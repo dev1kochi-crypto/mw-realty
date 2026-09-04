@@ -1,0 +1,18 @@
+/* Sitemap Specific Styles */
+
+.xml-editor {
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.9rem;
+    height: 500px;
+    background-color: #f8fafc;
+    line-height: 1.6;
+    border-radius: 0.75rem;
+}
+
+.sitemap-card {
+    transition: transform 0.3s;
+}
+
+.sitemap-card:hover {
+    transform: translateY(-5px);
+}

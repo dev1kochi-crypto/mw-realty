@@ -1,0 +1,13 @@
+@extends('cms-kit::layouts.cms')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('cms.careers.vacancies.index') }}">Vacancies</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Edit Vacancy</li>
+@endsection
+
+@section('content')
+    @include('cms-kit::careers._form', [
+        'formAction' => route('cms.careers.update', $career->id),
+        'submitLabel' => 'Update Vacancy',
+    ])
+@endsection
