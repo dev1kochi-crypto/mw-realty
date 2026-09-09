@@ -38,7 +38,7 @@
                     <div class="row g-3">
                         @if(config('cms-kit.database.testimonials.section.title'))
                         <div class="col-md-4">
-                            <label class="form-label fw-bold">Title{{ $showLanguageUi ? ' (' . strtoupper($lang->code) . ')' : '' }} {!! in_array('title', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                            <label class="form-label fw-bold">Title {!! in_array('title', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                             <input type="text" name="translations[{{ $lang->code }}][section_title]" class="form-control @error("translations.{$lang->code}.section_title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.section_title", $section->translations[$lang->code]['section_title'] ?? '') }}" {{ in_array('title', $sectionRequired) ? 'required' : '' }}>
                             @error("translations.{$lang->code}.section_title")
                                 <div class="invalid-feedback">{{ $message }}</div>

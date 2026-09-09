@@ -11,7 +11,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Only the portal routes use Laravel's built-in auth/guest middleware
+        // (the CMS admin uses its own cms.auth/cms.permission middleware), so
+        // these redirects only ever apply to /portal/* requests.
+        $middleware->redirectGuestsTo(fn ($request) => route('portal.login'));
+        $middleware->redirectUsersTo(fn ($request) => route('portal.dashboard'));
+
+        $middleware->alias([
+            'portal.or.cms' => \App\Http\Middleware\PortalOrCmsAuth::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

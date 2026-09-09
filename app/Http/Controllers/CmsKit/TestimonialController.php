@@ -27,7 +27,11 @@ class TestimonialController extends Controller
                 })
                 ->addColumn('image', function($row){
                     if (!$row->image) return '<span class="text-muted">No Image</span>';
-                    return '<img src="'.asset('storage/'.$row->image).'" class="rounded border" style="height: 40px; width: 40px; object-fit: cover;">';
+                    $img = '<img src="'.asset('storage/'.$row->image).'" class="rounded border" style="height: 40px; width: 40px; object-fit: cover;">';
+                    if ($row->type === 'video') {
+                        $img = '<span class="position-relative d-inline-block">'.$img.'<i class="fas fa-play-circle position-absolute top-50 start-50 translate-middle text-white" style="text-shadow: 0 0 3px rgba(0,0,0,.7);"></i></span>';
+                    }
+                    return $img;
                 })
                 ->addColumn('name_info', function($row){
                     return '<strong>'.($row->getTranslation('name') ?: 'No Name').'</strong><br><small class="text-muted">'.($row->getTranslation('designation') ?: '').'</small>';
@@ -191,7 +195,9 @@ class TestimonialController extends Controller
             if (in_array('designation', $requiredFields)) {
                 $rules["translations.{$lang->code}.designation"] = 'required';
             }
-            if (in_array('content', $requiredFields)) {
+            // Video testimonials show the photo + play button, not the text card, so
+            // content isn't required for them even when it's required for text ones.
+            if (in_array('content', $requiredFields) && $request->input('type', 'text') !== 'video') {
                 $rules["translations.{$lang->code}.content"] = 'required';
             }
         }
@@ -214,6 +220,21 @@ class TestimonialController extends Controller
 
         $rules['remove_image'] = 'nullable|boolean';
         $rules['order_index'] = 'nullable|integer|min:1';
+
+        $rules['type'] = 'nullable|in:text,video';
+        $isVideo = $request->input('type') === 'video';
+        $rules['video_source'] = $isVideo ? 'required|in:url,file' : 'nullable|in:url,file';
+        $rules['video_url'] = [
+            $isVideo && $request->input('video_source') === 'url' ? 'required' : 'nullable',
+            'nullable', 'url',
+        ];
+        $requiresVideoFile = $isVideo && $request->input('video_source') === 'file'
+            && !$request->hasFile('video_file')
+            && ($request->isMethod('post') || !$testimonial?->video_file);
+        $rules['video_file'] = [
+            $requiresVideoFile ? 'required' : 'nullable',
+            'nullable', 'file', 'mimetypes:video/mp4,video/quicktime,video/x-msvideo', 'max:10240',
+        ];
 
         $request->validate($rules);
     }
@@ -267,6 +288,22 @@ class TestimonialController extends Controller
             $data['image'] = $request->file('image')->store('testimonials', 'public');
         }
         $data['image_alt'] = $request->input('image_alt');
+
+        $data['type'] = $request->input('type', 'text');
+        if ($data['type'] === 'video') {
+            $data['video_source'] = $request->input('video_source');
+            if ($request->hasFile('video_file')) {
+                $data['video_file'] = $request->file('video_file')->store('testimonials/videos', 'public');
+                $data['video_url'] = null;
+            } else {
+                $data['video_url'] = $request->input('video_url');
+                $data['video_file'] = null;
+            }
+        } else {
+            $data['video_source'] = null;
+            $data['video_url'] = null;
+            $data['video_file'] = null;
+        }
 
         Testimonial::create($data);
         $this->normalizeOrderIndex(Testimonial::class);
@@ -330,6 +367,33 @@ class TestimonialController extends Controller
             $data['image'] = null;
         }
         $data['image_alt'] = $request->boolean('remove_image') ? null : $request->input('image_alt');
+
+        $data['type'] = $request->input('type', 'text');
+        if ($data['type'] === 'video') {
+            $data['video_source'] = $request->input('video_source');
+            if ($request->hasFile('video_file')) {
+                if ($testimonial->video_file) {
+                    Storage::disk('public')->delete($testimonial->video_file);
+                }
+                $data['video_file'] = $request->file('video_file')->store('testimonials/videos', 'public');
+                $data['video_url'] = null;
+            } elseif ($data['video_source'] === 'url') {
+                if ($testimonial->video_file) {
+                    Storage::disk('public')->delete($testimonial->video_file);
+                }
+                $data['video_file'] = null;
+                $data['video_url'] = $request->input('video_url');
+            } else {
+                $data['video_url'] = null;
+            }
+        } else {
+            if ($testimonial->video_file) {
+                Storage::disk('public')->delete($testimonial->video_file);
+            }
+            $data['video_source'] = null;
+            $data['video_url'] = null;
+            $data['video_file'] = null;
+        }
 
         $testimonial->update($data);
         $this->normalizeOrderIndex(Testimonial::class);

@@ -142,25 +142,150 @@
                     @endif
                     
                     {{-- Home Group --}}
-                    @if(config('cms-kit.common.modules.banners', true) && $cmsUser->can('banners.view'))
+                    @php
+                        $homeRoutes = request()->routeIs('cms.banners.*') || request()->routeIs('cms.popular-places.*') || request()->routeIs('cms.luxury-projects.*');
+                    @endphp
+                    @if(($cmsUser->can('banners.view') && config('cms-kit.common.modules.banners', true))
+                        || ($cmsUser->can('popular-places.view') && config('cms-kit.common.modules.popular-places', true))
+                        || ($cmsUser->can('luxury-projects.view') && config('cms-kit.common.modules.luxury-projects', true)))
                     <div class="nav-item sidebar-group">
-                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.banners.*')) active @endif" 
-                           data-bs-toggle="collapse" href="#homeMenu" role="button" 
-                           aria-expanded="@if(request()->routeIs('cms.banners.*')) true @else false @endif">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if($homeRoutes) active @endif"
+                           data-bs-toggle="collapse" href="#homeMenu" role="button"
+                           aria-expanded="@if($homeRoutes) true @else false @endif">
                             <i class="fas fa-home"></i>
                             <span>Home</span>
                             <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
                         </a>
-                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.banners.*')) show @endif" id="homeMenu">
+                        <div class="collapse sidebar-submenu @if($homeRoutes) show @endif" id="homeMenu">
                             <nav class="nav flex-column">
+                                @if(config('cms-kit.common.modules.banners', true) && $cmsUser->can('banners.view'))
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.banners.*')) active @endif" href="{{ route('cms.banners.index') }}">
                                     Banner
                                 </a>
+                                @endif
+                                @if(config('cms-kit.common.modules.popular-places', true) && $cmsUser->can('popular-places.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.popular-places.*')) active @endif" href="{{ route('cms.popular-places.index') }}">
+                                    Popular Places
+                                </a>
+                                @endif
+                                @if(config('cms-kit.common.modules.luxury-projects', true) && $cmsUser->can('luxury-projects.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.luxury-projects.*')) active @endif" href="{{ route('cms.luxury-projects.index') }}">
+                                    Luxury Projects
+                                </a>
+                                @endif
                             </nav>
                         </div>
                     </div>
                     @endif
-                    
+
+                    {{-- About Group --}}
+                    @php
+                        $aboutRoutes = request()->routeIs('cms.about-us.*') || request()->routeIs('cms.market-trends.*')
+                            || request()->routeIs('cms.why-choose-us.*') || request()->routeIs('cms.our-builders.*')
+                            || request()->routeIs('cms.connect-us.*') || request()->routeIs('cms.post-property-steps.*');
+                    @endphp
+                    @if(($cmsUser->can('about-us.view') && config('cms-kit.common.modules.about-us', true))
+                        || ($cmsUser->can('market-trends.view') && config('cms-kit.common.modules.market-trends', true))
+                        || ($cmsUser->can('why-choose-us.view') && config('cms-kit.common.modules.why-choose-us', true))
+                        || ($cmsUser->can('our-builders.view') && config('cms-kit.common.modules.our-builders', true))
+                        || ($cmsUser->can('connect-us.view') && config('cms-kit.common.modules.connect-us', true))
+                        || ($cmsUser->can('post-property-steps.view') && config('cms-kit.common.modules.post-property-steps', true)))
+                    <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if($aboutRoutes) active @endif"
+                           data-bs-toggle="collapse" href="#aboutMenu" role="button"
+                           aria-expanded="@if($aboutRoutes) true @else false @endif">
+                            <i class="fas fa-info-circle"></i>
+                            <span>About</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu @if($aboutRoutes) show @endif" id="aboutMenu">
+                            <nav class="nav flex-column">
+                                @if(config('cms-kit.common.modules.about-us', true) && $cmsUser->can('about-us.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.about-us.*')) active @endif" href="{{ route('cms.about-us.index') }}">
+                                    About Us
+                                </a>
+                                @endif
+                                @if(config('cms-kit.common.modules.market-trends', true) && $cmsUser->can('market-trends.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.market-trends.*')) active @endif" href="{{ route('cms.market-trends.index') }}">
+                                    Market Trends
+                                </a>
+                                @endif
+                                @if(config('cms-kit.common.modules.why-choose-us', true) && $cmsUser->can('why-choose-us.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.why-choose-us.*')) active @endif" href="{{ route('cms.why-choose-us.index') }}">
+                                    Why Choose Us
+                                </a>
+                                @endif
+                                @if(config('cms-kit.common.modules.our-builders', true) && $cmsUser->can('our-builders.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.our-builders.*')) active @endif" href="{{ route('cms.our-builders.index') }}">
+                                    Our Builders
+                                </a>
+                                @endif
+                                @if(config('cms-kit.common.modules.connect-us', true) && $cmsUser->can('connect-us.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.connect-us.*')) active @endif" href="{{ route('cms.connect-us.index') }}">
+                                    Connect Us
+                                </a>
+                                @endif
+                                @if(config('cms-kit.common.modules.post-property-steps', true) && $cmsUser->can('post-property-steps.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.post-property-steps.*')) active @endif" href="{{ route('cms.post-property-steps.index') }}">
+                                    Property Posting Steps
+                                </a>
+                                @endif
+                            </nav>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(config('cms-kit.common.modules.contact-us', true) && $cmsUser->can('contact-us.view'))
+                    <a class="nav-link @if(Route::is('cms.contact-us.*')) active @endif" href="{{ route('cms.contact-us.index') }}">
+                        <i class="fas fa-envelope-open-text"></i> Contact
+                    </a>
+                    @endif
+
+                    {{-- Property listings themselves are managed in the separate Properties dashboard
+                         (see the "Properties" button in the header) — this stays admin-only since
+                         it's shared taxonomy, not content agents/companies should edit. --}}
+                    @php
+                        $filtersRoutes = request()->routeIs('cms.filters.*') || request()->routeIs('cms.communities.*') || request()->routeIs('cms.find-properties.*');
+                    @endphp
+                    @if(($cmsUser->can('filters.view') && config('cms-kit.common.modules.filters', true))
+                        || ($cmsUser->can('communities.view') && config('cms-kit.common.modules.communities', true))
+                        || ($cmsUser->can('find-properties.view') && config('cms-kit.common.modules.find-properties', true)))
+                    <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if($filtersRoutes) active @endif"
+                           data-bs-toggle="collapse" href="#filtersMenu" role="button"
+                           aria-expanded="@if($filtersRoutes) true @else false @endif">
+                            <i class="fas fa-sliders-h"></i>
+                            <span>Filters</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu @if($filtersRoutes) show @endif" id="filtersMenu">
+                            <nav class="nav flex-column">
+                                @if(config('cms-kit.common.modules.filters', true) && $cmsUser->can('filters.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.filters.*')) active @endif" href="{{ route('cms.filters.index') }}">
+                                    Manage Filters
+                                </a>
+                                @endif
+                                @if(config('cms-kit.common.modules.communities', true) && $cmsUser->can('communities.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.communities.*')) active @endif" href="{{ route('cms.communities.index') }}">
+                                    Communities
+                                </a>
+                                @endif
+                                @if(config('cms-kit.common.modules.find-properties', true) && $cmsUser->can('find-properties.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.find-properties.*')) active @endif" href="{{ route('cms.find-properties.index') }}">
+                                    Find Properties
+                                </a>
+                                @endif
+                            </nav>
+                        </div>
+                    </div>
+                    @endif
+     
+                    @if(config('cms-kit.common.modules.brands', true) && $cmsUser->can('brands.view'))
+                    <a class="nav-link @if(Route::is('cms.brands.*')) active @endif" href="{{ route('cms.brands.index') }}">
+                        <i class="fas fa-tag"></i> Brands
+                    </a>
+                    @endif
+
                     @if(config('cms-kit.common.modules.testimonials', true) && $cmsUser->can('testimonials.view'))
                     <a class="nav-link @if(Route::is('cms.testimonials.*')) active @endif" href="{{ route('cms.testimonials.index') }}">
                         <i class="fas fa-comment-dots"></i> Testimonials
@@ -173,11 +298,6 @@
                     </a>
                     @endif
 
-                    @if(config('cms-kit.common.modules.brands', true) && $cmsUser->can('brands.view'))
-                    <a class="nav-link @if(Route::is('cms.brands.*')) active @endif" href="{{ route('cms.brands.index') }}">
-                        <i class="fas fa-tag"></i> Brands
-                    </a>
-                    @endif
 
                     @if(config('cms-kit.common.modules.locations', true) && $cmsUser->can('locations.view'))
                     <a class="nav-link @if(Route::is('cms.locations.*')) active @endif" href="{{ route('cms.locations.index') }}">
@@ -253,16 +373,16 @@
                     @endif
 
                     {{-- User Management Group --}}
-                    @if($cmsUser->hasRole('superadmin') || $cmsUser->can('users.view') || $cmsUser->can('roles.view'))
+                    @if($cmsUser->hasRole('superadmin') || $cmsUser->can('users.view') || $cmsUser->can('roles.view') || $cmsUser->can('portal-accounts.view'))
                     <div class="nav-item sidebar-group">
-                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*')) active @endif" 
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*') || request()->routeIs('cms.portal-accounts.*')) active @endif" 
                            data-bs-toggle="collapse" href="#userMenu" role="button" 
-                           aria-expanded="@if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*')) true @else false @endif">
+                           aria-expanded="@if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*') || request()->routeIs('cms.portal-accounts.*')) true @else false @endif">
                             <i class="fas fa-users-cog"></i>
                             <span>User Management</span>
                             <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
                         </a>
-                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*')) show @endif" id="userMenu">
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*') || request()->routeIs('cms.portal-accounts.*')) show @endif" id="userMenu">
                             <nav class="nav flex-column">
                                 @if($cmsUser->hasRole('superadmin') || $cmsUser->can('users.view'))
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.admins.*')) active @endif" href="{{ route('cms.admins.index') }}">
@@ -277,9 +397,20 @@
                                     Permissions List
                                 </a>
                                 @endif
+                                @if(config('cms-kit.common.modules.portal-accounts', true) && ($cmsUser->hasRole('superadmin') || $cmsUser->can('portal-accounts.view')))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.portal-accounts.*')) active @endif" href="{{ route('cms.portal-accounts.index') }}">
+                                    Agents & Companies
+                                </a>
+                                @endif
                             </nav>
                         </div>
                     </div>
+                    @endif
+
+                    @if(config('cms-kit.common.modules.plans', true) && $cmsUser->can('plans.view'))
+                    <a class="nav-link @if(Route::is('cms.plans.*')) active @endif" href="{{ route('cms.plans.index') }}">
+                        <i class="fas fa-layer-group"></i> Plans
+                    </a>
                     @endif
                 </nav>
             </div>
@@ -299,10 +430,19 @@
                 </nav>
 
                 <div class="d-flex align-items-center gap-3">
+                    @if($cmsUser->hasRole('superadmin'))
+                    <a href="{{ route('portal.crm.index') }}" class="btn btn-premium btn-quicknav btn-sm">
+                        <i class="fas fa-users"></i> CRM
+                    </a>
+                    <a href="{{ route('portal.properties.index') }}" class="btn btn-premium btn-quicknav btn-sm">
+                        <i class="fas fa-building"></i> Properties
+                    </a>
+                    @endif
+
                     <a href="/" target="_blank" class="btn btn-premium btn-view-site btn-sm">
                         <i class="fas fa-external-link-alt me-2"></i> View Site
                     </a>
-                    
+
                     <div class="dropdown">
                         <div class="user-profile dropdown-toggle" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             @php

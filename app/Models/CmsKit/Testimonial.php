@@ -9,6 +9,10 @@ class Testimonial extends Model
     protected $fillable = [
         'image',
         'image_alt',
+        'type',
+        'video_source',
+        'video_url',
+        'video_file',
         'rating',
         'order_index',
         'status',

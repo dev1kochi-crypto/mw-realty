@@ -45,6 +45,82 @@ return [
             'max_size' => 512, // Updated
         ],
     ],
+    'post-property-steps' => [
+        'section_image' => [
+            'width' => 851,
+            'height' => 521,
+            'max_size' => 2048,
+        ],
+        'item_icon' => [
+            'width' => 64,
+            'height' => 64,
+            'max_size' => 256,
+        ],
+    ],
+    'popular-places' => [
+        'item_image' => [
+            'width' => 400,
+            'height' => 500,
+            'max_size' => 2048,
+        ],
+    ],
+    'about-us' => [
+        'main_image' => [
+            'width' => 851,
+            'height' => 900,
+            'max_size' => 2048,
+        ],
+        'ceo_image' => [
+            'width' => 400,
+            'height' => 400,
+            'max_size' => 1024,
+        ],
+    ],
+    'market-trends' => [
+        'image' => [
+            'width' => 851,
+            'height' => 521,
+            'max_size' => 2048,
+        ],
+    ],
+    'why-choose-us' => [
+        'section_image' => [
+            'width' => 851,
+            'height' => 521,
+            'max_size' => 2048,
+        ],
+        'item_icon' => [
+            'width' => 64,
+            'height' => 64,
+            'max_size' => 256,
+        ],
+    ],
+    'our-builders' => [
+        'item_logo' => [
+            'width' => 250,
+            'height' => 150,
+            'max_size' => 1024,
+        ],
+    ],
+    'connect-us' => [
+        'video' => [
+            'max_size' => 10240,
+        ],
+    ],
+    'communities' => [
+        'item_icon' => [
+            'width' => 64,
+            'height' => 64,
+            'max_size' => 256,
+        ],
+    ],
+    'find-properties' => [
+        'item_image' => [
+            'width' => 500,
+            'height' => 500,
+            'max_size' => 2048,
+        ],
+    ],
     'brands' => [
         'logo' => [
             'width' => 250,

@@ -36,12 +36,12 @@ return [
         'section' => [
             'title' => true,
             'sub_heading_1' => true,
-            'sub_heading_2' => true,
-            'section_image' => true,
-            'section_image_alt' => true,
-            'banner' => true,
-            'banner_alt' => true,
-            'description' => true,
+            'sub_heading_2' => false,
+            'section_image' => false,
+            'section_image_alt' => false,
+            'banner' => false,
+            'banner_alt' => false,
+            'description' => false,
             'display_home' => true,
             'extra_fields' => [],
             'required' => ['title'], // Section fields that are mandatory
@@ -60,28 +60,56 @@ return [
         ],
     ],
     'banners' => [
-        'max_items' => 5, // Dynamic limit for banners
-        'allowed_types' => ['image', 'video'], // Available banner types
+        'max_items' => 1, // Dynamic limit for banners
+        'allowed_types' => ['video'], // Available banner types
         'items' => [
-            'banner_type' => true, // New: image, video toggle
+            'banner_type' => false, // New: image, video toggle
             'line_1' => true,
             'line_2' => true,
             'content' => true,
             'image' => true,
             'video_url' => true, // New: for video banners
             'video_file' => true, // New: for video file uploads
-            'image_alt' => true,
-            'buttons' => true, // New: JSON array of buttons
-            'additional_buttons'=> true, // New: toggle for additional buttons
-            'google_review_text' => true, // New
-            'google_rating' => true, // New
-            'google_review_count' => true, // New
-            'google_avatars' => true, // New: for the avatars in screenshot
-            'google_avatars_alt' => true, // New: alt text for avatars
+            'image_alt' => false,
+            'buttons' => false, // New: JSON array of buttons
+            'additional_buttons'=> false, // New: toggle for additional buttons
+            'google_review_text' => false, // New
+            'google_rating' => false, // New
+            'google_review_count' => false, // New
+            'google_avatars' => false, // New: for the avatars in screenshot
+            'google_avatars_alt' => false, // New: alt text for avatars
             'order' => true,
             'status' => true,
-            'extra_fields' => [],
-            'required' => ['line_1', 'banner_type'], // Mandatory fields
+            'extra_fields' => [
+                // Small note strip under the search bar, e.g.
+                // "Want to find out more about UAE real estate using AI?  Coming Soon  -> Let Us Guide Your Home"
+                'note_text' => [
+                    'label' => 'Note Text',
+                    'type' => 'text',
+                    'translatable' => true,
+                    'placeholder' => 'e.g. Want to find out more about UAE real estate using AI?',
+                    'helpText' => 'Small text shown under the search bar on the home banner.',
+                ],
+                'note_badge' => [
+                    'label' => 'Note Badge',
+                    'type' => 'text',
+                    'translatable' => true,
+                    'placeholder' => 'e.g. Coming Soon',
+                ],
+                'note_link_text' => [
+                    'label' => 'Note Link Text',
+                    'type' => 'text',
+                    'translatable' => true,
+                    'placeholder' => 'e.g. Let Us Guide Your Home',
+                ],
+                'note_link_url' => [
+                    'label' => 'Note Link URL',
+                    'type' => 'url',
+                    'translatable' => true,
+                    'placeholder' => 'https://...',
+                ],
+            ],
+            'required' => ['line_1'], // Mandatory fields
         ],
     ],
     'metadata' => [
@@ -93,35 +121,37 @@ return [
         'country' => true,
         'po_box' => true,
         'fax' => true,
+        'working_hours' => true,
         'phone_1' => true,
         'phone_2' => true,
-        'phone_3' => true,
-        'phone_4' => true,
+        'phone_3' => false,
+        'phone_4' => false,
         'whatsapp_number' => true,
+        'toll_free' => true,
         'email_1' => true,
         'email_2' => true,
-        'email_3' => true,
-        'email_4' => true,
+        'email_3' => false,
+        'email_4' => false,
         'receipt_email' => true,
         'privacy_policy' => true,
         'terms_and_conditions' => true,
         'disclaimer' => true,
         'logo' => true,
         'logo_alt' => true,
-        'footer_logo' => true,
-        'footer_logo_alt' => true,
-        'footer_description' => true,
+        'footer_logo' => false,
+        'footer_logo_alt' => false,
+        'footer_description' => false,
         'facebook' => true,
         'twitter' => true,
         'linkedin' => true,
         'instagram' => true,
-        'tiktok' => true,
-        'snapchat' => true,
-        'pinterest' => true,
-        'youtube' => true,
-        'skype' => true,
+        'tiktok' => false,
+        'snapchat' => false,
+        'pinterest' => false,
+        'youtube' => false,
+        'skype' => false,
         'whatsapp_social' => true,
-        'vimeo' => true,
+        'vimeo' => false,
         'gtag' => true,
         'custom_head_script' => true,
         'custom_body_script' => true,
@@ -317,6 +347,63 @@ return [
             'order' => true,
             'status' => true,
             'required' => ['question', 'answer'],
+        ],
+    ],
+    'post-property-steps' => [
+        'section' => [
+            'title' => true,
+            'description' => true,
+            'image' => true,
+            'status' => true,
+            'extra_fields' => [],
+            'required' => ['title'],
+        ],
+        'items' => [
+            'image' => true, // step icon
+            'title' => true,
+            'description' => true,
+            'order' => true,
+            'status' => true,
+            'extra_fields' => [],
+            'required' => ['title'],
+        ],
+    ],
+    'popular-places' => [
+        'section' => [
+            'title' => true,
+            'status' => true,
+            'extra_fields' => [],
+            'required' => ['title'],
+        ],
+        'items' => [
+            'image' => true,
+            'name' => true,
+            'order' => true,
+            'status' => true,
+            'extra_fields' => [],
+            'required' => ['name', 'image'],
+        ],
+    ],
+    'luxury-projects' => [
+        'section' => [
+            'title' => true,
+            'description' => true,
+            'status' => true,
+            'extra_fields' => [
+                'button_name' => [
+                    'label' => 'Button Name',
+                    'type' => 'text',
+                    'translatable' => true,
+                    'placeholder' => 'e.g. View More Details',
+                ],
+                'button_url' => [
+                    'label' => 'Button URL',
+                    'type' => 'url',
+                    'translatable' => true,
+                    'placeholder' => 'https://...',
+                ],
+            ],
+            'required' => ['title'],
         ],
     ],
 ];

@@ -116,6 +116,15 @@
                                         @enderror
                                     </div>
                                     @endif
+                                    @if($siteInfoConfig['working_hours'] ?? true)
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Working Hours</label>
+                                        <input type="text" name="translations[{{ $lang->code }}][working_hours]" class="form-control @error("translations.{$lang->code}.working_hours") is-invalid @enderror" value="{{ old("translations.{$lang->code}.working_hours", $trans['working_hours'] ?? $siteInfo->working_hours) }}" placeholder="e.g. Mon - Fri: 9:00 AM - 6:00 PM">
+                                        @error("translations.{$lang->code}.working_hours")
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    @endif
                                 </div>
 
                                 @if(($siteInfoConfig['privacy_policy'] ?? true) || ($siteInfoConfig['terms_and_conditions'] ?? true) || ($siteInfoConfig['disclaimer'] ?? true) || ($siteInfoConfig['footer_description'] ?? true))
@@ -200,6 +209,15 @@
                                 </div>
                                 @endif
                                 @endfor
+                                @if($siteInfoConfig['toll_free'] ?? true)
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Toll Free</label>
+                                    <input type="text" name="toll_free" class="form-control @error('toll_free') is-invalid @enderror" value="{{ old('toll_free', $siteInfo->toll_free) }}" placeholder="e.g. 800644489">
+                                    @error('toll_free')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                @endif
                             </div>
                             @endif
                             @if(collect(range(1, 4))->contains(fn($i) => $siteInfoConfig["email_{$i}"] ?? true))

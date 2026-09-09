@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\PortalUser;
 
 return [
 
@@ -42,6 +43,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Agent/Company self-service portal — separate credentials from the CMS admin.
+        'portal' => [
+            'driver' => 'session',
+            'provider' => 'portal_users',
+        ],
     ],
 
     /*
@@ -71,6 +78,11 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+
+        'portal_users' => [
+            'driver' => 'eloquent',
+            'model' => PortalUser::class,
+        ],
     ],
 
     /*

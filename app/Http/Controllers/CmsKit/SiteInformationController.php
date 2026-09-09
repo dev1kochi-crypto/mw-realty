@@ -16,6 +16,7 @@ class SiteInformationController extends Controller
         'country',
         'po_box',
         'fax',
+        'working_hours',
         'privacy_policy',
         'terms_and_conditions',
         'disclaimer',
@@ -37,7 +38,7 @@ class SiteInformationController extends Controller
 
         foreach ([
             'phone_1', 'phone_2', 'phone_3', 'phone_4',
-            'whatsapp_number',
+            'whatsapp_number', 'toll_free',
             'logo_alt', 'footer_logo_alt',
             'gtag'
         ] as $field) {
