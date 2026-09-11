@@ -7,7 +7,7 @@ use App\Models\CmsKit\Language;
 use App\Models\CmsKit\SectionLabel;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ValidatesImageDimensions;
 
 class MarketTrendController extends Controller
 {
@@ -44,12 +44,12 @@ class MarketTrendController extends Controller
 
         if ($request->hasFile('image_1')) {
             if ($section?->section_image) {
-                Storage::disk('public')->delete($section->section_image);
+                app(\App\Services\ManagedFiles::class)->delete($section->section_image);
             }
-            $data['section_image'] = $request->file('image_1')->store('market-trends', 'public');
+            $data['section_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image_1'), 'market-trends');
             $data['section_image_alt'] = $request->input('image_1_alt');
         } elseif ($request->boolean('remove_image_1') && $section?->section_image) {
-            Storage::disk('public')->delete($section->section_image);
+            app(\App\Services\ManagedFiles::class)->delete($section->section_image);
             $data['section_image'] = null;
             $data['section_image_alt'] = null;
         } elseif ($request->filled('image_1_alt')) {
@@ -58,12 +58,12 @@ class MarketTrendController extends Controller
 
         if ($request->hasFile('image_2')) {
             if ($section?->banner) {
-                Storage::disk('public')->delete($section->banner);
+                app(\App\Services\ManagedFiles::class)->delete($section->banner);
             }
-            $data['banner'] = $request->file('image_2')->store('market-trends', 'public');
+            $data['banner'] = app(\App\Services\ManagedFiles::class)->store($request->file('image_2'), 'market-trends');
             $data['banner_alt'] = $request->input('image_2_alt');
         } elseif ($request->boolean('remove_image_2') && $section?->banner) {
-            Storage::disk('public')->delete($section->banner);
+            app(\App\Services\ManagedFiles::class)->delete($section->banner);
             $data['banner'] = null;
             $data['banner_alt'] = null;
         } elseif ($request->filled('image_2_alt')) {

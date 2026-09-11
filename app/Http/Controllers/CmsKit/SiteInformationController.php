@@ -160,32 +160,32 @@ class SiteInformationController extends Controller
         // Handle File Uploads
         if ($request->hasFile('logo')) {
             if ($siteInfo->logo) {
-                Storage::delete($siteInfo->logo);
+                app(\App\Services\ManagedFiles::class)->delete($siteInfo->logo);
             }
-            $data['logo'] = $request->file('logo')->store('site-info', 'public');
+            $data['logo'] = app(\App\Services\ManagedFiles::class)->store($request->file('logo'), 'site-info');
         } elseif ($request->boolean('remove_logo') && $siteInfo->logo) {
-            Storage::disk('public')->delete($siteInfo->logo);
+            app(\App\Services\ManagedFiles::class)->delete($siteInfo->logo);
             $data['logo'] = null;
             $data['logo_alt'] = null;
         }
         
         if ($request->hasFile('favicon')) {
             if ($siteInfo->favicon) {
-                Storage::delete($siteInfo->favicon);
+                app(\App\Services\ManagedFiles::class)->delete($siteInfo->favicon);
             }
-            $data['favicon'] = $request->file('favicon')->store('site-info', 'public');
+            $data['favicon'] = app(\App\Services\ManagedFiles::class)->store($request->file('favicon'), 'site-info');
         } elseif ($request->boolean('remove_favicon') && $siteInfo->favicon) {
-            Storage::disk('public')->delete($siteInfo->favicon);
+            app(\App\Services\ManagedFiles::class)->delete($siteInfo->favicon);
             $data['favicon'] = null;
         }
 
         if ($request->hasFile('footer_logo')) {
             if ($siteInfo->footer_logo) {
-                Storage::delete($siteInfo->footer_logo);
+                app(\App\Services\ManagedFiles::class)->delete($siteInfo->footer_logo);
             }
-            $data['footer_logo'] = $request->file('footer_logo')->store('site-info', 'public');
+            $data['footer_logo'] = app(\App\Services\ManagedFiles::class)->store($request->file('footer_logo'), 'site-info');
         } elseif ($request->boolean('remove_footer_logo') && $siteInfo->footer_logo) {
-            Storage::disk('public')->delete($siteInfo->footer_logo);
+            app(\App\Services\ManagedFiles::class)->delete($siteInfo->footer_logo);
             $data['footer_logo'] = null;
             $data['footer_logo_alt'] = null;
         }

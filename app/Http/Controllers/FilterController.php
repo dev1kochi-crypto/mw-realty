@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
-use CMS\SiteManager\Support\ManagesOrderIndex;
+use App\Support\ManagesOrderIndex;
 
 class FilterController extends Controller
 {
@@ -72,22 +72,27 @@ class FilterController extends Controller
         return [
             'key' => [
                 $isUpdate ? 'required' : 'required',
-                'alpha_dash',
+                'alpha_dash', 'max:255',
+                \Illuminate\Validation\Rule::in(array_merge(Filter::SELECT_KEYS, Filter::NUMBER_KEYS)),
                 $isUpdate
                     ? \Illuminate\Validation\Rule::unique('filters', 'key')->ignore($filter?->id)
                     : \Illuminate\Validation\Rule::unique('filters', 'key'),
             ],
-            'translations.*.label' => 'required',
+            'translations' => 'required|array|min:1',
+            'translations.*.label' => 'required|string|max:255',
             'type' => 'required|in:select,range,number',
-            'show_on' => 'nullable|array',
+            'show_on' => 'nullable|array|max:2',
+            'show_on.*' => 'in:home,listing',
             'order_index' => 'nullable|integer|min:1',
         ];
     }
 
     public function store(Request $request)
     {
+        $request->merge(['key' => Str::slug((string) $request->input('key'), '_')]);
         $request->validate($this->rules());
 
+        $this->validateType($request);
         $data = $request->only(['key', 'type']);
         $data['key'] = Str::slug($request->input('key'), '_');
         $data['translations'] = $request->input('translations', []);
@@ -113,8 +118,14 @@ class FilterController extends Controller
     public function update(Request $request, $id)
     {
         $filter = Filter::findOrFail($id);
+        $request->merge(['key' => Str::slug((string) $request->input('key'), '_')]);
         $request->validate($this->rules(true, $filter));
+        if ($filter->key !== $request->input('key') && ($filter->values()->exists() || \App\Models\Property::whereNotNull($filter->key)->exists())) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['key' => 'A filter with values or listings cannot be renamed.']);
+        }
 
+        $this->validateType($request);
+        if ($request->filled('order_index')) $this->moveOrder($filter, (int) $request->order_index);
         $data = $request->only(['type']);
         $data['key'] = Str::slug($request->input('key'), '_');
         $data['translations'] = $request->input('translations', []);
@@ -130,6 +141,7 @@ class FilterController extends Controller
     {
         $filter = Filter::findOrFail($id);
         $order = $filter->order_index;
+        foreach ($filter->values()->cursor() as $value) $this->assertValueUnused($value);
         $filter->delete();
 
         Filter::where('order_index', '>', $order)->decrement('order_index');
@@ -177,8 +189,9 @@ class FilterController extends Controller
     public function storeValue(Request $request, $filterId)
     {
         $filter = Filter::findOrFail($filterId);
+        $request->merge(['value' => Str::slug((string) $request->input('value'), '_')]);
         $request->validate([
-            'value' => 'required|string',
+            'value' => ['required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('filter_values', 'value')->where('filter_id', $filterId)->ignore($valueId ?? null)],
             'translations.*.label' => 'required',
         ]);
 
@@ -201,6 +214,7 @@ class FilterController extends Controller
             'translations.*.label' => 'required',
         ]);
 
+        $this->assertValueUnused($value, $request->input('value'));
         $value->update([
             'value' => Str::slug($request->input('value'), '_'),
             'translations' => $request->input('translations', []),
@@ -213,6 +227,7 @@ class FilterController extends Controller
     public function destroyValue($filterId, $valueId)
     {
         $value = FilterValue::where('filter_id', $filterId)->findOrFail($valueId);
+        $this->assertValueUnused($value);
         $value->delete();
 
         return response()->json(['success' => true]);
@@ -225,5 +240,22 @@ class FilterController extends Controller
         $value->save();
 
         return response()->json(['success' => true]);
+    }
+    private function validateType(Request $request): void
+    {
+        $select = in_array($request->input('key'), Filter::SELECT_KEYS, true);
+        if (($select && $request->input('type') !== 'select') || (!$select && $request->input('type') === 'select')) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['type' => 'The filter type must match the selected property field.']);
+        }
+    }
+
+    private function assertValueUnused(FilterValue $value, ?string $replacement = null): void
+    {
+        if ($replacement === $value->value) return;
+        $key = $value->filter->key;
+        $used = in_array($key, Filter::SELECT_KEYS, true) && \App\Models\Property::where($key, $value->value)->exists();
+        if ($key === 'location') $used = $used || \App\Models\CmsKit\CommunityHighlight::where('community', $value->value)->exists();
+        if ($key === 'property_type') $used = $used || \App\Models\CmsKit\FindPropertyItem::where('property_type', $value->value)->exists();
+        if ($used) throw \Illuminate\Validation\ValidationException::withMessages(['value' => 'This value is in use. Reassign its listings/cards first.']);
     }
 }

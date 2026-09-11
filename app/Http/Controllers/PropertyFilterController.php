@@ -17,10 +17,11 @@ class PropertyFilterController extends Controller
 {
     public function index(Request $request)
     {
+        $request->validate(['page' => 'sometimes|in:home,listing', 'lang' => 'sometimes|string|max:10']);
         $page = $request->input('page', 'home'); // "home" or "listing"
         $lang = $request->input('lang', app()->getLocale());
 
-        $filters = Filter::active()
+        $filters = Filter::active()->whereIn('key', array_merge(Filter::SELECT_KEYS, Filter::NUMBER_KEYS))
             ->shownOn($page)
             ->orderBy('order_index')
             ->with(['activeValues'])
@@ -37,7 +38,7 @@ class PropertyFilterController extends Controller
                         'value' => $v->value,
                         'label' => $v->getTranslation('label', $lang),
                     ])->values();
-                } else {
+                } elseif (in_array($filter->key, Filter::NUMBER_KEYS, true)) {
                     $payload['min'] = (float) (Property::active()->min($filter->key) ?? 0);
                     $payload['max'] = (float) (Property::active()->max($filter->key) ?? 0);
                 }

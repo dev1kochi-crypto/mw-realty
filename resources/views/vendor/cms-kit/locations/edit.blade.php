@@ -104,7 +104,10 @@
                             <label class="form-check-label" for="removeLocationImage">Remove current image</label>
                         </div>
                     @endif
-                    <input type="file" name="image" class="form-control">
+                    <input type="file" name="image" class="form-control @error('image') is-invalid @enderror">
+                    @error('image')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                     <input type="text" name="image_alt" class="form-control mt-2" value="{{ old('image_alt', $location->image_alt) }}" placeholder="Image ALT text">
                 </div>
                 @endif
@@ -121,7 +124,10 @@
                             <label class="form-check-label" for="removeLocationFlag">Remove current flag</label>
                         </div>
                     @endif
-                    <input type="file" name="flag" class="form-control">
+                    <input type="file" name="flag" class="form-control @error('flag') is-invalid @enderror">
+                    @error('flag')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                     <input type="text" name="flag_alt" class="form-control mt-2" value="{{ old('flag_alt', $location->flag_alt) }}" placeholder="Flag ALT text">
                 </div>
                 @endif
@@ -130,27 +136,39 @@
                 @if($locationConfig['phone'] ?? true)
                 <div class="col-md-4">
                     <label class="form-label">Phone Numbers {!! in_array('phone', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                    <textarea name="phone" class="form-control" rows="3" placeholder="One phone per line" {{ in_array('phone', $locationRequired) ? 'required' : '' }}>{{ old('phone', is_array($location->phone) ? implode("\n", $location->phone) : ($location->phone ?? '')) }}</textarea>
+                    <textarea name="phone" class="form-control @error('phone') is-invalid @enderror" rows="3" placeholder="One phone per line" {{ in_array('phone', $locationRequired) ? 'required' : '' }}>{{ old('phone', is_array($location->phone) ? implode("\n", $location->phone) : ($location->phone ?? '')) }}</textarea>
+                    @error('phone')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                     <small class="text-muted">Enter one phone number per line. Comma or semicolon also accepted.</small>
                 </div>
                 @endif
                 @if($locationConfig['whatsapp'] ?? true)
                 <div class="col-md-4">
                     <label class="form-label">WhatsApp {!! in_array('whatsapp', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                    <input type="text" name="whatsapp" class="form-control" value="{{ old('whatsapp', $location->whatsapp) }}" placeholder="+971 50 123 4567" {{ in_array('whatsapp', $locationRequired) ? 'required' : '' }}>
+                    <input type="text" name="whatsapp" class="form-control @error('whatsapp') is-invalid @enderror" value="{{ old('whatsapp', $location->whatsapp) }}" placeholder="+971 50 123 4567" {{ in_array('whatsapp', $locationRequired) ? 'required' : '' }}>
+                    @error('whatsapp')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
                 @endif
                 @if($locationConfig['fax'] ?? true)
                 <div class="col-md-4">
                     <label class="form-label">Fax {!! in_array('fax', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                    <input type="text" name="fax" class="form-control" value="{{ old('fax', $location->fax) }}" {{ in_array('fax', $locationRequired) ? 'required' : '' }}>
+                    <input type="text" name="fax" class="form-control @error('fax') is-invalid @enderror" value="{{ old('fax', $location->fax) }}" {{ in_array('fax', $locationRequired) ? 'required' : '' }}>
+                    @error('fax')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
                 @endif
 
                 @if($locationConfig['emails'] ?? true)
                 <div class="col-12">
                     <label class="form-label">Emails (multiple) {!! in_array('emails', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                    <textarea name="emails" class="form-control" rows="3" placeholder="One email per line" {{ in_array('emails', $locationRequired) ? 'required' : '' }}>{{ old('emails', is_array($location->emails) ? implode("\n", $location->emails) : '') }}</textarea>
+                    <textarea name="emails" class="form-control @error('emails') is-invalid @enderror" rows="3" placeholder="One email per line" {{ in_array('emails', $locationRequired) ? 'required' : '' }}>{{ old('emails', is_array($location->emails) ? implode("\n", $location->emails) : '') }}</textarea>
+                    @error('emails')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                     <small class="text-muted">Enter one email per line. Comma or semicolon also accepted.</small>
                 </div>
                 @endif
@@ -159,7 +177,10 @@
                 @if($locationConfig['map_link'] ?? true)
                 <div class="col-12">
                     <label class="form-label">Google Map Link / Embed URL {!! in_array('map_link', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                    <input type="text" name="map_link" class="form-control" value="{{ old('map_link', $location->map_link) }}" placeholder="https://maps.google.com/..." {{ in_array('map_link', $locationRequired) ? 'required' : '' }}>
+                    <input type="text" name="map_link" class="form-control @error('map_link') is-invalid @enderror" value="{{ old('map_link', $location->map_link) }}" placeholder="https://maps.google.com/..." {{ in_array('map_link', $locationRequired) ? 'required' : '' }}>
+                    @error('map_link')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
                 @endif
 

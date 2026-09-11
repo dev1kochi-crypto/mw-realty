@@ -9,8 +9,8 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
-use CMS\SiteManager\Support\ManagesOrderIndex;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ManagesOrderIndex;
+use App\Support\ValidatesImageDimensions;
 
 class BrandController extends Controller
 {
@@ -111,7 +111,7 @@ class BrandController extends Controller
         $data['translations'] = $this->buildBrandTranslations($request);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('brands', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'brands');
         }
 
         $order = $this->resolveOrderForCreate(Brand::class, $request->order_index ? (int) $request->order_index : null);
@@ -142,10 +142,10 @@ class BrandController extends Controller
         $data['translations'] = $this->buildBrandTranslations($request);
 
         if ($request->hasFile('image')) {
-            if ($brand->image) Storage::disk('public')->delete($brand->image);
-            $data['image'] = $request->file('image')->store('brands', 'public');
+            if ($brand->image) app(\App\Services\ManagedFiles::class)->delete($brand->image);
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'brands');
         } elseif ($request->boolean('remove_image') && $brand->image) {
-            Storage::disk('public')->delete($brand->image);
+            app(\App\Services\ManagedFiles::class)->delete($brand->image);
             $data['image'] = null;
             $data['image_alt'] = null;
         }
@@ -159,7 +159,7 @@ class BrandController extends Controller
     {
         $brand = Brand::findOrFail($id);
         $order = $brand->order_index;
-        if ($brand->image) Storage::disk('public')->delete($brand->image);
+        if ($brand->image) app(\App\Services\ManagedFiles::class)->delete($brand->image);
         $brand->delete();
 
         Brand::where('order_index', '>', $order)->decrement('order_index');
@@ -219,7 +219,7 @@ class BrandController extends Controller
             $brands = Brand::whereIn('id', $ids)->get();
             foreach ($brands as $brand) {
                 if ($brand->image) {
-                    Storage::disk('public')->delete($brand->image);
+                    app(\App\Services\ManagedFiles::class)->delete($brand->image);
                 }
                 $brand->delete();
             }

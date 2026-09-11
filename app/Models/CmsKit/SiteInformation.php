@@ -23,6 +23,18 @@ class SiteInformation extends Model
         'extra_fields' => 'array',
         'translations' => 'array',
     ];
+
+    /**
+     * Where system notifications (new portal registrations, etc.) get sent.
+     */
+    public static function notificationEmail(): ?string
+    {
+        $info = static::first();
+
+        return $info?->receipt_email
+            ?: $info?->email_1
+            ?: config('mail.from.address');
+    }
 }
 
 

@@ -7,7 +7,7 @@ use App\Models\CmsKit\Language;
 use App\Models\CmsKit\SectionLabel;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ValidatesImageDimensions;
 
 class AboutUsController extends Controller
 {
@@ -46,12 +46,12 @@ class AboutUsController extends Controller
 
         if ($request->hasFile('image')) {
             if ($section?->section_image) {
-                Storage::disk('public')->delete($section->section_image);
+                app(\App\Services\ManagedFiles::class)->delete($section->section_image);
             }
-            $data['section_image'] = $request->file('image')->store('about-us', 'public');
+            $data['section_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'about-us');
             $data['section_image_alt'] = $request->input('image_alt');
         } elseif ($request->boolean('remove_image') && $section?->section_image) {
-            Storage::disk('public')->delete($section->section_image);
+            app(\App\Services\ManagedFiles::class)->delete($section->section_image);
             $data['section_image'] = null;
             $data['section_image_alt'] = null;
         } elseif ($request->filled('image_alt')) {
@@ -60,12 +60,12 @@ class AboutUsController extends Controller
 
         if ($request->hasFile('ceo_image')) {
             if ($section?->banner) {
-                Storage::disk('public')->delete($section->banner);
+                app(\App\Services\ManagedFiles::class)->delete($section->banner);
             }
-            $data['banner'] = $request->file('ceo_image')->store('about-us', 'public');
+            $data['banner'] = app(\App\Services\ManagedFiles::class)->store($request->file('ceo_image'), 'about-us');
             $data['banner_alt'] = $request->input('ceo_image_alt');
         } elseif ($request->boolean('remove_ceo_image') && $section?->banner) {
-            Storage::disk('public')->delete($section->banner);
+            app(\App\Services\ManagedFiles::class)->delete($section->banner);
             $data['banner'] = null;
             $data['banner_alt'] = null;
         } elseif ($request->filled('ceo_image_alt')) {

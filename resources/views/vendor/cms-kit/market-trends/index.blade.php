@@ -63,7 +63,8 @@
                 <div class="col-md-6">
                     <label class="form-label d-block">Image 1</label>
                     <small class="text-muted d-block mb-1">Recommended size: {{ $imageConfig['width'] ?? '' }}x{{ $imageConfig['height'] ?? '' }}px, Max: {{ $imageConfig['max_size'] ?? '' }}KB</small>
-                    <input type="file" name="image_1" class="form-control">
+                    <input type="file" name="image_1" class="form-control @error('image_1') is-invalid @enderror">
+                    @error('image_1')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     <input type="text" name="image_1_alt" class="form-control mt-2" placeholder="Image 1 ALT text" value="{{ old('image_1_alt', $section->section_image_alt ?? '') }}">
                     @if($section?->section_image)
                         <div class="mt-2">
@@ -78,7 +79,8 @@
                 <div class="col-md-6">
                     <label class="form-label d-block">Image 2</label>
                     <small class="text-muted d-block mb-1">Recommended size: {{ $imageConfig['width'] ?? '' }}x{{ $imageConfig['height'] ?? '' }}px, Max: {{ $imageConfig['max_size'] ?? '' }}KB</small>
-                    <input type="file" name="image_2" class="form-control">
+                    <input type="file" name="image_2" class="form-control @error('image_2') is-invalid @enderror">
+                    @error('image_2')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     <input type="text" name="image_2_alt" class="form-control mt-2" placeholder="Image 2 ALT text" value="{{ old('image_2_alt', $section->banner_alt ?? '') }}">
                     @if($section?->banner)
                         <div class="mt-2">

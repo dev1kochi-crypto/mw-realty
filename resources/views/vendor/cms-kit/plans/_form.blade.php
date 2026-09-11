@@ -55,16 +55,18 @@
     <div class="col-md-3">
         <label class="form-label fw-bold">Billing Cycle <span class="text-danger">*</span></label>
         @php $currentCycle = old('billing_cycle', $plan->billing_cycle ?? 'monthly'); @endphp
-        <select name="billing_cycle" class="form-select" required>
+        <select name="billing_cycle" class="form-select @error('billing_cycle') is-invalid @enderror" required>
             <option value="free" {{ $currentCycle === 'free' ? 'selected' : '' }}>Free</option>
             <option value="monthly" {{ $currentCycle === 'monthly' ? 'selected' : '' }}>Monthly</option>
             <option value="yearly" {{ $currentCycle === 'yearly' ? 'selected' : '' }}>Yearly</option>
             <option value="one_time" {{ $currentCycle === 'one_time' ? 'selected' : '' }}>One-time</option>
         </select>
+        @error('billing_cycle')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-3">
         <label class="form-label fw-bold">Price (AED) <span class="text-danger">*</span></label>
-        <input type="number" step="0.01" min="0" name="price" class="form-control" value="{{ old('price', $plan->price ?? 0) }}" required>
+        <input type="number" step="0.01" min="0" name="price" class="form-control @error('price') is-invalid @enderror" value="{{ old('price', $plan->price ?? 0) }}" required>
+        @error('price')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-3">
         <label class="form-label fw-bold">Property Limit</label>
@@ -90,3 +92,19 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('invalid', function(e) {
+    let invalidTabPane = e.target.closest('.tab-pane');
+    if (invalidTabPane) {
+        let tabId = invalidTabPane.id;
+        let tabBtn = document.querySelector(`[data-bs-target="#${tabId}"]`);
+        if (tabBtn && !tabBtn.classList.contains('active')) {
+            bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+            setTimeout(() => { e.target.focus(); }, 150);
+        }
+    }
+}, true);
+</script>
+@endpush

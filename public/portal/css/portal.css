@@ -229,40 +229,26 @@ body.portal-body {
     padding: 2rem;
 }
 
-/* ---------- App switcher (Admin / Properties / CRM) ---------- */
-.portal-app-switcher {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    background: var(--portal-bg);
-    border: 1px solid var(--portal-border);
-    border-radius: 50px;
-    padding: 0.3rem;
-    margin-right: 0.5rem;
-}
-
-.portal-switch-pill {
+/* ---------- Back-to-Admin pill (superadmin browsing the portal) ---------- */
+.portal-admin-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.4rem 0.9rem;
+    padding: 0.5rem 1rem;
     border-radius: 50px;
     font-size: 0.82rem;
     font-weight: 700;
-    color: var(--portal-muted);
+    color: var(--portal-primary-dark);
+    background: rgba(79, 70, 229, 0.08);
+    border: 1.5px solid rgba(79, 70, 229, 0.2);
     text-decoration: none;
     transition: all 0.15s ease;
 }
 
-.portal-switch-pill:hover {
-    color: var(--portal-primary-dark);
-    background: rgba(79, 70, 229, 0.08);
-}
-
-.portal-switch-pill.active {
-    background: linear-gradient(135deg, var(--portal-primary), var(--portal-accent));
+.portal-admin-pill:hover {
     color: #fff;
-    box-shadow: 0 6px 14px rgba(79, 70, 229, 0.3);
+    background: linear-gradient(135deg, var(--portal-primary), var(--portal-primary-dark));
+    border-color: transparent;
 }
 
 /* ---------- Cards / stats ---------- */
@@ -367,6 +353,285 @@ body.portal-body {
 
 .portal-empty {
     text-align: center;
-    padding: 3rem 1rem;
+    padding: 3.5rem 1rem;
     color: var(--portal-muted);
+}
+
+.portal-empty-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: rgba(79, 70, 229, 0.08);
+    color: var(--portal-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+/* ---------- Clickable stat cards used as status filters (Leads page) ---------- */
+.portal-lead-stat-link {
+    text-decoration: none;
+    display: block;
+}
+
+.portal-lead-stat-link .portal-stat-card {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.portal-lead-stat-link:hover .portal-stat-card {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 30px rgba(31, 35, 64, 0.1);
+}
+
+.portal-lead-stat-link .portal-stat-card.is-active {
+    border-color: var(--portal-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14), var(--portal-shadow);
+}
+
+/* ---------- Lead name avatar (Leads table) ---------- */
+.portal-lead-avatar {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--portal-primary), var(--portal-accent));
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ---------- Sidebar collapsible group (Master) ---------- */
+.portal-nav-group-toggle { justify-content: flex-start; }
+.portal-nav-chevron { transition: transform 0.2s ease; font-size: 0.75rem; }
+.portal-nav-group-toggle[aria-expanded="true"] .portal-nav-chevron,
+.portal-nav-group-toggle.active .portal-nav-chevron { transform: rotate(180deg); }
+.portal-nav-submenu .nav-link { padding-left: 2.6rem; font-size: 0.85rem; font-weight: 500; }
+
+/* ---------- Locked nav badge (pending/rejected) ---------- */
+.portal-nav-lock { margin-left: auto; font-size: 0.68rem; color: #fbbf24; }
+
+/* ---------- Animated Upgrade CTA ---------- */
+.btn-portal-upgrade-cta {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    overflow: hidden;
+    background: linear-gradient(120deg, #6366f1, #4f46e5, #14b8a6, #4f46e5);
+    background-size: 300% 300%;
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.84rem;
+    letter-spacing: 0.01em;
+    padding: 0.55rem 1.2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35), 0 0 0 0 rgba(79, 70, 229, 0.5);
+    animation: portal-upgrade-pulse 2.2s infinite, portal-upgrade-gradient 4s ease infinite;
+    transition: transform 0.15s ease;
+}
+
+.btn-portal-upgrade-cta:hover {
+    color: #fff;
+    transform: translateY(-2px) scale(1.03);
+}
+
+.btn-portal-upgrade-cta i {
+    animation: portal-upgrade-rocket 2.2s ease-in-out infinite;
+}
+
+.btn-portal-upgrade-shine {
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    transform: skewX(-20deg);
+    animation: portal-upgrade-shine 2.8s ease-in-out infinite;
+}
+
+@keyframes portal-upgrade-pulse {
+    0%   { box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35), 0 0 0 0 rgba(79, 70, 229, 0.45); }
+    70%  { box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35), 0 0 0 10px rgba(79, 70, 229, 0); }
+    100% { box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35), 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+@keyframes portal-upgrade-gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes portal-upgrade-rocket {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(1px, -2px) rotate(8deg); }
+}
+
+@keyframes portal-upgrade-shine {
+    0% { left: -60%; }
+    100% { left: 130%; }
+}
+
+/* ---------- Profile avatar dropdown (topbar) ---------- */
+.portal-profile-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--portal-surface);
+    border: 1.5px solid var(--portal-border);
+    border-radius: 50px;
+    padding: 0.3rem 0.7rem 0.3rem 0.3rem;
+    color: var(--portal-text);
+    transition: all 0.15s ease;
+}
+
+.portal-profile-btn:hover {
+    border-color: var(--portal-primary);
+}
+
+.portal-profile-btn i {
+    font-size: 0.65rem;
+    color: var(--portal-muted);
+}
+
+.portal-avatar-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--portal-primary), var(--portal-accent));
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.portal-profile-menu {
+    border-radius: 14px;
+    border: 1px solid var(--portal-border);
+    box-shadow: 0 20px 40px rgba(31, 35, 64, 0.14);
+    padding: 0.5rem;
+    min-width: 220px;
+}
+
+.portal-profile-menu-header {
+    padding: 0.4rem 0.75rem;
+}
+
+.portal-profile-menu .dropdown-item {
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.portal-profile-menu .dropdown-item:hover {
+    background: rgba(79, 70, 229, 0.08);
+    color: var(--portal-primary-dark);
+}
+
+/* ---------- Contact Us page ---------- */
+.portal-contact-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: rgba(79, 70, 229, 0.08);
+    color: var(--portal-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+}
+
+/* ---------- Stage / tag color chips (Leads table + Master pages) ---------- */
+.portal-stage-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.7rem;
+    border-radius: 50px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.portal-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-right: 0.25rem;
+}
+
+.portal-tag-chip-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 50px;
+    border: 1.5px solid var(--portal-border);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.portal-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* ---------- CRM section sub-header (Leads / Master / Reports) ---------- */
+.portal-crm-subheader {
+    margin-bottom: 1.25rem;
+}
+
+.portal-crm-tabs {
+    display: inline-flex;
+    gap: 0.4rem;
+    background: var(--portal-surface);
+    border: 1px solid var(--portal-border);
+    border-radius: 14px;
+    padding: 0.35rem;
+    box-shadow: var(--portal-shadow);
+}
+
+.portal-crm-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1.1rem;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--portal-muted);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.portal-crm-tab:hover {
+    color: var(--portal-primary-dark);
+    background: rgba(79, 70, 229, 0.06);
+}
+
+.portal-crm-tab.active {
+    background: linear-gradient(135deg, var(--portal-primary), var(--portal-accent));
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(79, 70, 229, 0.3);
+}
+
+/* ---------- Drag-to-reorder rows (Master > Stage / Source) ---------- */
+tr[draggable="true"].is-dragging {
+    opacity: 0.4;
 }

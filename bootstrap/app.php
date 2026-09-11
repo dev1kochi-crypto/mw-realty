@@ -17,6 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn ($request) => route('portal.login'));
         $middleware->redirectUsersTo(fn ($request) => route('portal.dashboard'));
 
+        $middleware->web(append: [
+            \App\Http\Middleware\EnforceAccountSecurity::class,
+            \App\Http\Middleware\AuthorizeCmsAction::class,
+            \App\Http\Middleware\ValidateAdminInput::class,
+            \App\Http\Middleware\AtomicAdminChanges::class,
+        ]);
+
         $middleware->alias([
             'portal.or.cms' => \App\Http\Middleware\PortalOrCmsAuth::class,
         ]);

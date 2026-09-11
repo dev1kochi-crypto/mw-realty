@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Filter extends Model
 {
+    public const SELECT_KEYS = ['listing_type', 'completion_status', 'property_type', 'location'];
+    public const NUMBER_KEYS = ['bedrooms', 'bathrooms', 'sqft', 'price'];
     protected $fillable = [
         'key',
         'translations',

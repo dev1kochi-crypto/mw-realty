@@ -46,7 +46,10 @@
                 @if($blogConfig['published_at'] ?? true)
                 <div class="col-md-6">
                     <label class="form-label">Published Date {!! in_array('published_at', $blogRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                    <input type="date" name="published_at" class="form-control" value="{{ $blog->published_at->format('Y-m-d') }}" {{ in_array('published_at', $blogRequired) ? 'required' : '' }}>
+                    <input type="date" name="published_at" class="form-control @error('published_at') is-invalid @enderror" value="{{ $blog->published_at->format('Y-m-d') }}" {{ in_array('published_at', $blogRequired) ? 'required' : '' }}>
+                    @error('published_at')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
                 @endif
             </div>
@@ -118,7 +121,10 @@
                                 <label class="form-check-label" for="remove_{{ $field }}">Remove current image</label>
                             </div>
                             @endif
-                            <input type="file" name="{{ $field }}" class="form-control">
+                            <input type="file" name="{{ $field }}" class="form-control @error($field) is-invalid @enderror">
+                            @error($field)
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                             <small class="text-muted">Recommended: {{ $imagesConfig[$field]['width'] }}x{{ $imagesConfig[$field]['height'] }}px</small>
                         </div>
                         @endif

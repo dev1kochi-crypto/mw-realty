@@ -9,8 +9,8 @@ use App\Models\CmsKit\SectionLabel;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
-use CMS\SiteManager\Support\ManagesOrderIndex;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ManagesOrderIndex;
+use App\Support\ValidatesImageDimensions;
 
 class LocationController extends Controller
 {
@@ -196,12 +196,12 @@ class LocationController extends Controller
         $data['extra_fields'] = $extra_fields;
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('locations', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'locations');
         }
 
 
         if ($request->hasFile('flag')) {
-            $data['flag'] = $request->file('flag')->store('locations/flags', 'public');
+            $data['flag'] = app(\App\Services\ManagedFiles::class)->store($request->file('flag'), 'locations/flags');
         }
 
         $order = $this->resolveOrderForCreate(Location::class, $request->order_index ? (int) $request->order_index : null);
@@ -247,18 +247,18 @@ class LocationController extends Controller
 
 
         if ($request->hasFile('image')) {
-            if ($location->image) Storage::disk('public')->delete($location->image);
-            $data['image'] = $request->file('image')->store('locations', 'public');
+            if ($location->image) app(\App\Services\ManagedFiles::class)->delete($location->image);
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'locations');
         } elseif ($request->boolean('remove_image') && $location->image) {
-            Storage::disk('public')->delete($location->image);
+            app(\App\Services\ManagedFiles::class)->delete($location->image);
             $data['image'] = null;
         }
 
         if ($request->hasFile('flag')) {
-            if ($location->flag) Storage::disk('public')->delete($location->flag);
-            $data['flag'] = $request->file('flag')->store('locations/flags', 'public');
+            if ($location->flag) app(\App\Services\ManagedFiles::class)->delete($location->flag);
+            $data['flag'] = app(\App\Services\ManagedFiles::class)->store($request->file('flag'), 'locations/flags');
         } elseif ($request->boolean('remove_flag') && $location->flag) {
-            Storage::disk('public')->delete($location->flag);
+            app(\App\Services\ManagedFiles::class)->delete($location->flag);
             $data['flag'] = null;
         }
 
@@ -274,8 +274,8 @@ class LocationController extends Controller
     {
         $location = Location::findOrFail($id);
         $order = $location->order_index;
-        if ($location->image) Storage::disk('public')->delete($location->image);
-        if ($location->flag) Storage::disk('public')->delete($location->flag);
+        if ($location->image) app(\App\Services\ManagedFiles::class)->delete($location->image);
+        if ($location->flag) app(\App\Services\ManagedFiles::class)->delete($location->flag);
         $location->delete();
 
         Location::where('order_index', '>', $order)->decrement('order_index');
@@ -361,8 +361,8 @@ class LocationController extends Controller
         if ($action === 'delete') {
             $locations = Location::whereIn('id', $ids)->get();
             foreach ($locations as $loc) {
-                if ($loc->image) Storage::disk('public')->delete($loc->image);
-                if ($loc->flag) Storage::disk('public')->delete($loc->flag);
+                if ($loc->image) app(\App\Services\ManagedFiles::class)->delete($loc->image);
+                if ($loc->flag) app(\App\Services\ManagedFiles::class)->delete($loc->flag);
                 $loc->delete();
             }
             $this->normalizeOrderIndex(Location::class);

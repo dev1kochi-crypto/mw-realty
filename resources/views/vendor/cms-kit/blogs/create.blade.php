@@ -45,7 +45,10 @@
                 @if($blogConfig['published_at'] ?? true)
                 <div class="col-md-6">
                     <label class="form-label">Published Date {!! in_array('published_at', $blogRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                    <input type="date" name="published_at" class="form-control" value="{{ date('Y-m-d') }}" {{ in_array('published_at', $blogRequired) ? 'required' : '' }}>
+                    <input type="date" name="published_at" class="form-control @error('published_at') is-invalid @enderror" value="{{ date('Y-m-d') }}" {{ in_array('published_at', $blogRequired) ? 'required' : '' }}>
+                    @error('published_at')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
                 @endif
             </div>
@@ -108,7 +111,10 @@
                             @if($blogConfig[$field] ?? true)
                             <div class="col-md-6">
                                 <label class="form-label">{{ $label }} {!! in_array($field, $blogRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                                <input type="file" name="{{ $field }}" class="form-control" {{ in_array($field, $blogRequired) ? 'required' : '' }}>
+                                <input type="file" name="{{ $field }}" class="form-control @error($field) is-invalid @enderror" {{ in_array($field, $blogRequired) ? 'required' : '' }}>
+                                @error($field)
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                                 <small class="text-muted">Recommended: {{ $imagesConfig[$field]['width'] }}x{{ $imagesConfig[$field]['height'] }}px</small>
                             </div>
                             @endif

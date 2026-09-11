@@ -9,7 +9,7 @@ use App\Models\CmsKit\SectionLabel;
 use CMS\SiteManager\Http\Requests\FaqRequest;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Routing\Controller;
-use CMS\SiteManager\Support\ManagesOrderIndex;
+use App\Support\ManagesOrderIndex;
 
 class FaqController extends Controller
 {
@@ -121,7 +121,7 @@ class FaqController extends Controller
         ];
 
         if (($sectionConfig['section_image'] ?? false) && $request->hasFile('section_image')) {
-            $data['section_image'] = $request->file('section_image')->store('faqs', 'public');
+            $data['section_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('section_image'), 'faqs');
         }
 
         $extra_fields = [];

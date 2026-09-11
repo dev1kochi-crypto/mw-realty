@@ -50,7 +50,8 @@
                                     <p class="mb-0 text-muted small">Best for refreshing the sitemap after adding or updating content.</p>
                                 </div>
                             </div>
-                            <form action="{{ route('cms.sitemap.generate') }}" method="GET">
+                            <form action="{{ route('cms.sitemap.generate') }}" method="POST">
+                                @csrf
                                 <button type="submit" class="btn btn-primary w-100">
                                     <i class="fas fa-sync-alt me-2"></i>{{ $exists ? 'Regenerate Sitemap' : 'Generate Sitemap' }}
                                 </button>

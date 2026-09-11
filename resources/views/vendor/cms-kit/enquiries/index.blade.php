@@ -144,6 +144,7 @@
             const id = $(this).data('id');
             $.get(`{{ url(config('cms-kit.common.auth.prefix', 'admin')) }}/enquiries/${id}`)
             .done(function(data) {
+                const escapeText = value => $('<span>').text(String(value ?? '')).html();
                 let html = '<div class="row g-3">';
                 
                 // Fields to show explicitly if present
@@ -162,8 +163,7 @@
 
                 for(let key in fields) {
                     if(data[key]) {
-                        let val = data[key];
-                        if(key === 'page_url') val = `<a href="${val}" target="_blank">${val}</a>`;
+                        let val = escapeText(data[key]);
                         html += `<div class="col-md-6"><p><strong>${fields[key]}:</strong><br>${val || '-'}</p></div>`;
                     }
                 }
@@ -172,7 +172,7 @@
                     for(let key in data.extra_fields) {
                         if(!fields[key]) { // Don't duplicate if already shown
                             let label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                            html += `<div class="col-md-6"><p><strong>${label}:</strong><br>${data.extra_fields[key] || '-'}</p></div>`;
+                            html += `<div class="col-md-6"><p><strong>${escapeText(label)}:</strong><br>${escapeText(data.extra_fields[key] || '-')}</p></div>`;
                         }
                     }
                 }

@@ -50,7 +50,8 @@
                                     <p class="mb-0 text-muted small">Refresh the generated URL list from sitemap.xml or configured content models.</p>
                                 </div>
                             </div>
-                            <form action="{{ route('cms.llms-txt.generate') }}" method="GET">
+                            <form action="{{ route('cms.llms-txt.generate') }}" method="POST">
+                                @csrf
                                 <button type="submit" class="btn btn-primary w-100">
                                     <i class="fas fa-sync-alt me-2"></i>{{ $exists ? 'Regenerate LLMs.txt' : 'Generate LLMs.txt' }}
                                 </button>

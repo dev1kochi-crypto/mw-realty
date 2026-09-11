@@ -9,8 +9,8 @@ use App\Models\CmsKit\SectionLabel;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
-use CMS\SiteManager\Support\ManagesOrderIndex;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ManagesOrderIndex;
+use App\Support\ValidatesImageDimensions;
 
 class PopularPlaceController extends Controller
 {
@@ -20,7 +20,7 @@ class PopularPlaceController extends Controller
     {
         if ($request->ajax()) {
             $data = PopularPlace::orderBy('order_index', 'asc');
-            return DataTables::of($data)
+            return \App\Support\TranslatedTable::column(DataTables::of($data), 'name', 'name')
                 ->addIndexColumn()
                 ->addColumn('select_all', function ($row) {
                     return '<input type="checkbox" class="row-checkbox form-check-input" value="' . $row->id . '">';
@@ -40,6 +40,7 @@ class PopularPlaceController extends Controller
                                 <input class="form-check-input toggle-status" type="checkbox" data-id="' . $row->id . '" ' . $checked . '>
                             </div>';
                 })
+                ->orderColumn('order', fn ($query, $direction) => $query->reorder()->orderBy('order_index', $direction))
                 ->addColumn('order', function ($row) {
                     return '<input type="number" min="1" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 80px;">';
                 })
@@ -107,7 +108,7 @@ class PopularPlaceController extends Controller
         $data['translations'] = $request->input('translations', []);
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('popular-places', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'popular-places');
         }
 
         $order = $this->resolveOrderForCreate(PopularPlace::class, $request->order_index ? (int) $request->order_index : null);
@@ -140,11 +141,11 @@ class PopularPlaceController extends Controller
 
         if ($request->hasFile('image')) {
             if ($place->image) {
-                Storage::disk('public')->delete($place->image);
+                app(\App\Services\ManagedFiles::class)->delete($place->image);
             }
-            $data['image'] = $request->file('image')->store('popular-places', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'popular-places');
         } elseif ($request->boolean('remove_image') && $place->image) {
-            Storage::disk('public')->delete($place->image);
+            app(\App\Services\ManagedFiles::class)->delete($place->image);
             $data['image'] = null;
         }
 
@@ -160,7 +161,7 @@ class PopularPlaceController extends Controller
         $place = PopularPlace::findOrFail($id);
         $order = $place->order_index;
         if ($place->image) {
-            Storage::disk('public')->delete($place->image);
+            app(\App\Services\ManagedFiles::class)->delete($place->image);
         }
         $place->delete();
 
@@ -246,7 +247,7 @@ class PopularPlaceController extends Controller
             $places = PopularPlace::whereIn('id', $ids)->get();
             foreach ($places as $place) {
                 if ($place->image) {
-                    Storage::disk('public')->delete($place->image);
+                    app(\App\Services\ManagedFiles::class)->delete($place->image);
                 }
                 $place->delete();
             }

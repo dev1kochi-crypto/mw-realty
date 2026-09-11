@@ -48,6 +48,11 @@ class Property extends Model
         return $this->hasMany(PropertyImage::class)->orderBy('order_index');
     }
 
+    public function leads()
+    {
+        return $this->hasMany(Lead::class);
+    }
+
     public function getTranslation($attribute, $lang = null)
     {
         $lang = $lang ?? app()->getLocale();
@@ -66,11 +71,8 @@ class Property extends Model
             return null;
         }
 
-        $filterValue = FilterValue::whereHas('filter', fn ($q) => $q->where('key', $key))
-            ->where('value', $value)
-            ->first();
-
-        return $filterValue?->getTranslation('label', $lang) ?? $value;
+        $labels = app(\App\Services\PropertyLabels::class)->values();
+        return ($labels[$key][$value] ?? null)?->getTranslation('label', $lang) ?? $value;
     }
 
     public function scopeActive($query)

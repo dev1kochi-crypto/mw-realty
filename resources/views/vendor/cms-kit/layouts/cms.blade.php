@@ -48,6 +48,49 @@
     <link rel="stylesheet" href="{{ asset('vendor/cms-kit/css/cms-premium.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/cms-kit/css/sitemap.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/cms-kit/css/cms-modules.css') }}">
+    <style>
+        .sidebar-section-label {
+            font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+            color: rgba(255,255,255,0.32); padding: 1.1rem 1rem 0.4rem;
+            border-top: 1px solid rgba(255,255,255,0.08); margin-top: 0.6rem;
+        }
+
+        /* Sidebar — standard navy gradient (tied to the configured brand colors), dim/professional */
+        .sidebar {
+            background: linear-gradient(165deg, var(--secondary-color, #264373) 0%, #16213d 45%, #0c1730 100%) !important;
+            border-right: 1px solid rgba(255,255,255,0.06);
+        }
+        .sidebar .brand {
+            background: linear-gradient(135deg, rgba(var(--primary-rgb, 4,161,204), 0.18), transparent 70%);
+            border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+        }
+        .sidebar .nav-link.active {
+            background: linear-gradient(135deg, rgba(var(--primary-rgb, 4,161,204), 0.32), rgba(var(--primary-rgb, 4,161,204), 0.1)) !important;
+            box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb, 4,161,204), 0.24), 0 10px 22px rgba(0,0,0,0.22) !important;
+        }
+        .notif-bell-btn { position: relative; border: none; background: #f4f6fb; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #4b5065; font-size: 1.05rem; }
+        .notif-bell-btn:hover { background: #e9ecf6; color: var(--secondary-color, #212529); }
+        .notif-bell-badge { position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 10px; background: #dc3545; border: 2px solid #fff; color: #fff; font-size: 0.62rem; font-weight: 800; display: flex; align-items: center; justify-content: center; line-height: 1; }
+        .notif-offcanvas { width: 400px; max-width: 92vw; }
+        .notif-offcanvas .offcanvas-header { border-bottom: 1px solid #f0f1f6; }
+        .notif-offcanvas .offcanvas-title { font-weight: 800; font-size: 1.05rem; }
+        .notif-offcanvas-actions { padding: 0.7rem 1.25rem; display: flex; justify-content: flex-end; border-bottom: 1px solid #f5f6fa; }
+        .notif-offcanvas-actions .btn-link { font-size: 0.8rem; font-weight: 700; text-decoration: none; }
+        .notif-list { overflow-y: auto; }
+        .notif-item { display: flex; gap: 0.7rem; padding: 0.8rem 1.1rem; text-decoration: none; color: inherit; border-bottom: 1px solid #f5f6fa; }
+        .notif-item:hover { background: #f9fafc; color: inherit; }
+        .notif-item.is-unread { background: #f3f9ff; }
+        .notif-icon { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.8rem; margin-top: 2px; }
+        .notif-icon.tone-teal { background: linear-gradient(135deg, var(--primary-color, #04a1cc), #2fc4e8); }
+        .notif-icon.tone-amber { background: linear-gradient(135deg, #e08e0b, #f5a623); }
+        .notif-icon.tone-green { background: linear-gradient(135deg, #0f9d58, #34c880); }
+        .notif-icon.tone-red { background: linear-gradient(135deg, #dc3545, #ef6a76); }
+        .notif-body { flex: 1; min-width: 0; }
+        .notif-title { font-weight: 700; font-size: 0.83rem; color: #1c2340; }
+        .notif-message { font-size: 0.78rem; color: #6b7185; line-height: 1.4; }
+        .notif-time { font-size: 0.68rem; color: #a3a8bb; margin-top: 0.2rem; }
+        .notif-empty { padding: 2.5rem 1rem; text-align: center; color: #a3a8bb; font-size: 0.85rem; }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js" referrerpolicy="origin"></script>
 
     {{-- TinyMCE initialized in specific views --}}
@@ -67,6 +110,50 @@
                     <a class="nav-link @if(Route::is('cms.dashboard')) active @endif" href="{{ route('cms.dashboard') }}">
                         <i class="fas fa-th-large"></i> Dashboard
                     </a>
+
+                    {{-- Clients Group — portal-guard accounts (agents/companies, and future frontend/customer logins).
+                         These are NOT admin users: no CMS roles/permissions, scoped to CRM + Properties portal only.
+                         Keep this separate from User Management below; add new client-account types here, not there.
+                         Placed right after Dashboard (with Plans) since these two are the core business — everything
+                         below the "Website Content" label is CMS content for the public site, not the product itself. --}}
+                    @if(config('cms-kit.common.modules.portal-accounts', true) && ($cmsUser->hasRole('superadmin') || $cmsUser->can('portal-accounts.view')))
+                    <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.portal-accounts.*')) active @endif"
+                           data-bs-toggle="collapse" href="#clientsMenu" role="button"
+                           aria-expanded="@if(request()->routeIs('cms.portal-accounts.*')) true @else false @endif">
+                            <i class="fas fa-address-card"></i>
+                            <span>Clients</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.portal-accounts.*')) show @endif" id="clientsMenu">
+                            <nav class="nav flex-column">
+                               <a class="nav-link py-2 @if(request()->routeIs('cms.portal-accounts.*') && request()->query('type') === 'company') active @endif" href="{{ route('cms.portal-accounts.index', ['type' => 'company']) }}">
+                                    Companies
+                                </a>
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.portal-accounts.*') && request()->query('type') === 'agent') active @endif" href="{{ route('cms.portal-accounts.index', ['type' => 'agent']) }}">
+                                    Agents
+                                </a>
+                                <a class="nav-link py-2 d-flex align-items-center @if(request()->routeIs('cms.portal-accounts.plan-upgrade-requests')) active @endif" href="{{ route('cms.portal-accounts.plan-upgrade-requests') }}">
+                                    Plan Requests
+                                    @if(($pendingUpgradeCount ?? 0) > 0)
+                                    <span class="badge bg-danger ms-auto">{{ $pendingUpgradeCount }}</span>
+                                    @endif
+                                </a>
+
+                                {{-- Frontend/customer user logins land here once frontend auth is integrated. --}}
+                            </nav>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(config('cms-kit.common.modules.plans', true) && $cmsUser->can('plans.view'))
+                    <a class="nav-link @if(Route::is('cms.plans.*')) active @endif" href="{{ route('cms.plans.index') }}">
+                        <i class="fas fa-layer-group"></i> Plans
+                    </a>
+                    @endif
+
+                    <div class="sidebar-section-label">Website Content</div>
+
                     {{-- Site Settings Group --}}
                     @if((config('cms-kit.common.modules.languages', true) && $cmsUser->can('languages.view')) || $cmsUser->can('site-information.view'))
                         <div class="nav-item sidebar-group">
@@ -372,17 +459,17 @@
                     </div>
                     @endif
 
-                    {{-- User Management Group --}}
-                    @if($cmsUser->hasRole('superadmin') || $cmsUser->can('users.view') || $cmsUser->can('roles.view') || $cmsUser->can('portal-accounts.view'))
+                    {{-- User Management Group — CMS admin/staff accounts only (roles & permissions govern the admin panel itself) --}}
+                    @if($cmsUser->hasRole('superadmin') || $cmsUser->can('users.view') || $cmsUser->can('roles.view'))
                     <div class="nav-item sidebar-group">
-                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*') || request()->routeIs('cms.portal-accounts.*')) active @endif" 
-                           data-bs-toggle="collapse" href="#userMenu" role="button" 
-                           aria-expanded="@if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*') || request()->routeIs('cms.portal-accounts.*')) true @else false @endif">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*')) active @endif"
+                           data-bs-toggle="collapse" href="#userMenu" role="button"
+                           aria-expanded="@if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*')) true @else false @endif">
                             <i class="fas fa-users-cog"></i>
                             <span>User Management</span>
                             <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
                         </a>
-                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*') || request()->routeIs('cms.portal-accounts.*')) show @endif" id="userMenu">
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*')) show @endif" id="userMenu">
                             <nav class="nav flex-column">
                                 @if($cmsUser->hasRole('superadmin') || $cmsUser->can('users.view'))
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.admins.*')) active @endif" href="{{ route('cms.admins.index') }}">
@@ -397,21 +484,11 @@
                                     Permissions List
                                 </a>
                                 @endif
-                                @if(config('cms-kit.common.modules.portal-accounts', true) && ($cmsUser->hasRole('superadmin') || $cmsUser->can('portal-accounts.view')))
-                                <a class="nav-link py-2 @if(request()->routeIs('cms.portal-accounts.*')) active @endif" href="{{ route('cms.portal-accounts.index') }}">
-                                    Agents & Companies
-                                </a>
-                                @endif
                             </nav>
                         </div>
                     </div>
                     @endif
 
-                    @if(config('cms-kit.common.modules.plans', true) && $cmsUser->can('plans.view'))
-                    <a class="nav-link @if(Route::is('cms.plans.*')) active @endif" href="{{ route('cms.plans.index') }}">
-                        <i class="fas fa-layer-group"></i> Plans
-                    </a>
-                    @endif
                 </nav>
             </div>
 
@@ -431,17 +508,25 @@
 
                 <div class="d-flex align-items-center gap-3">
                     @if($cmsUser->hasRole('superadmin'))
-                    <a href="{{ route('portal.crm.index') }}" class="btn btn-premium btn-quicknav btn-sm">
+                    <a href="{{ route('portal.crm.leads.index') }}" class="btn btn-premium btn-quicknav btn-sm">
                         <i class="fas fa-users"></i> CRM
-                    </a>
-                    <a href="{{ route('portal.properties.index') }}" class="btn btn-premium btn-quicknav btn-sm">
-                        <i class="fas fa-building"></i> Properties
                     </a>
                     @endif
 
                     <a href="/" target="_blank" class="btn btn-premium btn-view-site btn-sm">
                         <i class="fas fa-external-link-alt me-2"></i> View Site
                     </a>
+
+                    @php
+                        $recentNotifications = $cmsUser?->notifications()->latest()->take(20)->get() ?? collect();
+                        $unreadNotifCount = $cmsUser?->unreadNotifications()->count() ?? 0;
+                    @endphp
+                    <button type="button" class="notif-bell-btn" id="notifBellBtn" data-bs-toggle="offcanvas" data-bs-target="#notifOffcanvas" aria-controls="notifOffcanvas">
+                        <i class="fas fa-bell"></i>
+                        @if($unreadNotifCount > 0)
+                        <span class="notif-bell-badge">{{ $unreadNotifCount > 9 ? '9+' : $unreadNotifCount }}</span>
+                        @endif
+                    </button>
 
                     <div class="dropdown">
                         <div class="user-profile dropdown-toggle" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -473,6 +558,34 @@
                     </div>
                 </div>
             </header>
+
+            <div class="offcanvas offcanvas-end notif-offcanvas" tabindex="-1" id="notifOffcanvas" aria-labelledby="notifOffcanvasLabel">
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title" id="notifOffcanvasLabel">Notifications</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body p-0">
+                    @if($unreadNotifCount > 0)
+                    <div class="notif-offcanvas-actions">
+                        <button type="button" id="notifMarkAllBtn" class="btn btn-sm btn-link p-0">Mark all read</button>
+                    </div>
+                    @endif
+                    <div class="notif-list">
+                        @forelse($recentNotifications as $notif)
+                        <a href="{{ $notif->data['url'] ?? '#' }}" class="notif-item {{ $notif->read_at ? '' : 'is-unread' }} notif-mark-read" data-id="{{ $notif->id }}">
+                            <span class="notif-icon tone-{{ $notif->data['tone'] ?? 'teal' }}"><i class="fas {{ $notif->data['icon'] ?? 'fa-bell' }}"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">{{ $notif->data['title'] ?? 'Notification' }}</span>
+                                <span class="notif-message d-block">{{ $notif->data['message'] ?? '' }}</span>
+                                <span class="notif-time">{{ $notif->created_at->diffForHumans() }}</span>
+                            </span>
+                        </a>
+                        @empty
+                        <div class="notif-empty"><i class="fas fa-bell-slash mb-2 d-block" style="font-size: 1.5rem;"></i>You're all caught up.</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
 
             <!-- Content Area -->
             <div class="main-content">
@@ -506,6 +619,86 @@
             });
         });
     </script>
+
+    <script>
+    (function () {
+        // Show a "Processing..." spinner on the submit button the moment a form is actually
+        // submitted (the browser only fires `submit` once native validation has passed),
+        // and disable every submit button in it to prevent double-submits.
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            if (!(form instanceof HTMLFormElement) || form.dataset.noSpinner) return;
+
+            const submitBtns = form.querySelectorAll('button[type="submit"]');
+            const clicked = (e.submitter && e.submitter.tagName === 'BUTTON') ? e.submitter : submitBtns[0];
+
+            submitBtns.forEach(function (btn) { btn.disabled = true; });
+
+            if (clicked) {
+                if (clicked.dataset.originalHtml === undefined) {
+                    clicked.dataset.originalHtml = clicked.innerHTML;
+                }
+                clicked.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+            }
+        }, true);
+
+        function restoreSubmitButtons(form) {
+            form.querySelectorAll('button[type="submit"][data-original-html]').forEach(function (btn) {
+                btn.innerHTML = btn.dataset.originalHtml;
+                btn.disabled = false;
+            });
+        }
+        window.restoreSubmitButtons = restoreSubmitButtons;
+
+        // Guard against a stuck spinner if the page is restored from the back/forward cache.
+        window.addEventListener('pageshow', function () {
+            document.querySelectorAll('form').forEach(restoreSubmitButtons);
+        });
+
+        // After a failed server-side validation round trip, jump straight to the first
+        // invalid field instead of leaving the admin to hunt for it in a long form. If that
+        // field lives inside an inactive Bootstrap tab (e.g. the Arabic language tab), switch
+        // to that tab first — otherwise scrollIntoView/focus silently land on a hidden element
+        // and the admin never sees which tab the error is actually in.
+        document.addEventListener('DOMContentLoaded', function () {
+            const firstInvalid = document.querySelector('.is-invalid');
+            if (!firstInvalid) return;
+
+            const invalidTabPane = firstInvalid.closest('.tab-pane');
+            if (invalidTabPane && !invalidTabPane.classList.contains('active') && window.bootstrap) {
+                const tabBtn = document.querySelector('[data-bs-target="#' + invalidTabPane.id + '"], [href="#' + invalidTabPane.id + '"]');
+                if (tabBtn) {
+                    bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+                }
+            }
+
+            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstInvalid.focus({ preventScroll: true });
+        });
+
+        // Bell-icon notifications — mark as read on click (link navigation proceeds normally)
+        document.querySelectorAll('.notif-mark-read').forEach(function (link) {
+            link.addEventListener('click', function () {
+                fetch("{{ url(config('cms-kit.common.auth.prefix', 'admin')) }}/notifications/" + this.dataset.id + "/read", {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                });
+            });
+        });
+
+        const notifMarkAllBtn = document.getElementById('notifMarkAllBtn');
+        if (notifMarkAllBtn) {
+            notifMarkAllBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                fetch("{{ url(config('cms-kit.common.auth.prefix', 'admin')) }}/notifications/read-all", {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                }).then(function () { window.location.reload(); });
+            });
+        }
+    })();
+    </script>
+
     @stack('scripts')
 </body>
 </html>

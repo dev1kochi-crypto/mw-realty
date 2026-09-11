@@ -59,7 +59,8 @@
                 <div class="col-md-6">
                     <label class="form-label d-block">Icon <span class="text-danger">*</span></label>
                     <small class="text-muted d-block mb-1">Recommended size: {{ $iconConfig['width'] }}x{{ $iconConfig['height'] }}px, Max: {{ $iconConfig['max_size'] }}KB</small>
-                    <input type="file" name="image" class="form-control" required>
+                    <input type="file" name="image" class="form-control @error('image') is-invalid @enderror" required>
+                    @error('image')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     <input type="text" name="image_alt" class="form-control mt-2" placeholder="Icon ALT text">
                 </div>
                 <div class="col-md-3">

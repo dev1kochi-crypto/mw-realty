@@ -9,8 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
-use CMS\SiteManager\Support\ManagesOrderIndex;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ManagesOrderIndex;
+use App\Support\ValidatesImageDimensions;
 
 class TestimonialController extends Controller
 {
@@ -34,10 +34,10 @@ class TestimonialController extends Controller
                     return $img;
                 })
                 ->addColumn('name_info', function($row){
-                    return '<strong>'.($row->getTranslation('name') ?: 'No Name').'</strong><br><small class="text-muted">'.($row->getTranslation('designation') ?: '').'</small>';
+                    return '<strong>'.e($row->getTranslation('name') ?: 'No Name').'</strong><br><small class="text-muted">'.e($row->getTranslation('designation') ?: '').'</small>';
                 })
                 ->addColumn('content_preview', function($row){
-                    return '<div class="text-truncate" style="max-width: 200px;">'.strip_tags($row->getTranslation('content') ?: '').'</div>';
+                    return '<div class="text-truncate" style="max-width: 200px;">'.e(strip_tags($row->getTranslation('content') ?: '')).'</div>';
                 })
                 ->addColumn('rating', function($row){
                     if(!config('cms-kit.database.testimonials.items.rating')) return '';
@@ -147,22 +147,22 @@ class TestimonialController extends Controller
 
         if (($sectionConfig['section_image'] ?? false) && $request->hasFile('section_image')) {
             if ($section->section_image) {
-                Storage::disk('public')->delete($section->section_image);
+                app(\App\Services\ManagedFiles::class)->delete($section->section_image);
             }
-            $data['section_image'] = $request->file('section_image')->store('testimonials', 'public');
+            $data['section_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('section_image'), 'testimonials');
         } elseif ($request->boolean('remove_section_image') && $section->section_image) {
-            Storage::disk('public')->delete($section->section_image);
+            app(\App\Services\ManagedFiles::class)->delete($section->section_image);
             $data['section_image'] = null;
         }
         $data['section_image_alt'] = $request->boolean('remove_section_image') ? null : $request->input('section_image_alt');
 
         if (($sectionConfig['banner'] ?? false) && $request->hasFile('banner')) {
             if ($section->banner) {
-                Storage::disk('public')->delete($section->banner);
+                app(\App\Services\ManagedFiles::class)->delete($section->banner);
             }
-            $data['banner'] = $request->file('banner')->store('testimonials', 'public');
+            $data['banner'] = app(\App\Services\ManagedFiles::class)->store($request->file('banner'), 'testimonials');
         } elseif ($request->boolean('remove_banner') && $section->banner) {
-            Storage::disk('public')->delete($section->banner);
+            app(\App\Services\ManagedFiles::class)->delete($section->banner);
             $data['banner'] = null;
         }
         $data['banner_alt'] = $request->boolean('remove_banner') ? null : $request->input('banner_alt');
@@ -285,7 +285,7 @@ class TestimonialController extends Controller
         }
 
         if (($itemConfig['image'] ?? false) && $request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('testimonials', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'testimonials');
         }
         $data['image_alt'] = $request->input('image_alt');
 
@@ -293,7 +293,7 @@ class TestimonialController extends Controller
         if ($data['type'] === 'video') {
             $data['video_source'] = $request->input('video_source');
             if ($request->hasFile('video_file')) {
-                $data['video_file'] = $request->file('video_file')->store('testimonials/videos', 'public');
+                $data['video_file'] = app(\App\Services\ManagedFiles::class)->store($request->file('video_file'), 'testimonials/videos');
                 $data['video_url'] = null;
             } else {
                 $data['video_url'] = $request->input('video_url');
@@ -359,11 +359,11 @@ class TestimonialController extends Controller
 
         if (($itemConfig['image'] ?? false) && $request->hasFile('image')) {
             if ($testimonial->image) {
-                Storage::disk('public')->delete($testimonial->image);
+                app(\App\Services\ManagedFiles::class)->delete($testimonial->image);
             }
-            $data['image'] = $request->file('image')->store('testimonials', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'testimonials');
         } elseif ($request->boolean('remove_image') && $testimonial->image) {
-            Storage::disk('public')->delete($testimonial->image);
+            app(\App\Services\ManagedFiles::class)->delete($testimonial->image);
             $data['image'] = null;
         }
         $data['image_alt'] = $request->boolean('remove_image') ? null : $request->input('image_alt');
@@ -373,13 +373,13 @@ class TestimonialController extends Controller
             $data['video_source'] = $request->input('video_source');
             if ($request->hasFile('video_file')) {
                 if ($testimonial->video_file) {
-                    Storage::disk('public')->delete($testimonial->video_file);
+                    app(\App\Services\ManagedFiles::class)->delete($testimonial->video_file);
                 }
-                $data['video_file'] = $request->file('video_file')->store('testimonials/videos', 'public');
+                $data['video_file'] = app(\App\Services\ManagedFiles::class)->store($request->file('video_file'), 'testimonials/videos');
                 $data['video_url'] = null;
             } elseif ($data['video_source'] === 'url') {
                 if ($testimonial->video_file) {
-                    Storage::disk('public')->delete($testimonial->video_file);
+                    app(\App\Services\ManagedFiles::class)->delete($testimonial->video_file);
                 }
                 $data['video_file'] = null;
                 $data['video_url'] = $request->input('video_url');
@@ -388,7 +388,7 @@ class TestimonialController extends Controller
             }
         } else {
             if ($testimonial->video_file) {
-                Storage::disk('public')->delete($testimonial->video_file);
+                app(\App\Services\ManagedFiles::class)->delete($testimonial->video_file);
             }
             $data['video_source'] = null;
             $data['video_url'] = null;
@@ -420,7 +420,7 @@ class TestimonialController extends Controller
         $testimonial = Testimonial::findOrFail($id);
         $order = $testimonial->order_index;
         if ($testimonial->image) {
-            Storage::disk('public')->delete($testimonial->image);
+            app(\App\Services\ManagedFiles::class)->delete($testimonial->image);
         }
         $testimonial->delete();
         
@@ -469,7 +469,7 @@ class TestimonialController extends Controller
                 if ($testimonial) {
                     $order = $testimonial->order_index;
                     if ($testimonial->image) {
-                        Storage::disk('public')->delete($testimonial->image);
+                        app(\App\Services\ManagedFiles::class)->delete($testimonial->image);
                     }
                     $testimonial->delete();
                     Testimonial::where('order_index', '>', $order)->decrement('order_index');

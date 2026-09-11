@@ -98,10 +98,10 @@ class EnquiryController extends Controller
 
         $callback = function () use ($enquiries, $columns) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, $columns);
+            \App\Support\Csv::row($file, $columns);
 
             foreach ($enquiries as $enquiry) {
-                fputcsv($file, [
+                \App\Support\Csv::row($file, [
                     $enquiry->id,
                     $enquiry->name,
                     $enquiry->email,
