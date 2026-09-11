@@ -24,6 +24,7 @@ class SitemapController extends Controller
 
     public function generate(Request $request)
     {
+        abort_unless(request()->isMethod('POST'), 405);
         dispatch(new UpdateSitemapJob());
 
         return redirect()->back()->with('success', 'Sitemap regeneration has been queued.');

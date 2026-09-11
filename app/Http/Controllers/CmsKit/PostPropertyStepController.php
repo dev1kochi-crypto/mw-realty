@@ -9,8 +9,8 @@ use App\Models\CmsKit\SectionLabel;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
-use CMS\SiteManager\Support\ManagesOrderIndex;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ManagesOrderIndex;
+use App\Support\ValidatesImageDimensions;
 
 class PostPropertyStepController extends Controller
 {
@@ -50,7 +50,7 @@ class PostPropertyStepController extends Controller
     {
         if ($request->ajax()) {
             $data = PostPropertyStep::orderBy('order_index', 'asc');
-            return DataTables::of($data)
+            return \App\Support\TranslatedTable::column(DataTables::of($data), 'title', 'title')
                 ->addIndexColumn()
                 ->addColumn('select_all', function ($row) {
                     return '<input type="checkbox" class="row-checkbox form-check-input" value="' . $row->id . '">';
@@ -70,6 +70,7 @@ class PostPropertyStepController extends Controller
                                 <input class="form-check-input toggle-status" type="checkbox" data-id="' . $row->id . '" ' . $checked . '>
                             </div>';
                 })
+                ->orderColumn('order', fn ($query, $direction) => $query->reorder()->orderBy('order_index', $direction))
                 ->addColumn('order', function ($row) {
                     return '<input type="number" min="1" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 80px;">';
                 })
@@ -164,7 +165,7 @@ class PostPropertyStepController extends Controller
         $data['extra_fields'] = $extraFields;
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('post-property-steps', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'post-property-steps');
         }
 
         $order = $this->resolveOrderForCreate(PostPropertyStep::class, $request->order_index ? (int) $request->order_index : null);
@@ -204,11 +205,11 @@ class PostPropertyStepController extends Controller
 
         if ($request->hasFile('image')) {
             if ($step->image) {
-                Storage::disk('public')->delete($step->image);
+                app(\App\Services\ManagedFiles::class)->delete($step->image);
             }
-            $data['image'] = $request->file('image')->store('post-property-steps', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'post-property-steps');
         } elseif ($request->boolean('remove_image') && $step->image) {
-            Storage::disk('public')->delete($step->image);
+            app(\App\Services\ManagedFiles::class)->delete($step->image);
             $data['image'] = null;
         }
 
@@ -224,7 +225,7 @@ class PostPropertyStepController extends Controller
         $step = PostPropertyStep::findOrFail($id);
         $order = $step->order_index;
         if ($step->image) {
-            Storage::disk('public')->delete($step->image);
+            app(\App\Services\ManagedFiles::class)->delete($step->image);
         }
         $step->delete();
 
@@ -296,11 +297,11 @@ class PostPropertyStepController extends Controller
 
         if ($request->hasFile('section_image')) {
             if ($section?->section_image) {
-                Storage::disk('public')->delete($section->section_image);
+                app(\App\Services\ManagedFiles::class)->delete($section->section_image);
             }
-            $data['section_image'] = $request->file('section_image')->store('post-property-steps', 'public');
+            $data['section_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('section_image'), 'post-property-steps');
         } elseif ($request->boolean('remove_section_image') && $section?->section_image) {
-            Storage::disk('public')->delete($section->section_image);
+            app(\App\Services\ManagedFiles::class)->delete($section->section_image);
             $data['section_image'] = null;
         }
 
@@ -328,7 +329,7 @@ class PostPropertyStepController extends Controller
             $steps = PostPropertyStep::whereIn('id', $ids)->get();
             foreach ($steps as $step) {
                 if ($step->image) {
-                    Storage::disk('public')->delete($step->image);
+                    app(\App\Services\ManagedFiles::class)->delete($step->image);
                 }
                 $step->delete();
             }

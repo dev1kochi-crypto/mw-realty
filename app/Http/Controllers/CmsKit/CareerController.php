@@ -6,7 +6,7 @@ use App\Models\CmsKit\Career;
 use App\Models\CmsKit\CareerDepartment;
 use App\Models\CmsKit\Language;
 use App\Models\CmsKit\SectionLabel;
-use CMS\SiteManager\Support\ManagesOrderIndex;
+use App\Support\ManagesOrderIndex;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
@@ -275,10 +275,10 @@ class CareerController extends Controller
             if (($field['type'] ?? 'text') === 'file') {
                 if ($request->hasFile("extra_fields.{$key}")) {
                     if ($storagePath !== '' && is_string($existingValue) && $existingValue !== '') {
-                        Storage::disk('public')->delete($existingValue);
+                        app(\App\Services\ManagedFiles::class)->delete($existingValue);
                     }
 
-                    $resolved[$key] = $request->file("extra_fields.{$key}")->store($storagePath, 'public');
+                    $resolved[$key] = app(\App\Services\ManagedFiles::class)->store($request->file("extra_fields.{$key}"), $storagePath);
                     continue;
                 }
 
@@ -310,10 +310,10 @@ class CareerController extends Controller
                 if (($field['type'] ?? 'text') === 'file') {
                     if ($request->hasFile("translations.{$lang}.extra_fields.{$fieldName}")) {
                         if ($storagePath !== '' && is_string($existingValue) && $existingValue !== '') {
-                            Storage::disk('public')->delete($existingValue);
+                            app(\App\Services\ManagedFiles::class)->delete($existingValue);
                         }
 
-                        $translations[$lang]['extra_fields'][$fieldName] = $request->file("translations.{$lang}.extra_fields.{$fieldName}")->store($storagePath, 'public');
+                        $translations[$lang]['extra_fields'][$fieldName] = app(\App\Services\ManagedFiles::class)->store($request->file("translations.{$lang}.extra_fields.{$fieldName}"), $storagePath);
                         continue;
                     }
 
@@ -664,7 +664,7 @@ class CareerController extends Controller
 
         $metadata = $request->input('metadata', []);
         if ($request->hasFile('metadata.og_image')) {
-            $metadata['og_image'] = $request->file('metadata.og_image')->store('careers/metadata', 'public');
+            $metadata['og_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('metadata.og_image'), 'careers/metadata');
         }
 
         Career::create([
@@ -716,11 +716,11 @@ class CareerController extends Controller
         );
         if ($request->hasFile('metadata.og_image')) {
             if (!empty($existingMetadata['og_image'])) {
-                Storage::disk('public')->delete($existingMetadata['og_image']);
+                app(\App\Services\ManagedFiles::class)->delete($existingMetadata['og_image']);
             }
-            $metadata['og_image'] = $request->file('metadata.og_image')->store('careers/metadata', 'public');
+            $metadata['og_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('metadata.og_image'), 'careers/metadata');
         } elseif ($request->boolean('remove_metadata_og_image') && !empty($existingMetadata['og_image'])) {
-            Storage::disk('public')->delete($existingMetadata['og_image']);
+            app(\App\Services\ManagedFiles::class)->delete($existingMetadata['og_image']);
             $metadata['og_image'] = null;
         } else {
             $metadata['og_image'] = $existingMetadata['og_image'] ?? null;
@@ -828,12 +828,12 @@ class CareerController extends Controller
 
         if (($sectionConfig['banner'] ?? true) && $request->hasFile('banner')) {
             if ($section->banner) {
-                Storage::disk('public')->delete($section->banner);
+                app(\App\Services\ManagedFiles::class)->delete($section->banner);
             }
 
-            $data['banner'] = $request->file('banner')->store('careers/section', 'public');
+            $data['banner'] = app(\App\Services\ManagedFiles::class)->store($request->file('banner'), 'careers/section');
         } elseif ($request->boolean('remove_banner') && $section->banner) {
-            Storage::disk('public')->delete($section->banner);
+            app(\App\Services\ManagedFiles::class)->delete($section->banner);
             $data['banner'] = null;
         }
 

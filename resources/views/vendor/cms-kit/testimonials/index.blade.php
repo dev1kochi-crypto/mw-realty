@@ -302,7 +302,7 @@
                 let tabId = invalidTabPane.id;
                 let tabBtn = document.querySelector(`[data-bs-target="#${tabId}"]`);
                 if (tabBtn && !tabBtn.classList.contains('active')) {
-                    $(tabBtn).tab('show');
+                    bootstrap.Tab.getOrCreateInstance(tabBtn).show();
                     setTimeout(() => { e.target.focus(); }, 150);
                 }
             }

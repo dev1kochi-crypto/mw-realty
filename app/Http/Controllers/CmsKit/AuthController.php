@@ -24,8 +24,9 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (Auth::guard('cms')->attempt($request->only('email', 'password'), $request->filled('remember'))) {
+        if (Auth::guard('cms')->attempt(array_merge($request->only('email', 'password'), ['is_active' => true]), $request->filled('remember'))) {
             $request->session()->regenerate();
+            $request->session()->put('password_hash_cms', Auth::guard('cms')->user()->getAuthPassword());
             return redirect()->intended(route('cms.dashboard'));
         }
 

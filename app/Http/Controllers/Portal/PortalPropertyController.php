@@ -22,9 +22,15 @@ use Illuminate\Validation\Rule;
  */
 class PortalPropertyController extends Controller
 {
+    /**
+     * A portal-guard login always wins, even if a superadmin cms-guard session is
+     * also active in the same browser (e.g. testing the portal in a second tab) —
+     * otherwise there'd be no way to see your own scoped view without logging out
+     * of /admin first.
+     */
     protected function isAdmin(): bool
     {
-        return (bool) Auth::guard('cms')->user()?->hasRole('superadmin');
+        return !Auth::guard('portal')->check() && (bool) Auth::guard('cms')->user()?->hasRole('superadmin');
     }
 
     /**
@@ -32,7 +38,7 @@ class PortalPropertyController extends Controller
      */
     protected function ownerId(): ?int
     {
-        return $this->isAdmin() ? null : Auth::guard('portal')->user()->id;
+        return Auth::guard('portal')->check() ? Auth::guard('portal')->user()->id : null;
     }
 
     protected function selectFilterOptions(): \Illuminate\Support\Collection
@@ -46,8 +52,7 @@ class PortalPropertyController extends Controller
 
     protected function storeNamedImage(UploadedFile $file, int $propertyId, string $suffix): string
     {
-        $filename = 'property-' . $propertyId . '-' . $suffix . '.' . $file->getClientOriginalExtension();
-        return $file->storeAs('properties', $filename, 'public');
+        return app(\App\Services\ManagedFiles::class)->store($file, 'properties');
     }
 
     public function index()
@@ -72,6 +77,11 @@ class PortalPropertyController extends Controller
 
     public function create()
     {
+        if (!$this->isAdmin() && Auth::guard('portal')->user()->status !== 'approved') {
+            return redirect()->route('portal.dashboard')
+                ->with('error', 'Your account needs to be approved by Super Admin before you can add properties. Complete your profile while you wait for review.');
+        }
+
         $languages = Language::where('status', true)->get();
         $filterOptions = $this->selectFilterOptions();
         $remainingSlots = $this->isAdmin() ? null : Auth::guard('portal')->user()->remainingPropertySlots();
@@ -84,35 +94,22 @@ class PortalPropertyController extends Controller
         return view('portal.properties.create', ['languages' => $languages, 'filterOptions' => $filterOptions, 'isAdmin' => $this->isAdmin(), 'remainingSlots' => $remainingSlots]);
     }
 
-    protected function rules(): array
-    {
-        return [
-            'translations.*.title' => 'required',
-            'slug' => 'nullable|alpha_dash',
-            'listing_type' => 'nullable|string',
-            'completion_status' => 'nullable|string',
-            'property_type' => 'nullable|string',
-            'location' => 'nullable|string',
-            'bedrooms' => 'nullable|integer|min:0',
-            'bathrooms' => 'nullable|integer|min:0',
-            'sqft' => 'nullable|integer|min:0',
-            'price' => 'nullable|numeric|min:0',
-            'image' => 'nullable|image|max:4096',
-            'images.*' => 'nullable|image|max:4096',
-        ];
-    }
-
-    public function store(Request $request)
+    public function store(\App\Http\Requests\PropertyRequest $request)
     {
         if (!$this->isAdmin()) {
-            $owner = Auth::guard('portal')->user();
+            $owner = \App\Models\PortalUser::lockForUpdate()->findOrFail(Auth::guard('portal')->id());
+
+            if ($owner->status !== 'approved') {
+                return redirect()->route('portal.dashboard')
+                    ->with('error', 'Your account needs to be approved by Super Admin before you can add properties.');
+            }
+
             if ($owner->remainingPropertySlots() === 0) {
                 return redirect()->route('portal.properties.index')
                     ->with('error', "You've reached your plan's property limit. Upgrade your plan to add more listings.");
             }
         }
 
-        $request->validate($this->rules());
 
         $data = $request->only([
             'reference_no', 'listing_type', 'completion_status', 'property_type',
@@ -121,7 +118,7 @@ class PortalPropertyController extends Controller
         // null when Super Admin creates it directly (a house/MW Realty listing with no portal owner)
         $data['portal_user_id'] = $this->ownerId();
         $data['translations'] = $request->input('translations', []);
-        $data['status'] = $request->has('status');
+        $data['status'] = $request->boolean('status') && ($this->isAdmin() || Auth::guard('portal')->user()->isApproved());
         $data['featured'] = $this->isAdmin() && $request->has('featured');
 
         $title = $request->input('translations.' . config('app.fallback_locale', 'en') . '.title')
@@ -176,12 +173,9 @@ class PortalPropertyController extends Controller
         return view('portal.properties.edit', ['property' => $property, 'languages' => $languages, 'filterOptions' => $filterOptions, 'isAdmin' => $this->isAdmin()]);
     }
 
-    public function update(Request $request, $id)
+    public function update(\App\Http\Requests\PropertyRequest $request, $id)
     {
         $property = $this->findOwned($id);
-        $request->validate(array_merge($this->rules(), [
-            'slug' => ['nullable', 'alpha_dash', Rule::unique('properties', 'slug')->ignore($property->id)],
-        ]));
 
         $data = $request->only([
             'reference_no', 'listing_type', 'completion_status', 'property_type',
@@ -198,7 +192,7 @@ class PortalPropertyController extends Controller
 
         if ($request->hasFile('image')) {
             if ($property->image) {
-                Storage::disk('public')->delete($property->image);
+                app(\App\Services\ManagedFiles::class)->delete($property->image);
             }
             $data['image'] = $this->storeNamedImage($request->file('image'), $property->id, 'cover');
         }
@@ -237,10 +231,10 @@ class PortalPropertyController extends Controller
     {
         $property = $this->findOwned($id);
         if ($property->image) {
-            Storage::disk('public')->delete($property->image);
+            app(\App\Services\ManagedFiles::class)->delete($property->image);
         }
         foreach ($property->images as $image) {
-            Storage::disk('public')->delete($image->image);
+            app(\App\Services\ManagedFiles::class)->delete($image->image);
         }
         $property->delete();
 
@@ -251,7 +245,7 @@ class PortalPropertyController extends Controller
     {
         $property = $this->findOwned($propertyId);
         $image = PropertyImage::where('property_id', $property->id)->findOrFail($imageId);
-        Storage::disk('public')->delete($image->image);
+        app(\App\Services\ManagedFiles::class)->delete($image->image);
         $image->delete();
 
         return response()->json(['success' => true]);
@@ -260,6 +254,7 @@ class PortalPropertyController extends Controller
     public function toggleStatus($id)
     {
         $property = $this->findOwned($id);
+        abort_unless($this->isAdmin() || Auth::guard('portal')->user()->isApproved(), 403);
         $property->status = !$property->status;
         $property->save();
 

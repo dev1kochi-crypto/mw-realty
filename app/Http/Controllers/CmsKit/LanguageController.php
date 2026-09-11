@@ -4,7 +4,7 @@ namespace App\Http\Controllers\CmsKit;
 
 use App\Models\CmsKit\Language;
 use CMS\SiteManager\Services\StaticTranslationService;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ValidatesImageDimensions;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -100,7 +100,7 @@ class LanguageController extends Controller
 
         $data = $request->only(['name', 'code', 'flag_alt']);
         if ($request->hasFile('flag_image')) {
-            $data['flag_image'] = $request->file('flag_image')->store('languages/flags', 'public');
+            $data['flag_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('flag_image'), 'languages/flags');
         }
 
         $language = Language::create($data);
@@ -137,9 +137,9 @@ class LanguageController extends Controller
         $data = $request->only(['name', 'code', 'flag_alt']);
         if ($request->hasFile('flag_image')) {
             if ($language->flag_image) {
-                Storage::disk('public')->delete($language->flag_image);
+                app(\App\Services\ManagedFiles::class)->delete($language->flag_image);
             }
-            $data['flag_image'] = $request->file('flag_image')->store('languages/flags', 'public');
+            $data['flag_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('flag_image'), 'languages/flags');
         }
 
         $language->update($data);
@@ -195,7 +195,7 @@ class LanguageController extends Controller
             return redirect()->back()->with('error', 'Cannot delete default language.');
         }
         if ($language->flag_image) {
-            Storage::disk('public')->delete($language->flag_image);
+            app(\App\Services\ManagedFiles::class)->delete($language->flag_image);
         }
         $this->staticTranslations->deleteLanguageFile(strtolower((string) $language->code));
         $language->delete();

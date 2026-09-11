@@ -10,8 +10,8 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
-use CMS\SiteManager\Support\ManagesOrderIndex;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ManagesOrderIndex;
+use App\Support\ValidatesImageDimensions;
 
 class BlogController extends Controller
 {
@@ -25,6 +25,10 @@ class BlogController extends Controller
         $languages = Language::where('status', true)->get();
         $rules = [
             'order_index' => 'nullable|integer|min:1',
+            'translations' => 'required|array|min:1',
+            'slug' => ['nullable', 'string', 'max:255', \Illuminate\Validation\Rule::unique('blogs', 'slug')->ignore($blog?->id)],
+            'metadata' => 'nullable|array',
+            'metadata.og_image' => 'nullable|image|max:4096',
         ];
 
         foreach ($languages as $lang) {
@@ -114,7 +118,7 @@ class BlogController extends Controller
         if ($request->ajax()) {
             $cmsUser = auth('cms')->user();
             $data = Blog::orderBy('order_index', 'asc');
-            return DataTables::of($data)
+            return \App\Support\TranslatedTable::column(DataTables::of($data), 'title', 'title')
                 ->addIndexColumn()
                 ->addColumn('select_all', function ($row) {
                     return '<input type="checkbox" class="row-checkbox form-check-input" value="' . $row->id . '">';
@@ -137,6 +141,7 @@ class BlogController extends Controller
                                 <input class="form-check-input toggle-status" type="checkbox" data-id="' . $row->id . '" ' . $checked . '>
                             </div>';
                 })
+                ->orderColumn('order', fn ($query, $direction) => $query->reorder()->orderBy('order_index', $direction))
                 ->addColumn('order', function ($row) {
                     return '<input type="number" min="1" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 80px;">';
                 })
@@ -170,6 +175,7 @@ class BlogController extends Controller
     public function store(Request $request)
     {
         $imagesConfig = config('cms-kit.images.blogs');
+        $request->merge(['slug' => Str::slug($request->input('slug') ?: $request->input('translations.'.config('app.fallback_locale').'.title', ''))]);
         $request->validate($this->getBlogValidationRules());
         foreach (['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'] as $field) {
             $this->validateImageWithinLimits($request, $field, $imagesConfig[$field] ?? [], str_replace('_', ' ', ucfirst($field)));
@@ -185,7 +191,7 @@ class BlogController extends Controller
         $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
         foreach ($imageFields as $field) {
             if ($request->hasFile($field)) {
-                $data[$field] = $request->file($field)->store('blogs', 'public');
+                $data[$field] = app(\App\Services\ManagedFiles::class)->store($request->file($field), 'blogs');
             }
         }
 
@@ -197,7 +203,7 @@ class BlogController extends Controller
         if ($request->has('metadata')) {
             $metadata = $request->metadata;
             if ($request->hasFile('metadata.og_image')) {
-                $metadata['og_image'] = $request->file('metadata.og_image')->store('blogs/metadata', 'public');
+                $metadata['og_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('metadata.og_image'), 'blogs/metadata');
             }
             $data['metadata'] = $metadata;
         }
@@ -220,6 +226,7 @@ class BlogController extends Controller
         $blog = Blog::findOrFail($id);
         $imagesConfig = config('cms-kit.images.blogs');
 
+        if ($request->filled('slug')) $request->merge(['slug' => Str::slug($request->input('slug'))]);
         $request->validate($this->getBlogValidationRules(true, $blog));
         foreach (['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'] as $field) {
             $this->validateImageWithinLimits($request, $field, $imagesConfig[$field] ?? [], str_replace('_', ' ', ucfirst($field)));
@@ -227,7 +234,7 @@ class BlogController extends Controller
 
         $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'slug']);
         // Keep existing status when status input is absent in edit form.
-        $data['status'] = $request->has('status') ? $request->boolean('status') : $blog->status;
+        $data['status'] = $request->boolean('status');
         $data['translations'] = $this->mergeBlogTranslatableExtraFields($request->input('translations', []));
         $data['extra_fields'] = $request->input('extra_fields', []);
         if ($request->filled('slug')) {
@@ -240,10 +247,10 @@ class BlogController extends Controller
         $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
         foreach ($imageFields as $field) {
             if ($request->hasFile($field)) {
-                if ($blog->$field) Storage::disk('public')->delete($blog->$field);
-                $data[$field] = $request->file($field)->store('blogs', 'public');
+                if ($blog->$field) app(\App\Services\ManagedFiles::class)->delete($blog->$field);
+                $data[$field] = app(\App\Services\ManagedFiles::class)->store($request->file($field), 'blogs');
             } elseif ($request->boolean("remove_{$field}") && $blog->$field) {
-                Storage::disk('public')->delete($blog->$field);
+                app(\App\Services\ManagedFiles::class)->delete($blog->$field);
                 $data[$field] = null;
             }
 
@@ -260,11 +267,11 @@ class BlogController extends Controller
             
             if ($request->hasFile('metadata.og_image')) {
                 if (!empty($existingMetadata['og_image'])) {
-                    Storage::disk('public')->delete($existingMetadata['og_image']);
+                    app(\App\Services\ManagedFiles::class)->delete($existingMetadata['og_image']);
                 }
-                $metadata['og_image'] = $request->file('metadata.og_image')->store('blogs/metadata', 'public');
+                $metadata['og_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('metadata.og_image'), 'blogs/metadata');
             } elseif ($request->boolean('remove_metadata_og_image') && !empty($existingMetadata['og_image'])) {
-                Storage::disk('public')->delete($existingMetadata['og_image']);
+                app(\App\Services\ManagedFiles::class)->delete($existingMetadata['og_image']);
                 $metadata['og_image'] = null;
             } else {
                 // Preserve existing og_image if no new file is uploaded
@@ -285,12 +292,12 @@ class BlogController extends Controller
         $order = $blog->order_index;
         $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
         foreach ($imageFields as $field) {
-            if ($blog->$field) Storage::disk('public')->delete($blog->$field);
+            if ($blog->$field) app(\App\Services\ManagedFiles::class)->delete($blog->$field);
         }
         
         // Delete Metadata OG Image
         if (!empty($blog->metadata['og_image'])) {
-            Storage::disk('public')->delete($blog->metadata['og_image']);
+            app(\App\Services\ManagedFiles::class)->delete($blog->metadata['og_image']);
         }
 
         $blog->delete();
@@ -380,12 +387,12 @@ class BlogController extends Controller
                 $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
                 foreach ($imageFields as $field) {
                     if ($blog->$field) {
-                        Storage::disk('public')->delete($blog->$field);
+                        app(\App\Services\ManagedFiles::class)->delete($blog->$field);
                     }
                 }
 
                 if (!empty($blog->metadata['og_image'])) {
-                    Storage::disk('public')->delete($blog->metadata['og_image']);
+                    app(\App\Services\ManagedFiles::class)->delete($blog->metadata['og_image']);
                 }
 
                 $blog->delete();

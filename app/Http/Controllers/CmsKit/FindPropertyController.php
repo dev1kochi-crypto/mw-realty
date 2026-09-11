@@ -10,8 +10,8 @@ use App\Models\Filter;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
-use CMS\SiteManager\Support\ManagesOrderIndex;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ManagesOrderIndex;
+use App\Support\ValidatesImageDimensions;
 
 class FindPropertyController extends Controller
 {
@@ -29,8 +29,9 @@ class FindPropertyController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
+            $counts = \App\Models\Property::active()->selectRaw('property_type, COUNT(*) as total')->groupBy('property_type')->pluck('total', 'property_type');
             $data = FindPropertyItem::orderBy('order_index', 'asc');
-            return DataTables::of($data)
+            return \App\Support\TranslatedTable::column(DataTables::of($data), 'title', 'title')
                 ->addIndexColumn()
                 ->addColumn('select_all', function ($row) {
                     return '<input type="checkbox" class="row-checkbox form-check-input" value="' . $row->id . '">';
@@ -47,8 +48,8 @@ class FindPropertyController extends Controller
                 ->addColumn('property_type', function ($row) {
                     return $row->property_type ?: '-';
                 })
-                ->addColumn('property_count', function ($row) {
-                    return $row->propertyCount() . ' properties';
+                ->addColumn('property_count', function ($row) use ($counts) {
+                    return ($counts[$row->property_type] ?? 0) . ' properties';
                 })
                 ->addColumn('status', function ($row) {
                     $checked = $row->status ? 'checked' : '';
@@ -56,6 +57,7 @@ class FindPropertyController extends Controller
                                 <input class="form-check-input toggle-status" type="checkbox" data-id="' . $row->id . '" ' . $checked . '>
                             </div>';
                 })
+                ->orderColumn('order', fn ($query, $direction) => $query->reorder()->orderBy('order_index', $direction))
                 ->addColumn('order', function ($row) {
                     return '<input type="number" min="1" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 80px;">';
                 })
@@ -115,7 +117,7 @@ class FindPropertyController extends Controller
         $data['status'] = $request->has('status');
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('find-properties', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'find-properties');
         }
         $data['image_alt'] = $request->input('image_alt');
 
@@ -149,11 +151,11 @@ class FindPropertyController extends Controller
 
         if ($request->hasFile('image')) {
             if ($item->image) {
-                Storage::disk('public')->delete($item->image);
+                app(\App\Services\ManagedFiles::class)->delete($item->image);
             }
-            $data['image'] = $request->file('image')->store('find-properties', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'find-properties');
         } elseif ($request->boolean('remove_image') && $item->image) {
-            Storage::disk('public')->delete($item->image);
+            app(\App\Services\ManagedFiles::class)->delete($item->image);
             $data['image'] = null;
         }
 
@@ -169,7 +171,7 @@ class FindPropertyController extends Controller
         $item = FindPropertyItem::findOrFail($id);
         $order = $item->order_index;
         if ($item->image) {
-            Storage::disk('public')->delete($item->image);
+            app(\App\Services\ManagedFiles::class)->delete($item->image);
         }
         $item->delete();
 
@@ -246,7 +248,7 @@ class FindPropertyController extends Controller
             $items = FindPropertyItem::whereIn('id', $ids)->get();
             foreach ($items as $item) {
                 if ($item->image) {
-                    Storage::disk('public')->delete($item->image);
+                    app(\App\Services\ManagedFiles::class)->delete($item->image);
                 }
                 $item->delete();
             }

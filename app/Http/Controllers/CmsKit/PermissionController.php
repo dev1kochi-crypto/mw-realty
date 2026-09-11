@@ -16,10 +16,10 @@ class PermissionController extends Controller
             return \Yajra\DataTables\Facades\DataTables::of($permissions)
                 ->addColumn('module_badge', function ($row) {
                 $module = explode('.', $row->name)[0] ?? 'general';
-                return '<span class="badge bg-light text-dark border">' . ucfirst($module) . '</span>';
+                return '<span class="badge bg-light text-dark border">' . e(ucfirst($module)) . '</span>';
             })
                 ->addColumn('name_code', function ($row) {
-                return '<code class="text-primary fw-bold">' . $row->name . '</code>';
+                return '<code class="text-primary fw-bold">' . e($row->name) . '</code>';
             })
                 ->addColumn('created_at_fmt', function ($row) {
                 return $row->created_at ? $row->created_at->format('M d, Y') : 'N/A';
@@ -44,6 +44,7 @@ class PermissionController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(auth('cms')->user()?->hasRole('superadmin'), 403);
         $tableName = config('permission.table_names.permissions', 'permissions');
         $request->validate([
             'name' => 'required|string|unique:' . $tableName . ',name',
@@ -56,7 +57,8 @@ class PermissionController extends Controller
 
     public function update(Request $request, $id)
     {
-        $permission = Permission::findOrFail($id);
+        abort_unless(auth('cms')->user()?->hasRole('superadmin'), 403);
+        $permission = Permission::where('guard_name', 'cms')->findOrFail($id);
         $tableName = config('permission.table_names.permissions', 'permissions');
         $request->validate([
             'name' => 'required|string|unique:' . $tableName . ',name,' . $id,
@@ -70,7 +72,8 @@ class PermissionController extends Controller
 
     public function destroy($id)
     {
-        $permission = Permission::findOrFail($id);
+        abort_unless(auth('cms')->user()?->hasRole('superadmin'), 403);
+        $permission = Permission::where('guard_name', 'cms')->findOrFail($id);
 
         // Safeguard: Check if any roles are using this permission
         $rolesCount = \Spatie\Permission\Models\Role::where('guard_name', 'cms')

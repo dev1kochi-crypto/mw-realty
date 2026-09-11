@@ -86,7 +86,10 @@
                 <div class="col-md-6">
                     <label class="form-label d-block">Step Icon</label>
                     <small class="text-muted d-block mb-1">Recommended size: {{ $iconConfig['width'] }}x{{ $iconConfig['height'] }}px, Max: {{ $iconConfig['max_size'] }}KB</small>
-                    <input type="file" name="image" class="form-control">
+                    <input type="file" name="image" class="form-control @error('image') is-invalid @enderror">
+                    @error('image')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                     <input type="text" name="image_alt" class="form-control mt-2" placeholder="Icon ALT text" value="{{ old('image_alt', $step->image_alt) }}">
                     @if($step->image)
                         <div class="mt-2">

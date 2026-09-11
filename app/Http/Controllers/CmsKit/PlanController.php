@@ -5,10 +5,10 @@ namespace App\Http\Controllers\CmsKit;
 use Illuminate\Http\Request;
 use App\Models\Plan;
 use App\Models\PortalUser;
+use App\Models\PlanPayment;
 use App\Models\CmsKit\Language;
-use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Routing\Controller;
-use CMS\SiteManager\Support\ManagesOrderIndex;
+use App\Support\ManagesOrderIndex;
 
 class PlanController extends Controller
 {
@@ -16,62 +16,20 @@ class PlanController extends Controller
 
     public function index(Request $request)
     {
-        if ($request->ajax()) {
-            $data = Plan::withCount('subscribers')->orderBy('order_index', 'asc');
-            return DataTables::of($data)
-                ->addIndexColumn()
-                ->addColumn('name', function ($row) {
-                    return $row->getTranslation('name');
-                })
-                ->addColumn('price', function ($row) {
-                    if ($row->billing_cycle === 'free') {
-                        return 'Free';
-                    }
-                    $suffix = ['monthly' => '/mo', 'yearly' => '/yr', 'one_time' => ' one-time'][$row->billing_cycle] ?? '';
-                    return 'AED ' . number_format($row->price) . $suffix;
-                })
-                ->addColumn('limit', function ($row) {
-                    return $row->isUnlimited() ? 'Unlimited' : $row->property_limit . ' properties';
-                })
-                ->addColumn('subscribers_count', function ($row) {
-                    return $row->subscribers_count;
-                })
-                ->addColumn('popular', function ($row) {
-                    return $row->is_popular ? '<span class="badge bg-warning text-dark">Popular</span>' : '';
-                })
-                ->addColumn('status', function ($row) {
-                    $checked = $row->status ? 'checked' : '';
-                    return '<div class="form-check form-switch">
-                                <input class="form-check-input toggle-status" type="checkbox" data-id="' . $row->id . '" ' . $checked . '>
-                            </div>';
-                })
-                ->addColumn('order', function ($row) {
-                    return '<input type="number" min="1" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 80px;">';
-                })
-                ->addColumn('action', function ($row) {
-                    $btns = '<div class="btn-group">';
-                    if (auth('cms')->user()->can('plans.edit')) {
-                        $btns .= '<a href="' . route('cms.plans.edit', $row->id) . '" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>';
-                    }
-                    if (auth('cms')->user()->can('plans.delete')) {
-                        $btns .= '<button type="button" class="btn btn-sm btn-outline-danger delete-item" data-id="' . $row->id . '"><i class="fas fa-trash"></i></button>';
-                    }
-                    $btns .= '</div>';
-                    return $btns;
-                })
-                ->rawColumns(['popular', 'status', 'order', 'action'])
-                ->make(true);
-        }
-
+        // Plans are a small, hand-curated list of pricing tiers (not customer data), so the
+        // full set renders on one page — that's also what the drag-to-reorder card grid needs.
+        $plans = Plan::withCount('subscribers')->orderBy('order_index', 'asc')->get();
         $languages = Language::where('status', true)->get();
 
         // Estimated monthly revenue from currently assigned paid plans (no invoicing/billing yet —
-        // this is a live snapshot of assigned plans × price, not a transaction ledger).
-        $monthlyRevenue = PortalUser::approved()
-            ->whereHas('plan', fn ($q) => $q->where('billing_cycle', 'monthly')->where('price', '>', 0))
-            ->with('plan')
-            ->get()
-            ->sum(fn ($u) => (float) $u->plan->price);
+        // this is a live snapshot of assigned plans × price, not a transaction ledger). Summed at
+        // the database level so it stays cheap regardless of how many subscribers exist.
+        $monthlyRevenue = (float) PortalUser::query()
+            ->join('plans', 'plans.id', '=', 'portal_users.plan_id')
+            ->where('portal_users.status', 'approved')
+            ->where('plans.billing_cycle', 'monthly')
+            ->where('plans.price', '>', 0)
+            ->sum('plans.price');
 
         $planStats = [
             'total_plans' => Plan::count(),
@@ -79,7 +37,31 @@ class PlanController extends Controller
             'monthly_revenue' => $monthlyRevenue,
         ];
 
-        return view('cms-kit::plans.index', compact('languages', 'planStats'));
+        return view('cms-kit::plans.index', compact('plans', 'languages', 'planStats'));
+    }
+
+    public function show($id)
+    {
+        $plan = Plan::withCount('subscribers')->findOrFail($id);
+
+        // Paginated — a single plan (e.g. the default Free tier) can end up with
+        // tens of thousands of subscribers, so this must never load them all at once.
+        $subscribers = PortalUser::where('plan_id', $id)
+            ->withCount(['properties', 'leads'])
+            ->orderByDesc('created_at')
+            ->paginate(15, ['*'], 'subscribers_page')
+            ->withQueryString();
+
+        $recentPayments = PlanPayment::where('plan_id', $id)
+            ->with('portalUser')
+            ->orderByDesc('paid_at')
+            ->paginate(15, ['*'], 'payments_page')
+            ->withQueryString();
+
+        $totalCollected = (float) PlanPayment::where('plan_id', $id)->sum('amount');
+        $activeSubscribers = PortalUser::where('plan_id', $id)->where('status', 'approved')->count();
+
+        return view('cms-kit::plans.show', compact('plan', 'subscribers', 'recentPayments', 'totalCollected', 'activeSubscribers'));
     }
 
     public function create()
@@ -158,7 +140,15 @@ class PlanController extends Controller
 
     public function destroy($id)
     {
-        $plan = Plan::findOrFail($id);
+        $plan = Plan::withCount('subscribers')->findOrFail($id);
+
+        if ($plan->subscribers_count > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This plan can\'t be deleted — ' . $plan->subscribers_count . ' agent/company account' . ($plan->subscribers_count === 1 ? ' is' : 's are') . ' still on it. Move them to another plan first.',
+            ], 422);
+        }
+
         $order = $plan->order_index;
         $plan->delete();
 
@@ -177,27 +167,20 @@ class PlanController extends Controller
         return response()->json(['success' => true]);
     }
 
+    /**
+     * Drag-and-drop reorder from the card grid — the client sends the full
+     * plan id sequence in its new order, we just re-number 1..n to match.
+     */
     public function reorder(Request $request)
     {
         $request->validate([
-            'id' => 'required|integer|exists:plans,id',
-            'order_index' => 'required|integer|min:1',
+            'order' => 'required|array',
+            'order.*' => 'integer|exists:plans,id',
         ]);
 
-        $plan = Plan::findOrFail($request->id);
-        $newOrder = $this->resolveOrderForReorder(Plan::class, (int) $request->order_index);
-        $oldOrder = $plan->order_index;
-
-        if ($newOrder != $oldOrder) {
-            if ($newOrder > $oldOrder) {
-                Plan::where('order_index', '>', $oldOrder)->where('order_index', '<=', $newOrder)->decrement('order_index');
-            } else {
-                Plan::where('order_index', '>=', $newOrder)->where('order_index', '<', $oldOrder)->increment('order_index');
-            }
-            $plan->order_index = $newOrder;
-            $plan->save();
+        foreach ($request->input('order') as $index => $id) {
+            Plan::where('id', $id)->update(['order_index' => $index + 1]);
         }
-        $this->normalizeOrderIndex(Plan::class);
 
         return response()->json(['success' => true]);
     }

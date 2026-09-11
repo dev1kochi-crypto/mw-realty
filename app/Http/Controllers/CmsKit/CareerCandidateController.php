@@ -166,7 +166,7 @@ class CareerCandidateController extends Controller
                 'privacy' => 'Privacy',
             ];
 
-            fputcsv($file, array_merge(
+            \App\Support\Csv::row($file, array_merge(
                 ['ID'],
                 collect($visibleColumns)->map(fn ($key) => $baseHeaderMap[$key] ?? ucfirst(str_replace('_', ' ', $key)))->all(),
                 $extraFieldLabels
@@ -197,7 +197,7 @@ class CareerCandidateController extends Controller
                     $row[] = $candidate->extra_fields[$key] ?? '';
                 }
 
-                fputcsv($file, $row);
+                \App\Support\Csv::row($file, $row);
             }
 
             fclose($file);

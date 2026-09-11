@@ -85,11 +85,17 @@
             <div class="row g-4">
                 <div class="col-md-6">
                     <label class="form-label">Video URL</label>
-                    <input type="url" name="video_url" class="form-control" value="{{ old('video_url', $extra['video_url'] ?? '') }}" placeholder="YouTube/Vimeo or self-hosted URL">
+                    <input type="url" name="video_url" class="form-control @error('video_url') is-invalid @enderror" value="{{ old('video_url', $extra['video_url'] ?? '') }}" placeholder="YouTube/Vimeo or self-hosted URL">
+                    @error('video_url')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Video File</label>
-                    <input type="file" name="video_file" class="form-control" accept="video/*">
+                    <input type="file" name="video_file" class="form-control @error('video_file') is-invalid @enderror" accept="video/*">
+                    @error('video_file')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                     <small class="text-muted d-block mt-1">Max: {{ $videoMaxSize }}KB</small>
                     @if(!empty($extra['video_file']))
                         <small class="text-muted d-block mt-1">Current: {{ basename($extra['video_file']) }}</small>

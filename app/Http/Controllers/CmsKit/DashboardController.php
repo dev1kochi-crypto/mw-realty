@@ -8,6 +8,7 @@ use App\Models\CmsKit\Faq;
 use App\Models\CmsKit\Enquiry;
 use App\Models\CmsKit\Testimonial;
 use App\Models\CmsKit\Career;
+use App\Models\Lead;
 use App\Models\Property;
 use App\Models\PortalUser;
 use App\Models\Plan;
@@ -15,6 +16,13 @@ use App\Models\Plan;
 class DashboardController extends Controller
 {
     public function index()
+    {
+        if (!auth('cms')->user()->hasRole('superadmin')) return view('cms-kit::dashboard-restricted');
+        $data = \Illuminate\Support\Facades\Cache::remember('admin.dashboard.summary', 30, fn () => $this->dashboardData());
+        return view('cms-kit::dashboard', $data);
+    }
+
+    private function dashboardData(): array
     {
         $stats = [
             'banners' => Banner::count(),
@@ -29,16 +37,14 @@ class DashboardController extends Controller
             'approved_companies' => PortalUser::where('type', 'company')->approved()->count(),
             'pending_accounts' => PortalUser::pending()->count(),
             'rejected_accounts' => PortalUser::where('status', 'rejected')->count(),
-            'crm_leads' => Enquiry::whereNotNull('portal_user_id')->count(),
-            'new_crm_leads' => Enquiry::whereNotNull('portal_user_id')->where('status', 'new')->count(),
+            'crm_leads' => Lead::count(),
+            'new_crm_leads' => Lead::where('status', 'new')->count(),
             'total_plans' => Plan::count(),
         ];
 
-        $stats['monthly_revenue'] = PortalUser::approved()
-            ->whereHas('plan', fn ($q) => $q->where('billing_cycle', 'monthly')->where('price', '>', 0))
-            ->with('plan')
-            ->get()
-            ->sum(fn ($u) => (float) $u->plan->price);
+        $stats['monthly_revenue'] = (float) PortalUser::query()->join('plans', 'plans.id', '=', 'portal_users.plan_id')
+            ->where('portal_users.status', 'approved')->where('portal_users.is_active', true)
+            ->where('plans.status', true)->where('plans.billing_cycle', 'monthly')->sum('plans.price');
 
         $totalAccounts = $stats['approved_agents'] + $stats['approved_companies'] + $stats['pending_accounts'] + $stats['rejected_accounts'];
         $stats['approval_rate'] = $totalAccounts > 0
@@ -53,8 +59,7 @@ class DashboardController extends Controller
         $pendingAccounts = PortalUser::pending()->latest()->take(5)->get();
 
         // CRM pipeline (New -> Contacted -> Closed)
-        $leadStatusBreakdown = Enquiry::whereNotNull('portal_user_id')
-            ->selectRaw('status, count(*) as total')
+        $leadStatusBreakdown = Lead::selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
 
@@ -75,26 +80,24 @@ class DashboardController extends Controller
             ->get();
 
         $topOwners = PortalUser::approved()
-            ->withCount(['properties', 'enquiries'])
+            ->withCount(['properties', 'leads'])
             ->orderByDesc('properties_count')
             ->take(5)
             ->get();
 
-        $recentLeads = Enquiry::whereNotNull('portal_user_id')
-            ->with(['property', 'owner'])
+        $recentLeads = Lead::with(['property', 'owner'])
             ->latest()
             ->take(5)
             ->get();
 
         $latestProperties = Property::with('owner')->latest()->take(5)->get();
 
-        $paidUserPoints = PortalUser::approved()
-            ->whereHas('plan', fn ($q) => $q->where('price', '>', 0))
-            ->with('plan')
-            ->orderBy('created_at')
-            ->get(['id', 'created_at', 'plan_id'])
-            ->map(fn ($u) => ['date' => $u->created_at, 'price' => (float) $u->plan->price])
-            ->values();
+        $paidUserPoints = PortalUser::query()->join('plans', 'plans.id', '=', 'portal_users.plan_id')
+            ->where('portal_users.status', 'approved')->where('portal_users.is_active', true)
+            ->where('plans.status', true)->where('plans.billing_cycle', 'monthly')
+            ->selectRaw('DATE(portal_users.created_at) as joined_on, SUM(plans.price) as price')
+            ->groupByRaw('DATE(portal_users.created_at)')->orderBy('joined_on')->get()
+            ->map(fn ($point) => ['date' => \Carbon\Carbon::parse($point->joined_on), 'price' => (float) $point->price])->values();
 
         $revenueSeries = [
             'daily' => $this->buildRevenueSeries($paidUserPoints, now()->subDays(29)->startOfDay(), 30, 'day', 'd M'),
@@ -102,7 +105,7 @@ class DashboardController extends Controller
             'monthly' => $this->buildRevenueSeries($paidUserPoints, now()->subMonths(11)->startOfMonth(), 12, 'month', 'M Y'),
         ];
 
-        return view('cms-kit::dashboard', compact(
+        return compact(
             'stats',
             'pendingAccounts',
             'leadStatusBreakdown',
@@ -116,7 +119,7 @@ class DashboardController extends Controller
             'freeSubscribers',
             'noPlan',
             'revenueSeries'
-        ));
+        );
     }
 
     /**

@@ -16,10 +16,19 @@ use App\Http\Controllers\CmsKit\CommunityController;
 use App\Http\Controllers\CmsKit\ContactController;
 use App\Http\Controllers\CmsKit\FindPropertyController;
 use App\Http\Controllers\CmsKit\PlanController;
+use App\Http\Controllers\CmsKit\NotificationController;
 use App\Http\Controllers\Portal\PortalAuthController;
 use App\Http\Controllers\Portal\PortalDashboardController;
 use App\Http\Controllers\Portal\PortalPropertyController;
-use App\Http\Controllers\Portal\PortalEnquiryController;
+use App\Http\Controllers\Portal\PortalProfileController;
+use App\Http\Controllers\Portal\PortalNotificationController;
+use App\Http\Controllers\Portal\PortalPlanController;
+use App\Http\Controllers\Portal\Crm\LeadController;
+use App\Http\Controllers\Portal\Crm\LeadStageController;
+use App\Http\Controllers\Portal\Crm\LeadTagController;
+use App\Http\Controllers\Portal\Crm\LeadSourceController;
+use App\Http\Controllers\Portal\Crm\PortalReportController;
+use App\Http\Controllers\Crm\LeadCaptureController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -27,6 +36,10 @@ Route::get('/', function () {
 
 // Public, read-only — consumed by the frontend (home banner + listing page) search filter bar.
 Route::get('/api/property-filters', [PropertyFilterController::class, 'index']);
+
+// Public, unauthenticated — any property-detail page can POST a lead here; it's
+// routed to the property's owning company/agent (see LeadCaptureController).
+Route::post('/leads/capture', [LeadCaptureController::class, 'store'])->name('leads.capture')->middleware('throttle:lead-capture');
 
 Route::middleware(['web'])->group(function () {
     Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->group(function () {
@@ -225,15 +238,45 @@ Route::middleware(['web'])->group(function () {
                 });
             });
 
+            // Bell-icon notifications — every logged-in admin can read/mark their own
+            Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('cms.notifications.read');
+            Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('cms.notifications.read-all');
+
+            Route::get('/portal-accounts/{portalUser}/documents/{field}', [\App\Http\Controllers\DocumentController::class, 'admin'])
+                ->name('cms.portal-accounts.document')->middleware('cms.permission:portal-accounts.view');
+
             // Agents & Companies (portal account moderation)
             Route::middleware(['cms.permission:portal-accounts.view'])->group(function () {
                 Route::get('/portal-accounts', [PortalUserController::class, 'index'])->name('cms.portal-accounts.index');
+                Route::get('/portal-accounts-export', [PortalUserController::class, 'export'])->name('cms.portal-accounts.export');
+                Route::get('/portal-accounts/{id}', [PortalUserController::class, 'show'])->name('cms.portal-accounts.show');
                 Route::middleware(['cms.permission:portal-accounts.edit'])->group(function () {
+                    Route::get('/portal-accounts-create', [PortalUserController::class, 'create'])->name('cms.portal-accounts.create');
+                    Route::post('/portal-accounts', [PortalUserController::class, 'store'])->name('cms.portal-accounts.store');
                     Route::post('/portal-accounts/{id}/approve', [PortalUserController::class, 'approve'])->name('cms.portal-accounts.approve');
                     Route::post('/portal-accounts/{id}/reject', [PortalUserController::class, 'reject'])->name('cms.portal-accounts.reject');
+                    Route::post('/portal-accounts/{id}/status', [PortalUserController::class, 'updateStatus'])->name('cms.portal-accounts.update-status');
                     Route::post('/portal-accounts/{id}/assign-plan', [PortalUserController::class, 'assignPlan'])->name('cms.portal-accounts.assign-plan');
+                    Route::post('/portal-accounts/{id}/payment-status', [PortalUserController::class, 'updatePaymentStatus'])->name('cms.portal-accounts.update-payment-status');
+                    Route::post('/portal-accounts/{id}/update', [PortalUserController::class, 'update'])->name('cms.portal-accounts.update');
+                    Route::post('/portal-accounts/{id}/retranslate-bio', [PortalUserController::class, 'retranslateBio'])->name('cms.portal-accounts.retranslate-bio');
+                    Route::post('/portal-accounts/{id}/reset-password', [PortalUserController::class, 'resetPassword'])->name('cms.portal-accounts.reset-password');
+                    Route::post('/portal-accounts/{id}/toggle-active', [PortalUserController::class, 'toggleActive'])->name('cms.portal-accounts.toggle-active');
+                    Route::post('/portal-accounts/{id}/documents/{field}', [PortalUserController::class, 'uploadDocument'])->name('cms.portal-accounts.upload-document');
+                    Route::delete('/portal-accounts/{id}/documents/{field}', [PortalUserController::class, 'removeDocument'])->name('cms.portal-accounts.remove-document');
+                    Route::post('/portal-accounts/{id}/documents/{field}/status', [PortalUserController::class, 'updateDocumentStatus'])->name('cms.portal-accounts.update-document-status');
+                    Route::post('/portal-accounts/bulk-approve', [PortalUserController::class, 'bulkApprove'])->name('cms.portal-accounts.bulk-approve');
                 });
-                Route::delete('/portal-accounts/{id}', [PortalUserController::class, 'destroy'])->name('cms.portal-accounts.destroy')->middleware('cms.permission:portal-accounts.delete');
+                Route::middleware(['cms.permission:portal-accounts.delete'])->group(function () {
+                    Route::delete('/portal-accounts/{id}', [PortalUserController::class, 'destroy'])->name('cms.portal-accounts.destroy');
+                    Route::post('/portal-accounts/bulk-delete', [PortalUserController::class, 'bulkDelete'])->name('cms.portal-accounts.bulk-delete');
+                });
+
+                Route::get('/plan-upgrade-requests', [PortalUserController::class, 'planUpgradeRequests'])->name('cms.portal-accounts.plan-upgrade-requests');
+                Route::middleware(['cms.permission:portal-accounts.edit'])->group(function () {
+                    Route::post('/plan-upgrade-requests/{id}/approve', [PortalUserController::class, 'approvePlanUpgradeRequest'])->name('cms.portal-accounts.plan-upgrade-requests.approve');
+                    Route::post('/plan-upgrade-requests/{id}/reject', [PortalUserController::class, 'rejectPlanUpgradeRequest'])->name('cms.portal-accounts.plan-upgrade-requests.reject');
+                });
             });
 
             // Plans (packages / pricing tiers assignable to Agents & Companies)
@@ -255,6 +298,8 @@ Route::middleware(['web'])->group(function () {
                 Route::middleware(['cms.permission:plans.delete'])->group(function () {
                     Route::delete('/plans/{id}', [PlanController::class, 'destroy'])->name('cms.plans.destroy');
                 });
+
+                Route::get('/plans/{id}', [PlanController::class, 'show'])->name('cms.plans.show');
             });
         });
     });
@@ -264,13 +309,35 @@ Route::middleware(['web'])->group(function () {
 Route::prefix('portal')->name('portal.')->group(function () {
     Route::middleware(['guest:portal'])->group(function () {
         Route::get('/register', [PortalAuthController::class, 'showRegister'])->name('register');
-        Route::post('/register', [PortalAuthController::class, 'register']);
+        Route::post('/register', [PortalAuthController::class, 'register'])->name('register.store')->middleware('throttle:portal-registration');
         Route::get('/login', [PortalAuthController::class, 'showLogin'])->name('login');
-        Route::post('/login', [PortalAuthController::class, 'login']);
+        Route::post('/login', [PortalAuthController::class, 'login'])->name('login.store')->middleware('throttle:admin-login');
     });
 
     Route::middleware(['auth:portal'])->group(function () {
         Route::post('/logout', [PortalAuthController::class, 'logout'])->name('logout');
+
+        Route::get('/profile/documents/{field}', [\App\Http\Controllers\DocumentController::class, 'own'])->name('profile.document');
+
+        // Self-service profile — available even while pending/rejected, since
+        // completing or fixing it is exactly what unblocks approval.
+        Route::get('/profile', [PortalProfileController::class, 'edit'])->name('profile.edit');
+        Route::post('/profile', [PortalProfileController::class, 'update'])->name('profile.update');
+        Route::post('/profile/documents/{field}', [PortalProfileController::class, 'uploadDocument'])->name('profile.upload-document');
+        Route::delete('/profile/documents/{field}', [PortalProfileController::class, 'removeDocument'])->name('profile.remove-document');
+        Route::post('/profile/resubmit', [PortalProfileController::class, 'resubmit'])->name('profile.resubmit');
+
+        // Bell-icon notifications
+        Route::post('/notifications/{id}/read', [PortalNotificationController::class, 'markRead'])->name('notifications.read');
+        Route::post('/notifications/read-all', [PortalNotificationController::class, 'markAllRead'])->name('notifications.read-all');
+
+        // Self-service plan upgrade — portal guard only, a Super Admin doesn't request plans for itself.
+        Route::get('/plans', [PortalPlanController::class, 'index'])->name('plans.index');
+        Route::post('/plans/request', [PortalPlanController::class, 'request'])->name('plans.request');
+
+        // Contact Us — portal guard only, reaches MW Realty support (not meaningful for admin browsing).
+        Route::get('/contact', [\App\Http\Controllers\Portal\PortalContactController::class, 'index'])->name('contact.index');
+        Route::post('/contact', [\App\Http\Controllers\Portal\PortalContactController::class, 'store'])->name('contact.store');
     });
 
     // Shared by Super Admin (global view) and Agent/Company (own-data view) —
@@ -287,8 +354,37 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::delete('/properties/{propertyId}/images/{imageId}', [PortalPropertyController::class, 'destroyImage'])->name('properties.images.destroy');
         Route::post('/properties/{id}/toggle-status', [PortalPropertyController::class, 'toggleStatus'])->name('properties.toggle-status');
 
-        Route::get('/crm', [PortalEnquiryController::class, 'index'])->name('crm.index');
-        Route::get('/crm/{id}', [PortalEnquiryController::class, 'show'])->name('crm.show');
-        Route::put('/crm/{id}', [PortalEnquiryController::class, 'update'])->name('crm.update');
+        Route::prefix('crm')->name('crm.')->group(function () {
+            Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
+            Route::get('/leads/{id}', [LeadController::class, 'show'])->name('leads.show');
+            Route::put('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
+
+            Route::prefix('master')->name('master.')->group(function () {
+                Route::get('/stages', [LeadStageController::class, 'index'])->name('stages.index');
+                Route::post('/stages', [LeadStageController::class, 'store'])->name('stages.store');
+                Route::put('/stages/{id}', [LeadStageController::class, 'update'])->name('stages.update');
+                Route::delete('/stages/{id}', [LeadStageController::class, 'destroy'])->name('stages.destroy');
+                Route::post('/stages/reorder', [LeadStageController::class, 'reorder'])->name('stages.reorder');
+                Route::post('/stages/{id}/set-default', [LeadStageController::class, 'setDefault'])->name('stages.set-default');
+
+                Route::get('/tags', [LeadTagController::class, 'index'])->name('tags.index');
+                Route::post('/tags', [LeadTagController::class, 'store'])->name('tags.store');
+                Route::put('/tags/{id}', [LeadTagController::class, 'update'])->name('tags.update');
+                Route::delete('/tags/{id}', [LeadTagController::class, 'destroy'])->name('tags.destroy');
+
+                Route::get('/sources', [LeadSourceController::class, 'index'])->name('sources.index');
+                Route::post('/sources', [LeadSourceController::class, 'store'])->name('sources.store');
+                Route::put('/sources/{id}', [LeadSourceController::class, 'update'])->name('sources.update');
+                Route::delete('/sources/{id}', [LeadSourceController::class, 'destroy'])->name('sources.destroy');
+                Route::post('/sources/reorder', [LeadSourceController::class, 'reorder'])->name('sources.reorder');
+            });
+
+            Route::get('/reports', [PortalReportController::class, 'index'])->name('reports.index');
+        });
     });
+});
+
+Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->middleware(['web', 'cms.auth'])->group(function () {
+    Route::post('/sitemap/generate', [\App\Http\Controllers\CmsKit\SitemapController::class, 'generate'])->name('cms.sitemap.generate')->middleware('cms.permission:sitemap.edit');
+    Route::post('/seo/llms-txt/generate', [\App\Http\Controllers\CmsKit\LlmsTxtController::class, 'generate'])->name('cms.llms-txt.generate')->middleware('cms.permission:llms-txt.edit');
 });

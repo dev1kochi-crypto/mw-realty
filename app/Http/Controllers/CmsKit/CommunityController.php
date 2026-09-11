@@ -10,8 +10,8 @@ use App\Models\Filter;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
-use CMS\SiteManager\Support\ManagesOrderIndex;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ManagesOrderIndex;
+use App\Support\ValidatesImageDimensions;
 
 class CommunityController extends Controller
 {
@@ -30,7 +30,7 @@ class CommunityController extends Controller
     {
         if ($request->ajax()) {
             $data = CommunityHighlight::orderBy('order_index', 'asc');
-            return DataTables::of($data)
+            return \App\Support\TranslatedTable::column(DataTables::of($data), 'title', 'title')
                 ->addIndexColumn()
                 ->addColumn('select_all', function ($row) {
                     return '<input type="checkbox" class="row-checkbox form-check-input" value="' . $row->id . '">';
@@ -50,6 +50,7 @@ class CommunityController extends Controller
                                 <input class="form-check-input toggle-status" type="checkbox" data-id="' . $row->id . '" ' . $checked . '>
                             </div>';
                 })
+                ->orderColumn('order', fn ($query, $direction) => $query->reorder()->orderBy('order_index', $direction))
                 ->addColumn('order', function ($row) {
                     return '<input type="number" min="1" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 80px;">';
                 })
@@ -109,7 +110,7 @@ class CommunityController extends Controller
         $data['status'] = $request->has('status');
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('communities', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'communities');
         }
         $data['image_alt'] = $request->input('image_alt');
 
@@ -143,11 +144,11 @@ class CommunityController extends Controller
 
         if ($request->hasFile('image')) {
             if ($item->image) {
-                Storage::disk('public')->delete($item->image);
+                app(\App\Services\ManagedFiles::class)->delete($item->image);
             }
-            $data['image'] = $request->file('image')->store('communities', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'communities');
         } elseif ($request->boolean('remove_image') && $item->image) {
-            Storage::disk('public')->delete($item->image);
+            app(\App\Services\ManagedFiles::class)->delete($item->image);
             $data['image'] = null;
         }
 
@@ -163,7 +164,7 @@ class CommunityController extends Controller
         $item = CommunityHighlight::findOrFail($id);
         $order = $item->order_index;
         if ($item->image) {
-            Storage::disk('public')->delete($item->image);
+            app(\App\Services\ManagedFiles::class)->delete($item->image);
         }
         $item->delete();
 
@@ -244,7 +245,7 @@ class CommunityController extends Controller
             $items = CommunityHighlight::whereIn('id', $ids)->get();
             foreach ($items as $item) {
                 if ($item->image) {
-                    Storage::disk('public')->delete($item->image);
+                    app(\App\Services\ManagedFiles::class)->delete($item->image);
                 }
                 $item->delete();
             }

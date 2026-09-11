@@ -12,10 +12,10 @@ class RoleController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax() || $request->wantsJson()) {
-            $roles = Role::where('guard_name', 'cms')->get();
+            $roles = Role::where('guard_name', 'cms')->withCount('permissions')->get();
             return \Yajra\DataTables\Facades\DataTables::of($roles)
                 ->addColumn('permissions_count', function ($row) {
-                return $row->name === 'superadmin' ? 'All' : $row->permissions->count();
+                return $row->name === 'superadmin' ? 'All' : $row->permissions_count;
             })
                 ->addColumn('created_at_fmt', function ($row) {
                 return $row->created_at->format('M d, Y');
@@ -34,7 +34,7 @@ class RoleController extends Controller
                 ->rawColumns(['actions'])
                 ->make(true);
         }
-        $roles = Role::where('guard_name', 'cms')->get();
+        $roles = Role::where('guard_name', 'cms')->withCount('permissions')->get();
         return view('cms-kit::roles.index', compact('roles'));
     }
 
@@ -52,6 +52,7 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(auth('cms')->user()?->hasRole('superadmin'), 403);
         $request->validate([
             'name' => 'required|unique:' . config('permission.table_names.roles', 'roles') . ',name',
             'permissions' => 'array'
@@ -67,7 +68,7 @@ class RoleController extends Controller
 
     public function edit($id)
     {
-        $role = Role::findOrFail($id);
+        $role = Role::where('guard_name', 'cms')->findOrFail($id);
         $permissions = Permission::where('guard_name', 'cms')->get()->groupBy(function ($item) {
             // Group by module if available, fallback to 'other'
             $parts = explode('.', $item->name);
@@ -80,12 +81,14 @@ class RoleController extends Controller
 
     public function update(Request $request, $id)
     {
-        $role = Role::findOrFail($id);
+        abort_unless(auth('cms')->user()?->hasRole('superadmin'), 403);
+        $role = Role::where('guard_name', 'cms')->findOrFail($id);
         $request->validate([
             'name' => 'required|unique:' . config('permission.table_names.roles', 'roles') . ',name,' . $id,
             'permissions' => 'array'
         ]);
 
+        abort_if($role->name === 'superadmin', 403, 'The reserved Super Admin role cannot be modified.');
         $role->name = $request->name;
         $role->save();
 
@@ -96,7 +99,8 @@ class RoleController extends Controller
 
     public function destroy($id)
     {
-        $role = Role::findOrFail($id);
+        abort_unless(auth('cms')->user()?->hasRole('superadmin'), 403);
+        $role = Role::where('guard_name', 'cms')->findOrFail($id);
         if ($role->name === 'superadmin') {
             return back()->with('error', 'Super Admin role cannot be deleted.');
         }
@@ -116,6 +120,7 @@ class RoleController extends Controller
 
     public function storePermission(Request $request)
     {
+        abort_unless(auth('cms')->user()?->hasRole('superadmin'), 403);
         $tableName = config('permission.table_names.permissions', 'permissions');
         $request->validate([
             'name' => 'required|string|unique:' . $tableName . ',name',

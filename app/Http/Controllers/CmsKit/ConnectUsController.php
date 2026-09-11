@@ -46,13 +46,13 @@ class ConnectUsController extends Controller
 
         if ($request->hasFile('video_file')) {
             if (!empty($existingExtra['video_file'])) {
-                Storage::disk('public')->delete($existingExtra['video_file']);
+                app(\App\Services\ManagedFiles::class)->delete($existingExtra['video_file']);
             }
-            $extraFields['video_file'] = $request->file('video_file')->store('connect-us/videos', 'public');
+            $extraFields['video_file'] = app(\App\Services\ManagedFiles::class)->store($request->file('video_file'), 'connect-us/videos');
             $extraFields['video_url'] = null;
         } elseif ($extraFields['video_source'] === 'url') {
             if (!empty($existingExtra['video_file'])) {
-                Storage::disk('public')->delete($existingExtra['video_file']);
+                app(\App\Services\ManagedFiles::class)->delete($existingExtra['video_file']);
             }
             $extraFields['video_file'] = null;
         }

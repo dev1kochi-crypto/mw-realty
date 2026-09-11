@@ -9,8 +9,8 @@ use App\Models\CmsKit\SectionLabel;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
-use CMS\SiteManager\Support\ManagesOrderIndex;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ManagesOrderIndex;
+use App\Support\ValidatesImageDimensions;
 
 class WhyChooseUsController extends Controller
 {
@@ -20,7 +20,7 @@ class WhyChooseUsController extends Controller
     {
         if ($request->ajax()) {
             $data = WhyChooseUsItem::orderBy('order_index', 'asc');
-            return DataTables::of($data)
+            return \App\Support\TranslatedTable::column(DataTables::of($data), 'title', 'title')
                 ->addIndexColumn()
                 ->addColumn('select_all', function ($row) {
                     return '<input type="checkbox" class="row-checkbox form-check-input" value="' . $row->id . '">';
@@ -40,6 +40,7 @@ class WhyChooseUsController extends Controller
                                 <input class="form-check-input toggle-status" type="checkbox" data-id="' . $row->id . '" ' . $checked . '>
                             </div>';
                 })
+                ->orderColumn('order', fn ($query, $direction) => $query->reorder()->orderBy('order_index', $direction))
                 ->addColumn('order', function ($row) {
                     return '<input type="number" min="1" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 80px;">';
                 })
@@ -98,7 +99,7 @@ class WhyChooseUsController extends Controller
         $data['status'] = $request->has('status');
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('why-choose-us', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'why-choose-us');
         }
 
         $order = $this->resolveOrderForCreate(WhyChooseUsItem::class, $request->order_index ? (int) $request->order_index : null);
@@ -130,11 +131,11 @@ class WhyChooseUsController extends Controller
 
         if ($request->hasFile('image')) {
             if ($item->image) {
-                Storage::disk('public')->delete($item->image);
+                app(\App\Services\ManagedFiles::class)->delete($item->image);
             }
-            $data['image'] = $request->file('image')->store('why-choose-us', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'why-choose-us');
         } elseif ($request->boolean('remove_image') && $item->image) {
-            Storage::disk('public')->delete($item->image);
+            app(\App\Services\ManagedFiles::class)->delete($item->image);
             $data['image'] = null;
         }
 
@@ -150,7 +151,7 @@ class WhyChooseUsController extends Controller
         $item = WhyChooseUsItem::findOrFail($id);
         $order = $item->order_index;
         if ($item->image) {
-            Storage::disk('public')->delete($item->image);
+            app(\App\Services\ManagedFiles::class)->delete($item->image);
         }
         $item->delete();
 
@@ -215,12 +216,12 @@ class WhyChooseUsController extends Controller
 
         if ($request->hasFile('section_image')) {
             if ($section?->section_image) {
-                Storage::disk('public')->delete($section->section_image);
+                app(\App\Services\ManagedFiles::class)->delete($section->section_image);
             }
-            $data['section_image'] = $request->file('section_image')->store('why-choose-us', 'public');
+            $data['section_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('section_image'), 'why-choose-us');
             $data['section_image_alt'] = $request->input('section_image_alt');
         } elseif ($request->boolean('remove_section_image') && $section?->section_image) {
-            Storage::disk('public')->delete($section->section_image);
+            app(\App\Services\ManagedFiles::class)->delete($section->section_image);
             $data['section_image'] = null;
             $data['section_image_alt'] = null;
         } elseif ($request->filled('section_image_alt')) {
@@ -245,7 +246,7 @@ class WhyChooseUsController extends Controller
             $items = WhyChooseUsItem::whereIn('id', $ids)->get();
             foreach ($items as $item) {
                 if ($item->image) {
-                    Storage::disk('public')->delete($item->image);
+                    app(\App\Services\ManagedFiles::class)->delete($item->image);
                 }
                 $item->delete();
             }

@@ -61,20 +61,7 @@ return [
     | Seed these users automatically. 
     |
     */
-    'users' => [
-        [
-            'name'     => 'Super Admin',
-            'email'    => 'admin@example.com',
-            'password' => 'password',
-            'role'     => 'superadmin',
-        ],
-        [
-            'name'     => 'Client User',
-            'email'    => 'client@example.com',
-            'password' => 'password',
-            'role'     => 'client',
-        ],
-    ],
+    'users' => [], // Provision administrators with admin:provision; never seed passwords.
 
     'defaults' => [
         'view',

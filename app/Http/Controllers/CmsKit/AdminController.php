@@ -13,19 +13,19 @@ class AdminController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax() || $request->wantsJson()) {
-            $admins = Admin::with('roles')->get();
+            $admins = Admin::with('roles');
             return \Yajra\DataTables\Facades\DataTables::of($admins)
                 ->addColumn('name_info', function($row) {
                     $initial = strtoupper(substr($row->name, 0, 1));
                     return '<div class="d-flex align-items-center gap-2">
-                                <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.8rem; font-weight: bold;">'.$initial.'</div>
-                                <span class="fw-bold">'.$row->name.'</span>
+                                <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.8rem; font-weight: bold;">'.e($initial).'</div>
+                                <span class="fw-bold">'.e($row->name).'</span>
                             </div>';
                 })
                 ->addColumn('roles_list', function($row) {
                     $html = '';
                     foreach($row->roles as $role) {
-                        $html .= '<span class="badge bg-soft-primary text-primary border border-primary-subtle px-2 py-1 me-1" style="background-color: rgba(var(--primary-rgb), 0.1);">'.ucfirst($role->name).'</span>';
+                        $html .= '<span class="badge bg-soft-primary text-primary border border-primary-subtle px-2 py-1 me-1" style="background-color: rgba(var(--primary-rgb), 0.1);">'.e(ucfirst($role->name)).'</span>';
                     }
                     return $html;
                 })
@@ -74,11 +74,15 @@ class AdminController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(auth('cms')->user()?->hasRole('superadmin'), 403);
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:cms_admins,email',
-            'password' => 'required|min:6|confirmed',
-            'roles' => 'required|array'
+            'password' => 'required|string|min:12|max:255|confirmed',
+            'roles' => 'required|array|min:1',
+            'roles.*' => ['required', 'string', \Illuminate\Validation\Rule::exists('roles', 'name')->where('guard_name', 'cms')],
+            'permissions' => 'sometimes|array',
+            'permissions.*' => ['required', 'string', \Illuminate\Validation\Rule::exists('permissions', 'name')->where('guard_name', 'cms')]
         ]);
 
         $admin = Admin::create([
@@ -112,18 +116,26 @@ class AdminController extends Controller
 
     public function update(Request $request, $id)
     {
+        abort_unless(auth('cms')->user()?->hasRole('superadmin'), 403);
         $admin = Admin::findOrFail($id);
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:cms_admins,email,' . $id,
-            'password' => 'nullable|min:6|confirmed',
-            'roles' => 'required|array'
+            'password' => 'nullable|string|min:12|max:255|confirmed',
+            'roles' => 'required|array|min:1',
+            'roles.*' => ['required', 'string', \Illuminate\Validation\Rule::exists('roles', 'name')->where('guard_name', 'cms')],
+            'permissions' => 'sometimes|array',
+            'permissions.*' => ['required', 'string', \Illuminate\Validation\Rule::exists('permissions', 'name')->where('guard_name', 'cms')]
         ]);
 
+        if ($admin->hasRole('superadmin') && !in_array('superadmin', $request->input('roles', []), true)) {
+            abort(403, 'The Super Admin role cannot be removed here.');
+        }
         $admin->name = $request->name;
         $admin->email = $request->email;
         if ($request->password) {
             $admin->password = Hash::make($request->password);
+            $admin->remember_token = \Illuminate\Support\Str::random(60);
         }
         $admin->save();
 
@@ -135,6 +147,7 @@ class AdminController extends Controller
 
     public function destroy($id)
     {
+        abort_unless(auth('cms')->user()?->hasRole('superadmin'), 403);
         $admin = Admin::findOrFail($id);
         if ($admin->isProtected()) {
             return back()->with('error', 'Special protected Admin accounts cannot be deleted.');
@@ -145,6 +158,7 @@ class AdminController extends Controller
 
     public function toggleStatus($id)
     {
+        abort_unless(auth('cms')->user()?->hasRole('superadmin'), 403);
         $admin = Admin::findOrFail($id);
         
         if ($admin->isProtected()) {

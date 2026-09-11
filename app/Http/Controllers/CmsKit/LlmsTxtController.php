@@ -27,6 +27,7 @@ class LlmsTxtController extends Controller
 
     public function generate()
     {
+        abort_unless(request()->isMethod('POST'), 405);
         $this->sitemapService->generate();
         $this->llmsTxtService->generate();
 

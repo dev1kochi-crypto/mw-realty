@@ -335,6 +335,7 @@ h2 {
 
 .btn-quicknav:hover,
 .btn-quicknav:focus-visible {
+    background: var(--primary-fill);
     color: #fff;
     transform: translateY(-2px);
     box-shadow: 0 10px 26px rgba(var(--primary-rgb), 0.45);

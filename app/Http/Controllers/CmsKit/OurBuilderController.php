@@ -9,8 +9,8 @@ use App\Models\CmsKit\SectionLabel;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
-use CMS\SiteManager\Support\ManagesOrderIndex;
-use CMS\SiteManager\Support\ValidatesImageDimensions;
+use App\Support\ManagesOrderIndex;
+use App\Support\ValidatesImageDimensions;
 
 class OurBuilderController extends Controller
 {
@@ -90,7 +90,7 @@ class OurBuilderController extends Controller
         $data['image_alt'] = $request->input('image_alt');
 
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('our-builders', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'our-builders');
         }
 
         $order = $this->resolveOrderForCreate(OurBuilderItem::class, $request->order_index ? (int) $request->order_index : null);
@@ -121,11 +121,11 @@ class OurBuilderController extends Controller
 
         if ($request->hasFile('image')) {
             if ($item->image) {
-                Storage::disk('public')->delete($item->image);
+                app(\App\Services\ManagedFiles::class)->delete($item->image);
             }
-            $data['image'] = $request->file('image')->store('our-builders', 'public');
+            $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'our-builders');
         } elseif ($request->boolean('remove_image') && $item->image) {
-            Storage::disk('public')->delete($item->image);
+            app(\App\Services\ManagedFiles::class)->delete($item->image);
             $data['image'] = null;
         }
 
@@ -141,7 +141,7 @@ class OurBuilderController extends Controller
         $item = OurBuilderItem::findOrFail($id);
         $order = $item->order_index;
         if ($item->image) {
-            Storage::disk('public')->delete($item->image);
+            app(\App\Services\ManagedFiles::class)->delete($item->image);
         }
         $item->delete();
 
@@ -218,7 +218,7 @@ class OurBuilderController extends Controller
             $items = OurBuilderItem::whereIn('id', $ids)->get();
             foreach ($items as $item) {
                 if ($item->image) {
-                    Storage::disk('public')->delete($item->image);
+                    app(\App\Services\ManagedFiles::class)->delete($item->image);
                 }
                 $item->delete();
             }

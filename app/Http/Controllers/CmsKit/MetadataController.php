@@ -18,7 +18,7 @@ class MetadataController extends Controller
             return DataTables::eloquent($data)
                 ->addColumn('page', function ($row) {
                 $name = $row->getTranslation('page_name', 'en') ?: ucfirst($row->page_key);
-                return '<strong>' . $name . '</strong><br><small class="text-muted">' . $row->page_key . '</small>';
+                return '<strong>' . e($name) . '</strong><br><small class="text-muted">' . e($row->page_key) . '</small>';
             })
                 ->addColumn('meta_title', function ($row) {
                 $title = $row->getTranslation('meta_title', 'en');
@@ -27,7 +27,7 @@ class MetadataController extends Controller
 
                 $len = mb_strlen($title);
                 $badgeClass = $len > 60 ? 'bg-danger' : 'bg-secondary';
-                return '<div class="mb-1 text-truncate" style="max-width: 250px;">' . $title . '</div>' .
+                return '<div class="mb-1 text-truncate" style="max-width: 250px;">' . e($title) . '</div>' .
                     '<span class="badge ' . $badgeClass . '">' . $len . '/60</span>';
             })
                 ->addColumn('meta_description', function ($row) {
@@ -37,7 +37,7 @@ class MetadataController extends Controller
 
                 $len = mb_strlen($desc);
                 $badgeClass = $len > 160 ? 'bg-danger' : 'bg-secondary';
-                return '<div class="mb-1 text-truncate" style="max-width: 300px;">' . $desc . '</div>' .
+                return '<div class="mb-1 text-truncate" style="max-width: 300px;">' . e($desc) . '</div>' .
                     '<span class="badge ' . $badgeClass . '">' . $len . '/160</span>';
             })
                 ->addColumn('actions', function ($row) {
@@ -68,6 +68,8 @@ class MetadataController extends Controller
             $rules["{$field}.en"] = 'required';
         }
 
+        $rules['og_image'] = 'nullable|image|max:4096';
+        $rules['canonical_url.*'] = 'nullable|url:http,https|max:2048';
         $rules['remove_og_image'] = 'nullable|boolean';
 
         $request->validate($rules);
@@ -85,11 +87,11 @@ class MetadataController extends Controller
         if ($request->hasFile('og_image')) {
             // Delete old image if exists
             if ($metadata->og_image) {
-                Storage::disk('public')->delete($metadata->og_image);
+                app(\App\Services\ManagedFiles::class)->delete($metadata->og_image);
             }
-            $data['og_image'] = $request->file('og_image')->store('metadata', 'public');
+            $data['og_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('og_image'), 'metadata');
         } elseif ($request->boolean('remove_og_image') && $metadata->og_image) {
-            Storage::disk('public')->delete($metadata->og_image);
+            app(\App\Services\ManagedFiles::class)->delete($metadata->og_image);
             $data['og_image'] = null;
         }
 
