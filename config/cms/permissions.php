@@ -58,10 +58,21 @@ return [
     | Default Users
     |--------------------------------------------------------------------------
     |
-    | Seed these users automatically. 
+    | Seed these users automatically via CmsRolesPermissionsSeeder, so a fresh
+    | `migrate` + `db:seed` always has a working superadmin login without an
+    | extra manual step. DEV/DEMO CONVENIENCE ONLY — change or remove this
+    | before any real deploy; `php artisan admin:provision {email}` sets a
+    | password interactively without ever writing it to a file, for that.
     |
     */
-    'users' => [], // Provision administrators with admin:provision; never seed passwords.
+    'users' => [
+        [
+            'name' => 'Super Admin',
+            'email' => 'admin@example.com',
+            'password' => 'password',
+            'role' => 'superadmin',
+        ],
+    ],
 
     'defaults' => [
         'view',
