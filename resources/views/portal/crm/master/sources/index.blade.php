@@ -25,12 +25,15 @@
     <div class="text-muted small mb-2"><i class="fas fa-arrows-alt me-1"></i> Drag rows to reorder.</div>
     <div class="table-responsive">
         <table class="table portal-table mb-0" id="sourcesTable">
-            <thead><tr><th></th><th>Name</th><th class="text-end">Actions</th></tr></thead>
+            <thead><tr><th></th><th>Name</th>@if($isAdmin)<th>Owner</th>@endif<th class="text-end">Actions</th></tr></thead>
             <tbody>
                 @forelse($sources as $source)
                 <tr draggable="true" data-id="{{ $source->id }}">
                     <td class="text-muted" style="cursor:grab;"><i class="fas fa-grip-lines"></i></td>
                     <td class="fw-semibold">{{ $source->name }}</td>
+                    @if($isAdmin)
+                    <td>{{ $source->owner?->displayName() ?? '-' }}</td>
+                    @endif
                     <td class="text-end">
                         <button type="button" class="btn btn-sm portal-btn-ghost edit-source-btn"
                             data-id="{{ $source->id }}" data-name="{{ $source->name }}">Edit</button>
@@ -38,7 +41,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="3" class="portal-empty">No sources yet — add one above.</td></tr>
+                <tr><td colspan="{{ $isAdmin ? 4 : 3 }}" class="portal-empty">No sources yet — add one above.</td></tr>
                 @endforelse
             </tbody>
         </table>

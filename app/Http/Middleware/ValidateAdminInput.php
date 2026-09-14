@@ -23,10 +23,13 @@ class ValidateAdminInput
         foreach (Arr::dot($request->allFiles()) as $field => $file) {
             $isDocument = str_contains($field, 'document') || str_contains($field, 'resume');
             $isVideo = str_contains($field, 'video');
-            $rules[$field] = $isDocument
-                ? 'file|mimes:jpg,jpeg,png,pdf|extensions:jpg,jpeg,png,pdf|max:4096'
-                : ($isVideo ? 'file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|extensions:mp4,mov,avi|max:51200'
-                    : 'image|extensions:jpg,jpeg,png,gif,bmp,webp|max:4096');
+            $isSpreadsheet = str_ends_with($name, '.import');
+            $rules[$field] = match (true) {
+                $isDocument => 'file|mimes:jpg,jpeg,png,pdf|extensions:jpg,jpeg,png,pdf|max:4096',
+                $isVideo => 'file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|extensions:mp4,mov,avi|max:51200',
+                $isSpreadsheet => 'file|mimes:xlsx,xls,csv|extensions:xlsx,xls,csv|max:10240',
+                default => 'image|extensions:jpg,jpeg,png,gif,bmp,webp|max:4096',
+            };
         }
         if (str_ends_with($name, '.bulk-action')) {
             $rules['action'] = ['required', Rule::in(['delete', 'active', 'activate', 'inactive', 'deactivate'])];

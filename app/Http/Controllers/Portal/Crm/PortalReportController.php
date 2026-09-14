@@ -41,11 +41,9 @@ class PortalReportController extends Controller
             ->pluck('total', 'day');
 
         $totalLeads = $leadQuery()->count();
-        $closedLeads = $leadQuery()
-            ->where(function ($q) {
-                $q->where('status', 'closed')->orWhereHas('stage', fn ($s) => $s->where('is_closed', true));
-            })
-            ->count();
+        // "Closed" here means the pipeline stage marks it done (Closed Won/Lost)
+        // — the lead's own status is now just Active/Inactive, not a deal outcome.
+        $closedLeads = $leadQuery()->whereHas('stage', fn ($s) => $s->where('is_closed', true))->count();
         $conversionRate = $totalLeads > 0 ? round($closedLeads / $totalLeads * 100, 1) : 0.0;
 
         return view('portal.crm.reports.index', [

@@ -162,5 +162,22 @@ return [
             'max_size' => 512,
         ],
     ],
+    'ads' => [
+        'image' => [
+            'width' => 1920,
+            'height' => 800,
+            'max_size' => 4096, // GIFs run larger than static images
+        ],
+    ],
+    'landing-pages' => [
+        'content_image' => [
+            'width' => 2560,
+            'height' => 2560,
+            'max_size' => 4096,
+        ],
+        'metadata_og_image' => [
+            'max_size' => 4096,
+        ],
+    ],
 ];
 

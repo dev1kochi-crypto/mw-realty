@@ -28,13 +28,16 @@
 <div class="portal-card p-4">
     <div class="table-responsive">
         <table class="table portal-table mb-0">
-            <thead><tr><th>Name</th><th class="text-end">Actions</th></tr></thead>
+            <thead><tr><th>Name</th>@if($isAdmin)<th>Owner</th>@endif<th class="text-end">Actions</th></tr></thead>
             <tbody>
                 @forelse($tags as $tag)
                 <tr>
                     <td>
                         <span class="portal-tag-chip" style="background: {{ $tag->color }}22; color: {{ $tag->color }};">{{ $tag->name }}</span>
                     </td>
+                    @if($isAdmin)
+                    <td>{{ $tag->owner?->displayName() ?? '-' }}</td>
+                    @endif
                     <td class="text-end">
                         <button type="button" class="btn btn-sm portal-btn-ghost edit-tag-btn"
                             data-id="{{ $tag->id }}" data-name="{{ $tag->name }}" data-color="{{ $tag->color }}">Edit</button>
@@ -42,7 +45,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="2" class="portal-empty">No tags yet — add one above.</td></tr>
+                <tr><td colspan="{{ $isAdmin ? 3 : 2 }}" class="portal-empty">No tags yet — add one above.</td></tr>
                 @endforelse
             </tbody>
         </table>

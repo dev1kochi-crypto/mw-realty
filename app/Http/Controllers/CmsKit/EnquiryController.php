@@ -10,10 +10,18 @@ use Carbon\Carbon;
 
 class EnquiryController extends Controller
 {
+    /** Landing page submissions have their own dedicated page (Landing Pages > Enquiries) — kept out of here. */
+    private function scopeExcludingLandingPages($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('page_source')->orWhere('page_source', 'not like', 'Landing Page:%');
+        });
+    }
+
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Enquiry::query();
+            $query = $this->scopeExcludingLandingPages(Enquiry::query());
 
             // Filters
             if ($request->filled('page_source') && $request->page_source != 'All') {
@@ -56,8 +64,9 @@ class EnquiryController extends Controller
                 ->make(true);
         }
 
-        $sources = Enquiry::select('page_source')->distinct()->pluck('page_source')->filter()->values();
-        $hasData = Enquiry::exists();
+        $sources = $this->scopeExcludingLandingPages(Enquiry::query())
+            ->select('page_source')->distinct()->pluck('page_source')->filter()->values();
+        $hasData = $this->scopeExcludingLandingPages(Enquiry::query())->exists();
 
         return view('cms-kit::enquiries.index', compact('sources', 'hasData'));
     }
@@ -70,7 +79,7 @@ class EnquiryController extends Controller
 
     public function export(Request $request)
     {
-        $query = Enquiry::query();
+        $query = $this->scopeExcludingLandingPages(Enquiry::query());
 
         // Apply filters same as index
         if ($request->filled('page_source') && $request->page_source != 'All') {

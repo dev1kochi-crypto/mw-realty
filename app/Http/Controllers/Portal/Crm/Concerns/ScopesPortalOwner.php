@@ -2,29 +2,48 @@
 
 namespace App\Http\Controllers\Portal\Crm\Concerns;
 
-use Illuminate\Support\Facades\Auth;
+use App\Services\Crm\OwnerContext;
 
-/** Shared Super Admin (global) vs Agent/Company (own-data) scoping used across the CRM controllers. */
+/**
+ * Shared Super Admin (global) vs Agent/Company (own-data) scoping used across
+ * the CRM controllers. Thin delegation to OwnerContext, the single source of
+ * truth for this resolution — also used directly by FormRequests/Imports that
+ * need the same answer outside a controller.
+ */
 trait ScopesPortalOwner
 {
-    /**
-     * A portal-guard login always wins, even if a superadmin cms-guard session is
-     * also active in the same browser (e.g. testing the portal in a second tab) —
-     * otherwise there'd be no way to see your own scoped view without logging out
-     * of /admin first.
-     */
+    protected function ownerContext(): OwnerContext
+    {
+        return app(OwnerContext::class);
+    }
+
     protected function isAdmin(): bool
     {
-        return !Auth::guard('portal')->check() && (bool) Auth::guard('cms')->user()?->hasRole('superadmin');
+        return $this->ownerContext()->isAdmin();
     }
 
     protected function ownerId(): ?int
     {
-        return Auth::guard('portal')->check() ? Auth::guard('portal')->user()->id : null;
+        return $this->ownerContext()->ownerId();
     }
 
     protected function owner(): ?\App\Models\PortalUser
     {
-        return Auth::guard('portal')->user();
+        return $this->ownerContext()->owner();
+    }
+
+    protected function effectiveOwnerId(): ?int
+    {
+        return $this->ownerContext()->effectiveOwnerId();
+    }
+
+    protected function effectiveOwner(): ?\App\Models\PortalUser
+    {
+        return $this->ownerContext()->effectiveOwner();
+    }
+
+    protected function actorName(): string
+    {
+        return $this->ownerContext()->actorName();
     }
 }

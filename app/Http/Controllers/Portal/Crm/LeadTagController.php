@@ -14,19 +14,18 @@ class LeadTagController extends Controller
 
     public function index()
     {
-        if ($this->isAdmin()) {
-            return redirect()->route('portal.dashboard')
-                ->with('info', 'Stage/Tag/Source are managed per company or agent account — log in as (or impersonate) a specific account to manage theirs.');
-        }
+        $ownerId = $this->effectiveOwnerId();
+        $tags = LeadTag::forOwner($ownerId)->orderBy('name')->get();
 
-        $tags = LeadTag::forOwner($this->ownerId())->orderBy('name')->get();
-
-        return view('portal.crm.master.tags.index', compact('tags'));
+        return view('portal.crm.master.tags.index', [
+            'tags' => $tags,
+            'isAdmin' => $this->isAdmin(),
+        ]);
     }
 
     public function store(Request $request)
     {
-        $ownerId = $this->ownerId();
+        $ownerId = $this->effectiveOwnerId();
         abort_if(!$ownerId, 403);
 
         $request->validate([
@@ -45,7 +44,7 @@ class LeadTagController extends Controller
 
     protected function findOwned($id): LeadTag
     {
-        return LeadTag::forOwner($this->ownerId())->findOrFail($id);
+        return LeadTag::forOwner($this->effectiveOwnerId())->findOrFail($id);
     }
 
     public function update(Request $request, $id)

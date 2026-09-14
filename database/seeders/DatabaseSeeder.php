@@ -22,7 +22,8 @@ class DatabaseSeeder extends Seeder
             CmsRolesPermissionsSeeder::class,
             MetadataSeeder::class,
             FilterSeeder::class,
-            PlanSeeder::class
+            PlanSeeder::class,
+            CrmAdminMasterDataSeeder::class,
         ]);
     }
 }

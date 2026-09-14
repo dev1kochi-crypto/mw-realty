@@ -14,19 +14,18 @@ class LeadSourceController extends Controller
 
     public function index()
     {
-        if ($this->isAdmin()) {
-            return redirect()->route('portal.dashboard')
-                ->with('info', 'Stage/Tag/Source are managed per company or agent account — log in as (or impersonate) a specific account to manage theirs.');
-        }
+        $ownerId = $this->effectiveOwnerId();
+        $sources = LeadSource::forOwner($ownerId)->orderBy('order_index')->get();
 
-        $sources = LeadSource::forOwner($this->ownerId())->orderBy('order_index')->get();
-
-        return view('portal.crm.master.sources.index', compact('sources'));
+        return view('portal.crm.master.sources.index', [
+            'sources' => $sources,
+            'isAdmin' => $this->isAdmin(),
+        ]);
     }
 
     public function store(Request $request)
     {
-        $ownerId = $this->ownerId();
+        $ownerId = $this->effectiveOwnerId();
         abort_if(!$ownerId, 403);
 
         $request->validate([
@@ -46,7 +45,7 @@ class LeadSourceController extends Controller
 
     protected function findOwned($id): LeadSource
     {
-        return LeadSource::forOwner($this->ownerId())->findOrFail($id);
+        return LeadSource::forOwner($this->effectiveOwnerId())->findOrFail($id);
     }
 
     public function update(Request $request, $id)
@@ -77,7 +76,7 @@ class LeadSourceController extends Controller
 
     public function reorder(Request $request)
     {
-        $ownerId = $this->ownerId();
+        $ownerId = $this->effectiveOwnerId();
         abort_if(!$ownerId, 403);
 
         $request->validate([

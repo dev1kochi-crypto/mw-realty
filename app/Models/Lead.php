@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * A visitor enquiry about one specific property, routed to that property's
@@ -11,12 +12,15 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Lead extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'property_id',
         'portal_user_id',
         'name',
         'email',
         'phone',
+        'phone_country_code',
         'company',
         'country',
         'message',
@@ -58,8 +62,29 @@ class Lead extends Model
         return $this->belongsToMany(LeadTag::class, 'lead_tag_pivot');
     }
 
+    /** Activity history (notes today; Follow-ups/Calls/Site Visits later) — see LeadNoteService. */
+    public function notesHistory()
+    {
+        return $this->hasMany(LeadNote::class);
+    }
+
     public function scopeForOwner($query, ?int $ownerId)
     {
         return $query->when($ownerId, fn ($q) => $q->where('leads.portal_user_id', $ownerId));
+    }
+
+    public function getFormattedPhoneAttribute(): ?string
+    {
+        $phone = trim((string) $this->phone);
+
+        if ($phone === '') {
+            return null;
+        }
+
+        if (str_starts_with($phone, '+') || !$this->phone_country_code) {
+            return $phone;
+        }
+
+        return trim($this->phone_country_code.' '.$phone);
     }
 }

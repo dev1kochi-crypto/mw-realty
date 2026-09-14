@@ -34,7 +34,7 @@
     <div class="table-responsive">
         <table class="table portal-table mb-0" id="stagesTable">
             <thead>
-                <tr><th></th><th>Name</th><th>Closed?</th><th>Default</th><th class="text-end">Actions</th></tr>
+                <tr><th></th><th>Name</th><th>Closed?</th><th>Default</th>@if($isAdmin)<th>Owner</th>@endif<th class="text-end">Actions</th></tr>
             </thead>
             <tbody>
                 @forelse($stages as $stage)
@@ -55,6 +55,9 @@
                         </form>
                         @endif
                     </td>
+                    @if($isAdmin)
+                    <td>{{ $stage->owner?->displayName() ?? '-' }}</td>
+                    @endif
                     <td class="text-end">
                         <button type="button" class="btn btn-sm portal-btn-ghost edit-stage-btn"
                             data-id="{{ $stage->id }}" data-name="{{ $stage->name }}" data-color="{{ $stage->color }}" data-closed="{{ $stage->is_closed ? 1 : 0 }}">
@@ -66,7 +69,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="5" class="portal-empty">No stages yet — add one above.</td></tr>
+                <tr><td colspan="{{ $isAdmin ? 6 : 5 }}" class="portal-empty">No stages yet — add one above.</td></tr>
                 @endforelse
             </tbody>
         </table>
