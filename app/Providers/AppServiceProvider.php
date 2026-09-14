@@ -30,6 +30,8 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Cache\RateLimiting\Limit::perHour(10)->by($request->ip()));
         \Illuminate\Support\Facades\RateLimiter::for('lead-capture', fn ($request) =>
             \Illuminate\Cache\RateLimiting\Limit::perHour(20)->by($request->ip()));
+        \Illuminate\Support\Facades\RateLimiter::for('landing-page-enquiry', fn ($request) =>
+            \Illuminate\Cache\RateLimiting\Limit::perHour(20)->by($request->ip()));
 
         $this->app->booted(function () {
             foreach (app('router')->getRoutes() as $route) {

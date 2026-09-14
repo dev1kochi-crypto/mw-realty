@@ -423,6 +423,34 @@
                     </a>
                     @endif
 
+                    @if(config('cms-kit.common.modules.landing-pages', true) && $cmsUser->can('landing-pages.view'))
+                    <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.landing-pages.*')) active @endif"
+                           data-bs-toggle="collapse" href="#landingPagesMenu" role="button"
+                           aria-expanded="@if(request()->routeIs('cms.landing-pages.*')) true @else false @endif">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Landing Pages</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.landing-pages.*')) show @endif" id="landingPagesMenu">
+                            <nav class="nav flex-column">
+                                <a class="nav-link py-2 @if(Route::is('cms.landing-pages.index') || Route::is('cms.landing-pages.create') || Route::is('cms.landing-pages.edit')) active @endif" href="{{ route('cms.landing-pages.index') }}">
+                                    All Pages
+                                </a>
+                                <a class="nav-link py-2 @if(Route::is('cms.landing-pages.enquiries')) active @endif" href="{{ route('cms.landing-pages.enquiries') }}">
+                                    Enquiries
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(config('cms-kit.common.modules.ads', true) && $cmsUser->can('ads.view'))
+                    <a class="nav-link @if(Route::is('cms.ads.*')) active @endif" href="{{ route('cms.ads.index') }}">
+                        <i class="fas fa-bullhorn"></i> Ad Management
+                    </a>
+                    @endif
+
                     @if(config('cms-kit.common.modules.careers', true) && $cmsUser->can('careers.view'))
                     <div class="nav-item sidebar-group">
                         <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.careers.*')) active @endif" 
