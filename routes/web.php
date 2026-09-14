@@ -16,6 +16,8 @@ use App\Http\Controllers\CmsKit\CommunityController;
 use App\Http\Controllers\CmsKit\ContactController;
 use App\Http\Controllers\CmsKit\FindPropertyController;
 use App\Http\Controllers\CmsKit\PlanController;
+use App\Http\Controllers\CmsKit\AdController;
+use App\Http\Controllers\CmsKit\LandingPageController;
 use App\Http\Controllers\CmsKit\NotificationController;
 use App\Http\Controllers\Portal\PortalAuthController;
 use App\Http\Controllers\Portal\PortalDashboardController;
@@ -302,6 +304,70 @@ Route::middleware(['web'])->group(function () {
 
                 Route::get('/plans/{id}', [PlanController::class, 'show'])->name('cms.plans.show');
             });
+
+            // Ad Management (image/GIF banners shown at a named placement — placement is free-text until the frontend design is final)
+            Route::middleware(['cms.permission:ads.view'])->group(function () {
+                Route::get('/ads', [AdController::class, 'index'])->name('cms.ads.index');
+
+                Route::middleware(['cms.permission:ads.create'])->group(function () {
+                    Route::get('/ads/create', [AdController::class, 'create'])->name('cms.ads.create');
+                    Route::post('/ads', [AdController::class, 'store'])->name('cms.ads.store');
+                });
+
+                Route::middleware(['cms.permission:ads.edit'])->group(function () {
+                    Route::get('/ads/{id}/edit', [AdController::class, 'edit'])->name('cms.ads.edit');
+                    Route::put('/ads/{id}', [AdController::class, 'update'])->name('cms.ads.update');
+                    Route::post('/ads/{id}/toggle-status', [AdController::class, 'toggleStatus'])->name('cms.ads.toggle-status');
+                    Route::post('/ads/reorder', [AdController::class, 'reorder'])->name('cms.ads.reorder');
+                });
+
+                Route::middleware(['cms.permission:ads.delete'])->group(function () {
+                    Route::delete('/ads/{id}', [AdController::class, 'destroy'])->name('cms.ads.destroy');
+                    Route::post('/ads/bulk-action', [AdController::class, 'bulkAction'])->name('cms.ads.bulk-action');
+                });
+            });
+
+            // Landing Pages (template pages sharing the Blog field shape, or fully custom HTML/CSS)
+            Route::middleware(['cms.permission:landing-pages.view'])->group(function () {
+                Route::get('/landing-pages', [LandingPageController::class, 'index'])->name('cms.landing-pages.index');
+                Route::get('/landing-pages/enquiries', [LandingPageController::class, 'enquiries'])->name('cms.landing-pages.enquiries');
+
+                Route::middleware(['cms.permission:landing-pages.create'])->group(function () {
+                    Route::get('/landing-pages/create', [LandingPageController::class, 'create'])->name('cms.landing-pages.create');
+                    Route::post('/landing-pages', [LandingPageController::class, 'store'])->name('cms.landing-pages.store');
+                });
+
+                Route::middleware(['cms.permission:landing-pages.edit'])->group(function () {
+                    Route::get('/landing-pages/{id}/edit', [LandingPageController::class, 'edit'])->name('cms.landing-pages.edit');
+                    Route::put('/landing-pages/{id}', [LandingPageController::class, 'update'])->name('cms.landing-pages.update');
+                    Route::post('/landing-pages/{id}/toggle-status', [LandingPageController::class, 'toggleStatus'])->name('cms.landing-pages.toggle-status');
+                    Route::post('/landing-pages/reorder', [LandingPageController::class, 'reorder'])->name('cms.landing-pages.reorder');
+                    Route::post('/landing-pages/upload-image', [LandingPageController::class, 'uploadContentImage'])->name('cms.landing-pages.upload-image');
+                    Route::post('/landing-pages/discard-temp-images', [LandingPageController::class, 'discardTempImages'])->name('cms.landing-pages.discard-temp-images');
+                    Route::post('/landing-pages/extract-text', [LandingPageController::class, 'extractText'])->name('cms.landing-pages.extract-text');
+                    Route::post('/landing-pages/extract-images', [LandingPageController::class, 'extractImages'])->name('cms.landing-pages.extract-images');
+                    Route::post('/landing-pages/preview', [LandingPageController::class, 'preview'])->name('cms.landing-pages.preview');
+                });
+
+                Route::middleware(['cms.permission:landing-pages.delete'])->group(function () {
+                    Route::delete('/landing-pages/{id}', [LandingPageController::class, 'destroy'])->name('cms.landing-pages.destroy');
+                    Route::post('/landing-pages/bulk-action', [LandingPageController::class, 'bulkAction'])->name('cms.landing-pages.bulk-action');
+                });
+            });
+
+            // Overrides the vendor package's own /enquiries routes (same names/permissions, so nothing
+            // else that calls route('cms.enquiries.*') needs to change) — the only difference is that
+            // this app-level EnquiryController excludes landing-page submissions from the listing/export,
+            // since those now live under their own Landing Pages > Enquiries page instead.
+            Route::middleware(['cms.permission:enquiries.view'])->group(function () {
+                if (config('cms-kit.common.modules.enquiries', true)) {
+                    Route::get('/enquiries', [\App\Http\Controllers\CmsKit\EnquiryController::class, 'index'])->name('cms.enquiries.index');
+                    Route::get('/enquiries/export', [\App\Http\Controllers\CmsKit\EnquiryController::class, 'export'])->name('cms.enquiries.export')->middleware('cms.permission:enquiries.export');
+                    Route::get('/enquiries/{id}', [\App\Http\Controllers\CmsKit\EnquiryController::class, 'show'])->name('cms.enquiries.show')->middleware('cms.permission:enquiries.show');
+                    Route::delete('/enquiries/{id}', [\App\Http\Controllers\CmsKit\EnquiryController::class, 'destroy'])->name('cms.enquiries.destroy')->middleware('cms.permission:enquiries.delete');
+                    Route::post('/enquiries/bulk-action', [\App\Http\Controllers\CmsKit\EnquiryController::class, 'bulkAction'])->name('cms.enquiries.bulk-action')->middleware('cms.permission:enquiries.delete');
+                }
+            });
         });
     });
 });
@@ -401,3 +467,17 @@ Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->middleware(['web',
     Route::post('/sitemap/generate', [\App\Http\Controllers\CmsKit\SitemapController::class, 'generate'])->name('cms.sitemap.generate')->middleware('cms.permission:sitemap.edit');
     Route::post('/seo/llms-txt/generate', [\App\Http\Controllers\CmsKit\LlmsTxtController::class, 'generate'])->name('cms.llms-txt.generate')->middleware('cms.permission:llms-txt.edit');
 });
+
+// Public, unauthenticated — captures any <form> submission on a landing page (see
+// LandingPageController::rewireForms(), which points every form at this URL automatically).
+Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryController::class, 'store'])
+    ->name('landing-pages.enquiry.store')
+    ->middleware('throttle:landing-page-enquiry');
+
+// Public — renders a published Landing Page by its slug. Registered LAST: it's a single-segment
+// catch-all, so every more specific route above (/, /api/*, /leads/capture, /admin/*, /portal/*)
+// must always get first chance to match. The (?!...) guard is a belt-and-braces exclusion of the
+// app's other top-level path segments, in case any of them is ever reached without a deeper segment.
+Route::get('/{slug}', [\App\Http\Controllers\LandingPageController::class, 'show'])
+    ->where('slug', '^(?!(admin|portal|api|storage)$).+$')
+    ->name('landing-pages.show');

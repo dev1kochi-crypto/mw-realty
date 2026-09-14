@@ -43,6 +43,8 @@ return [
         'locations' => false,
         'newsletter-signups' => true,
         'blogs' => true,
+        'landing-pages' => true,
+        'ads' => true,
         'careers' => false,
         'properties' => true,
         'portal-accounts' => true,
