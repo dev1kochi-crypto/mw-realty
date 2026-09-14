@@ -261,7 +261,7 @@
         </a>
     </div>
     <div class="col-6 col-md-3 col-xl">
-        <a href="{{ route('portal.crm.leads.index', ['status' => 'new']) }}" class="stat-mini fill-amber">
+        <a href="{{ route('portal.crm.leads.index', ['status' => 'active']) }}" class="stat-mini fill-amber">
             <span class="stat-mini-icon fill-amber"><i class="fas fa-bell"></i></span>
             <div><div class="stat-mini-value">{{ $stats['new_crm_leads'] }}</div><div class="stat-mini-label">New Leads</div></div>
         </a>
@@ -364,7 +364,7 @@
                                 <td class="fw-semibold">{{ $lead->name ?: 'Unknown' }}</td>
                                 <td>{{ $lead->property?->getTranslation('title') ?? '-' }}</td>
                                 <td>{{ $lead->owner ? ($lead->owner->type === 'company' ? ($lead->owner->company_name ?: $lead->owner->name) : $lead->owner->name) : '-' }}</td>
-                                <td><span class="badge bg-{{ $lead->status === 'new' ? 'primary' : ($lead->status === 'contacted' ? 'warning text-dark' : 'secondary') }}">{{ ucfirst($lead->status) }}</span></td>
+                                <td><span class="badge bg-{{ $lead->status === 'active' ? 'primary' : 'secondary' }}">{{ ucfirst($lead->status) }}</span></td>
                             </tr>
                             @empty
                             <tr><td colspan="4" class="text-center text-muted py-3">No CRM leads yet.</td></tr>
@@ -406,7 +406,7 @@
             @if($stats['new_crm_leads'] > 0)
             <div class="action-row">
                 <span><i class="fas fa-bell me-2" style="color: var(--dash-teal);"></i>{{ $stats['new_crm_leads'] }} new leads to contact</span>
-                <a href="{{ route('portal.crm.leads.index', ['status' => 'new']) }}" class="btn btn-sm btn-outline-secondary py-0">View</a>
+                <a href="{{ route('portal.crm.leads.index', ['status' => 'active']) }}" class="btn btn-sm btn-outline-secondary py-0">View</a>
             </div>
             @endif
             @if($stats['pending_accounts'] === 0 && $stats['new_crm_leads'] === 0)

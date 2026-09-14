@@ -6,8 +6,6 @@ use CMS\SiteManager\Database\Seeders\CmsRolesPermissionsSeeder;
 use CMS\SiteManager\Database\Seeders\MetadataSeeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use CMS\SiteManager\Database\Seeders\CmsRolesPermissionsSeeder;
-use CMS\SiteManager\Database\Seeders\MetadataSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -24,7 +22,8 @@ class DatabaseSeeder extends Seeder
             CmsRolesPermissionsSeeder::class,
             MetadataSeeder::class,
             FilterSeeder::class,
-            PlanSeeder::class
+            PlanSeeder::class,
+            CrmAdminMasterDataSeeder::class,
         ]);
     }
 }
