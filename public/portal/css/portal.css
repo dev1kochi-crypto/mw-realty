@@ -351,6 +351,115 @@ body.portal-body {
     vertical-align: middle;
 }
 
+/* Lead-table actions: familiar icons keep each row compact; native tooltips
+   expose the action name on hover. */
+.portal-lead-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.portal-lead-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid var(--portal-border);
+    border-radius: 9px;
+    background: var(--portal-surface);
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.portal-lead-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(40, 46, 105, 0.12);
+}
+
+.portal-lead-action:focus-visible {
+    outline: 3px solid rgba(79, 70, 229, 0.25);
+    outline-offset: 2px;
+}
+
+.portal-lead-action.is-view {
+    color: #334155;
+}
+
+.portal-lead-action.is-view:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.portal-lead-action.is-edit {
+    border-color: #c7d2fe;
+    background: #eef2ff;
+    color: #4338ca;
+}
+
+.portal-lead-action.is-edit:hover {
+    border-color: #818cf8;
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.portal-inline-stage {
+    display: inline-flex;
+    align-items: center;
+    min-width: 120px;
+}
+
+.portal-stage-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.portal-stage-picker:hover .portal-stage-pill,
+.portal-stage-picker:focus-visible .portal-stage-pill {
+    filter: brightness(0.96);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+
+.portal-stage-picker:focus-visible {
+    outline: none;
+}
+
+.portal-stage-picker-chevron {
+    color: var(--portal-muted);
+    font-size: 0.62rem;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.portal-stage-picker:hover .portal-stage-picker-chevron {
+    color: var(--portal-primary);
+    transform: translateY(1px);
+}
+
+.portal-stage-picker-empty {
+    color: var(--portal-primary);
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.portal-stage-select {
+    min-width: 140px;
+    max-width: 190px;
+    font-size: 0.78rem;
+}
+
+.portal-stage-spinner {
+    margin-left: 0.45rem;
+}
+
 .portal-empty {
     text-align: center;
     padding: 3.5rem 1rem;

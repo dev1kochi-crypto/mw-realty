@@ -44,7 +44,7 @@ class LeadCaptureController extends Controller
             'message' => $request->input('message'),
             'page_url' => $request->header('referer'),
             'page_source' => $request->input('page_source', 'property-detail'),
-            'status' => 'new',
+            'status' => 'active',
         ]);
 
         try {

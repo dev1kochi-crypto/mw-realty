@@ -205,4 +205,10 @@ class PortalUser extends Authenticatable
     {
         return $query->where('status', 'pending');
     }
+
+    /** The name shown wherever this portal user is displayed as an "Owner". */
+    public function displayName(): string
+    {
+        return $this->type === 'company' ? ($this->company_name ?: $this->name) : $this->name;
+    }
 }

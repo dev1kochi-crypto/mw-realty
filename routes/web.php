@@ -26,6 +26,7 @@ use App\Http\Controllers\Portal\PortalProfileController;
 use App\Http\Controllers\Portal\PortalNotificationController;
 use App\Http\Controllers\Portal\PortalPlanController;
 use App\Http\Controllers\Portal\Crm\LeadController;
+use App\Http\Controllers\Portal\Crm\LeadNoteController;
 use App\Http\Controllers\Portal\Crm\LeadStageController;
 use App\Http\Controllers\Portal\Crm\LeadTagController;
 use App\Http\Controllers\Portal\Crm\LeadSourceController;
@@ -422,8 +423,20 @@ Route::prefix('portal')->name('portal.')->group(function () {
 
         Route::prefix('crm')->name('crm.')->group(function () {
             Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
+            Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
+            Route::delete('/leads/bulk-delete', [LeadController::class, 'bulkDestroy'])->name('leads.bulk-delete');
+            Route::get('/leads/export', [LeadController::class, 'export'])->name('leads.export');
+            Route::get('/leads/import', [LeadController::class, 'importForm'])->name('leads.import.form');
+            Route::post('/leads/import', [LeadController::class, 'import'])->name('leads.import');
+            Route::get('/leads/import/template', [LeadController::class, 'downloadImportTemplate'])->name('leads.import.template');
+            Route::get('/leads/trashed', [LeadController::class, 'trashed'])->name('leads.trashed');
+            Route::post('/leads/{id}/restore', [LeadController::class, 'restore'])->name('leads.restore');
+            Route::delete('/leads/{id}/force', [LeadController::class, 'forceDestroy'])->name('leads.force-delete');
+            Route::patch('/leads/{id}/stage', [LeadController::class, 'updateStage'])->name('leads.stage.update');
             Route::get('/leads/{id}', [LeadController::class, 'show'])->name('leads.show');
             Route::put('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
+            Route::delete('/leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
+            Route::post('/leads/{id}/notes', [LeadNoteController::class, 'store'])->name('leads.notes.store');
 
             Route::prefix('master')->name('master.')->group(function () {
                 Route::get('/stages', [LeadStageController::class, 'index'])->name('stages.index');

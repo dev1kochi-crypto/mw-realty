@@ -8,13 +8,17 @@ use App\Models\CmsKit\Faq;
 use App\Models\CmsKit\Enquiry;
 use App\Models\CmsKit\Testimonial;
 use App\Models\CmsKit\Career;
-use App\Models\Lead;
 use App\Models\Property;
 use App\Models\PortalUser;
 use App\Models\Plan;
+use App\Services\Crm\LeadService;
 
 class DashboardController extends Controller
 {
+    public function __construct(private readonly LeadService $leadService)
+    {
+    }
+
     public function index()
     {
         if (!auth('cms')->user()->hasRole('superadmin')) return view('cms-kit::dashboard-restricted');
@@ -24,6 +28,8 @@ class DashboardController extends Controller
 
     private function dashboardData(): array
     {
+        $leadStats = $this->leadService->getLeadStatistics(null);
+
         $stats = [
             'banners' => Banner::count(),
             'faqs' => Faq::count(),
@@ -37,8 +43,8 @@ class DashboardController extends Controller
             'approved_companies' => PortalUser::where('type', 'company')->approved()->count(),
             'pending_accounts' => PortalUser::pending()->count(),
             'rejected_accounts' => PortalUser::where('status', 'rejected')->count(),
-            'crm_leads' => Lead::count(),
-            'new_crm_leads' => Lead::where('status', 'new')->count(),
+            'crm_leads' => $leadStats['total'],
+            'new_crm_leads' => $leadStats['active'],
             'total_plans' => Plan::count(),
         ];
 
@@ -59,9 +65,7 @@ class DashboardController extends Controller
         $pendingAccounts = PortalUser::pending()->latest()->take(5)->get();
 
         // CRM pipeline (New -> Contacted -> Closed)
-        $leadStatusBreakdown = Lead::selectRaw('status, count(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+        $leadStatusBreakdown = $leadStats;
 
         $listingTypeBreakdown = Property::whereNotNull('listing_type')
             ->selectRaw('listing_type, count(*) as total')
@@ -85,10 +89,7 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        $recentLeads = Lead::with(['property', 'owner'])
-            ->latest()
-            ->take(5)
-            ->get();
+        $recentLeads = $this->leadService->filteredQuery(null)->take(5)->get();
 
         $latestProperties = Property::with('owner')->latest()->take(5)->get();
 
