@@ -43,16 +43,7 @@ class CrmAdminMasterDataSeeder extends Seeder
             }
         }
 
-        if (!LeadTag::where('portal_user_id', $admin->id)->exists()) {
-            foreach (range(1, 5) as $i) {
-                LeadTag::create([
-                    'portal_user_id' => $admin->id,
-                    'name' => "Tag {$i}",
-                    'color' => '#14b8a6',
-                ]);
-            }
-        }
-
         LeadSource::seedDefaultsFor($admin);
+        LeadTag::seedDefaultsFor($admin);
     }
 }

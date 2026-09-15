@@ -66,40 +66,72 @@
     </button>
 </div>
 
+@php($hasTableField = fn (string $field) => in_array($field, $leadTableColumns, true))
 <div class="portal-card p-3 p-md-4">
+    <div class="portal-table-toolbar">
+        <span id="leadTableScrollHint" class="portal-table-scroll-hint d-none"><i class="fas fa-arrows-left-right me-1" aria-hidden="true"></i>Scroll horizontally to see all selected fields</span>
+    </div>
     <div class="table-responsive">
-        <table class="table portal-table mb-0">
+        <table class="table portal-table mb-0" id="leadsDataTable" data-has-rows="{{ $leads->isNotEmpty() ? 'true' : 'false' }}">
             <thead>
                 <tr>
                     <th style="width: 2.5rem;"><input type="checkbox" class="form-check-input" id="selectAllLeads"></th>
-                    <th>Lead</th>
-                    <th>Property</th>
-                    @if($isAdmin)
-                    <th>Owner</th>
+                    <th data-column-key="lead">Lead</th>
+                    @if($hasTableField('email'))
+                    <th data-column-key="email">Email</th>
                     @endif
-                    <th>Stage</th>
-                    <th>Source</th>
-                    <th>Tags</th>
-                    <th>Received</th>
-                    <th class="text-end">Actions</th>
+                    @if($hasTableField('phone'))
+                    <th data-column-key="phone">Phone</th>
+                    @endif
+                    @if($isAdmin && $hasTableField('owner'))
+                    <th data-column-key="owner">Owner</th>
+                    @endif
+                    @if($hasTableField('stage'))
+                    <th data-column-key="stage">Stage</th>
+                    @endif
+                    @if($hasTableField('status'))
+                    <th data-column-key="status">Status</th>
+                    @endif
+                    @if($hasTableField('source'))
+                    <th data-column-key="source">Source</th>
+                    @endif
+                    @if($hasTableField('tags'))
+                    <th data-column-key="tags">Tags</th>
+                    @endif
+                    @if($hasTableField('message'))
+                    <th data-column-key="message">Message</th>
+                    @endif
+                    @if($hasTableField('notes'))
+                    <th data-column-key="notes">Notes</th>
+                    @endif
+                    @if($hasTableField('received'))
+                    <th data-column-key="received">Received</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
                 @forelse($leads as $lead)
-                <tr>
-                    <td><input type="checkbox" class="form-check-input lead-select-checkbox" value="{{ $lead->id }}"></td>
-                    <td>
+                <tr class="portal-lead-row" data-lead-id="{{ $lead->id }}" tabindex="0" aria-label="View {{ $lead->name ?: 'lead' }} details">
+                    <td data-lead-selection><input type="checkbox" class="form-check-input lead-select-checkbox" value="{{ $lead->id }}"></td>
+                    <td data-column-key="lead">
                         <div class="d-flex align-items-center gap-2">
                             <span class="portal-lead-avatar">{{ strtoupper(mb_substr($lead->name ?: '?', 0, 1)) }}</span>
                             <div class="min-w-0">
-                                <div class="fw-semibold">{{ $lead->name ?: 'Unknown' }}</div>
+                                <button type="button" class="portal-lead-name-button view-lead-btn" data-id="{{ $lead->id }}" aria-label="View details for {{ $lead->name ?: 'lead' }}">
+                                    {{ $lead->name ?: 'Unknown' }}
+                                </button>
                                 <div class="text-muted text-truncate" style="font-size: 0.78rem; max-width: 180px;">{{ $lead->email ?: $lead->formatted_phone ?: '-' }}</div>
                             </div>
                         </div>
                     </td>
-                    <td>{{ $lead->property?->getTranslation('title') ?? '-' }}</td>
-                    @if($isAdmin)
-                    <td>
+                    @if($hasTableField('email'))
+                    <td data-column-key="email" data-search="{{ $lead->email ?? '' }}"><span class="portal-table-email">{{ $lead->email ?: '-' }}</span></td>
+                    @endif
+                    @if($hasTableField('phone'))
+                    <td data-column-key="phone" data-search="{{ $lead->formatted_phone ?? '' }}">{{ $lead->formatted_phone ?: '-' }}</td>
+                    @endif
+                    @if($isAdmin && $hasTableField('owner'))
+                    <td data-column-key="owner">
                         @if($lead->owner)
                             {{ $lead->owner->displayName() }}
                         @else
@@ -107,7 +139,8 @@
                         @endif
                     </td>
                     @endif
-                    <td>
+                    @if($hasTableField('stage'))
+                    <td data-column-key="stage" data-search="{{ $lead->stage?->name ?? '' }}" data-order="{{ $lead->stage?->name ?? '' }}">
                         <div class="portal-inline-stage">
                             <button type="button" class="portal-stage-picker" title="Change stage" aria-label="Change stage for {{ $lead->name ?: 'lead' }}">
                                 @if($lead->stage)
@@ -131,29 +164,53 @@
                             <span class="spinner-border spinner-border-sm text-primary d-none portal-stage-spinner" role="status" aria-hidden="true"></span>
                         </div>
                     </td>
+                    @endif
+                    @if($hasTableField('status'))
+                    <td data-column-key="status" data-search="{{ $lead->status }}">
+                        <span class="portal-badge-status portal-badge-{{ $lead->status }}">{{ ucfirst($lead->status) }}</span>
+                    </td>
+                    @endif
+                    @if($hasTableField('source'))
                     <td>{{ $lead->source?->name ?? '—' }}</td>
-                    <td>
-                        @forelse($lead->tags as $tag)
-                        <span class="portal-tag-chip" style="background: {{ $tag->color }}22; color: {{ $tag->color }};">{{ $tag->name }}</span>
-                        @empty
-                        <span class="text-muted">&mdash;</span>
-                        @endforelse
+                    @endif
+                    @if($hasTableField('tags'))
+                    <td data-column-key="tags" data-search="{{ $lead->tags->pluck('name')->implode(' ') }}">
+                        <button type="button" class="portal-tags-picker" data-id="{{ $lead->id }}" title="Manage tags" aria-label="Manage tags for {{ $lead->name ?: 'lead' }}">
+                            @forelse($lead->tags->take(1) as $tag)
+                            <span class="portal-tag-chip" style="background: {{ $tag->color }}22; color: {{ $tag->color }};">{{ $tag->name }}</span>
+                            @empty
+                            <span class="portal-tags-empty"><i class="fas fa-plus" aria-hidden="true"></i> Add tags</span>
+                            @endforelse
+                            @if($lead->tags->count() > 1)
+                            <span class="portal-tag-overflow">+{{ $lead->tags->count() - 1 }}</span>
+                            @endif
+                            @if($lead->tags->isNotEmpty())
+                            <i class="fas fa-pen portal-tags-picker-icon" aria-hidden="true"></i>
+                            @endif
+                        </button>
                     </td>
-                    <td class="text-muted">{{ $lead->created_at->format('d M Y') }}</td>
-                    <td class="text-end text-nowrap">
-                        <div class="portal-lead-actions" role="group" aria-label="Actions for {{ $lead->name ?: 'lead' }}">
-                            <button type="button" class="portal-lead-action is-view view-lead-btn" data-id="{{ $lead->id }}" title="View lead details" aria-label="View {{ $lead->name ?: 'lead' }} details">
-                                <i class="fas fa-eye" aria-hidden="true"></i>
-                            </button>
-                            <button type="button" class="portal-lead-action is-edit edit-lead-btn" data-id="{{ $lead->id }}" title="Edit lead" aria-label="Edit {{ $lead->name ?: 'lead' }}">
-                                <i class="fas fa-pen" aria-hidden="true"></i>
-                            </button>
-                        </div>
+                    @endif
+                    @if($hasTableField('message'))
+                    <td data-column-key="message" data-search="{{ $lead->message ?? '' }}">
+                        <span class="portal-lead-message-excerpt">{{ \Illuminate\Support\Str::limit($lead->message ?: '-', 70) }}</span>
                     </td>
+                    @endif
+                    @if($hasTableField('notes'))
+                    <td data-column-key="notes" data-order="{{ $lead->notes_history_count }}">
+                        @if($lead->notes_history_count)
+                        <span class="portal-lead-notes-count"><i class="fas fa-note-sticky" aria-hidden="true"></i>{{ $lead->notes_history_count }}</span>
+                        @else
+                        <span class="text-muted">-</span>
+                        @endif
+                    </td>
+                    @endif
+                    @if($hasTableField('received'))
+                    <td data-column-key="received" class="text-muted" data-order="{{ $lead->created_at->format('Y-m-d H:i:s') }}">{{ $lead->created_at->format('d M Y') }}</td>
+                    @endif
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="{{ $isAdmin ? 9 : 8 }}" class="portal-empty">
+                    <td colspan="{{ count($leadTableColumns) + 1 }}" class="portal-empty" data-empty-cell>
                         <div class="portal-empty-icon"><i class="fas fa-address-book"></i></div>
                         <div class="fw-semibold mb-1">No leads {{ request('status') || request('stage_id') || request('source_id') || request('tag_id') ? 'match these filters' : 'yet' }}</div>
                         <div style="font-size: 0.85rem;">They'll show up here the moment a visitor enquires about {{ $isAdmin ? 'a' : 'one of your' }} listing{{ $isAdmin ? '' : 's' }}.</div>
@@ -164,5 +221,3 @@
         </table>
     </div>
 </div>
-
-<div class="mt-3">{{ $leads->links() }}</div>

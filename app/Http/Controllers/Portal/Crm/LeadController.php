@@ -15,6 +15,7 @@ use App\Models\LeadTag;
 use App\Models\PortalUser;
 use App\Services\Crm\LeadNoteService;
 use App\Services\Crm\LeadService;
+use App\Services\Crm\LeadTablePreferenceService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\Rule;
@@ -33,6 +34,7 @@ class LeadController extends Controller
     public function __construct(
         private readonly LeadService $leadService,
         private readonly LeadNoteService $leadNoteService,
+        private readonly LeadTablePreferenceService $leadTablePreferenceService,
     ) {
     }
 
@@ -61,7 +63,7 @@ class LeadController extends Controller
         }
 
         $filters = $this->filtersFromRequest($request);
-        $leads = $this->leadService->getFilteredLeads($ownerId, $filters);
+        $leads = $this->leadService->getAllFilteredLeads($ownerId, $filters);
 
         // In the Super Admin's global view, use the same shared Admin master
         // data managed under Master > Stage, Tag, and Source. Selecting an
@@ -84,6 +86,8 @@ class LeadController extends Controller
             'filters' => $filters,
             'isAdmin' => $this->isAdmin(),
             'currentOwnerId' => $this->effectiveOwnerId(),
+            'leadTableColumns' => $this->leadTablePreferenceService->getUserColumns(),
+            'leadTableFields' => $this->leadTablePreferenceService->availableColumns(),
         ];
 
         // The "reload after Create/Edit/Delete" AJAX call re-requests this same
@@ -94,6 +98,21 @@ class LeadController extends Controller
         }
 
         return view('portal.crm.leads.index', $viewData);
+    }
+
+    /** Persist the current viewer's optional DataTable fields. */
+    public function updateTableColumns(Request $request)
+    {
+        $validated = $request->validate([
+            'columns' => ['nullable', 'array'],
+            'columns.*' => ['string', 'max:30'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'columns' => $this->leadTablePreferenceService->saveUserColumns($validated['columns'] ?? []),
+            'message' => 'Table fields saved.',
+        ]);
     }
 
     public function store(StoreLeadRequest $request)
@@ -234,6 +253,33 @@ class LeadController extends Controller
             'success' => true,
             'message' => 'Stage updated.',
             'stage' => $stage ? ['id' => $stage->id, 'name' => $stage->name, 'color' => $stage->color] : null,
+        ]);
+    }
+
+    /** Replaces a lead's tags from the listing's lightweight tag manager. */
+    public function syncTags(Request $request, $id)
+    {
+        $lead = $this->findOwned($id);
+        $viewerOwnerId = $this->effectiveOwnerId();
+
+        $belongsToLeadOrViewer = function ($query) use ($lead, $viewerOwnerId) {
+            $query->where('portal_user_id', $lead->portal_user_id);
+
+            if ($viewerOwnerId && $viewerOwnerId !== $lead->portal_user_id) {
+                $query->orWhere('portal_user_id', $viewerOwnerId);
+            }
+        };
+
+        $request->validate([
+            'tags' => ['nullable', 'array'],
+            'tags.*' => ['integer', Rule::exists('lead_tags', 'id')->where($belongsToLeadOrViewer)],
+        ]);
+
+        $lead->tags()->sync($request->input('tags', []));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tags updated.',
         ]);
     }
 
