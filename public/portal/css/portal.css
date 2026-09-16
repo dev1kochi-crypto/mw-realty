@@ -259,6 +259,126 @@ body.portal-body {
     box-shadow: var(--portal-shadow);
 }
 
+/* ---------- Leads filter bar ---------- */
+.portal-filter-bar {
+    overflow: hidden;
+    position: relative;
+}
+
+.portal-filter-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--portal-primary), var(--portal-accent), #ec4899, #f59e0b);
+}
+
+.portal-filter-bar__header {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.07), rgba(20, 184, 166, 0.07));
+    border-bottom: 1px solid var(--portal-border);
+    padding: 0.7rem 1.1rem;
+    color: var(--portal-primary-dark);
+}
+
+.portal-filter-bar__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: var(--portal-surface);
+    color: var(--portal-primary);
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.18);
+    font-size: 0.78rem;
+}
+
+.portal-filter-bar__badge {
+    background: linear-gradient(135deg, var(--portal-primary), var(--portal-primary-dark));
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.32rem 0.6rem;
+    border-radius: 999px;
+    box-shadow: 0 3px 8px rgba(79, 70, 229, 0.3);
+}
+
+.portal-filter-bar__form {
+    overflow-x: auto;
+}
+
+.portal-filter-field {
+    flex: 0 0 auto;
+}
+
+.portal-filter-field .input-group {
+    width: 168px;
+}
+
+.portal-filter-field--search .input-group {
+    width: 190px;
+}
+
+.portal-filter-field label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--portal-muted);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.portal-filter-field .input-group-text {
+    background: var(--portal-bg);
+    border: 1.5px solid var(--portal-border);
+    border-right: none;
+    color: var(--portal-muted);
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.portal-filter-field .form-control,
+.portal-filter-field .form-select {
+    border: 1.5px solid var(--portal-border);
+    border-left: none;
+    box-shadow: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.portal-filter-field .input-group:hover .input-group-text,
+.portal-filter-field .input-group:hover .form-control,
+.portal-filter-field .input-group:hover .form-select {
+    border-color: #cfd2ec;
+}
+
+.portal-filter-field .input-group:focus-within .input-group-text,
+.portal-filter-field .input-group:focus-within .form-control,
+.portal-filter-field .input-group:focus-within .form-select {
+    border-color: var(--portal-primary);
+}
+
+.portal-filter-field .input-group:focus-within .form-control,
+.portal-filter-field .input-group:focus-within .form-select {
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.portal-filter-field--search .input-group-text { color: var(--portal-primary); }
+.portal-filter-field--owner .input-group-text { color: #7c3aed; }
+.portal-filter-field--stage .input-group-text { color: var(--portal-accent); }
+.portal-filter-field--source .input-group-text { color: #3b82f6; }
+.portal-filter-field--tag .input-group-text { color: #ec4899; }
+.portal-filter-field--date .input-group-text { color: #f59e0b; }
+
+.portal-filter-field--search .input-group:focus-within .input-group-text { background: rgba(79, 70, 229, 0.1); }
+.portal-filter-field--owner .input-group:focus-within .input-group-text { background: rgba(124, 58, 237, 0.1); }
+.portal-filter-field--stage .input-group:focus-within .input-group-text { background: rgba(20, 184, 166, 0.1); }
+.portal-filter-field--source .input-group:focus-within .input-group-text { background: rgba(59, 130, 246, 0.1); }
+.portal-filter-field--tag .input-group:focus-within .input-group-text { background: rgba(236, 72, 153, 0.1); }
+.portal-filter-field--date .input-group:focus-within .input-group-text { background: rgba(245, 158, 11, 0.1); }
+
 .portal-stat-card {
     background: var(--portal-surface);
     border-radius: var(--portal-radius);

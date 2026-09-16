@@ -15,9 +15,8 @@
     <div class="d-flex flex-wrap gap-2">
         <button type="button" id="openLeadTableFieldsModal" class="portal-btn-ghost btn btn-sm"><i class="fas fa-table-columns me-1"></i> Table Fields</button>
         <a href="{{ route('portal.crm.leads.trashed') }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-trash-can me-1"></i> Deleted Leads</a>
-        <a href="{{ route('portal.crm.leads.import.template') }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-file-arrow-down me-1"></i> Download Import Template</a>
-        <a href="{{ route('portal.crm.leads.import.form') }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-file-import me-1"></i> Import</a>
-        <a href="{{ route('portal.crm.leads.export', request()->query()) }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-file-export me-1"></i> Export</a>
+        <button type="button" id="openLeadImportModal" class="portal-btn-ghost btn btn-sm"><i class="fas fa-file-import me-1"></i> Import</button>
+        <button type="button" id="openLeadExportModal" class="portal-btn-ghost btn btn-sm"><i class="fas fa-file-export me-1"></i> Export</button>
         <button type="button" id="openCreateLeadModal" class="btn btn-portal-primary btn-sm"><i class="fas fa-plus me-1"></i> Add Lead</button>
     </div>
 </div>
@@ -55,6 +54,8 @@
 @include('portal.crm.leads._lead_table_fields_modal')
 @include('portal.crm.leads._lead_note_modal')
 @include('portal.crm.leads._lead_delete_modal')
+@include('portal.crm.leads._lead_import_modal')
+@include('portal.crm.leads._lead_export_modal')
 @include('portal.crm.leads._stage_quick_add_modal')
 
 @push('scripts')

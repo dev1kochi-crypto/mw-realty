@@ -1,62 +1,95 @@
 {{-- Filters + stats cards + table + pagination — reloaded via AJAX (LeadController::index
      with an XHR header) after Create/Edit/Delete so the page never has to fully reload. --}}
-<form method="GET" class="portal-card p-3 mb-3 d-flex flex-wrap gap-3 align-items-end">
-    <input type="hidden" name="status" value="{{ request('status') }}">
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">Search</label>
-        <input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Name, email, phone" style="min-width: 180px;">
+@php($activeFilterCount = collect(['search', 'owner_id', 'stage_id', 'source_id', 'tag_id', 'date_from', 'date_to'])->filter(fn ($key) => filled(request($key)))->count())
+<div class="portal-card portal-filter-bar mb-3">
+    <div class="portal-filter-bar__header d-flex flex-wrap align-items-center gap-2">
+        <span class="portal-filter-bar__icon"><i class="fas fa-sliders" aria-hidden="true"></i></span>
+        <span class="fw-semibold" style="font-size: 0.88rem;">Filter Leads</span>
+        @if($activeFilterCount)
+        <span class="portal-filter-bar__badge">{{ $activeFilterCount }} active</span>
+        @endif
     </div>
-    @if($isAdmin)
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">Owner</label>
-        <select name="owner_id" class="form-select form-select-sm" onchange="this.form.submit()">
-            <option value="">All owners</option>
-            @foreach($owners as $owner)
-            <option value="{{ $owner->id }}" {{ (string) request('owner_id') === (string) $owner->id ? 'selected' : '' }}>{{ $owner->displayName() }}</option>
-            @endforeach
-        </select>
-    </div>
-    @endif
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">Stage</label>
-        <select name="stage_id" class="form-select form-select-sm" onchange="this.form.submit()">
-            <option value="">All stages</option>
-            @foreach($stages as $stage)
-            <option value="{{ $stage->id }}" {{ (string) request('stage_id') === (string) $stage->id ? 'selected' : '' }}>{{ $stage->name }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">Source</label>
-        <select name="source_id" class="form-select form-select-sm" onchange="this.form.submit()">
-            <option value="">All sources</option>
-            @foreach($sources as $source)
-            <option value="{{ $source->id }}" {{ (string) request('source_id') === (string) $source->id ? 'selected' : '' }}>{{ $source->name }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">Tag</label>
-        <select name="tag_id" class="form-select form-select-sm" onchange="this.form.submit()">
-            <option value="">All tags</option>
-            @foreach($tags as $tag)
-            <option value="{{ $tag->id }}" {{ (string) request('tag_id') === (string) $tag->id ? 'selected' : '' }}>{{ $tag->name }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">From</label>
-        <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control form-control-sm">
-    </div>
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">To</label>
-        <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control form-control-sm">
-    </div>
-    <button type="submit" class="btn btn-portal-primary btn-sm">Filter</button>
-    @if(request('search') || request('owner_id') || request('stage_id') || request('source_id') || request('tag_id') || request('date_from') || request('date_to'))
-    <a href="{{ route('portal.crm.leads.index', ['status' => request('status')]) }}" class="btn btn-sm btn-link text-muted">Clear filters</a>
-    @endif
-</form>
+    <form method="GET" class="portal-filter-bar__form p-3 d-flex flex-nowrap gap-3 align-items-end">
+        <input type="hidden" name="status" value="{{ request('status') }}">
+        <div class="portal-filter-field portal-filter-field--search">
+            <label class="form-label mb-1">Search</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-magnifying-glass"></i></span>
+                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Name, email, phone">
+            </div>
+        </div>
+        @if($isAdmin)
+        <div class="portal-filter-field portal-filter-field--owner">
+            <label class="form-label mb-1">Owner</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                <select name="owner_id" class="form-select">
+                    <option value="">All owners</option>
+                    @foreach($owners as $owner)
+                    <option value="{{ $owner->id }}" {{ (string) request('owner_id') === (string) $owner->id ? 'selected' : '' }}>{{ $owner->displayName() }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        @endif
+        <div class="portal-filter-field portal-filter-field--stage">
+            <label class="form-label mb-1">Stage</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-layer-group"></i></span>
+                <select name="stage_id" class="form-select">
+                    <option value="">All stages</option>
+                    @foreach($stages as $stage)
+                    <option value="{{ $stage->id }}" {{ (string) request('stage_id') === (string) $stage->id ? 'selected' : '' }}>{{ $stage->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="portal-filter-field portal-filter-field--source">
+            <label class="form-label mb-1">Source</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-share-nodes"></i></span>
+                <select name="source_id" class="form-select">
+                    <option value="">All sources</option>
+                    @foreach($sources as $source)
+                    <option value="{{ $source->id }}" {{ (string) request('source_id') === (string) $source->id ? 'selected' : '' }}>{{ $source->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="portal-filter-field portal-filter-field--tag">
+            <label class="form-label mb-1">Tag</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                <select name="tag_id" class="form-select">
+                    <option value="">All tags</option>
+                    @foreach($tags as $tag)
+                    <option value="{{ $tag->id }}" {{ (string) request('tag_id') === (string) $tag->id ? 'selected' : '' }}>{{ $tag->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="portal-filter-field portal-filter-field--date">
+            <label class="form-label mb-1">From</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-calendar-days"></i></span>
+                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control">
+            </div>
+        </div>
+        <div class="portal-filter-field portal-filter-field--date">
+            <label class="form-label mb-1">To</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-calendar-check"></i></span>
+                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control">
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-shrink-0">
+            <button type="submit" class="btn btn-portal-primary btn-sm text-nowrap"><i class="fas fa-filter me-1"></i> Filter</button>
+            @if($activeFilterCount)
+            <a href="{{ route('portal.crm.leads.index', ['status' => request('status')]) }}" class="btn btn-outline-secondary btn-sm text-nowrap"><i class="fas fa-rotate-left me-1"></i> Clear</a>
+            @endif
+        </div>
+    </form>
+</div>
 
 
 <div id="leadBulkActionsBar" class="portal-card p-2 px-3 mb-3 d-none d-flex align-items-center justify-content-between">
