@@ -44,7 +44,8 @@
                 <tr>
                     <td>
                         <div class="d-flex align-items-center gap-2">
-                            <img src="{{ $property->image ? asset('storage/' . $property->image) : 'https://placehold.co/60x40?text=No+Image' }}" style="width:60px;height:40px;object-fit:cover;border-radius:8px;">
+                            @php $thumb = $property->galleryImages()[0]['url'] ?? null; @endphp
+                            <img src="{{ $thumb ?: 'https://placehold.co/60x40?text=No+Image' }}" style="width:60px;height:40px;object-fit:cover;border-radius:8px;">
                             <div class="fw-semibold">{{ $property->getTranslation('title') }}</div>
                         </div>
                     </td>

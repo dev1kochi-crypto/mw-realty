@@ -2,5 +2,23 @@
     "example": {
         "welcome": "Welcome",
         "description": "Replace or extend these keys as you add static copy to the site."
+    },
+    "property_type": {
+        "apartment": "شقة",
+        "villa": "فيلا",
+        "townhouse": "منزل تاون",
+        "penthouse": "بنتهاوس"
+    },
+    "listing_type": {
+        "sale": "شراء",
+        "rent": "إيجار"
+    },
+    "completion_status": {
+        "ready": "جاهز",
+        "off_plan": "على الخريطة"
+    },
+    "furnished": {
+        "yes": "مفروش",
+        "no": "غير مفروش"
     }
 }

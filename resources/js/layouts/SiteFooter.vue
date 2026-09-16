@@ -1,0 +1,146 @@
+<script setup>
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const activeBottom = computed(() => route.meta.activeBottom ?? '');
+const isHome = computed(() => route.meta.isHome === true);
+const homeAnchor = computed(() => (isHome.value ? '' : '/'));
+</script>
+
+<template>
+    <footer class="mw-footer">
+        <div class="container-ctn">
+            <div class="mw-footer__grid">
+                <div>
+                    <h3 class="mw-footer__col-title">Quick Links</h3>
+                    <ul class="mw-footer__links">
+                        <li><router-link to="/">Home</router-link></li>
+                        <li><router-link to="/about">About Us</router-link></li>
+                        <li><a href="#">Properties</a></li>
+                        <li><a href="#">Mortgage Calculator</a></li>
+                        <li><a href="#">Delhi Expo</a></li>
+                        <li><a href="#">Invest in Dubai</a></li>
+                        <li><router-link to="/contact">Contact</router-link></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="mw-footer__col-title">Properties</h3>
+                    <ul class="mw-footer__links">
+                        <li><router-link to="/properties-dubai">Properties in Dubai</router-link></li>
+                        <li><a href="#">Properties in Abu dhabi</a></li>
+                        <li><a href="#">Properties in Ajman</a></li>
+                        <li><a href="#">Properties in Ras Al Khaimah</a></li>
+                        <li><a href="#">Sobha Siniya Island</a></li>
+                        <li><a href="#">Sobha Elwood</a></li>
+                        <li><a href="#">Binghatti</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="mw-footer__col-title">Buy</h3>
+                    <ul class="mw-footer__links">
+                        <li><a href="#">Properties for Sale</a></li>
+                        <li><a href="#">Guide to Buying</a></li>
+                        <li><a href="#">Mortgages</a></li>
+                        <li><a href="#">Property Management</a></li>
+                        <li><a href="#">Legal Services</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="mw-footer__col-title">Off-Plan</h3>
+                    <ul class="mw-footer__links">
+                        <li><a href="#">New Projects</a></li>
+                        <li><a href="#">Guide to Buying Off Plan</a></li>
+                        <li><a href="#">Best Dubai Communities</a></li>
+                        <li><a href="#">Top Dubai Developers</a></li>
+                        <li><a href="#">Snagging &amp; Inspection</a></li>
+                        <li><a href="#">Upcoming Roadshows</a></li>
+                        <li><a href="#">Branded Residences</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="mw-footer__col-title">Legal</h3>
+                    <ul class="mw-footer__links">
+                        <li><router-link to="/terms-and-conditions">Terms of use</router-link></li>
+                        <li><a href="#">Privacy policy</a></li>
+                        <li><a href="#">Security Policy</a></li>
+                        <li><a href="#">Cookie settings</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mw-footer__meta">
+                <div class="mw-footer__contact-list">
+                    <div class="mw-footer__contact-item">
+                        <span class="mw-footer__contact-label">Address</span>
+                        <span class="mw-footer__contact-value">Office No: 703 - Churchill Tower Business Bay - Dubai, UAE</span>
+                    </div>
+                    <div class="mw-footer__contact-item">
+                        <span class="mw-footer__contact-label">Toll Free</span>
+                        <span class="mw-footer__contact-value mw-footer__contact-value--phone">800644489</span>
+                    </div>
+                    <div class="mw-footer__contact-item">
+                        <span class="mw-footer__contact-label">Call Us</span>
+                        <span class="mw-footer__contact-value mw-footer__contact-value--phone"><a href="tel:+971585899990">+971 58 589 9990</a></span>
+                    </div>
+                    <div class="mw-footer__contact-item">
+                        <span class="mw-footer__contact-label">Email</span>
+                        <span class="mw-footer__contact-value"><a href="mailto:info@mightywarnersrealty.com">info@mightywarnersrealty.com</a></span>
+                    </div>
+                </div>
+
+                <div class="mw-footer__newsletter">
+                    <h3 class="mw-footer__newsletter-title">Newsletter</h3>
+                    <form class="mw-footer__newsletter-form" @submit.prevent>
+                        <input type="email" placeholder="Your email address" required>
+                        <button type="submit" aria-label="Subscribe">
+                            <img src="/frontend/assets/images/icons/footer-arrow.svg" alt="" width="24" height="24">
+                        </button>
+                    </form>
+                    <label class="mw-footer__newsletter-terms">
+                        <input type="checkbox">
+                        I have read and agree to the terms &amp; conditions
+                    </label>
+                </div>
+            </div>
+
+            <div class="mw-footer__bottom">
+                <p class="mw-footer__copyright">Copyright &copy; 2026 Mighty Warner Realty &nbsp;|&nbsp; Designed by : Mighty Warners Technologies</p>
+                <div class="mw-footer__social">
+                    <a href="#"><img src="/frontend/assets/images/icons/social-twitter.svg" alt="" width="18" height="18"> Twitter</a>
+                    <a href="#"><img src="/frontend/assets/images/icons/social-facebook.svg" alt="" width="18" height="18"> Facebook</a>
+                    <a href="#"><img src="/frontend/assets/images/icons/social-instagram.svg" alt="" width="18" height="18"> Instagram</a>
+                    <a href="#"><img src="/frontend/assets/images/icons/social-linkedin.svg" alt="" width="18" height="18"> LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <nav class="mw-bottom-nav" aria-label="Quick links">
+        <router-link to="/" class="mw-bottom-nav__item" :class="{ 'is-active': activeBottom === 'home' }" data-bottom-nav="home">
+            <img src="/frontend/assets/images/icons/icon-home.svg" alt="">
+            <span>Home</span>
+        </router-link>
+        <router-link :to="`${homeAnchor}#premium-properties`" class="mw-bottom-nav__item" :class="{ 'is-active': activeBottom === 'buy' }" data-bottom-nav="buy">
+            <img src="/frontend/assets/images/icons/building.svg" alt="">
+            <span>Buy</span>
+        </router-link>
+        <router-link :to="`${homeAnchor}#search`" class="mw-bottom-nav__item mw-bottom-nav__item--search" :class="{ 'is-active': activeBottom === 'search' }" data-bottom-nav="search">
+            <span class="mw-bottom-nav__fab" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="11" cy="11" r="6.25" stroke="#fff" stroke-width="1.8"/>
+                    <path d="M15.8 15.8L20 20" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            </span>
+            <span></span>
+        </router-link>
+        <router-link :to="`${homeAnchor}#find-properties`" class="mw-bottom-nav__item" :class="{ 'is-active': activeBottom === 'properties' }" data-bottom-nav="properties">
+            <img src="/frontend/assets/images/icons/icon-building-a.svg" alt="">
+            <span>Properties</span>
+        </router-link>
+        <router-link to="/login" class="mw-bottom-nav__item" :class="{ 'is-active': activeBottom === 'login' }" data-bottom-nav="login">
+            <img src="/frontend/assets/images/icons/user.svg" alt="">
+            <span>Login</span>
+        </router-link>
+    </nav>
+</template>

@@ -2,5 +2,23 @@
     "example": {
         "welcome": "Welcome",
         "description": "Replace or extend these keys as you add static copy to the site."
+    },
+    "property_type": {
+        "apartment": "Apartment",
+        "villa": "Villa",
+        "townhouse": "Townhouse",
+        "penthouse": "Penthouse"
+    },
+    "listing_type": {
+        "sale": "Buy",
+        "rent": "Rent"
+    },
+    "completion_status": {
+        "ready": "Ready",
+        "off_plan": "Off-Plan"
+    },
+    "furnished": {
+        "yes": "Furnished",
+        "no": "Unfurnished"
     }
 }
