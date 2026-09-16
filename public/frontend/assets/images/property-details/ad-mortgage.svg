@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="902" height="520" viewBox="0 0 902 520" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1b3459"/>
+      <stop offset="100%" stop-color="#244373"/>
+    </linearGradient>
+    <linearGradient id="accentBar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b9233c"/>
+      <stop offset="100%" stop-color="#e8546b"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="85%" cy="15%" r="65%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="902" height="520" fill="url(#bg)"/>
+  <rect width="902" height="520" fill="url(#glow)"/>
+  <rect width="902" height="8" fill="url(#accentBar)"/>
+
+  <!-- Decorative faint skyline silhouette -->
+  <g fill="#ffffff" opacity="0.06">
+    <rect x="620" y="300" width="46" height="220"/>
+    <rect x="676" y="240" width="34" height="280"/>
+    <rect x="720" y="330" width="52" height="190"/>
+    <rect x="782" y="180" width="40" height="340"/>
+    <rect x="832" y="270" width="46" height="250"/>
+  </g>
+
+  <!-- Percentage badge icon -->
+  <g transform="translate(64,64)">
+    <circle cx="46" cy="46" r="46" fill="rgba(255,255,255,0.12)"/>
+    <text x="46" y="61" font-size="42" font-weight="700" fill="#ffffff" text-anchor="middle" font-family="Georgia, serif">%</text>
+  </g>
+
+  <text x="64" y="230" font-family="'Plus Jakarta Sans', Arial, Helvetica, sans-serif" font-size="19" font-weight="700" letter-spacing="2" fill="#ffb0bf">HOME FINANCE</text>
+
+  <text x="62" y="288" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="600" fill="#ffffff">Own It Sooner</text>
+
+  <text x="64" y="336" font-family="'Plus Jakarta Sans', Arial, Helvetica, sans-serif" font-size="21" fill="rgba(255,255,255,0.82)">Mortgage pre-approval in 24 hours,</text>
+  <text x="64" y="366" font-family="'Plus Jakarta Sans', Arial, Helvetica, sans-serif" font-size="21" fill="rgba(255,255,255,0.82)">rates from 3.49% with our partner banks.</text>
+
+  <g transform="translate(64,410)">
+    <rect x="0" y="0" width="230" height="54" rx="10" fill="#ffffff"/>
+    <text x="115" y="35" font-family="'Plus Jakarta Sans', Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#244373" text-anchor="middle">Get Pre-Approved</text>
+  </g>
+</svg>

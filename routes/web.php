@@ -419,7 +419,23 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::put('/properties/{id}', [PortalPropertyController::class, 'update'])->name('properties.update');
         Route::delete('/properties/{id}', [PortalPropertyController::class, 'destroy'])->name('properties.destroy');
         Route::delete('/properties/{propertyId}/images/{imageId}', [PortalPropertyController::class, 'destroyImage'])->name('properties.images.destroy');
+        Route::delete('/properties/{propertyId}/images', [PortalPropertyController::class, 'destroyAllImages'])->name('properties.images.destroy-all');
+        Route::post('/properties/{propertyId}/images/reorder', [PortalPropertyController::class, 'reorderImages'])->name('properties.images.reorder');
         Route::post('/properties/{id}/toggle-status', [PortalPropertyController::class, 'toggleStatus'])->name('properties.toggle-status');
+        // Feeds the property form's Type -> Place cascading Nearby Places picker — reachable by
+        // both a portal agent/company and an admin browsing the portal.
+        Route::get('/properties/nearby-places-by-type', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'byType'])->name('properties.nearby-places-by-type');
+
+        // Nearby Places master list — global data (schools/hospitals/restaurants/...) properties
+        // can be tagged with; management restricted to a Super Admin browsing the portal (see
+        // NearbyPlaceController::isAdmin()), same gate as the sidebar link.
+        Route::get('/nearby-places', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'index'])->name('nearby-places.index');
+        Route::get('/nearby-places/create', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'create'])->name('nearby-places.create');
+        Route::post('/nearby-places', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'store'])->name('nearby-places.store');
+        Route::get('/nearby-places/{id}/edit', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'edit'])->name('nearby-places.edit');
+        Route::put('/nearby-places/{id}', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'update'])->name('nearby-places.update');
+        Route::post('/nearby-places/{id}/toggle-status', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'toggleStatus'])->name('nearby-places.toggle-status');
+        Route::delete('/nearby-places/{id}', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'destroy'])->name('nearby-places.destroy');
 
         Route::prefix('crm')->name('crm.')->group(function () {
             Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
@@ -468,6 +484,29 @@ Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->middleware(['web',
     Route::post('/seo/llms-txt/generate', [\App\Http\Controllers\CmsKit\LlmsTxtController::class, 'generate'])->name('cms.llms-txt.generate')->middleware('cms.permission:llms-txt.edit');
 });
 
+// Public — static marketing/front-end pages, served by the Vue SPA (resources/js/router).
+// Registered before the /{slug} landing-page catch-all below so these always win.
+Route::view('/about', 'welcome');
+Route::view('/commercial', 'welcome');
+Route::view('/agents', 'welcome');
+Route::view('/agent-details', 'welcome');
+Route::view('/agent-login', 'welcome');
+Route::view('/agent-signup', 'welcome');
+Route::view('/agencies', 'welcome');
+Route::view('/agency-details', 'welcome');
+Route::view('/agency-login', 'welcome');
+Route::view('/agency-signup', 'welcome');
+Route::view('/blogs', 'welcome');
+Route::view('/blog-details', 'welcome');
+Route::view('/contact', 'welcome');
+Route::view('/login', 'welcome');
+Route::view('/signup', 'welcome');
+Route::view('/profile', 'welcome');
+Route::view('/properties-dubai', 'welcome');
+Route::view('/property-details', 'welcome');
+Route::view('/terms-and-conditions', 'welcome');
+Route::view('/thank-you', 'welcome');
+
 // Public, unauthenticated — captures any <form> submission on a landing page (see
 // LandingPageController::rewireForms(), which points every form at this URL automatically).
 Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryController::class, 'store'])
@@ -479,5 +518,5 @@ Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryControll
 // must always get first chance to match. The (?!...) guard is a belt-and-braces exclusion of the
 // app's other top-level path segments, in case any of them is ever reached without a deeper segment.
 Route::get('/{slug}', [\App\Http\Controllers\LandingPageController::class, 'show'])
-    ->where('slug', '^(?!(admin|portal|api|storage)$).+$')
+    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|contact|login|signup|profile|properties-dubai|property-details|terms-and-conditions|thank-you)$).+$')
     ->name('landing-pages.show');
