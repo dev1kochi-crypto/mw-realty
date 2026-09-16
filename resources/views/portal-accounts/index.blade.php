@@ -75,6 +75,7 @@
                     @endcan
                     <button type="button" class="btn btn-sm btn-toolbar-outline" id="openFiltersBtn" data-bs-toggle="offcanvas" data-bs-target="#filtersPanel">
                         <i class="fas fa-filter me-1"></i> Filters
+                        <span id="filterCountBadge" class="badge rounded-pill bg-primary ms-1 d-none">0</span>
                     </button>
                     <a href="#" id="exportBtn" class="btn btn-sm btn-toolbar-outline"><i class="fas fa-file-excel me-1"></i> Export</a>
                     @can('portal-accounts.edit')
@@ -88,6 +89,14 @@
                     Agents and companies can register their own account at <code>/portal/register</code>, or you can add one
                     directly above. Self-registered accounts start <strong>pending</strong> until approved here — only
                     approved accounts can log in and list properties.
+                </div>
+                <div id="activeFiltersBar" class="alert d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3 mb-3 d-none" style="background:#eaf7fb; border:1px solid #b8e6f2;">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <i class="fas fa-filter text-primary"></i>
+                        <span class="fw-bold small text-nowrap">Filters applied:</span>
+                        <div id="activeFilterChips" class="d-flex flex-wrap gap-2"></div>
+                    </div>
+                    <button type="button" id="clearFiltersBtn" class="btn btn-sm btn-outline-secondary text-nowrap"><i class="fas fa-times me-1"></i>Clear all</button>
                 </div>
                 <div class="table-responsive">
                     <table class="table premium-table mb-0 w-100">
@@ -275,6 +284,52 @@
             return url.toString();
         }
 
+        // Makes an applied filter set visible on the page itself (badge count + a chip row with a
+        // one-click Clear), instead of only being noticeable via a subtle color change on the button.
+        const FILTER_LABELS = {
+            company_id: 'Company',
+            has_properties: 'Properties',
+            has_leads: 'Leads',
+            plan_id: 'Plan',
+            status: 'Approval Status',
+            pending_days: 'Pending Duration',
+            payment_status: 'Payment Status',
+            payment_month: 'Payment Month',
+            joined_from: 'Joined From',
+            joined_to: 'Joined To',
+        };
+
+        function renderActiveFiltersBar(filters) {
+            const entries = Object.entries(filters);
+            const badge = $('#filterCountBadge');
+            const bar = $('#activeFiltersBar');
+            const chips = $('#activeFilterChips');
+
+            if (entries.length === 0) {
+                badge.addClass('d-none');
+                bar.addClass('d-none');
+                chips.empty();
+                return;
+            }
+
+            chips.empty();
+            entries.forEach(([param, value]) => {
+                const elId = filterParamMap[param];
+                const el = elId ? document.getElementById(elId) : null;
+                let displayValue = value;
+                if (el && el.tagName === 'SELECT') {
+                    const opt = Array.from(el.options).find(o => o.value === value);
+                    if (opt) displayValue = opt.text;
+                }
+                const label = FILTER_LABELS[param] || param;
+                const safeValue = $('<div>').text(displayValue).html();
+                chips.append(`<span class="badge bg-white text-dark border fw-normal">${label}: ${safeValue}</span>`);
+            });
+
+            badge.removeClass('d-none').text(entries.length);
+            bar.removeClass('d-none');
+        }
+
         // Deep-link support — e.g. a "View in Agents & Companies" link from a Plan's
         // detail page arrives as ?plan_id=3, which we pre-apply as if the filter panel had been used.
         const filterParamMap = {
@@ -302,6 +357,7 @@
         if (Object.keys(initialFilters).length > 0) {
             $('#openFiltersBtn').addClass('has-filters');
         }
+        renderActiveFiltersBar(initialFilters);
 
         const table = $('.premium-table').DataTable({
             processing: true,
@@ -451,6 +507,7 @@
             const filters = currentFilters();
             table.ajax.url(buildUrl(baseAjaxUrl, filters)).load();
             $('#openFiltersBtn').toggleClass('has-filters', Object.keys(filters).length > 0);
+            renderActiveFiltersBar(filters);
             bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('filtersPanel')).hide();
         });
 
@@ -458,6 +515,12 @@
             document.querySelectorAll('#filtersPanel select, #filtersPanel input').forEach(el => el.value = '');
             table.ajax.url(baseAjaxUrl).load();
             $('#openFiltersBtn').removeClass('has-filters');
+            renderActiveFiltersBar({});
+        });
+
+        // Same reset, reachable directly from the page without opening the filters panel first.
+        $('#clearFiltersBtn').on('click', function () {
+            $('#resetFiltersBtn').trigger('click');
         });
 
         $('#exportBtn').on('click', function (e) {

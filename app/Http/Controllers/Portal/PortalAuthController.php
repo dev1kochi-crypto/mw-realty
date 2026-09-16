@@ -140,7 +140,12 @@ class PortalAuthController extends Controller
 
     public function showLogin()
     {
-        return view('portal.auth.login');
+        // The Vue frontend's /login page is now the only login UI (it posts
+        // straight to /portal/login below) — this GET route just exists for
+        // the other flows still named 'portal.login' (logout, the
+        // redirectGuestsTo default in bootstrap/app.php, post-registration)
+        // to redirect through.
+        return redirect('/login');
     }
 
     public function login(Request $request)

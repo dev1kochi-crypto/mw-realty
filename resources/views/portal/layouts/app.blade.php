@@ -89,6 +89,11 @@
                     <i class="fas fa-building"></i> Properties
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
+                @if($cmsActor)
+                <a href="{{ route('portal.nearby-places.index') }}" class="nav-link @if(request()->routeIs('portal.nearby-places.*')) active @endif">
+                    <i class="fas fa-map-marker-alt"></i> Nearby Places
+                </a>
+                @endif
 
                 <div class="nav-section-label">Insights</div>
                 <a href="{{ route('portal.crm.reports.index') }}" class="nav-link @if(request()->routeIs('portal.crm.reports.*')) active @endif">
@@ -287,8 +292,13 @@
         }, true);
 
         function restoreSubmitButtons(form) {
-            form.querySelectorAll('button[type="submit"][data-original-html]').forEach(function (btn) {
-                btn.innerHTML = btn.dataset.originalHtml;
+            // Every submit button in the form was disabled above, but only the one actually
+            // clicked got a spinner (and `data-original-html`) — so all of them need re-enabling
+            // here, not just that one, or a second button (e.g. a duplicate top/bottom Save) stays
+            // stuck disabled when a submit is cancelled (client-side validation, for instance)
+            // instead of proceeding.
+            form.querySelectorAll('button[type="submit"]').forEach(function (btn) {
+                if (btn.dataset.originalHtml !== undefined) btn.innerHTML = btn.dataset.originalHtml;
                 btn.disabled = false;
             });
         }

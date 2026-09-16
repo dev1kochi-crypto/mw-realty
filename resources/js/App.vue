@@ -1,8 +1,23 @@
 <script setup>
+import { watch } from 'vue';
+import { useRoute } from 'vue-router';
+import SiteHeader from './layouts/SiteHeader.vue';
+import SiteFooter from './layouts/SiteFooter.vue';
+
+const route = useRoute();
+
+watch(
+    () => route.meta,
+    (meta) => {
+        document.title = meta.title ?? 'MW Realty';
+        document.body.className = meta.bodyClass ?? '';
+    },
+    { immediate: true },
+);
 </script>
 
 <template>
-    <div class="min-h-screen flex items-center justify-center">
-        <h1 class="text-2xl font-semibold">MW Realty — Vue is wired up</h1>
-    </div>
+    <SiteHeader />
+    <router-view />
+    <SiteFooter />
 </template>

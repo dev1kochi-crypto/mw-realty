@@ -18,29 +18,45 @@ class FilterSeeder extends Seeder
             'listing_type' => [
                 'label' => 'Listing Type',
                 'values' => [
-                    'sale' => 'Buy',
-                    'rent' => 'Rent',
+                    'sale' => ['en' => 'Buy', 'ar' => 'شراء'],
+                    'rent' => ['en' => 'Rent', 'ar' => 'إيجار'],
                 ],
             ],
             'completion_status' => [
                 'label' => 'Completion Status',
                 'values' => [
-                    'ready' => 'Ready',
-                    'off_plan' => 'Off-Plan',
+                    'ready' => ['en' => 'Ready', 'ar' => 'جاهز'],
+                    'off_plan' => ['en' => 'Off-Plan', 'ar' => 'على الخريطة'],
                 ],
             ],
             'property_type' => [
                 'label' => 'Property Type',
                 'values' => [
-                    'apartment' => 'Apartment',
-                    'villa' => 'Villa',
-                    'townhouse' => 'Townhouse',
-                    'penthouse' => 'Penthouse',
+                    'apartment' => ['en' => 'Apartment', 'ar' => 'شقة'],
+                    'villa' => ['en' => 'Villa', 'ar' => 'فيلا'],
+                    'townhouse' => ['en' => 'Townhouse', 'ar' => 'منزل تاون'],
+                    'penthouse' => ['en' => 'Penthouse', 'ar' => 'بنتهاوس'],
                 ],
+            ],
+            'category' => [
+                'label' => 'Category',
+                'values' => [],
             ],
             'location' => [
                 'label' => 'Location',
                 'values' => [],
+            ],
+            // Not a property search filter — powers the Nearby Places "Type" dropdown instead,
+            // so it's kept out of the public search bar via an empty show_on.
+            'nearby_place_type' => [
+                'label' => 'Nearby Place Type',
+                'show_on' => [],
+                'values' => [
+                    'school' => ['en' => 'School', 'ar' => 'مدرسة'],
+                    'hospital' => ['en' => 'Hospital', 'ar' => 'مستشفى'],
+                    'restaurant' => ['en' => 'Restaurant', 'ar' => 'مطعم'],
+                    'attraction' => ['en' => 'Attraction', 'ar' => 'معلم سياحي'],
+                ],
             ],
         ];
 
@@ -51,7 +67,7 @@ class FilterSeeder extends Seeder
                 [
                     'translations' => ['en' => ['label' => $config['label']]],
                     'type' => 'select',
-                    'show_on' => ['home', 'listing'],
+                    'show_on' => $config['show_on'] ?? ['home', 'listing'],
                     'order_index' => $order++,
                     'status' => true,
                 ]
@@ -59,10 +75,13 @@ class FilterSeeder extends Seeder
 
             $valueOrder = 1;
             foreach ($config['values'] as $value => $label) {
+                $translations = is_array($label)
+                    ? collect($label)->map(fn ($text) => ['label' => $text])->all()
+                    : ['en' => ['label' => $label]];
                 FilterValue::updateOrCreate(
                     ['filter_id' => $filter->id, 'value' => $value],
                     [
-                        'translations' => ['en' => ['label' => $label]],
+                        'translations' => $translations,
                         'order_index' => $valueOrder++,
                         'status' => true,
                     ]
