@@ -127,7 +127,7 @@
                                     @endif
                                 </div>
 
-                                @if(($siteInfoConfig['privacy_policy'] ?? true) || ($siteInfoConfig['terms_and_conditions'] ?? true) || ($siteInfoConfig['disclaimer'] ?? true) || ($siteInfoConfig['footer_description'] ?? true))
+                                @if(($siteInfoConfig['privacy_policy'] ?? true) || ($siteInfoConfig['terms_and_conditions'] ?? true) || ($siteInfoConfig['disclaimer'] ?? true) || ($siteInfoConfig['footer_description'] ?? true) || config('cms-kit.database.site-information.extra_fields.security_settings') || config('cms-kit.database.site-information.extra_fields.cookie_policy'))
                                 <hr class="my-4">
 
                                 <div class="card border-0 bg-light">
@@ -160,6 +160,24 @@
                                             @enderror
                                         </div>
                                         @endif
+                                        @if(config('cms-kit.database.site-information.extra_fields.security_settings'))
+                                        <div class="mb-3">
+                                            <label class="form-label">Security Setting</label>
+                                            <textarea name="translations[{{ $lang->code }}][extra_fields][security_settings]" class="form-control tinymce-site-info @error("translations.{$lang->code}.extra_fields.security_settings") is-invalid @enderror" rows="6">{{ old("translations.{$lang->code}.extra_fields.security_settings", $trans['extra_fields']['security_settings'] ?? '') }}</textarea>
+                                            @error("translations.{$lang->code}.extra_fields.security_settings")
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                        @endif
+                                        @if(config('cms-kit.database.site-information.extra_fields.cookie_policy'))
+                                        <div class="mb-3">
+                                            <label class="form-label">Cookie Policy</label>
+                                            <textarea name="translations[{{ $lang->code }}][extra_fields][cookie_policy]" class="form-control tinymce-site-info @error("translations.{$lang->code}.extra_fields.cookie_policy") is-invalid @enderror" rows="6">{{ old("translations.{$lang->code}.extra_fields.cookie_policy", $trans['extra_fields']['cookie_policy'] ?? '') }}</textarea>
+                                            @error("translations.{$lang->code}.extra_fields.cookie_policy")
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                        @endif
                                         @if($siteInfoConfig['footer_description'] ?? true)
                                         <div class="mb-0">
                                             <label class="form-label">Footer Description</label>
@@ -179,6 +197,7 @@
                                         'configKey' => 'site-information',
                                         'lang' => $lang,
                                         'existingTranslations' => $siteInfo->translations ?? [],
+                                        'excludeKeys' => ['security_settings', 'cookie_policy'], // rendered in the Legal Content block above instead
                                     ])
                                 </div>
                                 @endif
@@ -292,6 +311,27 @@
                         </div>
                         @endif
 
+                        @if(config('cms-kit.database.site-information.extra_fields.logo_colour'))
+                        @php $logoColour = $siteInfo->extra_fields['logo_colour'] ?? null; @endphp
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Colour Logo</label>
+                            <small class="text-muted d-block mb-1">Recommended size: 200x60px (PNG/SVG). An alternate colour version of the main logo.</small>
+                            @if($logoColour)
+                            <div class="mb-2">
+                                <img src="{{ asset('storage/' . $logoColour) }}" class="img-thumbnail rounded" style="max-height: 80px;">
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="remove_extra_fields_logo_colour" id="removeSiteLogoColour" value="1" {{ old('remove_extra_fields_logo_colour') ? 'checked' : '' }}>
+                                <label class="form-check-label" for="removeSiteLogoColour">Remove current colour logo</label>
+                            </div>
+                            @endif
+                            <input type="file" name="extra_fields[logo_colour]" class="form-control mb-2 @error('extra_fields.logo_colour') is-invalid @enderror">
+                            @error('extra_fields.logo_colour')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        @endif
+
                         @if($siteInfoConfig['favicon'] ?? true)
                         <div class="mb-4">
                             <label class="form-label fw-bold">Favicon {!! in_array('favicon', $siteInfoRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
@@ -394,6 +434,7 @@
                 @include('cms-kit::partials.extra-fields-global', [
                     'configKey' => 'site-information',
                     'existingValues' => $siteInfo->extra_fields ?? [],
+                    'excludeKeys' => ['logo_colour'], // rendered in the Visual Assets card above instead
                 ])
             </div>
         </div>

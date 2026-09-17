@@ -47,20 +47,20 @@ return [
     ],
     'post-property-steps' => [
         'section_image' => [
-            'width' => 851,
-            'height' => 521,
+            'width' => 2000,
+            'height' => 1143,
             'max_size' => 2048,
         ],
         'item_icon' => [
-            'width' => 64,
-            'height' => 64,
+            'width' => 96,
+            'height' => 96,
             'max_size' => 256,
         ],
     ],
     'popular-places' => [
         'item_image' => [
-            'width' => 400,
-            'height' => 500,
+            'width' => 346,
+            'height' => 453,
             'max_size' => 2048,
         ],
     ],
@@ -164,9 +164,14 @@ return [
     ],
     'ads' => [
         'image' => [
-            'width' => 1920,
-            'height' => 800,
-            'max_size' => 4096, // GIFs run larger than static images
+            'width' => 4800,
+            'height' => 900,
+            'max_size' => 8192, // GIFs, and this banner's larger canvas, run bigger than a typical static image
+        ],
+        'mobile_image' => [
+            'width' => 800,
+            'height' => 400,
+            'max_size' => 4096,
         ],
     ],
     'landing-pages' => [

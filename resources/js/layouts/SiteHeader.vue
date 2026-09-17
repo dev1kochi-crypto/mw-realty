@@ -1,10 +1,12 @@
 <script setup>
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { useLanguages } from '../composables/useLanguages';
 
 const route = useRoute();
 const activeNav = computed(() => route.meta.activeNav ?? '');
 const isHome = computed(() => route.meta.headerVariant === 'home');
+const { languages, selectedLanguage, selectLanguage } = useLanguages();
 </script>
 
 <template>
@@ -38,13 +40,14 @@ const isHome = computed(() => route.meta.headerVariant === 'home');
                     </router-link>
                     <div class="mw-dropdown" data-dropdown>
                         <button type="button" class="mw-header__lang" data-dropdown-trigger>
-                            <img src="/frontend/assets/images/icons/flag-uk.png" alt="" class="mw-header__lang-flag" width="22" height="16">
-                            <span data-dropdown-label>ENG</span>
+                            <img v-if="selectedLanguage?.flag_url" :src="selectedLanguage.flag_url" alt="" class="mw-header__lang-flag" width="22" height="16">
+                            <span>{{ selectedLanguage?.code?.toUpperCase() }}</span>
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" width="14" height="14">
                         </button>
                         <ul class="mw-dropdown__menu" data-dropdown-menu>
-                            <li><button type="button" class="is-selected" data-dropdown-option>ENG</button></li>
-                            <li><button type="button" data-dropdown-option>عربي</button></li>
+                            <li v-for="lang in languages" :key="lang.id">
+                                <button type="button" :class="{ 'is-selected': selectedLanguage?.id === lang.id }" data-dropdown-option @click="selectLanguage(lang)">{{ lang.name }}</button>
+                            </li>
                         </ul>
                     </div>
                     <div class="mw-dropdown" data-dropdown>
@@ -95,13 +98,14 @@ const isHome = computed(() => route.meta.headerVariant === 'home');
                 <div v-if="isHome" class="mw-mobile-nav__prefs">
                     <div class="mw-dropdown" data-dropdown>
                         <button type="button" class="mw-header__lang" data-dropdown-trigger>
-                            <img src="/frontend/assets/images/icons/flag-uk.png" alt="" class="mw-header__lang-flag" width="22" height="16">
-                            <span data-dropdown-label>ENG</span>
+                            <img v-if="selectedLanguage?.flag_url" :src="selectedLanguage.flag_url" alt="" class="mw-header__lang-flag" width="22" height="16">
+                            <span>{{ selectedLanguage?.code?.toUpperCase() }}</span>
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" width="14" height="14">
                         </button>
                         <ul class="mw-dropdown__menu" data-dropdown-menu>
-                            <li><button type="button" class="is-selected" data-dropdown-option>ENG</button></li>
-                            <li><button type="button" data-dropdown-option>عربي</button></li>
+                            <li v-for="lang in languages" :key="lang.id">
+                                <button type="button" :class="{ 'is-selected': selectedLanguage?.id === lang.id }" data-dropdown-option @click="selectLanguage(lang)">{{ lang.name }}</button>
+                            </li>
                         </ul>
                     </div>
                     <div class="mw-dropdown" data-dropdown>

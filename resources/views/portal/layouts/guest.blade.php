@@ -10,14 +10,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('portal/css/portal.css') }}">
+    <link rel="stylesheet" href="{{ asset('portal/css/portal.css') }}?v={{ filemtime(public_path('portal/css/portal.css')) }}">
     @stack('styles')
 </head>
 <body class="portal-body">
     <div class="portal-auth-wrapper">
         <div class="portal-auth-card">
             <div class="portal-brand">
-                <span class="badge-dot"></span> MW Realty Partner Portal
+                <img src="{{ asset('frontend/assets/images/logo-dark.png') }}" alt="MW Realty" class="portal-brand__logo">
+                <span>Partner Portal</span>
             </div>
             @yield('content')
         </div>

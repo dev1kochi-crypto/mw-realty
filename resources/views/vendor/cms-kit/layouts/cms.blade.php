@@ -230,11 +230,11 @@
                     
                     {{-- Home Group --}}
                     @php
-                        $homeRoutes = request()->routeIs('cms.banners.*') || request()->routeIs('cms.popular-places.*') || request()->routeIs('cms.luxury-projects.*');
+                        $homeRoutes = request()->routeIs('cms.banners.*') || request()->routeIs('cms.popular-places.*') || request()->routeIs('cms.section-headings.*');
                     @endphp
                     @if(($cmsUser->can('banners.view') && config('cms-kit.common.modules.banners', true))
                         || ($cmsUser->can('popular-places.view') && config('cms-kit.common.modules.popular-places', true))
-                        || ($cmsUser->can('luxury-projects.view') && config('cms-kit.common.modules.luxury-projects', true)))
+                        || $cmsUser->can('section-headings.view'))
                     <div class="nav-item sidebar-group">
                         <a class="nav-link d-flex align-items-center sidebar-group-toggle @if($homeRoutes) active @endif"
                            data-bs-toggle="collapse" href="#homeMenu" role="button"
@@ -255,9 +255,9 @@
                                     Popular Places
                                 </a>
                                 @endif
-                                @if(config('cms-kit.common.modules.luxury-projects', true) && $cmsUser->can('luxury-projects.view'))
-                                <a class="nav-link py-2 @if(request()->routeIs('cms.luxury-projects.*')) active @endif" href="{{ route('cms.luxury-projects.index') }}">
-                                    Luxury Projects
+                                @if($cmsUser->can('section-headings.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.section-headings.*')) active @endif" href="{{ route('cms.section-headings.index') }}">
+                                    Common Titles
                                 </a>
                                 @endif
                             </nav>

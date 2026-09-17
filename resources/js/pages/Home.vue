@@ -1,4 +1,29 @@
 <script setup>
+import { computed, nextTick, watch } from 'vue';
+import { useBanner } from '../composables/useBanner';
+import { useBrands } from '../composables/useBrands';
+import { useDevelopments } from '../composables/useDevelopments';
+import { usePremiumProperties } from '../composables/usePremiumProperties';
+import { useAd } from '../composables/useAd';
+import { usePostPropertySteps } from '../composables/usePostPropertySteps';
+import { usePopularPlaces } from '../composables/usePopularPlaces';
+
+const { banner } = useBanner();
+const { brands } = useBrands();
+const { developments } = useDevelopments();
+const { premiumProperties } = usePremiumProperties();
+const { postPropertySection } = usePostPropertySteps();
+const { popularPlacesSection } = usePopularPlaces();
+const { ad: homeAd } = useAd('home');
+
+const heroLine1 = computed(() => banner.value?.line_1 || 'Your Trusted Partner in');
+const heroLine2 = computed(() => banner.value?.line_2 || 'Finding the Best Properties');
+const heroVideoUrl = computed(() => banner.value?.video_url || '/frontend/assets/video/banner.mp4');
+const heroNoteText = computed(() => banner.value?.note_text || 'Want to find out more about UAE real estate using AI?');
+const heroNoteBadge = computed(() => banner.value?.note_badge || 'Comming Soon');
+const heroGuideText = computed(() => banner.value?.note_link_text || 'Let Us Guide Your Home');
+const heroGuideUrl = computed(() => banner.value?.note_link_url || '#');
+
 const heroTabs = [
     { filter: 'buy', label: 'Buy', active: true },
     { filter: 'rent', label: 'Rent' },
@@ -38,7 +63,13 @@ const partnerLogos = [
     { src: '/frontend/assets/images/partners/partner-7.png', alt: 'Omniyat' },
 ];
 
-const projectFilters = [
+const displayLogos = computed(() =>
+    brands.value.length
+        ? brands.value.map((brand) => ({ src: brand.image_url, alt: brand.alt || '' }))
+        : partnerLogos,
+);
+
+const fallbackProjectFilters = [
     { filter: 'all', label: 'All', active: true },
     { filter: 'dubai', label: 'Dubai' },
     { filter: 'abu-dhabi', label: 'Abu Dhabi' },
@@ -48,7 +79,7 @@ const projectFilters = [
     { filter: 'umm-al-quwain', label: 'Umm Al Quwain' },
 ];
 
-const projectCards = [
+const fallbackProjectCards = [
     { category: 'dubai', images: ['project-card-1.jpg', 'project-card-2.jpg', 'luxury-card-1.jpg', 'realty-card-1.jpg'], name: 'Modern Penthouse in Downtown Dubai', location: 'Downtown Dubai', beds: 2, baths: 2, area: '2,100 sq.ft', type: 'Penthouse', price: 'AED 9,500,000' },
     { category: 'abu-dhabi', images: ['project-card-2.jpg', 'project-card-3.jpg', 'luxury-card-2.jpg', 'realty-card-2.jpg'], name: 'Skyline Residences on Saadiyat Island', location: 'Saadiyat Island, Abu Dhabi', beds: 3, baths: 3, area: '1,860 sq.ft', type: 'Apartment', price: 'AED 4,200,000' },
     { category: 'sharjah', images: ['project-card-3.jpg', 'project-card-4.jpg', 'luxury-card-3.jpg', 'realty-card-3.jpg'], name: 'Waterfront Apartment in Al Khan', location: 'Al Khan, Sharjah', beds: 3, baths: 3, area: '1,850 sq.ft', type: 'Apartment', price: 'AED 2,150,000' },
@@ -59,26 +90,135 @@ const projectCards = [
     { category: 'abu-dhabi', images: ['realty-card-3.jpg', 'project-card-3.jpg', 'luxury-card-2.jpg', 'project-card-6.jpg'], name: 'Beachfront Apartment on Yas Island', location: 'Yas Island, Abu Dhabi', beds: 2, baths: 2, area: '1,560 sq.ft', type: 'Apartment', price: 'AED 2,750,000' },
 ];
 
-const highlightCards = [
+const projectsEyebrow = computed(() => developments.value?.eyebrow || 'UAE developments');
+const projectsTitle = computed(() => developments.value?.title || 'Browse New Projects in the UAE');
+const projectsButtonLabel = computed(() => developments.value?.button_name || 'View All Properties');
+
+const projectFilters = computed(() => {
+    const cities = developments.value?.cities;
+    if (!cities || !cities.length) return fallbackProjectFilters;
+    return [
+        { filter: 'all', label: 'All', active: true },
+        ...cities.map((city) => ({ filter: slugify(city), label: city })),
+    ];
+});
+
+const projectCards = computed(() => {
+    const properties = developments.value?.properties;
+    if (!properties || !properties.length) return fallbackProjectCards;
+    return properties.map((p) => ({
+        category: p.category,
+        images: p.images,
+        isAbsoluteImage: true,
+        name: p.name,
+        location: p.location,
+        beds: p.beds ?? '—',
+        baths: p.baths ?? '—',
+        area: p.area ?? '—',
+        type: p.type,
+        price: p.price,
+    }));
+});
+
+function slugify(value) {
+    return String(value).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+// The project cards' photo gallery slider and the "All / Dubai / Abu Dhabi ..." tab filter
+// are wired up by the legacy assets/js/script.js, which only scans the DOM once — once the
+// real data replaces the placeholder cards above, the freshly rendered elements need that
+// binding run again (window.MWRealty.refresh is idempotent, safe to call repeatedly).
+watch(projectCards, () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+});
+
+const fallbackHighlightCards = [
     { images: ['luxury-card-1.jpg', 'luxury-card-2.jpg', 'luxury-card-3.png', 'realty-card-1.jpg'], name: 'Luxury Beachfront Villa in Palm Jumeirah', location: 'Palm Jumeirah', beds: '5 Bed', baths: '6 Bath', area: '12,500 sq.ft', price: 'AED 17,500,000' },
     { images: ['luxury-card-2.jpg', 'realty-card-2.jpg', 'luxury-card-1.jpg', 'project-card-1.jpg'], name: 'Skyline Penthouse in Downtown Dubai', location: 'Downtown Dubai', beds: '3 Bed', baths: '4 Bath', area: '4,200 sq.ft', price: 'AED 12,800,000' },
     { images: ['luxury-card-3.png', 'luxury-card-1.jpg', 'realty-card-3.jpg', 'luxury-card-2.jpg'], name: 'Waterfront Mansion in Emirates Hills', location: 'Emirates Hills', beds: '6 Bed', baths: '7 Bath', area: '18,000 sq.ft', price: 'AED 21,000,000' },
     { images: ['realty-card-2.jpg', 'luxury-card-2.jpg', 'project-card-2.jpg', 'luxury-card-3.png'], name: 'Branded Residence in Dubai Marina', location: 'Dubai Marina', beds: '4 Bed', baths: '5 Bath', area: '6,800 sq.ft', price: 'AED 15,400,000' },
 ];
 
-const postPropertySteps = [
+const premiumEyebrow = computed(() => premiumProperties.value?.eyebrow || 'Exclusive selection');
+const premiumTitle = computed(() => premiumProperties.value?.title || 'Premium Properties');
+const premiumDescription = computed(() => premiumProperties.value?.description || 'A highlight of exclusive listings from our premium customers — featured homes selected for exceptional location, quality, and investment value.');
+const premiumButtonLabel = computed(() => premiumProperties.value?.button_name || 'View More Details');
+const premiumButtonUrl = computed(() => premiumProperties.value?.button_url || '#');
+
+const highlightCards = computed(() => {
+    const properties = premiumProperties.value?.properties;
+    if (!properties || !properties.length) return fallbackHighlightCards;
+    return properties.map((p) => ({
+        images: p.images,
+        isAbsoluteImage: true,
+        name: p.name,
+        location: p.location,
+        beds: p.beds,
+        baths: p.baths,
+        area: p.area,
+        price: p.price,
+    }));
+});
+
+watch(highlightCards, () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+});
+
+const fallbackPostPropertySteps = [
     { index: '01', icon: 'property-add.svg', title: 'Add Details Of Your Property', text: 'Begin By Telling Us The Few Basic Details About Your Property Like Your Property Type, Location, No. Of Rooms Etc.' },
     { index: '02', icon: 'upload.svg', title: 'Upload Photos & Videos', text: 'Upload Photos And Videos Of Your Property Either Via Your Desktop Device Or From Your Mobile Phone.' },
     { index: '03', icon: 'tag-add.svg', title: 'Add Pricing & Ownership', text: "Just Update Your Property's Ownership Details And Your Expected Price And Your Property Is Ready For Posting Post Property." },
 ];
+const fallbackPostPropertyDescription = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.";
 
-const popularPlaces = [
+const postPropertyEyebrow = computed(() => postPropertySection.value?.eyebrow || 'List with MW Realty');
+const postPropertyTitle = computed(() => postPropertySection.value?.title || 'Post your property in 3 simple steps');
+const postPropertyDescription = computed(() => postPropertySection.value?.description || fallbackPostPropertyDescription);
+const postPropertyButtonText = computed(() => postPropertySection.value?.button_text || 'Start listing');
+const postPropertyButtonUrl = computed(() => postPropertySection.value?.button_url || '#contact');
+const postPropertyImageUrl = computed(() => postPropertySection.value?.image_url || '/frontend/assets/images/home/post-property.jpg');
+const postPropertyImageAlt = computed(() => postPropertySection.value?.image_alt || 'Aerial view of a UAE waterfront residential community');
+
+const postPropertySteps = computed(() => {
+    const steps = postPropertySection.value?.steps;
+    if (!steps || !steps.length) {
+        return fallbackPostPropertySteps.map((s) => ({ ...s, iconSrc: `/frontend/assets/images/icons/${s.icon}` }));
+    }
+    return steps.map((s, i) => ({
+        index: s.index,
+        iconSrc: s.icon_url || `/frontend/assets/images/icons/${fallbackPostPropertySteps[i % fallbackPostPropertySteps.length].icon}`,
+        title: s.title,
+        text: s.description,
+    }));
+});
+
+const postPropertyBadge = computed(() => `${postPropertySteps.value.length} easy step${postPropertySteps.value.length === 1 ? '' : 's'}`);
+
+const fallbackPopularPlaces = [
     { image: 'place-dubai.jpg', name: 'Dubai' },
     { image: 'place-dubai.jpg', name: 'Dubai' },
     { image: 'place-sharjah.jpg', name: 'Sharjah' },
     { image: 'place-ajman.jpg', name: 'Ajman' },
     { image: 'place-abudhabi.jpg', name: 'Abu Dhabi' },
 ];
+
+const popularPlacesEyebrow = computed(() => popularPlacesSection.value?.eyebrow || 'In-demand cities');
+const popularPlacesTitle = computed(() => popularPlacesSection.value?.title || 'Most Popular Properties Places');
+
+const popularPlaces = computed(() => {
+    const places = popularPlacesSection.value?.places;
+    if (!places || !places.length) {
+        return fallbackPopularPlaces.map((p) => ({ ...p, imageSrc: `/frontend/assets/images/home/${p.image}` }));
+    }
+    return places.map((p) => ({
+        imageSrc: p.image_url || '/frontend/assets/images/home/place-dubai.jpg',
+        name: p.name,
+    }));
+});
+
+watch(popularPlaces, () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+});
 
 const luxuryCards = [
     { image: 'luxury-card-1.jpg', villa: true, name: 'Nihil est aut volupt', location: 'Ut adipisci et venia', stat1: 'Natus magnam enim po', stat2: 'Tempore a labore po', area: '49 Sqft', price: 'AED 645' },
@@ -159,13 +299,13 @@ const testimonials = [
 <template>
     <main>
         <section class="mw-hero">
-            <video class="mw-hero__video" autoplay muted loop playsinline poster="/frontend/assets/images/home/hero-bg.jpg" aria-hidden="true">
-                <source src="/frontend/assets/video/banner.mp4" type="video/mp4">
+            <video :key="heroVideoUrl" class="mw-hero__video" autoplay muted loop playsinline poster="/frontend/assets/images/home/hero-bg.jpg" aria-hidden="true">
+                <source :src="heroVideoUrl" type="video/mp4">
             </video>
             <div class="container-ctn mw-hero__inner">
                 <div class="mw-hero__panel">
-                    <h1 class="mw-hero__title">Your Trusted Partner in</h1>
-                    <p class="mw-hero__subtitle">Finding the Best Properties</p>
+                    <h1 class="mw-hero__title">{{ heroLine1 }}</h1>
+                    <p class="mw-hero__subtitle">{{ heroLine2 }}</p>
 
                     <div class="mw-hero__tabs" role="tablist" aria-label="Listing type" data-tab-group>
                         <button v-for="tab in heroTabs" :key="tab.filter" type="button" class="mw-hero__tab" :class="{ 'is-active': tab.active }" data-tab :data-filter="tab.filter">{{ tab.label }}</button>
@@ -225,11 +365,11 @@ const testimonials = [
                     </form>
 
                     <div class="mw-hero__foot">
-                        <p class="mw-hero__ai-note">Want to find out more about UAE real estate using AI? <strong>Comming Soon</strong></p>
-                        <a href="#" class="mw-hero__guide">
+                        <p class="mw-hero__ai-note">{{ heroNoteText }} <strong>{{ heroNoteBadge }}</strong></p>
+                        <a :href="heroGuideUrl" class="mw-hero__guide">
                             <span>
                                 <img src="/frontend/assets/images/icons/play.svg" alt="" width="24" height="24">
-                                Let Us Guide Your Home
+                                {{ heroGuideText }}
                             </span>
                         </a>
                     </div>
@@ -241,10 +381,10 @@ const testimonials = [
             <div class="mw-partners__slider">
                 <div class="mw-partners__track">
                     <div class="mw-partners__group">
-                        <div v-for="(logo, index) in partnerLogos" :key="'a' + index" class="mw-partners__logo"><img :src="logo.src" :alt="logo.alt"></div>
+                        <div v-for="(logo, index) in displayLogos" :key="'a' + index" class="mw-partners__logo"><img :src="logo.src" :alt="logo.alt"></div>
                     </div>
                     <div class="mw-partners__group" aria-hidden="true">
-                        <div v-for="(logo, index) in partnerLogos" :key="'b' + index" class="mw-partners__logo"><img :src="logo.src" alt=""></div>
+                        <div v-for="(logo, index) in displayLogos" :key="'b' + index" class="mw-partners__logo"><img :src="logo.src" alt=""></div>
                     </div>
                 </div>
             </div>
@@ -253,8 +393,8 @@ const testimonials = [
         <section class="mw-projects mw-section" id="projects">
             <div class="container-ctn">
                 <div class="mw-section-head">
-                    <p class="mw-eyebrow">UAE developments</p>
-                    <h2 class="mw-section-title">Browse New Projects in the UAE</h2>
+                    <p class="mw-eyebrow">{{ projectsEyebrow }}</p>
+                    <h2 class="mw-section-title">{{ projectsTitle }}</h2>
                 </div>
 
                 <div class="mw-projects__filters">
@@ -267,7 +407,7 @@ const testimonials = [
                     <article v-for="(card, index) in projectCards" :key="index" class="mw-projects__card" :data-category="card.category">
                         <div class="mw-projects__media" data-card-gallery>
                             <div class="mw-projects__slides" data-gallery-track>
-                                <img v-for="(img, i) in card.images" :key="i" :src="`/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-projects__photo">
+                                <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-projects__photo">
                             </div>
                             <span class="mw-badge mw-badge--success mw-projects__verified">
                                 <img src="/frontend/assets/images/icons/verified.svg" alt="" width="18" height="18">
@@ -285,7 +425,7 @@ const testimonials = [
                             <div class="mw-projects__dots" data-gallery-dots></div>
                             <span class="mw-projects__photo-count">
                                 <img src="/frontend/assets/images/icons/photo-count.svg" alt="" width="16" height="16">
-                                <span data-gallery-count>4</span>
+                                <span data-gallery-count>{{ card.images.length }}</span>
                             </span>
                             <div class="mw-projects__contact">
                                 <a href="mailto:info@mightywarnersrealty.com" class="mw-projects__contact-btn mw-projects__contact-btn--email" aria-label="Mail">
@@ -325,7 +465,7 @@ const testimonials = [
 
                 <div class="mw-projects__actions">
                     <router-link to="/properties-dubai" class="mw-btn mw-btn--solid">
-                        View All Properties
+                        {{ projectsButtonLabel }}
                         <img src="/frontend/assets/images/icons/arrow-up-right.svg" alt="" class="mw-projects__view-all-icon">
                     </router-link>
                 </div>
@@ -335,12 +475,12 @@ const testimonials = [
         <section class="mw-highlight mw-section" id="premium-properties">
             <div class="container-ctn">
                 <div class="mw-highlight__head">
-                    <p class="mw-eyebrow">Exclusive selection</p>
-                    <h2 class="mw-section-title">Premium Properties</h2>
+                    <p class="mw-eyebrow">{{ premiumEyebrow }}</p>
+                    <h2 class="mw-section-title">{{ premiumTitle }}</h2>
                     <div class="mw-highlight__head-row">
-                        <p class="mw-highlight__text">A highlight of exclusive listings from our premium customers — featured homes selected for exceptional location, quality, and investment value.</p>
-                        <a href="#" class="mw-btn mw-highlight__cta">
-                            View More Details
+                        <p class="mw-highlight__text">{{ premiumDescription }}</p>
+                        <a :href="premiumButtonUrl" class="mw-btn mw-highlight__cta">
+                            {{ premiumButtonLabel }}
                             <img src="/frontend/assets/images/icons/luxury-cta-arrow.svg" alt="" width="18" height="18">
                         </a>
                     </div>
@@ -351,7 +491,7 @@ const testimonials = [
                         <article v-for="(card, index) in highlightCards" :key="index" class="mw-highlight__card">
                             <div class="mw-highlight__media" data-card-gallery>
                                 <div class="mw-highlight__slides" data-gallery-track>
-                                    <img v-for="(img, i) in card.images" :key="i" :src="`/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-highlight__photo">
+                                    <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-highlight__photo">
                                 </div>
                                 <span class="mw-highlight__badge">
                                     <img src="/frontend/assets/images/icons/star.svg" alt="" width="18" height="18">
@@ -371,7 +511,7 @@ const testimonials = [
                                 <div class="mw-highlight__dots" data-gallery-dots></div>
                                 <span class="mw-highlight__count">
                                     <img src="/frontend/assets/images/icons/photo-count.svg" alt="" width="16" height="16">
-                                    <span data-gallery-count>4</span>
+                                    <span data-gallery-count>{{ card.images.length }}</span>
                                 </span>
                             </div>
                             <div class="mw-highlight__body">
@@ -406,13 +546,13 @@ const testimonials = [
             </div>
         </section>
 
-        <section class="mw-home-banner">
+        <section class="mw-home-banner" v-if="homeAd && homeAd.image_url">
             <div class="container-ctn">
-                <a href="#" class="mw-home-banner__card">
+                <a :href="homeAd.link_url || '#'" class="mw-home-banner__card" :target="homeAd.link_url ? '_blank' : null" rel="noopener">
                     <span class="mw-home-banner__label">Advertisement</span>
                     <picture>
-                        <source media="(max-width: 767px)" srcset="/frontend/assets/images/home/ad-home-banner-mobile.svg">
-                        <img src="/frontend/assets/images/home/ad-home-banner.svg" alt="Home Finance — Own It Sooner. Mortgage pre-approval in 24 hours, rates from 3.49% with our partner banks. Get Pre-Approved." class="mw-home-banner__image">
+                        <source v-if="homeAd.mobile_image_url" media="(max-width: 767px)" :srcset="homeAd.mobile_image_url">
+                        <img :src="homeAd.image_url" :alt="homeAd.image_alt || homeAd.name" class="mw-home-banner__image">
                     </picture>
                 </a>
             </div>
@@ -422,18 +562,18 @@ const testimonials = [
             <div class="container-ctn">
                 <div class="mw-post-property__inner">
                     <div class="mw-post-property__intro">
-                        <p class="mw-eyebrow">List with MW Realty</p>
-                        <h2 class="mw-section-title">Post your property in 3 simple steps</h2>
-                        <p class="mw-post-property__text">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
-                        <a href="#contact" class="mw-btn mw-btn--solid mw-post-property__cta">
-                            Start listing
+                        <p class="mw-eyebrow">{{ postPropertyEyebrow }}</p>
+                        <h2 class="mw-section-title" v-html="postPropertyTitle"></h2>
+                        <p class="mw-post-property__text" v-html="postPropertyDescription"></p>
+                        <a :href="postPropertyButtonUrl" class="mw-btn mw-btn--solid mw-post-property__cta">
+                            {{ postPropertyButtonText }}
                             <img src="/frontend/assets/images/icons/arrow-up-right.svg" alt="" class="mw-post-property__cta-icon">
                         </a>
                     </div>
 
                     <div class="mw-post-property__media">
-                        <img src="/frontend/assets/images/home/post-property.jpg" alt="Aerial view of a UAE waterfront residential community" class="mw-post-property__photo">
-                        <span class="mw-post-property__media-tag">3 easy steps</span>
+                        <img :src="postPropertyImageUrl" :alt="postPropertyImageAlt" class="mw-post-property__photo">
+                        <span class="mw-post-property__media-tag">{{ postPropertyBadge }}</span>
                     </div>
 
                     <ol class="mw-post-property__steps">
@@ -441,7 +581,7 @@ const testimonials = [
                             <div class="mw-post-property__card">
                                 <span class="mw-post-property__step-index" aria-hidden="true">{{ step.index }}</span>
                                 <span class="mw-post-property__step-icon-wrap">
-                                    <img :src="`/frontend/assets/images/icons/${step.icon}`" alt="" class="mw-post-property__step-icon">
+                                    <img :src="step.iconSrc" alt="" class="mw-post-property__step-icon">
                                 </span>
                                 <div class="mw-post-property__step-body">
                                     <p class="mw-post-property__step-label">Step {{ step.index }}</p>
@@ -459,8 +599,8 @@ const testimonials = [
             <div class="container-ctn">
                 <div class="mw-popular-places__head">
                     <div class="mw-popular-places__heading">
-                        <p class="mw-eyebrow">In-demand cities</p>
-                        <h2 class="mw-section-title">Most Popular Properties Places</h2>
+                        <p class="mw-eyebrow">{{ popularPlacesEyebrow }}</p>
+                        <h2 class="mw-section-title">{{ popularPlacesTitle }}</h2>
                     </div>
                     <div class="mw-popular-places__nav">
                         <button type="button" class="mw-arrow-btn mw-arrow-btn--prev mw-popular-places__nav-btn" data-places-prev aria-label="Previous places">
@@ -475,7 +615,7 @@ const testimonials = [
                 <div class="mw-popular-places__slider" data-places-slider>
                     <a v-for="(place, index) in popularPlaces" :key="index" href="#" class="mw-popular-places__card">
                         <div class="mw-popular-places__media">
-                            <img :src="`/frontend/assets/images/home/${place.image}`" :alt="place.name">
+                            <img :src="place.imageSrc" :alt="place.name">
                             <div class="mw-popular-places__foot">
                                 <span class="mw-popular-places__name">{{ place.name }}</span>
                                 <span class="mw-popular-places__arrow">

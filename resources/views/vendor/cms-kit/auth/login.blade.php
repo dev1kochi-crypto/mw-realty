@@ -53,7 +53,10 @@
 <body>
     <div class="login-card">
         <div class="logo">
-            @if($siteInfo && $siteInfo->logo)
+            @php $colourLogo = $siteInfo->extra_fields['logo_colour'] ?? null; @endphp
+            @if($colourLogo)
+                <img src="{{ asset('storage/' . $colourLogo) }}" alt="{{ $siteInfo->logo_alt ?? $siteInfo->company_name }}" class="img-fluid mb-3" style="max-height: 60px;">
+            @elseif($siteInfo && $siteInfo->logo)
                 <img src="{{ asset('storage/' . $siteInfo->logo) }}" alt="{{ $siteInfo->logo_alt ?? $siteInfo->company_name }}" class="img-fluid mb-3" style="max-height: 60px;">
             @endif
             <h3>{{ $siteInfo->company_name ?? config('cms-kit.common.name', 'CMS Kit') }}</h3>

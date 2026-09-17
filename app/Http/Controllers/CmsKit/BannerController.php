@@ -249,7 +249,10 @@ class BannerController extends Controller
                 'url',
             ],
             'video_file' => [
-                Rule::requiredIf(fn () => $resolvedBannerType === 'video' && $request->input('video_source') === 'file'),
+                // Only demand a fresh upload when this banner doesn't already have a
+                // video file on record — editing an existing video banner without
+                // touching the upload field must keep the current file, not error out.
+                Rule::requiredIf(fn () => $resolvedBannerType === 'video' && $request->input('video_source') === 'file' && !$banner->video_file),
                 'nullable',
                 'file',
                 'mimetypes:video/mp4,video/quicktime,video/x-msvideo',
@@ -304,6 +307,9 @@ class BannerController extends Controller
                 app(\App\Services\ManagedFiles::class)->delete($banner->video_file);
             $data['video_file'] = app(\App\Services\ManagedFiles::class)->store($request->file('video_file'), 'banners/videos');
             $data['video_url'] = null; // Clear URL if file is uploaded
+        } elseif ($resolvedBannerType === 'video' && $request->input('video_source') === 'file') {
+            // File source selected but no new upload — keep the existing video_file
+            // untouched (leave it out of $data entirely so fill() doesn't null it).
         } elseif ($resolvedBannerType === 'video' && $request->input('video_url')) {
             if ($banner->video_file) {
                 app(\App\Services\ManagedFiles::class)->delete($banner->video_file);

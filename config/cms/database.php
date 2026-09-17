@@ -135,12 +135,32 @@ return [
         'receipt_email' => true,
         'privacy_policy' => true,
         'terms_and_conditions' => true,
-        'disclaimer' => true,
+        'disclaimer' => false,
         'logo' => true,
         'logo_alt' => true,
         'footer_logo' => false,
         'footer_logo_alt' => false,
         'footer_description' => false,
+        'extra_fields' => [
+            'logo_colour' => [
+                'label' => 'Colour Logo',
+                'type' => 'file',
+                'accept' => 'image/*',
+                'helpText' => 'Recommended size: 200x60px (PNG/SVG). An alternate colour version of the main logo.',
+            ],
+            'security_settings' => [
+                'label' => 'Security Setting',
+                'type' => 'textarea',
+                'editor' => 'tinymce',
+                'translatable' => true,
+            ],
+            'cookie_policy' => [
+                'label' => 'Cookie Policy',
+                'type' => 'textarea',
+                'editor' => 'tinymce',
+                'translatable' => true,
+            ],
+        ],
         'facebook' => true,
         'twitter' => true,
         'linkedin' => true,
@@ -155,7 +175,6 @@ return [
         'gtag' => true,
         'custom_head_script' => true,
         'custom_body_script' => true,
-        'extra_fields' => [],
         'required' => ['company_name', 'address', 'phone_1', 'email_1', 'receipt_email', 'logo', 'favicon'], // Fields that are mandatory
     ],
     'locations' => [
@@ -190,7 +209,7 @@ return [
             'order' => true,
             'status' => true,
             'extra_fields' => [],
-            'required' => ['image', 'image_alt'],
+            'required' => ['image'],
         ],
     ],
     'blogs' => [
@@ -351,8 +370,11 @@ return [
     ],
     'post-property-steps' => [
         'section' => [
+            'title_1' => true, // small eyebrow line shown above Title on the home page
             'title' => true,
             'description' => true,
+            'button_text' => true,
+            'button_url' => true,
             'image' => true,
             'status' => true,
             'extra_fields' => [],
@@ -370,6 +392,7 @@ return [
     ],
     'popular-places' => [
         'section' => [
+            'title_1' => true, // small eyebrow line shown above Title on the home page
             'title' => true,
             'status' => true,
             'extra_fields' => [],
