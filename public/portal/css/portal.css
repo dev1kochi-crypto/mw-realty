@@ -813,6 +813,13 @@ body.portal-body {
 }
 
 /* Compact tag summary and row-level tag manager. */
+.portal-tags-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    max-width: 100%;
+}
+
 .portal-tags-picker {
     display: inline-flex;
     align-items: center;
@@ -848,6 +855,90 @@ body.portal-body {
     padding: 0.2rem 0.42rem;
     border-radius: 50px;
     background: #eef2ff;
+    border: 0;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.portal-tag-overflow:hover,
+.portal-tag-overflow:focus-visible,
+.portal-tag-overflow[aria-expanded="true"] {
+    background: #e0e7ff;
+    outline: none;
+}
+
+/* Small card shown when clicking the "+N" overflow badge on a lead's tags. */
+.portal-tag-popover {
+    position: absolute;
+    z-index: 1060;
+    min-width: 180px;
+    max-width: 240px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 12px 30px rgba(23, 27, 72, 0.18);
+    border: 1px solid var(--portal-border);
+    padding: 0.6rem;
+}
+
+.portal-tag-popover-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+}
+
+.portal-tag-popover-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.35rem 0.2rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.portal-tag-popover-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.08);
+    color: inherit;
+    font-size: 0.6rem;
+    padding: 0;
+    line-height: 1;
+}
+
+.portal-tag-popover-remove:hover,
+.portal-tag-popover-remove:focus-visible {
+    background: rgba(220, 38, 38, 0.18);
+    color: #dc2626;
+    outline: none;
+}
+
+.portal-tag-popover-footer {
+    border-top: 1px solid var(--portal-border);
+    padding-top: 0.5rem;
+}
+
+.portal-tag-popover-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 0;
+    background: transparent;
+    color: var(--portal-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0;
+}
+
+.portal-tag-popover-add:hover {
+    text-decoration: underline;
 }
 
 .portal-tags-picker-icon {

@@ -1,5 +1,5 @@
 <div class="modal fade" id="leadTagsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm modal-dialog-scrollable">
+    <div class="modal-dialog modal-sm modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content portal-lead-tags-modal">
             <form id="leadTagsForm" novalidate>
                 <div class="modal-header border-0 pb-0">

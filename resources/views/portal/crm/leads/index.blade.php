@@ -51,6 +51,7 @@
 @include('portal.crm.leads._lead_form_modal')
 @include('portal.crm.leads._lead_view_modal')
 @include('portal.crm.leads._lead_tags_modal')
+@include('portal.crm.leads._lead_tag_overflow_popover')
 @include('portal.crm.leads._lead_table_fields_modal')
 @include('portal.crm.leads._lead_note_modal')
 @include('portal.crm.leads._lead_delete_modal')
@@ -99,6 +100,11 @@
         const leadTagsError = document.getElementById('leadTagsError');
         const leadTagsSaveBtn = document.getElementById('leadTagsSaveBtn');
         const leadTagsSpinner = document.getElementById('leadTagsSpinner');
+        const tagOverflowPopover = document.getElementById('leadTagOverflowPopover');
+        const tagOverflowList = document.getElementById('leadTagOverflowList');
+        const tagOverflowAddBtn = document.getElementById('leadTagOverflowAddBtn');
+        let currentOverflowLeadId = null;
+        let currentOverflowAnchor = null;
         const leadTableFieldsModal = new bootstrap.Modal(document.getElementById('leadTableFieldsModal'));
         const leadTableFieldsForm = document.getElementById('leadTableFieldsForm');
         const leadTableFieldsError = document.getElementById('leadTableFieldsError');
@@ -463,6 +469,94 @@
             });
         }
 
+        function closeTagOverflowPopover() {
+            tagOverflowPopover.classList.add('d-none');
+            currentOverflowLeadId = null;
+            if (currentOverflowAnchor) currentOverflowAnchor.setAttribute('aria-expanded', 'false');
+            currentOverflowAnchor = null;
+        }
+
+        function openTagOverflowPopover(anchor, id) {
+            fetchLead(id).then(function (data) {
+                currentOverflowLeadId = id;
+                currentOverflowAnchor = anchor;
+                const otherTags = (data.tags || []).slice(1);
+                tagOverflowList.innerHTML = '';
+
+                if (!otherTags.length) {
+                    tagOverflowList.innerHTML = '<span class="text-muted small">No more tags.</span>';
+                } else {
+                    otherTags.forEach(function (tag) {
+                        const chip = document.createElement('span');
+                        chip.className = 'portal-tag-popover-chip';
+                        chip.style.background = (tag.color || '#14b8a6') + '22';
+                        chip.style.color = tag.color || '#14b8a6';
+                        chip.textContent = tag.name;
+
+                        const removeBtn = document.createElement('button');
+                        removeBtn.type = 'button';
+                        removeBtn.className = 'portal-tag-popover-remove';
+                        removeBtn.dataset.tagId = tag.id;
+                        removeBtn.setAttribute('aria-label', 'Remove ' + tag.name);
+                        removeBtn.innerHTML = '<i class="fas fa-xmark" aria-hidden="true"></i>';
+                        chip.appendChild(removeBtn);
+                        tagOverflowList.appendChild(chip);
+                    });
+                }
+
+                const rect = anchor.getBoundingClientRect();
+                tagOverflowPopover.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+                tagOverflowPopover.style.left = (rect.left + window.scrollX) + 'px';
+                tagOverflowPopover.classList.remove('d-none');
+                anchor.setAttribute('aria-expanded', 'true');
+            }).catch(function () {
+                alert('Could not load tags for this lead. Please try again.');
+            });
+        }
+
+        function removeLeadTag(leadId, tagId) {
+            fetchLead(leadId).then(function (data) {
+                const remainingIds = (data.tag_ids || []).map(String).filter(function (id) { return id !== String(tagId); });
+                const body = new URLSearchParams();
+                remainingIds.forEach(function (id) { body.append('tags[]', id); });
+
+                return fetch("{{ url('portal/crm/leads') }}/" + leadId + '/tags', {
+                    method: 'PATCH',
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: body,
+                });
+            })
+            .then(async function (response) {
+                const data = await response.json().catch(function () { return {}; });
+                if (!response.ok) throw new Error(data.message || 'Could not remove tag.');
+
+                showFlash('success', 'Tag removed.');
+                closeTagOverflowPopover();
+                reloadLeadsListing();
+            })
+            .catch(function (error) {
+                alert(error.message || 'Could not remove tag. Please try again.');
+            });
+        }
+
+        tagOverflowList.addEventListener('click', function (e) {
+            const removeBtn = e.target.closest('.portal-tag-popover-remove');
+            if (!removeBtn || !currentOverflowLeadId) return;
+            removeLeadTag(currentOverflowLeadId, removeBtn.dataset.tagId);
+        });
+
+        tagOverflowAddBtn.addEventListener('click', function () {
+            const leadId = currentOverflowLeadId;
+            closeTagOverflowPopover();
+            if (leadId) openTagsModal(leadId);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (tagOverflowPopover.classList.contains('d-none')) return;
+            if (e.target.closest('.portal-tag-popover') || e.target.closest('.portal-tag-overflow')) return;
+            closeTagOverflowPopover();
+        });
+
         function openViewModal(id) {
             fetchLead(id).then(function (data) {
                 currentViewedLeadId = id;
@@ -609,6 +703,14 @@
 
             const tagsPicker = e.target.closest('.portal-tags-picker');
             if (tagsPicker) { openTagsModal(tagsPicker.dataset.id); return; }
+
+            const tagOverflowBtn = e.target.closest('.portal-tag-overflow');
+            if (tagOverflowBtn) {
+                const isOpenForSameLead = currentOverflowLeadId === tagOverflowBtn.dataset.id && !tagOverflowPopover.classList.contains('d-none');
+                closeTagOverflowPopover();
+                if (!isOpenForSameLead) openTagOverflowPopover(tagOverflowBtn, tagOverflowBtn.dataset.id);
+                return;
+            }
 
             const stagePicker = e.target.closest('.portal-stage-picker');
             if (stagePicker) {

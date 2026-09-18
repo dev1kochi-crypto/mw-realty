@@ -208,19 +208,21 @@
                     @endif
                     @if($hasTableField('tags'))
                     <td data-column-key="tags" data-search="{{ $lead->tags->pluck('name')->implode(' ') }}">
-                        <button type="button" class="portal-tags-picker" data-id="{{ $lead->id }}" title="Manage tags" aria-label="Manage tags for {{ $lead->name ?: 'lead' }}">
-                            @forelse($lead->tags->take(1) as $tag)
-                            <span class="portal-tag-chip" style="background: {{ $tag->color }}22; color: {{ $tag->color }};">{{ $tag->name }}</span>
-                            @empty
-                            <span class="portal-tags-empty"><i class="fas fa-plus" aria-hidden="true"></i> Add tags</span>
-                            @endforelse
+                        <div class="portal-tags-cell">
+                            <button type="button" class="portal-tags-picker" data-id="{{ $lead->id }}" title="Manage tags" aria-label="Manage tags for {{ $lead->name ?: 'lead' }}">
+                                @forelse($lead->tags->take(1) as $tag)
+                                <span class="portal-tag-chip" style="background: {{ $tag->color }}22; color: {{ $tag->color }};">{{ $tag->name }}</span>
+                                @empty
+                                <span class="portal-tags-empty"><i class="fas fa-plus" aria-hidden="true"></i> Add tags</span>
+                                @endforelse
+                                @if($lead->tags->isNotEmpty())
+                                <i class="fas fa-pen portal-tags-picker-icon" aria-hidden="true"></i>
+                                @endif
+                            </button>
                             @if($lead->tags->count() > 1)
-                            <span class="portal-tag-overflow">+{{ $lead->tags->count() - 1 }}</span>
+                            <button type="button" class="portal-tag-overflow" data-id="{{ $lead->id }}" aria-haspopup="true" aria-expanded="false" title="Show other tags">+{{ $lead->tags->count() - 1 }}</button>
                             @endif
-                            @if($lead->tags->isNotEmpty())
-                            <i class="fas fa-pen portal-tags-picker-icon" aria-hidden="true"></i>
-                            @endif
-                        </button>
+                        </div>
                     </td>
                     @endif
                     @if($hasTableField('message'))
