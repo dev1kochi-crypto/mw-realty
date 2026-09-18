@@ -28,7 +28,10 @@ class ValidateAdminInput
                 $isDocument => 'file|mimes:jpg,jpeg,png,pdf|extensions:jpg,jpeg,png,pdf|max:4096',
                 $isVideo => 'file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|extensions:mp4,mov,avi|max:51200',
                 $isSpreadsheet => 'file|mimes:xlsx,xls,csv|extensions:xlsx,xls,csv|max:10240',
-                default => 'image|extensions:jpg,jpeg,png,gif,bmp,webp|max:4096',
+                // 8192KB ceiling (not 4096) so it never undercuts a controller's own, larger
+                // config limit (e.g. ads.image allows up to 8192KB for a wide banner) — this
+                // check is just an outer safety net; each controller still enforces its own.
+                default => 'image|extensions:jpg,jpeg,png,gif,bmp,webp|max:8192',
             };
         }
         if (str_ends_with($name, '.bulk-action')) {

@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('portal/css/portal.css') }}">
+    <link rel="stylesheet" href="{{ asset('portal/css/portal.css') }}?v={{ filemtime(public_path('portal/css/portal.css')) }}">
     <style>
         .notif-bell-btn { position: relative; border: none; background: #f4f6fb; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #4b5065; font-size: 1.05rem; }
         .notif-bell-btn:hover { background: #e9ecf6; color: var(--secondary-color, #212529); }
@@ -40,8 +40,8 @@
 <body class="portal-body">
     <div class="portal-shell">
         <aside class="portal-sidebar">
-            <div class="portal-brand">
-                <span class="badge-dot"></span> MW Realty
+            <div class="portal-brand portal-brand--sidebar">
+                <img src="{{ asset('frontend/assets/images/logo.png') }}" alt="MW Realty" class="portal-brand__icon portal-brand__icon--only">
             </div>
 
             @php
@@ -89,6 +89,11 @@
                     <i class="fas fa-building"></i> Properties
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
+                @if($cmsActor || $owner?->type === 'company')
+                <a href="{{ route('portal.agents.index') }}" class="nav-link @if(request()->routeIs('portal.agents.*')) active @endif">
+                    <i class="fas fa-user-tie"></i> Agents
+                </a>
+                @endif
                 @if($cmsActor)
                 <a href="{{ route('portal.nearby-places.index') }}" class="nav-link @if(request()->routeIs('portal.nearby-places.*')) active @endif">
                     <i class="fas fa-map-marker-alt"></i> Nearby Places

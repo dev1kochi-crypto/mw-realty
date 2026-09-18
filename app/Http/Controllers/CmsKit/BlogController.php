@@ -29,6 +29,7 @@ class BlogController extends Controller
             'slug' => ['nullable', 'string', 'max:255', \Illuminate\Validation\Rule::unique('blogs', 'slug')->ignore($blog?->id)],
             'metadata' => 'nullable|array',
             'metadata.og_image' => 'nullable|image|max:4096',
+            'extra_fields.category' => ['required', \Illuminate\Validation\Rule::exists('blog_categories', 'slug')],
         ];
 
         foreach ($languages as $lang) {
@@ -44,7 +45,7 @@ class BlogController extends Controller
             $rules['published_at'] = in_array('published_at', $requiredFields) ? 'required|date' : 'nullable|date';
         }
 
-        foreach (['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'] as $field) {
+        foreach (['feature_image', 'detail_image'] as $field) {
             if (!($blogConfig[$field] ?? true)) {
                 continue;
             }
@@ -58,7 +59,64 @@ class BlogController extends Controller
 
         $rules['remove_metadata_og_image'] = 'nullable|boolean';
 
+        foreach ($blogConfig['extra_fields'] ?? [] as $fieldName => $field) {
+            $required = $field['required'] ?? false;
+
+            if ($field['translatable'] ?? false) {
+                foreach ($languages as $lang) {
+                    $rules["translations.{$lang->code}.extra_fields.{$fieldName}"] = $required ? 'required' : 'nullable';
+                }
+                continue;
+            }
+
+            if (($field['type'] ?? 'text') === 'file') {
+                $requiresFile = $required && (!$isUpdate || empty($blog?->extra_fields[$fieldName]) || request()->boolean("remove_extra_fields_{$fieldName}"));
+                $rules["extra_fields.{$fieldName}"] = ($requiresFile ? 'required' : 'nullable') . '|image|max:1024';
+                $rules["remove_extra_fields_{$fieldName}"] = 'nullable|boolean';
+                continue;
+            }
+
+            $rules["extra_fields.{$fieldName}"] = $required ? 'required|string' : 'nullable|string';
+        }
+
         return $rules;
+    }
+
+    /** Global (non-translatable) blog extra fields — handles file uploads/removal via config('cms-kit.database.blogs.items.extra_fields'). */
+    protected function mergeBlogGlobalExtraFields(Request $request, ?Blog $blog = null): array
+    {
+        $fieldConfig = config('cms-kit.database.blogs.items.extra_fields', []);
+        $existing = $blog?->extra_fields ?? [];
+        // 'category' isn't config-driven (see the note in config/cms/database.php) but is still
+        // a plain global extra field, so it's merged in here alongside the config-driven ones.
+        $resolved = ['category' => $request->input('extra_fields.category', $existing['category'] ?? null)];
+
+        foreach ($fieldConfig as $fieldName => $field) {
+            if ($field['translatable'] ?? false) {
+                continue;
+            }
+
+            $existingValue = $existing[$fieldName] ?? null;
+
+            if (($field['type'] ?? 'text') === 'file') {
+                if ($request->hasFile("extra_fields.{$fieldName}")) {
+                    if (is_string($existingValue) && $existingValue !== '') {
+                        app(\App\Services\ManagedFiles::class)->delete($existingValue);
+                    }
+                    $resolved[$fieldName] = app(\App\Services\ManagedFiles::class)->store($request->file("extra_fields.{$fieldName}"), 'blogs');
+                } elseif ($request->boolean("remove_extra_fields_{$fieldName}") && is_string($existingValue) && $existingValue !== '') {
+                    app(\App\Services\ManagedFiles::class)->delete($existingValue);
+                    $resolved[$fieldName] = null;
+                } else {
+                    $resolved[$fieldName] = $existingValue;
+                }
+                continue;
+            }
+
+            $resolved[$fieldName] = $request->input("extra_fields.{$fieldName}", $existingValue);
+        }
+
+        return $resolved;
     }
 
     protected function getBlogSectionValidationRules(): array
@@ -169,7 +227,8 @@ class BlogController extends Controller
     {
         $languages = Language::where('status', true)->get();
         $imagesConfig = config('cms-kit.images.blogs');
-        return view('cms-kit::blogs.create', compact('languages', 'imagesConfig'));
+        $blogCategories = \App\Models\CmsKit\BlogCategory::active()->orderBy('order_index')->get();
+        return view('cms-kit::blogs.create', compact('languages', 'imagesConfig', 'blogCategories'));
     }
 
     public function store(Request $request)
@@ -177,18 +236,18 @@ class BlogController extends Controller
         $imagesConfig = config('cms-kit.images.blogs');
         $request->merge(['slug' => Str::slug($request->input('slug') ?: $request->input('translations.'.config('app.fallback_locale').'.title', ''))]);
         $request->validate($this->getBlogValidationRules());
-        foreach (['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'] as $field) {
+        foreach (['feature_image', 'detail_image'] as $field) {
             $this->validateImageWithinLimits($request, $field, $imagesConfig[$field] ?? [], str_replace('_', ' ', ucfirst($field)));
         }
 
-        $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'slug']);
+        $data = $request->except(['feature_image', 'detail_image', 'status', 'slug']);
         // Blog create defaults to active unless explicitly turned off.
         $data['status'] = $request->boolean('status', true);
         $data['translations'] = $this->mergeBlogTranslatableExtraFields($request->input('translations', []));
         $data['slug'] = $request->filled('slug') ? Str::slug($request->slug) : Str::slug($request->translations[config('app.fallback_locale')]['title'] ?? $request->translations[array_key_first($request->translations)]['title']);
-        $data['extra_fields'] = $request->input('extra_fields', []);
+        $data['extra_fields'] = $this->mergeBlogGlobalExtraFields($request);
 
-        $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
+        $imageFields = ['feature_image', 'detail_image'];
         foreach ($imageFields as $field) {
             if ($request->hasFile($field)) {
                 $data[$field] = app(\App\Services\ManagedFiles::class)->store($request->file($field), 'blogs');
@@ -218,7 +277,8 @@ class BlogController extends Controller
         $blog = Blog::findOrFail($id);
         $languages = Language::where('status', true)->get();
         $imagesConfig = config('cms-kit.images.blogs');
-        return view('cms-kit::blogs.edit', compact('blog', 'languages', 'imagesConfig'));
+        $blogCategories = \App\Models\CmsKit\BlogCategory::active()->orderBy('order_index')->get();
+        return view('cms-kit::blogs.edit', compact('blog', 'languages', 'imagesConfig', 'blogCategories'));
     }
 
     public function update(Request $request, $id)
@@ -228,15 +288,15 @@ class BlogController extends Controller
 
         if ($request->filled('slug')) $request->merge(['slug' => Str::slug($request->input('slug'))]);
         $request->validate($this->getBlogValidationRules(true, $blog));
-        foreach (['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'] as $field) {
+        foreach (['feature_image', 'detail_image'] as $field) {
             $this->validateImageWithinLimits($request, $field, $imagesConfig[$field] ?? [], str_replace('_', ' ', ucfirst($field)));
         }
 
-        $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'slug']);
+        $data = $request->except(['feature_image', 'detail_image', 'status', 'slug']);
         // Keep existing status when status input is absent in edit form.
         $data['status'] = $request->boolean('status');
         $data['translations'] = $this->mergeBlogTranslatableExtraFields($request->input('translations', []));
-        $data['extra_fields'] = $request->input('extra_fields', []);
+        $data['extra_fields'] = $this->mergeBlogGlobalExtraFields($request, $blog);
         if ($request->filled('slug')) {
             $data['slug'] = Str::slug($request->slug);
         }
@@ -244,7 +304,7 @@ class BlogController extends Controller
         $newSlug = $data['slug'] ?? $blog->slug;
         app(\CMS\SiteManager\Services\UrlRedirectService::class)->recordSlugChange('blog', $blog->slug, $newSlug, auth('cms')->id());
 
-        $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
+        $imageFields = ['feature_image', 'detail_image'];
         foreach ($imageFields as $field) {
             if ($request->hasFile($field)) {
                 if ($blog->$field) app(\App\Services\ManagedFiles::class)->delete($blog->$field);
@@ -255,8 +315,7 @@ class BlogController extends Controller
             }
 
             if ($request->boolean("remove_{$field}")) {
-                $altField = $field === 'banner_image' ? 'banner_alt' : $field . '_alt';
-                $data[$altField] = null;
+                $data["{$field}_alt"] = null;
             }
         }
 
@@ -290,7 +349,7 @@ class BlogController extends Controller
         $blog = Blog::findOrFail($id);
         app(\CMS\SiteManager\Services\UrlRedirectService::class)->recordDeletion('blog', $blog->slug, auth('cms')->id());
         $order = $blog->order_index;
-        $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
+        $imageFields = ['feature_image', 'detail_image'];
         foreach ($imageFields as $field) {
             if ($blog->$field) app(\App\Services\ManagedFiles::class)->delete($blog->$field);
         }
@@ -298,6 +357,10 @@ class BlogController extends Controller
         // Delete Metadata OG Image
         if (!empty($blog->metadata['og_image'])) {
             app(\App\Services\ManagedFiles::class)->delete($blog->metadata['og_image']);
+        }
+
+        if (!empty($blog->extra_fields['author_avatar'])) {
+            app(\App\Services\ManagedFiles::class)->delete($blog->extra_fields['author_avatar']);
         }
 
         $blog->delete();
@@ -355,17 +418,11 @@ class BlogController extends Controller
             [
                 'translations' => $this->mergeBlogSectionTranslatableExtraFields($request->input('translations', [])),
                 'status' => $request->has('status'),
-                'extra_fields' => array_merge(
-                    $request->input('extra_fields', []),
-                    [
-                        'status' => $request->has('status'),
-                        'display_home' => ($sectionConfig['display_home'] ?? false) ? $request->boolean('display_home') : false,
-                    ]
-                )
+                'extra_fields' => $request->input('extra_fields', []),
             ]
         );
 
-        return redirect()->back()->with('success', 'Blog section settings updated.');
+        return redirect()->route('cms.blogs.index')->with('success', 'Blog section settings updated.');
     }
 
     public function bulkAction(Request $request)
@@ -384,7 +441,7 @@ class BlogController extends Controller
                 $redirectSvc->recordDeletion('blog', $blog->slug, auth('cms')->id());
             }
             foreach ($blogs as $blog) {
-                $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
+                $imageFields = ['feature_image', 'detail_image'];
                 foreach ($imageFields as $field) {
                     if ($blog->$field) {
                         app(\App\Services\ManagedFiles::class)->delete($blog->$field);
@@ -393,6 +450,10 @@ class BlogController extends Controller
 
                 if (!empty($blog->metadata['og_image'])) {
                     app(\App\Services\ManagedFiles::class)->delete($blog->metadata['og_image']);
+                }
+
+                if (!empty($blog->extra_fields['author_avatar'])) {
+                    app(\App\Services\ManagedFiles::class)->delete($blog->extra_fields['author_avatar']);
                 }
 
                 $blog->delete();

@@ -135,12 +135,32 @@ return [
         'receipt_email' => true,
         'privacy_policy' => true,
         'terms_and_conditions' => true,
-        'disclaimer' => true,
+        'disclaimer' => false,
         'logo' => true,
         'logo_alt' => true,
         'footer_logo' => false,
         'footer_logo_alt' => false,
         'footer_description' => false,
+        'extra_fields' => [
+            'logo_colour' => [
+                'label' => 'Colour Logo',
+                'type' => 'file',
+                'accept' => 'image/*',
+                'helpText' => 'Recommended size: 200x60px (PNG/SVG). An alternate colour version of the main logo.',
+            ],
+            'security_settings' => [
+                'label' => 'Security Setting',
+                'type' => 'textarea',
+                'editor' => 'tinymce',
+                'translatable' => true,
+            ],
+            'cookie_policy' => [
+                'label' => 'Cookie Policy',
+                'type' => 'textarea',
+                'editor' => 'tinymce',
+                'translatable' => true,
+            ],
+        ],
         'facebook' => true,
         'twitter' => true,
         'linkedin' => true,
@@ -155,7 +175,6 @@ return [
         'gtag' => true,
         'custom_head_script' => true,
         'custom_body_script' => true,
-        'extra_fields' => [],
         'required' => ['company_name', 'address', 'phone_1', 'email_1', 'receipt_email', 'logo', 'favicon'], // Fields that are mandatory
     ],
     'locations' => [
@@ -190,7 +209,7 @@ return [
             'order' => true,
             'status' => true,
             'extra_fields' => [],
-            'required' => ['image', 'image_alt'],
+            'required' => ['image'],
         ],
     ],
     'blogs' => [
@@ -201,7 +220,6 @@ return [
             'banner' => true,
             'banner_alt' => true,
             'status' => true,
-            'display_home' => true,
             'extra_fields' => [],
             'required' => ['title'],
         ],
@@ -214,15 +232,49 @@ return [
             'feature_image_alt' => true,
             'detail_image' => true,
             'detail_image_alt' => true,
-            'banner_image' => true,
-            'banner_alt' => true,
-            'image_3' => true,
-            'image_3_alt' => true,
-            'image_4' => true,
-            'image_4_alt' => true,
+            'banner_image' => false,
+            'banner_alt' => false,
+            'image_3' => false,
+            'image_3_alt' => false,
+            'image_4' => false,
+            'image_4_alt' => false,
             'order' => true,
             'status' => true,
-            'extra_fields' => [],
+            // 'category' is intentionally NOT declared here — it's rendered as its own dynamic
+            // <select> (see blogs/create.blade.php and blogs/edit.blade.php) sourced from the
+            // admin-managed Blogs > Categories list (BlogCategory model) instead of a fixed set
+            // of options, so admins can add/rename/remove categories without a code change.
+            'extra_fields' => [
+                'read_time' => [
+                    'type' => 'text',
+                    'label' => 'Read Time',
+                    'placeholder' => 'e.g. 6 min read',
+                    'column_class' => 'col-md-4',
+                ],
+                'author_name' => [
+                    'type' => 'text',
+                    'label' => 'Author Name',
+                    'column_class' => 'col-md-4',
+                ],
+                'author_role' => [
+                    'type' => 'text',
+                    'label' => 'Author Role',
+                    'placeholder' => 'e.g. Senior Investment Consultant',
+                    'column_class' => 'col-md-6',
+                ],
+                'author_avatar' => [
+                    'type' => 'file',
+                    'label' => 'Author Avatar',
+                    'column_class' => 'col-md-6',
+                ],
+                'excerpt' => [
+                    'type' => 'textarea',
+                    'label' => 'Excerpt',
+                    'translatable' => true,
+                    'placeholder' => 'Short summary shown on the blog listing card.',
+                    'column_class' => 'col-12',
+                ],
+            ],
             'required' => ['title', 'content', 'published_at', 'feature_image', 'feature_image_alt'],
         ],
     ],
@@ -351,8 +403,11 @@ return [
     ],
     'post-property-steps' => [
         'section' => [
+            'title_1' => true, // small eyebrow line shown above Title on the home page
             'title' => true,
             'description' => true,
+            'button_text' => true,
+            'button_url' => true,
             'image' => true,
             'status' => true,
             'extra_fields' => [],
@@ -370,6 +425,7 @@ return [
     ],
     'popular-places' => [
         'section' => [
+            'title_1' => true, // small eyebrow line shown above Title on the home page
             'title' => true,
             'status' => true,
             'extra_fields' => [],

@@ -48,11 +48,29 @@
                             <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $t['title'] ?? '') }}" required>
                             @error("translations.{$lang->code}.title")<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Description</label>
-                            <textarea name="translations[{{ $lang->code }}][description]" class="form-control" rows="4">{{ old("translations.{$lang->code}.description", $t['description'] ?? '') }}</textarea>
-                        </div>
                     </div>
+
+                    <hr class="my-4">
+                    <h6 class="fw-bold text-secondary mb-3">Trend Points</h6>
+                    @php
+                        $trends = old("translations.{$lang->code}.trends", $t['trends'] ?? []);
+                        if (!$trends) { $trends = ['']; }
+                    @endphp
+                    <div class="trend-points-list" data-lang="{{ $lang->code }}">
+                        @foreach ($trends as $trend)
+                        <div class="row g-2 mb-2 trend-point-row align-items-center">
+                            <div class="col">
+                                <input type="text" name="translations[{{ $lang->code }}][trends][]" class="form-control" value="{{ $trend }}" placeholder="e.g. Higher mortgage rates have slowed rapid price growth.">
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-outline-danger remove-trend-point"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm add-trend-point" data-lang="{{ $lang->code }}">
+                        <i class="fas fa-plus me-1"></i>Add Trend Point
+                    </button>
                 </div>
                 @endforeach
             </div>
@@ -62,7 +80,7 @@
             <div class="row g-4">
                 <div class="col-md-6">
                     <label class="form-label d-block">Image 1</label>
-                    <small class="text-muted d-block mb-1">Recommended size: {{ $imageConfig['width'] ?? '' }}x{{ $imageConfig['height'] ?? '' }}px, Max: {{ $imageConfig['max_size'] ?? '' }}KB</small>
+                    <small class="text-muted d-block mb-1">Recommended size: {{ $image1Config['width'] ?? '' }}x{{ $image1Config['height'] ?? '' }}px, Max: {{ $image1Config['max_size'] ?? '' }}KB</small>
                     <input type="file" name="image_1" class="form-control @error('image_1') is-invalid @enderror">
                     @error('image_1')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     <input type="text" name="image_1_alt" class="form-control mt-2" placeholder="Image 1 ALT text" value="{{ old('image_1_alt', $section->section_image_alt ?? '') }}">
@@ -78,7 +96,7 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label d-block">Image 2</label>
-                    <small class="text-muted d-block mb-1">Recommended size: {{ $imageConfig['width'] ?? '' }}x{{ $imageConfig['height'] ?? '' }}px, Max: {{ $imageConfig['max_size'] ?? '' }}KB</small>
+                    <small class="text-muted d-block mb-1">Recommended size: {{ $image2Config['width'] ?? '' }}x{{ $image2Config['height'] ?? '' }}px, Max: {{ $image2Config['max_size'] ?? '' }}KB</small>
                     <input type="file" name="image_2" class="form-control @error('image_2') is-invalid @enderror">
                     @error('image_2')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     <input type="text" name="image_2_alt" class="form-control mt-2" placeholder="Image 2 ALT text" value="{{ old('image_2_alt', $section->banner_alt ?? '') }}">
@@ -112,3 +130,34 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('click', function (e) {
+        const addBtn = e.target.closest('.add-trend-point');
+        if (addBtn) {
+            const lang = addBtn.dataset.lang;
+            const list = document.querySelector('.trend-points-list[data-lang="' + lang + '"]');
+            const row = document.createElement('div');
+            row.className = 'row g-2 mb-2 trend-point-row align-items-center';
+            row.innerHTML = '<div class="col"><input type="text" name="translations[' + lang + '][trends][]" class="form-control" placeholder="e.g. Higher mortgage rates have slowed rapid price growth."></div>' +
+                '<div class="col-auto"><button type="button" class="btn btn-outline-danger remove-trend-point"><i class="fas fa-trash"></i></button></div>';
+            list.appendChild(row);
+            row.querySelector('input').focus();
+            return;
+        }
+
+        const removeBtn = e.target.closest('.remove-trend-point');
+        if (removeBtn) {
+            const list = removeBtn.closest('.trend-points-list');
+            const row = removeBtn.closest('.trend-point-row');
+            // Keep at least one (empty) row so the field is never entirely removed from the form.
+            if (list.querySelectorAll('.trend-point-row').length <= 1) {
+                row.querySelector('input').value = '';
+            } else {
+                row.remove();
+            }
+        }
+    });
+</script>
+@endpush

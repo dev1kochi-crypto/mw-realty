@@ -81,16 +81,7 @@
                                 <label class="form-check-label fw-bold" for="sectionStatus">Status</label>
                             </div>
                         </div>
-                        @if(config('cms-kit.database.blogs.section.display_home'))
-                        <div class="col-md-auto">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="display_home" id="displayHome" value="1" {{ old('display_home', data_get($section->extra_fields, 'display_home', false)) ? 'checked' : '' }}>
-                                <label class="form-check-label fw-bold" for="displayHome">Display Home</label>
-                            </div>
-                        </div>
-                        @endif
                     </div>
-                       
 
                     @include('cms-kit::partials.extra-fields-global', [
                         'configKey' => 'blogs.section',

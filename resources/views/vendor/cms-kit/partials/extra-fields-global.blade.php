@@ -6,6 +6,7 @@
      */
     $configKey = $configKey ?? null;
     $existingValues = $existingValues ?? [];
+    $excludeKeys = $excludeKeys ?? [];
 
     $extraFields = [];
     if ($configKey) {
@@ -14,7 +15,8 @@
 
     $supportedInputTypes = ['text', 'number', 'email', 'date', 'time', 'datetime-local', 'url', 'tel', 'color', 'password', 'month', 'week'];
     $globalFields = collect($extraFields)
-        ->filter(fn($field) => !($field['translatable'] ?? false));
+        ->filter(fn($field) => !($field['translatable'] ?? false))
+        ->reject(fn($field, $key) => in_array($key, $excludeKeys, true));
 @endphp
 
 @if($globalFields->count())

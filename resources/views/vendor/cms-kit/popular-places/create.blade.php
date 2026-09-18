@@ -82,3 +82,7 @@
     </div>
 </div>
 @endsection
+
+{{-- Jumping to the tab holding a required/invalid field (client-side blocked submit, or a
+     server-side validation error after redirect) is handled globally for every CMS page in
+     layouts/cms.blade.php — no page-specific script needed here. --}}

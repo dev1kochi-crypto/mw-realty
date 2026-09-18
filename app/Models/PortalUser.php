@@ -15,6 +15,7 @@ class PortalUser extends Authenticatable
         'company_name',
         'email',
         'phone',
+        'whatsapp_number',
         'nationality',
         'avatar',
         'emirates_id_no',
@@ -36,6 +37,7 @@ class PortalUser extends Authenticatable
         'translations',
         'years_of_experience',
         'preferred_areas',
+        'features',
         'website',
         'founding_year',
         'badges',
@@ -79,6 +81,7 @@ class PortalUser extends Authenticatable
         'document_status' => 'array',
         'translations' => 'array',
         'preferred_areas' => 'array',
+        'features' => 'array',
         'badges' => 'array',
     ];
 

@@ -62,10 +62,10 @@ const routes = [
         meta: { title: 'Blog | MW Realty', bodyClass: 'agents-page blogs-page', activeNav: 'blogs' },
     },
     {
-        path: '/blog-details',
+        path: '/blog-details/:slug',
         name: 'blog-details',
         component: () => import('../pages/BlogDetails.vue'),
-        meta: { title: '5 Reasons to Invest in Dubai Off-Plan Properties in 2026 | MW Realty', bodyClass: 'agents-page blog-details-page', activeNav: 'blogs' },
+        meta: { title: 'Blog Details | MW Realty', bodyClass: 'agents-page blog-details-page', activeNav: 'blogs' },
     },
     {
         path: '/contact',
@@ -123,11 +123,61 @@ const routes = [
     },
 ];
 
+// The browser's own scroll-restoration remembers the scrollY from before a hard
+// reload and jumps straight there as soon as the page repaints — but this is a
+// lazily-mounted SPA, so that jump fires before the async page chunk has mounted
+// and grown the page to its real height, landing wherever the (still mostly
+// empty) page happens to be tall enough at that instant, usually the footer.
+// Disabling the native restore and doing it ourselves after the page has
+// actually mounted (below) fixes that while keeping the same end behavior:
+// paint at the top first, then settle back where the reader left off.
+if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+}
+
+const SCROLL_KEY_PREFIX = 'mw-scroll:';
+let scrollSaveScheduled = false;
+window.addEventListener(
+    'scroll',
+    () => {
+        if (scrollSaveScheduled) return;
+        scrollSaveScheduled = true;
+        requestAnimationFrame(() => {
+            sessionStorage.setItem(SCROLL_KEY_PREFIX + window.location.pathname, String(window.scrollY));
+            scrollSaveScheduled = false;
+        });
+    },
+    { passive: true },
+);
+
 const router = createRouter({
     history: createWebHistory(),
     routes,
     scrollBehavior(to, from, savedPosition) {
         if (savedPosition) return savedPosition;
+
+        // Vue Router gives the very first navigation a "from" with no matched
+        // route at all — a reliable, order-independent way to tell "this is a
+        // fresh page load" apart from a later in-app navigation (which should
+        // just go to { top: 0 } like a normal new page).
+        const isInitialLoad = from.matched.length === 0;
+        if (isInitialLoad) {
+            const saved = sessionStorage.getItem(SCROLL_KEY_PREFIX + to.path);
+            if (saved !== null) {
+                // Wait for the lazy-loaded page to actually mount and lay out —
+                // nextTick alone can still fire before images/late content have
+                // settled the page's final height, so give layout one more frame.
+                return nextTick().then(
+                    () =>
+                        new Promise((resolve) => {
+                            requestAnimationFrame(() => {
+                                resolve({ top: Number(saved) });
+                            });
+                        }),
+                );
+            }
+        }
+
         if (to.hash) return { el: to.hash };
         return { top: 0 };
     },

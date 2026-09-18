@@ -16,8 +16,19 @@
                 <h6 class="mb-0 fw-bold text-primary">"Most Popular Properties Places" Section Settings</h6>
             </div>
             <div class="card-body p-4">
-                <form action="{{ route('cms.popular-places.update-section') }}" method="POST">
+                <form action="{{ route('cms.popular-places.update-section') }}" method="POST" id="popularPlacesSectionForm">
                     @csrf
+
+                    @if($errors->any())
+                    <div class="alert alert-danger">
+                        <strong>Please fix the following before saving</strong> — note that some of these may be on the Arabic tab above.
+                        <ul class="mb-0 mt-1">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
 
                     @if($showLanguageUi)
                     <ul class="nav nav-pills mb-4 bg-light p-2 rounded-4 language-switcher-tabs" id="sectionLanguageTabs" role="tablist">
@@ -34,11 +45,23 @@
                     <div class="tab-content mb-4 language-switcher-content">
                         @foreach($languages as $lang)
                         <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="section-panel-{{ $lang->code }}" role="tabpanel">
-                            <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
-                            <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $section->translations[$lang->code]['title'] ?? '') }}" placeholder="Most Popular Properties Places" required>
-                            @error("translations.{$lang->code}.title")
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Title 1</label>
+                                    <input type="text" name="translations[{{ $lang->code }}][title_1]" class="form-control @error("translations.{$lang->code}.title_1") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title_1", $section->translations[$lang->code]['title_1'] ?? '') }}" placeholder="e.g. In-demand cities">
+                                    <div class="form-text mt-1 text-muted">Small eyebrow line shown above the Title on the home page.</div>
+                                    @error("translations.{$lang->code}.title_1")
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
+                                    <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $section->translations[$lang->code]['title'] ?? '') }}" placeholder="Most Popular Properties Places" required>
+                                    @error("translations.{$lang->code}.title")
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
                         @endforeach
                     </div>
@@ -199,6 +222,10 @@
                 updateBulkVisibility();
             });
         };
+
+        // Jumping to the tab holding a required/invalid field (client-side blocked submit, or
+        // a server-side validation error after redirect) is now handled globally for every CMS
+        // page in layouts/cms.blade.php — nothing page-specific needed here anymore.
     });
 </script>
 @endpush

@@ -190,15 +190,31 @@ class SiteInformationController extends Controller
             $data['footer_logo_alt'] = null;
         }
 
-        $extraFields = [];
+        $extraFields = $siteInfo->extra_fields ?? [];
         foreach (config('cms-kit.database.site-information.extra_fields', []) as $key => $field) {
-            $extraFields[$key] = $request->input("extra_fields.{$key}");
+            if (($field['type'] ?? 'text') === 'file') {
+                if ($request->hasFile("extra_fields.{$key}")) {
+                    if (!empty($extraFields[$key])) {
+                        app(\App\Services\ManagedFiles::class)->delete($extraFields[$key]);
+                    }
+                    $extraFields[$key] = app(\App\Services\ManagedFiles::class)->store($request->file("extra_fields.{$key}"), 'site-info');
+                }
+                // No new file submitted — keep whatever's already stored for this field.
+            } else {
+                $extraFields[$key] = $request->input("extra_fields.{$key}");
+            }
         }
         $data['extra_fields'] = $extraFields;
         $translations = $this->mergeTranslatableExtraFields($request->input('translations', []));
         $data['translations'] = $translations;
 
+        $siteInfoConfig = config('cms-kit.database.site-information', []);
         foreach ($this->translatableFields as $field) {
+            // A field hidden via config never had a chance to be edited on this
+            // submit — leave its stored value alone instead of nulling it out.
+            if (!($siteInfoConfig[$field] ?? true)) {
+                continue;
+            }
             $data[$field] = data_get($translations, "{$defaultLanguageCode}.{$field}", $request->input($field));
         }
 

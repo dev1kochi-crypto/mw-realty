@@ -54,7 +54,7 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">Description</label>
-                            <textarea name="translations[{{ $lang->code }}][description]" class="form-control" rows="4">{{ old("translations.{$lang->code}.description", $t['description'] ?? '') }}</textarea>
+                            <textarea name="translations[{{ $lang->code }}][description]" class="form-control tinymce-extra-field" rows="4">{{ old("translations.{$lang->code}.description", $t['description'] ?? '') }}</textarea>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold">CEO Name</label>
@@ -63,6 +63,10 @@
                         <div class="col-md-4">
                             <label class="form-label fw-bold">CEO Designation</label>
                             <input type="text" name="translations[{{ $lang->code }}][ceo_designation]" class="form-control" value="{{ old("translations.{$lang->code}.ceo_designation", $t['ceo_designation'] ?? '') }}" placeholder="e.g. Founder & CEO">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">CEO Quote</label>
+                            <textarea name="translations[{{ $lang->code }}][ceo_quote]" class="form-control" rows="3" placeholder="A short quote shown on the director/CEO card.">{{ old("translations.{$lang->code}.ceo_quote", $t['ceo_quote'] ?? '') }}</textarea>
                         </div>
                     </div>
                 </div>

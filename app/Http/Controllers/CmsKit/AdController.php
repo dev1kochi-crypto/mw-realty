@@ -8,10 +8,28 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Routing\Controller;
 use App\Support\ManagesOrderIndex;
 use App\Support\ValidatesImageDimensions;
+use Illuminate\Validation\Rule;
 
 class AdController extends Controller
 {
     use ValidatesImageDimensions, ManagesOrderIndex;
+
+    /** Which page on the public site an ad can be placed on — matches the SPA's own routes. */
+    const PAGE_OPTIONS = [
+        'home' => 'Home',
+        'about' => 'About Us',
+        'commercial' => 'Commercial Properties',
+        'agents' => 'Agents',
+        'agent-details' => 'Agent Details',
+        'agencies' => 'Agencies',
+        'agency-details' => 'Agency Details',
+        'blogs' => 'Blogs',
+        'blog-details' => 'Blog Details',
+        'contact' => 'Contact Us',
+        'properties-dubai' => 'Properties Listing',
+        'property-details' => 'Property Details',
+        'terms-and-conditions' => 'Terms and Conditions',
+    ];
 
     public function index(Request $request)
     {
@@ -26,7 +44,8 @@ class AdController extends Controller
                     return '<img src="' . asset('storage/' . $row->image) . '" class="img-thumbnail" style="height: 40px;">';
                 })
                 ->addColumn('placement', function ($row) {
-                    return '<span class="badge bg-light text-dark border">' . e($row->placement) . '</span>';
+                    $label = self::PAGE_OPTIONS[$row->placement] ?? $row->placement;
+                    return '<span class="badge bg-light text-dark border">' . e($label) . '</span>';
                 })
                 ->addColumn('schedule', function ($row) {
                     if (!$row->starts_at && !$row->ends_at) {
@@ -59,16 +78,16 @@ class AdController extends Controller
                 ->make(true);
         }
 
-        $placements = Ad::query()->distinct()->orderBy('placement')->pluck('placement');
-        return view('cms-kit::ads.index', compact('placements'));
+        return view('cms-kit::ads.index');
     }
 
     public function create()
     {
         $imageConfig = config('cms-kit.images.ads.image', []);
-        $placements = Ad::query()->distinct()->orderBy('placement')->pluck('placement');
+        $mobileImageConfig = config('cms-kit.images.ads.mobile_image', []);
+        $pageOptions = self::PAGE_OPTIONS;
         $nextOrder = Ad::count() + 1;
-        return view('cms-kit::ads.create', compact('imageConfig', 'placements', 'nextOrder'));
+        return view('cms-kit::ads.create', compact('imageConfig', 'mobileImageConfig', 'pageOptions', 'nextOrder'));
     }
 
     protected function rules(bool $isUpdate = false, ?Ad $ad = null): array
@@ -77,7 +96,7 @@ class AdController extends Controller
 
         return [
             'name' => 'required|string|max:255',
-            'placement' => 'required|string|max:100',
+            'placement' => ['required', Rule::in(array_keys(self::PAGE_OPTIONS))],
             'link_url' => 'nullable|url|max:500',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
@@ -85,6 +104,7 @@ class AdController extends Controller
             'image' => ($requiresImage ? 'required' : 'nullable') . '|image|max:' . (config('cms-kit.images.ads.image.max_size') ?? 4096),
             'image_alt' => 'nullable|string|max:255',
             'remove_image' => 'nullable|boolean',
+            'mobile_image' => 'nullable|image|max:' . (config('cms-kit.images.ads.mobile_image.max_size') ?? 4096),
         ];
     }
 
@@ -92,10 +112,14 @@ class AdController extends Controller
     {
         $request->validate($this->rules());
         $this->validateImageWithinLimits($request, 'image', config('cms-kit.images.ads.image', []), 'Image');
+        $this->validateImageWithinLimits($request, 'mobile_image', config('cms-kit.images.ads.mobile_image', []), 'Mobile Image');
 
         $data = $request->only(['name', 'placement', 'link_url', 'starts_at', 'ends_at', 'order_index', 'image_alt']);
         $data['status'] = $request->boolean('status', true);
         $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'ads');
+        if ($request->hasFile('mobile_image')) {
+            $data['mobile_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('mobile_image'), 'ads');
+        }
 
         $order = $this->resolveOrderForCreate(Ad::class, $request->order_index ? (int) $request->order_index : null);
         Ad::where('order_index', '>=', $order)->increment('order_index');
@@ -110,8 +134,9 @@ class AdController extends Controller
     {
         $ad = Ad::findOrFail($id);
         $imageConfig = config('cms-kit.images.ads.image', []);
-        $placements = Ad::query()->distinct()->orderBy('placement')->pluck('placement');
-        return view('cms-kit::ads.edit', compact('ad', 'imageConfig', 'placements'));
+        $mobileImageConfig = config('cms-kit.images.ads.mobile_image', []);
+        $pageOptions = self::PAGE_OPTIONS;
+        return view('cms-kit::ads.edit', compact('ad', 'imageConfig', 'mobileImageConfig', 'pageOptions'));
     }
 
     public function update(Request $request, $id)
@@ -119,6 +144,7 @@ class AdController extends Controller
         $ad = Ad::findOrFail($id);
         $request->validate($this->rules(true, $ad));
         $this->validateImageWithinLimits($request, 'image', config('cms-kit.images.ads.image', []), 'Image');
+        $this->validateImageWithinLimits($request, 'mobile_image', config('cms-kit.images.ads.mobile_image', []), 'Mobile Image');
 
         $data = $request->only(['name', 'placement', 'link_url', 'starts_at', 'ends_at', 'order_index', 'image_alt']);
         $data['status'] = $request->boolean('status');
@@ -128,6 +154,13 @@ class AdController extends Controller
                 app(\App\Services\ManagedFiles::class)->delete($ad->image);
             }
             $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'ads');
+        }
+
+        if ($request->hasFile('mobile_image')) {
+            if ($ad->mobile_image) {
+                app(\App\Services\ManagedFiles::class)->delete($ad->mobile_image);
+            }
+            $data['mobile_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('mobile_image'), 'ads');
         }
 
         $ad->update($data);
@@ -141,6 +174,9 @@ class AdController extends Controller
         $order = $ad->order_index;
         if ($ad->image) {
             app(\App\Services\ManagedFiles::class)->delete($ad->image);
+        }
+        if ($ad->mobile_image) {
+            app(\App\Services\ManagedFiles::class)->delete($ad->mobile_image);
         }
         $ad->delete();
 
@@ -198,6 +234,9 @@ class AdController extends Controller
             foreach ($ads as $ad) {
                 if ($ad->image) {
                     app(\App\Services\ManagedFiles::class)->delete($ad->image);
+                }
+                if ($ad->mobile_image) {
+                    app(\App\Services\ManagedFiles::class)->delete($ad->mobile_image);
                 }
                 $ad->delete();
             }

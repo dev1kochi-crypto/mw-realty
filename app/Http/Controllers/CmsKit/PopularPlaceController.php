@@ -217,8 +217,10 @@ class PopularPlaceController extends Controller
 
         $rules = [];
         foreach ($languages as $lang) {
-            if (($sectionConfig['title'] ?? true) && in_array('title', $requiredFields)) {
-                $rules["translations.{$lang->code}.title"] = 'required';
+            foreach (['title_1', 'title'] as $field) {
+                if (($sectionConfig[$field] ?? true) && in_array($field, $requiredFields)) {
+                    $rules["translations.{$lang->code}.{$field}"] = 'required';
+                }
             }
         }
         $request->validate($rules);
@@ -231,7 +233,7 @@ class PopularPlaceController extends Controller
             ]
         );
 
-        return redirect()->back()->with('success', 'Section settings updated.');
+        return redirect()->route('cms.popular-places.index')->with('success', 'Section settings updated.');
     }
 
     public function bulkAction(Request $request)

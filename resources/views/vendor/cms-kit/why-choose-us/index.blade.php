@@ -33,9 +33,19 @@
                     <div class="tab-content mb-4 language-switcher-content">
                         @foreach($languages as $lang)
                         <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="section-panel-{{ $lang->code }}" role="tabpanel">
-                            <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
-                            <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $section->translations[$lang->code]['title'] ?? '') }}" placeholder="Why Choose Us" required>
-                            @error("translations.{$lang->code}.title")<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
+                                    <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $section->translations[$lang->code]['title'] ?? '') }}" placeholder="Why Choose Us" required>
+                                    @error("translations.{$lang->code}.title")<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Title 2</label>
+                                    <input type="text" name="translations[{{ $lang->code }}][title_2]" class="form-control @error("translations.{$lang->code}.title_2") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title_2", $section->translations[$lang->code]['title_2'] ?? '') }}" placeholder="e.g. The MW advantage">
+                                    <div class="form-text mt-1 text-muted">Small eyebrow line shown above the Title on the home page.</div>
+                                    @error("translations.{$lang->code}.title_2")<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                            </div>
                         </div>
                         @endforeach
                     </div>
@@ -43,7 +53,9 @@
                     <div class="row g-4 mb-4">
                         <div class="col-md-6">
                             <label class="form-label d-block">Section Image</label>
-                            <input type="file" name="section_image" class="form-control">
+                            <small class="text-muted d-block mb-1">Recommended size: {{ $sectionImageConfig['width'] ?? '' }}x{{ $sectionImageConfig['height'] ?? '' }}px, Max: {{ $sectionImageConfig['max_size'] ?? '' }}KB</small>
+                            <input type="file" name="section_image" class="form-control @error('section_image') is-invalid @enderror">
+                            @error('section_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             <input type="text" name="section_image_alt" class="form-control mt-2" placeholder="Image ALT text" value="{{ old('section_image_alt', $section->section_image_alt ?? '') }}">
                             @if($section?->section_image)
                                 <div class="mt-2">

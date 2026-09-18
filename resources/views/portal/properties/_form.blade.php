@@ -31,6 +31,9 @@
         <button type="button" role="tab" class="property-tab-link active" data-bs-toggle="pill" data-bs-target="#tab-basic">
             <span class="property-tab-icon"><i class="fas fa-file-lines"></i></span> <span>Basic</span>
         </button>
+        <button type="button" role="tab" class="property-tab-link" data-bs-toggle="pill" data-bs-target="#tab-agent">
+            <span class="property-tab-icon"><i class="fas fa-user-tie"></i></span> <span>Agent &amp; Agency</span>
+        </button>
         <button type="button" role="tab" class="property-tab-link" data-bs-toggle="pill" data-bs-target="#tab-location">
             <span class="property-tab-icon"><i class="fas fa-map-pin"></i></span> <span>Location</span>
         </button>
@@ -258,6 +261,92 @@
                 </div>
                 @endif
                 --}}
+            </div>
+        </div>
+
+        {{-- Agent & Agency --}}
+        <div class="tab-pane fade" id="tab-agent" role="tabpanel">
+            <div class="property-tab-pane-head">
+                <div class="property-tab-pane-title">Agent &amp; Agency</div>
+                <div class="property-tab-pane-hint">Who this listing is published under</div>
+            </div>
+
+            <div class="row g-3">
+                @if($lockedAgent)
+                    {{-- Logged in as the agent themself — both sides are fixed, nothing to pick. --}}
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Agent</label>
+                        <input type="text" class="form-control" value="{{ $lockedAgent->name }}" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Agency</label>
+                        <input type="text" class="form-control" value="{{ $lockedAgency?->displayName() ?? '—' }}" disabled>
+                    </div>
+                @elseif($lockedAgency)
+                    {{-- Logged in as the agency — agency is fixed, pick one of our own agents. --}}
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Agency</label>
+                        <input type="text" class="form-control" value="{{ $lockedAgency->displayName() }}" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Assigned Agent</label>
+                        <select name="agent_id" class="form-select">
+                            <option value="">— No agent assigned —</option>
+                            @foreach($agentOptions as $agent)
+                            <option value="{{ $agent->id }}" {{ (string) $val('agent_id') === (string) $agent->id ? 'selected' : '' }}>{{ $agent->name }}</option>
+                            @endforeach
+                        </select>
+                        @if($agentOptions->isEmpty())
+                        <div class="form-text">You haven't added any agents yet. <a href="{{ route('portal.agents.create') }}" target="_blank">Add one</a>.</div>
+                        @endif
+                    </div>
+                @else
+                    {{-- Super Admin — separate Agency and Agent pickers; choosing an agency narrows the agent list. --}}
+                    @php $currentAgentCompanyId = $isEdit ? $property->agent?->company_id : null; @endphp
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Agency</label>
+                        <select id="propertyAgencySelect" class="form-select">
+                            <option value="">— All agencies —</option>
+                            @foreach($agencyOptions as $agency)
+                            <option value="{{ $agency->id }}" {{ (string) $currentAgentCompanyId === (string) $agency->id ? 'selected' : '' }}>{{ $agency->displayName() }}</option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">Filters the agent list below — a listing is still saved against the agent, not the agency.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Agent</label>
+                        <select name="agent_id" id="propertyAgentSelect" class="form-select">
+                            <option value="">— No agent assigned —</option>
+                            @foreach($agentOptions as $agent)
+                            <option value="{{ $agent->id }}" data-agency="{{ $agent->company_id }}" {{ (string) $val('agent_id') === (string) $agent->id ? 'selected' : '' }}>
+                                {{ $agent->name }} @if($agent->company)&mdash; {{ $agent->company->displayName() }}@endif
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <script>
+                        (function () {
+                            var agencySelect = document.getElementById('propertyAgencySelect');
+                            var agentSelect = document.getElementById('propertyAgentSelect');
+                            if (!agencySelect || !agentSelect) return;
+
+                            function applyFilter() {
+                                var agencyId = agencySelect.value;
+                                Array.prototype.forEach.call(agentSelect.options, function (option) {
+                                    if (!option.value) return;
+                                    var matches = !agencyId || option.dataset.agency === agencyId;
+                                    option.hidden = !matches;
+                                    if (!matches && option.selected) {
+                                        agentSelect.value = '';
+                                    }
+                                });
+                            }
+
+                            agencySelect.addEventListener('change', applyFilter);
+                            applyFilter();
+                        })();
+                    </script>
+                @endif
             </div>
         </div>
 
