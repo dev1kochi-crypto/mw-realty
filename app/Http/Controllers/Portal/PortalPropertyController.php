@@ -40,6 +40,58 @@ class PortalPropertyController extends Controller
         return Auth::guard('portal')->check() ? Auth::guard('portal')->user()->id : null;
     }
 
+    /**
+     * Which agent_id to actually save, based on who's logged in:
+     * - An Agent can only ever be assigned to their own listings.
+     * - A Company can only assign one of its own agents (or none) — a submitted
+     *   agent_id belonging to someone else's roster is silently ignored.
+     * - Super Admin can assign any agent (or none).
+     */
+    protected function resolveAgentId(Request $request): ?int
+    {
+        $user = Auth::guard('portal')->user();
+
+        if ($user && $user->type === 'agent') {
+            return $user->id;
+        }
+
+        if ($user && $user->type === 'company') {
+            $requested = $request->input('agent_id');
+            return $requested && $user->agents()->where('id', $requested)->exists() ? (int) $requested : null;
+        }
+
+        if ($this->isAdmin()) {
+            $requested = $request->input('agent_id');
+            return $requested ? (int) $requested : null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Agent/agency data for the create/edit form: a locked (read-only) agent and/or
+     * agency for an Agent or Company login, or a full picker list for Super Admin.
+     */
+    protected function agentAssignmentOptions(): array
+    {
+        $user = Auth::guard('portal')->user();
+
+        if ($user && $user->type === 'agent') {
+            return ['lockedAgent' => $user, 'lockedAgency' => $user->company, 'agentOptions' => collect(), 'agencyOptions' => collect()];
+        }
+
+        if ($user && $user->type === 'company') {
+            return ['lockedAgent' => null, 'lockedAgency' => $user, 'agentOptions' => $user->agents()->orderBy('name')->get(), 'agencyOptions' => collect()];
+        }
+
+        return [
+            'lockedAgent' => null,
+            'lockedAgency' => null,
+            'agentOptions' => \App\Models\PortalUser::where('type', 'agent')->with('company')->orderBy('name')->get(),
+            'agencyOptions' => \App\Models\PortalUser::where('type', 'company')->orderBy('name')->get(),
+        ];
+    }
+
     protected function selectFilterOptions(): \Illuminate\Support\Collection
     {
         return Filter::whereIn('key', ['listing_type', 'completion_status', 'property_type', 'location'])
@@ -222,13 +274,13 @@ class PortalPropertyController extends Controller
                 ->with('error', "You've reached your plan's property limit. Upgrade your plan to add more listings.");
         }
 
-        return view('portal.properties.create', [
+        return view('portal.properties.create', array_merge([
             'languages' => $languages,
             'filterOptions' => $filterOptions,
             'isAdmin' => $this->isAdmin(),
             'remainingSlots' => $remainingSlots,
             'nearbyPlaceTypes' => $this->nearbyPlaceTypes(),
-        ]);
+        ], $this->agentAssignmentOptions()));
     }
 
     public function store(\App\Http\Requests\PropertyRequest $request)
@@ -257,6 +309,7 @@ class PortalPropertyController extends Controller
         $data['reference_no'] = $this->generateReferenceNo();
         // null when Super Admin creates it directly (a house/MW Realty listing with no portal owner)
         $data['portal_user_id'] = $this->ownerId();
+        $data['agent_id'] = $this->resolveAgentId($request);
         $data['translations'] = $request->input('translations', []);
         $data['status'] = $request->boolean('status') && ($this->isAdmin() || Auth::guard('portal')->user()->isApproved());
         $data['featured'] = $this->isAdmin() && $request->has('featured');
@@ -324,7 +377,7 @@ class PortalPropertyController extends Controller
 
     protected function findOwned($id): Property
     {
-        return Property::with(['details', 'images', 'floorPlans', 'nearbyPlaces'])
+        return Property::with(['details', 'images', 'floorPlans', 'nearbyPlaces', 'agent'])
             ->when($this->ownerId(), fn ($q, $ownerId) => $q->where('portal_user_id', $ownerId))
             ->findOrFail($id);
     }
@@ -334,13 +387,13 @@ class PortalPropertyController extends Controller
         $property = $this->findOwned($id);
         $languages = Language::where('status', true)->get();
         $filterOptions = $this->selectFilterOptions();
-        return view('portal.properties.edit', [
+        return view('portal.properties.edit', array_merge([
             'property' => $property,
             'languages' => $languages,
             'filterOptions' => $filterOptions,
             'isAdmin' => $this->isAdmin(),
             'nearbyPlaceTypes' => $this->nearbyPlaceTypes(),
-        ]);
+        ], $this->agentAssignmentOptions()));
     }
 
     public function update(\App\Http\Requests\PropertyRequest $request, $id)
@@ -355,6 +408,7 @@ class PortalPropertyController extends Controller
         ]);
         $data['translations'] = $request->input('translations', []);
         $data['status'] = $request->has('status');
+        $data['agent_id'] = $this->resolveAgentId($request);
         $data['published_at'] = $request->input('published_at');
         $data['order_index'] = $request->input('order_index') ?: 0;
         if ($this->isAdmin()) {
@@ -434,7 +488,33 @@ class PortalPropertyController extends Controller
 
     public function destroy($id)
     {
-        $property = $this->findOwned($id);
+        $this->deletePropertyWithFiles($this->findOwned($id));
+
+        return response()->json(['success' => true]);
+    }
+
+    /** Bulk "Delete Selected" from the listing page's checkboxes. */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $properties = Property::with(['details', 'images', 'floorPlans'])
+            ->when($this->ownerId(), fn ($q, $ownerId) => $q->where('portal_user_id', $ownerId))
+            ->whereIn('id', $request->input('ids'))
+            ->get();
+
+        foreach ($properties as $property) {
+            $this->deletePropertyWithFiles($property);
+        }
+
+        return response()->json(['success' => true, 'deleted' => $properties->count()]);
+    }
+
+    protected function deletePropertyWithFiles(Property $property): void
+    {
         $files = app(\App\Services\ManagedFiles::class);
 
         if ($property->image) {
@@ -470,8 +550,18 @@ class PortalPropertyController extends Controller
         }
 
         $property->delete();
+    }
 
-        return response()->json(['success' => true]);
+    public function show($id)
+    {
+        $property = $this->findOwned($id);
+        $languages = Language::where('status', true)->get();
+
+        return view('portal.properties.show', [
+            'property' => $property,
+            'languages' => $languages,
+            'isAdmin' => $this->isAdmin(),
+        ]);
     }
 
     /** $number is the gallery position suffix from the filename ({reference_no}-{number}.jpeg). */

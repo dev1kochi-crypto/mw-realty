@@ -47,47 +47,59 @@ return [
     ],
     'post-property-steps' => [
         'section_image' => [
-            'width' => 851,
-            'height' => 521,
+            'width' => 2000,
+            'height' => 1143,
             'max_size' => 2048,
         ],
         'item_icon' => [
-            'width' => 64,
-            'height' => 64,
+            'width' => 96,
+            'height' => 96,
             'max_size' => 256,
         ],
     ],
     'popular-places' => [
         'item_image' => [
-            'width' => 400,
-            'height' => 500,
+            'width' => 346,
+            'height' => 453,
             'max_size' => 2048,
         ],
     ],
     'about-us' => [
         'main_image' => [
-            'width' => 851,
-            'height' => 900,
+            'width' => 1024,
+            'height' => 520,
             'max_size' => 2048,
         ],
         'ceo_image' => [
-            'width' => 400,
-            'height' => 400,
+            'width' => 1480,
+            'height' => 680,
             'max_size' => 1024,
         ],
     ],
     'market-trends' => [
-        'image' => [
-            'width' => 851,
-            'height' => 521,
+        'image_1' => [
+            'width' => 1090,
+            'height' => 2000,
+            'max_size' => 2560,
+        ],
+        'image_2' => [
+            'width' => 4096,
+            'height' => 2732,
+            'max_size' => 9500,
+        ],
+    ],
+    'contact-us' => [
+        'section_image' => [
+            'width' => 392,
+            'height' => 875,
             'max_size' => 2048,
         ],
     ],
     'why-choose-us' => [
         'section_image' => [
-            'width' => 851,
-            'height' => 521,
-            'max_size' => 2048,
+            'width' => 900,
+            'height' => 1100,
+            'max_size' => 4096,
         ],
         'item_icon' => [
             'width' => 64,
@@ -97,14 +109,19 @@ return [
     ],
     'our-builders' => [
         'item_logo' => [
-            'width' => 250,
-            'height' => 150,
+            'width' => 300,
+            'height' => 180,
             'max_size' => 1024,
         ],
     ],
     'connect-us' => [
         'video' => [
             'max_size' => 10240,
+        ],
+        'poster' => [
+            'width' => 1480,
+            'height' => 740,
+            'max_size' => 1024,
         ],
     ],
     'communities' => [
@@ -164,9 +181,14 @@ return [
     ],
     'ads' => [
         'image' => [
-            'width' => 1920,
-            'height' => 800,
-            'max_size' => 4096, // GIFs run larger than static images
+            'width' => 4800,
+            'height' => 900,
+            'max_size' => 8192, // GIFs, and this banner's larger canvas, run bigger than a typical static image
+        ],
+        'mobile_image' => [
+            'width' => 800,
+            'height' => 400,
+            'max_size' => 4096,
         ],
     ],
     'landing-pages' => [

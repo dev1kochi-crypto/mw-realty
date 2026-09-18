@@ -137,10 +137,13 @@ class PostPropertyStepController extends Controller
         $rules = [];
 
         foreach ($languages as $lang) {
-            foreach (['title', 'description'] as $field) {
+            foreach (['title_1', 'title', 'description', 'button_text'] as $field) {
                 if (($sectionConfig[$field] ?? true) && in_array($field, $requiredFields)) {
                     $rules["translations.{$lang->code}.{$field}"] = 'required';
                 }
+            }
+            if ($sectionConfig['button_url'] ?? true) {
+                $rules["translations.{$lang->code}.button_url"] = 'nullable|url|max:500';
             }
         }
 
@@ -313,7 +316,7 @@ class PostPropertyStepController extends Controller
 
         SectionLabel::updateOrCreate(['section_key' => 'post-property-steps'], $data);
 
-        return redirect()->back()->with('success', 'Section settings updated.');
+        return redirect()->route('cms.post-property-steps.index')->with('success', 'Section settings updated.');
     }
 
     public function bulkAction(Request $request)

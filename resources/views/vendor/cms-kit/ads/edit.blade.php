@@ -32,19 +32,13 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Placement <span class="text-danger">*</span></label>
-                    <input type="text" name="placement" class="form-control @error('placement') is-invalid @enderror" value="{{ old('placement', $ad->placement) }}" list="placementSuggestions" required>
-                    <datalist id="placementSuggestions">
-                        <option value="home-top">
-                        <option value="home-middle">
-                        <option value="home-bottom">
-                        <option value="sidebar">
-                        <option value="footer">
-                        <option value="property-detail-top">
-                        <option value="property-detail-bottom">
-                        @foreach($placements as $existing)
-                        <option value="{{ $existing }}">
+                    <small class="text-muted d-block mb-1">Which page on the site this ad shows on.</small>
+                    <select name="placement" class="form-select @error('placement') is-invalid @enderror" required>
+                        <option value="">Select a page&hellip;</option>
+                        @foreach($pageOptions as $value => $label)
+                        <option value="{{ $value }}" {{ old('placement', $ad->placement) === $value ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
-                    </datalist>
+                    </select>
                     @error('placement')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
@@ -54,7 +48,7 @@
             <div class="row g-4">
                 <div class="col-md-8">
                     <label class="form-label d-block">Image / GIF</label>
-                    <small class="text-muted d-block mb-1">Recommended max: {{ $imageConfig['width'] ?? 1920 }}x{{ $imageConfig['height'] ?? 800 }}px, up to {{ $imageConfig['max_size'] ?? 4096 }}KB.</small>
+                    <small class="text-muted d-block mb-1">Recommended max: {{ $imageConfig['width'] ?? 4800 }}x{{ $imageConfig['height'] ?? 900 }}px, up to {{ $imageConfig['max_size'] ?? 8192 }}KB.</small>
                     <input type="file" name="image" accept="image/*" class="form-control @error('image') is-invalid @enderror">
                     @error('image')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     @if($ad->image)
@@ -68,6 +62,22 @@
                     <label class="form-label fw-bold">Link URL</label>
                     <input type="url" name="link_url" class="form-control @error('link_url') is-invalid @enderror" value="{{ old('link_url', $ad->link_url) }}" placeholder="https://...">
                     @error('link_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row g-4">
+                <div class="col-md-8">
+                    <label class="form-label d-block">Mobile Image <span class="text-muted fw-normal">(optional)</span></label>
+                    <small class="text-muted d-block mb-1">Shown on mobile screens instead of the image above — leave empty to use the same image on mobile. Recommended max: {{ $mobileImageConfig['width'] ?? 800 }}x{{ $mobileImageConfig['height'] ?? 400 }}px, up to {{ $mobileImageConfig['max_size'] ?? 4096 }}KB.</small>
+                    <input type="file" name="mobile_image" accept="image/*" class="form-control @error('mobile_image') is-invalid @enderror">
+                    @error('mobile_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    @if($ad->mobile_image)
+                    <div class="mt-2">
+                        <img src="{{ asset('storage/' . $ad->mobile_image) }}" class="img-thumbnail" style="height: 70px;">
+                    </div>
+                    @endif
                 </div>
             </div>
 

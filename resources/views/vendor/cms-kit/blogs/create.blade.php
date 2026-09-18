@@ -11,11 +11,8 @@
     $blogRequired = $blogConfig['required'] ?? [];
     $showLanguageUi = config('cms-kit.common.modules.languages', true);
     $blogImageLabels = [
-        'feature_image' => 'Feature Image (Listing)',
-        'detail_image' => 'Detail Image (Hero)',
-        'banner_image' => 'Banner Image',
-        'image_3' => 'Image 3',
-        'image_4' => 'Image 4',
+        'feature_image' => 'Listing Image',
+        'detail_image' => 'Detail Image',
     ];
 @endphp
 <div class="card">
@@ -169,6 +166,20 @@
                             <small class="text-muted">Raw HTML tags to be included in the header.</small>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-2">
+                <div class="col-md-4">
+                    <label class="form-label">Category <span class="text-danger">*</span></label>
+                    <select name="extra_fields[category]" class="form-select @error('extra_fields.category') is-invalid @enderror" required>
+                        <option value="">-- Select --</option>
+                        @foreach($blogCategories as $cat)
+                        <option value="{{ $cat->slug }}" {{ old('extra_fields.category') === $cat->slug ? 'selected' : '' }}>{{ $cat->getTranslation('title') }}</option>
+                        @endforeach
+                    </select>
+                    @error('extra_fields.category')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="form-text mt-1">Manage the list under <a href="{{ route('cms.blog-categories.index') }}">Blogs &raquo; Categories</a>.</div>
                 </div>
             </div>
 

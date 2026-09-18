@@ -8,6 +8,7 @@ class Property extends Model
 {
     protected $fillable = [
         'portal_user_id',
+        'agent_id',
         'translations',
         'slug',
         'reference_no',
@@ -56,6 +57,11 @@ class Property extends Model
     public function owner()
     {
         return $this->belongsTo(PortalUser::class, 'portal_user_id');
+    }
+
+    public function agent()
+    {
+        return $this->belongsTo(PortalUser::class, 'agent_id');
     }
 
     public function images()

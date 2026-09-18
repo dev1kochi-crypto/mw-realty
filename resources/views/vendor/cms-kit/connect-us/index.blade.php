@@ -101,6 +101,22 @@
                         <small class="text-muted d-block mt-1">Current: {{ basename($extra['video_file']) }}</small>
                     @endif
                 </div>
+                <div class="col-md-6">
+                    <label class="form-label d-block">Poster Image</label>
+                    <small class="text-muted d-block mb-1">Shown before the video plays. Recommended size: {{ $posterConfig['width'] ?? '' }}x{{ $posterConfig['height'] ?? '' }}px, Max: {{ $posterConfig['max_size'] ?? '' }}KB</small>
+                    <input type="file" name="poster" class="form-control @error('poster') is-invalid @enderror">
+                    @error('poster')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <input type="text" name="poster_alt" class="form-control mt-2" placeholder="Poster ALT text" value="{{ old('poster_alt', $section->section_image_alt ?? '') }}">
+                    @if($section?->section_image)
+                        <div class="mt-2">
+                            <img src="{{ asset('storage/' . $section->section_image) }}" class="img-thumbnail" style="height: 70px;">
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="checkbox" name="remove_poster" id="removePoster" value="1">
+                                <label class="form-check-label" for="removePoster">Remove current poster</label>
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
 
             <div class="row g-4 mt-1">

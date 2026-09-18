@@ -61,7 +61,8 @@ class WhyChooseUsController extends Controller
 
         $section = SectionLabel::where('section_key', 'why-choose-us')->first();
         $languages = Language::where('status', true)->get();
-        return view('cms-kit::why-choose-us.index', compact('section', 'languages'));
+        $sectionImageConfig = config('cms-kit.images.why-choose-us.section_image', []);
+        return view('cms-kit::why-choose-us.index', compact('section', 'languages', 'sectionImageConfig'));
     }
 
     public function create()

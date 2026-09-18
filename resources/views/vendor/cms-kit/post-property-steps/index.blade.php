@@ -19,8 +19,19 @@
                 <h6 class="mb-0 fw-bold text-primary">"Post Your Property" Section Settings</h6>
             </div>
             <div class="card-body p-4">
-                <form action="{{ route('cms.post-property-steps.update-section') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('cms.post-property-steps.update-section') }}" method="POST" enctype="multipart/form-data" id="sectionSettingsForm">
                     @csrf
+
+                    @if($errors->any())
+                    <div class="alert alert-danger">
+                        <strong>Please fix the following before saving</strong> — note that some of these may be on the Arabic tab above.
+                        <ul class="mb-0 mt-1">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
 
                     <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                         <i class="fas fa-info-circle text-primary me-2"></i>
@@ -43,8 +54,18 @@
                         @foreach($languages as $lang)
                         <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="section-panel-{{ $lang->code }}" role="tabpanel">
                             <div class="row g-4">
+                                @if($sectionConfig['title_1'] ?? true)
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Title 1</label>
+                                    <input type="text" name="translations[{{ $lang->code }}][title_1]" class="form-control @error("translations.{$lang->code}.title_1") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title_1", $section->translations[$lang->code]['title_1'] ?? '') }}" placeholder="e.g. Sell Faster">
+                                    <div class="form-text mt-1 text-muted">Small eyebrow line shown above the Title on the home page.</div>
+                                    @error("translations.{$lang->code}.title_1")
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                @endif
                                 @if($sectionConfig['title'] ?? true)
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <label class="form-label fw-bold">Title {!! in_array('title', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                                     <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $section->translations[$lang->code]['title'] ?? '') }}" placeholder="Post Your property in 3 simple steps" {{ in_array('title', $sectionRequired) ? 'required' : '' }}>
                                     @error("translations.{$lang->code}.title")
@@ -66,6 +87,24 @@
                                     <input type="text" name="translations[{{ $lang->code }}][listing_page_title]" class="form-control" value="{{ old("translations.{$lang->code}.listing_page_title", $section->translations[$lang->code]['listing_page_title'] ?? '') }}" placeholder="Title used on the property-posting listing page">
                                     <div class="form-text mt-1 text-muted">Used as the page title when this content is shown on its own listing/detail page, separate from the home section title above.</div>
                                 </div>
+                                @if($sectionConfig['button_text'] ?? true)
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Button Text</label>
+                                    <input type="text" name="translations[{{ $lang->code }}][button_text]" class="form-control @error("translations.{$lang->code}.button_text") is-invalid @enderror" value="{{ old("translations.{$lang->code}.button_text", $section->translations[$lang->code]['button_text'] ?? '') }}" placeholder="e.g. Post Your Property">
+                                    @error("translations.{$lang->code}.button_text")
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                @endif
+                                @if($sectionConfig['button_url'] ?? true)
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Button URL</label>
+                                    <input type="url" name="translations[{{ $lang->code }}][button_url]" class="form-control @error("translations.{$lang->code}.button_url") is-invalid @enderror" value="{{ old("translations.{$lang->code}.button_url", $section->translations[$lang->code]['button_url'] ?? '') }}" placeholder="https://...">
+                                    @error("translations.{$lang->code}.button_url")
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                @endif
 
                                 @include('cms-kit::partials.extra-fields-translatable', [
                                     'configKey' => 'post-property-steps.section',
@@ -187,8 +226,8 @@
             columns: [
                 {data: 'select_all', name: 'select_all', orderable: false, searchable: false},
                 {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
-                {data: 'title', name: 'title'},
                 {data: 'image', name: 'image', orderable: false, searchable: false},
+                {data: 'title', name: 'title'},
                 {data: 'order', name: 'order', className: 'text-center'},
                 {data: 'status', name: 'status', className: 'text-center'},
                 {data: 'action', name: 'action', orderable: false, searchable: false}
@@ -266,17 +305,9 @@
             });
         };
 
-        document.addEventListener('invalid', function(e) {
-            let invalidTabPane = e.target.closest('.tab-pane');
-            if (invalidTabPane) {
-                let tabId = invalidTabPane.id;
-                let tabBtn = document.querySelector(`[data-bs-target="#${tabId}"]`);
-                if (tabBtn && !tabBtn.classList.contains('active')) {
-                    bootstrap.Tab.getOrCreateInstance(tabBtn).show();
-                    setTimeout(() => { e.target.focus(); }, 150);
-                }
-            }
-        }, true);
+        // Jumping to the tab holding a required/invalid field (client-side blocked submit, or
+        // a server-side validation error after redirect) is now handled globally for every CMS
+        // page in layouts/cms.blade.php — nothing page-specific needed here anymore.
     });
 </script>
 @endpush

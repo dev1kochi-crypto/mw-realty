@@ -2,12 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FilterController;
-use App\Http\Controllers\PropertyFilterController;
 use App\Http\Controllers\PortalUserController;
 use App\Http\Controllers\CmsKit\PostPropertyStepController;
 use App\Http\Controllers\CmsKit\PopularPlaceController;
 use App\Http\Controllers\CmsKit\LuxuryProjectController;
 use App\Http\Controllers\CmsKit\AboutUsController;
+use App\Http\Controllers\CmsKit\BlogCategoryController;
+use App\Http\Controllers\CmsKit\BlogController;
 use App\Http\Controllers\CmsKit\MarketTrendController;
 use App\Http\Controllers\CmsKit\WhyChooseUsController;
 use App\Http\Controllers\CmsKit\OurBuilderController;
@@ -36,9 +37,6 @@ use App\Http\Controllers\Crm\LeadCaptureController;
 Route::get('/', function () {
     return view('welcome');
 });
-
-// Public, read-only — consumed by the frontend (home banner + listing page) search filter bar.
-Route::get('/api/property-filters', [PropertyFilterController::class, 'index']);
 
 // Public, unauthenticated — any property-detail page can POST a lead here; it's
 // routed to the property's owning company/agent (see LeadCaptureController).
@@ -148,6 +146,14 @@ Route::middleware(['web'])->group(function () {
                 Route::post('/about-us', [AboutUsController::class, 'update'])->name('cms.about-us.update')->middleware('cms.permission:about-us.edit');
             });
 
+            // Common Titles — heading/description/button content for home-page sections
+            // that have no admin screen of their own (Developments, Premium Property,
+            // Popular Places, Luxury Project, Realty Property).
+            Route::middleware(['cms.permission:section-headings.view'])->group(function () {
+                Route::get('/section-headings', [\App\Http\Controllers\CmsKit\SectionHeadingController::class, 'index'])->name('cms.section-headings.index');
+                Route::put('/section-headings/{section}', [\App\Http\Controllers\CmsKit\SectionHeadingController::class, 'update'])->name('cms.section-headings.update')->middleware('cms.permission:section-headings.edit');
+            });
+
             // Market Trends (section-only)
             Route::middleware(['cms.permission:market-trends.view'])->group(function () {
                 Route::get('/market-trends', [MarketTrendController::class, 'index'])->name('cms.market-trends.index');
@@ -174,6 +180,55 @@ Route::middleware(['web'])->group(function () {
                 Route::middleware(['cms.permission:why-choose-us.delete'])->group(function () {
                     Route::delete('/why-choose-us/{id}', [WhyChooseUsController::class, 'destroy'])->name('cms.why-choose-us.destroy');
                     Route::post('/why-choose-us/bulk-action', [WhyChooseUsController::class, 'bulkAction'])->name('cms.why-choose-us.bulk-action');
+                });
+            });
+
+            // Blogs (section + items) — overrides the vendor package's own /blogs routes (registered
+            // in vendor/mightywarnerskochi/cms/src/routes/web.php) so this app's BlogController, with
+            // its extra_fields file-upload handling and dynamic category list, is what actually runs.
+            // Laravel matches routes in registration order, and this file's routes load before the
+            // package's own, so these take priority for the same URIs.
+            Route::middleware(['cms.permission:blogs.view'])->group(function () {
+                Route::get('/blogs', [BlogController::class, 'index'])->name('cms.blogs.index');
+                Route::post('/blogs/update-section', [BlogController::class, 'updateSection'])->name('cms.blogs.update-section')->middleware('cms.permission:blogs.edit');
+
+                Route::middleware(['cms.permission:blogs.create'])->group(function () {
+                    Route::get('/blogs/create', [BlogController::class, 'create'])->name('cms.blogs.create');
+                    Route::post('/blogs', [BlogController::class, 'store'])->name('cms.blogs.store');
+                });
+
+                Route::middleware(['cms.permission:blogs.edit'])->group(function () {
+                    Route::get('/blogs/{id}/edit', [BlogController::class, 'edit'])->name('cms.blogs.edit');
+                    Route::put('/blogs/{id}', [BlogController::class, 'update'])->name('cms.blogs.update');
+                    Route::post('/blogs/{id}/toggle-status', [BlogController::class, 'toggleStatus'])->name('cms.blogs.toggle-status');
+                    Route::post('/blogs/reorder', [BlogController::class, 'reorder'])->name('cms.blogs.reorder');
+                });
+
+                Route::middleware(['cms.permission:blogs.delete'])->group(function () {
+                    Route::delete('/blogs/{id}', [BlogController::class, 'destroy'])->name('cms.blogs.destroy');
+                    Route::post('/blogs/bulk-action', [BlogController::class, 'bulkAction'])->name('cms.blogs.bulk-action');
+                });
+            });
+
+            // Blog Categories
+            Route::middleware(['cms.permission:blog-categories.view'])->group(function () {
+                Route::get('/blog-categories', [BlogCategoryController::class, 'index'])->name('cms.blog-categories.index');
+
+                Route::middleware(['cms.permission:blog-categories.create'])->group(function () {
+                    Route::get('/blog-categories/create', [BlogCategoryController::class, 'create'])->name('cms.blog-categories.create');
+                    Route::post('/blog-categories', [BlogCategoryController::class, 'store'])->name('cms.blog-categories.store');
+                });
+
+                Route::middleware(['cms.permission:blog-categories.edit'])->group(function () {
+                    Route::get('/blog-categories/{id}/edit', [BlogCategoryController::class, 'edit'])->name('cms.blog-categories.edit');
+                    Route::put('/blog-categories/{id}', [BlogCategoryController::class, 'update'])->name('cms.blog-categories.update');
+                    Route::post('/blog-categories/{id}/toggle-status', [BlogCategoryController::class, 'toggleStatus'])->name('cms.blog-categories.toggle-status');
+                    Route::post('/blog-categories/reorder', [BlogCategoryController::class, 'reorder'])->name('cms.blog-categories.reorder');
+                });
+
+                Route::middleware(['cms.permission:blog-categories.delete'])->group(function () {
+                    Route::delete('/blog-categories/{id}', [BlogCategoryController::class, 'destroy'])->name('cms.blog-categories.destroy');
+                    Route::post('/blog-categories/bulk-action', [BlogCategoryController::class, 'bulkAction'])->name('cms.blog-categories.bulk-action');
                 });
             });
 
@@ -415,9 +470,11 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::get('/properties', [PortalPropertyController::class, 'index'])->name('properties.index');
         Route::get('/properties/create', [PortalPropertyController::class, 'create'])->name('properties.create');
         Route::post('/properties', [PortalPropertyController::class, 'store'])->name('properties.store');
+        Route::post('/properties/bulk-delete', [PortalPropertyController::class, 'bulkDestroy'])->name('properties.bulk-destroy');
         Route::get('/properties/{id}/edit', [PortalPropertyController::class, 'edit'])->name('properties.edit');
         Route::put('/properties/{id}', [PortalPropertyController::class, 'update'])->name('properties.update');
         Route::delete('/properties/{id}', [PortalPropertyController::class, 'destroy'])->name('properties.destroy');
+        Route::get('/properties/{id}', [PortalPropertyController::class, 'show'])->name('properties.show');
         Route::delete('/properties/{propertyId}/images/{imageId}', [PortalPropertyController::class, 'destroyImage'])->name('properties.images.destroy');
         Route::delete('/properties/{propertyId}/images', [PortalPropertyController::class, 'destroyAllImages'])->name('properties.images.destroy-all');
         Route::post('/properties/{propertyId}/images/reorder', [PortalPropertyController::class, 'reorderImages'])->name('properties.images.reorder');
@@ -425,6 +482,12 @@ Route::prefix('portal')->name('portal.')->group(function () {
         // Feeds the property form's Type -> Place cascading Nearby Places picker — reachable by
         // both a portal agent/company and an admin browsing the portal.
         Route::get('/properties/nearby-places-by-type', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'byType'])->name('properties.nearby-places-by-type');
+
+        // Agent roster — a Company manages its own agents; Super Admin sees every
+        // agent across every agency (see AgentController::isAdmin()/company()).
+        Route::get('/agents', [\App\Http\Controllers\Portal\AgentController::class, 'index'])->name('agents.index');
+        Route::get('/agents/create', [\App\Http\Controllers\Portal\AgentController::class, 'create'])->name('agents.create');
+        Route::post('/agents', [\App\Http\Controllers\Portal\AgentController::class, 'store'])->name('agents.store');
 
         // Nearby Places master list — global data (schools/hospitals/restaurants/...) properties
         // can be tagged with; management restricted to a Super Admin browsing the portal (see
@@ -499,7 +562,7 @@ Route::view('/agency-details', 'welcome');
 Route::view('/agency-login', 'welcome');
 Route::view('/agency-signup', 'welcome');
 Route::view('/blogs', 'welcome');
-Route::view('/blog-details', 'welcome');
+Route::view('/blog-details/{slug}', 'welcome');
 Route::view('/contact', 'welcome');
 Route::view('/login', 'welcome');
 Route::view('/signup', 'welcome');

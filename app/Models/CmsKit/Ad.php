@@ -10,6 +10,7 @@ class Ad extends Model
         'name',
         'image',
         'image_alt',
+        'mobile_image',
         'link_url',
         'placement',
         'starts_at',
