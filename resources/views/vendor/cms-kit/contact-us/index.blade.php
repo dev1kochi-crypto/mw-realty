@@ -27,7 +27,7 @@
             <a href="{{ route('cms.site-information.index') }}">Site Information</a>. The enquiry form fields are managed separately.
         </div>
 
-        <form action="{{ route('cms.contact-us.update') }}" method="POST">
+        <form action="{{ route('cms.contact-us.update') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
             @if($showLanguageUi)
@@ -48,7 +48,13 @@
                 <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="panel-{{ $lang->code }}" role="tabpanel">
                     <h6 class="fw-bold text-secondary mb-3">Home Page</h6>
                     <div class="row g-4 mb-4">
-                        <div class="col-12">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Home Title 1</label>
+                            <input type="text" name="translations[{{ $lang->code }}][home_title_1]" class="form-control @error("translations.{$lang->code}.home_title_1") is-invalid @enderror" value="{{ old("translations.{$lang->code}.home_title_1", $t['home_title_1'] ?? '') }}" placeholder="e.g. We're here to help">
+                            <div class="form-text mt-1 text-muted">Small eyebrow line shown above the Home Title on the home page.</div>
+                            @error("translations.{$lang->code}.home_title_1")<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label fw-bold">Home Title <span class="text-danger">*</span></label>
                             <input type="text" name="translations[{{ $lang->code }}][home_title]" class="form-control @error("translations.{$lang->code}.home_title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.home_title", $t['home_title'] ?? '') }}" placeholder="Connect with the experts who make property management simple." required>
                             @error("translations.{$lang->code}.home_title")<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -73,6 +79,32 @@
                     </div>
                 </div>
                 @endforeach
+            </div>
+
+            <h6 class="fw-bold text-secondary mb-3">Contact Page — Map &amp; Hero Image</h6>
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Google Maps Embed URL</label>
+                    <input type="url" name="map_url" class="form-control @error('map_url') is-invalid @enderror" value="{{ old('map_url', $section->extra_fields['map_url'] ?? '') }}" placeholder="https://maps.google.com/maps?q=...&output=embed">
+                    <div class="form-text mt-1 text-muted">Paste a Google Maps <strong>embed</strong> URL (Share &raquo; Embed a map, or a "...&amp;output=embed" link) — shown as the map on the Contact page.</div>
+                    @error('map_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label d-block">Hero Image</label>
+                    <small class="text-muted d-block mb-1">Recommended size: {{ $sectionImageConfig['width'] ?? '' }}x{{ $sectionImageConfig['height'] ?? '' }}px, Max: {{ $sectionImageConfig['max_size'] ?? '' }}KB</small>
+                    <input type="file" name="section_image" class="form-control @error('section_image') is-invalid @enderror">
+                    @error('section_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <input type="text" name="section_image_alt" class="form-control mt-2" placeholder="Image ALT text" value="{{ old('section_image_alt', $section->section_image_alt ?? '') }}">
+                    @if($section?->section_image)
+                        <div class="mt-2">
+                            <img src="{{ asset('storage/' . $section->section_image) }}" class="img-thumbnail" style="height: 70px;">
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="checkbox" name="remove_section_image" id="removeSectionImage" value="1">
+                                <label class="form-check-label" for="removeSectionImage">Remove current image</label>
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
 
             <div class="form-check form-switch">

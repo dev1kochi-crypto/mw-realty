@@ -305,40 +305,9 @@
             });
         };
 
-        // One click fires an 'invalid' event for EVERY empty required field at once (English's
-        // AND Arabic's Title), not just the first — without this guard we'd process both and
-        // end up parked on the last one (Arabic) even when English, shown first, is also empty.
-        let sectionInvalidHandled = false;
-        document.addEventListener('invalid', function(e) {
-            if (sectionInvalidHandled) return;
-            sectionInvalidHandled = true;
-            setTimeout(() => { sectionInvalidHandled = false; }, 0);
-
-            let invalidTabPane = e.target.closest('.tab-pane');
-            if (invalidTabPane) {
-                let tabId = invalidTabPane.id;
-                let tabBtn = document.querySelector(`[data-bs-target="#${tabId}"]`);
-                if (tabBtn && !tabBtn.classList.contains('active')) {
-                    bootstrap.Tab.getOrCreateInstance(tabBtn).show();
-                }
-            }
-            setTimeout(() => { e.target.focus(); }, 150);
-        }, true);
-
-        // After a failed server-side save, Laravel re-renders this same page with the errors —
-        // if the field that actually failed (e.g. the Arabic tab's Title) lives on a language
-        // tab that isn't the active one, it's invisible (display:none) and the save looks like
-        // it silently did nothing. Jump to whichever tab actually holds the first error.
-        const firstInvalidField = document.querySelector('#sectionSettingsForm .is-invalid');
-        if (firstInvalidField) {
-            const invalidTabPane = firstInvalidField.closest('.tab-pane');
-            if (invalidTabPane) {
-                const tabBtn = document.querySelector(`[data-bs-target="#${invalidTabPane.id}"]`);
-                if (tabBtn) {
-                    bootstrap.Tab.getOrCreateInstance(tabBtn).show();
-                }
-            }
-        }
+        // Jumping to the tab holding a required/invalid field (client-side blocked submit, or
+        // a server-side validation error after redirect) is now handled globally for every CMS
+        // page in layouts/cms.blade.php — nothing page-specific needed here anymore.
     });
 </script>
 @endpush

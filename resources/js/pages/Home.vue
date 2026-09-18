@@ -1,20 +1,25 @@
 <script setup>
 import { computed, nextTick, watch } from 'vue';
-import { useBanner } from '../composables/useBanner';
-import { useBrands } from '../composables/useBrands';
-import { useDevelopments } from '../composables/useDevelopments';
-import { usePremiumProperties } from '../composables/usePremiumProperties';
-import { useAd } from '../composables/useAd';
-import { usePostPropertySteps } from '../composables/usePostPropertySteps';
-import { usePopularPlaces } from '../composables/usePopularPlaces';
+import { useHomePage } from '../composables/useHomePage';
 
-const { banner } = useBanner();
-const { brands } = useBrands();
-const { developments } = useDevelopments();
-const { premiumProperties } = usePremiumProperties();
-const { postPropertySection } = usePostPropertySteps();
-const { popularPlacesSection } = usePopularPlaces();
-const { ad: homeAd } = useAd('home');
+// One fetch for the whole page (see routes/api.php -> Api\HomeController) instead of a
+// request per section — every section below just reads its own slice of `homePage.value`.
+const { homePage } = useHomePage();
+
+const banner = computed(() => homePage.value?.banner || null);
+const brands = computed(() => homePage.value?.brands || []);
+const homeAd = computed(() => homePage.value?.ad || null);
+const developments = computed(() => homePage.value?.developments || null);
+const premiumProperties = computed(() => homePage.value?.premiumProperties || null);
+const luxuryProject = computed(() => homePage.value?.luxury || null);
+const whyChooseUsSection = computed(() => homePage.value?.whyChooseUs || null);
+const realtyProperty = computed(() => homePage.value?.realty || null);
+const communitiesSection = computed(() => homePage.value?.communities || null);
+const findPropertiesSection = computed(() => homePage.value?.findProperties || null);
+const postPropertySection = computed(() => homePage.value?.postProperty || null);
+const popularPlacesSection = computed(() => homePage.value?.popularPlaces || null);
+const testimonialsSection = computed(() => homePage.value?.testimonials || null);
+const contactInfo = computed(() => homePage.value?.contact || null);
 
 const heroLine1 = computed(() => banner.value?.line_1 || 'Your Trusted Partner in');
 const heroLine2 = computed(() => banner.value?.line_2 || 'Finding the Best Properties');
@@ -53,50 +58,14 @@ const pricePresets = [
     { min: 10000000, max: 30000000, label: '10M+' },
 ];
 
-const partnerLogos = [
-    { src: '/frontend/assets/images/partners/partner-1.png', alt: 'Developer partner' },
-    { src: '/frontend/assets/images/partners/partner-2.png', alt: 'Developer partner' },
-    { src: '/frontend/assets/images/partners/partner-3.png', alt: 'Developer partner' },
-    { src: '/frontend/assets/images/partners/partner-4.png', alt: 'Developer partner' },
-    { src: '/frontend/assets/images/partners/partner-5.png', alt: 'Nshama' },
-    { src: '/frontend/assets/images/partners/partner-6.png', alt: 'Sobha' },
-    { src: '/frontend/assets/images/partners/partner-7.png', alt: 'Omniyat' },
-];
-
-const displayLogos = computed(() =>
-    brands.value.length
-        ? brands.value.map((brand) => ({ src: brand.image_url, alt: brand.alt || '' }))
-        : partnerLogos,
-);
-
-const fallbackProjectFilters = [
-    { filter: 'all', label: 'All', active: true },
-    { filter: 'dubai', label: 'Dubai' },
-    { filter: 'abu-dhabi', label: 'Abu Dhabi' },
-    { filter: 'sharjah', label: 'Sharjah' },
-    { filter: 'ajman', label: 'Ajman' },
-    { filter: 'ras-al-khaimah', label: 'Ras Al Khaimah' },
-    { filter: 'umm-al-quwain', label: 'Umm Al Quwain' },
-];
-
-const fallbackProjectCards = [
-    { category: 'dubai', images: ['project-card-1.jpg', 'project-card-2.jpg', 'luxury-card-1.jpg', 'realty-card-1.jpg'], name: 'Modern Penthouse in Downtown Dubai', location: 'Downtown Dubai', beds: 2, baths: 2, area: '2,100 sq.ft', type: 'Penthouse', price: 'AED 9,500,000' },
-    { category: 'abu-dhabi', images: ['project-card-2.jpg', 'project-card-3.jpg', 'luxury-card-2.jpg', 'realty-card-2.jpg'], name: 'Skyline Residences on Saadiyat Island', location: 'Saadiyat Island, Abu Dhabi', beds: 3, baths: 3, area: '1,860 sq.ft', type: 'Apartment', price: 'AED 4,200,000' },
-    { category: 'sharjah', images: ['project-card-3.jpg', 'project-card-4.jpg', 'luxury-card-3.jpg', 'realty-card-3.jpg'], name: 'Waterfront Apartment in Al Khan', location: 'Al Khan, Sharjah', beds: 3, baths: 3, area: '1,850 sq.ft', type: 'Apartment', price: 'AED 2,150,000' },
-    { category: 'ajman', images: ['project-card-4.jpg', 'project-card-5.jpg', 'realty-card-4.jpg', 'luxury-card-1.jpg'], name: 'Family Villa in Al Nuaimiya', location: 'Al Nuaimiya, Ajman', beds: 4, baths: 4, area: '3,200 sq.ft', type: 'Villa', price: 'AED 3,400,000' },
-    { category: 'ras-al-khaimah', images: ['project-card-5.jpg', 'project-card-6.jpg', 'luxury-card-2.jpg', 'project-card-1.jpg'], name: 'Golf Course Townhouse in Al Hamra', location: 'Al Hamra, Ras Al Khaimah', beds: 3, baths: 3, area: '2,400 sq.ft', type: 'Townhouse', price: 'AED 2,850,000' },
-    { category: 'umm-al-quwain', images: ['project-card-6.jpg', 'project-card-1.jpg', 'realty-card-1.jpg', 'luxury-card-3.jpg'], name: 'Marina Residences in Umm Al Quwain', location: 'UAQ Marina, Umm Al Quwain', beds: 2, baths: 2, area: '1,420 sq.ft', type: 'Apartment', price: 'AED 1,650,000' },
-    { category: 'dubai', images: ['luxury-card-1.jpg', 'project-card-1.jpg', 'realty-card-2.jpg', 'luxury-card-3.jpg'], name: 'Luxury Villa on Palm Jumeirah', location: 'Palm Jumeirah, Dubai', beds: 5, baths: 6, area: '6,800 sq.ft', type: 'Villa', price: 'AED 18,500,000' },
-    { category: 'abu-dhabi', images: ['realty-card-3.jpg', 'project-card-3.jpg', 'luxury-card-2.jpg', 'project-card-6.jpg'], name: 'Beachfront Apartment on Yas Island', location: 'Yas Island, Abu Dhabi', beds: 2, baths: 2, area: '1,560 sq.ft', type: 'Apartment', price: 'AED 2,750,000' },
-];
+const displayLogos = computed(() => brands.value.map((brand) => ({ src: brand.image_url, alt: brand.alt || '' })));
 
 const projectsEyebrow = computed(() => developments.value?.eyebrow || 'UAE developments');
 const projectsTitle = computed(() => developments.value?.title || 'Browse New Projects in the UAE');
 const projectsButtonLabel = computed(() => developments.value?.button_name || 'View All Properties');
 
 const projectFilters = computed(() => {
-    const cities = developments.value?.cities;
-    if (!cities || !cities.length) return fallbackProjectFilters;
+    const cities = developments.value?.cities || [];
     return [
         { filter: 'all', label: 'All', active: true },
         ...cities.map((city) => ({ filter: slugify(city), label: city })),
@@ -104,8 +73,7 @@ const projectFilters = computed(() => {
 });
 
 const projectCards = computed(() => {
-    const properties = developments.value?.properties;
-    if (!properties || !properties.length) return fallbackProjectCards;
+    const properties = developments.value?.properties || [];
     return properties.map((p) => ({
         category: p.category,
         images: p.images,
@@ -120,6 +88,9 @@ const projectCards = computed(() => {
     }));
 });
 
+// Nothing to show until real listings exist — no lorem-ipsum placeholder cards on a live site.
+const showDevelopments = computed(() => projectCards.value.length > 0);
+
 function slugify(value) {
     return String(value).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
@@ -132,13 +103,6 @@ watch(projectCards, () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
 
-const fallbackHighlightCards = [
-    { images: ['luxury-card-1.jpg', 'luxury-card-2.jpg', 'luxury-card-3.png', 'realty-card-1.jpg'], name: 'Luxury Beachfront Villa in Palm Jumeirah', location: 'Palm Jumeirah', beds: '5 Bed', baths: '6 Bath', area: '12,500 sq.ft', price: 'AED 17,500,000' },
-    { images: ['luxury-card-2.jpg', 'realty-card-2.jpg', 'luxury-card-1.jpg', 'project-card-1.jpg'], name: 'Skyline Penthouse in Downtown Dubai', location: 'Downtown Dubai', beds: '3 Bed', baths: '4 Bath', area: '4,200 sq.ft', price: 'AED 12,800,000' },
-    { images: ['luxury-card-3.png', 'luxury-card-1.jpg', 'realty-card-3.jpg', 'luxury-card-2.jpg'], name: 'Waterfront Mansion in Emirates Hills', location: 'Emirates Hills', beds: '6 Bed', baths: '7 Bath', area: '18,000 sq.ft', price: 'AED 21,000,000' },
-    { images: ['realty-card-2.jpg', 'luxury-card-2.jpg', 'project-card-2.jpg', 'luxury-card-3.png'], name: 'Branded Residence in Dubai Marina', location: 'Dubai Marina', beds: '4 Bed', baths: '5 Bath', area: '6,800 sq.ft', price: 'AED 15,400,000' },
-];
-
 const premiumEyebrow = computed(() => premiumProperties.value?.eyebrow || 'Exclusive selection');
 const premiumTitle = computed(() => premiumProperties.value?.title || 'Premium Properties');
 const premiumDescription = computed(() => premiumProperties.value?.description || 'A highlight of exclusive listings from our premium customers — featured homes selected for exceptional location, quality, and investment value.');
@@ -146,8 +110,7 @@ const premiumButtonLabel = computed(() => premiumProperties.value?.button_name |
 const premiumButtonUrl = computed(() => premiumProperties.value?.button_url || '#');
 
 const highlightCards = computed(() => {
-    const properties = premiumProperties.value?.properties;
-    if (!properties || !properties.length) return fallbackHighlightCards;
+    const properties = premiumProperties.value?.properties || [];
     return properties.map((p) => ({
         images: p.images,
         isAbsoluteImage: true,
@@ -160,33 +123,26 @@ const highlightCards = computed(() => {
     }));
 });
 
+// Nothing to show until at least one property is marked Featured — no placeholder villas.
+const showPremiumProperties = computed(() => highlightCards.value.length > 0);
+
 watch(highlightCards, () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
 
-const fallbackPostPropertySteps = [
-    { index: '01', icon: 'property-add.svg', title: 'Add Details Of Your Property', text: 'Begin By Telling Us The Few Basic Details About Your Property Like Your Property Type, Location, No. Of Rooms Etc.' },
-    { index: '02', icon: 'upload.svg', title: 'Upload Photos & Videos', text: 'Upload Photos And Videos Of Your Property Either Via Your Desktop Device Or From Your Mobile Phone.' },
-    { index: '03', icon: 'tag-add.svg', title: 'Add Pricing & Ownership', text: "Just Update Your Property's Ownership Details And Your Expected Price And Your Property Is Ready For Posting Post Property." },
-];
-const fallbackPostPropertyDescription = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.";
-
 const postPropertyEyebrow = computed(() => postPropertySection.value?.eyebrow || 'List with MW Realty');
 const postPropertyTitle = computed(() => postPropertySection.value?.title || 'Post your property in 3 simple steps');
-const postPropertyDescription = computed(() => postPropertySection.value?.description || fallbackPostPropertyDescription);
+const postPropertyDescription = computed(() => postPropertySection.value?.description || '');
 const postPropertyButtonText = computed(() => postPropertySection.value?.button_text || 'Start listing');
 const postPropertyButtonUrl = computed(() => postPropertySection.value?.button_url || '#contact');
 const postPropertyImageUrl = computed(() => postPropertySection.value?.image_url || '/frontend/assets/images/home/post-property.jpg');
 const postPropertyImageAlt = computed(() => postPropertySection.value?.image_alt || 'Aerial view of a UAE waterfront residential community');
 
 const postPropertySteps = computed(() => {
-    const steps = postPropertySection.value?.steps;
-    if (!steps || !steps.length) {
-        return fallbackPostPropertySteps.map((s) => ({ ...s, iconSrc: `/frontend/assets/images/icons/${s.icon}` }));
-    }
-    return steps.map((s, i) => ({
+    const steps = postPropertySection.value?.steps || [];
+    return steps.map((s) => ({
         index: s.index,
-        iconSrc: s.icon_url || `/frontend/assets/images/icons/${fallbackPostPropertySteps[i % fallbackPostPropertySteps.length].icon}`,
+        iconSrc: s.icon_url,
         title: s.title,
         text: s.description,
     }));
@@ -194,106 +150,136 @@ const postPropertySteps = computed(() => {
 
 const postPropertyBadge = computed(() => `${postPropertySteps.value.length} easy step${postPropertySteps.value.length === 1 ? '' : 's'}`);
 
-const fallbackPopularPlaces = [
-    { image: 'place-dubai.jpg', name: 'Dubai' },
-    { image: 'place-dubai.jpg', name: 'Dubai' },
-    { image: 'place-sharjah.jpg', name: 'Sharjah' },
-    { image: 'place-ajman.jpg', name: 'Ajman' },
-    { image: 'place-abudhabi.jpg', name: 'Abu Dhabi' },
-];
+// Nothing to show until the admin has added at least one real step — no placeholder steps.
+const showPostProperty = computed(() => postPropertySteps.value.length > 0);
 
 const popularPlacesEyebrow = computed(() => popularPlacesSection.value?.eyebrow || 'In-demand cities');
 const popularPlacesTitle = computed(() => popularPlacesSection.value?.title || 'Most Popular Properties Places');
 
 const popularPlaces = computed(() => {
-    const places = popularPlacesSection.value?.places;
-    if (!places || !places.length) {
-        return fallbackPopularPlaces.map((p) => ({ ...p, imageSrc: `/frontend/assets/images/home/${p.image}` }));
-    }
+    const places = popularPlacesSection.value?.places || [];
     return places.map((p) => ({
-        imageSrc: p.image_url || '/frontend/assets/images/home/place-dubai.jpg',
+        imageSrc: p.image_url,
         name: p.name,
     }));
 });
+
+// Nothing to show until the admin has added at least one real place — no placeholder cities.
+const showPopularPlaces = computed(() => popularPlaces.value.length > 0);
 
 watch(popularPlaces, () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
 
-const luxuryCards = [
-    { image: 'luxury-card-1.jpg', villa: true, name: 'Nihil est aut volupt', location: 'Ut adipisci et venia', stat1: 'Natus magnam enim po', stat2: 'Tempore a labore po', area: '49 Sqft', price: 'AED 645' },
-    { image: 'luxury-card-2.jpg', villa: false, name: 'Nihil est aut volupt2', location: 'Ut adipisci et venia', stat1: 'Natus magnam enim po', stat2: 'Tempore a labore po', area: '49 Sqft', price: 'AED 850' },
-    { image: 'luxury-card-3.png', villa: false, name: 'Nihil est aut volupt3', location: 'Ut adipisci et venia', stat1: 'Natus magnam enim po', stat2: 'Tempore a labore po', area: '49 Sqft', price: 'AED 760' },
-    { image: 'luxury-card-1.jpg', villa: true, name: 'Nihil est aut volupt', location: 'Ut adipisci et venia', stat1: 'Natus magnam enim po', stat2: 'Tempore a labore po', area: '49 Sqft', price: 'AED 645' },
-];
+// --- Luxury Project ---
+const luxuryEyebrow = computed(() => luxuryProject.value?.eyebrow || 'Signature collection');
+const luxuryTitle = computed(() => luxuryProject.value?.title || 'Luxury Project');
+const luxuryDescription = computed(() => luxuryProject.value?.description || '');
+const luxuryButtonText = computed(() => luxuryProject.value?.button_text || 'View More Details');
+const luxuryButtonUrl = computed(() => luxuryProject.value?.button_url || '#');
+const luxuryCards = computed(() => {
+    const properties = luxuryProject.value?.properties || [];
+    return properties.map((p) => ({
+        image: p.images?.[0],
+        villa: String(p.type || '').toLowerCase().includes('villa'),
+        name: p.name,
+        location: p.location,
+        stat1: p.stat1,
+        stat2: p.stat2,
+        area: p.area,
+        price: p.price,
+    }));
+});
+const showLuxury = computed(() => luxuryCards.value.length > 0);
 
-const whyChooseUsItems = [
-    { icon: 'feature-select-property.svg', title: 'Select Property' },
-    { icon: 'feature-buy-property.svg', title: 'Buy Property' },
-    { icon: 'feature-meet-team.svg', title: 'Meet Our Team' },
-    { icon: 'feature-loan-assistance.svg', title: 'Loan Assistance' },
-    { icon: 'feature-visit-site.svg', title: 'Visit Site' },
-    { icon: 'feature-customer-support.svg', title: 'Customer Support' },
-];
+// --- Why Choose Us ---
+const whyChooseUsEyebrow = computed(() => whyChooseUsSection.value?.eyebrow || 'The MW advantage');
+const whyChooseUsTitle = computed(() => whyChooseUsSection.value?.title || 'Why Choose Us');
+const whyChooseUsImage = computed(() => whyChooseUsSection.value?.image_url || '/frontend/assets/images/home/why-choose-us.png');
+const whyChooseUsImageAlt = computed(() => whyChooseUsSection.value?.image_alt || 'Luxury residential tower developed by MW Realty');
+const whyChooseUsItems = computed(() => (whyChooseUsSection.value?.items || []).map((item) => ({
+    icon: item.icon_url,
+    title: item.title,
+    description: item.description,
+})));
+const showWhyChooseUs = computed(() => whyChooseUsItems.value.length > 0);
 
-const realtyCards = [
-    { image: 'realty-card-1.jpg' },
-    { image: 'realty-card-2.jpg' },
-    { image: 'realty-card-3.jpg' },
-    { image: 'realty-card-4.jpg' },
-];
+// --- Realty Property ---
+const realtyEyebrow = computed(() => realtyProperty.value?.eyebrow || 'On-market homes');
+const realtyTitle = computed(() => realtyProperty.value?.title || 'Realty Property');
+const realtyDescription = computed(() => realtyProperty.value?.description || '');
+const realtyButtonText = computed(() => realtyProperty.value?.button_text || 'View More Details');
+const realtyButtonUrl = computed(() => realtyProperty.value?.button_url || '#');
+const realtyCards = computed(() => {
+    const properties = realtyProperty.value?.properties || [];
+    return properties.map((p) => ({
+        image: p.image,
+        name: p.name,
+        location: p.location,
+        beds: p.beds,
+        baths: p.baths,
+        area: p.area,
+        price: p.price,
+    }));
+});
+const showRealty = computed(() => realtyCards.value.length > 0);
 
+// --- Communities ---
 const communityFilters = [
     { filter: 'for-sale', label: 'For Sale', active: true },
     { filter: 'for-rent', label: 'For Rent' },
     { filter: 'off-plan', label: 'Off Plan' },
 ];
+const communitiesEyebrow = computed(() => communitiesSection.value?.eyebrow || 'Neighbourhood living');
+const communitiesTitle = computed(() => communitiesSection.value?.title || 'Popular Properties in Dubai Communities');
+const communitiesColumns = computed(() => {
+    const items = communitiesSection.value?.items || [];
+    const columnCount = 4;
+    const columns = Array.from({ length: columnCount }, () => []);
+    items.forEach((item, i) => {
+        columns[i % columnCount].push({ icon: item.icon_url, name: item.name });
+    });
+    return columns.filter((col) => col.length);
+});
+const showCommunities = computed(() => (communitiesSection.value?.items || []).length > 0);
 
-const communitiesColumns = [
-    [
-        { icon: 'icon-community-dubai.svg', name: 'Dubai Marina' },
-        { icon: 'icon-community-building-vector.svg', name: 'Palm Jumeirah' },
-        { icon: 'icon-community-creek.svg', name: 'Dubai Creek Harbour' },
-        { icon: 'icon-community-building-vector.svg', name: 'Jumeirah Village Circle' },
-        { icon: 'icon-community-water-polo.svg', name: 'Al Habtoor Polo Resort and Club' },
-    ],
-    [
-        { icon: 'icon-community-dubai.svg', name: 'Downtown Dubai' },
-        { icon: 'icon-community-real-estate.svg', name: 'Dubai Hills Estate' },
-        { icon: 'icon-community-beach.svg', name: 'Emaar Beachfront' },
-        { icon: 'icon-community-golf.svg', name: 'Jumeirah Golf Estates' },
-    ],
-    [
-        { icon: 'icon-community-building-2.svg', name: 'Jumeirah Beach Residence' },
-        { icon: 'icon-community-building-6.svg', name: 'Damac Lagoons' },
-        { icon: 'icon-community-mountain.svg', name: 'DAMAC Hills' },
-        { icon: 'icon-community-building-vector.svg', name: 'Jumeirah' },
-    ],
-    [
-        { icon: 'icon-community-building-outline.svg', name: 'Sobha Hartland' },
-        { icon: 'icon-community-hot-springs-a.svg', name: 'The Springs' },
-        { icon: 'icon-community-holiday-village.svg', name: 'Jumeirah Village Triangle' },
-        { icon: 'icon-community-building-04.svg', name: 'Al Habtoor City' },
-    ],
-];
+// --- Find Properties ---
+const findPropertiesModifiers = ['penthouse-1', 'villa', 'penthouse-2', 'plot'];
+const findPropertiesEyebrow = computed(() => findPropertiesSection.value?.eyebrow || 'Browse by type');
+const findPropertiesTitle = computed(() => findPropertiesSection.value?.title || 'Find Properties');
+const findPropertiesCards = computed(() => {
+    const items = findPropertiesSection.value?.items || [];
+    return items.map((item, i) => ({
+        modifier: findPropertiesModifiers[i % findPropertiesModifiers.length],
+        image: item.image_url,
+        type: item.title,
+        count: `${item.count} ${item.count === 1 ? 'property' : 'properties'}`,
+    }));
+});
+const showFindProperties = computed(() => findPropertiesCards.value.length > 0);
 
-const findPropertiesCards = [
-    { modifier: 'penthouse-1', image: 'find-penthouse-1.jpg', type: 'Pent House', count: '20 properties' },
-    { modifier: 'villa', image: 'find-villa.jpg', type: 'Villa', count: '20 properties' },
-    { modifier: 'penthouse-2', image: 'find-penthouse-2.jpg', type: 'Pent House', count: '20 properties' },
-    { modifier: 'plot', image: 'find-plot.jpg', type: 'Plot', count: '20 properties' },
-];
+// --- Testimonials ---
+const testimonialsEyebrow = computed(() => testimonialsSection.value?.eyebrow || 'From our clients');
+const testimonialsTitle = computed(() => testimonialsSection.value?.title || 'Why Our Clients Trust Us');
+const testimonialsDescription = computed(() => testimonialsSection.value?.description || 'Discover what our customers are saying about their experiences.');
+const testimonials = computed(() => testimonialsSection.value?.items || []);
+const showTestimonials = computed(() => testimonials.value.length > 0);
 
-const testimonialQuoteText = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.";
+// The Luxury/Realty/Testimonials sliders are wired up by the legacy assets/js/script.js,
+// which only scans the DOM once — once real data replaces the placeholder cards, the freshly
+// rendered elements need that binding run again (window.MWRealty.refresh is idempotent).
+watch([luxuryCards, realtyCards, testimonials], () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+});
 
-const testimonials = [
-    { type: 'video', modifier: 'max', image: 'testimonial-max.jpg', name: 'Max Patrick', role: 'CEO Of Company' },
-    { type: 'video', modifier: 'anna', image: 'testimonial-anna.jpg', name: 'Anna James', role: 'Managing Director Of Company' },
-    { type: 'quote', name: 'Jenifer Jackson', role: 'Managing Director Of Company' },
-    { type: 'video', modifier: 'johnson', image: 'testimonial-johnson.jpg', name: 'Johnson Mathew', role: 'CEO Of Company' },
-    { type: 'quote', name: 'Jenifer Jackson', role: 'Managing Director Of Company' },
-    { type: 'video', modifier: 'max', image: 'testimonial-max.jpg', name: 'Max Patrick', role: 'CEO Of Company' },
-];
+// --- Contact ---
+const contactEyebrow = computed(() => contactInfo.value?.eyebrow || "We're here to help");
+const contactHeading = computed(() => contactInfo.value?.title || 'Connect with the experts who make property management simple.');
+const contactText = computed(() => contactInfo.value?.description || 'Experience hassle-free property management, expertly handled by professionals who understand your unique requirements.');
+const contactAddress = computed(() => contactInfo.value?.address || 'Office No: 703 - Churchill Tower Business Bay - Dubai, UAE');
+const contactTollFree = computed(() => contactInfo.value?.toll_free || '800644489');
+const contactWhatsapp = computed(() => contactInfo.value?.whatsapp_number || '971585899990');
+const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarnersrealty.com');
 </script>
 
 <template>
@@ -377,7 +363,7 @@ const testimonials = [
             </div>
         </section>
 
-        <section class="mw-partners">
+        <section class="mw-partners" v-if="displayLogos.length">
             <div class="mw-partners__slider">
                 <div class="mw-partners__track">
                     <div class="mw-partners__group">
@@ -390,7 +376,7 @@ const testimonials = [
             </div>
         </section>
 
-        <section class="mw-projects mw-section" id="projects">
+        <section class="mw-projects mw-section" id="projects" v-if="showDevelopments">
             <div class="container-ctn">
                 <div class="mw-section-head">
                     <p class="mw-eyebrow">{{ projectsEyebrow }}</p>
@@ -472,7 +458,7 @@ const testimonials = [
             </div>
         </section>
 
-        <section class="mw-highlight mw-section" id="premium-properties">
+        <section class="mw-highlight mw-section" id="premium-properties" v-if="showPremiumProperties">
             <div class="container-ctn">
                 <div class="mw-highlight__head">
                     <p class="mw-eyebrow">{{ premiumEyebrow }}</p>
@@ -558,7 +544,7 @@ const testimonials = [
             </div>
         </section>
 
-        <section class="mw-post-property mw-section mw-section--alt" id="post-property">
+        <section class="mw-post-property mw-section mw-section--alt" id="post-property" v-if="showPostProperty">
             <div class="container-ctn">
                 <div class="mw-post-property__inner">
                     <div class="mw-post-property__intro">
@@ -595,7 +581,7 @@ const testimonials = [
             </div>
         </section>
 
-        <section class="mw-popular-places mw-section" id="popular-places">
+        <section class="mw-popular-places mw-section" id="popular-places" v-if="showPopularPlaces">
             <div class="container-ctn">
                 <div class="mw-popular-places__head">
                     <div class="mw-popular-places__heading">
@@ -628,19 +614,19 @@ const testimonials = [
             </div>
         </section>
 
-        <section class="mw-luxury mw-section" id="luxury">
+        <section class="mw-luxury mw-section" id="luxury" v-if="showLuxury">
             <div class="mw-luxury__mark" aria-hidden="true">
                 <img src="/frontend/assets/images/home/luxury-logo.png" alt="">
             </div>
             <div class="container-aside">
                 <div class="mw-luxury__layout">
                     <div class="mw-luxury__intro">
-                        <p class="mw-eyebrow">Signature collection</p>
-                        <h2 class="mw-section-title">Luxury Project</h2>
-                        <p class="mw-luxury__text">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+                        <p class="mw-eyebrow">{{ luxuryEyebrow }}</p>
+                        <h2 class="mw-section-title">{{ luxuryTitle }}</h2>
+                        <p class="mw-luxury__text" v-if="luxuryDescription" v-html="luxuryDescription"></p>
                         <div class="mw-luxury__actions">
-                            <a href="#" class="mw-btn mw-luxury__cta">
-                                View More Details
+                            <a :href="luxuryButtonUrl" class="mw-btn mw-luxury__cta">
+                                {{ luxuryButtonText }}
                                 <img src="/frontend/assets/images/icons/luxury-cta-arrow.svg" alt="" width="18" height="18">
                             </a>
                             <div class="mw-luxury__nav">
@@ -657,7 +643,7 @@ const testimonials = [
                     <div class="mw-luxury__stage">
                         <div class="mw-luxury__slider" data-luxury-slider>
                             <article v-for="(card, index) in luxuryCards" :key="index" class="mw-luxury__card">
-                                <img :src="`/frontend/assets/images/home/${card.image}`" :alt="card.name" class="mw-luxury__photo" :class="{ 'mw-luxury__photo--villa': card.villa }">
+                                <img :src="card.image" :alt="card.name" class="mw-luxury__photo" :class="{ 'mw-luxury__photo--villa': card.villa }">
                                 <span class="mw-luxury__tag">Buy</span>
                                 <button type="button" class="mw-luxury__save" aria-label="Save property" aria-pressed="false">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -706,31 +692,31 @@ const testimonials = [
             </div>
         </section>
 
-        <section class="mw-why-choose-us mw-section" id="why-choose-us">
+        <section class="mw-why-choose-us mw-section" id="why-choose-us" v-if="showWhyChooseUs">
             <div class="container-ctn">
                 <div class="mw-why-choose-us__inner">
                     <div class="mw-why-choose-us__visual">
-                        <p class="mw-eyebrow">The MW advantage</p>
-                        <h2 class="mw-section-title">Why Choose Us</h2>
+                        <p class="mw-eyebrow">{{ whyChooseUsEyebrow }}</p>
+                        <h2 class="mw-section-title">{{ whyChooseUsTitle }}</h2>
                         <div class="mw-why-choose-us__media">
                             <div class="mw-why-choose-us__media-bg">
                                 <img src="/frontend/assets/images/home/why-choose-us-bg.png" alt="">
                             </div>
                             <img class="mw-why-choose-us__mark" src="/frontend/assets/images/home/luxury-logo.png" alt="" aria-hidden="true">
                             <div class="mw-why-choose-us__media-photo">
-                                <img src="/frontend/assets/images/home/why-choose-us.png" alt="Luxury residential tower developed by MW Realty">
+                                <img :src="whyChooseUsImage" :alt="whyChooseUsImageAlt">
                             </div>
                         </div>
                     </div>
 
                     <div class="mw-why-choose-us__content">
                         <div class="mw-why-choose-us__grid">
-                            <div v-for="item in whyChooseUsItems" :key="item.title" class="mw-why-choose-us__item">
+                            <div v-for="(item, index) in whyChooseUsItems" :key="index" class="mw-why-choose-us__item">
                                 <div class="mw-why-choose-us__item-head">
-                                    <img :src="`/frontend/assets/images/icons/${item.icon}`" alt="" class="mw-why-choose-us__icon">
+                                    <img :src="item.icon" alt="" class="mw-why-choose-us__icon">
                                     <h3 class="mw-why-choose-us__title">{{ item.title }}</h3>
                                 </div>
-                                <p class="mw-why-choose-us__text">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum.</p>
+                                <p class="mw-why-choose-us__text">{{ item.description }}</p>
                             </div>
                         </div>
                     </div>
@@ -738,15 +724,15 @@ const testimonials = [
             </div>
         </section>
 
-        <section class="mw-realty mw-section" id="realty-property">
+        <section class="mw-realty mw-section" id="realty-property" v-if="showRealty">
             <div class="container-ctn">
                 <div class="mw-realty__head">
-                    <p class="mw-eyebrow">On-market homes</p>
-                    <h2 class="mw-section-title">Realty Property</h2>
+                    <p class="mw-eyebrow">{{ realtyEyebrow }}</p>
+                    <h2 class="mw-section-title">{{ realtyTitle }}</h2>
                     <div class="mw-realty__head-row">
-                        <p class="mw-realty__text">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
-                        <a href="#" class="mw-btn mw-realty__cta">
-                            View More Details
+                        <p class="mw-realty__text" v-if="realtyDescription" v-html="realtyDescription"></p>
+                        <a :href="realtyButtonUrl" class="mw-btn mw-realty__cta">
+                            {{ realtyButtonText }}
                             <img src="/frontend/assets/images/icons/luxury-cta-arrow.svg" alt="" width="18" height="18">
                         </a>
                     </div>
@@ -756,7 +742,7 @@ const testimonials = [
                     <div class="mw-realty__track" data-realty-slider>
                         <article v-for="(card, index) in realtyCards" :key="index" class="mw-realty__card">
                             <div class="mw-realty__media">
-                                <img :src="`/frontend/assets/images/home/${card.image}`" alt="Modern Penthouse in Downtown Dubai" class="mw-realty__photo">
+                                <img :src="card.image" :alt="card.name" class="mw-realty__photo">
                                 <span class="mw-badge mw-badge--success mw-realty__verified">
                                     <img src="/frontend/assets/images/icons/verified.svg" alt="" width="18" height="18">
                                     Verified
@@ -768,20 +754,20 @@ const testimonials = [
                                 </button>
                             </div>
                             <div class="mw-realty__body">
-                                <h3 class="mw-realty__name">Modern Penthouse in Downtown....</h3>
+                                <h3 class="mw-realty__name">{{ card.name }}</h3>
                                 <p class="mw-realty__location">
                                     <img src="/frontend/assets/images/icons/location.svg" alt="" width="18" height="18">
-                                    Downtown Dubai
+                                    {{ card.location }}
                                 </p>
                                 <div class="mw-realty__divider"></div>
                                 <div class="mw-realty__stats">
-                                    <span class="mw-realty__stat"><img src="/frontend/assets/images/icons/bed.svg" alt="" width="18" height="18">2 Bed</span>
-                                    <span class="mw-realty__stat"><img src="/frontend/assets/images/icons/bathroom.svg" alt="" width="18" height="18">2 Bath</span>
-                                    <span class="mw-realty__stat"><img src="/frontend/assets/images/icons/area.svg" alt="" width="18" height="18">4200 sq.ft</span>
+                                    <span class="mw-realty__stat"><img src="/frontend/assets/images/icons/bed.svg" alt="" width="18" height="18">{{ card.beds }}</span>
+                                    <span class="mw-realty__stat"><img src="/frontend/assets/images/icons/bathroom.svg" alt="" width="18" height="18">{{ card.baths }}</span>
+                                    <span class="mw-realty__stat"><img src="/frontend/assets/images/icons/area.svg" alt="" width="18" height="18">{{ card.area }}</span>
                                 </div>
                                 <div class="mw-realty__divider"></div>
                                 <div class="mw-realty__foot">
-                                    <span class="mw-realty__price">AED 9,500,000</span>
+                                    <span class="mw-realty__price">{{ card.price }}</span>
                                     <div class="mw-realty__actions">
                                         <a href="mailto:info@mightywarnersrealty.com" aria-label="Email"><img src="/frontend/assets/images/icons/realty-email.svg" alt="" width="40" height="40"></a>
                                         <a href="tel:+971585899990" aria-label="Call"><img src="/frontend/assets/images/icons/realty-phone.svg" alt="" width="40" height="40"></a>
@@ -803,11 +789,11 @@ const testimonials = [
             </div>
         </section>
 
-        <section class="mw-communities mw-section" id="communities">
+        <section class="mw-communities mw-section" id="communities" v-if="showCommunities">
             <div class="container-ctn">
                 <div class="mw-section-head">
-                    <p class="mw-eyebrow">Neighbourhood living</p>
-                    <h2 class="mw-section-title">Popular Properties in Dubai Communities</h2>
+                    <p class="mw-eyebrow">{{ communitiesEyebrow }}</p>
+                    <h2 class="mw-section-title">{{ communitiesTitle }}</h2>
                 </div>
 
                 <div class="mw-communities__tabs">
@@ -820,7 +806,7 @@ const testimonials = [
                     <div class="mw-communities__grid" data-category="for-sale">
                         <div v-for="(col, ci) in communitiesColumns" :key="ci" class="mw-communities__col">
                             <a v-for="(row, ri) in col" :key="ri" href="#" class="mw-communities__row" :class="{ 'mw-communities__row--last': ri === col.length - 1 }">
-                                <img class="mw-communities__icon" :src="`/frontend/assets/images/icons/${row.icon}`" alt="" width="24" height="24">
+                                <img class="mw-communities__icon" :src="row.icon" alt="" width="24" height="24">
                                 <span class="mw-communities__name">{{ row.name }}</span>
                             </a>
                         </div>
@@ -829,16 +815,16 @@ const testimonials = [
             </div>
         </section>
 
-        <section class="mw-find-properties mw-section mw-section--alt" id="find-properties">
+        <section class="mw-find-properties mw-section mw-section--alt" id="find-properties" v-if="showFindProperties">
             <div class="container-ctn">
                 <div class="mw-section-head">
-                    <p class="mw-eyebrow">Browse by type</p>
-                    <h2 class="mw-section-title">Find Properties</h2>
+                    <p class="mw-eyebrow">{{ findPropertiesEyebrow }}</p>
+                    <h2 class="mw-section-title">{{ findPropertiesTitle }}</h2>
                 </div>
 
                 <div class="mw-find-properties__grid">
-                    <a v-for="card in findPropertiesCards" :key="card.modifier" href="#" class="mw-find-properties__card" :class="`mw-find-properties__card--${card.modifier}`">
-                        <img :src="`/frontend/assets/images/home/${card.image}`" :alt="`${card.type} properties`">
+                    <a v-for="(card, index) in findPropertiesCards" :key="index" href="#" class="mw-find-properties__card" :class="`mw-find-properties__card--${card.modifier}`">
+                        <img :src="card.image" :alt="`${card.type} properties`">
                         <span class="mw-find-properties__label">
                             <span class="mw-find-properties__label-type">{{ card.type }}</span>
                             <span class="mw-find-properties__label-count">{{ card.count }}</span>
@@ -857,13 +843,13 @@ const testimonials = [
             </div>
         </section>
 
-        <section class="mw-testimonials mw-section" id="testimonials">
+        <section class="mw-testimonials mw-section" id="testimonials" v-if="showTestimonials">
             <div class="container-ctn">
                 <div class="mw-testimonials__header">
                     <div class="mw-section-head">
-                        <p class="mw-eyebrow">From our clients</p>
-                        <h2 class="mw-section-title">Why Our Clients Trust Us</h2>
-                        <p class="mw-section-text">Discover what our customers are saying about their experiences.</p>
+                        <p class="mw-eyebrow">{{ testimonialsEyebrow }}</p>
+                        <h2 class="mw-section-title">{{ testimonialsTitle }}</h2>
+                        <p class="mw-section-text">{{ testimonialsDescription }}</p>
                     </div>
                     <div class="mw-testimonials__arrows">
                         <button type="button" data-testimonials-prev class="mw-testimonials__arrow mw-testimonials__arrow--prev" aria-label="Previous testimonial">
@@ -877,11 +863,11 @@ const testimonials = [
 
                 <div class="mw-testimonials__slider" data-testimonials-slider>
                     <template v-for="(item, index) in testimonials" :key="index">
-                        <article v-if="item.type === 'video'" class="mw-testimonials__card mw-testimonials__card--video" :class="`mw-testimonials__card--${item.modifier}`">
+                        <article v-if="item.type === 'video'" class="mw-testimonials__card mw-testimonials__card--video">
                             <div class="mw-testimonials__media">
-                                <img class="mw-testimonials__photo" :src="`/frontend/assets/images/home/${item.image}`" :alt="item.name">
-                                <video class="mw-testimonials__video" :poster="`/frontend/assets/images/home/${item.image}`" preload="metadata" playsinline>
-                                    <source src="/frontend/video/testimonial.webm" type="video/webm">
+                                <img class="mw-testimonials__photo" :src="item.image_url" :alt="item.name">
+                                <video v-if="item.video_url" class="mw-testimonials__video" :poster="item.image_url" preload="metadata" playsinline>
+                                    <source :src="item.video_url">
                                 </video>
                                 <button type="button" class="mw-testimonials__play" :aria-label="`Play ${item.name}'s video testimonial`">
                                     <img class="mw-testimonials__icon-play" src="/frontend/assets/images/icons/play.svg" alt="" width="24" height="24">
@@ -896,17 +882,13 @@ const testimonials = [
 
                         <article v-else class="mw-testimonials__card mw-testimonials__card--quote">
                             <div class="mw-testimonials__body">
-                                <div class="mw-testimonials__stars" aria-label="5 star rating">
-                                    <img src="/frontend/assets/images/icons/star.svg" alt="" width="24" height="24">
-                                    <img src="/frontend/assets/images/icons/star.svg" alt="" width="24" height="24">
-                                    <img src="/frontend/assets/images/icons/star.svg" alt="" width="24" height="24">
-                                    <img src="/frontend/assets/images/icons/star.svg" alt="" width="24" height="24">
-                                    <img src="/frontend/assets/images/icons/star.svg" alt="" width="24" height="24">
+                                <div class="mw-testimonials__stars" :aria-label="`${item.rating || 5} star rating`">
+                                    <img v-for="star in (item.rating || 5)" :key="star" src="/frontend/assets/images/icons/star.svg" alt="" width="24" height="24">
                                 </div>
                                 <img class="mw-testimonials__quote-icon" src="/frontend/assets/images/icons/quote-mark.svg" alt="" width="48" height="48">
-                                <p class="mw-testimonials__quote-text">{{ testimonialQuoteText }}</p>
+                                <p class="mw-testimonials__quote-text">{{ item.content }}</p>
                                 <div class="mw-testimonials__author">
-                                    <img class="mw-testimonials__avatar" src="/frontend/assets/images/home/testimonial-jenifer-avatar.jpg" alt="">
+                                    <img class="mw-testimonials__avatar" :src="item.image_url" alt="">
                                     <div class="mw-testimonials__author-info">
                                         <p class="mw-testimonials__name mw-testimonials__name--light">{{ item.name }}</p>
                                         <p class="mw-testimonials__role mw-testimonials__role--light">{{ item.role }}</p>
@@ -972,16 +954,16 @@ const testimonials = [
                 </div>
 
                 <div class="mw-contact__info">
-                    <p class="mw-eyebrow">We're here to help</p>
-                    <h2 class="mw-contact__heading">Connect with the experts who make property management simple.</h2>
-                    <p class="mw-contact__text">Experience hassle-free property management, expertly handled by professionals who understand your unique requirements.</p>
+                    <p class="mw-eyebrow">{{ contactEyebrow }}</p>
+                    <h2 class="mw-contact__heading">{{ contactHeading }}</h2>
+                    <p class="mw-contact__text">{{ contactText }}</p>
 
                     <div class="mw-contact__rows">
                         <div class="mw-contact__row">
                             <span class="mw-contact__icon"><img src="/frontend/assets/images/icons/location.svg" alt="" width="24" height="24"></span>
                             <div class="mw-contact__row-body">
                                 <p class="mw-contact__row-label">Office Address</p>
-                                <p class="mw-contact__row-value">Office No: 703 - Churchill Tower Business Bay - Dubai, UAE</p>
+                                <p class="mw-contact__row-value">{{ contactAddress }}</p>
                             </div>
                         </div>
 
@@ -989,7 +971,7 @@ const testimonials = [
                             <span class="mw-contact__icon"><img src="/frontend/assets/images/icons/phone.svg" alt="" width="24" height="24"></span>
                             <div class="mw-contact__row-body">
                                 <p class="mw-contact__row-label">Toll Free</p>
-                                <a class="mw-contact__row-value mw-contact__row-value--link mw-contact__row-value--lg" href="tel:800644489">800644489</a>
+                                <a class="mw-contact__row-value mw-contact__row-value--link mw-contact__row-value--lg" :href="`tel:${contactTollFree}`">{{ contactTollFree }}</a>
                             </div>
                         </div>
 
@@ -997,7 +979,7 @@ const testimonials = [
                             <span class="mw-contact__icon"><img src="/frontend/assets/images/icons/whatsapp.svg" alt="" width="24" height="24"></span>
                             <div class="mw-contact__row-body">
                                 <p class="mw-contact__row-label">Request A Call Back</p>
-                                <a class="mw-contact__row-value mw-contact__row-value--link mw-contact__row-value--lg" href="https://wa.me/971585899990" target="_blank" rel="noopener">+971 58 589 9990</a>
+                                <a class="mw-contact__row-value mw-contact__row-value--link mw-contact__row-value--lg" :href="`https://wa.me/${contactWhatsapp}`" target="_blank" rel="noopener">+{{ contactWhatsapp }}</a>
                             </div>
                         </div>
 
@@ -1005,7 +987,7 @@ const testimonials = [
                             <span class="mw-contact__icon"><img src="/frontend/assets/images/icons/email.svg" alt="" width="24" height="24"></span>
                             <div class="mw-contact__row-body">
                                 <p class="mw-contact__row-label">Email Us</p>
-                                <a class="mw-contact__row-value mw-contact__row-value--link" href="mailto:info@mightywarnersrealty.com">info@mightywarnersrealty.com</a>
+                                <a class="mw-contact__row-value mw-contact__row-value--link" :href="`mailto:${contactEmail}`">{{ contactEmail }}</a>
                             </div>
                         </div>
                     </div>

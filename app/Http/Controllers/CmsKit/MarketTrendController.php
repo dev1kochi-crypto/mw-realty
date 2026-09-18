@@ -13,12 +13,15 @@ class MarketTrendController extends Controller
 {
     use ValidatesImageDimensions;
 
+    const MAX_TRENDS = 30;
+
     public function index()
     {
         $section = SectionLabel::where('section_key', 'market-trends')->first();
         $languages = Language::where('status', true)->get();
-        $imageConfig = config('cms-kit.images.market-trends.image');
-        return view('cms-kit::market-trends.index', compact('section', 'languages', 'imageConfig'));
+        $image1Config = config('cms-kit.images.market-trends.image_1');
+        $image2Config = config('cms-kit.images.market-trends.image_2');
+        return view('cms-kit::market-trends.index', compact('section', 'languages', 'image1Config', 'image2Config'));
     }
 
     public function update(Request $request)
@@ -28,17 +31,27 @@ class MarketTrendController extends Controller
         $rules = ['remove_image_1' => 'nullable|boolean', 'remove_image_2' => 'nullable|boolean'];
         foreach ($languages as $lang) {
             $rules["translations.{$lang->code}.title"] = 'required';
+            $rules["translations.{$lang->code}.trends"] = 'nullable|array|max:'.self::MAX_TRENDS;
+            $rules["translations.{$lang->code}.trends.*"] = 'nullable|string|max:255';
         }
         $request->validate($rules);
 
-        $imageConfig = config('cms-kit.images.market-trends.image', []);
-        $this->validateImageWithinLimits($request, 'image_1', $imageConfig, 'Image 1');
-        $this->validateImageWithinLimits($request, 'image_2', $imageConfig, 'Image 2');
+        $image1Config = config('cms-kit.images.market-trends.image_1', []);
+        $image2Config = config('cms-kit.images.market-trends.image_2', []);
+        $this->validateImageWithinLimits($request, 'image_1', $image1Config, 'Image 1');
+        $this->validateImageWithinLimits($request, 'image_2', $image2Config, 'Image 2');
 
         $section = SectionLabel::where('section_key', 'market-trends')->first();
 
+        $translations = $request->input('translations', []);
+        foreach ($translations as $lang => $values) {
+            if (isset($values['trends'])) {
+                $translations[$lang]['trends'] = array_slice(array_values(array_filter($values['trends'], fn ($trend) => trim((string) $trend) !== '')), 0, self::MAX_TRENDS);
+            }
+        }
+
         $data = [
-            'translations' => $request->input('translations', []),
+            'translations' => $translations,
             'status' => $request->has('status'),
         ];
 

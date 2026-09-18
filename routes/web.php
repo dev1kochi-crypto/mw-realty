@@ -7,6 +7,8 @@ use App\Http\Controllers\CmsKit\PostPropertyStepController;
 use App\Http\Controllers\CmsKit\PopularPlaceController;
 use App\Http\Controllers\CmsKit\LuxuryProjectController;
 use App\Http\Controllers\CmsKit\AboutUsController;
+use App\Http\Controllers\CmsKit\BlogCategoryController;
+use App\Http\Controllers\CmsKit\BlogController;
 use App\Http\Controllers\CmsKit\MarketTrendController;
 use App\Http\Controllers\CmsKit\WhyChooseUsController;
 use App\Http\Controllers\CmsKit\OurBuilderController;
@@ -178,6 +180,55 @@ Route::middleware(['web'])->group(function () {
                 Route::middleware(['cms.permission:why-choose-us.delete'])->group(function () {
                     Route::delete('/why-choose-us/{id}', [WhyChooseUsController::class, 'destroy'])->name('cms.why-choose-us.destroy');
                     Route::post('/why-choose-us/bulk-action', [WhyChooseUsController::class, 'bulkAction'])->name('cms.why-choose-us.bulk-action');
+                });
+            });
+
+            // Blogs (section + items) — overrides the vendor package's own /blogs routes (registered
+            // in vendor/mightywarnerskochi/cms/src/routes/web.php) so this app's BlogController, with
+            // its extra_fields file-upload handling and dynamic category list, is what actually runs.
+            // Laravel matches routes in registration order, and this file's routes load before the
+            // package's own, so these take priority for the same URIs.
+            Route::middleware(['cms.permission:blogs.view'])->group(function () {
+                Route::get('/blogs', [BlogController::class, 'index'])->name('cms.blogs.index');
+                Route::post('/blogs/update-section', [BlogController::class, 'updateSection'])->name('cms.blogs.update-section')->middleware('cms.permission:blogs.edit');
+
+                Route::middleware(['cms.permission:blogs.create'])->group(function () {
+                    Route::get('/blogs/create', [BlogController::class, 'create'])->name('cms.blogs.create');
+                    Route::post('/blogs', [BlogController::class, 'store'])->name('cms.blogs.store');
+                });
+
+                Route::middleware(['cms.permission:blogs.edit'])->group(function () {
+                    Route::get('/blogs/{id}/edit', [BlogController::class, 'edit'])->name('cms.blogs.edit');
+                    Route::put('/blogs/{id}', [BlogController::class, 'update'])->name('cms.blogs.update');
+                    Route::post('/blogs/{id}/toggle-status', [BlogController::class, 'toggleStatus'])->name('cms.blogs.toggle-status');
+                    Route::post('/blogs/reorder', [BlogController::class, 'reorder'])->name('cms.blogs.reorder');
+                });
+
+                Route::middleware(['cms.permission:blogs.delete'])->group(function () {
+                    Route::delete('/blogs/{id}', [BlogController::class, 'destroy'])->name('cms.blogs.destroy');
+                    Route::post('/blogs/bulk-action', [BlogController::class, 'bulkAction'])->name('cms.blogs.bulk-action');
+                });
+            });
+
+            // Blog Categories
+            Route::middleware(['cms.permission:blog-categories.view'])->group(function () {
+                Route::get('/blog-categories', [BlogCategoryController::class, 'index'])->name('cms.blog-categories.index');
+
+                Route::middleware(['cms.permission:blog-categories.create'])->group(function () {
+                    Route::get('/blog-categories/create', [BlogCategoryController::class, 'create'])->name('cms.blog-categories.create');
+                    Route::post('/blog-categories', [BlogCategoryController::class, 'store'])->name('cms.blog-categories.store');
+                });
+
+                Route::middleware(['cms.permission:blog-categories.edit'])->group(function () {
+                    Route::get('/blog-categories/{id}/edit', [BlogCategoryController::class, 'edit'])->name('cms.blog-categories.edit');
+                    Route::put('/blog-categories/{id}', [BlogCategoryController::class, 'update'])->name('cms.blog-categories.update');
+                    Route::post('/blog-categories/{id}/toggle-status', [BlogCategoryController::class, 'toggleStatus'])->name('cms.blog-categories.toggle-status');
+                    Route::post('/blog-categories/reorder', [BlogCategoryController::class, 'reorder'])->name('cms.blog-categories.reorder');
+                });
+
+                Route::middleware(['cms.permission:blog-categories.delete'])->group(function () {
+                    Route::delete('/blog-categories/{id}', [BlogCategoryController::class, 'destroy'])->name('cms.blog-categories.destroy');
+                    Route::post('/blog-categories/bulk-action', [BlogCategoryController::class, 'bulkAction'])->name('cms.blog-categories.bulk-action');
                 });
             });
 
@@ -509,7 +560,7 @@ Route::view('/agency-details', 'welcome');
 Route::view('/agency-login', 'welcome');
 Route::view('/agency-signup', 'welcome');
 Route::view('/blogs', 'welcome');
-Route::view('/blog-details', 'welcome');
+Route::view('/blog-details/{slug}', 'welcome');
 Route::view('/contact', 'welcome');
 Route::view('/login', 'welcome');
 Route::view('/signup', 'welcome');

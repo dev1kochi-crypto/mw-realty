@@ -62,10 +62,10 @@ const routes = [
         meta: { title: 'Blog | MW Realty', bodyClass: 'agents-page blogs-page', activeNav: 'blogs' },
     },
     {
-        path: '/blog-details',
+        path: '/blog-details/:slug',
         name: 'blog-details',
         component: () => import('../pages/BlogDetails.vue'),
-        meta: { title: '5 Reasons to Invest in Dubai Off-Plan Properties in 2026 | MW Realty', bodyClass: 'agents-page blog-details-page', activeNav: 'blogs' },
+        meta: { title: 'Blog Details | MW Realty', bodyClass: 'agents-page blog-details-page', activeNav: 'blogs' },
     },
     {
         path: '/contact',

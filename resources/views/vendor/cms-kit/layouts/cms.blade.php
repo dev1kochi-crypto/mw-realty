@@ -417,10 +417,30 @@
                     </div>
                     @endif
 
-                    @if(config('cms-kit.common.modules.blogs', true) && $cmsUser->can('blogs.view'))
-                    <a class="nav-link @if(Route::is('cms.blogs.*')) active @endif" href="{{ route('cms.blogs.index') }}">
-                        <i class="fas fa-blog"></i> Blogs
-                    </a>
+                    @if(config('cms-kit.common.modules.blogs', true) && ($cmsUser->can('blogs.view') || $cmsUser->can('blog-categories.view')))
+                    <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.blogs.*') || request()->routeIs('cms.blog-categories.*')) active @endif"
+                           data-bs-toggle="collapse" href="#blogsMenu" role="button"
+                           aria-expanded="@if(request()->routeIs('cms.blogs.*') || request()->routeIs('cms.blog-categories.*')) true @else false @endif">
+                            <i class="fas fa-blog"></i>
+                            <span>Blogs</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.blogs.*') || request()->routeIs('cms.blog-categories.*')) show @endif" id="blogsMenu">
+                            <nav class="nav flex-column">
+                                @if($cmsUser->can('blogs.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.blogs.*')) active @endif" href="{{ route('cms.blogs.index') }}">
+                                    All Blogs
+                                </a>
+                                @endif
+                                @if($cmsUser->can('blog-categories.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.blog-categories.*')) active @endif" href="{{ route('cms.blog-categories.index') }}">
+                                    Categories
+                                </a>
+                                @endif
+                            </nav>
+                        </div>
+                    </div>
                     @endif
 
                     @if(config('cms-kit.common.modules.landing-pages', true) && $cmsUser->can('landing-pages.view'))
@@ -645,6 +665,50 @@
                 branding: false,
                 promotion: false
             });
+        });
+    </script>
+
+    <script>
+        // Site-wide fix for every admin form that splits per-language fields across Bootstrap
+        // tabs (English/Arabic/...): a required field on a tab that ISN'T the active one is
+        // invisible (display:none), so a validation failure there looks exactly like the
+        // Save/Update button silently doing nothing. This runs on every CMS page, so any
+        // module built with the same tab pattern gets it automatically — no per-page script
+        // needed.
+        document.addEventListener('DOMContentLoaded', function () {
+            function activateTabFor(el) {
+                const pane = el.closest('.tab-pane');
+                if (!pane || !pane.id) return;
+                const tabBtn = document.querySelector(`[data-bs-target="#${pane.id}"]`);
+                if (tabBtn && !tabBtn.classList.contains('active')) {
+                    bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+                }
+            }
+
+            // Case 1: the page just reloaded after a server-side validation failure — Laravel's
+            // error-bag markup already put .is-invalid on the offending field(s); jump to the
+            // first one so it's actually visible instead of sitting on a hidden tab.
+            const firstServerInvalid = document.querySelector('.tab-content .is-invalid');
+            if (firstServerInvalid) {
+                activateTabFor(firstServerInvalid);
+            }
+
+            // Case 2: native HTML5 "required" validation blocks the submit client-side, before
+            // any request is sent — the browser can't show its tooltip on a hidden field, so
+            // nothing visible happens at all. `invalid` doesn't bubble, so this must be a
+            // capture-phase listener. One click fires this event for EVERY empty required field
+            // at once (not just the first in DOM order) — the guard below only acts on the
+            // first one per click, otherwise a still-empty English field would be skipped in
+            // favor of jumping straight to Arabic.
+            let handledThisAttempt = false;
+            document.addEventListener('invalid', function (e) {
+                if (handledThisAttempt) return;
+                handledThisAttempt = true;
+                setTimeout(() => { handledThisAttempt = false; }, 0);
+
+                activateTabFor(e.target);
+                setTimeout(() => e.target.focus(), 150);
+            }, true);
         });
     </script>
 

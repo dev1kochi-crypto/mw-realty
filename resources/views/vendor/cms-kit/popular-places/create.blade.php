@@ -83,47 +83,6 @@
 </div>
 @endsection
 
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // A required field on a hidden language tab (e.g. Arabic Name) fails validation
-        // invisibly since the tab-pane is display:none — jump to it and focus the field.
-        const firstInvalidField = document.querySelector('.language-switcher-content .is-invalid');
-        if (firstInvalidField) {
-            const invalidTabPane = firstInvalidField.closest('.tab-pane');
-            if (invalidTabPane) {
-                const tabBtn = document.querySelector(`[data-bs-target="#${invalidTabPane.id}"]`);
-                if (tabBtn) {
-                    bootstrap.Tab.getOrCreateInstance(tabBtn).show();
-                    setTimeout(() => firstInvalidField.focus(), 150);
-                }
-            }
-        }
-    });
-
-    // The Name field on every language tab is browser-required — if the Arabic tab's copy
-    // is empty, Chrome silently blocks the whole submit (it can't show its native tooltip on
-    // a display:none field), which looks exactly like "Save does nothing". Catch that native
-    // constraint-validation failure (capture: true, since 'invalid' doesn't bubble) and jump
-    // to whichever tab actually holds the empty required field.
-    //
-    // One click fires an 'invalid' event for EVERY empty required field at once (English's
-    // AND Arabic's), not just the first — without the guard below we'd process both and end
-    // up parked on the last one (Arabic) even when English, shown first, is also empty.
-    let placeInvalidHandled = false;
-    document.addEventListener('invalid', function (e) {
-        if (placeInvalidHandled) return;
-        placeInvalidHandled = true;
-        setTimeout(() => { placeInvalidHandled = false; }, 0);
-
-        const invalidTabPane = e.target.closest('.tab-pane');
-        if (invalidTabPane) {
-            const tabBtn = document.querySelector(`[data-bs-target="#${invalidTabPane.id}"]`);
-            if (tabBtn && !tabBtn.classList.contains('active')) {
-                bootstrap.Tab.getOrCreateInstance(tabBtn).show();
-            }
-        }
-        setTimeout(() => { e.target.focus(); }, 150);
-    }, true);
-</script>
-@endpush
+{{-- Jumping to the tab holding a required/invalid field (client-side blocked submit, or a
+     server-side validation error after redirect) is handled globally for every CMS page in
+     layouts/cms.blade.php — no page-specific script needed here. --}}
