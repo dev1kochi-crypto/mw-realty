@@ -29,7 +29,8 @@ class LeadService
      */
     public function filteredQuery(?int $ownerId, array $filters = []): Builder
     {
-        $query = Lead::with(['property', 'owner', 'stage', 'source', 'tags'])
+        $query = Lead::with(['owner', 'stage', 'source', 'tags'])
+            ->withCount('notesHistory')
             ->forOwner($ownerId)
             ->latest();
 
@@ -98,6 +99,12 @@ class LeadService
     public function getFilteredLeads(?int $ownerId, array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         return $this->filteredQuery($ownerId, $filters)->paginate($perPage)->withQueryString();
+    }
+
+    /** All filtered leads for the client-side DataTable on the CRM listing. */
+    public function getAllFilteredLeads(?int $ownerId, array $filters = []): Collection
+    {
+        return $this->filteredQuery($ownerId, $filters)->get();
     }
 
     /**

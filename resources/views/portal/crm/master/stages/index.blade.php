@@ -4,29 +4,14 @@
 @section('title', 'Master - Stages')
 
 @section('crm-content')
-<div class="mb-3">
-    <div class="portal-section-title mb-0">Stages</div>
-    <p class="text-muted mb-0" style="font-size: 0.85rem;">Build your lead pipeline — drag to reorder, pick a color per stage, and mark which ones count as closed.</p>
-</div>
-
-<div class="portal-card p-4 mb-3">
-    <div class="portal-section-title">Add Stage</div>
-    <form action="{{ route('portal.crm.master.stages.store') }}" method="POST" class="d-flex flex-wrap gap-2 align-items-end">
-        @csrf
-        <div>
-            <label class="form-label small mb-1">Name</label>
-            <input type="text" name="name" class="form-control form-control-sm" required maxlength="100">
-        </div>
-        <div>
-            <label class="form-label small mb-1">Color</label>
-            <input type="color" name="color" class="form-control form-control-sm form-control-color" value="#4f46e5">
-        </div>
-        <div class="form-check mb-1">
-            <input type="checkbox" name="is_closed" value="1" class="form-check-input" id="stageIsClosed">
-            <label class="form-check-label small" for="stageIsClosed">Counts as closed</label>
-        </div>
-        <button type="submit" class="btn btn-portal-primary btn-sm">Add Stage</button>
-    </form>
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <div class="portal-section-title mb-0">Stages</div>
+        <p class="text-muted mb-0" style="font-size: 0.85rem;">Build your lead pipeline — drag to reorder, pick a color per stage, and mark which ones count as closed.</p>
+    </div>
+    <button type="button" id="openAddStageModal" class="btn btn-portal-primary btn-sm">
+        <i class="fas fa-plus me-1" aria-hidden="true"></i> Add Stage
+    </button>
 </div>
 
 <div class="portal-card p-4">
@@ -76,6 +61,42 @@
     </div>
 </div>
 
+<div class="modal fade" id="addStageModal" tabindex="-1" aria-labelledby="addStageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="{{ route('portal.crm.master.stages.store') }}" method="POST">
+                @csrf
+                <input type="hidden" name="stage_form" value="create">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addStageModalLabel">Add Stage</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="stageName">Name</label>
+                        <input type="text" name="name" id="stageName" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required maxlength="100" autofocus>
+                        @error('name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="stageColor">Color</label>
+                        <input type="color" name="color" id="stageColor" class="form-control form-control-color" value="{{ old('color', '#4f46e5') }}">
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="is_closed" value="1" class="form-check-input" id="stageIsClosed" @checked(old('is_closed'))>
+                        <label class="form-check-label" for="stageIsClosed">Counts as closed</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-portal-primary">Add Stage</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="editStageModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -112,6 +133,23 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const addModalEl = document.getElementById('addStageModal');
+        const addModal = new bootstrap.Modal(addModalEl);
+        const addStageButton = document.getElementById('openAddStageModal');
+        const addStageName = document.getElementById('stageName');
+
+        addStageButton.addEventListener('click', function () {
+            addModal.show();
+        });
+
+        addModalEl.addEventListener('shown.bs.modal', function () {
+            addStageName.focus();
+        });
+
+        @if(old('stage_form') === 'create' && $errors->any())
+        addModal.show();
+        @endif
+
         const editModalEl = document.getElementById('editStageModal');
         const editModal = new bootstrap.Modal(editModalEl);
         const editForm = document.getElementById('editStageForm');

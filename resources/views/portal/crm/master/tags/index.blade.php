@@ -4,25 +4,14 @@
 @section('title', 'Master - Tags')
 
 @section('crm-content')
-<div class="mb-3">
-    <div class="portal-section-title mb-0">Tags</div>
-    <p class="text-muted mb-0" style="font-size: 0.85rem;">Label leads with your own tags to spot patterns at a glance — a lead can carry more than one.</p>
-</div>
-
-<div class="portal-card p-4 mb-3">
-    <div class="portal-section-title">Add Tag</div>
-    <form action="{{ route('portal.crm.master.tags.store') }}" method="POST" class="d-flex flex-wrap gap-2 align-items-end">
-        @csrf
-        <div>
-            <label class="form-label small mb-1">Name</label>
-            <input type="text" name="name" class="form-control form-control-sm" required maxlength="100">
-        </div>
-        <div>
-            <label class="form-label small mb-1">Color</label>
-            <input type="color" name="color" class="form-control form-control-sm form-control-color" value="#14b8a6">
-        </div>
-        <button type="submit" class="btn btn-portal-primary btn-sm">Add Tag</button>
-    </form>
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <div class="portal-section-title mb-0">Tags</div>
+        <p class="text-muted mb-0" style="font-size: 0.85rem;">Label leads with your own tags to spot patterns at a glance — a lead can carry more than one.</p>
+    </div>
+    <button type="button" id="openAddTagModal" class="btn btn-portal-primary btn-sm">
+        <i class="fas fa-plus me-1" aria-hidden="true"></i> Add Tag
+    </button>
 </div>
 
 <div class="portal-card p-4">
@@ -49,6 +38,38 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addTagModal" tabindex="-1" aria-labelledby="addTagModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="{{ route('portal.crm.master.tags.store') }}" method="POST">
+                @csrf
+                <input type="hidden" name="tag_form" value="create">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTagModalLabel">Add Tag</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="tagName">Name</label>
+                        <input type="text" name="name" id="tagName" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required maxlength="100" autofocus>
+                        @error('name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="tagColor">Color</label>
+                        <input type="color" name="color" id="tagColor" class="form-control form-control-color" value="{{ old('color', '#14b8a6') }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-portal-primary">Add Tag</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -84,6 +105,23 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const addModalEl = document.getElementById('addTagModal');
+        const addModal = new bootstrap.Modal(addModalEl);
+        const addTagButton = document.getElementById('openAddTagModal');
+        const addTagName = document.getElementById('tagName');
+
+        addTagButton.addEventListener('click', function () {
+            addModal.show();
+        });
+
+        addModalEl.addEventListener('shown.bs.modal', function () {
+            addTagName.focus();
+        });
+
+        @if(old('tag_form') === 'create' && $errors->any())
+        addModal.show();
+        @endif
+
         const editModal = new bootstrap.Modal(document.getElementById('editTagModal'));
         const editForm = document.getElementById('editTagForm');
 
