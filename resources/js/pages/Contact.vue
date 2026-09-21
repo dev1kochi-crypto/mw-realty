@@ -21,24 +21,25 @@
                     <div class="mw-page-contact__form-col" data-reveal="left">
                         <h2 class="mw-about-title mw-page-contact__title">{{ title }}</h2>
                         <p class="mw-page-contact__lead">{{ description }}</p>
-                        <form class="mw-page-contact__form" novalidate @submit.prevent>
+                        <form class="mw-page-contact__form" novalidate @submit.prevent="handleSubmit">
                             <div class="mw-page-contact__field">
                                 <label for="page-contact-name">Name*</label>
-                                <input type="text" id="page-contact-name" name="name" placeholder="Your name" required>
+                                <input type="text" id="page-contact-name" name="name" placeholder="Your name" v-model="form.name" required>
                             </div>
                             <div class="mw-page-contact__field">
                                 <label for="page-contact-email">Email*</label>
-                                <input type="email" id="page-contact-email" name="email" placeholder="Your email" required>
+                                <input type="email" id="page-contact-email" name="email" placeholder="Your email" v-model="form.email" required>
                             </div>
                             <div class="mw-page-contact__field">
                                 <label for="page-contact-phone">Phone</label>
-                                <input type="tel" id="page-contact-phone" name="phone" placeholder="Your phone">
+                                <input type="tel" id="page-contact-phone" name="phone" placeholder="Your phone" v-model="form.phone">
                             </div>
                             <div class="mw-page-contact__field">
                                 <label for="page-contact-message">Message</label>
-                                <textarea id="page-contact-message" name="message" rows="4" placeholder="How can we help you?"></textarea>
+                                <textarea id="page-contact-message" name="message" rows="4" placeholder="How can we help you?" v-model="form.message" required></textarea>
                             </div>
-                            <button type="submit" class="mw-btn mw-btn--gradient mw-page-contact__submit">Send Message</button>
+                            <p v-if="feedback" class="mw-form-feedback" :class="`mw-form-feedback--${feedback.type}`">{{ feedback.text }}</p>
+                            <button type="submit" class="mw-btn mw-btn--gradient mw-page-contact__submit" :disabled="submitting">{{ submitting ? 'Sending…' : 'Send Message' }}</button>
                         </form>
                     </div>
 
@@ -98,10 +99,36 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useContactPage } from '../composables/useContactPage';
+import { useRecaptcha } from '../composables/useRecaptcha';
 
 const { contactPage } = useContactPage();
+const { getRecaptchaToken } = useRecaptcha();
+
+const form = reactive({ name: '', email: '', phone: '', message: '' });
+const submitting = ref(false);
+const feedback = ref(null);
+
+async function handleSubmit() {
+    if (submitting.value) return;
+    submitting.value = true;
+    feedback.value = null;
+
+    try {
+        const recaptcha_token = await getRecaptchaToken('contact');
+        const { data } = await window.axios.post('/api/contact', { ...form, recaptcha_token });
+        feedback.value = { type: 'success', text: data.message };
+        form.name = '';
+        form.email = '';
+        form.phone = '';
+        form.message = '';
+    } catch (error) {
+        feedback.value = { type: 'error', text: error.response?.data?.message || 'Something went wrong — please try again.' };
+    } finally {
+        submitting.value = false;
+    }
+}
 
 const title = computed(() => contactPage.value?.title || 'Get in Touch');
 const description = computed(() => contactPage.value?.description || 'Have questions about our properties or services? Our team is here to help you.');

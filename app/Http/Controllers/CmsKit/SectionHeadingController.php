@@ -26,6 +26,11 @@ class SectionHeadingController extends Controller
             'home-premium-property' => ['label' => 'Premium Property', 'fields' => ['title_1', 'title_2', 'description', 'button_name', 'button_url']],
             'home-luxury-project' => ['label' => 'Luxury Project', 'fields' => ['title_1', 'title_2', 'description', 'button_name', 'button_url']],
             'home-realty-property' => ['label' => 'Realty Property', 'fields' => ['title_1', 'title_2', 'description', 'button_name', 'button_url']],
+            // Page-hero titles for listing pages that otherwise have no admin screen of their
+            // own (title_1 here is the <h1> shown on the page, not a home-page section title).
+            'commercial' => ['label' => 'Commercial Page', 'fields' => ['title_1']],
+            'agents' => ['label' => 'Agents Page', 'fields' => ['title_1']],
+            'agencies' => ['label' => 'Agencies Page', 'fields' => ['title_1', 'title_2', 'description']],
         ];
     }
 

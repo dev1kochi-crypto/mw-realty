@@ -28,7 +28,7 @@ watch(agentsListing, () => {
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>Our Agent</h1>
+                    <h1 class="mw-about-title" data-reveal>{{ agentsListing?.title || 'Our Agent' }}</h1>
                 </div>
             </div>
             <nav class="mw-about-crumb" aria-label="Breadcrumb">

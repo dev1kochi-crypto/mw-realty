@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Crm;
 
+use App\Mail\NewLeadReceived;
 use App\Models\Lead;
 use App\Models\Property;
 use App\Notifications\NewLeadNotification;
+use App\Rules\RecaptchaRule;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * Public, unauthenticated endpoint any property-detail page can POST to.
@@ -28,6 +31,7 @@ class LeadCaptureController extends Controller
             'country' => 'nullable|string|max:100',
             'message' => 'required|string|max:2000',
             'page_source' => 'nullable|string|max:100',
+            'recaptcha_token' => ['nullable', new RecaptchaRule()],
         ]);
 
         $property = Property::findOrFail($request->input('property_id'));
@@ -53,6 +57,16 @@ class LeadCaptureController extends Controller
             Log::error('Failed to create new-lead bell notification: ' . $e->getMessage());
         }
 
-        return back()->with('success', 'Thanks — your enquiry has been sent to the listing agent.');
+        if ($property->owner->email) {
+            Mail::to($property->owner->email)->queue((new NewLeadReceived($lead))->afterCommit());
+        }
+
+        $message = 'Thanks — your enquiry has been sent to the listing agent.';
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
     }
 }

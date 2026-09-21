@@ -48,7 +48,7 @@ watch(filteredAgencies, () => {
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>Our Agencies</h1>
+                    <h1 class="mw-about-title" data-reveal>{{ agenciesListing?.title || 'Our Agencies' }}</h1>
                 </div>
             </div>
             <nav class="mw-about-crumb" aria-label="Breadcrumb">
@@ -88,8 +88,8 @@ watch(filteredAgencies, () => {
         <section class="mw-agencies">
             <div class="container-ctn">
                 <div class="mw-agencies__head">
-                    <h2 class="mw-agencies__title" data-reveal>Top Agencies</h2>
-                    <p class="mw-agencies__text" data-reveal>Explore agency with a proven track record of high response rates and authentic listings.</p>
+                    <h2 class="mw-agencies__title" data-reveal>{{ agenciesListing?.section_title || 'Top Agencies' }}</h2>
+                    <p class="mw-agencies__text" data-reveal>{{ agenciesListing?.section_description || 'Explore agency with a proven track record of high response rates and authentic listings.' }}</p>
                 </div>
 
                 <p v-if="agenciesListing && !filteredAgencies.length" class="mw-agencies__text">No agencies match your search.</p>

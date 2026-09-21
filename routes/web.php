@@ -568,7 +568,7 @@ Route::view('/contact', 'welcome');
 Route::view('/login', 'welcome');
 Route::view('/signup', 'welcome');
 Route::view('/profile', 'welcome');
-Route::view('/properties-dubai', 'welcome');
+Route::view('/properties', 'welcome');
 Route::view('/property-details/{slug}', 'welcome');
 Route::view('/terms-and-conditions', 'welcome');
 Route::view('/privacy-policy', 'welcome');
@@ -587,5 +587,5 @@ Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryControll
 // must always get first chance to match. The (?!...) guard is a belt-and-braces exclusion of the
 // app's other top-level path segments, in case any of them is ever reached without a deeper segment.
 Route::get('/{slug}', [\App\Http\Controllers\LandingPageController::class, 'show'])
-    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|contact|login|signup|profile|properties-dubai|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
+    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|contact|login|signup|profile|properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
     ->name('landing-pages.show');

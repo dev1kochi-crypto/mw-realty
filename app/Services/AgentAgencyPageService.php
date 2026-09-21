@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CmsKit\SectionLabel;
 use App\Models\PortalUser;
 use App\Models\Property;
 use App\Support\MapsPropertyCards;
@@ -17,11 +18,13 @@ class AgentAgencyPageService
     public function getAgentsListing(string $lang): array
     {
         return Cache::remember("agents-listing:{$lang}", self::CACHE_TTL, function () use ($lang) {
+            $section = SectionLabel::where('section_key', 'agents')->where('status', true)->first();
             $agents = PortalUser::where('type', 'agent')->approved()->where('is_active', true)
                 ->orderBy('name')
                 ->get();
 
             return [
+                'title' => $section?->getTranslation('title_1', $lang) ?: 'Our Agent',
                 'agents' => $agents->map(fn ($agent) => $this->mapAgentCard($agent))->values(),
             ];
         });
@@ -62,13 +65,17 @@ class AgentAgencyPageService
 
     public function getAgenciesListing(string $lang): array
     {
-        return Cache::remember("agencies-listing:{$lang}", self::CACHE_TTL, function () {
+        return Cache::remember("agencies-listing:{$lang}", self::CACHE_TTL, function () use ($lang) {
+            $section = SectionLabel::where('section_key', 'agencies')->where('status', true)->first();
             $agencies = PortalUser::companies()->approved()->where('is_active', true)
                 ->withCount('properties')
                 ->orderBy('company_name')
                 ->get();
 
             return [
+                'title' => $section?->getTranslation('title_1', $lang) ?: 'Our Agencies',
+                'section_title' => $section?->getTranslation('title_2', $lang) ?: 'Top Agencies',
+                'section_description' => $section?->getTranslation('description', $lang) ?: 'Explore agency with a proven track record of high response rates and authentic listings.',
                 'agencies' => $agencies->map(fn ($agency) => $this->mapAgencyCard($agency))->values(),
             ];
         });

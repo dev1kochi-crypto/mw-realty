@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\CommercialController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\LegalController;
+use App\Http\Controllers\Api\NewsletterController;
+use App\Http\Controllers\Api\PropertiesController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\SiteInformationController;
 use App\Http\Controllers\PropertyFilterController;
@@ -37,6 +39,12 @@ Route::get('/home', [HomeController::class, 'index']);
 // map embed url, hero image, office address/phone/email/whatsapp/hours, social links).
 Route::get('/contact', [ContactController::class, 'index']);
 
+// Public — the /contact page form submission. Saves to Enquiries and emails admin.
+Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:form-submit');
+
+// Public — the footer newsletter signup form. Saves to Newsletter Signups and emails admin.
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'store'])->middleware('throttle:form-submit');
+
 // Public, read-only — the standalone /about page in one request (overview, director quote,
 // post-property steps, market trends, why-choose-us icons, connect-us video, builders).
 Route::get('/about', [AboutController::class, 'index']);
@@ -55,6 +63,9 @@ Route::get('/agencies/{slug}', [AgencyController::class, 'show']);
 
 // Public, read-only — the /commercial listing page (properties where category=commercial).
 Route::get('/commercial', [CommercialController::class, 'index']);
+
+// Public, read-only — the /properties listing page.
+Route::get('/properties', [PropertiesController::class, 'index']);
 
 // Public, read-only — the /property-details/{slug} page.
 Route::get('/properties/{slug}', [PropertyController::class, 'show']);

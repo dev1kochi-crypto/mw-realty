@@ -38,6 +38,7 @@ class PropertyPageService
                 ->orderByDesc('featured')->orderByDesc('published_at')->take(6)->get();
 
             return [
+                'id' => $property->id,
                 'slug' => $property->slug,
                 'name' => $property->getTranslation('title', $lang),
                 'description' => $property->getTranslation('description', $lang),

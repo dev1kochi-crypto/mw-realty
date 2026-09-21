@@ -1,12 +1,14 @@
 <script setup>
-import { computed, nextTick, onMounted, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { usePropertyDetail } from '../composables/usePropertyDetail';
 import { useLanguages } from '../composables/useLanguages';
+import { useRecaptcha } from '../composables/useRecaptcha';
 
 const route = useRoute();
 const { property, notFound, fetchProperty } = usePropertyDetail();
 const { selectedLanguage } = useLanguages();
+const { getRecaptchaToken } = useRecaptcha();
 
 function load() {
     fetchProperty(route.params.slug, selectedLanguage.value?.code);
@@ -26,6 +28,45 @@ watch(
 watch(property, () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
+
+const enquiryForm = reactive({ name: '', email: '', phone: '', message: '' });
+const enquirySubmitting = ref(false);
+const enquiryFeedback = ref(null);
+
+watch(
+    () => property.value?.name,
+    (name) => {
+        if (name) enquiryForm.message = `I'm interested in "${name}" — please share more details.`;
+    },
+    { immediate: true },
+);
+
+async function handleEnquirySubmit() {
+    if (enquirySubmitting.value) return;
+    enquirySubmitting.value = true;
+    enquiryFeedback.value = null;
+
+    try {
+        const recaptcha_token = await getRecaptchaToken('property_enquiry');
+        const { data } = await window.axios.post('/leads/capture', {
+            property_id: property.value.id,
+            name: enquiryForm.name,
+            email: enquiryForm.email,
+            phone: enquiryForm.phone,
+            message: enquiryForm.message,
+            page_source: 'property-detail',
+            recaptcha_token,
+        });
+        enquiryFeedback.value = { type: 'success', text: data.message };
+        enquiryForm.name = '';
+        enquiryForm.email = '';
+        enquiryForm.phone = '';
+    } catch (error) {
+        enquiryFeedback.value = { type: 'error', text: error.response?.data?.message || 'Something went wrong — please try again.' };
+    } finally {
+        enquirySubmitting.value = false;
+    }
+}
 
 const pills = computed(() => {
     if (!property.value) return [];
@@ -61,7 +102,7 @@ function whatsappUrl(number) {
             </div>
             <nav class="mw-about-crumb" aria-label="Breadcrumb">
                 <div class="container-ctn">
-                    <p><router-link to="/">Home</router-link><span class="mw-about-crumb__sep"> / </span><router-link to="/properties-dubai">Properties in Dubai</router-link><span class="mw-about-crumb__sep"> / </span><span>{{ property.name }}</span></p>
+                    <p><router-link to="/">Home</router-link><span class="mw-about-crumb__sep"> / </span><router-link to="/properties">Properties in Dubai</router-link><span class="mw-about-crumb__sep"> / </span><span>{{ property.name }}</span></p>
                 </div>
             </nav>
         </section>
@@ -201,18 +242,18 @@ function whatsappUrl(number) {
 
                         <div class="mw-property-enquiry">
                             <h4 class="mw-property-enquiry__title">Enquire About This Property</h4>
-                            <form class="mw-property-enquiry__form" novalidate @submit.prevent>
+                            <form class="mw-property-enquiry__form" novalidate @submit.prevent="handleEnquirySubmit">
                                 <div class="mw-property-enquiry__field">
                                     <label for="enquiry-name">Name*</label>
-                                    <input type="text" id="enquiry-name" name="name" placeholder="Your name" required>
+                                    <input type="text" id="enquiry-name" name="name" placeholder="Your name" v-model="enquiryForm.name" required>
                                 </div>
                                 <div class="mw-property-enquiry__field">
                                     <label for="enquiry-email">Email*</label>
-                                    <input type="email" id="enquiry-email" name="email" placeholder="Your email" required>
+                                    <input type="email" id="enquiry-email" name="email" placeholder="Your email" v-model="enquiryForm.email" required>
                                 </div>
                                 <div class="mw-property-enquiry__field">
                                     <label for="enquiry-phone">Phone</label>
-                                    <input type="tel" id="enquiry-phone" name="phone" placeholder="Your phone">
+                                    <input type="tel" id="enquiry-phone" name="phone" placeholder="Your phone" v-model="enquiryForm.phone">
                                 </div>
                                 <div class="mw-property-enquiry__field">
                                     <label for="enquiry-property">Property</label>
@@ -220,10 +261,11 @@ function whatsappUrl(number) {
                                 </div>
                                 <div class="mw-property-enquiry__field">
                                     <label for="enquiry-message">Message</label>
-                                    <textarea id="enquiry-message" name="message" rows="4" :placeholder="`I'm interested in this property...`">{{ `I'm interested in "${property.name}" — please share more details.` }}</textarea>
+                                    <textarea id="enquiry-message" name="message" rows="4" v-model="enquiryForm.message"></textarea>
                                 </div>
 
-                                <button type="submit" class="mw-btn mw-btn--gradient mw-property-enquiry__submit">Send Enquiry</button>
+                                <p v-if="enquiryFeedback" class="mw-form-feedback" :class="`mw-form-feedback--${enquiryFeedback.type}`">{{ enquiryFeedback.text }}</p>
+                                <button type="submit" class="mw-btn mw-btn--gradient mw-property-enquiry__submit" :disabled="enquirySubmitting">{{ enquirySubmitting ? 'Sending…' : 'Send Enquiry' }}</button>
                             </form>
                         </div>
 
@@ -308,7 +350,7 @@ function whatsappUrl(number) {
         </section>
         <section class="mw-property">
             <div class="container-ctn">
-                <p>This property listing doesn't exist or is no longer available. <router-link to="/properties-dubai">Back to Properties</router-link></p>
+                <p>This property listing doesn't exist or is no longer available. <router-link to="/properties">Back to Properties</router-link></p>
             </div>
         </section>
     </main>

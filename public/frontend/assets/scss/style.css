@@ -9084,6 +9084,22 @@ html:has(.about-page) {
   font-size: 16px;
   font-weight: 700;
 }
+.mw-page-contact__submit:disabled,
+.mw-property-enquiry__submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.mw-form-feedback {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.mw-form-feedback--success {
+  color: #1a9c5a;
+}
+.mw-form-feedback--error {
+  color: #e0433e;
+}
 .mw-page-contact__info-col {
   display: flex;
   flex-direction: column;

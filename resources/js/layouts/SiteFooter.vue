@@ -1,8 +1,9 @@
 <script setup>
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useSiteInformation } from '../composables/useSiteInformation';
 import { useLanguages } from '../composables/useLanguages';
+import { useRecaptcha } from '../composables/useRecaptcha';
 
 const route = useRoute();
 const activeBottom = computed(() => route.meta.activeBottom ?? '');
@@ -18,6 +19,36 @@ onMounted(() => fetchSiteInformation(selectedLanguage.value?.code));
 watch(selectedLanguage, () => fetchSiteInformation(selectedLanguage.value?.code));
 
 const copyrightYear = new Date().getFullYear();
+
+const { getRecaptchaToken } = useRecaptcha();
+const newsletterEmail = ref('');
+const newsletterAgreed = ref(false);
+const newsletterSubmitting = ref(false);
+const newsletterFeedback = ref(null);
+
+async function handleNewsletterSubmit() {
+    if (newsletterSubmitting.value) return;
+
+    if (!newsletterAgreed.value) {
+        newsletterFeedback.value = { type: 'error', text: 'Please agree to the terms & conditions to subscribe.' };
+        return;
+    }
+
+    newsletterSubmitting.value = true;
+    newsletterFeedback.value = null;
+
+    try {
+        const recaptcha_token = await getRecaptchaToken('newsletter');
+        const { data } = await window.axios.post('/api/newsletter/subscribe', { email: newsletterEmail.value, recaptcha_token });
+        newsletterFeedback.value = { type: 'success', text: data.message };
+        newsletterEmail.value = '';
+        newsletterAgreed.value = false;
+    } catch (error) {
+        newsletterFeedback.value = { type: 'error', text: error.response?.data?.message || 'Something went wrong — please try again.' };
+    } finally {
+        newsletterSubmitting.value = false;
+    }
+}
 </script>
 
 <template>
@@ -39,7 +70,7 @@ const copyrightYear = new Date().getFullYear();
                 <div>
                     <h3 class="mw-footer__col-title">Properties</h3>
                     <ul class="mw-footer__links">
-                        <li><router-link to="/properties-dubai">Properties in Dubai</router-link></li>
+                        <li><router-link to="/properties">Properties in Dubai</router-link></li>
                         <li><a href="#">Properties in Abu dhabi</a></li>
                         <li><a href="#">Properties in Ajman</a></li>
                         <li><a href="#">Properties in Ras Al Khaimah</a></li>
@@ -103,16 +134,17 @@ const copyrightYear = new Date().getFullYear();
 
                 <div class="mw-footer__newsletter">
                     <h3 class="mw-footer__newsletter-title">Newsletter</h3>
-                    <form class="mw-footer__newsletter-form" @submit.prevent>
-                        <input type="email" placeholder="Your email address" required>
-                        <button type="submit" aria-label="Subscribe">
+                    <form class="mw-footer__newsletter-form" @submit.prevent="handleNewsletterSubmit">
+                        <input type="email" placeholder="Your email address" v-model="newsletterEmail" required>
+                        <button type="submit" aria-label="Subscribe" :disabled="newsletterSubmitting">
                             <img src="/frontend/assets/images/icons/footer-arrow.svg" alt="" width="24" height="24">
                         </button>
                     </form>
                     <label class="mw-footer__newsletter-terms">
-                        <input type="checkbox">
+                        <input type="checkbox" v-model="newsletterAgreed" required>
                         I have read and agree to the terms &amp; conditions
                     </label>
+                    <p v-if="newsletterFeedback" class="mw-form-feedback" :class="`mw-form-feedback--${newsletterFeedback.type}`">{{ newsletterFeedback.text }}</p>
                 </div>
             </div>
 

@@ -200,7 +200,7 @@ const settingsFieldsPassword = [
                                         <p class="mw-dashboard__search-row-meta">{{ search.meta }}</p>
                                     </div>
                                     <div class="mw-dashboard__search-row-actions">
-                                        <router-link to="/properties-dubai" class="mw-dashboard__link-btn">View Results</router-link>
+                                        <router-link to="/properties" class="mw-dashboard__link-btn">View Results</router-link>
                                         <button type="button" class="mw-dashboard__icon-btn" data-remove-item aria-label="Delete saved search">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
                                         </button>

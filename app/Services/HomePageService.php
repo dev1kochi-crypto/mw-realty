@@ -157,8 +157,8 @@ class HomePageService
 
         $properties = Property::where('status', true)->orderByDesc('price')->take(4)->get()
             ->map(fn ($p) => array_merge($this->mapProperty($p, $lang), [
-                'stat1' => $p->bedrooms ? "{$p->bedrooms} Bedrooms" : '—',
-                'stat2' => $p->bathrooms ? "{$p->bathrooms} Bathrooms" : '—',
+                'stat1' => $p->bedrooms ? "{$p->bedrooms} Bed" : '—',
+                'stat2' => $p->bathrooms ? "{$p->bathrooms} Bath" : '—',
             ]))->values();
 
         return [

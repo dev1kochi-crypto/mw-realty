@@ -454,7 +454,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                 </div>
 
                 <div class="mw-projects__actions">
-                    <router-link to="/properties-dubai" class="mw-btn mw-btn--solid">
+                    <router-link to="/properties" class="mw-btn mw-btn--solid">
                         {{ projectsButtonLabel }}
                         <img src="/frontend/assets/images/icons/arrow-up-right.svg" alt="" class="mw-projects__view-all-icon">
                     </router-link>
@@ -838,7 +838,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     <div class="mw-find-properties__card mw-find-properties__card--tall">
                         <img src="/frontend/assets/images/home/find-tall.jpg" alt="All properties">
                         <img class="mw-find-properties__mark" src="/frontend/assets/images/home/find-properties-mark.svg" alt="" aria-hidden="true">
-                        <router-link to="/properties-dubai" class="mw-find-properties__cta">
+                        <router-link to="/properties" class="mw-find-properties__cta">
                             View All Properties
                             <img src="/frontend/assets/images/icons/find-cta-arrow.svg" alt="" width="18" height="18">
                         </router-link>

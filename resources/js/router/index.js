@@ -92,7 +92,7 @@ const routes = [
         meta: { title: 'My Account | MW Realty', bodyClass: 'agents-page profile-page' },
     },
     {
-        path: '/properties-dubai',
+        path: '/properties',
         name: 'properties-dubai',
         component: () => import('../pages/PropertiesDubai.vue'),
         meta: { title: 'Properties in Dubai | MW Realty', bodyClass: 'agents-page properties-dubai-page' },
