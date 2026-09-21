@@ -35,6 +35,35 @@ class SiteInformation extends Model
             ?: $info?->email_1
             ?: config('mail.from.address');
     }
+
+    /**
+     * Per-language value for a plain column (privacy_policy, terms_and_conditions, ...), falling
+     * back to the fallback locale's translation, then to the plain (default-language) column
+     * itself — same pattern as SectionLabel::getTranslation, added here since the admin form
+     * already writes translations[lang][attribute] but nothing previously read it back out.
+     */
+    public function getTranslation(string $attribute, ?string $lang = null): ?string
+    {
+        $lang = $lang ?? app()->getLocale();
+        $fallback = config('app.fallback_locale');
+
+        return $this->translations[$lang][$attribute]
+            ?? $this->translations[$fallback][$attribute]
+            ?? $this->{$attribute}
+            ?? null;
+    }
+
+    /** Same as getTranslation(), but for a field nested inside extra_fields (security_settings, cookie_policy). */
+    public function getExtraFieldTranslation(string $field, ?string $lang = null): ?string
+    {
+        $lang = $lang ?? app()->getLocale();
+        $fallback = config('app.fallback_locale');
+
+        return $this->translations[$lang]['extra_fields'][$field]
+            ?? $this->translations[$fallback]['extra_fields'][$field]
+            ?? $this->extra_fields[$field]
+            ?? null;
+    }
 }
 
 

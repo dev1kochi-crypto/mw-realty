@@ -245,12 +245,9 @@ return [
             // admin-managed Blogs > Categories list (BlogCategory model) instead of a fixed set
             // of options, so admins can add/rename/remove categories without a code change.
             'extra_fields' => [
-                'read_time' => [
-                    'type' => 'text',
-                    'label' => 'Read Time',
-                    'placeholder' => 'e.g. 6 min read',
-                    'column_class' => 'col-md-4',
-                ],
+                // No manual "Read Time" field here on purpose — it's calculated from the post's
+                // word count at display time (see BlogPageService::calculateReadTime) instead of
+                // being typed in by hand, so it can never drift from the actual content length.
                 'author_name' => [
                     'type' => 'text',
                     'label' => 'Author Name',

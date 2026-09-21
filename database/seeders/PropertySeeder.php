@@ -109,8 +109,8 @@ class PropertySeeder extends Seeder
             }
         }
 
-        $company = PortalUser::where('type', 'company')->where('status', 'approved')->first();
-        $agent = PortalUser::where('type', 'agent')->where('status', 'approved')->first();
+        $companies = PortalUser::where('type', 'company')->where('status', 'approved')->get();
+        $agents = PortalUser::where('type', 'agent')->where('status', 'approved')->get();
 
         $startNumber = ((int) (Property::where('reference_no', 'like', 'PROP%')
             ->pluck('reference_no')
@@ -145,9 +145,12 @@ class PropertySeeder extends Seeder
                 ],
             ];
 
+            $company = $companies->isNotEmpty() ? $companies[$i % $companies->count()] : null;
+            $agent = $agents->isNotEmpty() ? $agents[$i % $agents->count()] : null;
+
             $property = Property::create([
-                'portal_user_id' => $i % 3 === 0 ? $company?->id : null,
-                'agent_id' => $i % 3 === 0 ? $agent?->id : null,
+                'portal_user_id' => $company?->id,
+                'agent_id' => $agent?->id,
                 'translations' => $translations,
                 'slug' => $slug,
                 'reference_no' => $referenceNo,

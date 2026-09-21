@@ -1,4 +1,4 @@
-@extends('cms-kit::layouts.cms')
+﻿@extends('cms-kit::layouts.cms')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item active" aria-current="page">Testimonials</li>
@@ -164,7 +164,7 @@
         <h5 class="mb-0">Testimonial Items</h5>
         <div class="d-flex gap-2">
             <div class="dropdown" id="bulkActions" style="display: none;">
-                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <button class="btn btn-outline-danger btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                     Bulk Actions (<span id="selectedCount">0</span>)
                 </button>
                 <ul class="dropdown-menu">

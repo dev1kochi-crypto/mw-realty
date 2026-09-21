@@ -1,9 +1,15 @@
 <?php
 
 use App\Http\Controllers\Api\AboutController;
+use App\Http\Controllers\Api\AgencyController;
+use App\Http\Controllers\Api\AgentController;
 use App\Http\Controllers\Api\BlogController;
+use App\Http\Controllers\Api\CommercialController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\HomeController;
+use App\Http\Controllers\Api\LegalController;
+use App\Http\Controllers\Api\PropertyController;
+use App\Http\Controllers\Api\SiteInformationController;
 use App\Http\Controllers\PropertyFilterController;
 use App\Http\Controllers\PublicAdController;
 use App\Http\Controllers\PublicLanguageController;
@@ -38,3 +44,23 @@ Route::get('/about', [AboutController::class, 'index']);
 // Public, read-only — the /blogs listing page (paginated) and /blog-details/{slug} page.
 Route::get('/blogs', [BlogController::class, 'index']);
 Route::get('/blogs/{slug}', [BlogController::class, 'show']);
+
+// Public, read-only — the /agents listing page and /agent-details/{slug} page.
+Route::get('/agents', [AgentController::class, 'index']);
+Route::get('/agents/{slug}', [AgentController::class, 'show']);
+
+// Public, read-only — the /agencies listing page and /agency-details/{slug} page.
+Route::get('/agencies', [AgencyController::class, 'index']);
+Route::get('/agencies/{slug}', [AgencyController::class, 'show']);
+
+// Public, read-only — the /commercial listing page (properties where category=commercial).
+Route::get('/commercial', [CommercialController::class, 'index']);
+
+// Public, read-only — the /property-details/{slug} page.
+Route::get('/properties/{slug}', [PropertyController::class, 'show']);
+
+// Public, read-only — site-wide footer content (address/phone/email/social links).
+Route::get('/site-information', [SiteInformationController::class, 'index']);
+
+// Public, read-only — one endpoint shared by all 4 legal pages, keyed by {key} = terms|privacy|security|cookie.
+Route::get('/legal/{key}', [LegalController::class, 'show']);

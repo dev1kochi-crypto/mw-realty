@@ -4,13 +4,35 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class PortalUser extends Authenticatable
 {
     use Notifiable;
 
+    protected static function booted(): void
+    {
+        // The public Agent/Agency detail pages are URLed by slug, so every profile needs one —
+        // generated from whichever name is actually displayed, unless one was already set
+        // explicitly (e.g. by a seeder).
+        static::creating(function (PortalUser $portalUser) {
+            if ($portalUser->slug) {
+                return;
+            }
+
+            $base = Str::slug($portalUser->type === 'company' ? ($portalUser->company_name ?: $portalUser->name) : $portalUser->name) ?: 'profile';
+            $slug = $base;
+            $suffix = 1;
+            while (static::where('slug', $slug)->exists()) {
+                $slug = $base . '-' . (++$suffix);
+            }
+            $portalUser->slug = $slug;
+        });
+    }
+
     protected $fillable = [
         'type',
+        'slug',
         'name',
         'company_name',
         'email',
@@ -143,6 +165,11 @@ class PortalUser extends Authenticatable
     {
         return $query->where('type', 'company');
     }
+
+    // No scopeAgents() here — this model already has an agents() *relationship* (an agency's
+    // roster of agents, see below), and a same-named scope would be unreachable via the static
+    // PortalUser::agents() call (Eloquent resolves the real method first). Filter with
+    // ->where('type', 'agent') directly instead.
 
     /**
      * How many more properties this owner can list under their current plan,

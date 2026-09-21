@@ -15,6 +15,7 @@ use App\Models\CmsKit\SiteInformation;
 use App\Models\CmsKit\Testimonial;
 use App\Models\CmsKit\WhyChooseUsItem;
 use App\Models\Property;
+use App\Support\MapsPropertyCards;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -33,6 +34,8 @@ use Illuminate\Support\Str;
  */
 class HomePageService
 {
+    use MapsPropertyCards;
+
     private const CACHE_TTL = 180; // seconds
 
     public function getHomeData(string $lang): array
@@ -345,6 +348,28 @@ class HomePageService
         });
     }
 
+    /** Site-wide footer content (SiteFooter.vue renders once, outside the router, so this is its own endpoint rather than folding into /api/home). */
+    public function getFooterData(string $lang): array
+    {
+        return Cache::remember("footer-data:{$lang}", self::CACHE_TTL, function () {
+            $info = SiteInformation::first();
+
+            return [
+                'company_name' => $info?->company_name,
+                'address' => $info?->address,
+                'toll_free' => $info?->toll_free,
+                'phone' => $info?->phone_1,
+                'email' => $info?->email_1,
+                'social' => [
+                    'facebook' => $info?->facebook,
+                    'twitter' => $info?->twitter,
+                    'instagram' => $info?->instagram,
+                    'linkedin' => $info?->linkedin,
+                ],
+            ];
+        });
+    }
+
     /** Everything the standalone /about page needs, in one request. */
     public function getAboutPageData(string $lang): array
     {
@@ -428,30 +453,6 @@ class HomePageService
             ->get();
 
         return $featured->concat($filler);
-    }
-
-    /** Shared card shape used by Developments/Premium/Luxury/Realty — one place to change it. */
-    protected function mapProperty(Property $property, string $lang, bool $shortBedBath = false): array
-    {
-        $images = array_values(array_map(fn ($img) => $img['url'], $property->galleryImages()));
-        $images = count($images) ? $images : [asset('frontend/assets/images/property-details/gallery-1.jpg')];
-
-        $locality = $property->filterLabel('location', $lang) ?: $property->getTranslation('community', $lang);
-        $city = $property->getTranslation('city', $lang);
-        $location = ($locality && $city && $locality !== $city) ? "{$locality}, {$city}" : ($locality ?: $city ?: '—');
-
-        return [
-            'id' => $property->id,
-            'images' => $images,
-            'image' => $images[0],
-            'name' => $property->getTranslation('title', $lang),
-            'location' => $location,
-            'beds' => $shortBedBath ? ($property->bedrooms ? "{$property->bedrooms} Bed" : '—') : $property->bedrooms,
-            'baths' => $shortBedBath ? ($property->bathrooms ? "{$property->bathrooms} Bath" : '—') : $property->bathrooms,
-            'area' => $property->sqft ? number_format($property->sqft) . ' sq.ft' : '—',
-            'type' => $property->filterLabel('property_type', $lang) ?: '—',
-            'price' => $property->price ? $property->currency . ' ' . number_format($property->price) : 'Price on request',
-        ];
     }
 
     /** Which admin-configured city tab (Developments) a listing's location text matches, if any. */

@@ -12,12 +12,18 @@ class BlogPageService
 {
     private const CACHE_TTL = 180; // seconds
 
-    public function getListingData(string $lang, int $page = 1, int $perPage = 8): array
+    public function getListingData(string $lang, int $page = 1, int $perPage = 12, ?string $category = null): array
     {
-        return Cache::remember("blogs-listing:{$lang}:{$page}:{$perPage}", self::CACHE_TTL, function () use ($lang, $page, $perPage) {
+        $cacheKey = "blogs-listing:{$lang}:{$page}:{$perPage}:" . ($category ?: 'all');
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($lang, $page, $perPage, $category) {
             $section = SectionLabel::where('section_key', 'blogs')->where('status', true)->first();
             $categories = $this->categoryLabels($lang);
+            // Category filtering runs server-side, inside the same paginated query — not as a
+            // client-side filter of one already-fetched page — so the pagination totals/pages
+            // stay correct for whichever category (or "all") is currently selected.
             $paginator = Blog::where('status', true)
+                ->when($category, fn ($query) => $query->whereJsonContains('extra_fields->category', $category))
                 ->orderBy('order_index')
                 ->paginate($perPage, ['*'], 'page', $page);
 
@@ -26,6 +32,7 @@ class BlogPageService
                 'heading' => $section?->getTranslation('title', $lang) ?: 'Latest Articles',
                 'description' => $section?->getTranslation('description', $lang),
                 'categories' => $this->categoryOptions($categories),
+                'active_category' => $category,
                 'posts' => collect($paginator->items())->map(fn ($post) => $this->mapCard($post, $lang, $categories))->values(),
                 'pagination' => [
                     'current_page' => $paginator->currentPage(),
@@ -91,9 +98,18 @@ class BlogPageService
             'title' => $post->getTranslation('title', $lang),
             'excerpt' => data_get($post->translations, "{$lang}.extra_fields.excerpt"),
             'author_name' => $extra['author_name'] ?? null,
-            'read_time' => $extra['read_time'] ?? null,
+            'read_time' => $this->calculateReadTime($post->getTranslation('content', $lang)),
             'published_at' => $post->published_at?->format('M d, Y'),
         ];
+    }
+
+    /** "X min read", estimated from the post's word count at ~200 words/minute — never stored, always live. */
+    private function calculateReadTime(?string $content): string
+    {
+        $wordCount = str_word_count(strip_tags((string) $content));
+        $minutes = max(1, (int) ceil($wordCount / 200));
+
+        return "{$minutes} min read";
     }
 
     private function mapDetail(Blog $post, string $lang, array $categories): array
@@ -113,7 +129,7 @@ class BlogPageService
             'author_name' => $extra['author_name'] ?? null,
             'author_role' => $extra['author_role'] ?? null,
             'author_avatar_url' => !empty($extra['author_avatar']) ? asset('storage/'.$extra['author_avatar']) : null,
-            'read_time' => $extra['read_time'] ?? null,
+            'read_time' => $this->calculateReadTime($post->getTranslation('content', $lang)),
             'published_at' => $post->published_at?->format('F d, Y'),
         ];
     }

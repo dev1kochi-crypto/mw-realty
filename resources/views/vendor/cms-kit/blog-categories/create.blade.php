@@ -53,16 +53,10 @@
 
             <div class="row g-4">
                 <div class="col-md-6">
-                    <label class="form-label">Slug (Optional)</label>
-                    <input type="text" name="slug" class="form-control @error('slug') is-invalid @enderror" placeholder="auto-generated from title if empty">
-                    @error('slug')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    <div class="form-text mt-1">Used internally to link blog posts to this category — leave empty to auto-generate.</div>
-                </div>
-                <div class="col-md-3">
                     <label class="form-label">Sort Order</label>
                     <input type="number" name="order_index" class="form-control" value="{{ old('order_index', $nextOrder) }}" min="1">
                 </div>
-                <div class="col-md-3 d-flex align-items-end pb-2">
+                <div class="col-md-6 d-flex align-items-end pb-2">
                     <div class="form-check form-switch mb-0">
                         <input class="form-check-input" type="checkbox" name="status" id="categoryStatus" checked>
                         <label class="form-check-label" for="categoryStatus">Active</label>

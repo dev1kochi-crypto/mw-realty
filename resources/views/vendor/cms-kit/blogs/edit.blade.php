@@ -73,7 +73,7 @@
                 <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="panel-{{ $lang->code }}" role="tabpanel">
                     <div class="row g-4">
                         @if($blogConfig['title'] ?? true)
-                        <div class="col-12">
+                        <div class="col-md-6">
                             <label class="form-label fw-bold">Blog Title {!! in_array('title', $blogRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                             <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $blog->translations[$lang->code]['title'] ?? '') }}" {{ in_array('title', $blogRequired) ? 'required' : '' }}>
                             @error("translations.{$lang->code}.title")
@@ -81,6 +81,28 @@
                             @enderror
                         </div>
                         @endif
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Category <span class="text-danger">*</span></label>
+                            <div class="dropdown category-picker">
+                                <button type="button" class="btn form-select text-start dropdown-toggle category-picker-toggle @error('extra_fields.category') is-invalid @enderror" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span class="category-picker-label text-muted">-- Select --</span>
+                                </button>
+                                <ul class="dropdown-menu w-100" style="max-height: 260px; overflow-y: auto;">
+                                    @foreach($blogCategories as $cat)
+                                    <li>
+                                        <button type="button" class="dropdown-item d-flex justify-content-between align-items-center gap-3 category-picker-item" data-value="{{ $cat->slug }}" data-label="{{ $cat->getTranslation('title', $lang->code) }}">
+                                            <span>{{ $cat->getTranslation('title', $lang->code) }}</span>
+                                            @unless($loop->parent->first)
+                                            <span class="text-muted small">{{ $cat->getTranslation('title', 'en') }}</span>
+                                            @endunless
+                                        </button>
+                                    </li>
+                                    @endforeach
+                                </ul>
+                                <input type="hidden" name="extra_fields[category]" class="blog-category-select" value="{{ old('extra_fields.category', $blog->extra_fields['category'] ?? '') }}">
+                            </div>
+                            @error('extra_fields.category')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                        </div>
                         @if($blogConfig['content'] ?? true)
                         <div class="col-12">
                             <label class="form-label fw-bold">Content {!! in_array('content', $blogRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
@@ -188,20 +210,6 @@
                 </div>
             </div>
 
-            <div class="row g-3 mb-2">
-                <div class="col-md-4">
-                    <label class="form-label">Category <span class="text-danger">*</span></label>
-                    <select name="extra_fields[category]" class="form-select @error('extra_fields.category') is-invalid @enderror" required>
-                        <option value="">-- Select --</option>
-                        @foreach($blogCategories as $cat)
-                        <option value="{{ $cat->slug }}" {{ old('extra_fields.category', $blog->extra_fields['category'] ?? '') === $cat->slug ? 'selected' : '' }}>{{ $cat->getTranslation('title') }}</option>
-                        @endforeach
-                    </select>
-                    @error('extra_fields.category')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    <div class="form-text mt-1">Manage the list under <a href="{{ route('cms.blog-categories.index') }}">Blogs &raquo; Categories</a>.</div>
-                </div>
-            </div>
-
             @include('cms-kit::partials.extra-fields-global', [
                 'configKey' => 'blogs.items',
                 'existingValues' => $blog->extra_fields ?? [],
@@ -246,5 +254,58 @@
             }
         }
     }, true);
+
+    (function() {
+        const pickers = Array.from(document.querySelectorAll('.category-picker'));
+        if (!pickers.length) return;
+
+        function setCategoryValue(slug) {
+            pickers.forEach(function(picker) {
+                const hidden = picker.querySelector('.blog-category-select');
+                const toggle = picker.querySelector('.category-picker-toggle');
+                const label = picker.querySelector('.category-picker-label');
+                hidden.value = slug;
+                toggle.classList.remove('is-invalid');
+
+                const item = slug ? picker.querySelector('.category-picker-item[data-value="' + CSS.escape(slug) + '"]') : null;
+                if (item) {
+                    label.textContent = item.dataset.label;
+                    label.classList.remove('text-muted');
+                } else {
+                    label.textContent = '-- Select --';
+                    label.classList.add('text-muted');
+                }
+
+                picker.querySelectorAll('.category-picker-item').forEach(function(i) {
+                    i.classList.toggle('active', i.dataset.value === slug);
+                });
+            });
+        }
+
+        pickers.forEach(function(picker) {
+            picker.querySelectorAll('.category-picker-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    setCategoryValue(item.dataset.value);
+                });
+            });
+        });
+
+        const form = pickers[0].closest('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const hidden = pickers[0].querySelector('.blog-category-select');
+                if (!hidden.value) {
+                    e.preventDefault();
+                    pickers.forEach(function(picker) {
+                        picker.querySelector('.category-picker-toggle').classList.add('is-invalid');
+                    });
+                    alert('Please select a category.');
+                }
+            });
+        }
+
+        const initial = pickers[0].querySelector('.blog-category-select').value;
+        if (initial) setCategoryValue(initial);
+    })();
 </script>
 @endpush

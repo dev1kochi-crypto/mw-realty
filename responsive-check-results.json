@@ -1,0 +1,3382 @@
+[
+  {
+    "width": 320,
+    "route": "/",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/about",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/contact",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/agents",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/agencies",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/commercial",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "MW Verified Buy Now3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "MW Verified For Rent3Retail Shop"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "MW Verified Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "For Rent3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "Buy Now3Retail Shop"
+      }
+    ]
+  },
+  {
+    "width": 320,
+    "route": "/properties-dubai",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-dropdown mw-dubai-toolbar__sort",
+        "width": 182,
+        "scrollWidth": 185,
+        "text": "Most RecentMost RecentPrice: Low to HighPrice: High to LowMost Popular"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "Buy | Off Plan3Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "Buy | Off Plan3Townhouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "Buy3Penthouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "Buy3Studio"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "Buy | Off Plan3Duplex"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 286,
+        "scrollWidth": 858,
+        "text": "Buy | Off Plan3Townhouse"
+      }
+    ]
+  },
+  {
+    "width": 320,
+    "route": "/property-details",
+    "issues": [
+      {
+        "tag": "SECTION",
+        "cls": "mw-property",
+        "width": 320,
+        "scrollWidth": 328,
+        "text": "Elegant ApartmentFor SaleMirdif, Abu Dhabi4 Bedrooms3 BathroomsUpdated"
+      },
+      {
+        "tag": "H2",
+        "cls": "sr-only",
+        "width": 1,
+        "scrollWidth": 116,
+        "text": "Elegant Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-property__pill",
+        "width": 135,
+        "scrollWidth": 138,
+        "text": "Rera IDRERA70613"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "mw-property__pill-text",
+        "width": 61,
+        "scrollWidth": 76,
+        "text": "Rera IDRERA70613"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "mw-property__pill-value",
+        "width": 61,
+        "scrollWidth": 76,
+        "text": "RERA70613"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "mw-property__pill-text",
+        "width": 61,
+        "scrollWidth": 71,
+        "text": "Bedrooms4"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "mw-property__pill-label",
+        "width": 61,
+        "scrollWidth": 71,
+        "text": "Bedrooms"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "mw-property__pill-text",
+        "width": 61,
+        "scrollWidth": 75,
+        "text": "Bathrooms3"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "mw-property__pill-label",
+        "width": 61,
+        "scrollWidth": 75,
+        "text": "Bathrooms"
+      }
+    ]
+  },
+  {
+    "width": 320,
+    "route": "/blogs",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/login",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/signup",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/profile",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/terms-and-conditions",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/privacy-policy",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/security-policy",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/cookie-settings",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/thank-you",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/page-does-not-exist",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/agent-details/abhishek-mohan",
+    "issues": [
+      {
+        "tag": "ARTICLE",
+        "cls": "mw-agent-profile is-inview",
+        "width": 288,
+        "scrollWidth": 429,
+        "text": "Abhishek MohanResponsive BrokerServes in DubaiKaal Real Estate Agency "
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-agent-profile__bar",
+        "width": 288,
+        "scrollWidth": 429,
+        "text": "Years of Experience: 7Preferred Areas: Downtown Dubai, Dubai Marina, B"
+      },
+      {
+        "tag": "BUTTON",
+        "cls": "mw-agent-detail__tab is-active",
+        "width": 65,
+        "scrollWidth": 74,
+        "text": "About Me"
+      }
+    ]
+  },
+  {
+    "width": 320,
+    "route": "/agency-details/abc-real-estate",
+    "issues": []
+  },
+  {
+    "width": 320,
+    "route": "/blog-details/5-reasons-to-invest-in-dubai-off-plan-properties-in-2026",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/about",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/contact",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/agents",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/agencies",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/commercial",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "MW Verified Buy Now3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "MW Verified For Rent3Retail Shop"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "MW Verified Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "For Rent3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "Buy Now3Retail Shop"
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "route": "/properties-dubai",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "Buy | Off Plan3Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "Buy | Off Plan3Townhouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "Buy3Penthouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "Buy3Studio"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "Buy | Off Plan3Duplex"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 341,
+        "scrollWidth": 1023,
+        "text": "Buy | Off Plan3Townhouse"
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "route": "/property-details",
+    "issues": [
+      {
+        "tag": "SECTION",
+        "cls": "mw-property",
+        "width": 375,
+        "scrollWidth": 382,
+        "text": "Elegant ApartmentFor SaleMirdif, Abu Dhabi4 Bedrooms3 BathroomsUpdated"
+      },
+      {
+        "tag": "H2",
+        "cls": "sr-only",
+        "width": 1,
+        "scrollWidth": 116,
+        "text": "Elegant Apartment"
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "route": "/blogs",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/login",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/signup",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/profile",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/terms-and-conditions",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/privacy-policy",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/security-policy",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/cookie-settings",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/thank-you",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/page-does-not-exist",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/agent-details/abhishek-mohan",
+    "issues": [
+      {
+        "tag": "ARTICLE",
+        "cls": "mw-agent-profile is-inview",
+        "width": 343,
+        "scrollWidth": 429,
+        "text": "Abhishek MohanResponsive BrokerServes in DubaiKaal Real Estate Agency "
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-agent-profile__bar",
+        "width": 343,
+        "scrollWidth": 429,
+        "text": "Years of Experience: 7Preferred Areas: Downtown Dubai, Dubai Marina, B"
+      },
+      {
+        "tag": "BUTTON",
+        "cls": "mw-agent-detail__tab is-active",
+        "width": 65,
+        "scrollWidth": 74,
+        "text": "About Me"
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "route": "/agency-details/abc-real-estate",
+    "issues": []
+  },
+  {
+    "width": 375,
+    "route": "/blog-details/5-reasons-to-invest-in-dubai-off-plan-properties-in-2026",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/",
+    "issues": [
+      {
+        "tag": "SPAN",
+        "cls": "mw-communities__name",
+        "width": 202,
+        "scrollWidth": 211,
+        "text": "Al Habtoor Polo Resort and Club"
+      }
+    ]
+  },
+  {
+    "width": 576,
+    "route": "/about",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/contact",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/agents",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/agencies",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/commercial",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "MW Verified Buy Now3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "MW Verified For Rent3Retail Shop"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "MW Verified Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "For Rent3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "Buy Now3Retail Shop"
+      }
+    ]
+  },
+  {
+    "width": 576,
+    "route": "/properties-dubai",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "Buy | Off Plan3Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "Buy | Off Plan3Townhouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "Buy3Penthouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "Buy3Studio"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "Buy | Off Plan3Duplex"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 513,
+        "scrollWidth": 1540,
+        "text": "Buy | Off Plan3Townhouse"
+      }
+    ]
+  },
+  {
+    "width": 576,
+    "route": "/property-details",
+    "issues": [
+      {
+        "tag": "SECTION",
+        "cls": "mw-property",
+        "width": 576,
+        "scrollWidth": 582,
+        "text": "Elegant ApartmentFor SaleMirdif, Abu Dhabi4 Bedrooms3 BathroomsUpdated"
+      },
+      {
+        "tag": "H2",
+        "cls": "sr-only",
+        "width": 1,
+        "scrollWidth": 116,
+        "text": "Elegant Apartment"
+      }
+    ]
+  },
+  {
+    "width": 576,
+    "route": "/blogs",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/login",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/signup",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/profile",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/terms-and-conditions",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/privacy-policy",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/security-policy",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/cookie-settings",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/thank-you",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/page-does-not-exist",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/agent-details/abhishek-mohan",
+    "issues": [
+      {
+        "tag": "BUTTON",
+        "cls": "mw-agent-detail__tab is-active",
+        "width": 65,
+        "scrollWidth": 74,
+        "text": "About Me"
+      }
+    ]
+  },
+  {
+    "width": 576,
+    "route": "/agency-details/abc-real-estate",
+    "issues": []
+  },
+  {
+    "width": 576,
+    "route": "/blog-details/5-reasons-to-invest-in-dubai-off-plan-properties-in-2026",
+    "issues": [
+      {
+        "tag": "SPAN",
+        "cls": "mw-blog-details__pager-title",
+        "width": 208,
+        "scrollWidth": 218,
+        "text": "A Complete Guide to Buying Property in Dubai as a Foreigner"
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "route": "/",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "container-ctn mw-hero__inner",
+        "width": 730,
+        "scrollWidth": 733,
+        "text": "Your Trusted Partner inFinding the Best PropertiesBuyRentReadyOff-Plan"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-hero__panel",
+        "width": 728,
+        "scrollWidth": 732,
+        "text": "Your Trusted Partner inFinding the Best PropertiesBuyRentReadyOff-Plan"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 357,
+        "scrollWidth": 1070,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 323,
+        "scrollWidth": 400,
+        "text": "Full-Floor Office in Downtown Dubai Business Tower"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 357,
+        "scrollWidth": 1070,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 323,
+        "scrollWidth": 365,
+        "text": "Mid-Size Storage Warehouse near Business Bay"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 357,
+        "scrollWidth": 1070,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 357,
+        "scrollWidth": 1070,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 357,
+        "scrollWidth": 1070,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 357,
+        "scrollWidth": 1070,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 357,
+        "scrollWidth": 1070,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 323,
+        "scrollWidth": 347,
+        "text": "Ground Floor Auto Showroom on Marina Walk"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 357,
+        "scrollWidth": 1070,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-highlight__carousel",
+        "width": 730,
+        "scrollWidth": 734,
+        "text": "Premium 3AED 2,350,000Premium 3BR Apartment, Off-Plan Palm Jumeirah, D"
+      },
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 730,
+        "scrollWidth": 738,
+        "text": "In-demand citiesMost Popular Properties PlacesSajukDubaiAbu DhabiSharj"
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "route": "/about",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/contact",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/agents",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/agencies",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/commercial",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-commercial-filter__field mw-commercial-filter__field--select mw-dropdown",
+        "width": 122,
+        "scrollWidth": 165,
+        "text": "Property TypeAll typeAll typeOfficeRetail ShopWarehouseShowroom"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-commercial-filter__field mw-commercial-filter__field--select mw-commercial-filter__field--last mw-dropdown",
+        "width": 122,
+        "scrollWidth": 165,
+        "text": "CategoryAll categoriesAll categoriesBuyLeaseOff-Plan"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "",
+        "width": 80,
+        "scrollWidth": 84,
+        "text": "All categories"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "MW Verified Buy Now3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "MW Verified For Rent3Retail Shop"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "MW Verified Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "For Rent3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "Buy Now3Retail Shop"
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "route": "/properties-dubai",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-dubai-filter__field mw-dubai-filter__field--select mw-dropdown",
+        "width": 94,
+        "scrollWidth": 165,
+        "text": "PurposeBuyBuyRentOff-Plan"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-dubai-filter__field mw-dubai-filter__field--select mw-dropdown",
+        "width": 94,
+        "scrollWidth": 165,
+        "text": "Property TypeAll typeAll typeApartmentVillaTownhousePenthouseDuplexStu"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-dubai-filter__field mw-dubai-filter__field--select mw-dropdown",
+        "width": 94,
+        "scrollWidth": 182,
+        "text": "BedroomsSelect bedroomsSelect bedroomsStudio12345+"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "",
+        "width": 52,
+        "scrollWidth": 108,
+        "text": "Select bedrooms"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-dubai-filter__field mw-dubai-filter__field--select mw-dubai-filter__field--last mw-dropdown",
+        "width": 94,
+        "scrollWidth": 186,
+        "text": "BathroomsSelect bathroomsSelect bathrooms12345+"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "",
+        "width": 52,
+        "scrollWidth": 111,
+        "text": "Select bathrooms"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-dropdown mw-dubai-toolbar__sort",
+        "width": 131,
+        "scrollWidth": 185,
+        "text": "Most RecentMost RecentPrice: Low to HighPrice: High to LowMost Popular"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "Buy | Off Plan3Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "Buy | Off Plan3Townhouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "Buy3Penthouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "Buy3Studio"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "Buy | Off Plan3Duplex"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 355,
+        "scrollWidth": 1064,
+        "text": "Buy | Off Plan3Townhouse"
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "route": "/property-details",
+    "issues": [
+      {
+        "tag": "SECTION",
+        "cls": "mw-property",
+        "width": 768,
+        "scrollWidth": 782,
+        "text": "Elegant ApartmentFor SaleMirdif, Abu Dhabi4 Bedrooms3 BathroomsUpdated"
+      },
+      {
+        "tag": "H2",
+        "cls": "sr-only",
+        "width": 1,
+        "scrollWidth": 116,
+        "text": "Elegant Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 730,
+        "scrollWidth": 744,
+        "text": "Similar Properties Verified 3VillaAED 17,500,000Luxury Beachfront Vill"
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "route": "/blogs",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/login",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/signup",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/profile",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/terms-and-conditions",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/privacy-policy",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/security-policy",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/cookie-settings",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/thank-you",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/page-does-not-exist",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/agent-details/abhishek-mohan",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 730,
+        "scrollWidth": 744,
+        "text": "Other Properties Verified 3VillaAED 5,200,000Elegant 4 Bedroom Villa w"
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "route": "/agency-details/abc-real-estate",
+    "issues": []
+  },
+  {
+    "width": 768,
+    "route": "/blog-details/5-reasons-to-invest-in-dubai-off-plan-properties-in-2026",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "container-ctn mw-hero__inner",
+        "width": 901,
+        "scrollWidth": 904,
+        "text": "Your Trusted Partner inFinding the Best PropertiesBuyRentReadyOff-Plan"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-hero__panel",
+        "width": 899,
+        "scrollWidth": 903,
+        "text": "Your Trusted Partner inFinding the Best PropertiesBuyRentReadyOff-Plan"
+      },
+      {
+        "tag": "INPUT",
+        "cls": "",
+        "width": 65,
+        "scrollWidth": 82,
+        "text": ""
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 442,
+        "scrollWidth": 1327,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 442,
+        "scrollWidth": 1327,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 442,
+        "scrollWidth": 1327,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 442,
+        "scrollWidth": 1327,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 442,
+        "scrollWidth": 1327,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 442,
+        "scrollWidth": 1327,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 442,
+        "scrollWidth": 1327,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 442,
+        "scrollWidth": 1327,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-highlight__carousel",
+        "width": 901,
+        "scrollWidth": 905,
+        "text": "Premium 3AED 1,850,000Fitted Office Space in Business Bay Tower Busine"
+      },
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 901,
+        "scrollWidth": 909,
+        "text": "In-demand citiesMost Popular Properties PlacesSharjaAjmanSajukDubaiAbu"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-luxury__stage",
+        "width": 334,
+        "scrollWidth": 18200,
+        "text": "BuyContemporary Villa, Handover 2027 Al Furjan, Dubai 4 Bedrooms 5 Bat"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-find-properties__card mw-find-properties__card--tall",
+        "width": 196,
+        "scrollWidth": 220,
+        "text": "View All Properties"
+      }
+    ]
+  },
+  {
+    "width": 992,
+    "route": "/about",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/contact",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/agents",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/agencies",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/commercial",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "MW Verified Buy Now3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "MW Verified For Rent3Retail Shop"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "MW Verified Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "For Rent3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "Buy Now3Retail Shop"
+      }
+    ]
+  },
+  {
+    "width": 992,
+    "route": "/properties-dubai",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-dubai-filter__field mw-dubai-filter__field--select mw-dropdown",
+        "width": 128,
+        "scrollWidth": 165,
+        "text": "PurposeBuyBuyRentOff-Plan"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-dubai-filter__field mw-dubai-filter__field--select mw-dropdown",
+        "width": 128,
+        "scrollWidth": 165,
+        "text": "Property TypeAll typeAll typeApartmentVillaTownhousePenthouseDuplexStu"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-dubai-filter__field mw-dubai-filter__field--select mw-dropdown",
+        "width": 128,
+        "scrollWidth": 182,
+        "text": "BedroomsSelect bedroomsSelect bedroomsStudio12345+"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "",
+        "width": 86,
+        "scrollWidth": 108,
+        "text": "Select bedrooms"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-dubai-filter__field mw-dubai-filter__field--select mw-dubai-filter__field--last mw-dropdown",
+        "width": 128,
+        "scrollWidth": 186,
+        "text": "BathroomsSelect bathroomsSelect bathrooms12345+"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "",
+        "width": 86,
+        "scrollWidth": 111,
+        "text": "Select bathrooms"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-dropdown mw-dubai-toolbar__sort",
+        "width": 131,
+        "scrollWidth": 185,
+        "text": "Most RecentMost RecentPrice: Low to HighPrice: High to LowMost Popular"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "Buy | Off Plan3Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "Buy | Off Plan3Townhouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "Buy3Penthouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "Buy3Studio"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "Buy | Off Plan3Duplex"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 440,
+        "scrollWidth": 1321,
+        "text": "Buy | Off Plan3Townhouse"
+      }
+    ]
+  },
+  {
+    "width": 992,
+    "route": "/property-details",
+    "issues": [
+      {
+        "tag": "SECTION",
+        "cls": "mw-property",
+        "width": 992,
+        "scrollWidth": 1006,
+        "text": "Elegant ApartmentFor SaleMirdif, Abu Dhabi4 Bedrooms3 BathroomsUpdated"
+      },
+      {
+        "tag": "H2",
+        "cls": "sr-only",
+        "width": 1,
+        "scrollWidth": 116,
+        "text": "Elegant Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 901,
+        "scrollWidth": 915,
+        "text": "Similar Properties Verified 3DuplexAED 2,850,000Contemporary Duplex in"
+      }
+    ]
+  },
+  {
+    "width": 992,
+    "route": "/blogs",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/login",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/signup",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/profile",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/terms-and-conditions",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/privacy-policy",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/security-policy",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/cookie-settings",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/thank-you",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/page-does-not-exist",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/agent-details/abhishek-mohan",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 901,
+        "scrollWidth": 915,
+        "text": "Other Properties Verified 3TownhouseAED 2,900,000New Launch Townhouse,"
+      }
+    ]
+  },
+  {
+    "width": 992,
+    "route": "/agency-details/abc-real-estate",
+    "issues": []
+  },
+  {
+    "width": 992,
+    "route": "/blog-details/5-reasons-to-invest-in-dubai-off-plan-properties-in-2026",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-hero__panel",
+        "width": 1098,
+        "scrollWidth": 1102,
+        "text": "Your Trusted Partner inFinding the Best PropertiesBuyRentReadyOff-Plan"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 279,
+        "scrollWidth": 836,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 245,
+        "scrollWidth": 400,
+        "text": "Full-Floor Office in Downtown Dubai Business Tower"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 279,
+        "scrollWidth": 836,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 245,
+        "scrollWidth": 365,
+        "text": "Mid-Size Storage Warehouse near Business Bay"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 279,
+        "scrollWidth": 836,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 245,
+        "scrollWidth": 318,
+        "text": "Community Retail Unit in Arabian Ranches"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 279,
+        "scrollWidth": 836,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 245,
+        "scrollWidth": 297,
+        "text": "End-Unit Townhouse with Roof Terrace"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 279,
+        "scrollWidth": 836,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 245,
+        "scrollWidth": 308,
+        "text": "Grade A Office Suite in Dubai Hills Estate"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 279,
+        "scrollWidth": 836,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 245,
+        "scrollWidth": 323,
+        "text": "Smart 1BR Apartment, Branded Residence"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 279,
+        "scrollWidth": 836,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 245,
+        "scrollWidth": 347,
+        "text": "Ground Floor Auto Showroom on Marina Walk"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 279,
+        "scrollWidth": 836,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 245,
+        "scrollWidth": 268,
+        "text": "3 Bedroom Villa, Quiet Cul-de-Sac"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-highlight__carousel",
+        "width": 1162,
+        "scrollWidth": 1166,
+        "text": "Premium 3AED 3,200,000Logistics Warehouse with Loading Bay in Al Furja"
+      },
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 1162,
+        "scrollWidth": 1170,
+        "text": "In-demand citiesMost Popular Properties PlacesAbu DhabiSharjaAjmanSaju"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-luxury__stage",
+        "width": 595,
+        "scrollWidth": 18200,
+        "text": "BuyContemporary Villa, Handover 2027 Al Furjan, Dubai 4 Bedrooms 5 Bat"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "mw-communities__name",
+        "width": 188,
+        "scrollWidth": 241,
+        "text": "Al Habtoor Polo Resort and Club"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "mw-communities__name",
+        "width": 188,
+        "scrollWidth": 202,
+        "text": "Jumeirah Beach Residence"
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "route": "/about",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/contact",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-page-contact__info-col is-inview",
+        "width": 448,
+        "scrollWidth": 526,
+        "text": "Office AddressOffice No: 703 - Churchill Tower Business Bay - Dubai, U"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-page-contact__details",
+        "width": 448,
+        "scrollWidth": 526,
+        "text": "Office AddressOffice No: 703 - Churchill Tower Business Bay - Dubai, U"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-page-contact__item",
+        "width": 121,
+        "scrollWidth": 199,
+        "text": "Call Us+971 58 589 9990"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-page-contact__value mw-page-contact__value--lg",
+        "width": 121,
+        "scrollWidth": 199,
+        "text": "+971 58 589 9990"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-page-contact__item",
+        "width": 121,
+        "scrollWidth": 199,
+        "text": "WhatsApp+971 58 589 9990"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-page-contact__value mw-page-contact__value--lg",
+        "width": 121,
+        "scrollWidth": 199,
+        "text": "+971 58 589 9990"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-page-contact__item",
+        "width": 121,
+        "scrollWidth": 156,
+        "text": "Follow Us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-page-contact__social",
+        "width": 121,
+        "scrollWidth": 156,
+        "text": ""
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "route": "/agents",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/agencies",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/commercial",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "MW Verified Buy Now3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "MW Verified For Rent3Retail Shop"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "MW Verified Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "For Rent3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "Buy Now3Retail Shop"
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "route": "/properties-dubai",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-dubai-filter__field mw-dubai-filter__field--select mw-dropdown",
+        "width": 176,
+        "scrollWidth": 182,
+        "text": "BedroomsSelect bedroomsSelect bedroomsStudio12345+"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-dubai-filter__field mw-dubai-filter__field--select mw-dubai-filter__field--last mw-dropdown",
+        "width": 176,
+        "scrollWidth": 186,
+        "text": "BathroomsSelect bathroomsSelect bathrooms12345+"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-dropdown mw-dubai-toolbar__sort",
+        "width": 137,
+        "scrollWidth": 185,
+        "text": "Most RecentMost RecentPrice: Low to HighPrice: High to LowMost Popular"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "Buy | Off Plan3Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "Buy | Off Plan3Townhouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "Buy3Penthouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "Buy3Studio"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "Buy | Off Plan3Duplex"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 375,
+        "scrollWidth": 1124,
+        "text": "Buy | Off Plan3Townhouse"
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "route": "/property-details",
+    "issues": [
+      {
+        "tag": "SECTION",
+        "cls": "mw-property",
+        "width": 1280,
+        "scrollWidth": 1294,
+        "text": "Elegant ApartmentFor SaleMirdif, Abu Dhabi4 Bedrooms3 BathroomsUpdated"
+      },
+      {
+        "tag": "H2",
+        "cls": "sr-only",
+        "width": 1,
+        "scrollWidth": 120,
+        "text": "Elegant Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 1162,
+        "scrollWidth": 1176,
+        "text": "Similar Properties Verified 3StudioAED 650,000Cozy Studio in Discovery"
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "route": "/blogs",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/login",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/signup",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/profile",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/terms-and-conditions",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/privacy-policy",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/security-policy",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/cookie-settings",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/thank-you",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/page-does-not-exist",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/agent-details/abhishek-mohan",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 1162,
+        "scrollWidth": 1176,
+        "text": "Other Properties Verified 3ShowroomAED 420,000Ground Floor Auto Showro"
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "route": "/agency-details/abc-real-estate",
+    "issues": []
+  },
+  {
+    "width": 1280,
+    "route": "/blog-details/5-reasons-to-invest-in-dubai-off-plan-properties-in-2026",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-hero__panel",
+        "width": 1098,
+        "scrollWidth": 1102,
+        "text": "Your Trusted Partner inFinding the Best PropertiesBuyRentReadyOff-Plan"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 313,
+        "scrollWidth": 940,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 279,
+        "scrollWidth": 400,
+        "text": "Full-Floor Office in Downtown Dubai Business Tower"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 313,
+        "scrollWidth": 940,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 279,
+        "scrollWidth": 365,
+        "text": "Mid-Size Storage Warehouse near Business Bay"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 313,
+        "scrollWidth": 940,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 279,
+        "scrollWidth": 318,
+        "text": "Community Retail Unit in Arabian Ranches"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 313,
+        "scrollWidth": 940,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 279,
+        "scrollWidth": 297,
+        "text": "End-Unit Townhouse with Roof Terrace"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 313,
+        "scrollWidth": 940,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 279,
+        "scrollWidth": 308,
+        "text": "Grade A Office Suite in Dubai Hills Estate"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 313,
+        "scrollWidth": 940,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 279,
+        "scrollWidth": 323,
+        "text": "Smart 1BR Apartment, Branded Residence"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 313,
+        "scrollWidth": 940,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 279,
+        "scrollWidth": 347,
+        "text": "Ground Floor Auto Showroom on Marina Walk"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 313,
+        "scrollWidth": 940,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-highlight__carousel",
+        "width": 1307,
+        "scrollWidth": 1311,
+        "text": "Premium 3AED 3,200,000Logistics Warehouse with Loading Bay in Al Furja"
+      },
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 1307,
+        "scrollWidth": 1315,
+        "text": "In-demand citiesMost Popular Properties PlacesAbu DhabiSharjaAjmanSaju"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-luxury__stage",
+        "width": 739,
+        "scrollWidth": 18200,
+        "text": "BuyContemporary Villa, Handover 2027 Al Furjan, Dubai 4 Bedrooms 5 Bat"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "mw-communities__name",
+        "width": 224,
+        "scrollWidth": 241,
+        "text": "Al Habtoor Polo Resort and Club"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "route": "/about",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/contact",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-page-contact__info-col is-inview",
+        "width": 527,
+        "scrollWidth": 537,
+        "text": "Office AddressOffice No: 703 - Churchill Tower Business Bay - Dubai, U"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-page-contact__details",
+        "width": 527,
+        "scrollWidth": 537,
+        "text": "Office AddressOffice No: 703 - Churchill Tower Business Bay - Dubai, U"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-page-contact__item",
+        "width": 189,
+        "scrollWidth": 199,
+        "text": "Call Us+971 58 589 9990"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-page-contact__value mw-page-contact__value--lg",
+        "width": 189,
+        "scrollWidth": 199,
+        "text": "+971 58 589 9990"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-page-contact__item",
+        "width": 189,
+        "scrollWidth": 199,
+        "text": "WhatsApp+971 58 589 9990"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-page-contact__value mw-page-contact__value--lg",
+        "width": 189,
+        "scrollWidth": 199,
+        "text": "+971 58 589 9990"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "route": "/agents",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/agencies",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/commercial",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "MW Verified Buy Now3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "MW Verified For Rent3Retail Shop"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "MW Verified Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "For Rent3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "Buy Now3Retail Shop"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "route": "/properties-dubai",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-dropdown mw-dubai-toolbar__sort",
+        "width": 153,
+        "scrollWidth": 185,
+        "text": "Most RecentMost RecentPrice: Low to HighPrice: High to LowMost Popular"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "Buy | Off Plan3Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "Buy | Off Plan3Townhouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "Buy3Penthouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "Buy3Studio"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "Buy | Off Plan3Duplex"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 311,
+        "scrollWidth": 934,
+        "text": "Buy | Off Plan3Townhouse"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "route": "/property-details",
+    "issues": [
+      {
+        "tag": "SECTION",
+        "cls": "mw-property",
+        "width": 1440,
+        "scrollWidth": 1454,
+        "text": "Elegant ApartmentFor SaleMirdif, Abu Dhabi4 Bedrooms3 BathroomsUpdated"
+      },
+      {
+        "tag": "H2",
+        "cls": "sr-only",
+        "width": 1,
+        "scrollWidth": 138,
+        "text": "Elegant Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 1307,
+        "scrollWidth": 1321,
+        "text": "Similar Properties Verified 3StudioAED 650,000Cozy Studio in Discovery"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "route": "/blogs",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/login",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/signup",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/profile",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/terms-and-conditions",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/privacy-policy",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/security-policy",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/cookie-settings",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/thank-you",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/page-does-not-exist",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/agent-details/abhishek-mohan",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 1307,
+        "scrollWidth": 1321,
+        "text": "Other Properties Verified 3ShowroomAED 420,000Ground Floor Auto Showro"
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "route": "/agency-details/abc-real-estate",
+    "issues": []
+  },
+  {
+    "width": 1440,
+    "route": "/blog-details/5-reasons-to-invest-in-dubai-off-plan-properties-in-2026",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-hero__panel",
+        "width": 1098,
+        "scrollWidth": 1102,
+        "text": "Your Trusted Partner inFinding the Best PropertiesBuyRentReadyOff-Plan"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 396,
+        "scrollWidth": 1187,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 362,
+        "scrollWidth": 400,
+        "text": "Full-Floor Office in Downtown Dubai Business Tower"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 396,
+        "scrollWidth": 1187,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "H3",
+        "cls": "mw-projects__name",
+        "width": 362,
+        "scrollWidth": 365,
+        "text": "Mid-Size Storage Warehouse near Business Bay"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 396,
+        "scrollWidth": 1187,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 396,
+        "scrollWidth": 1187,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 396,
+        "scrollWidth": 1187,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 396,
+        "scrollWidth": 1187,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 396,
+        "scrollWidth": 1187,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 396,
+        "scrollWidth": 1187,
+        "text": "Verified 3MailCall usChat with us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--call",
+        "width": 40,
+        "scrollWidth": 45,
+        "text": "Call us"
+      },
+      {
+        "tag": "A",
+        "cls": "mw-projects__contact-btn mw-projects__contact-btn--whatsapp",
+        "width": 40,
+        "scrollWidth": 61,
+        "text": "Chat with us"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-highlight__carousel",
+        "width": 1655,
+        "scrollWidth": 1659,
+        "text": "Premium 3AED 3,200,000Logistics Warehouse with Loading Bay in Al Furja"
+      },
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 1655,
+        "scrollWidth": 1663,
+        "text": "In-demand citiesMost Popular Properties PlacesAbu DhabiSharjaAjmanSaju"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-luxury__stage",
+        "width": 1171,
+        "scrollWidth": 18200,
+        "text": "BuyContemporary Villa, Handover 2027 Al Furjan, Dubai 4 Bedrooms 5 Bat"
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "route": "/about",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/contact",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/agents",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/agencies",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/commercial",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "MW Verified Buy Now3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "MW Verified For Rent3Retail Shop"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "MW Verified Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "Buy Now3Office"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "For Rent3Warehouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "Buy Now3Retail Shop"
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "route": "/properties-dubai",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "mw-dropdown mw-dubai-toolbar__sort",
+        "width": 157,
+        "scrollWidth": 185,
+        "text": "Most RecentMost RecentPrice: Low to HighPrice: High to LowMost Popular"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "Buy | Off Plan3Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "Buy | Off Plan3Townhouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "Buy3Penthouse"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "Buy3Studio"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "Buy | Off Plan3Duplex"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "Buy3Villa"
+      },
+      {
+        "tag": "DIV",
+        "cls": "mw-projects__media",
+        "width": 394,
+        "scrollWidth": 1181,
+        "text": "Buy | Off Plan3Townhouse"
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "route": "/property-details",
+    "issues": [
+      {
+        "tag": "SECTION",
+        "cls": "mw-property",
+        "width": 1920,
+        "scrollWidth": 1934,
+        "text": "Elegant ApartmentFor SaleMirdif, Abu Dhabi4 Bedrooms3 BathroomsUpdated"
+      },
+      {
+        "tag": "H2",
+        "cls": "sr-only",
+        "width": 1,
+        "scrollWidth": 143,
+        "text": "Elegant Apartment"
+      },
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 1655,
+        "scrollWidth": 1669,
+        "text": "Similar Properties Verified 3PenthouseAED 9,750,000Sea View Penthouse "
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "route": "/blogs",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/login",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/signup",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/profile",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/terms-and-conditions",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/privacy-policy",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/security-policy",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/cookie-settings",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/thank-you",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/page-does-not-exist",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/agent-details/abhishek-mohan",
+    "issues": [
+      {
+        "tag": "DIV",
+        "cls": "container-ctn",
+        "width": 1655,
+        "scrollWidth": 1669,
+        "text": "Other Properties Verified 3TownhouseAED 3,450,000End-Unit Townhouse wi"
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "route": "/agency-details/abc-real-estate",
+    "issues": []
+  },
+  {
+    "width": 1920,
+    "route": "/blog-details/5-reasons-to-invest-in-dubai-off-plan-properties-in-2026",
+    "issues": []
+  }
+]

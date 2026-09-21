@@ -167,6 +167,38 @@ class PlanController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function bulkAction(Request $request)
+    {
+        $ids = array_filter((array) $request->input('ids', []));
+        $action = $request->input('action');
+
+        if (empty($ids) || !$action) {
+            return response()->json(['success' => false, 'message' => 'No action or items selected.'], 422);
+        }
+
+        if ($action === 'delete') {
+            $blocked = Plan::withCount('subscribers')->whereIn('id', $ids)->get()
+                ->filter(fn ($plan) => $plan->subscribers_count > 0);
+
+            if ($blocked->isNotEmpty()) {
+                return response()->json(['success' => false, 'message' => 'Some selected plans still have agent/company accounts on them and cannot be deleted. Move them to another plan first.'], 422);
+            }
+
+            Plan::whereIn('id', $ids)->delete();
+            $this->normalizeOrderIndex(Plan::class);
+        }
+
+        if (in_array($action, ['active', 'activate'], true)) {
+            Plan::whereIn('id', $ids)->update(['status' => true]);
+        }
+
+        if (in_array($action, ['inactive', 'deactivate'], true)) {
+            Plan::whereIn('id', $ids)->update(['status' => false]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
     /**
      * Drag-and-drop reorder from the card grid — the client sends the full
      * plan id sequence in its new order, we just re-number 1..n to match.

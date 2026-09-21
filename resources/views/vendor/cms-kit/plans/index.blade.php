@@ -131,9 +131,30 @@
         <span class="plans-hint"><i class="fas fa-arrows-alt me-1"></i> Grab a card by its "Drag to reorder" bar and drop it where you want it.</span>
         @endif
     </div>
-    @if($cmsUser->can('plans.create'))
-    <a href="{{ route('cms.plans.create') }}" class="btn btn-sm btn-brand-add"><i class="fas fa-plus me-1"></i> Add Plan</a>
-    @endif
+    <div class="d-flex align-items-center gap-2">
+        @if($cmsUser->can('plans.edit') || $cmsUser->can('plans.delete'))
+        <div class="dropdown" id="bulkActions" style="display: none;">
+            <button class="btn btn-outline-danger btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Bulk Actions (<span id="selectedCount">0</span>)
+            </button>
+            <ul class="dropdown-menu">
+                @if($cmsUser->can('plans.edit'))
+                <li><button class="dropdown-item" type="button" onclick="planBulkAction('active')"><i class="fas fa-check-circle text-success me-2"></i> Mark Active</button></li>
+                <li><button class="dropdown-item" type="button" onclick="planBulkAction('inactive')"><i class="fas fa-times-circle text-secondary me-2"></i> Mark Inactive</button></li>
+                @endif
+                @if($cmsUser->can('plans.edit') && $cmsUser->can('plans.delete'))
+                <li><hr class="dropdown-divider"></li>
+                @endif
+                @if($cmsUser->can('plans.delete'))
+                <li><button class="dropdown-item" type="button" onclick="planBulkAction('delete')"><i class="fas fa-trash text-danger me-2"></i> Delete Selected</button></li>
+                @endif
+            </ul>
+        </div>
+        @endif
+        @if($cmsUser->can('plans.create'))
+        <a href="{{ route('cms.plans.create') }}" class="btn btn-sm btn-brand-add"><i class="fas fa-plus me-1"></i> Add Plan</a>
+        @endif
+    </div>
 </div>
 
 <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
@@ -178,6 +199,11 @@
             </div>
 
             <div class="plan-actions-row">
+                @if($cmsUser->can('plans.edit') || $cmsUser->can('plans.delete'))
+                <div class="form-check mb-0 me-auto">
+                    <input class="form-check-input plan-select-checkbox" type="checkbox" value="{{ $plan->id }}">
+                </div>
+                @endif
                 <a href="{{ route('cms.plans.show', $plan->id) }}" class="btn btn-sm btn-outline-secondary" title="View plan details"><i class="fas fa-eye"></i></a>
                 @if($cmsUser->can('plans.edit'))
                 <a href="{{ route('cms.plans.edit', $plan->id) }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
@@ -219,6 +245,27 @@
             $.post(base + id + '/toggle-status', { _token: '{{ csrf_token() }}' })
                 .done(() => window.location.reload());
         });
+
+        function updatePlanBulkVisibility() {
+            const checkedCount = $('.plan-select-checkbox:checked').length;
+            $('#selectedCount').text(checkedCount);
+            $('#bulkActions').toggle(checkedCount > 0);
+        }
+        $(document).on('change', '.plan-select-checkbox', updatePlanBulkVisibility);
+
+        window.planBulkAction = function(action) {
+            if (action === 'delete' && !confirm('Are you sure you want to delete the selected plans?')) return;
+            const ids = $('.plan-select-checkbox:checked').map(function() { return $(this).val(); }).get();
+            $.post("{{ route('cms.plans.bulk-action') }}", { _token: '{{ csrf_token() }}', action: action, ids: ids })
+                .done(function(res) {
+                    if (res.success === false) { alert(res.message || 'Action failed.'); return; }
+                    window.location.reload();
+                })
+                .fail(function(xhr) {
+                    const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Action failed.';
+                    alert(msg);
+                });
+        };
 
         // Custom confirm/blocked modal — replaces the native browser confirm() popup
         const planModalEl = document.getElementById('planConfirmModal');

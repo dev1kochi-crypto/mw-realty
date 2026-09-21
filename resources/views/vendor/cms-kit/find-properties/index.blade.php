@@ -1,4 +1,4 @@
-@extends('cms-kit::layouts.cms')
+﻿@extends('cms-kit::layouts.cms')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('cms.filters.index') }}">Filters</a></li>
@@ -18,7 +18,7 @@
                     <i class="fas fa-info-circle text-primary me-2"></i>
                     Each card below links to a value of the <strong>Property Type</strong> filter, so make sure the
                     types you want here already exist as options under <a href="{{ route('cms.filters.index') }}">Filters &raquo; Property Type</a>.
-                    The property count shown on each card is calculated automatically — it's not something you set.
+                    The property count shown on each card is calculated automatically â€” it's not something you set.
                 </div>
                 <form action="{{ route('cms.find-properties.update-section') }}" method="POST">
                     @csrf
@@ -75,7 +75,7 @@
                 <div class="d-flex gap-2">
                     @if($cmsUser->can('find-properties.delete'))
                     <div class="dropdown" id="bulkActions" style="display: none;">
-                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-outline-danger btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             Bulk Actions (<span id="selectedCount">0</span>)
                         </button>
                         <ul class="dropdown-menu">

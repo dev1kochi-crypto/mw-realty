@@ -34,10 +34,10 @@ const routes = [
         meta: { title: 'Our Agent | MW Realty', bodyClass: 'agents-page', activeNav: 'agents' },
     },
     {
-        path: '/agent-details',
+        path: '/agent-details/:slug',
         name: 'agent-details',
         component: () => import('../pages/AgentDetails.vue'),
-        meta: { title: 'Jayme Craig | MW Realty', bodyClass: 'agents-page agent-details-page', activeNav: 'agents' },
+        meta: { title: 'Agent Details | MW Realty', bodyClass: 'agents-page agent-details-page', activeNav: 'agents' },
     },
     { path: '/agent-login', redirect: '/login' },
     { path: '/agent-signup', redirect: '/signup' },
@@ -48,10 +48,10 @@ const routes = [
         meta: { title: 'Our Agencies | MW Realty', bodyClass: 'agents-page agencies-page', activeNav: 'agencies' },
     },
     {
-        path: '/agency-details',
+        path: '/agency-details/:slug',
         name: 'agency-details',
         component: () => import('../pages/AgencyDetails.vue'),
-        meta: { title: 'DXB Dubai Properties | MW Realty', bodyClass: 'agents-page agency-details-page', activeNav: 'agencies' },
+        meta: { title: 'Agency Details | MW Realty', bodyClass: 'agents-page agency-details-page', activeNav: 'agencies' },
     },
     { path: '/agency-login', redirect: '/login' },
     { path: '/agency-signup', redirect: '/signup' },
@@ -98,16 +98,34 @@ const routes = [
         meta: { title: 'Properties in Dubai | MW Realty', bodyClass: 'agents-page properties-dubai-page' },
     },
     {
-        path: '/property-details',
+        path: '/property-details/:slug',
         name: 'property-details',
         component: () => import('../pages/PropertyDetails.vue'),
-        meta: { title: 'Elegant Apartment | MW Realty', bodyClass: 'agents-page property-details-page' },
+        meta: { title: 'Property Details | MW Realty', bodyClass: 'agents-page property-details-page' },
     },
     {
         path: '/terms-and-conditions',
         name: 'terms-and-conditions',
-        component: () => import('../pages/TermsAndConditions.vue'),
-        meta: { title: 'Terms and Conditions | MW Realty', bodyClass: 'agents-page terms-page' },
+        component: () => import('../pages/LegalPage.vue'),
+        meta: { title: 'Terms and Conditions | MW Realty', bodyClass: 'agents-page terms-page', legalKey: 'terms' },
+    },
+    {
+        path: '/privacy-policy',
+        name: 'privacy-policy',
+        component: () => import('../pages/LegalPage.vue'),
+        meta: { title: 'Privacy Policy | MW Realty', bodyClass: 'agents-page terms-page', legalKey: 'privacy' },
+    },
+    {
+        path: '/security-policy',
+        name: 'security-policy',
+        component: () => import('../pages/LegalPage.vue'),
+        meta: { title: 'Security Policy | MW Realty', bodyClass: 'agents-page terms-page', legalKey: 'security' },
+    },
+    {
+        path: '/cookie-settings',
+        name: 'cookie-settings',
+        component: () => import('../pages/LegalPage.vue'),
+        meta: { title: 'Cookie Settings | MW Realty', bodyClass: 'agents-page terms-page', legalKey: 'cookie' },
     },
     {
         path: '/thank-you',
@@ -128,56 +146,17 @@ const routes = [
 // lazily-mounted SPA, so that jump fires before the async page chunk has mounted
 // and grown the page to its real height, landing wherever the (still mostly
 // empty) page happens to be tall enough at that instant, usually the footer.
-// Disabling the native restore and doing it ourselves after the page has
-// actually mounted (below) fixes that while keeping the same end behavior:
-// paint at the top first, then settle back where the reader left off.
+// Every load (including a reload) should always land at the top instead, so
+// this is disabled outright rather than replaced with our own restoration.
 if ('scrollRestoration' in window.history) {
     window.history.scrollRestoration = 'manual';
 }
-
-const SCROLL_KEY_PREFIX = 'mw-scroll:';
-let scrollSaveScheduled = false;
-window.addEventListener(
-    'scroll',
-    () => {
-        if (scrollSaveScheduled) return;
-        scrollSaveScheduled = true;
-        requestAnimationFrame(() => {
-            sessionStorage.setItem(SCROLL_KEY_PREFIX + window.location.pathname, String(window.scrollY));
-            scrollSaveScheduled = false;
-        });
-    },
-    { passive: true },
-);
 
 const router = createRouter({
     history: createWebHistory(),
     routes,
     scrollBehavior(to, from, savedPosition) {
         if (savedPosition) return savedPosition;
-
-        // Vue Router gives the very first navigation a "from" with no matched
-        // route at all — a reliable, order-independent way to tell "this is a
-        // fresh page load" apart from a later in-app navigation (which should
-        // just go to { top: 0 } like a normal new page).
-        const isInitialLoad = from.matched.length === 0;
-        if (isInitialLoad) {
-            const saved = sessionStorage.getItem(SCROLL_KEY_PREFIX + to.path);
-            if (saved !== null) {
-                // Wait for the lazy-loaded page to actually mount and lay out —
-                // nextTick alone can still fire before images/late content have
-                // settled the page's final height, so give layout one more frame.
-                return nextTick().then(
-                    () =>
-                        new Promise((resolve) => {
-                            requestAnimationFrame(() => {
-                                resolve({ top: Number(saved) });
-                            });
-                        }),
-                );
-            }
-        }
-
         if (to.hash) return { el: to.hash };
         return { top: 0 };
     },

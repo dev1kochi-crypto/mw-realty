@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useBlogListing } from '../composables/useBlogListing';
 import { useLanguages } from '../composables/useLanguages';
 
@@ -10,11 +10,26 @@ const currentPage = ref(1);
 const activeCategory = ref('all');
 
 function load() {
-    fetchBlogListing(currentPage.value, selectedLanguage.value?.code);
+    fetchBlogListing(currentPage.value, selectedLanguage.value?.code, activeCategory.value);
+}
+
+function selectCategory(key) {
+    if (activeCategory.value === key) return;
+    activeCategory.value = key;
+    currentPage.value = 1;
+    load();
 }
 
 onMounted(load);
 watch(selectedLanguage, () => { currentPage.value = 1; load(); });
+
+// The blog cards' reveal-on-scroll animation is wired up by the legacy assets/js/script.js,
+// which only scans the DOM once — once the async fetch replaces the empty grid with real
+// cards, those freshly rendered elements need that binding run again (window.MWRealty.refresh
+// is idempotent, safe to call repeatedly), or they stay stuck at opacity:0 forever.
+watch(blogListing, () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+});
 
 function goToPage(page) {
     if (page < 1 || page > (pagination.value?.last_page || 1) || page === currentPage.value) return;
@@ -27,12 +42,17 @@ const pageTitle = computed(() => blogListing.value?.title || 'Blog');
 const heading = computed(() => blogListing.value?.heading || 'Latest Articles');
 const description = computed(() => blogListing.value?.description || '');
 const categories = computed(() => blogListing.value?.categories || []);
+// "All" needs to stay in this same keyed list (not a separate static button) so Vue's list
+// diffing keeps it in place once the real categories arrive — the legacy pill-tabs dropdown
+// script (see the reveal-on-scroll comment above) restructures this DOM on first scan while
+// "All" is still the only button, and inserts new items relative to wherever "All" physically
+// ends up, which shoves it to the end if it isn't part of the same v-for.
+const pillOptions = computed(() => [{ key: 'all', label: 'All' }, ...categories.value]);
 const pagination = computed(() => blogListing.value?.pagination || null);
-const posts = computed(() => {
-    const list = blogListing.value?.posts || [];
-    if (activeCategory.value === 'all') return list;
-    return list.filter((post) => post.category === activeCategory.value);
-});
+// The category filter is applied server-side (see fetchBlogListing/selectCategory) so this is
+// already the correct, correctly-paginated set for whichever category is currently selected —
+// no client-side re-filtering needed (or wanted: it would silently miss matches on other pages).
+const posts = computed(() => blogListing.value?.posts || []);
 
 function postMeta(post) {
     return [post.author_name, post.published_at, post.read_time].filter(Boolean).join(' · ');
@@ -60,11 +80,10 @@ const pageNumbers = computed(() => {
             </nav>
         </section>
 
-        <section class="mw-blog-filter">
+        <section v-if="blogListing" class="mw-blog-filter">
             <div class="container-ctn">
                 <div class="mw-pill-tabs">
-                    <button type="button" data-tab :class="{ 'is-active': activeCategory === 'all' }" @click="activeCategory = 'all'">All</button>
-                    <button v-for="cat in categories" :key="cat.key" type="button" data-tab :class="{ 'is-active': activeCategory === cat.key }" @click="activeCategory = cat.key">{{ cat.label }}</button>
+                    <button v-for="opt in pillOptions" :key="opt.key" type="button" data-tab :class="{ 'is-active': activeCategory === opt.key }" @click="selectCategory(opt.key)">{{ opt.label }}</button>
                 </div>
             </div>
         </section>

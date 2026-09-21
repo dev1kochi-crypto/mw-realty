@@ -355,6 +355,7 @@ Route::middleware(['web'])->group(function () {
 
                 Route::middleware(['cms.permission:plans.delete'])->group(function () {
                     Route::delete('/plans/{id}', [PlanController::class, 'destroy'])->name('cms.plans.destroy');
+                    Route::post('/plans/bulk-action', [PlanController::class, 'bulkAction'])->name('cms.plans.bulk-action');
                 });
 
                 Route::get('/plans/{id}', [PlanController::class, 'show'])->name('cms.plans.show');
@@ -554,11 +555,11 @@ Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->middleware(['web',
 Route::view('/about', 'welcome');
 Route::view('/commercial', 'welcome');
 Route::view('/agents', 'welcome');
-Route::view('/agent-details', 'welcome');
+Route::view('/agent-details/{slug}', 'welcome');
 Route::view('/agent-login', 'welcome');
 Route::view('/agent-signup', 'welcome');
 Route::view('/agencies', 'welcome');
-Route::view('/agency-details', 'welcome');
+Route::view('/agency-details/{slug}', 'welcome');
 Route::view('/agency-login', 'welcome');
 Route::view('/agency-signup', 'welcome');
 Route::view('/blogs', 'welcome');
@@ -568,8 +569,11 @@ Route::view('/login', 'welcome');
 Route::view('/signup', 'welcome');
 Route::view('/profile', 'welcome');
 Route::view('/properties-dubai', 'welcome');
-Route::view('/property-details', 'welcome');
+Route::view('/property-details/{slug}', 'welcome');
 Route::view('/terms-and-conditions', 'welcome');
+Route::view('/privacy-policy', 'welcome');
+Route::view('/security-policy', 'welcome');
+Route::view('/cookie-settings', 'welcome');
 Route::view('/thank-you', 'welcome');
 
 // Public, unauthenticated — captures any <form> submission on a landing page (see
@@ -583,5 +587,5 @@ Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryControll
 // must always get first chance to match. The (?!...) guard is a belt-and-braces exclusion of the
 // app's other top-level path segments, in case any of them is ever reached without a deeper segment.
 Route::get('/{slug}', [\App\Http\Controllers\LandingPageController::class, 'show'])
-    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|contact|login|signup|profile|properties-dubai|property-details|terms-and-conditions|thank-you)$).+$')
+    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|contact|login|signup|profile|properties-dubai|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
     ->name('landing-pages.show');
