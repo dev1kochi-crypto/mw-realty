@@ -1,4 +1,4 @@
-@extends('cms-kit::layouts.cms')
+﻿@extends('cms-kit::layouts.cms')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item active" aria-current="page">Property Posting Steps</li>
@@ -24,7 +24,7 @@
 
                     @if($errors->any())
                     <div class="alert alert-danger">
-                        <strong>Please fix the following before saving</strong> — note that some of these may be on the Arabic tab above.
+                        <strong>Please fix the following before saving</strong> â€” note that some of these may be on the Arabic tab above.
                         <ul class="mb-0 mt-1">
                             @foreach($errors->all() as $error)
                                 <li>{{ $error }}</li>
@@ -168,7 +168,7 @@
                 <div class="d-flex gap-2">
                     @if($cmsUser->can('post-property-steps.delete'))
                     <div class="dropdown" id="bulkActions" style="display: none;">
-                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-outline-danger btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             Bulk Actions (<span id="selectedCount">0</span>)
                         </button>
                         <ul class="dropdown-menu">
@@ -307,7 +307,7 @@
 
         // Jumping to the tab holding a required/invalid field (client-side blocked submit, or
         // a server-side validation error after redirect) is now handled globally for every CMS
-        // page in layouts/cms.blade.php — nothing page-specific needed here anymore.
+        // page in layouts/cms.blade.php â€” nothing page-specific needed here anymore.
     });
 </script>
 @endpush

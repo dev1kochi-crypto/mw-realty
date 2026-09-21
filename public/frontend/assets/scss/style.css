@@ -2051,7 +2051,7 @@ body.home-page header:not(.is-scrolled) .mw-header__login {
   gap: 32px;
   margin-bottom: 40px;
 }
-@media (min-width: 576px) {
+@media (min-width: 360px) {
   .mw-footer__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2066,15 +2066,14 @@ body.home-page header:not(.is-scrolled) .mw-header__login {
 @media (min-width: 1200px) {
   .mw-footer__grid {
     grid-template-columns: minmax(0, 158fr) minmax(0, 212fr) minmax(0, 212fr) minmax(0, 212fr) minmax(0, 166fr);
-    -moz-column-gap: 130px;
-         column-gap: 130px;
+    column-gap: clamp(24px, calc(13.6vw - 131px), 130px);
     margin-bottom: 107px;
   }
 }
 .mw-footer__col-title {
   color: #fff;
   font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 20px;
+  font-size: clamp(18px, 1.05vw, 20px);
   font-weight: 600;
   line-height: normal;
   margin: 0 0 24px;
@@ -2090,7 +2089,7 @@ body.home-page header:not(.is-scrolled) .mw-header__login {
   display: block;
   color: #a7a7a7;
   font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 16px;
+  font-size: clamp(14px, 0.84vw, 16px);
   font-weight: 400;
   line-height: normal;
   text-decoration: none;
@@ -2110,24 +2109,45 @@ body.home-page header:not(.is-scrolled) .mw-header__login {
 }
 @media (min-width: 1200px) {
   .mw-footer__meta {
-    flex-wrap: nowrap;
     justify-content: space-between;
-    gap: 50px;
+    gap: clamp(24px, 2.6vw, 50px);
     padding-bottom: 57px;
     margin-bottom: 39px;
   }
 }
 .mw-footer__contact-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px 40px;
   flex: 1 1 280px;
+  min-width: 0;
+}
+@media (min-width: 576px) {
+  .mw-footer__contact-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 992px) {
+  .mw-footer__contact-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .home-page .mw-footer__contact-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (min-width: 1200px) {
-  .mw-footer__contact-list {
-    flex-wrap: nowrap;
-    gap: 50px;
-    flex: 1 1 auto;
+  .home-page .mw-footer__meta {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+  .home-page .mw-footer__contact-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1600px) {
+  .home-page .mw-footer__contact-list {
+    grid-template-columns: 205fr 158fr 200fr 237fr;
   }
 }
 .mw-footer__contact-item {
@@ -2136,29 +2156,11 @@ body.home-page header:not(.is-scrolled) .mw-header__login {
   align-items: flex-start;
   min-width: 0;
 }
-@media (min-width: 1200px) {
-  .mw-footer__contact-item:nth-child(1) {
-    width: 205px;
-    flex-shrink: 0;
-  }
-  .mw-footer__contact-item:nth-child(2) {
-    width: 158px;
-    flex-shrink: 0;
-  }
-  .mw-footer__contact-item:nth-child(3) {
-    width: 200px;
-    flex-shrink: 0;
-  }
-  .mw-footer__contact-item:nth-child(4) {
-    width: 237px;
-    flex-shrink: 0;
-  }
-}
 .mw-footer__contact-label {
   display: block;
   color: #fff;
   font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 20px;
+  font-size: clamp(18px, 1.05vw, 20px);
   font-weight: 600;
   line-height: normal;
   margin: 0 0 24px;
@@ -2167,19 +2169,21 @@ body.home-page header:not(.is-scrolled) .mw-header__login {
   display: block;
   color: #a7a7a7;
   font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 16px;
+  font-size: clamp(14px, 0.84vw, 16px);
   font-weight: 400;
   line-height: normal;
   text-decoration: none;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .mw-footer__contact-value:hover, .mw-footer__contact-value a:hover {
   color: #fff;
 }
 .mw-footer__contact-value--phone, .mw-footer__contact-value--phone a {
   color: #fff;
-  font-size: 24px;
+  font-size: clamp(18px, 1.25vw, 24px);
   font-weight: 600;
-  white-space: nowrap;
+  white-space: normal;
 }
 .mw-footer__contact-value--phone:hover, .mw-footer__contact-value--phone a:hover {
   color: #fff;
@@ -2187,18 +2191,19 @@ body.home-page header:not(.is-scrolled) .mw-header__login {
 .mw-footer__newsletter {
   width: 100%;
   max-width: 495px;
-  flex-shrink: 0;
+  flex: 1 1 320px;
+  min-width: 0;
 }
 @media (min-width: 1200px) {
   .mw-footer__newsletter {
-    width: 495px;
+    width: 100%;
     margin-top: -6px;
   }
 }
 .mw-footer__newsletter-title {
   color: #fff;
   font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 24px;
+  font-size: clamp(20px, 1.25vw, 24px);
   font-weight: 500;
   line-height: normal;
   margin: 0 0 11px;
@@ -2253,11 +2258,11 @@ body.home-page header:not(.is-scrolled) .mw-header__login {
 }
 .mw-footer__newsletter-terms {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   margin-top: 13px;
   font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 16px;
+  font-size: clamp(14px, 0.84vw, 16px);
   font-weight: 400;
   line-height: normal;
   color: #a7a7a7;
@@ -2282,6 +2287,7 @@ body.home-page header:not(.is-scrolled) .mw-header__login {
 }
 .mw-footer__bottom {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: column;
   gap: 16px;
   align-items: center;
@@ -2299,7 +2305,7 @@ body.home-page header:not(.is-scrolled) .mw-header__login {
   margin: 0;
   color: #fff;
   font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 16px;
+  font-size: clamp(14px, 0.84vw, 16px);
   font-weight: 400;
   line-height: normal;
 }
@@ -2321,7 +2327,7 @@ body.home-page header:not(.is-scrolled) .mw-header__login {
   color: #fff;
   font-family: "Plus Jakarta Sans", sans-serif;
   text-decoration: none;
-  font-size: 16px;
+  font-size: clamp(14px, 0.84vw, 16px);
   font-weight: 600;
   line-height: normal;
   white-space: nowrap;
@@ -4399,7 +4405,8 @@ input:focus-visible ~ .crm-modal__checkbox-box {
 .mw-projects__nav--next img {
   transform: rotate(90deg);
 }
-.mw-projects__card:hover .mw-projects__nav, .mw-projects__card:focus-within .mw-projects__nav {
+.mw-projects__card:hover .mw-projects__nav, .mw-projects__card:focus-within .mw-projects__nav,
+.mw-commercial-card:hover .mw-projects__nav, .mw-commercial-card:focus-within .mw-projects__nav {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -4470,12 +4477,14 @@ input:focus-visible ~ .crm-modal__checkbox-box {
   pointer-events: none;
   transition: opacity 0.22s ease, transform 0.22s ease;
 }
-.mw-projects__card:hover .mw-projects__contact, .mw-projects__card:focus-within .mw-projects__contact {
+.mw-projects__card:hover .mw-projects__contact, .mw-projects__card:focus-within .mw-projects__contact,
+.mw-commercial-card:hover .mw-projects__contact, .mw-commercial-card:focus-within .mw-projects__contact {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
 }
-.mw-projects__card:hover .mw-projects__dots, .mw-projects__card:focus-within .mw-projects__dots, .mw-projects__card:hover .mw-projects__photo-count, .mw-projects__card:focus-within .mw-projects__photo-count {
+.mw-projects__card:hover .mw-projects__dots, .mw-projects__card:focus-within .mw-projects__dots, .mw-projects__card:hover .mw-projects__photo-count, .mw-projects__card:focus-within .mw-projects__photo-count,
+.mw-commercial-card:hover .mw-projects__dots, .mw-commercial-card:focus-within .mw-projects__dots, .mw-commercial-card:hover .mw-projects__photo-count, .mw-commercial-card:focus-within .mw-projects__photo-count {
   opacity: 0;
 }
 @media (hover: none) {
@@ -9602,6 +9611,11 @@ html:has(.about-page) {
 }
 @media (min-width: 1200px) {
   .mw-agencies__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1600px) {
+  .mw-agencies__grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
@@ -9684,6 +9698,7 @@ html:has(.about-page) {
 }
 .mw-agency-card__name {
   margin: 0 0 16px;
+  overflow-wrap: anywhere;
   color: #35373c;
   font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 20px;
@@ -9697,14 +9712,17 @@ html:has(.about-page) {
 }
 .mw-agency-card__meta-item {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
   gap: 8px;
   color: #6a6a6a;
   font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 14px;
   font-weight: 500;
-  line-height: 1;
-  white-space: nowrap;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .mw-agency-card__meta-item img {
   display: block;
@@ -9714,6 +9732,7 @@ html:has(.about-page) {
 }
 .mw-agency-card__foot {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-top: auto;

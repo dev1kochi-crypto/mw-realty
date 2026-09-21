@@ -75,8 +75,10 @@ const projectFilters = computed(() => {
 const projectCards = computed(() => {
     const properties = developments.value?.properties || [];
     return properties.map((p) => ({
+        slug: p.slug,
         category: p.category,
         images: p.images,
+        images_count: p.images_count,
         isAbsoluteImage: true,
         name: p.name,
         location: p.location,
@@ -112,7 +114,9 @@ const premiumButtonUrl = computed(() => premiumProperties.value?.button_url || '
 const highlightCards = computed(() => {
     const properties = premiumProperties.value?.properties || [];
     return properties.map((p) => ({
+        slug: p.slug,
         images: p.images,
+        images_count: p.images_count,
         isAbsoluteImage: true,
         name: p.name,
         location: p.location,
@@ -391,7 +395,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
 
                 <div class="mw-projects__grid" id="projects-grid" data-projects-slider>
                     <article v-for="(card, index) in projectCards" :key="index" class="mw-projects__card" :data-category="card.category">
-                        <div class="mw-projects__media" data-card-gallery>
+                        <div class="mw-projects__media" data-card-gallery role="link" tabindex="0" @click="card.slug && $router.push(`/property-details/${card.slug}`)" @keydown.enter="card.slug && $router.push(`/property-details/${card.slug}`)" :style="card.slug ? 'cursor: pointer;' : ''">
                             <div class="mw-projects__slides" data-gallery-track>
                                 <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-projects__photo">
                             </div>
@@ -399,37 +403,37 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 <img src="/frontend/assets/images/icons/verified.svg" alt="" width="18" height="18">
                                 Verified
                             </span>
-                            <button type="button" class="mw-projects__save" aria-label="Save property" aria-pressed="false">
+                            <button type="button" class="mw-projects__save" aria-label="Save property" aria-pressed="false" @click.stop>
                                 <img src="/frontend/assets/images/icons/heart.svg" alt="" width="24" height="24">
                             </button>
-                            <button type="button" class="mw-projects__nav mw-projects__nav--prev" data-gallery-prev aria-label="Previous photo">
+                            <button type="button" class="mw-projects__nav mw-projects__nav--prev" data-gallery-prev aria-label="Previous photo" @click.stop>
                                 <img src="/frontend/assets/images/icons/chevron.svg" alt="">
                             </button>
-                            <button type="button" class="mw-projects__nav mw-projects__nav--next" data-gallery-next aria-label="Next photo">
+                            <button type="button" class="mw-projects__nav mw-projects__nav--next" data-gallery-next aria-label="Next photo" @click.stop>
                                 <img src="/frontend/assets/images/icons/chevron.svg" alt="">
                             </button>
                             <div class="mw-projects__dots" data-gallery-dots></div>
-                            <span class="mw-projects__photo-count">
+                            <span v-if="card.images_count" class="mw-projects__photo-count">
                                 <img src="/frontend/assets/images/icons/photo-count.svg" alt="" width="16" height="16">
-                                <span data-gallery-count>{{ card.images.length }}</span>
+                                <span data-gallery-count>{{ card.images_count }}</span>
                             </span>
                             <div class="mw-projects__contact">
-                                <a href="mailto:info@mightywarnersrealty.com" class="mw-projects__contact-btn mw-projects__contact-btn--email" aria-label="Mail">
+                                <a href="mailto:info@mightywarnersrealty.com" class="mw-projects__contact-btn mw-projects__contact-btn--email" aria-label="Mail" @click.stop>
                                     <img src="/frontend/assets/images/icons/email.svg" alt="">
                                     <span>Mail</span>
                                 </a>
-                                <a href="tel:+971585899990" class="mw-projects__contact-btn mw-projects__contact-btn--call" aria-label="Call us">
+                                <a href="tel:+971585899990" class="mw-projects__contact-btn mw-projects__contact-btn--call" aria-label="Call us" @click.stop>
                                     <img src="/frontend/assets/images/icons/phone.svg" alt="">
                                     <span>Call us</span>
                                 </a>
-                                <a href="https://wa.me/971585899990" class="mw-projects__contact-btn mw-projects__contact-btn--whatsapp" aria-label="Chat with us">
+                                <a href="https://wa.me/971585899990" class="mw-projects__contact-btn mw-projects__contact-btn--whatsapp" aria-label="Chat with us" @click.stop>
                                     <img src="/frontend/assets/images/icons/whatsapp.svg" alt="">
                                     <span>Chat with us</span>
                                 </a>
                             </div>
                         </div>
                         <div class="mw-projects__body">
-                            <h3 class="mw-projects__name">{{ card.name }}</h3>
+                            <h3 class="mw-projects__name"><router-link v-if="card.slug" :to="`/property-details/${card.slug}`">{{ card.name }}</router-link><template v-else>{{ card.name }}</template></h3>
                             <p class="mw-projects__location">
                                 <img src="/frontend/assets/images/icons/location.svg" alt="">
                                 {{ card.location }}
@@ -475,7 +479,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                 <div class="mw-highlight__carousel">
                     <div class="mw-highlight__track" data-highlight-slider>
                         <article v-for="(card, index) in highlightCards" :key="index" class="mw-highlight__card">
-                            <div class="mw-highlight__media" data-card-gallery>
+                            <div class="mw-highlight__media" data-card-gallery role="link" tabindex="0" @click="card.slug && $router.push(`/property-details/${card.slug}`)" @keydown.enter="card.slug && $router.push(`/property-details/${card.slug}`)" :style="card.slug ? 'cursor: pointer;' : ''">
                                 <div class="mw-highlight__slides" data-gallery-track>
                                     <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-highlight__photo">
                                 </div>
@@ -483,26 +487,26 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                     <img src="/frontend/assets/images/icons/star.svg" alt="" width="18" height="18">
                                     Premium
                                 </span>
-                                <button type="button" class="mw-highlight__save" aria-label="Save property" aria-pressed="false">
+                                <button type="button" class="mw-highlight__save" aria-label="Save property" aria-pressed="false" @click.stop>
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path d="M16.696 3C14.652 3 12.887 4.197 12 5.943C11.113 4.197 9.348 3 7.304 3C4.374 3 2 5.457 2 8.481C2 11.505 3.817 14.277 6.165 16.554C8.513 18.831 12 21 12 21C12 21 15.374 18.867 17.835 16.554C20.46 14.088 22 11.514 22 8.481C22 5.448 19.626 3 16.696 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 </button>
-                                <button type="button" class="mw-highlight__shot mw-highlight__shot--prev" data-gallery-prev aria-label="Previous photo">
+                                <button type="button" class="mw-highlight__shot mw-highlight__shot--prev" data-gallery-prev aria-label="Previous photo" @click.stop>
                                     <img src="/frontend/assets/images/icons/chevron.svg" alt="">
                                 </button>
-                                <button type="button" class="mw-highlight__shot mw-highlight__shot--next" data-gallery-next aria-label="Next photo">
+                                <button type="button" class="mw-highlight__shot mw-highlight__shot--next" data-gallery-next aria-label="Next photo" @click.stop>
                                     <img src="/frontend/assets/images/icons/chevron.svg" alt="">
                                 </button>
                                 <div class="mw-highlight__dots" data-gallery-dots></div>
-                                <span class="mw-highlight__count">
+                                <span v-if="card.images_count" class="mw-highlight__count">
                                     <img src="/frontend/assets/images/icons/photo-count.svg" alt="" width="16" height="16">
-                                    <span data-gallery-count>{{ card.images.length }}</span>
+                                    <span data-gallery-count>{{ card.images_count }}</span>
                                 </span>
                             </div>
                             <div class="mw-highlight__body">
                                 <span class="mw-highlight__price">{{ card.price }}</span>
-                                <h3 class="mw-highlight__name">{{ card.name }}</h3>
+                                <h3 class="mw-highlight__name"><router-link v-if="card.slug" :to="`/property-details/${card.slug}`">{{ card.name }}</router-link><template v-else>{{ card.name }}</template></h3>
                                 <p class="mw-highlight__location">
                                     <img src="/frontend/assets/images/icons/location.svg" alt="" width="18" height="18">
                                     {{ card.location }}
@@ -513,9 +517,9 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                     <span class="mw-highlight__stat"><img src="/frontend/assets/images/icons/area.svg" alt="" width="18" height="18">{{ card.area }}</span>
                                 </div>
                                 <div class="mw-highlight__contacts">
-                                    <a href="mailto:info@mightywarnersrealty.com" aria-label="Email"><img src="/frontend/assets/images/icons/realty-email.svg" alt="" width="40" height="40"></a>
-                                    <a href="tel:+971585899990" aria-label="Call"><img src="/frontend/assets/images/icons/realty-phone.svg" alt="" width="40" height="40"></a>
-                                    <a href="https://wa.me/971585899990" aria-label="WhatsApp"><img src="/frontend/assets/images/icons/realty-whatsapp.svg" alt="" width="40" height="40"></a>
+                                    <a href="mailto:info@mightywarnersrealty.com" aria-label="Email" @click.stop><img src="/frontend/assets/images/icons/realty-email.svg" alt="" width="40" height="40"></a>
+                                    <a href="tel:+971585899990" aria-label="Call" @click.stop><img src="/frontend/assets/images/icons/realty-phone.svg" alt="" width="40" height="40"></a>
+                                    <a href="https://wa.me/971585899990" aria-label="WhatsApp" @click.stop><img src="/frontend/assets/images/icons/realty-whatsapp.svg" alt="" width="40" height="40"></a>
                                 </div>
                             </div>
                         </article>

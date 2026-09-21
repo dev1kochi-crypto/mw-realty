@@ -1,11 +1,24 @@
 <script setup>
-const agents = [
-    { name: "Ahmed Hassan Al Mansoori", image: "/frontend/assets/images/agents/ahmed.png", years: 7, areas: "Downtown Dubai, Dubai Marina, Business Bay", delay: 0 },
-    { name: "Jayme Craig", image: "/frontend/assets/images/agents/jayme.png", years: 5, areas: "Jumeirah, Business Bay", delay: 1 },
-    { name: "Abhishek Mohan", image: "/frontend/assets/images/agents/abhishek.png", years: 7, areas: "Downtown Dubai, Dubai Marina, Business Bay", delay: 2 },
-    { name: "James thomas", image: "/frontend/assets/images/agents/james.png", years: 8, areas: "Downtown Dubai, Dubai Marina, Business Bay", delay: 3 },
-    { name: "Aslam Ali Imran", image: "/frontend/assets/images/agents/aslam.png", years: 6, areas: "Downtown Dubai, Dubai Marina, Business Bay", delay: 4 },
-];
+import { nextTick, onMounted, watch } from 'vue';
+import { useAgents } from '../composables/useAgents';
+import { useLanguages } from '../composables/useLanguages';
+
+const { agentsListing, fetchAgentsListing } = useAgents();
+const { selectedLanguage } = useLanguages();
+
+function load() {
+    fetchAgentsListing(selectedLanguage.value?.code);
+}
+
+onMounted(load);
+watch(selectedLanguage, load);
+
+// The reveal-on-scroll animation (legacy assets/js/script.js) only scans the DOM once —
+// once the async fetch replaces the empty grid with real cards, those freshly rendered
+// elements need that binding run again (window.MWRealty.refresh is idempotent).
+watch(agentsListing, () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+});
 </script>
 
 <template>
@@ -28,28 +41,28 @@ const agents = [
         <section class="mw-agents">
             <div class="container-ctn">
                 <div class="mw-agents__grid">
-                    <article v-for="agent in agents" :key="agent.name" class="mw-agent-card" data-reveal :style="agent.delay ? { '--reveal-delay': agent.delay } : undefined">
+                    <article v-for="(agent, index) in (agentsListing?.agents || [])" :key="agent.slug" class="mw-agent-card" data-reveal :style="{ '--reveal-delay': index % 4 }">
                         <div class="mw-agent-card__head">
                             <div class="mw-agent-card__avatar">
-                                <img :src="agent.image" :alt="agent.name" width="80" height="80">
+                                <img :src="agent.avatar_url || '/frontend/assets/images/agents/ahmed.png'" :alt="agent.name" width="80" height="80">
                             </div>
                             <div class="mw-agent-card__intro">
                                 <h2 class="mw-agent-card__name">{{ agent.name }}</h2>
                                 <div class="mw-agent-card__tags">
                                     <span class="mw-agent-card__tag mw-agent-card__tag--fill">Serves in Dubai</span>
-                                    <span class="mw-agent-card__tag">Rent : 0</span>
-                                    <span class="mw-agent-card__tag">Sell : 0</span>
+                                    <span class="mw-agent-card__tag">Rent : {{ agent.rent_count }}</span>
+                                    <span class="mw-agent-card__tag">Sell : {{ agent.sell_count }}</span>
                                 </div>
                             </div>
                         </div>
                         <div class="mw-agent-card__body">
-                            <p>Years of Experience: {{ agent.years }}</p>
-                            <p>Preferred Areas: {{ agent.areas }}</p>
+                            <p>Years of Experience: {{ agent.years_of_experience ?? '—' }}</p>
+                            <p>Preferred Areas: {{ (agent.preferred_areas || []).join(', ') || '—' }}</p>
                         </div>
                         <div class="mw-agent-card__foot">
                             <img class="mw-agent-card__logo" src="/frontend/assets/images/logo-dark.png" alt="MW Realty" width="50" height="28">
                             <span class="mw-agent-card__rule" aria-hidden="true"></span>
-                            <router-link to="/agent-details" class="mw-agent-card__link">
+                            <router-link :to="`/agent-details/${agent.slug}`" class="mw-agent-card__link">
                                 View Details
                                 <img src="/frontend/assets/images/icons/find-cta-arrow.svg" alt="" width="18" height="18">
                             </router-link>

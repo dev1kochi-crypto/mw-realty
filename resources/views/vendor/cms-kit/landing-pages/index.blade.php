@@ -1,4 +1,4 @@
-@extends('cms-kit::layouts.cms')
+﻿@extends('cms-kit::layouts.cms')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item active" aria-current="page">Landing Pages</li>
@@ -16,7 +16,7 @@
                 <div class="d-flex gap-2">
                     @if($cmsUser->can('landing-pages.delete'))
                     <div class="dropdown" id="bulkActions" style="display: none;">
-                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-outline-danger btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             Bulk Actions (<span id="selectedCount">0</span>)
                         </button>
                         <ul class="dropdown-menu">

@@ -17,8 +17,9 @@ class BlogController extends Controller
     {
         $lang = $request->input('lang', app()->getLocale());
         $page = max(1, (int) $request->input('page', 1));
+        $category = $request->input('category') ?: null;
 
-        return response()->json($this->blogPage->getListingData($lang, $page));
+        return response()->json($this->blogPage->getListingData($lang, $page, 12, $category));
     }
 
     public function show(Request $request, string $slug)

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, watch } from 'vue';
+import { computed, nextTick, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogPost } from '../composables/useBlogPost';
 import { useLanguages } from '../composables/useLanguages';
@@ -21,6 +21,14 @@ watch(
         if (title) document.title = `${title} | MW Realty`;
     },
 );
+
+// The whole page (including the data-reveal heading) is gated behind v-if="post", so it
+// doesn't exist in the DOM for the legacy assets/js/script.js reveal-on-scroll scan to find
+// until this async fetch resolves — re-run it once the post arrives (window.MWRealty.refresh
+// is idempotent, safe to call repeatedly).
+watch(blogPost, () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+});
 
 const post = computed(() => blogPost.value?.post || null);
 const categories = computed(() => blogPost.value?.categories || []);

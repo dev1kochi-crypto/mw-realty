@@ -25,11 +25,28 @@ const directorByline = computed(() => {
     return `${designation} | ${name}`;
 });
 
-const steps = computed(() => aboutPage.value?.postPropertySteps?.length ? aboutPage.value.postPropertySteps : [
-    { index: '01', icon_url: '/frontend/assets/images/icons/about-step-1.png', title: 'Add Details Of Your Property', description: 'Begin By Telling Us The Few Basic Details About Your Property Like Your Property Type, Location, No. Of Rooms Etc.' },
-    { index: '02', icon_url: '/frontend/assets/images/icons/about-step-2.png', title: 'Upload Photos & Videos', description: 'Upload Photos And Videos Of Your Property Either Via Your Desktop Device Or From Your Mobile Phone.' },
-    { index: '03', icon_url: '/frontend/assets/images/icons/about-step-3.png', title: 'Add Pricing & Ownership', description: "Just Update Your Property's Ownership Details And Your Expected Price And Your Property Is Ready For Posting Post Property." },
-]);
+// These 3 circular graphics are this section's fixed design — not admin-manageable art, so a
+// step's icon always comes from here by position, even when its title/description are CMS-driven.
+const STEP_DESIGN_ICONS = [
+    '/frontend/assets/images/icons/about-step-1.png',
+    '/frontend/assets/images/icons/about-step-2.png',
+    '/frontend/assets/images/icons/about-step-3.png',
+];
+
+const steps = computed(() => {
+    const dbSteps = aboutPage.value?.postPropertySteps;
+    if (dbSteps?.length) {
+        return dbSteps.map((step, i) => ({
+            ...step,
+            icon_url: STEP_DESIGN_ICONS[i] || STEP_DESIGN_ICONS[STEP_DESIGN_ICONS.length - 1],
+        }));
+    }
+    return [
+        { index: '01', icon_url: STEP_DESIGN_ICONS[0], title: 'Add Details Of Your Property', description: 'Begin By Telling Us The Few Basic Details About Your Property Like Your Property Type, Location, No. Of Rooms Etc.' },
+        { index: '02', icon_url: STEP_DESIGN_ICONS[1], title: 'Upload Photos & Videos', description: 'Upload Photos And Videos Of Your Property Either Via Your Desktop Device Or From Your Mobile Phone.' },
+        { index: '03', icon_url: STEP_DESIGN_ICONS[2], title: 'Add Pricing & Ownership', description: "Just Update Your Property's Ownership Details And Your Expected Price And Your Property Is Ready For Posting Post Property." },
+    ];
+});
 
 const marketTrends = computed(() => aboutPage.value?.marketTrends || null);
 const trendsTitle = computed(() => marketTrends.value?.title || 'Real Estate Market Trends & Investment Tips');

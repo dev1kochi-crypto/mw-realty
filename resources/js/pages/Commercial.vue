@@ -1,191 +1,70 @@
 <script setup>
-const properties = [
-    {
-        title: 'Luxury Hotel Apartment in Business Bay',
-        images: [
-            '/frontend/assets/images/home/project-card-1.jpg',
-            '/frontend/assets/images/home/project-card-2.jpg',
-            '/frontend/assets/images/home/luxury-card-1.jpg',
-        ],
-        verified: true,
-        cta: 'Buy Now',
-        ctaVariant: null,
-        type: 'Hotel Apartment',
-        service: '+20,000 service',
-        price: 'AED 1,850,000',
-        location: 'Business Bay, Dubai',
-        desc: 'Spacious 1-bedroom hotel apartment with full rental',
-        floor: 12,
-        rera: 'DUB987654',
-        beds: 1,
-        baths: 1,
-        area: '950 sq.ft',
-        amenities: ['Furnished', 'Hotel Service', 'House Keeping', 'Room Services'],
-        extraMore: null,
-    },
-    {
-        title: 'Loft Apartment in Al Quoz',
-        images: [
-            '/frontend/assets/images/home/project-card-3.jpg',
-            '/frontend/assets/images/home/realty-card-1.jpg',
-            '/frontend/assets/images/home/luxury-card-2.jpg',
-        ],
-        verified: false,
-        cta: 'Buy Now',
-        ctaVariant: null,
-        type: 'Loft',
-        service: '+10,000 service',
-        price: 'AED 1,200,000',
-        location: 'Al Quoz, Dubai',
-        desc: 'Industrial-style loft with high ceilings',
-        floor: 4,
-        rera: 'DUB765432',
-        beds: 2,
-        baths: 2,
-        area: '1800 sq.ft',
-        amenities: ['Unfurnished', 'Open Plan', 'Exposed Bricks', 'Artist Studio'],
-        extraMore: null,
-    },
-    {
-        title: 'Waterfront Villa in Emirates Hills',
-        images: [
-            '/frontend/assets/images/home/project-card-4.jpg',
-            '/frontend/assets/images/home/realty-card-2.jpg',
-            '/frontend/assets/images/home/luxury-card-3.jpg',
-            '/frontend/assets/images/home/project-card-5.jpg',
-        ],
-        verified: true,
-        cta: 'Buy Now',
-        ctaVariant: null,
-        type: 'Villa',
-        service: '+60,000 service',
-        price: 'AED 1,200,000',
-        location: 'Emirates Hills, Dubai',
-        desc: 'Exclusive 6-bedroom mansion with lake views',
-        floor: 3,
-        rera: 'DUB876543',
-        beds: 6,
-        baths: 8,
-        area: '8500 sq.ft',
-        amenities: ['Furnished', 'Private Cinema', 'Wine Cellar', 'Home Spa'],
-        extraMore: 1,
-    },
-    {
-        title: 'Affordable Apartment in Discovery Gardens',
-        images: [
-            '/frontend/assets/images/home/project-card-6.jpg',
-            '/frontend/assets/images/home/realty-card-3.jpg',
-            '/frontend/assets/images/home/luxury-card-1.jpg',
-        ],
-        verified: false,
-        cta: 'Buy Now',
-        ctaVariant: null,
-        type: 'Apartment',
-        service: '+7,000 service',
-        price: 'AED 550,000',
-        location: 'Discovery Gardens, Dubai',
-        desc: '1-bedroom apartment perfect for first-time buyers',
-        floor: 5,
-        rera: 'DUB234567',
-        beds: 1,
-        baths: 1,
-        area: '800 sq.ft',
-        amenities: ['Semifurnished', 'Community Pool', 'Parking', '24/7 Security'],
-        extraMore: null,
-    },
-    {
-        title: 'Penthouse in Jumeirah Beach Residence',
-        images: [
-            '/frontend/assets/images/home/luxury-card-2.jpg',
-            '/frontend/assets/images/home/project-card-1.jpg',
-            '/frontend/assets/images/home/realty-card-4.jpg',
-        ],
-        verified: true,
-        cta: 'Buy Now',
-        ctaVariant: null,
-        type: 'Penthouse',
-        service: '+35,000 service',
-        price: 'AED 9,500,000',
-        location: 'JBR, Dubai',
-        desc: 'Luxury 4-bedroom penthouse with panoramic sea views',
-        floor: 42,
-        rera: 'DUB567890',
-        beds: 4,
-        baths: 5,
-        area: '3800 sq.ft',
-        amenities: ['Furnished', 'Private Pool', 'Jacuzzi', 'Smart Home'],
-        extraMore: 1,
-    },
-    {
-        title: 'Townhouse in Arabian Ranches',
-        images: [
-            '/frontend/assets/images/home/project-card-2.jpg',
-            '/frontend/assets/images/home/project-card-5.jpg',
-            '/frontend/assets/images/home/realty-card-1.jpg',
-        ],
-        verified: true,
-        cta: 'Buy Now',
-        ctaVariant: null,
-        type: 'Town House',
-        service: '+15,000 service',
-        price: 'AED 2,800,000',
-        location: 'Arabian Ranches, Dubai',
-        desc: 'Family-friendly 3-bedroom townhouse in gated community',
-        floor: 1,
-        rera: 'DUB901234',
-        beds: 3,
-        baths: 5,
-        area: '2200 sq.ft',
-        amenities: ['Furnished', 'Community Pool', 'Tennis Court', 'Kids Play Area'],
-        extraMore: null,
-    },
-    {
-        title: 'Updated Commercial Space for Lease',
-        images: [
-            '/frontend/assets/images/home/realty-card-2.jpg',
-            '/frontend/assets/images/home/project-card-3.jpg',
-            '/frontend/assets/images/home/luxury-card-3.jpg',
-        ],
-        verified: true,
-        cta: 'Sell',
-        ctaVariant: 'sell',
-        type: 'Commercial',
-        service: '+2,500 service',
-        price: 'AED 500,000',
-        location: 'Business Bay, Dubai',
-        desc: 'Prime commercial space available in business district',
-        floor: 10,
-        rera: 'RERA-COMM-7890',
-        beds: null,
-        baths: null,
-        area: '2500 sq.ft',
-        amenities: ['Furnished', 'High-Speed Internet', 'Conference Rooms', 'Reception'],
-        extraMore: null,
-    },
-    {
-        title: 'Studio Apartment in Dubai Marina',
-        images: [
-            '/frontend/assets/images/home/project-card-5.jpg',
-            '/frontend/assets/images/home/realty-card-3.jpg',
-            '/frontend/assets/images/home/luxury-card-1.jpg',
-        ],
-        verified: false,
-        cta: 'Buy Now',
-        ctaVariant: null,
-        type: 'Apartment',
-        service: '+8,000 service',
-        price: 'AED 750,000',
-        location: 'Dubai Marina, Dubai',
-        desc: 'Modern studio with marina views, ideal for investment',
-        floor: 15,
-        rera: 'DUB789012',
-        beds: null,
-        baths: 1,
-        area: '550 sq.ft',
-        amenities: ['Unfurnished', 'Balcony', 'Gym', 'Concierge'],
-        extraMore: 1,
-    },
-];
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { useCommercial } from '../composables/useCommercial';
+import { useLanguages } from '../composables/useLanguages';
+
+const { commercialListing, fetchCommercialListing } = useCommercial();
+const { selectedLanguage } = useLanguages();
+
+const locationQuery = ref('');
+const searchQuery = ref('');
+const propertyType = ref('');
+const listingCategory = ref('');
+const currentPage = ref(1);
+
+function load() {
+    fetchCommercialListing({
+        lang: selectedLanguage.value?.code,
+        page: currentPage.value,
+        location: locationQuery.value.trim() || undefined,
+        search: searchQuery.value.trim() || undefined,
+        property_type: propertyType.value || undefined,
+        category: listingCategory.value || undefined,
+    });
+}
+
+function applyFilters() {
+    currentPage.value = 1;
+    load();
+}
+
+function selectPropertyType(value) {
+    propertyType.value = value;
+    applyFilters();
+}
+
+function selectListingCategory(value) {
+    listingCategory.value = value;
+    applyFilters();
+}
+
+function goToPage(page) {
+    if (page < 1 || page > (pagination.value?.last_page || 1) || page === currentPage.value) return;
+    currentPage.value = page;
+    load();
+    document.querySelector('.mw-commercial')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+const properties = computed(() => commercialListing.value?.properties || []);
+const pagination = computed(() => commercialListing.value?.pagination || null);
+const pageNumbers = computed(() => {
+    if (!pagination.value) return [];
+    return Array.from({ length: pagination.value.last_page }, (_, i) => i + 1);
+});
+
+onMounted(load);
+watch(selectedLanguage, load);
+
+// The reveal-on-scroll animation + gallery/dropdown widgets (legacy assets/js/script.js) only
+// scan the DOM once — freshly rendered/filtered/paginated cards need that binding run again
+// (window.MWRealty.refresh is idempotent, safe to call repeatedly).
+watch(commercialListing, () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+});
+
+function amenityOverflow(amenities) {
+    return Math.max(0, (amenities || []).length - 4);
+}
 </script>
 
 <template>
@@ -345,14 +224,14 @@ const properties = [
 
         <section class="mw-commercial-filter">
             <div class="container-ctn">
-                <form class="mw-commercial-filter__bar" role="search" @submit.prevent>
+                <form class="mw-commercial-filter__bar" role="search" @submit.prevent="applyFilters">
                     <div class="mw-commercial-filter__field">
                         <label for="commercial-location">Location</label>
-                        <input type="text" id="commercial-location" name="location" placeholder="Enter location" autocomplete="off">
+                        <input type="text" id="commercial-location" name="location" placeholder="Enter location" autocomplete="off" v-model="locationQuery" @keyup.enter="applyFilters">
                     </div>
                     <div class="mw-commercial-filter__field">
                         <label for="commercial-properties">Properties</label>
-                        <input type="text" id="commercial-properties" name="properties" placeholder="Search by title, location" autocomplete="off">
+                        <input type="text" id="commercial-properties" name="properties" placeholder="Search by title, location" autocomplete="off" v-model="searchQuery" @keyup.enter="applyFilters">
                     </div>
                     <div class="mw-commercial-filter__field mw-commercial-filter__field--select mw-dropdown" data-dropdown>
                         <label>Property Type</label>
@@ -361,14 +240,11 @@ const properties = [
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" class="mw-commercial-filter__chevron">
                         </button>
                         <ul class="mw-dropdown__menu" data-dropdown-menu>
-                            <li><button type="button" class="is-selected" data-dropdown-option>All type</button></li>
-                            <li><button type="button" data-dropdown-option>Hotel Apartment</button></li>
-                            <li><button type="button" data-dropdown-option>Loft</button></li>
-                            <li><button type="button" data-dropdown-option>Villa</button></li>
-                            <li><button type="button" data-dropdown-option>Apartment</button></li>
-                            <li><button type="button" data-dropdown-option>Penthouse</button></li>
-                            <li><button type="button" data-dropdown-option>Town House</button></li>
-                            <li><button type="button" data-dropdown-option>Commercial</button></li>
+                            <li><button type="button" class="is-selected" data-dropdown-option @click="selectPropertyType('')">All type</button></li>
+                            <li><button type="button" data-dropdown-option @click="selectPropertyType('office')">Office</button></li>
+                            <li><button type="button" data-dropdown-option @click="selectPropertyType('retail-shop')">Retail Shop</button></li>
+                            <li><button type="button" data-dropdown-option @click="selectPropertyType('warehouse')">Warehouse</button></li>
+                            <li><button type="button" data-dropdown-option @click="selectPropertyType('showroom')">Showroom</button></li>
                         </ul>
                     </div>
                     <div class="mw-commercial-filter__field mw-commercial-filter__field--select mw-commercial-filter__field--last mw-dropdown" data-dropdown>
@@ -378,10 +254,10 @@ const properties = [
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" class="mw-commercial-filter__chevron">
                         </button>
                         <ul class="mw-dropdown__menu" data-dropdown-menu>
-                            <li><button type="button" class="is-selected" data-dropdown-option>All categories</button></li>
-                            <li><button type="button" data-dropdown-option>Buy</button></li>
-                            <li><button type="button" data-dropdown-option>Lease</button></li>
-                            <li><button type="button" data-dropdown-option>Off-Plan</button></li>
+                            <li><button type="button" class="is-selected" data-dropdown-option @click="selectListingCategory('')">All categories</button></li>
+                            <li><button type="button" data-dropdown-option @click="selectListingCategory('sale')">Buy</button></li>
+                            <li><button type="button" data-dropdown-option @click="selectListingCategory('rent')">Lease</button></li>
+                            <li><button type="button" data-dropdown-option @click="selectListingCategory('off_plan')">Off-Plan</button></li>
                         </ul>
                     </div>
                     <button type="button" class="mw-commercial-filter__filter-btn" aria-label="More filters" data-bs-toggle="offcanvas" data-bs-target="#commercial-filter-panel" aria-controls="commercial-filter-panel">
@@ -399,45 +275,45 @@ const properties = [
             <div class="container-ctn">
                 <div class="mw-commercial__grid">
 
-                    <article v-for="property in properties" :key="property.title" class="mw-commercial-card" data-reveal>
-                        <div class="mw-projects__media" data-card-gallery>
+                    <article v-for="property in properties" :key="property.slug" class="mw-commercial-card" data-reveal>
+                        <div class="mw-projects__media" data-card-gallery role="link" tabindex="0" @click="$router.push(`/property-details/${property.slug}`)" @keydown.enter="$router.push(`/property-details/${property.slug}`)" style="cursor: pointer;">
                             <div class="mw-projects__slides" data-gallery-track>
-                                <img v-for="(image, index) in property.images" :key="image" :src="image" :alt="index === 0 ? property.title : ''" class="mw-projects__photo">
+                                <img v-for="(image, index) in property.images" :key="image" :src="image" :alt="index === 0 ? property.name : ''" class="mw-projects__photo">
                             </div>
                             <div class="mw-commercial-card__badges">
                                 <span v-if="property.verified" class="mw-badge mw-badge--success mw-commercial-card__verified">
                                     <img src="/frontend/assets/images/icons/verified.svg" alt="" width="16" height="16">
                                     MW Verified
                                 </span>
-                                <span class="mw-commercial-card__cta-pill" :class="{ 'mw-commercial-card__cta-pill--sell': property.ctaVariant === 'sell' }">{{ property.cta }}</span>
+                                <span class="mw-commercial-card__cta-pill" :class="{ 'mw-commercial-card__cta-pill--sell': property.cta_variant === 'sell' }">{{ property.cta }}</span>
                             </div>
-                            <button type="button" class="mw-projects__nav mw-projects__nav--prev" data-gallery-prev aria-label="Previous photo">
+                            <button type="button" class="mw-projects__nav mw-projects__nav--prev" data-gallery-prev aria-label="Previous photo" @click.stop>
                                 <img src="/frontend/assets/images/icons/chevron.svg" alt="">
                             </button>
-                            <button type="button" class="mw-projects__nav mw-projects__nav--next" data-gallery-next aria-label="Next photo">
+                            <button type="button" class="mw-projects__nav mw-projects__nav--next" data-gallery-next aria-label="Next photo" @click.stop>
                                 <img src="/frontend/assets/images/icons/chevron.svg" alt="">
                             </button>
                             <div class="mw-projects__dots" data-gallery-dots></div>
-                            <span class="mw-projects__photo-count">
+                            <span v-if="property.images_count" class="mw-projects__photo-count">
                                 <img src="/frontend/assets/images/icons/photo-count.svg" alt="" width="16" height="16">
-                                <span data-gallery-count>{{ property.images.length }}</span>
+                                <span data-gallery-count>{{ property.images_count }}</span>
                             </span>
                             <span class="mw-commercial-card__type">{{ property.type }}</span>
                         </div>
                         <div class="mw-commercial-card__body">
                             <div class="mw-commercial-card__price-row">
-                                <span class="mw-commercial-card__service">{{ property.service }}</span>
+                                <span v-if="property.service" class="mw-commercial-card__service">{{ property.service }}</span>
                                 <span class="mw-commercial-card__price">{{ property.price }}</span>
                             </div>
-                            <h3 class="mw-commercial-card__title">{{ property.title }}</h3>
+                            <h3 class="mw-commercial-card__title"><router-link :to="`/property-details/${property.slug}`">{{ property.name }}</router-link></h3>
                             <p class="mw-commercial-card__location">
                                 <img src="/frontend/assets/images/icons/location.svg" alt="" width="16" height="16">
                                 {{ property.location }}
                             </p>
-                            <p class="mw-commercial-card__desc">{{ property.desc }}</p>
+                            <p class="mw-commercial-card__desc">{{ property.description }}</p>
                             <div class="mw-commercial-card__meta-row">
-                                <span>Floor: {{ property.floor }}</span>
-                                <span>RERA: {{ property.rera }}</span>
+                                <span>Floor: {{ property.floor ?? '—' }}</span>
+                                <span>RERA: {{ property.rera_id }}</span>
                             </div>
                             <div class="mw-commercial-card__stats">
                                 <span v-if="property.beds" class="mw-commercial-card__stat"><img src="/frontend/assets/images/icons/bed.svg" alt="" width="16" height="16">{{ property.beds }}</span>
@@ -445,8 +321,8 @@ const properties = [
                                 <span class="mw-commercial-card__stat"><img src="/frontend/assets/images/icons/area.svg" alt="" width="16" height="16">{{ property.area }}</span>
                             </div>
                             <div class="mw-commercial-card__amenities">
-                                <span v-for="amenity in property.amenities" :key="amenity" class="mw-commercial-card__amenity">{{ amenity }}</span>
-                                <span v-if="property.extraMore" class="mw-commercial-card__amenity mw-commercial-card__amenity--more">+{{ property.extraMore }} more</span>
+                                <span v-for="amenity in property.amenities.slice(0, 4)" :key="amenity" class="mw-commercial-card__amenity">{{ amenity }}</span>
+                                <span v-if="amenityOverflow(property.amenities)" class="mw-commercial-card__amenity mw-commercial-card__amenity--more">+{{ amenityOverflow(property.amenities) }} more</span>
                             </div>
                             <div class="mw-commercial-card__divider"></div>
                             <div class="mw-commercial-card__contacts">
@@ -466,7 +342,15 @@ const properties = [
                         </div>
                     </article>
 
+                    <p v-if="commercialListing && !properties.length" class="mw-commercial-card__desc">No commercial properties match your search.</p>
+
                 </div>
+
+                <nav v-if="pagination && pagination.last_page > 1" class="mw-blog__pagination" aria-label="Commercial properties pagination">
+                    <button type="button" class="mw-blog__page mw-blog__page--prev" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">Previous</button>
+                    <button v-for="page in pageNumbers" :key="page" type="button" class="mw-blog__page" :class="{ 'is-active': page === currentPage }" @click="goToPage(page)">{{ page }}</button>
+                    <button type="button" class="mw-blog__page mw-blog__page--next" :disabled="currentPage === pagination.last_page" @click="goToPage(currentPage + 1)">Next</button>
+                </nav>
             </div>
         </section>
     </main>

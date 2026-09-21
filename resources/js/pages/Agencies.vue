@@ -1,14 +1,44 @@
 <script setup>
-const agencies = [
-    { name: "Kaal Real Estate Agency", logo: "/frontend/assets/images/agencies/logo-kaal.png", logoWidth: 250, logoHeight: 89, properties: 3, delay: 0 },
-    { name: "Elite Homes Realty", logo: "/frontend/assets/images/agencies/logo-elite-homes.png", logoWidth: 177, logoHeight: 177, properties: 0, delay: 1 },
-    { name: "ABC Real Estate", logo: "/frontend/assets/images/agencies/logo-abc-real-estate.png", logoWidth: 207, logoHeight: 131, properties: 10, delay: 2 },
-    { name: "Violet Edwards", logo: "/frontend/assets/images/agencies/logo-violet-edwards.png", logoWidth: 250, logoHeight: 24, properties: 3, delay: 3 },
-    { name: "Skyline Properties", logo: "/frontend/assets/images/agencies/logo-skyline.png", logoWidth: 213, logoHeight: 148, properties: 5, delay: 0 },
-    { name: "Blue Horizon Real Estate", logo: "/frontend/assets/images/agencies/logo-blue-horizon.png", logoWidth: 203, logoHeight: 100, properties: 3, delay: 1 },
-    { name: "Dalton Wade", logo: "/frontend/assets/images/agencies/logo-dalton-wade.png", logoWidth: 200, logoHeight: 70, properties: 10, delay: 2 },
-    { name: "DXB Dubai Properties", logo: "/frontend/assets/images/agencies/logo-dxb-dubai.png", logoWidth: 176, logoHeight: 166, properties: 3, delay: 3 },
-];
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { useAgencies } from '../composables/useAgencies';
+import { useLanguages } from '../composables/useLanguages';
+
+const { agenciesListing, fetchAgenciesListing } = useAgencies();
+const { selectedLanguage } = useLanguages();
+
+const locationQuery = ref('');
+const nameQuery = ref('');
+const appliedLocation = ref('');
+const appliedName = ref('');
+
+function load() {
+    fetchAgenciesListing(selectedLanguage.value?.code);
+}
+
+function applyFilters() {
+    appliedLocation.value = locationQuery.value.trim().toLowerCase();
+    appliedName.value = nameQuery.value.trim().toLowerCase();
+}
+
+const filteredAgencies = computed(() => {
+    const agencies = agenciesListing.value?.agencies || [];
+    return agencies.filter((agency) => {
+        const matchesLocation = !appliedLocation.value || (agency.office_address || '').toLowerCase().includes(appliedLocation.value);
+        const matchesName = !appliedName.value || agency.name.toLowerCase().includes(appliedName.value);
+        return matchesLocation && matchesName;
+    });
+});
+
+onMounted(load);
+watch(selectedLanguage, load);
+
+// See Blogs.vue for why this re-run is needed after the async fetch populates the page.
+watch(agenciesListing, () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+});
+watch(filteredAgencies, () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+});
 </script>
 
 <template>
@@ -33,13 +63,13 @@ const agencies = [
                 <div class="mw-agencies-filter__bar">
                     <div class="mw-agencies-filter__field">
                         <label for="agency-location">Location</label>
-                        <input type="text" id="agency-location" name="location" placeholder="Enter location" autocomplete="off">
+                        <input type="text" id="agency-location" name="location" placeholder="Enter location" autocomplete="off" v-model="locationQuery" @keyup.enter="applyFilters">
                     </div>
                     <div class="mw-agencies-filter__field">
                         <label for="agency-name">Agency Name</label>
-                        <input type="text" id="agency-name" name="agency-name" placeholder="Search agency name" autocomplete="off">
+                        <input type="text" id="agency-name" name="agency-name" placeholder="Search agency name" autocomplete="off" v-model="nameQuery" @keyup.enter="applyFilters">
                     </div>
-                    <button type="button" class="mw-agencies-filter__search">
+                    <button type="button" class="mw-agencies-filter__search" @click="applyFilters">
                         <img src="/frontend/assets/images/agencies/icon-search.svg" alt="" width="18" height="18">
                         Search
                     </button>
@@ -58,49 +88,40 @@ const agencies = [
         <section class="mw-agencies">
             <div class="container-ctn">
                 <div class="mw-agencies__head">
-                    <h2 class="mw-agencies__title" data-reveal>Top 10 Agencies</h2>
+                    <h2 class="mw-agencies__title" data-reveal>Top Agencies</h2>
                     <p class="mw-agencies__text" data-reveal>Explore agency with a proven track record of high response rates and authentic listings.</p>
                 </div>
 
+                <p v-if="agenciesListing && !filteredAgencies.length" class="mw-agencies__text">No agencies match your search.</p>
+
                 <div class="mw-agencies__grid" data-agencies-grid>
-                    <article v-for="agency in agencies" :key="agency.name" class="mw-agency-card" data-reveal :style="agency.delay ? { '--reveal-delay': agency.delay } : undefined">
+                    <article v-for="(agency, index) in filteredAgencies" :key="agency.slug" class="mw-agency-card" data-reveal :style="{ '--reveal-delay': index % 4 }">
                         <div class="mw-agency-card__logo">
-                            <img :src="agency.logo" :alt="agency.name" :width="agency.logoWidth" :height="agency.logoHeight">
+                            <img :src="agency.logo_url || '/frontend/assets/images/agencies/logo-kaal.png'" :alt="agency.name" width="200" height="120">
                         </div>
                         <div class="mw-agency-card__body">
                             <h3 class="mw-agency-card__name">{{ agency.name }}</h3>
                             <div class="mw-agency-card__meta">
-                                <span class="mw-agency-card__meta-item"><img src="/frontend/assets/images/icons/building.svg" alt="" width="18" height="18">Properties : {{ agency.properties }}</span>
-                                <span class="mw-agency-card__meta-item"><img src="/frontend/assets/images/icons/location.svg" alt="" width="18" height="18">Services Area : Dubai</span>
+                                <span class="mw-agency-card__meta-item"><img src="/frontend/assets/images/icons/building.svg" alt="" width="18" height="18">Properties : {{ agency.properties_count }}</span>
+                                <span class="mw-agency-card__meta-item"><img src="/frontend/assets/images/icons/location.svg" alt="" width="18" height="18">{{ agency.office_address || 'Services Area : Dubai' }}</span>
                             </div>
                         </div>
                         <div class="mw-agency-card__foot">
                             <div class="mw-agency-card__contacts">
-                                <a href="tel:+971585899990" class="mw-agency-card__icon-btn" :aria-label="`Call ${agency.name}`">
+                                <a v-if="agency.phone" :href="`tel:${agency.phone}`" class="mw-agency-card__icon-btn" :aria-label="`Call ${agency.name}`">
                                     <img src="/frontend/assets/images/icons/phone.svg" alt="" width="24" height="24">
                                 </a>
-                                <a href="mailto:info@mightywarnersrealty.com" class="mw-agency-card__icon-btn" :aria-label="`Email ${agency.name}`">
+                                <a v-if="agency.email" :href="`mailto:${agency.email}`" class="mw-agency-card__icon-btn" :aria-label="`Email ${agency.name}`">
                                     <img src="/frontend/assets/images/icons/email.svg" alt="" width="24" height="24">
                                 </a>
                             </div>
-                            <router-link to="/agency-details" class="mw-agency-card__link">
+                            <router-link :to="`/agency-details/${agency.slug}`" class="mw-agency-card__link">
                                 View Details
                                 <img src="/frontend/assets/images/icons/find-cta-arrow.svg" alt="" width="18" height="18">
                             </router-link>
                         </div>
                     </article>
                 </div>
-
-                <nav class="mw-agencies__pagination" aria-label="Agencies pagination" data-agencies-pagination>
-                    <button type="button" class="mw-agencies__page mw-agencies__page--prev" data-agencies-page="prev">Previous</button>
-                    <button type="button" class="mw-agencies__page is-active" data-agencies-page="1">1</button>
-                    <button type="button" class="mw-agencies__page" data-agencies-page="2">2</button>
-                    <button type="button" class="mw-agencies__page" data-agencies-page="3">3</button>
-                    <button type="button" class="mw-agencies__page" data-agencies-page="4">4</button>
-                    <span class="mw-agencies__page mw-agencies__page--ellipsis" aria-hidden="true">…</span>
-                    <button type="button" class="mw-agencies__page" data-agencies-page="8">8</button>
-                    <button type="button" class="mw-agencies__page mw-agencies__page--next" data-agencies-page="next">Next</button>
-                </nav>
             </div>
         </section>
     </main>

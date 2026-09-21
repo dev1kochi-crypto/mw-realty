@@ -1,11 +1,23 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useSiteInformation } from '../composables/useSiteInformation';
+import { useLanguages } from '../composables/useLanguages';
 
 const route = useRoute();
 const activeBottom = computed(() => route.meta.activeBottom ?? '');
 const isHome = computed(() => route.meta.isHome === true);
 const homeAnchor = computed(() => (isHome.value ? '' : '/'));
+
+// The footer sits outside <router-view> and mounts once for the whole app lifetime, so this
+// only ever fires on first load and on a language switch — not on every navigation.
+const { siteInformation, fetchSiteInformation } = useSiteInformation();
+const { selectedLanguage } = useLanguages();
+
+onMounted(() => fetchSiteInformation(selectedLanguage.value?.code));
+watch(selectedLanguage, () => fetchSiteInformation(selectedLanguage.value?.code));
+
+const copyrightYear = new Date().getFullYear();
 </script>
 
 <template>
@@ -62,30 +74,30 @@ const homeAnchor = computed(() => (isHome.value ? '' : '/'));
                     <h3 class="mw-footer__col-title">Legal</h3>
                     <ul class="mw-footer__links">
                         <li><router-link to="/terms-and-conditions">Terms of use</router-link></li>
-                        <li><a href="#">Privacy policy</a></li>
-                        <li><a href="#">Security Policy</a></li>
-                        <li><a href="#">Cookie settings</a></li>
+                        <li><router-link to="/privacy-policy">Privacy policy</router-link></li>
+                        <li><router-link to="/security-policy">Security Policy</router-link></li>
+                        <li><router-link to="/cookie-settings">Cookie settings</router-link></li>
                     </ul>
                 </div>
             </div>
 
             <div class="mw-footer__meta">
                 <div class="mw-footer__contact-list">
-                    <div class="mw-footer__contact-item">
+                    <div v-if="siteInformation?.address" class="mw-footer__contact-item">
                         <span class="mw-footer__contact-label">Address</span>
-                        <span class="mw-footer__contact-value">Office No: 703 - Churchill Tower Business Bay - Dubai, UAE</span>
+                        <span class="mw-footer__contact-value">{{ siteInformation.address }}</span>
                     </div>
-                    <div class="mw-footer__contact-item">
+                    <div v-if="siteInformation?.toll_free" class="mw-footer__contact-item">
                         <span class="mw-footer__contact-label">Toll Free</span>
-                        <span class="mw-footer__contact-value mw-footer__contact-value--phone">800644489</span>
+                        <span class="mw-footer__contact-value mw-footer__contact-value--phone">{{ siteInformation.toll_free }}</span>
                     </div>
-                    <div class="mw-footer__contact-item">
+                    <div v-if="siteInformation?.phone" class="mw-footer__contact-item">
                         <span class="mw-footer__contact-label">Call Us</span>
-                        <span class="mw-footer__contact-value mw-footer__contact-value--phone"><a href="tel:+971585899990">+971 58 589 9990</a></span>
+                        <span class="mw-footer__contact-value mw-footer__contact-value--phone"><a :href="`tel:${siteInformation.phone}`">{{ siteInformation.phone }}</a></span>
                     </div>
-                    <div class="mw-footer__contact-item">
+                    <div v-if="siteInformation?.email" class="mw-footer__contact-item">
                         <span class="mw-footer__contact-label">Email</span>
-                        <span class="mw-footer__contact-value"><a href="mailto:info@mightywarnersrealty.com">info@mightywarnersrealty.com</a></span>
+                        <span class="mw-footer__contact-value"><a :href="`mailto:${siteInformation.email}`">{{ siteInformation.email }}</a></span>
                     </div>
                 </div>
 
@@ -105,12 +117,12 @@ const homeAnchor = computed(() => (isHome.value ? '' : '/'));
             </div>
 
             <div class="mw-footer__bottom">
-                <p class="mw-footer__copyright">Copyright &copy; 2026 Mighty Warner Realty &nbsp;|&nbsp; Designed by : Mighty Warners Technologies</p>
+                <p class="mw-footer__copyright">Copyright &copy; {{ copyrightYear }} {{ siteInformation?.company_name || 'Mighty Warner Realty' }} &nbsp;|&nbsp; Designed by : Mighty Warners Technologies</p>
                 <div class="mw-footer__social">
-                    <a href="#"><img src="/frontend/assets/images/icons/social-twitter.svg" alt="" width="18" height="18"> Twitter</a>
-                    <a href="#"><img src="/frontend/assets/images/icons/social-facebook.svg" alt="" width="18" height="18"> Facebook</a>
-                    <a href="#"><img src="/frontend/assets/images/icons/social-instagram.svg" alt="" width="18" height="18"> Instagram</a>
-                    <a href="#"><img src="/frontend/assets/images/icons/social-linkedin.svg" alt="" width="18" height="18"> LinkedIn</a>
+                    <a v-if="siteInformation?.social?.twitter" :href="siteInformation.social.twitter" target="_blank" rel="noopener"><img src="/frontend/assets/images/icons/social-twitter.svg" alt="" width="18" height="18"> Twitter</a>
+                    <a v-if="siteInformation?.social?.facebook" :href="siteInformation.social.facebook" target="_blank" rel="noopener"><img src="/frontend/assets/images/icons/social-facebook.svg" alt="" width="18" height="18"> Facebook</a>
+                    <a v-if="siteInformation?.social?.instagram" :href="siteInformation.social.instagram" target="_blank" rel="noopener"><img src="/frontend/assets/images/icons/social-instagram.svg" alt="" width="18" height="18"> Instagram</a>
+                    <a v-if="siteInformation?.social?.linkedin" :href="siteInformation.social.linkedin" target="_blank" rel="noopener"><img src="/frontend/assets/images/icons/social-linkedin.svg" alt="" width="18" height="18"> LinkedIn</a>
                 </div>
             </div>
         </div>

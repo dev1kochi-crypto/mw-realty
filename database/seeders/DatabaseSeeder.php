@@ -24,6 +24,11 @@ class DatabaseSeeder extends Seeder
             FilterSeeder::class,
             PlanSeeder::class,
             CrmAdminMasterDataSeeder::class,
+            // PortalUserSeeder must run before PropertySeeder — PropertySeeder assigns each
+            // demo property to a seeded agent/agency.
+            PortalUserSeeder::class,
+            PropertySeeder::class,
+            CommercialPropertySeeder::class,
         ]);
     }
 }
