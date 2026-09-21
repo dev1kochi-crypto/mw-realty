@@ -1,62 +1,95 @@
 {{-- Filters + stats cards + table + pagination — reloaded via AJAX (LeadController::index
      with an XHR header) after Create/Edit/Delete so the page never has to fully reload. --}}
-<form method="GET" class="portal-card p-3 mb-3 d-flex flex-wrap gap-3 align-items-end">
-    <input type="hidden" name="status" value="{{ request('status') }}">
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">Search</label>
-        <input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Name, email, phone" style="min-width: 180px;">
+@php($activeFilterCount = collect(['search', 'owner_id', 'stage_id', 'source_id', 'tag_id', 'date_from', 'date_to'])->filter(fn ($key) => filled(request($key)))->count())
+<div class="portal-card portal-filter-bar mb-3">
+    <div class="portal-filter-bar__header d-flex flex-wrap align-items-center gap-2">
+        <span class="portal-filter-bar__icon"><i class="fas fa-sliders" aria-hidden="true"></i></span>
+        <span class="fw-semibold" style="font-size: 0.88rem;">Filter Leads</span>
+        @if($activeFilterCount)
+        <span class="portal-filter-bar__badge">{{ $activeFilterCount }} active</span>
+        @endif
     </div>
-    @if($isAdmin)
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">Owner</label>
-        <select name="owner_id" class="form-select form-select-sm" onchange="this.form.submit()">
-            <option value="">All owners</option>
-            @foreach($owners as $owner)
-            <option value="{{ $owner->id }}" {{ (string) request('owner_id') === (string) $owner->id ? 'selected' : '' }}>{{ $owner->displayName() }}</option>
-            @endforeach
-        </select>
-    </div>
-    @endif
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">Stage</label>
-        <select name="stage_id" class="form-select form-select-sm" onchange="this.form.submit()">
-            <option value="">All stages</option>
-            @foreach($stages as $stage)
-            <option value="{{ $stage->id }}" {{ (string) request('stage_id') === (string) $stage->id ? 'selected' : '' }}>{{ $stage->name }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">Source</label>
-        <select name="source_id" class="form-select form-select-sm" onchange="this.form.submit()">
-            <option value="">All sources</option>
-            @foreach($sources as $source)
-            <option value="{{ $source->id }}" {{ (string) request('source_id') === (string) $source->id ? 'selected' : '' }}>{{ $source->name }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">Tag</label>
-        <select name="tag_id" class="form-select form-select-sm" onchange="this.form.submit()">
-            <option value="">All tags</option>
-            @foreach($tags as $tag)
-            <option value="{{ $tag->id }}" {{ (string) request('tag_id') === (string) $tag->id ? 'selected' : '' }}>{{ $tag->name }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">From</label>
-        <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control form-control-sm">
-    </div>
-    <div>
-        <label class="form-label small mb-1 text-muted fw-semibold">To</label>
-        <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control form-control-sm">
-    </div>
-    <button type="submit" class="btn btn-portal-primary btn-sm">Filter</button>
-    @if(request('search') || request('owner_id') || request('stage_id') || request('source_id') || request('tag_id') || request('date_from') || request('date_to'))
-    <a href="{{ route('portal.crm.leads.index', ['status' => request('status')]) }}" class="btn btn-sm btn-link text-muted">Clear filters</a>
-    @endif
-</form>
+    <form method="GET" class="portal-filter-bar__form p-3 d-flex flex-nowrap gap-3 align-items-end">
+        <input type="hidden" name="status" value="{{ request('status') }}">
+        <div class="portal-filter-field portal-filter-field--search">
+            <label class="form-label mb-1">Search</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-magnifying-glass"></i></span>
+                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Name, email, phone">
+            </div>
+        </div>
+        @if($isAdmin)
+        <div class="portal-filter-field portal-filter-field--owner">
+            <label class="form-label mb-1">Owner</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                <select name="owner_id" class="form-select">
+                    <option value="">All owners</option>
+                    @foreach($owners as $owner)
+                    <option value="{{ $owner->id }}" {{ (string) request('owner_id') === (string) $owner->id ? 'selected' : '' }}>{{ $owner->displayName() }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        @endif
+        <div class="portal-filter-field portal-filter-field--stage">
+            <label class="form-label mb-1">Stage</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-layer-group"></i></span>
+                <select name="stage_id" class="form-select">
+                    <option value="">All stages</option>
+                    @foreach($stages as $stage)
+                    <option value="{{ $stage->id }}" {{ (string) request('stage_id') === (string) $stage->id ? 'selected' : '' }}>{{ $stage->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="portal-filter-field portal-filter-field--source">
+            <label class="form-label mb-1">Source</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-share-nodes"></i></span>
+                <select name="source_id" class="form-select">
+                    <option value="">All sources</option>
+                    @foreach($sources as $source)
+                    <option value="{{ $source->id }}" {{ (string) request('source_id') === (string) $source->id ? 'selected' : '' }}>{{ $source->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="portal-filter-field portal-filter-field--tag">
+            <label class="form-label mb-1">Tag</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                <select name="tag_id" class="form-select">
+                    <option value="">All tags</option>
+                    @foreach($tags as $tag)
+                    <option value="{{ $tag->id }}" {{ (string) request('tag_id') === (string) $tag->id ? 'selected' : '' }}>{{ $tag->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="portal-filter-field portal-filter-field--date">
+            <label class="form-label mb-1">From</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-calendar-days"></i></span>
+                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control">
+            </div>
+        </div>
+        <div class="portal-filter-field portal-filter-field--date">
+            <label class="form-label mb-1">To</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-calendar-check"></i></span>
+                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control">
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-shrink-0">
+            <button type="submit" class="btn btn-portal-primary btn-sm text-nowrap"><i class="fas fa-filter me-1"></i> Filter</button>
+            @if($activeFilterCount)
+            <a href="{{ route('portal.crm.leads.index', ['status' => request('status')]) }}" class="btn btn-outline-secondary btn-sm text-nowrap"><i class="fas fa-rotate-left me-1"></i> Clear</a>
+            @endif
+        </div>
+    </form>
+</div>
 
 
 <div id="leadBulkActionsBar" class="portal-card p-2 px-3 mb-3 d-none d-flex align-items-center justify-content-between">
@@ -66,40 +99,72 @@
     </button>
 </div>
 
+@php($hasTableField = fn (string $field) => in_array($field, $leadTableColumns, true))
 <div class="portal-card p-3 p-md-4">
+    <div class="portal-table-toolbar">
+        <span id="leadTableScrollHint" class="portal-table-scroll-hint d-none"><i class="fas fa-arrows-left-right me-1" aria-hidden="true"></i>Scroll horizontally to see all selected fields</span>
+    </div>
     <div class="table-responsive">
-        <table class="table portal-table mb-0">
+        <table class="table portal-table mb-0" id="leadsDataTable" data-has-rows="{{ $leads->isNotEmpty() ? 'true' : 'false' }}">
             <thead>
                 <tr>
                     <th style="width: 2.5rem;"><input type="checkbox" class="form-check-input" id="selectAllLeads"></th>
-                    <th>Lead</th>
-                    <th>Property</th>
-                    @if($isAdmin)
-                    <th>Owner</th>
+                    <th data-column-key="lead">Lead</th>
+                    @if($hasTableField('email'))
+                    <th data-column-key="email">Email</th>
                     @endif
-                    <th>Stage</th>
-                    <th>Source</th>
-                    <th>Tags</th>
-                    <th>Received</th>
-                    <th class="text-end">Actions</th>
+                    @if($hasTableField('phone'))
+                    <th data-column-key="phone">Phone</th>
+                    @endif
+                    @if($isAdmin && $hasTableField('owner'))
+                    <th data-column-key="owner">Owner</th>
+                    @endif
+                    @if($hasTableField('stage'))
+                    <th data-column-key="stage">Stage</th>
+                    @endif
+                    @if($hasTableField('status'))
+                    <th data-column-key="status">Status</th>
+                    @endif
+                    @if($hasTableField('source'))
+                    <th data-column-key="source">Source</th>
+                    @endif
+                    @if($hasTableField('tags'))
+                    <th data-column-key="tags">Tags</th>
+                    @endif
+                    @if($hasTableField('message'))
+                    <th data-column-key="message">Message</th>
+                    @endif
+                    @if($hasTableField('notes'))
+                    <th data-column-key="notes">Notes</th>
+                    @endif
+                    @if($hasTableField('received'))
+                    <th data-column-key="received">Received</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
                 @forelse($leads as $lead)
-                <tr>
-                    <td><input type="checkbox" class="form-check-input lead-select-checkbox" value="{{ $lead->id }}"></td>
-                    <td>
+                <tr class="portal-lead-row" data-lead-id="{{ $lead->id }}" tabindex="0" aria-label="View {{ $lead->name ?: 'lead' }} details">
+                    <td data-lead-selection><input type="checkbox" class="form-check-input lead-select-checkbox" value="{{ $lead->id }}"></td>
+                    <td data-column-key="lead">
                         <div class="d-flex align-items-center gap-2">
                             <span class="portal-lead-avatar">{{ strtoupper(mb_substr($lead->name ?: '?', 0, 1)) }}</span>
                             <div class="min-w-0">
-                                <div class="fw-semibold">{{ $lead->name ?: 'Unknown' }}</div>
+                                <button type="button" class="portal-lead-name-button view-lead-btn" data-id="{{ $lead->id }}" aria-label="View details for {{ $lead->name ?: 'lead' }}">
+                                    {{ $lead->name ?: 'Unknown' }}
+                                </button>
                                 <div class="text-muted text-truncate" style="font-size: 0.78rem; max-width: 180px;">{{ $lead->email ?: $lead->formatted_phone ?: '-' }}</div>
                             </div>
                         </div>
                     </td>
-                    <td>{{ $lead->property?->getTranslation('title') ?? '-' }}</td>
-                    @if($isAdmin)
-                    <td>
+                    @if($hasTableField('email'))
+                    <td data-column-key="email" data-search="{{ $lead->email ?? '' }}"><span class="portal-table-email">{{ $lead->email ?: '-' }}</span></td>
+                    @endif
+                    @if($hasTableField('phone'))
+                    <td data-column-key="phone" data-search="{{ $lead->formatted_phone ?? '' }}">{{ $lead->formatted_phone ?: '-' }}</td>
+                    @endif
+                    @if($isAdmin && $hasTableField('owner'))
+                    <td data-column-key="owner">
                         @if($lead->owner)
                             {{ $lead->owner->displayName() }}
                         @else
@@ -107,7 +172,8 @@
                         @endif
                     </td>
                     @endif
-                    <td>
+                    @if($hasTableField('stage'))
+                    <td data-column-key="stage" data-search="{{ $lead->stage?->name ?? '' }}" data-order="{{ $lead->stage?->name ?? '' }}">
                         <div class="portal-inline-stage">
                             <button type="button" class="portal-stage-picker" title="Change stage" aria-label="Change stage for {{ $lead->name ?: 'lead' }}">
                                 @if($lead->stage)
@@ -131,29 +197,55 @@
                             <span class="spinner-border spinner-border-sm text-primary d-none portal-stage-spinner" role="status" aria-hidden="true"></span>
                         </div>
                     </td>
-                    <td>{{ $lead->source?->name ?? '—' }}</td>
-                    <td>
-                        @forelse($lead->tags as $tag)
-                        <span class="portal-tag-chip" style="background: {{ $tag->color }}22; color: {{ $tag->color }};">{{ $tag->name }}</span>
-                        @empty
-                        <span class="text-muted">&mdash;</span>
-                        @endforelse
+                    @endif
+                    @if($hasTableField('status'))
+                    <td data-column-key="status" data-search="{{ $lead->status }}">
+                        <span class="portal-badge-status portal-badge-{{ $lead->status }}">{{ ucfirst($lead->status) }}</span>
                     </td>
-                    <td class="text-muted">{{ $lead->created_at->format('d M Y') }}</td>
-                    <td class="text-end text-nowrap">
-                        <div class="portal-lead-actions" role="group" aria-label="Actions for {{ $lead->name ?: 'lead' }}">
-                            <button type="button" class="portal-lead-action is-view view-lead-btn" data-id="{{ $lead->id }}" title="View lead details" aria-label="View {{ $lead->name ?: 'lead' }} details">
-                                <i class="fas fa-eye" aria-hidden="true"></i>
+                    @endif
+                    @if($hasTableField('source'))
+                    <td>{{ $lead->source?->name ?? '—' }}</td>
+                    @endif
+                    @if($hasTableField('tags'))
+                    <td data-column-key="tags" data-search="{{ $lead->tags->pluck('name')->implode(' ') }}">
+                        <div class="portal-tags-cell">
+                            <button type="button" class="portal-tags-picker" data-id="{{ $lead->id }}" title="Manage tags" aria-label="Manage tags for {{ $lead->name ?: 'lead' }}">
+                                @forelse($lead->tags->take(1) as $tag)
+                                <span class="portal-tag-chip" style="background: {{ $tag->color }}22; color: {{ $tag->color }};">{{ $tag->name }}</span>
+                                @empty
+                                <span class="portal-tags-empty"><i class="fas fa-plus" aria-hidden="true"></i> Add tags</span>
+                                @endforelse
+                                @if($lead->tags->isNotEmpty())
+                                <i class="fas fa-pen portal-tags-picker-icon" aria-hidden="true"></i>
+                                @endif
                             </button>
-                            <button type="button" class="portal-lead-action is-edit edit-lead-btn" data-id="{{ $lead->id }}" title="Edit lead" aria-label="Edit {{ $lead->name ?: 'lead' }}">
-                                <i class="fas fa-pen" aria-hidden="true"></i>
-                            </button>
+                            @if($lead->tags->count() > 1)
+                            <button type="button" class="portal-tag-overflow" data-id="{{ $lead->id }}" aria-haspopup="true" aria-expanded="false" title="Show other tags">+{{ $lead->tags->count() - 1 }}</button>
+                            @endif
                         </div>
                     </td>
+                    @endif
+                    @if($hasTableField('message'))
+                    <td data-column-key="message" data-search="{{ $lead->message ?? '' }}">
+                        <span class="portal-lead-message-excerpt">{{ \Illuminate\Support\Str::limit($lead->message ?: '-', 70) }}</span>
+                    </td>
+                    @endif
+                    @if($hasTableField('notes'))
+                    <td data-column-key="notes" data-order="{{ $lead->notes_history_count }}">
+                        @if($lead->notes_history_count)
+                        <span class="portal-lead-notes-count"><i class="fas fa-note-sticky" aria-hidden="true"></i>{{ $lead->notes_history_count }}</span>
+                        @else
+                        <span class="text-muted">-</span>
+                        @endif
+                    </td>
+                    @endif
+                    @if($hasTableField('received'))
+                    <td data-column-key="received" class="text-muted" data-order="{{ $lead->created_at->format('Y-m-d H:i:s') }}">{{ $lead->created_at->format('d M Y') }}</td>
+                    @endif
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="{{ $isAdmin ? 9 : 8 }}" class="portal-empty">
+                    <td colspan="{{ count($leadTableColumns) + 1 }}" class="portal-empty" data-empty-cell>
                         <div class="portal-empty-icon"><i class="fas fa-address-book"></i></div>
                         <div class="fw-semibold mb-1">No leads {{ request('status') || request('stage_id') || request('source_id') || request('tag_id') ? 'match these filters' : 'yet' }}</div>
                         <div style="font-size: 0.85rem;">They'll show up here the moment a visitor enquires about {{ $isAdmin ? 'a' : 'one of your' }} listing{{ $isAdmin ? '' : 's' }}.</div>
@@ -164,5 +256,3 @@
         </table>
     </div>
 </div>
-
-<div class="mt-3">{{ $leads->links() }}</div>

@@ -504,6 +504,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::prefix('crm')->name('crm.')->group(function () {
             Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
             Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
+            Route::put('/leads/table-columns', [LeadController::class, 'updateTableColumns'])->name('leads.table-columns.update');
             Route::delete('/leads/bulk-delete', [LeadController::class, 'bulkDestroy'])->name('leads.bulk-delete');
             Route::get('/leads/export', [LeadController::class, 'export'])->name('leads.export');
             Route::get('/leads/import', [LeadController::class, 'importForm'])->name('leads.import.form');
@@ -513,6 +514,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::post('/leads/{id}/restore', [LeadController::class, 'restore'])->name('leads.restore');
             Route::delete('/leads/{id}/force', [LeadController::class, 'forceDestroy'])->name('leads.force-delete');
             Route::patch('/leads/{id}/stage', [LeadController::class, 'updateStage'])->name('leads.stage.update');
+            Route::patch('/leads/{id}/tags', [LeadController::class, 'syncTags'])->name('leads.tags.update');
             Route::get('/leads/{id}', [LeadController::class, 'show'])->name('leads.show');
             Route::put('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
             Route::delete('/leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
