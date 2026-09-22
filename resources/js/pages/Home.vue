@@ -1,10 +1,12 @@
 <script setup>
 import { computed, nextTick, watch } from 'vue';
 import { useHomePage } from '../composables/useHomePage';
+import { useWishlist } from '../composables/useWishlist';
 
 // One fetch for the whole page (see routes/api.php -> Api\HomeController) instead of a
 // request per section — every section below just reads its own slice of `homePage.value`.
 const { homePage } = useHomePage();
+const { isWishlisted, toggleWishlist } = useWishlist();
 
 const banner = computed(() => homePage.value?.banner || null);
 const brands = computed(() => homePage.value?.brands || []);
@@ -75,6 +77,7 @@ const projectFilters = computed(() => {
 const projectCards = computed(() => {
     const properties = developments.value?.properties || [];
     return properties.map((p) => ({
+        id: p.id,
         slug: p.slug,
         category: p.category,
         images: p.images,
@@ -114,6 +117,7 @@ const premiumButtonUrl = computed(() => premiumProperties.value?.button_url || '
 const highlightCards = computed(() => {
     const properties = premiumProperties.value?.properties || [];
     return properties.map((p) => ({
+        id: p.id,
         slug: p.slug,
         images: p.images,
         images_count: p.images_count,
@@ -403,7 +407,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 <img src="/frontend/assets/images/icons/verified.svg" alt="" width="18" height="18">
                                 Verified
                             </span>
-                            <button type="button" class="mw-projects__save" aria-label="Save property" aria-pressed="false" @click.stop>
+                            <button type="button" class="mw-projects__save" :class="{ 'is-saved': isWishlisted(card.id) }" aria-label="Save property" :aria-pressed="isWishlisted(card.id)" @click.stop="toggleWishlist(card.id)">
                                 <img src="/frontend/assets/images/icons/heart.svg" alt="" width="24" height="24">
                             </button>
                             <button type="button" class="mw-projects__nav mw-projects__nav--prev" data-gallery-prev aria-label="Previous photo" @click.stop>
@@ -487,7 +491,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                     <img src="/frontend/assets/images/icons/star.svg" alt="" width="18" height="18">
                                     Premium
                                 </span>
-                                <button type="button" class="mw-highlight__save" aria-label="Save property" aria-pressed="false" @click.stop>
+                                <button type="button" class="mw-highlight__save" :class="{ 'is-saved': isWishlisted(card.id) }" aria-label="Save property" :aria-pressed="isWishlisted(card.id)" @click.stop="toggleWishlist(card.id)">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path d="M16.696 3C14.652 3 12.887 4.197 12 5.943C11.113 4.197 9.348 3 7.304 3C4.374 3 2 5.457 2 8.481C2 11.505 3.817 14.277 6.165 16.554C8.513 18.831 12 21 12 21C12 21 15.374 18.867 17.835 16.554C20.46 14.088 22 11.514 22 8.481C22 5.448 19.626 3 16.696 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>

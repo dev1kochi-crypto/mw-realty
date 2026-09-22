@@ -33,6 +33,8 @@ use App\Http\Controllers\Portal\Crm\LeadTagController;
 use App\Http\Controllers\Portal\Crm\LeadSourceController;
 use App\Http\Controllers\Portal\Crm\PortalReportController;
 use App\Http\Controllers\Crm\LeadCaptureController;
+use App\Http\Controllers\Customer\CustomerAuthController;
+use App\Http\Controllers\Api\CustomerController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -41,6 +43,30 @@ Route::get('/', function () {
 // Public, unauthenticated — any property-detail page can POST a lead here; it's
 // routed to the property's owning company/agent (see LeadCaptureController).
 Route::post('/leads/capture', [LeadCaptureController::class, 'store'])->name('leads.capture')->middleware('throttle:lead-capture');
+
+// The public-site "customer" (buyer/visitor) account — guard 'web', separate from the
+// agent/company portal above. Real <form> POSTs (CustomerLogin.vue / CustomerSignup.vue),
+// same pattern as the portal's own login form.
+Route::post('/customer/register', [CustomerAuthController::class, 'register'])->name('customer.register')->middleware('throttle:portal-registration');
+Route::post('/customer/login', [CustomerAuthController::class, 'login'])->name('customer.login')->middleware('throttle:admin-login');
+Route::post('/customer/logout', [CustomerAuthController::class, 'logout'])->name('customer.logout');
+
+// "Continue with Google" — customer accounts only (see CustomerAuthController).
+Route::get('/customer/auth/google', [CustomerAuthController::class, 'redirectToGoogle'])->name('customer.auth.google');
+Route::get('/customer/auth/google/callback', [CustomerAuthController::class, 'handleGoogleCallback'])->name('customer.auth.google.callback');
+
+// Public — every page's shared wishlist-heart state reads this (see useWishlist.js).
+Route::get('/customer/session', [CustomerController::class, 'session'])->name('customer.session');
+
+// JSON API for the logged-in customer's own dashboard (Profile.vue) — guarded by
+// customer.auth (401 JSON on a guest, not a redirect; see EnsureCustomerAuthenticated).
+Route::prefix('customer')->middleware('customer.auth')->group(function () {
+    Route::get('/me', [CustomerController::class, 'me'])->name('customer.me');
+    Route::put('/settings', [CustomerController::class, 'updateSettings'])->name('customer.settings');
+    Route::post('/wishlist/{property}', [CustomerController::class, 'toggleWishlist'])->name('customer.wishlist.toggle');
+    Route::post('/saved-searches', [CustomerController::class, 'storeSavedSearch'])->name('customer.saved-searches.store');
+    Route::delete('/saved-searches/{savedSearch}', [CustomerController::class, 'destroySavedSearch'])->name('customer.saved-searches.destroy');
+});
 
 Route::middleware(['web'])->group(function () {
     Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->group(function () {
@@ -423,6 +449,15 @@ Route::middleware(['web'])->group(function () {
                     Route::delete('/enquiries/{id}', [\App\Http\Controllers\CmsKit\EnquiryController::class, 'destroy'])->name('cms.enquiries.destroy')->middleware('cms.permission:enquiries.delete');
                     Route::post('/enquiries/bulk-action', [\App\Http\Controllers\CmsKit\EnquiryController::class, 'bulkAction'])->name('cms.enquiries.bulk-action')->middleware('cms.permission:enquiries.delete');
                 }
+            });
+
+            // Property leads that came in with no agent/company assigned to the property (see
+            // Crm\LeadCaptureController) — superadmin gets notified and picks them up here to
+            // hand off to the right agent/company, since the portal CRM is otherwise scoped
+            // entirely to each agent/company's own leads.
+            Route::middleware(['cms.permission:enquiries.view'])->group(function () {
+                Route::get('/unassigned-leads', [\App\Http\Controllers\CmsKit\LeadController::class, 'index'])->name('cms.unassigned-leads.index');
+                Route::post('/unassigned-leads/{lead}/assign', [\App\Http\Controllers\CmsKit\LeadController::class, 'assign'])->name('cms.unassigned-leads.assign');
             });
         });
     });

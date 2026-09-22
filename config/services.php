@@ -45,4 +45,11 @@ return [
         'min_score' => env('RECAPTCHA_MIN_SCORE', 0.5),
     ],
 
+    // "Continue with Google" — customer accounts only (see Customer\CustomerAuthController).
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
 ];

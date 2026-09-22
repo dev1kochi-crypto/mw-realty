@@ -3,9 +3,11 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useProperties } from '../composables/useProperties';
 import { useLanguages } from '../composables/useLanguages';
+import { useWishlist } from '../composables/useWishlist';
 
 const route = useRoute();
 const { propertiesListing, fetchPropertiesListing } = useProperties();
+const { isWishlisted, toggleWishlist } = useWishlist();
 const { selectedLanguage } = useLanguages();
 
 const locationQuery = ref('');
@@ -399,7 +401,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                             <div class="mw-projects__slides" data-gallery-track>
                                 <img v-for="(image, index) in property.images" :key="image" :src="image" :alt="index === 0 ? property.name : ''" class="mw-projects__photo">
                             </div>
-                            <button type="button" class="mw-dubai-card__fav" aria-label="Save property" @click.stop>
+                            <button type="button" class="mw-dubai-card__fav" :class="{ 'is-saved': isWishlisted(property.id) }" aria-label="Save property" :aria-pressed="isWishlisted(property.id)" @click.stop="toggleWishlist(property.id)">
                                 <img src="/frontend/assets/images/icons/heart.svg" alt="" width="18" height="18">
                             </button>
                             <button type="button" class="mw-projects__nav mw-projects__nav--prev" data-gallery-prev aria-label="Previous photo" @click.stop>

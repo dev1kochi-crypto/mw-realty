@@ -158,14 +158,14 @@ class PortalAuthController extends Controller
         $portalUser = PortalUser::where('email', $request->input('email'))->first();
 
         if (!$portalUser || !Hash::check($request->input('password'), $portalUser->password)) {
-            return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
+            return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email', 'login_type');
         }
 
         // Pending and rejected accounts CAN log in — restricted to viewing/completing
         // their profile (and, once rejected, resubmitting) until Super Admin approves
         // them; only property creation is gated on approval. is_active is a hard stop.
         if (!$portalUser->is_active) {
-            return back()->withErrors(['email' => 'Your account has been disabled. Contact the site administrator.'])->onlyInput('email');
+            return back()->withErrors(['email' => 'Your account has been disabled. Contact the site administrator.'])->onlyInput('email', 'login_type');
         }
 
         Auth::guard('portal')->login($portalUser, $request->boolean('remember'));

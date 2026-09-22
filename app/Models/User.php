@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * The public-site "customer" (buyer/visitor) account — guard 'web'. Distinct from
+ * App\Models\PortalUser (agent/company, guard 'portal') and CmsKit\Admin (guard 'cms').
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -21,6 +25,10 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'google_id',
+        'phone',
+        'location',
+        'avatar',
         'password',
     ];
 
@@ -45,5 +53,20 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function wishlistProperties()
+    {
+        return $this->belongsToMany(Property::class, 'property_wishlists')->withTimestamps();
+    }
+
+    public function savedSearches()
+    {
+        return $this->hasMany(SavedSearch::class);
+    }
+
+    public function leads()
+    {
+        return $this->hasMany(Lead::class);
     }
 }

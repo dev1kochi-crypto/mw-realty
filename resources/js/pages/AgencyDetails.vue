@@ -3,10 +3,12 @@ import { nextTick, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAgencyDetail } from '../composables/useAgencyDetail';
 import { useLanguages } from '../composables/useLanguages';
+import { useWishlist } from '../composables/useWishlist';
 
 const route = useRoute();
 const { agency, notFound, fetchAgency } = useAgencyDetail();
 const { selectedLanguage } = useLanguages();
+const { isWishlisted, toggleWishlist } = useWishlist();
 
 function load() {
     fetchAgency(route.params.slug, selectedLanguage.value?.code);
@@ -116,7 +118,7 @@ watch(agency, () => {
                                     <img src="/frontend/assets/images/icons/verified.svg" alt="" width="18" height="18">
                                     Verified
                                 </span>
-                                <button type="button" class="mw-agent-prop__save" aria-label="Save property" aria-pressed="false" @click.stop>
+                                <button type="button" class="mw-agent-prop__save" :class="{ 'is-saved': isWishlisted(property.id) }" aria-label="Save property" :aria-pressed="isWishlisted(property.id)" @click.stop="toggleWishlist(property.id)">
                                     <img src="/frontend/assets/images/icons/heart.svg" alt="" width="24" height="24">
                                 </button>
                                 <button type="button" class="mw-agent-prop__nav mw-agent-prop__nav--prev" data-gallery-prev aria-label="Previous photo" @click.stop>
