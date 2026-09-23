@@ -3,10 +3,12 @@ import { nextTick, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAgencyDetail } from '../composables/useAgencyDetail';
 import { useLanguages } from '../composables/useLanguages';
+import { useWishlist } from '../composables/useWishlist';
 
 const route = useRoute();
 const { agency, notFound, fetchAgency } = useAgencyDetail();
 const { selectedLanguage } = useLanguages();
+const { isWishlisted, toggleWishlist } = useWishlist();
 
 function load() {
     fetchAgency(route.params.slug, selectedLanguage.value?.code);
@@ -110,13 +112,13 @@ watch(agency, () => {
                         <div v-for="property in agency.properties" :key="property.slug" class="mw-agent-more__slide"><article class="mw-agent-prop">
                             <div class="mw-agent-prop__media" data-card-gallery role="link" tabindex="0" @click="$router.push(`/property-details/${property.slug}`)" @keydown.enter="$router.push(`/property-details/${property.slug}`)" style="cursor: pointer;">
                                 <div class="mw-agent-prop__slides" data-gallery-track>
-                                    <img v-for="(image, imgIndex) in property.images" :key="imgIndex" :src="image" :alt="property.name" class="mw-agent-prop__photo">
+                                    <img v-for="(image, imgIndex) in property.images" :key="imgIndex" :src="image" :alt="property.name" class="mw-agent-prop__photo" loading="lazy">
                                 </div>
                                 <span class="mw-badge mw-badge--success mw-agent-prop__verified">
                                     <img src="/frontend/assets/images/icons/verified.svg" alt="" width="18" height="18">
                                     Verified
                                 </span>
-                                <button type="button" class="mw-agent-prop__save" aria-label="Save property" aria-pressed="false" @click.stop>
+                                <button type="button" class="mw-agent-prop__save" :class="{ 'is-saved': isWishlisted(property.id) }" aria-label="Save property" :aria-pressed="isWishlisted(property.id)" @click.stop="toggleWishlist(property.id)">
                                     <img src="/frontend/assets/images/icons/heart.svg" alt="" width="24" height="24">
                                 </button>
                                 <button type="button" class="mw-agent-prop__nav mw-agent-prop__nav--prev" data-gallery-prev aria-label="Previous photo" @click.stop>
@@ -181,7 +183,7 @@ watch(agency, () => {
                         <div v-for="agent in agency.agents" :key="agent.slug" class="mw-agent-more__slide"><article class="mw-agent-card">
                             <div class="mw-agent-card__head">
                                 <div class="mw-agent-card__avatar">
-                                    <img :src="agent.avatar_url || '/frontend/assets/images/agents/ahmed.png'" :alt="agent.name" width="80" height="80">
+                                    <img :src="agent.avatar_url || '/frontend/assets/images/agents/ahmed.png'" :alt="agent.name" width="80" height="80" loading="lazy">
                                 </div>
                                 <div class="mw-agent-card__intro">
                                     <h3 class="mw-agent-card__name">{{ agent.name }}</h3>

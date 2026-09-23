@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { useDocumentHead } from './useDocumentHead';
 
 const legalPage = ref(null);
 const notFound = ref(false);
@@ -8,6 +9,7 @@ function fetchLegalPage(key, langCode) {
     return window.axios.get(`/api/legal/${key}`, { params: langCode ? { lang: langCode } : {} })
         .then((res) => {
             legalPage.value = res.data;
+            useDocumentHead().setSeo(res.data.seo);
         })
         .catch(() => {
             legalPage.value = null;

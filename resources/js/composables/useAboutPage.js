@@ -1,5 +1,6 @@
 import { ref, watch } from 'vue';
 import { useLanguages } from './useLanguages';
+import { useDocumentHead } from './useDocumentHead';
 
 const aboutPage = ref(null);
 let initialized = false;
@@ -7,6 +8,7 @@ let initialized = false;
 function fetchAboutPage(langCode) {
     window.axios.get('/api/about', { params: langCode ? { lang: langCode } : {} }).then((res) => {
         aboutPage.value = res.data;
+        useDocumentHead().setSeo(res.data.seo);
     }).catch(() => {
         aboutPage.value = null;
     });

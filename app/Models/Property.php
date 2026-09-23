@@ -134,4 +134,25 @@ class Property extends Model
     {
         return $query->where('status', true);
     }
+
+    /** Dummy SEO content generated from the property's own real fields, used by SeoMeta::resolve()
+     *  whenever this property's own `metadata` doesn't set a given field. */
+    public function seoFallback(?string $lang = null): array
+    {
+        $lang = $lang ?? app()->getLocale();
+        $title = $this->getTranslation('title', $lang);
+        $images = $this->galleryImages();
+
+        return [
+            'meta_title' => $title ? "{$title} | MW Realty" : 'Property | MW Realty',
+            'meta_description' => \App\Support\SeoMeta::excerpt($this->getTranslation('description', $lang)) ?? sprintf(
+                '%s%s in %s, offered at %s by MW Realty.',
+                $this->bedrooms ? "{$this->bedrooms}-bedroom " : '',
+                $this->filterLabel('property_type', $lang) ?: 'property',
+                $this->getTranslation('city', $lang) ?: 'the UAE',
+                $this->price ? $this->currency . ' ' . number_format($this->price) : 'a competitive price',
+            ),
+            'og_image' => $images[0]['url'] ?? null,
+        ];
+    }
 }

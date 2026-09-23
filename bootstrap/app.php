@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'portal.or.cms' => \App\Http\Middleware\PortalOrCmsAuth::class,
+            'customer.auth' => \App\Http\Middleware\EnsureCustomerAuthenticated::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

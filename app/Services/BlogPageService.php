@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\CmsKit\Blog;
 use App\Models\CmsKit\BlogCategory;
 use App\Models\CmsKit\SectionLabel;
+use App\Support\SeoMeta;
 use Illuminate\Support\Facades\Cache;
 
 /** Builds the payloads for the /blogs listing page and the /blog-details/{slug} page. */
@@ -39,6 +40,7 @@ class BlogPageService
                     'last_page' => $paginator->lastPage(),
                     'total' => $paginator->total(),
                 ],
+                'seo' => SeoMeta::forStaticPage('blog', $lang),
             ];
         });
     }
@@ -131,6 +133,7 @@ class BlogPageService
             'author_avatar_url' => !empty($extra['author_avatar']) ? asset('storage/'.$extra['author_avatar']) : null,
             'read_time' => $this->calculateReadTime($post->getTranslation('content', $lang)),
             'published_at' => $post->published_at?->format('F d, Y'),
+            'seo' => SeoMeta::resolve($post->metadata, $post->seoFallback($lang)),
         ];
     }
 }

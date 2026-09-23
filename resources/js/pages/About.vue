@@ -105,7 +105,7 @@ const builderLogos = computed(() => {
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>Inside Our World</h1>
+                    <h1 class="mw-about-title" data-reveal>{{ aboutTitle }}</h1>
                 </div>
             </div>
             <nav class="mw-about-crumb" aria-label="Breadcrumb">

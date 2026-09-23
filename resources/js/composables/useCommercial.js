@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { useDocumentHead } from './useDocumentHead';
 
 const commercialListing = ref(null);
 const loading = ref(false);
@@ -8,6 +9,7 @@ function fetchCommercialListing(params = {}) {
     return window.axios.get('/api/commercial', { params })
         .then((res) => {
             commercialListing.value = res.data;
+            useDocumentHead().setSeo(res.data.seo);
         })
         .catch(() => {
             commercialListing.value = null;

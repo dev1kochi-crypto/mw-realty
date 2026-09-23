@@ -86,13 +86,31 @@ const routes = [
         meta: { title: 'Sign Up | MW Realty', bodyClass: 'agents-page signup-page' },
     },
     {
+        path: '/verify-email',
+        name: 'verify-otp',
+        component: () => import('../pages/VerifyOtp.vue'),
+        meta: { title: 'Verify Your Email | MW Realty', bodyClass: 'agents-page login-page' },
+    },
+    {
+        path: '/forgot-password',
+        name: 'forgot-password',
+        component: () => import('../pages/ForgotPassword.vue'),
+        meta: { title: 'Forgot Password | MW Realty', bodyClass: 'agents-page login-page' },
+    },
+    {
+        path: '/reset-password',
+        name: 'reset-password',
+        component: () => import('../pages/ResetPassword.vue'),
+        meta: { title: 'Reset Password | MW Realty', bodyClass: 'agents-page login-page' },
+    },
+    {
         path: '/profile',
         name: 'profile',
         component: () => import('../pages/Profile.vue'),
         meta: { title: 'My Account | MW Realty', bodyClass: 'agents-page profile-page' },
     },
     {
-        path: '/properties-dubai',
+        path: '/properties',
         name: 'properties-dubai',
         component: () => import('../pages/PropertiesDubai.vue'),
         meta: { title: 'Properties in Dubai | MW Realty', bodyClass: 'agents-page properties-dubai-page' },
@@ -170,6 +188,22 @@ router.afterEach(() => {
     nextTick(() => {
         window.MWRealty && window.MWRealty.refresh();
     });
+    sessionStorage.removeItem('mw-chunk-reload');
+});
+
+// Every page's lazy component() import() fetches a content-hashed JS file (e.g.
+// Home-BaOxiTGJ.js) by the exact name the CURRENTLY LOADED index.html was built with. Once a
+// newer deploy overwrites those files with new hashes, a tab left open from before that deploy
+// gets a 404 the instant someone clicks a nav link — Vue Router surfaces this as a rejected
+// navigation, so the click silently does nothing instead of erroring visibly. A full reload
+// fetches the current index.html (with current hashes) and then the same link works — the
+// sessionStorage guard stops a reload loop if the failure is for some other, unrelated reason.
+router.onError((error, to) => {
+    const isStaleChunk = /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed/i.test(error.message);
+    if (isStaleChunk && !sessionStorage.getItem('mw-chunk-reload')) {
+        sessionStorage.setItem('mw-chunk-reload', '1');
+        window.location.href = to.fullPath;
+    }
 });
 
 export default router;

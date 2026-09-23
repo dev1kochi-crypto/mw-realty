@@ -17,6 +17,7 @@ class Lead extends Model
     protected $fillable = [
         'property_id',
         'portal_user_id',
+        'user_id',
         'name',
         'email',
         'phone',
@@ -45,6 +46,12 @@ class Lead extends Model
     public function owner()
     {
         return $this->belongsTo(PortalUser::class, 'portal_user_id');
+    }
+
+    /** The logged-in customer who submitted this enquiry, if any (null for guest submissions). */
+    public function customer()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function stage()

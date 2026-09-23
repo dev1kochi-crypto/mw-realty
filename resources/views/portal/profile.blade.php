@@ -355,6 +355,67 @@
     </form>
 </div>
 
+@php $meta = $portalUser->metadata ?? []; @endphp
+<div class="dash-card mb-3">
+    <h6><i class="fas fa-search"></i> SEO Metadata
+        <button type="button" class="section-edit-btn section-edit-toggle" data-section="seo" title="Edit"><i class="fas fa-pen"></i></button>
+    </h6>
+    <p class="text-muted mb-3" style="font-size: 0.8rem;">
+        Used on your public profile page. If left blank, the page falls back to your name and bio.
+    </p>
+    <div class="section-view" data-section="seo">
+        <div class="row">
+            <div class="col-md-6 info-row"><div class="info-label">Meta Title</div><div class="info-value">{{ $meta['meta_title'] ?? '-' }}</div></div>
+            <div class="col-md-6 info-row"><div class="info-label">Canonical URL</div><div class="info-value">{{ $meta['canonical_url'] ?? '-' }}</div></div>
+            <div class="col-md-12 info-row"><div class="info-label">Meta Description</div><div class="info-value">{{ $meta['meta_description'] ?? '-' }}</div></div>
+        </div>
+    </div>
+    <form class="section-edit d-none section-form" data-section="seo" enctype="multipart/form-data">
+        <div class="section-form-error text-danger small d-none mb-2"></div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Meta Title</label>
+                <input type="text" name="metadata[meta_title]" class="form-control form-control-sm" maxlength="255" placeholder="Page title for search engines" value="{{ $meta['meta_title'] ?? '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Canonical URL</label>
+                <input type="url" name="metadata[canonical_url]" class="form-control form-control-sm" maxlength="2048" placeholder="https://mightywarnersrealty.com/agent-details/{{ $portalUser->slug }}" value="{{ $meta['canonical_url'] ?? '' }}">
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">Meta Description</label>
+                <textarea name="metadata[meta_description]" class="form-control form-control-sm" rows="2" maxlength="500" placeholder="Page description">{{ $meta['meta_description'] ?? '' }}</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Meta Keywords</label>
+                <input type="text" name="metadata[meta_keywords]" class="form-control form-control-sm" maxlength="500" placeholder="keyword1, keyword2" value="{{ $meta['meta_keywords'] ?? '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">OG Image</label>
+                <input type="file" name="metadata_og_image" class="form-control form-control-sm" accept="image/*">
+                @if(!empty($meta['og_image']))
+                    <img src="{{ asset('storage/' . $meta['og_image']) }}" class="mt-2 rounded" style="height:50px;">
+                    <div class="form-check mt-1">
+                        <input type="checkbox" name="remove_metadata_og_image" value="1" class="form-check-input" id="removeMetaOgImage">
+                        <label class="form-check-label small" for="removeMetaOgImage">Remove image</label>
+                    </div>
+                @endif
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">OG Title</label>
+                <input type="text" name="metadata[og_title]" class="form-control form-control-sm" maxlength="255" value="{{ $meta['og_title'] ?? '' }}">
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">OG Description</label>
+                <textarea name="metadata[og_description]" class="form-control form-control-sm" rows="2" maxlength="500">{{ $meta['og_description'] ?? '' }}</textarea>
+            </div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-sm btn-success">Save</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary section-edit-cancel">Cancel</button>
+        </div>
+    </form>
+</div>
+
 <div class="dash-card">
     <h6><i class="fas fa-folder-open"></i> My Documents</h6>
     <div class="row g-2">

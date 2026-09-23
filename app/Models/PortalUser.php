@@ -63,6 +63,7 @@ class PortalUser extends Authenticatable
         'website',
         'founding_year',
         'badges',
+        'metadata',
         'password',
         'status',
         'status_changed_at',
@@ -105,6 +106,7 @@ class PortalUser extends Authenticatable
         'preferred_areas' => 'array',
         'features' => 'array',
         'badges' => 'array',
+        'metadata' => 'array',
     ];
 
     /**
@@ -123,6 +125,22 @@ class PortalUser extends Authenticatable
      * Verification status + optional admin note for one KYC document, defaulting
      * to 'pending' for a document that hasn't been reviewed yet (or not uploaded).
      */
+    /** Dummy SEO content generated from the profile's own real fields, used by SeoMeta::resolve()
+     *  whenever this profile's own `metadata` doesn't set a given field. */
+    public function seoFallback(?string $lang = null): array
+    {
+        $lang = $lang ?? app()->getLocale();
+        $name = $this->type === 'company' ? ($this->company_name ?: $this->name) : $this->name;
+        $label = $this->type === 'company' ? 'Agency' : 'Agent';
+
+        return [
+            'meta_title' => $name ? "{$name} | MW Realty {$label}" : "MW Realty {$label}",
+            'meta_description' => \App\Support\SeoMeta::excerpt($this->getTranslation('bio', $lang))
+                ?? "Connect with {$name}, a trusted " . strtolower($label) . ' on MW Realty.',
+            'og_image' => $this->avatar ? asset('storage/' . $this->avatar) : null,
+        ];
+    }
+
     public function documentStatus(string $field): array
     {
         return ($this->document_status[$field] ?? null) ?: ['status' => 'pending', 'note' => null];

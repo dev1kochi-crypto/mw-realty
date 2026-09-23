@@ -28,7 +28,7 @@ watch(agentsListing, () => {
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>Our Agent</h1>
+                    <h1 class="mw-about-title" data-reveal>{{ agentsListing?.title || 'Our Agent' }}</h1>
                 </div>
             </div>
             <nav class="mw-about-crumb" aria-label="Breadcrumb">
@@ -44,7 +44,7 @@ watch(agentsListing, () => {
                     <article v-for="(agent, index) in (agentsListing?.agents || [])" :key="agent.slug" class="mw-agent-card" data-reveal :style="{ '--reveal-delay': index % 4 }">
                         <div class="mw-agent-card__head">
                             <div class="mw-agent-card__avatar">
-                                <img :src="agent.avatar_url || '/frontend/assets/images/agents/ahmed.png'" :alt="agent.name" width="80" height="80">
+                                <img :src="agent.avatar_url || '/frontend/assets/images/agents/ahmed.png'" :alt="agent.name" width="80" height="80" loading="lazy">
                             </div>
                             <div class="mw-agent-card__intro">
                                 <h2 class="mw-agent-card__name">{{ agent.name }}</h2>

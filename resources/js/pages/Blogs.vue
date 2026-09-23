@@ -98,7 +98,7 @@ const pageNumbers = computed(() => {
                 <div class="mw-blog__grid" id="blog-grid">
                     <article v-for="(post, index) in posts" :key="post.slug" class="mw-blog-card" data-reveal :style="{ '--reveal-delay': index % 3 }">
                         <router-link :to="`/blog-details/${post.slug}`" class="mw-blog-card__media">
-                            <img :src="post.image_url" :alt="post.image_alt || post.title">
+                            <img :src="post.image_url" :alt="post.image_alt || post.title" loading="lazy">
                             <span v-if="post.category_label" class="mw-blog-card__tag">{{ post.category_label }}</span>
                         </router-link>
                         <div class="mw-blog-card__body">

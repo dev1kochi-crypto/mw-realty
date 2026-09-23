@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\CmsKit\SectionLabel;
 use App\Models\Property;
 use App\Support\MapsPropertyCards;
+use App\Support\SeoMeta;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -40,6 +42,7 @@ class CommercialPageService
             . ($location ?: 'all') . ':' . ($propertyType ?: 'all') . ':' . ($search ?: '') . ':' . ($listingCategory ?: 'all');
 
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($lang, $location, $propertyType, $search, $listingCategory, $page, $perPage) {
+            $section = SectionLabel::where('section_key', 'commercial')->where('status', true)->first();
             $paginator = Property::where('status', true)->whereIn('property_type', self::COMMERCIAL_TYPES)
                 ->when($location, fn ($q) => $q->where(function ($q) use ($location) {
                     $q->where('translations->en->community', 'like', "%{$location}%")
@@ -59,12 +62,14 @@ class CommercialPageService
                 ->paginate($perPage, ['*'], 'page', $page);
 
             return [
+                'title' => $section?->getTranslation('title_1', $lang) ?: 'Commercial',
                 'properties' => collect($paginator->items())->map(fn ($p) => $this->mapCommercialCard($p, $lang))->values(),
                 'pagination' => [
                     'current_page' => $paginator->currentPage(),
                     'last_page' => $paginator->lastPage(),
                     'total' => $paginator->total(),
                 ],
+                'seo' => SeoMeta::forStaticPage('commercial', $lang),
             ];
         });
     }
