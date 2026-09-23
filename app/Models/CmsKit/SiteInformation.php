@@ -64,6 +64,35 @@ class SiteInformation extends Model
             ?? $this->extra_fields[$field]
             ?? null;
     }
+
+    /** `gtag` is one container ID per line (e.g. "GTM-XXXXXXX") — only ever plain IDs, never a
+     *  full script, so they're validated against GTM's own ID shape before being used in either
+     *  script below rather than trusted as raw HTML like custom_head_script/custom_body_script. */
+    private function gtmContainerIds(): array
+    {
+        return collect(preg_split('/\r\n|\r|\n/', (string) $this->gtag))
+            ->map(fn ($id) => trim($id))
+            ->filter(fn ($id) => $id !== '' && preg_match('/^GTM-[A-Z0-9]+$/i', $id))
+            ->values()
+            ->all();
+    }
+
+    /** The standard GTM loader snippet, once per configured container — placed as high in <head> as possible. */
+    public function gtmHeadScripts(): string
+    {
+        return collect($this->gtmContainerIds())->map(fn ($id) => <<<HTML
+            <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','{$id}');</script>
+            HTML)->implode("\n");
+    }
+
+    /** The standard GTM <noscript> fallback, once per configured container — placed immediately after <body>. */
+    public function gtmNoscriptTags(): string
+    {
+        return collect($this->gtmContainerIds())->map(fn ($id) =>
+            '<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=' . $id
+                . '" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>'
+        )->implode("\n");
+    }
 }
 
 

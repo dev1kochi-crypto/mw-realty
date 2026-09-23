@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\CmsKit\SectionLabel;
 use App\Models\Property;
 use App\Support\MapsPropertyCards;
+use App\Support\SeoMeta;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -68,6 +69,7 @@ class CommercialPageService
                     'last_page' => $paginator->lastPage(),
                     'total' => $paginator->total(),
                 ],
+                'seo' => SeoMeta::forStaticPage('commercial', $lang),
             ];
         });
     }

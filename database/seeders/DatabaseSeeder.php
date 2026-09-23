@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use CMS\SiteManager\Database\Seeders\CmsRolesPermissionsSeeder;
-use CMS\SiteManager\Database\Seeders\MetadataSeeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -20,7 +19,7 @@ class DatabaseSeeder extends Seeder
 
        $this->call([
             CmsRolesPermissionsSeeder::class,
-            MetadataSeeder::class,
+            SeoPageMetadataSeeder::class,
             FilterSeeder::class,
             PlanSeeder::class,
             CrmAdminMasterDataSeeder::class,

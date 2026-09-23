@@ -1,2 +1,13 @@
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /portal
+Disallow: /login
+Disallow: /signup
+Disallow: /agent-login
+Disallow: /agent-signup
+Disallow: /agency-login
+Disallow: /agency-signup
+Disallow: /profile
+Disallow: /thank-you
+
+Sitemap: http://localhost/sitemap.xml

@@ -97,7 +97,7 @@ watch(filteredAgencies, () => {
                 <div class="mw-agencies__grid" data-agencies-grid>
                     <article v-for="(agency, index) in filteredAgencies" :key="agency.slug" class="mw-agency-card" data-reveal :style="{ '--reveal-delay': index % 4 }">
                         <div class="mw-agency-card__logo">
-                            <img :src="agency.logo_url || '/frontend/assets/images/agencies/logo-kaal.png'" :alt="agency.name" width="200" height="120">
+                            <img :src="agency.logo_url || '/frontend/assets/images/agencies/logo-kaal.png'" :alt="agency.name" width="200" height="120" loading="lazy">
                         </div>
                         <div class="mw-agency-card__body">
                             <h3 class="mw-agency-card__name">{{ agency.name }}</h3>

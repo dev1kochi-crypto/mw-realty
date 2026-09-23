@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Services\Chatbot\ChatbotProvider;
+use App\Services\Chatbot\GeminiChatbotProvider;
+use App\Services\Chatbot\GroqChatbotProvider;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -15,6 +18,16 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->scoped(\App\Services\ManagedFiles::class);
         $this->app->scoped(\App\Services\PropertyLabels::class);
+
+        // Which concrete AI provider backs the chat widget — see config/chatbot.php's
+        // 'provider' (CHATBOT_PROVIDER env). Both implementations ship regardless of which is
+        // active, so switching providers (or back) is a one-line env change, no code change.
+        $this->app->bind(ChatbotProvider::class, function () {
+            return match (config('chatbot.provider')) {
+                'gemini' => new GeminiChatbotProvider(config('services.gemini.api_key') ?? '', config('services.gemini.model')),
+                default => new GroqChatbotProvider(config('services.groq.api_key') ?? '', config('services.groq.model')),
+            };
+        });
     }
 
     /**
@@ -34,6 +47,17 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Cache\RateLimiting\Limit::perHour(20)->by($request->ip()));
         \Illuminate\Support\Facades\RateLimiter::for('form-submit', fn ($request) =>
             \Illuminate\Cache\RateLimiting\Limit::perHour(20)->by($request->ip()));
+        // Tighter than form-submit — every message is a paid Gemini API call, not just a DB write.
+        \Illuminate\Support\Facades\RateLimiter::for('ai-chatbot', fn ($request) => [
+            \Illuminate\Cache\RateLimiting\Limit::perMinute(8)->by($request->ip()),
+            \Illuminate\Cache\RateLimiting\Limit::perDay(150)->by($request->ip()),
+        ]);
+        // Covers both verify (a 4-digit code is brute-forceable) and resend (don't let one
+        // signup spam its own inbox) — keyed by IP, same as the other auth limiters above.
+        \Illuminate\Support\Facades\RateLimiter::for('otp-verify', fn ($request) => [
+            \Illuminate\Cache\RateLimiting\Limit::perMinute(8)->by($request->ip()),
+            \Illuminate\Cache\RateLimiting\Limit::perDay(30)->by($request->ip()),
+        ]);
 
         $this->app->booted(function () {
             foreach (app('router')->getRoutes() as $route) {

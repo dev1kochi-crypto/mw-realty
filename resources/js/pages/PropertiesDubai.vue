@@ -7,7 +7,7 @@ import { useWishlist } from '../composables/useWishlist';
 
 const route = useRoute();
 const { propertiesListing, fetchPropertiesListing } = useProperties();
-const { isWishlisted, toggleWishlist } = useWishlist();
+const { isWishlisted, toggleWishlist, authenticated } = useWishlist();
 const { selectedLanguage } = useLanguages();
 
 const locationQuery = ref('');
@@ -61,6 +61,56 @@ function clearFilters() {
     bedroomsFilter.value = '';
     bathroomsFilter.value = '';
     applyFilters();
+}
+
+// "Save Search" — stores the currently-applied filters so Profile.vue's Saved Searches tab can
+// list them and (eventually) notify on new matches. Mirrors the same criteria keys
+// CustomerController::savedSearchMeta() already reads to build that tab's summary line.
+const savingSearch = ref(false);
+const searchSaved = ref(false);
+const searchSaveError = ref(false);
+const saveSearchLabel = computed(() => {
+    if (savingSearch.value) return 'Saving…';
+    if (searchSaved.value) return 'Search Saved ✓';
+    if (searchSaveError.value) return "Couldn't save — try again";
+    return 'Save Search';
+});
+
+function buildSearchTitle() {
+    const parts = [];
+    if (bedroomsFilter.value) parts.push(`${bedroomsFilter.value} Bed`);
+    if (propertyType.value) parts.push(propertyType.value.charAt(0).toUpperCase() + propertyType.value.slice(1));
+    if (locationQuery.value.trim()) parts.push(locationQuery.value.trim());
+    return parts.length ? parts.join(' ') : 'All Properties';
+}
+
+function saveSearch() {
+    if (!authenticated.value) {
+        window.location.href = '/login';
+        return;
+    }
+    if (savingSearch.value) return;
+
+    savingSearch.value = true;
+    searchSaveError.value = false;
+    window.axios.post('/customer/saved-searches', {
+        title: buildSearchTitle(),
+        criteria: {
+            location: locationQuery.value.trim() || undefined,
+            property_type: propertyType.value || undefined,
+            bedrooms: bedroomsFilter.value || undefined,
+            bathrooms: bathroomsFilter.value || undefined,
+            category: category.value || undefined,
+        },
+    }).then(() => {
+        searchSaved.value = true;
+        setTimeout(() => { searchSaved.value = false; }, 2500);
+    }).catch(() => {
+        searchSaveError.value = true;
+        setTimeout(() => { searchSaveError.value = false; }, 2500);
+    }).finally(() => {
+        savingSearch.value = false;
+    });
 }
 
 function goToPage(page) {
@@ -355,6 +405,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                         </div>
                         <div class="mw-dubai-toolbar__actions">
                             <button type="button" class="quote-modal__btn quote-modal__btn--primary mw-dubai-toolbar__custom-request" data-crm-open="custom-request-modal">Custom Request</button>
+                            <button type="button" class="mw-dubai-toolbar__save" :disabled="savingSearch" @click="saveSearch">{{ saveSearchLabel }}</button>
                             <button type="button" class="mw-dubai-toolbar__clear" @click="clearFilters">Clear Filters</button>
                         </div>
                     </div>
@@ -399,7 +450,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                     <article v-for="property in properties" :key="property.slug" class="mw-dubai-card" data-reveal>
                         <div class="mw-projects__media" data-card-gallery role="link" tabindex="0" @click="$router.push(`/property-details/${property.slug}`)" @keydown.enter="$router.push(`/property-details/${property.slug}`)" style="cursor: pointer;">
                             <div class="mw-projects__slides" data-gallery-track>
-                                <img v-for="(image, index) in property.images" :key="image" :src="image" :alt="index === 0 ? property.name : ''" class="mw-projects__photo">
+                                <img v-for="(image, index) in property.images" :key="image" :src="image" :alt="index === 0 ? property.name : ''" class="mw-projects__photo" loading="lazy">
                             </div>
                             <button type="button" class="mw-dubai-card__fav" :class="{ 'is-saved': isWishlisted(property.id) }" aria-label="Save property" :aria-pressed="isWishlisted(property.id)" @click.stop="toggleWishlist(property.id)">
                                 <img src="/frontend/assets/images/icons/heart.svg" alt="" width="18" height="18">

@@ -14,5 +14,7 @@ return [
         ['key' => 'contact', 'name' => 'Contact Us'],
         ['key' => 'terms', 'name' => 'Terms & Conditions'],
         ['key' => 'privacy', 'name' => 'Privacy Policy'],
+        ['key' => 'security', 'name' => 'Security Policy'],
+        ['key' => 'cookie', 'name' => 'Cookie Policy'],
     ],
 ];

@@ -131,7 +131,7 @@ const preferredAreasText = computed(() => (agent.value?.preferred_areas || []).j
                     <div v-for="property in agent.properties" :key="property.slug" class="mw-agent-more__slide"><article class="mw-agent-prop">
                         <div class="mw-agent-prop__media" data-card-gallery role="link" tabindex="0" @click="$router.push(`/property-details/${property.slug}`)" @keydown.enter="$router.push(`/property-details/${property.slug}`)" style="cursor: pointer;">
                             <div class="mw-agent-prop__slides" data-gallery-track>
-                                <img v-for="(image, imgIndex) in property.images" :key="imgIndex" :src="image" :alt="property.name" class="mw-agent-prop__photo">
+                                <img v-for="(image, imgIndex) in property.images" :key="imgIndex" :src="image" :alt="property.name" class="mw-agent-prop__photo" loading="lazy">
                             </div>
                             <span class="mw-badge mw-badge--success mw-agent-prop__verified">
                                 <img src="/frontend/assets/images/icons/verified.svg" alt="" width="18" height="18">

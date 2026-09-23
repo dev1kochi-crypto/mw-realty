@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CmsKit\SiteInformation;
+use App\Support\SeoMeta;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -40,6 +41,7 @@ class LegalPageService
                 'key' => $key,
                 'title' => $config['title'],
                 'content' => $content,
+                'seo' => SeoMeta::forStaticPage($key, $lang),
             ];
         });
     }

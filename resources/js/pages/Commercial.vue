@@ -278,7 +278,7 @@ function amenityOverflow(amenities) {
                     <article v-for="property in properties" :key="property.slug" class="mw-commercial-card" data-reveal>
                         <div class="mw-projects__media" data-card-gallery role="link" tabindex="0" @click="$router.push(`/property-details/${property.slug}`)" @keydown.enter="$router.push(`/property-details/${property.slug}`)" style="cursor: pointer;">
                             <div class="mw-projects__slides" data-gallery-track>
-                                <img v-for="(image, index) in property.images" :key="image" :src="image" :alt="index === 0 ? property.name : ''" class="mw-projects__photo">
+                                <img v-for="(image, index) in property.images" :key="image" :src="image" :alt="index === 0 ? property.name : ''" class="mw-projects__photo" loading="lazy">
                             </div>
                             <div class="mw-commercial-card__badges">
                                 <span v-if="property.verified" class="mw-badge mw-badge--success mw-commercial-card__verified">

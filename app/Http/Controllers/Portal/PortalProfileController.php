@@ -60,7 +60,7 @@ class PortalProfileController extends Controller
         $portalUser = Auth::guard('portal')->user();
 
         $request->validate([
-            'section' => ['required', Rule::in(['identity', 'agent', 'company', 'about'])],
+            'section' => ['required', Rule::in(['identity', 'agent', 'company', 'about', 'seo'])],
             'name' => 'sometimes|required|string|max:255',
             'company_name' => 'sometimes|nullable|string|max:255',
             'phone' => 'sometimes|nullable|string|max:50',
@@ -81,6 +81,16 @@ class PortalProfileController extends Controller
             'preferred_areas' => 'sometimes|nullable|string|max:500',
             'website' => 'sometimes|nullable|url|max:255',
             'founding_year' => 'sometimes|nullable|integer|min:1900|max:' . now()->year,
+            'metadata' => 'sometimes|nullable|array',
+            'metadata.meta_title' => 'nullable|string|max:255',
+            'metadata.meta_description' => 'nullable|string|max:500',
+            'metadata.meta_keywords' => 'nullable|string|max:500',
+            'metadata.canonical_url' => 'nullable|url|max:2048',
+            'metadata.og_title' => 'nullable|string|max:255',
+            'metadata.og_description' => 'nullable|string|max:500',
+            'metadata.other_meta_tags' => 'nullable|string',
+            'metadata_og_image' => 'nullable|image|max:4096',
+            'remove_metadata_og_image' => 'nullable|boolean',
         ]);
 
         if (in_array($request->input('section'), ['agent', 'company'], true)) {
@@ -108,6 +118,23 @@ class PortalProfileController extends Controller
             }
 
             $portalUser->save();
+        } elseif ($request->input('section') === 'seo') {
+            $metadata = $request->input('metadata', []);
+            $existingMetadata = $portalUser->metadata ?? [];
+
+            if ($request->hasFile('metadata_og_image')) {
+                if (!empty($existingMetadata['og_image'])) {
+                    app(\App\Services\ManagedFiles::class)->delete($existingMetadata['og_image']);
+                }
+                $metadata['og_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('metadata_og_image'), 'portal-users/metadata');
+            } elseif ($request->boolean('remove_metadata_og_image') && !empty($existingMetadata['og_image'])) {
+                app(\App\Services\ManagedFiles::class)->delete($existingMetadata['og_image']);
+                $metadata['og_image'] = null;
+            } else {
+                $metadata['og_image'] = $existingMetadata['og_image'] ?? null;
+            }
+
+            $portalUser->update(['metadata' => $metadata]);
         } else {
             $portalUser->update($request->only($fieldsBySection[$request->input('section')]));
         }

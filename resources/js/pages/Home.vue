@@ -401,7 +401,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     <article v-for="(card, index) in projectCards" :key="index" class="mw-projects__card" :data-category="card.category">
                         <div class="mw-projects__media" data-card-gallery role="link" tabindex="0" @click="card.slug && $router.push(`/property-details/${card.slug}`)" @keydown.enter="card.slug && $router.push(`/property-details/${card.slug}`)" :style="card.slug ? 'cursor: pointer;' : ''">
                             <div class="mw-projects__slides" data-gallery-track>
-                                <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-projects__photo">
+                                <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-projects__photo" loading="lazy">
                             </div>
                             <span class="mw-badge mw-badge--success mw-projects__verified">
                                 <img src="/frontend/assets/images/icons/verified.svg" alt="" width="18" height="18">
@@ -485,7 +485,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                         <article v-for="(card, index) in highlightCards" :key="index" class="mw-highlight__card">
                             <div class="mw-highlight__media" data-card-gallery role="link" tabindex="0" @click="card.slug && $router.push(`/property-details/${card.slug}`)" @keydown.enter="card.slug && $router.push(`/property-details/${card.slug}`)" :style="card.slug ? 'cursor: pointer;' : ''">
                                 <div class="mw-highlight__slides" data-gallery-track>
-                                    <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-highlight__photo">
+                                    <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-highlight__photo" loading="lazy">
                                 </div>
                                 <span class="mw-highlight__badge">
                                     <img src="/frontend/assets/images/icons/star.svg" alt="" width="18" height="18">
@@ -546,7 +546,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     <span class="mw-home-banner__label">Advertisement</span>
                     <picture>
                         <source v-if="homeAd.mobile_image_url" media="(max-width: 767px)" :srcset="homeAd.mobile_image_url">
-                        <img :src="homeAd.image_url" :alt="homeAd.image_alt || homeAd.name" class="mw-home-banner__image">
+                        <img :src="homeAd.image_url" :alt="homeAd.image_alt || homeAd.name" class="mw-home-banner__image" loading="lazy">
                     </picture>
                 </a>
             </div>
@@ -566,7 +566,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     </div>
 
                     <div class="mw-post-property__media">
-                        <img :src="postPropertyImageUrl" :alt="postPropertyImageAlt" class="mw-post-property__photo">
+                        <img :src="postPropertyImageUrl" :alt="postPropertyImageAlt" class="mw-post-property__photo" loading="lazy">
                         <span class="mw-post-property__media-tag">{{ postPropertyBadge }}</span>
                     </div>
 
@@ -609,7 +609,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                 <div class="mw-popular-places__slider" data-places-slider>
                     <a v-for="(place, index) in popularPlaces" :key="index" href="#" class="mw-popular-places__card">
                         <div class="mw-popular-places__media">
-                            <img :src="place.imageSrc" :alt="place.name">
+                            <img :src="place.imageSrc" :alt="place.name" loading="lazy">
                             <div class="mw-popular-places__foot">
                                 <span class="mw-popular-places__name">{{ place.name }}</span>
                                 <span class="mw-popular-places__arrow">
@@ -651,7 +651,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     <div class="mw-luxury__stage">
                         <div class="mw-luxury__slider" data-luxury-slider>
                             <article v-for="(card, index) in luxuryCards" :key="index" class="mw-luxury__card">
-                                <img :src="card.image" :alt="card.name" class="mw-luxury__photo" :class="{ 'mw-luxury__photo--villa': card.villa }">
+                                <img :src="card.image" :alt="card.name" class="mw-luxury__photo" :class="{ 'mw-luxury__photo--villa': card.villa }" loading="lazy">
                                 <span class="mw-luxury__tag">Buy</span>
                                 <button type="button" class="mw-luxury__save" aria-label="Save property" aria-pressed="false">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -708,11 +708,11 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                         <h2 class="mw-section-title">{{ whyChooseUsTitle }}</h2>
                         <div class="mw-why-choose-us__media">
                             <div class="mw-why-choose-us__media-bg">
-                                <img src="/frontend/assets/images/home/why-choose-us-bg.png" alt="">
+                                <img src="/frontend/assets/images/home/why-choose-us-bg.png" alt="" loading="lazy">
                             </div>
                             <img class="mw-why-choose-us__mark" src="/frontend/assets/images/home/luxury-logo.png" alt="" aria-hidden="true">
                             <div class="mw-why-choose-us__media-photo">
-                                <img :src="whyChooseUsImage" :alt="whyChooseUsImageAlt">
+                                <img :src="whyChooseUsImage" :alt="whyChooseUsImageAlt" loading="lazy">
                             </div>
                         </div>
                     </div>
@@ -750,7 +750,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     <div class="mw-realty__track" data-realty-slider>
                         <article v-for="(card, index) in realtyCards" :key="index" class="mw-realty__card">
                             <div class="mw-realty__media">
-                                <img :src="card.image" :alt="card.name" class="mw-realty__photo">
+                                <img :src="card.image" :alt="card.name" class="mw-realty__photo" loading="lazy">
                                 <span class="mw-badge mw-badge--success mw-realty__verified">
                                     <img src="/frontend/assets/images/icons/verified.svg" alt="" width="18" height="18">
                                     Verified
@@ -832,7 +832,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
 
                 <div class="mw-find-properties__grid">
                     <a v-for="(card, index) in findPropertiesCards" :key="index" href="#" class="mw-find-properties__card" :class="`mw-find-properties__card--${card.modifier}`">
-                        <img :src="card.image" :alt="`${card.type} properties`">
+                        <img :src="card.image" :alt="`${card.type} properties`" loading="lazy">
                         <span class="mw-find-properties__label">
                             <span class="mw-find-properties__label-type">{{ card.type }}</span>
                             <span class="mw-find-properties__label-count">{{ card.count }}</span>
@@ -840,7 +840,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     </a>
 
                     <div class="mw-find-properties__card mw-find-properties__card--tall">
-                        <img src="/frontend/assets/images/home/find-tall.jpg" alt="All properties">
+                        <img src="/frontend/assets/images/home/find-tall.jpg" alt="All properties" loading="lazy">
                         <img class="mw-find-properties__mark" src="/frontend/assets/images/home/find-properties-mark.svg" alt="" aria-hidden="true">
                         <router-link to="/properties" class="mw-find-properties__cta">
                             View All Properties
@@ -873,7 +873,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     <template v-for="(item, index) in testimonials" :key="index">
                         <article v-if="item.type === 'video'" class="mw-testimonials__card mw-testimonials__card--video">
                             <div class="mw-testimonials__media">
-                                <img class="mw-testimonials__photo" :src="item.image_url" :alt="item.name">
+                                <img class="mw-testimonials__photo" :src="item.image_url" :alt="item.name" loading="lazy">
                                 <video v-if="item.video_url" class="mw-testimonials__video" :poster="item.image_url" preload="metadata" playsinline>
                                     <source :src="item.video_url">
                                 </video>
@@ -896,7 +896,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 <img class="mw-testimonials__quote-icon" src="/frontend/assets/images/icons/quote-mark.svg" alt="" width="48" height="48">
                                 <p class="mw-testimonials__quote-text">{{ item.content }}</p>
                                 <div class="mw-testimonials__author">
-                                    <img class="mw-testimonials__avatar" :src="item.image_url" alt="">
+                                    <img class="mw-testimonials__avatar" :src="item.image_url" alt="" loading="lazy">
                                     <div class="mw-testimonials__author-info">
                                         <p class="mw-testimonials__name mw-testimonials__name--light">{{ item.name }}</p>
                                         <p class="mw-testimonials__role mw-testimonials__role--light">{{ item.role }}</p>
@@ -917,7 +917,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             <div class="mw-contact__inner">
                 <div class="mw-contact__visual">
                     <div class="mw-contact__photo">
-                        <img src="/frontend/assets/images/home/contact-photo.jpg" alt="Modern living room managed by MW Realty">
+                        <img src="/frontend/assets/images/home/contact-photo.jpg" alt="Modern living room managed by MW Realty" loading="lazy">
                     </div>
 
                     <div class="mw-contact__form-card">

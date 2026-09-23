@@ -1,5 +1,6 @@
 import { ref, watch } from 'vue';
 import { useLanguages } from './useLanguages';
+import { useDocumentHead } from './useDocumentHead';
 
 const homePage = ref(null);
 let initialized = false;
@@ -7,6 +8,7 @@ let initialized = false;
 function fetchHomePage(langCode) {
     window.axios.get('/api/home', { params: langCode ? { lang: langCode } : {} }).then((res) => {
         homePage.value = res.data;
+        useDocumentHead().setSeo(res.data.seo);
     }).catch(() => {
         homePage.value = null;
     });

@@ -27,6 +27,17 @@ trait MapsPropertyCards
         $city = $property->getTranslation('city', $lang);
         $location = ($locality && $city && $locality !== $city) ? "{$locality}, {$city}" : ($locality ?: $city ?: '—');
 
+        // "Buy | Off-Plan" — the off-plan half is only appended when it's actually off-plan;
+        // "Ready" is the unremarkable default and isn't worth a badge of its own.
+        $listingTypeLabel = $property->filterLabel('listing_type', $lang);
+        $completionStatusLabel = $property->completion_status === 'off_plan' ? $property->filterLabel('completion_status', $lang) : null;
+        $purposeBadge = implode(' | ', array_filter([$listingTypeLabel, $completionStatusLabel]));
+
+        // Same assigned-agent-else-owning-agency fallback as the real property detail page
+        // (PropertyPageService::mapContact) — kept here as raw fields (not tel:/wa.me/mailto:
+        // links) so each card template decides for itself which of the three to hide when unset.
+        $contact = $property->agent ?: $property->owner;
+
         return [
             'id' => $property->id,
             'slug' => $property->slug,
@@ -40,6 +51,13 @@ trait MapsPropertyCards
             'area' => $property->sqft ? number_format($property->sqft) . ' sq.ft' : '—',
             'type' => $property->filterLabel('property_type', $lang) ?: '—',
             'price' => $property->price ? $property->currency . ' ' . number_format($property->price) : 'Price on request',
+            'purpose_badge' => $purposeBadge ?: null,
+            'furnished' => (bool) ($property->details?->furnished),
+            'contact' => [
+                'phone' => $contact?->phone,
+                'whatsapp_number' => $contact?->whatsapp_number,
+                'email' => $contact?->email,
+            ],
         ];
     }
 }

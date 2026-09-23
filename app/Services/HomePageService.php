@@ -16,6 +16,7 @@ use App\Models\CmsKit\Testimonial;
 use App\Models\CmsKit\WhyChooseUsItem;
 use App\Models\Property;
 use App\Support\MapsPropertyCards;
+use App\Support\SeoMeta;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -55,6 +56,7 @@ class HomePageService
             'popularPlaces' => $this->popularPlaces($lang),
             'testimonials' => $this->testimonials($lang),
             'contact' => $this->contact($lang),
+            'seo' => SeoMeta::forStaticPage('home', $lang),
         ]);
     }
 
@@ -122,7 +124,6 @@ class HomePageService
             ->map(function ($property) use ($lang, $cities) {
                 $mapped = $this->mapProperty($property, $lang);
                 $mapped['category'] = $this->matchCityCategory($mapped['location'], $property->getTranslation('address', $lang), $cities);
-                unset($mapped['id']);
                 return $mapped;
             })
             ->values();
@@ -344,6 +345,7 @@ class HomePageService
                     'instagram' => $info?->instagram,
                     'linkedin' => $info?->linkedin,
                 ],
+                'seo' => SeoMeta::forStaticPage('contact', $lang),
             ];
         });
     }
@@ -434,6 +436,7 @@ class HomePageService
                             'image_alt' => $item->image_alt,
                         ])->values(),
                 ],
+                'seo' => SeoMeta::forStaticPage('about', $lang),
             ];
         });
     }

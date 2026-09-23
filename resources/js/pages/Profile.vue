@@ -1,6 +1,6 @@
 <script setup>
-import { nextTick, onMounted, reactive, ref, watch } from 'vue';
-import { useWishlist } from '../composables/useWishlist';
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { useWishlist, patchSessionUser } from '../composables/useWishlist';
 
 const navTabs = [
     { filter: 'overview', icon: 'icon-home.svg', label: 'Overview' },
@@ -12,6 +12,10 @@ const navTabs = [
 
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 const { toggleWishlist } = useWishlist();
+
+function whatsappUrl(number) {
+    return `https://wa.me/${(number || '').replace(/[^0-9]/g, '')}`;
+}
 
 const dashboard = ref(null);
 
@@ -53,11 +57,45 @@ const settingsForm = reactive({ name: '', email: '', phone: '', location: '', pa
 const settingsSubmitting = ref(false);
 const settingsFeedback = ref(null);
 
+const avatarInput = ref(null);
+const avatarFile = ref(null);
+const avatarPreview = ref(null);
+
+function handleAvatarChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    avatarFile.value = file;
+    if (avatarPreview.value) URL.revokeObjectURL(avatarPreview.value);
+    avatarPreview.value = URL.createObjectURL(file);
+}
+
+onBeforeUnmount(() => {
+    if (avatarPreview.value) URL.revokeObjectURL(avatarPreview.value);
+});
+
 function saveSettings() {
     settingsSubmitting.value = true;
     settingsFeedback.value = null;
 
-    window.axios.put('/customer/settings', settingsForm).then((res) => {
+    // A file needs multipart/form-data, which axios.put can't send as a plain reactive object —
+    // FormData + _method=PUT (Laravel's standard method-spoofing for a POST) covers both the
+    // text fields and the optional avatar in one request.
+    const formData = new FormData();
+    formData.append('_method', 'PUT');
+    formData.append('name', settingsForm.name);
+    formData.append('email', settingsForm.email);
+    formData.append('phone', settingsForm.phone || '');
+    formData.append('location', settingsForm.location || '');
+    if (settingsForm.password) {
+        formData.append('password', settingsForm.password);
+        formData.append('password_confirmation', settingsForm.password_confirmation);
+    }
+    if (avatarFile.value) {
+        formData.append('avatar', avatarFile.value);
+    }
+
+    window.axios.post('/customer/settings', formData).then((res) => {
         settingsFeedback.value = { type: 'success', text: res.data.message };
         settingsForm.password = '';
         settingsForm.password_confirmation = '';
@@ -66,6 +104,15 @@ function saveSettings() {
             dashboard.value.profile.email = settingsForm.email;
             dashboard.value.profile.phone = settingsForm.phone;
             dashboard.value.profile.location = settingsForm.location;
+            if (res.data.avatar_url) {
+                dashboard.value.profile.avatar_url = res.data.avatar_url;
+            }
+        }
+        patchSessionUser({ name: settingsForm.name, avatar_url: res.data.avatar_url });
+        avatarFile.value = null;
+        if (avatarPreview.value) {
+            URL.revokeObjectURL(avatarPreview.value);
+            avatarPreview.value = null;
         }
     }).catch((error) => {
         const errors = error.response?.data?.errors;
@@ -92,7 +139,7 @@ watch(dashboard, () => {
                     <aside class="mw-dashboard__sidebar" data-sticky-sidebar>
                         <div class="mw-dashboard__profile">
                             <span class="mw-dashboard__avatar">
-                                <img :src="dashboard.profile.avatar_url || '/frontend/assets/images/home/testimonial-anna.jpg'" alt="">
+                                <img :src="avatarPreview || dashboard.profile.avatar_url || '/frontend/assets/images/home/testimonial-anna.jpg'" alt="">
                             </span>
                             <p class="mw-dashboard__name">{{ dashboard.profile.name }}</p>
                             <p class="mw-dashboard__email">{{ dashboard.profile.email }}</p>
@@ -159,6 +206,7 @@ watch(dashboard, () => {
                                 <article v-for="property in dashboard.wishlist" :key="property.slug" class="mw-dubai-card">
                                     <div class="mw-projects__media">
                                         <router-link :to="`/property-details/${property.slug}`"><img :src="property.image" :alt="property.name" class="mw-projects__photo"></router-link>
+                                        <span v-if="property.purpose_badge" class="mw-dubai-card__purpose">{{ property.purpose_badge }}</span>
                                         <button type="button" class="mw-dubai-card__fav is-saved" aria-label="Remove from wishlist" @click="removeFromWishlist(property.id)">
                                             <img src="/frontend/assets/images/icons/heart.svg" alt="" width="18" height="18">
                                         </button>
@@ -167,6 +215,7 @@ watch(dashboard, () => {
                                     <div class="mw-dubai-card__body">
                                         <div class="mw-dubai-card__price-row">
                                             <span class="mw-dubai-card__price">{{ property.price }}</span>
+                                            <span v-if="property.furnished" class="mw-dubai-card__amenity">Furnished</span>
                                         </div>
                                         <h3 class="mw-dubai-card__title"><router-link :to="`/property-details/${property.slug}`">{{ property.name }}</router-link></h3>
                                         <p class="mw-dubai-card__location">
@@ -178,6 +227,23 @@ watch(dashboard, () => {
                                             <span v-if="property.baths" class="mw-dubai-card__stat"><img src="/frontend/assets/images/icons/bathroom.svg" alt="" width="16" height="16">{{ property.baths }}</span>
                                             <span class="mw-dubai-card__stat"><img src="/frontend/assets/images/icons/area.svg" alt="" width="16" height="16">{{ property.area }}</span>
                                         </div>
+                                        <template v-if="property.contact.email || property.contact.phone || property.contact.whatsapp_number">
+                                            <div class="mw-dubai-card__divider"></div>
+                                            <div class="mw-dubai-card__contacts">
+                                                <a v-if="property.contact.email" :href="`mailto:${property.contact.email}`" class="mw-dubai-card__contact-btn">
+                                                    <img src="/frontend/assets/images/icons/email.svg" alt="" width="16" height="16">
+                                                    Email
+                                                </a>
+                                                <a v-if="property.contact.phone" :href="`tel:${property.contact.phone}`" class="mw-dubai-card__contact-btn">
+                                                    <img src="/frontend/assets/images/icons/phone.svg" alt="" width="16" height="16">
+                                                    Call Us
+                                                </a>
+                                                <a v-if="property.contact.whatsapp_number" :href="whatsappUrl(property.contact.whatsapp_number)" target="_blank" rel="noopener" class="mw-dubai-card__contact-btn">
+                                                    <img src="/frontend/assets/images/icons/whatsapp.svg" alt="" width="16" height="16">
+                                                    WhatsApp
+                                                </a>
+                                            </div>
+                                        </template>
                                     </div>
                                 </article>
 
@@ -239,6 +305,17 @@ watch(dashboard, () => {
                             <p class="mw-dashboard__panel-subtitle">Update your personal information and password.</p>
 
                             <form class="mw-dashboard__settings-form" @submit.prevent="saveSettings">
+                                <div class="mw-dashboard__avatar-upload">
+                                    <span class="mw-dashboard__avatar-upload-preview">
+                                        <img :src="avatarPreview || dashboard.profile.avatar_url || '/frontend/assets/images/home/testimonial-anna.jpg'" alt="">
+                                    </span>
+                                    <div>
+                                        <button type="button" class="mw-dashboard__link-btn" @click="avatarInput?.click()">Change Photo</button>
+                                        <p class="mw-dashboard__avatar-upload-hint">JPG or PNG, up to 2MB.</p>
+                                    </div>
+                                    <input ref="avatarInput" type="file" accept="image/*" class="sr-only" @change="handleAvatarChange">
+                                </div>
+
                                 <div class="mw-dashboard__settings-grid">
                                     <div class="mw-login-form__field">
                                         <label for="settings-name">Full Name</label>

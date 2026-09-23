@@ -2,11 +2,34 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useLanguages } from '../composables/useLanguages';
+import { useWishlist } from '../composables/useWishlist';
 
 const route = useRoute();
 const activeNav = computed(() => route.meta.activeNav ?? '');
 const isHome = computed(() => route.meta.headerVariant === 'home');
 const { languages, selectedLanguage, selectLanguage } = useLanguages();
+
+const { authenticated, user } = useWishlist();
+const firstName = computed(() => (user.value?.name || '').trim().split(/\s+/)[0] || 'Account');
+
+// SiteHeader is mounted once for the whole app (see App.vue), never remounted on navigation —
+// so unlike the lang/currency menus (whose script.js widget marks the clicked option
+// `.is-selected` and only closes via that same click), Profile/Logout need their own explicit
+// close, or the menu would just stay open (Profile, an in-app SPA nav) or hang open during the
+// logout request's round-trip.
+function closeAccountMenu(e) {
+    e.currentTarget.closest('[data-dropdown]')?.classList.remove('is-open');
+}
+
+function logout(e) {
+    closeAccountMenu(e);
+    // Always end up on /login regardless of the response — a full reload also resets every
+    // page's shared session state (this header included), simplest and safest after auth changes
+    // (same pattern Login.vue/VerifyOtp.vue already use).
+    window.axios.post('/customer/logout').finally(() => {
+        window.location.href = '/login';
+    });
+}
 </script>
 
 <template>
@@ -34,7 +57,19 @@ const { languages, selectedLanguage, selectLanguage } = useLanguages();
                 </nav>
 
                 <div class="mw-header__actions">
-                    <router-link to="/login" class="mw-header__login">
+                    <div v-if="authenticated" class="mw-dropdown" data-dropdown>
+                        <button type="button" class="mw-header__login mw-header__account" data-dropdown-trigger>
+                            <img v-if="user?.avatar_url" :src="user.avatar_url" alt="" class="mw-header__account-avatar" width="22" height="22">
+                            <img v-else src="/frontend/assets/images/icons/user.svg" alt="" width="18" height="18">
+                            <span>{{ firstName }}</span>
+                            <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" width="12" height="12">
+                        </button>
+                        <ul class="mw-dropdown__menu mw-header__login-menu" data-dropdown-menu>
+                            <li><router-link to="/profile" @click="closeAccountMenu">Profile</router-link></li>
+                            <li><a href="#" @click.prevent="logout">Logout</a></li>
+                        </ul>
+                    </div>
+                    <router-link v-else to="/login" class="mw-header__login">
                         <img src="/frontend/assets/images/icons/user.svg" alt="" width="18" height="18">
                         <span>Login</span>
                     </router-link>
@@ -93,7 +128,14 @@ const { languages, selectedLanguage, selectLanguage } = useLanguages();
             </nav>
             <div class="mw-mobile-nav__foot">
                 <div class="mw-mobile-nav__login-options">
-                    <router-link to="/login" class="mw-mobile-nav__login-option">Login</router-link>
+                    <template v-if="authenticated">
+                        <router-link to="/profile" class="mw-mobile-nav__login-option">
+                            <span>{{ firstName }}'s Profile</span>
+                            <img v-if="user?.avatar_url" :src="user.avatar_url" alt="" width="24" height="24" class="mw-mobile-nav__login-avatar">
+                        </router-link>
+                        <a href="#" class="mw-mobile-nav__login-option" @click.prevent="logout">Logout</a>
+                    </template>
+                    <router-link v-else to="/login" class="mw-mobile-nav__login-option">Login</router-link>
                 </div>
                 <div v-if="isHome" class="mw-mobile-nav__prefs">
                     <div class="mw-dropdown" data-dropdown>

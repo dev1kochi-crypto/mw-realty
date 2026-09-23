@@ -3,6 +3,7 @@ import { watch } from 'vue';
 import { useRoute } from 'vue-router';
 import SiteHeader from './layouts/SiteHeader.vue';
 import SiteFooter from './layouts/SiteFooter.vue';
+import ChatWidget from './components/ChatWidget.vue';
 
 const route = useRoute();
 
@@ -20,4 +21,5 @@ watch(
     <SiteHeader />
     <router-view />
     <SiteFooter />
+    <ChatWidget />
 </template>

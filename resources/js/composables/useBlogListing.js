@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { useDocumentHead } from './useDocumentHead';
 
 const blogListing = ref(null);
 const loading = ref(false);
@@ -10,6 +11,7 @@ function fetchBlogListing(page = 1, langCode, category) {
     return window.axios.get('/api/blogs', { params })
         .then((res) => {
             blogListing.value = res.data;
+            useDocumentHead().setSeo(res.data.seo);
         })
         .catch(() => {
             blogListing.value = null;

@@ -125,7 +125,7 @@ const nextPost = computed(() => blogPost.value?.next || null);
                             <div class="mw-blog-details__recent">
                                 <router-link v-for="recent in recentPosts" :key="recent.slug" :to="`/blog-details/${recent.slug}`" class="mw-blog-details__recent-item">
                                     <span class="mw-blog-details__recent-thumb">
-                                        <img :src="recent.image_url" alt="">
+                                        <img :src="recent.image_url" alt="" loading="lazy">
                                     </span>
                                     <span class="mw-blog-details__recent-content">
                                         <span class="mw-blog-details__recent-title">{{ recent.title }}</span>

@@ -1,5 +1,6 @@
 import { ref, watch } from 'vue';
 import { useLanguages } from './useLanguages';
+import { useDocumentHead } from './useDocumentHead';
 
 const contactPage = ref(null);
 let initialized = false;
@@ -7,6 +8,7 @@ let initialized = false;
 function fetchContactPage(langCode) {
     window.axios.get('/api/contact', { params: langCode ? { lang: langCode } : {} }).then((res) => {
         contactPage.value = res.data;
+        useDocumentHead().setSeo(res.data.seo);
     }).catch(() => {
         contactPage.value = null;
     });

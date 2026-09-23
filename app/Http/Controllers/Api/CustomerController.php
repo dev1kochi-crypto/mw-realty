@@ -17,21 +17,26 @@ class CustomerController extends Controller
     use MapsPropertyCards;
 
     /**
-     * Public — every page's shared wishlist-heart state (useWishlist.js) calls this once on
-     * load to know whether a customer is logged in and, if so, which properties they've
-     * already saved. Deliberately not behind customer.auth: guests get a cheap {authenticated:
-     * false} instead of a console-cluttering 401 on every single page.
+     * Public — every page's shared session state (useWishlist.js) calls this once on load to
+     * know whether a customer is logged in, which properties they've already saved, and (for
+     * SiteHeader.vue's account dropdown) their basic identity. Deliberately not behind
+     * customer.auth: guests get a cheap {authenticated: false} instead of a console-cluttering
+     * 401 on every single page.
      */
     public function session(Request $request)
     {
         $user = $request->user('web');
         if (!$user) {
-            return response()->json(['authenticated' => false, 'wishlist_ids' => []]);
+            return response()->json(['authenticated' => false, 'wishlist_ids' => [], 'user' => null]);
         }
 
         return response()->json([
             'authenticated' => true,
             'wishlist_ids' => $user->wishlistProperties()->pluck('properties.id'),
+            'user' => [
+                'name' => $user->name,
+                'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+            ],
         ]);
     }
 
@@ -109,15 +114,26 @@ class CustomerController extends Controller
             'phone' => 'nullable|string|max:50',
             'location' => 'nullable|string|max:255',
             'password' => ['nullable', 'confirmed', Password::min(8)],
+            'avatar' => 'nullable|image|max:2048',
         ]);
 
         $user->fill($request->only(['name', 'email', 'phone', 'location']));
         if ($request->filled('password')) {
             $user->password = Hash::make($request->input('password'));
         }
+
+        if ($request->hasFile('avatar')) {
+            $managedFiles = app(\App\Services\ManagedFiles::class);
+            $managedFiles->delete($user->avatar);
+            $user->avatar = $managedFiles->store($request->file('avatar'), 'customers/avatars');
+        }
+
         $user->save();
 
-        return response()->json(['message' => 'Settings updated.']);
+        return response()->json([
+            'message' => 'Settings updated.',
+            'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+        ]);
     }
 
     public function toggleWishlist(Request $request, Property $property)

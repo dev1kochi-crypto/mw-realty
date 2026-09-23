@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Property;
 use App\Support\MapsPropertyCards;
+use App\Support\SeoMeta;
 use Illuminate\Support\Facades\Cache;
 
 /** Builds the payload for the /property-details/{slug} page. */
@@ -67,6 +68,7 @@ class PropertyPageService
                     ->filter()->values(),
                 'contact' => $this->mapContact($property),
                 'similar' => $similar->map(fn ($p) => $this->mapProperty($p, $lang, true))->values(),
+                'seo' => SeoMeta::resolve($property->metadata, $property->seoFallback($lang)),
             ];
         });
     }

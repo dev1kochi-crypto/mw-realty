@@ -158,6 +158,9 @@ class PortalAuthController extends Controller
         $portalUser = PortalUser::where('email', $request->input('email'))->first();
 
         if (!$portalUser || !Hash::check($request->input('password'), $portalUser->password)) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Invalid credentials.'], 422);
+            }
             return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email', 'login_type');
         }
 
@@ -165,12 +168,19 @@ class PortalAuthController extends Controller
         // their profile (and, once rejected, resubmitting) until Super Admin approves
         // them; only property creation is gated on approval. is_active is a hard stop.
         if (!$portalUser->is_active) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Your account has been disabled. Contact the site administrator.'], 422);
+            }
             return back()->withErrors(['email' => 'Your account has been disabled. Contact the site administrator.'])->onlyInput('email', 'login_type');
         }
 
         Auth::guard('portal')->login($portalUser, $request->boolean('remember'));
         $request->session()->regenerate();
         $request->session()->put('password_hash_portal', $portalUser->getAuthPassword());
+
+        if ($request->wantsJson()) {
+            return response()->json(['redirect' => route('portal.dashboard')]);
+        }
 
         return redirect()->route('portal.dashboard');
     }

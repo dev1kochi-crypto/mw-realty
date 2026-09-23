@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Property;
 use App\Support\MapsPropertyCards;
+use App\Support\SeoMeta;
 use Illuminate\Support\Facades\Cache;
 
 /** Builds the payload for the /properties listing page (all active properties, not restricted to any type). */
@@ -54,6 +55,7 @@ class PropertiesPageService
                     'last_page' => $paginator->lastPage(),
                     'total' => $paginator->total(),
                 ],
+                'seo' => SeoMeta::forStaticPage('properties', $lang),
             ];
         });
     }

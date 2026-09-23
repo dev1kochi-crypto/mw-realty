@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { useDocumentHead } from './useDocumentHead';
 
 const property = ref(null);
 const notFound = ref(false);
@@ -8,6 +9,7 @@ function fetchProperty(slug, langCode) {
     return window.axios.get(`/api/properties/${slug}`, { params: langCode ? { lang: langCode } : {} })
         .then((res) => {
             property.value = res.data;
+            useDocumentHead().setSeo(res.data.seo);
         })
         .catch(() => {
             property.value = null;

@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { useDocumentHead } from './useDocumentHead';
 
 const agentsListing = ref(null);
 const loading = ref(false);
@@ -8,6 +9,7 @@ function fetchAgentsListing(langCode) {
     return window.axios.get('/api/agents', { params: langCode ? { lang: langCode } : {} })
         .then((res) => {
             agentsListing.value = res.data;
+            useDocumentHead().setSeo(res.data.seo);
         })
         .catch(() => {
             agentsListing.value = null;

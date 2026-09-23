@@ -113,7 +113,7 @@ function whatsappUrl(number) {
                     <div class="mw-agent-more__track" data-property-gallery-slider>
                         <div v-for="(src, index) in property.images" :key="index" class="mw-agent-more__slide">
                             <div class="mw-property__gallery-item">
-                                <img :src="src" :alt="`${property.name} — photo ${index + 1}`">
+                                <img :src="src" :alt="`${property.name} — photo ${index + 1}`" loading="lazy">
                             </div>
                         </div>
                     </div>
@@ -194,7 +194,7 @@ function whatsappUrl(number) {
                                     </a>
                                 </div>
                                 <div class="mw-property__photo-gallery-grid">
-                                    <a v-for="(src, index) in property.images.slice(1)" :key="index" :href="src" data-fancybox="property-gallery" :data-caption="`${property.name} — photo ${index + 2}`"><img :src="src" :alt="`${property.name} photo`"></a>
+                                    <a v-for="(src, index) in property.images.slice(1)" :key="index" :href="src" data-fancybox="property-gallery" :data-caption="`${property.name} — photo ${index + 2}`"><img :src="src" :alt="`${property.name} photo`" loading="lazy"></a>
                                 </div>
                             </div>
                         </section>
@@ -271,7 +271,7 @@ function whatsappUrl(number) {
 
                         <router-link to="/#post-property" class="mw-property-ad">
                             <span class="mw-property-ad__label">Advertisement</span>
-                            <img src="/frontend/assets/images/home/post-property.jpg" alt="" class="mw-property-ad__bg">
+                            <img src="/frontend/assets/images/home/post-property.jpg" alt="" class="mw-property-ad__bg" loading="lazy">
                             <span class="mw-property-ad__content">
                                 <span class="mw-property-ad__eyebrow">MW Realty</span>
                                 <span class="mw-property-ad__title">Sell Your Property Faster</span>
@@ -307,7 +307,7 @@ function whatsappUrl(number) {
                     <div v-for="similar in property.similar" :key="similar.slug" class="mw-agent-more__slide"><article class="mw-agent-prop">
                         <router-link :to="`/property-details/${similar.slug}`" class="mw-agent-prop__media" data-card-gallery>
                             <div class="mw-agent-prop__slides" data-gallery-track>
-                                <img v-for="(src, pIndex) in similar.images" :key="pIndex" :src="src" :alt="similar.name" class="mw-agent-prop__photo">
+                                <img v-for="(src, pIndex) in similar.images" :key="pIndex" :src="src" :alt="similar.name" class="mw-agent-prop__photo" loading="lazy">
                             </div>
                             <span v-if="similar.images_count" class="mw-agent-prop__count">
                                 <img src="/frontend/assets/images/icons/photo-count.svg" alt="" width="16" height="16">

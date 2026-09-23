@@ -35,10 +35,9 @@ use App\Http\Controllers\Portal\Crm\PortalReportController;
 use App\Http\Controllers\Crm\LeadCaptureController;
 use App\Http\Controllers\Customer\CustomerAuthController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\SpaController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [SpaController::class, 'staticPage'])->defaults('pageKey', 'home');
 
 // Public, unauthenticated — any property-detail page can POST a lead here; it's
 // routed to the property's owning company/agent (see LeadCaptureController).
@@ -49,6 +48,10 @@ Route::post('/leads/capture', [LeadCaptureController::class, 'store'])->name('le
 // same pattern as the portal's own login form.
 Route::post('/customer/register', [CustomerAuthController::class, 'register'])->name('customer.register')->middleware('throttle:portal-registration');
 Route::post('/customer/login', [CustomerAuthController::class, 'login'])->name('customer.login')->middleware('throttle:admin-login');
+Route::post('/customer/verify-otp', [CustomerAuthController::class, 'verifyOtp'])->name('customer.verify-otp')->middleware('throttle:otp-verify');
+Route::post('/customer/resend-otp', [CustomerAuthController::class, 'resendOtp'])->name('customer.resend-otp')->middleware('throttle:otp-verify');
+Route::post('/customer/forgot-password', [CustomerAuthController::class, 'forgotPassword'])->name('customer.forgot-password')->middleware('throttle:form-submit');
+Route::post('/customer/reset-password', [CustomerAuthController::class, 'resetPassword'])->name('customer.reset-password')->middleware('throttle:form-submit');
 Route::post('/customer/logout', [CustomerAuthController::class, 'logout'])->name('customer.logout');
 
 // "Continue with Google" — customer accounts only (see CustomerAuthController).
@@ -587,28 +590,34 @@ Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->middleware(['web',
 
 // Public — static marketing/front-end pages, served by the Vue SPA (resources/js/router).
 // Registered before the /{slug} landing-page catch-all below so these always win.
-Route::view('/about', 'welcome');
-Route::view('/commercial', 'welcome');
-Route::view('/agents', 'welcome');
-Route::view('/agent-details/{slug}', 'welcome');
+// Pages with real SEO value are routed through SpaController, which injects a resolved
+// <title>/meta tags into the same welcome.blade.php shell before returning it — everything
+// else (auth/profile/thank-you) stays a bare Route::view since there's nothing to index.
+Route::get('/about', [SpaController::class, 'staticPage'])->defaults('pageKey', 'about');
+Route::get('/commercial', [SpaController::class, 'staticPage'])->defaults('pageKey', 'commercial');
+Route::get('/agents', [SpaController::class, 'staticPage'])->defaults('pageKey', 'agents');
+Route::get('/agent-details/{slug}', [SpaController::class, 'agentDetails']);
 Route::view('/agent-login', 'welcome');
 Route::view('/agent-signup', 'welcome');
-Route::view('/agencies', 'welcome');
-Route::view('/agency-details/{slug}', 'welcome');
+Route::get('/agencies', [SpaController::class, 'staticPage'])->defaults('pageKey', 'agencies');
+Route::get('/agency-details/{slug}', [SpaController::class, 'agencyDetails']);
 Route::view('/agency-login', 'welcome');
 Route::view('/agency-signup', 'welcome');
-Route::view('/blogs', 'welcome');
-Route::view('/blog-details/{slug}', 'welcome');
-Route::view('/contact', 'welcome');
+Route::get('/blogs', [SpaController::class, 'staticPage'])->defaults('pageKey', 'blog');
+Route::get('/blog-details/{slug}', [SpaController::class, 'blogDetails']);
+Route::get('/contact', [SpaController::class, 'staticPage'])->defaults('pageKey', 'contact');
 Route::view('/login', 'welcome');
 Route::view('/signup', 'welcome');
+Route::view('/verify-email', 'welcome');
+Route::view('/forgot-password', 'welcome');
+Route::view('/reset-password', 'welcome');
 Route::view('/profile', 'welcome');
-Route::view('/properties', 'welcome');
-Route::view('/property-details/{slug}', 'welcome');
-Route::view('/terms-and-conditions', 'welcome');
-Route::view('/privacy-policy', 'welcome');
-Route::view('/security-policy', 'welcome');
-Route::view('/cookie-settings', 'welcome');
+Route::get('/properties', [SpaController::class, 'staticPage'])->defaults('pageKey', 'properties');
+Route::get('/property-details/{slug}', [SpaController::class, 'propertyDetails']);
+Route::get('/terms-and-conditions', [SpaController::class, 'staticPage'])->defaults('pageKey', 'terms');
+Route::get('/privacy-policy', [SpaController::class, 'staticPage'])->defaults('pageKey', 'privacy');
+Route::get('/security-policy', [SpaController::class, 'staticPage'])->defaults('pageKey', 'security');
+Route::get('/cookie-settings', [SpaController::class, 'staticPage'])->defaults('pageKey', 'cookie');
 Route::view('/thank-you', 'welcome');
 
 // Public, unauthenticated — captures any <form> submission on a landing page (see
@@ -622,5 +631,5 @@ Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryControll
 // must always get first chance to match. The (?!...) guard is a belt-and-braces exclusion of the
 // app's other top-level path segments, in case any of them is ever reached without a deeper segment.
 Route::get('/{slug}', [\App\Http\Controllers\LandingPageController::class, 'show'])
-    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|contact|login|signup|profile|properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
+    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|contact|login|signup|verify-email|forgot-password|reset-password|profile|properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
     ->name('landing-pages.show');
