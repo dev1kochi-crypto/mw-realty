@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $siteInfo->company_name ?? config('cms-kit.common.name', 'CMS Kit') }} - Login</title>
-    <link rel="icon" type="image/png" href="{{ !empty($siteInfo->favicon) ? asset('storage/' . $siteInfo->favicon) : asset('frontend/assets/images/fav.png') }}">
+    <link rel="icon" type="image/png" href="{{ !empty($siteInfo->favicon) ? media_url($siteInfo->favicon) : asset('frontend/assets/images/fav.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     @php
         $theme = config('cms-kit.common.theme', []);
@@ -56,9 +56,9 @@
         <div class="logo">
             @php $colourLogo = $siteInfo->extra_fields['logo_colour'] ?? null; @endphp
             @if($colourLogo)
-                <img src="{{ asset('storage/' . $colourLogo) }}" alt="{{ $siteInfo->logo_alt ?? $siteInfo->company_name }}" class="img-fluid mb-3" style="max-height: 60px;">
+                <img src="{{ media_url($colourLogo) }}" alt="{{ $siteInfo->logo_alt ?? $siteInfo->company_name }}" class="img-fluid mb-3" style="max-height: 60px;">
             @elseif($siteInfo && $siteInfo->logo)
-                <img src="{{ asset('storage/' . $siteInfo->logo) }}" alt="{{ $siteInfo->logo_alt ?? $siteInfo->company_name }}" class="img-fluid mb-3" style="max-height: 60px;">
+                <img src="{{ media_url($siteInfo->logo) }}" alt="{{ $siteInfo->logo_alt ?? $siteInfo->company_name }}" class="img-fluid mb-3" style="max-height: 60px;">
             @endif
             <h3>{{ $siteInfo->company_name ?? config('cms-kit.common.name', 'CMS Kit') }}</h3>
             <p class="text-muted">Welcome back, Admin</p>

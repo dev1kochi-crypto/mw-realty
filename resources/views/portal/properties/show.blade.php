@@ -17,7 +17,7 @@
     $listingLabel = $property->filterLabel('listing_type');
     $address = collect(['address', 'community', 'city', 'country'])
         ->map(fn ($part) => $property->getTranslation($part))->filter()->implode(', ');
-    $iconUrl = fn ($icon) => $icon ? (str_starts_with($icon, 'http') ? $icon : asset('storage/' . $icon)) : null;
+    $iconUrl = fn ($icon) => $icon ? (str_starts_with($icon, 'http') ? $icon : media_url($icon)) : null;
     $chipLabel = fn ($row) => $row['label'][app()->getLocale()] ?? ($row['label']['en'] ?? reset($row['label']));
 
     $stats = array_filter([
@@ -289,7 +289,7 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div class="pd-card__title mb-0">Floor Plans</div>
                 @if($detail?->floor_plan_file)
-                <a href="{{ asset('storage/' . $detail->floor_plan_file) }}" target="_blank" class="btn btn-portal-light btn-sm"><i class="fas fa-file-download me-1"></i>Download</a>
+                <a href="{{ media_url($detail->floor_plan_file) }}" target="_blank" class="btn btn-portal-light btn-sm"><i class="fas fa-file-download me-1"></i>Download</a>
                 @endif
             </div>
             <div class="row g-3">
@@ -297,7 +297,7 @@
                 <div class="col-md-6">
                     <div class="pd-plan">
                         @if($plan->image)
-                        <a href="{{ asset('storage/' . $plan->image) }}" target="_blank"><img src="{{ asset('storage/' . $plan->image) }}" alt="{{ $plan->label }}"></a>
+                        <a href="{{ media_url($plan->image) }}" target="_blank"><img src="{{ media_url($plan->image) }}" alt="{{ $plan->label }}"></a>
                         @endif
                         <div class="pd-plan__body">
                             <div class="fw-bold">{{ $plan->label }}</div>
@@ -344,7 +344,7 @@
                 @if($agent = $property->agent)
                     <div class="pd-agent">
                         @if($agent->avatar)
-                        <img src="{{ asset('storage/' . $agent->avatar) }}" class="pd-agent__avatar" alt="">
+                        <img src="{{ media_url($agent->avatar) }}" class="pd-agent__avatar" alt="">
                         @else
                         <span class="pd-agent__avatar">{{ strtoupper(mb_substr($agent->name, 0, 1)) }}</span>
                         @endif

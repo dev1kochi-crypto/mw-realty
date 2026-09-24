@@ -85,7 +85,7 @@ class PropertyPageService
             'type' => $contact->type,
             'slug' => $contact->slug,
             'name' => $contact->displayName(),
-            'avatar_url' => $contact->avatar ? asset('storage/'.$contact->avatar) : null,
+            'avatar_url' => $contact->avatar ? media_url($contact->avatar) : null,
             'phone' => $contact->phone,
             'whatsapp_number' => $contact->whatsapp_number,
             'email' => $contact->email,

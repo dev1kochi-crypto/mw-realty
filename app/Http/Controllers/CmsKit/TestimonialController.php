@@ -27,7 +27,7 @@ class TestimonialController extends Controller
                 })
                 ->addColumn('image', function($row){
                     if (!$row->image) return '<span class="text-muted">No Image</span>';
-                    $img = '<img src="'.asset('storage/'.$row->image).'" class="rounded border" style="height: 40px; width: 40px; object-fit: cover;">';
+                    $img = '<img src="'.media_url($row->image).'" class="rounded border" style="height: 40px; width: 40px; object-fit: cover;">';
                     if ($row->type === 'video') {
                         $img = '<span class="position-relative d-inline-block">'.$img.'<i class="fas fa-play-circle position-absolute top-50 start-50 translate-middle text-white" style="text-shadow: 0 0 3px rgba(0,0,0,.7);"></i></span>';
                     }

@@ -175,7 +175,9 @@ class CommercialPropertySeeder extends Seeder
                 continue;
             }
 
-            Storage::disk('public')->put("{$folder}/{$referenceNo}-{$n}.jpeg", file_get_contents($sourcePath));
+            $gallery = app(\App\Services\PropertyGallery::class);
+            $folder = $gallery->folderValue($folder); // Cloudinary folder URL when configured
+            $gallery->put($folder, "{$referenceNo}-{$n}.jpeg", file_get_contents($sourcePath));
             $sequence[] = $n;
         }
 

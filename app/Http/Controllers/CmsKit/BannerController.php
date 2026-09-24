@@ -31,7 +31,7 @@ class BannerController extends Controller
                     $videoText = $row->video_file ? basename($row->video_file) : $row->video_url;
                     return '<i class="fas fa-video fa-2x text-muted"></i><br><small>' . e(Str::limit($videoText, 20)) . '</small>';
                 }
-                $url = $row->image ? asset('storage/' . $row->image) : asset('vendor/cms-kit/img/placeholder.png');
+                $url = $row->image ? media_url($row->image) : asset('vendor/cms-kit/img/placeholder.png');
                 return '<img src="' . $url . '" class="img-thumbnail" style="width: 100px; height: 50px; object-fit: cover;">';
             })
                 ->addColumn('localized_title', function ($row) {

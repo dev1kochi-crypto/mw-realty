@@ -109,7 +109,7 @@
                     <input type="text" name="poster_alt" class="form-control mt-2" placeholder="Poster ALT text" value="{{ old('poster_alt', $section->section_image_alt ?? '') }}">
                     @if($section?->section_image)
                         <div class="mt-2">
-                            <img src="{{ asset('storage/' . $section->section_image) }}" class="img-thumbnail" style="height: 70px;">
+                            <img src="{{ media_url($section->section_image) }}" class="img-thumbnail" style="height: 70px;">
                             <div class="form-check mt-1">
                                 <input class="form-check-input" type="checkbox" name="remove_poster" id="removePoster" value="1">
                                 <label class="form-check-label" for="removePoster">Remove current poster</label>

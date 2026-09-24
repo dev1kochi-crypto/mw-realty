@@ -65,7 +65,7 @@
                     <input type="text" name="image_alt" class="form-control mt-2" placeholder="Image ALT text" value="{{ old('image_alt', $place->image_alt) }}">
                     @if($place->image)
                         <div class="mt-2">
-                            <img src="{{ asset('storage/' . $place->image) }}" class="img-thumbnail" style="height: 60px;">
+                            <img src="{{ media_url($place->image) }}" class="img-thumbnail" style="height: 60px;">
                             <div class="form-check mt-1">
                                 <input class="form-check-input" type="checkbox" name="remove_image" id="removeImage" value="1">
                                 <label class="form-check-label" for="removeImage">Remove current image</label>

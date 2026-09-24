@@ -41,7 +41,7 @@ class AdController extends Controller
                     return '<input type="checkbox" class="row-checkbox form-check-input" value="' . $row->id . '">';
                 })
                 ->addColumn('image', function ($row) {
-                    return '<img src="' . asset('storage/' . $row->image) . '" class="img-thumbnail" style="height: 40px;">';
+                    return '<img src="' . media_url($row->image) . '" class="img-thumbnail" style="height: 40px;">';
                 })
                 ->addColumn('placement', function ($row) {
                     $label = self::PAGE_OPTIONS[$row->placement] ?? $row->placement;

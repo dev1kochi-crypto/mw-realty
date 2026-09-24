@@ -291,7 +291,7 @@
                             <small class="text-muted d-block mb-1">Recommended size: 200x60px (PNG/SVG)</small>
                             @if($siteInfo->logo)
                             <div class="mb-2">
-                                <img src="{{ asset('storage/' . $siteInfo->logo) }}" class="img-thumbnail rounded" style="max-height: 80px;">
+                                <img src="{{ media_url($siteInfo->logo) }}" class="img-thumbnail rounded" style="max-height: 80px;">
                             </div>
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="remove_logo" id="removeSiteLogo" value="1" {{ old('remove_logo') ? 'checked' : '' }}>
@@ -318,7 +318,7 @@
                             <small class="text-muted d-block mb-1">Recommended size: 200x60px (PNG/SVG). An alternate colour version of the main logo.</small>
                             @if($logoColour)
                             <div class="mb-2">
-                                <img src="{{ asset('storage/' . $logoColour) }}" class="img-thumbnail rounded" style="max-height: 80px;">
+                                <img src="{{ media_url($logoColour) }}" class="img-thumbnail rounded" style="max-height: 80px;">
                             </div>
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="remove_extra_fields_logo_colour" id="removeSiteLogoColour" value="1" {{ old('remove_extra_fields_logo_colour') ? 'checked' : '' }}>
@@ -338,7 +338,7 @@
                             <small class="text-muted d-block mb-1">Recommended size: 32x32px (ICO/PNG)</small>
                             @if($siteInfo->favicon)
                             <div class="mb-2">
-                                <img src="{{ asset('storage/' . $siteInfo->favicon) }}" class="img-thumbnail rounded" style="max-height: 32px;">
+                                <img src="{{ media_url($siteInfo->favicon) }}" class="img-thumbnail rounded" style="max-height: 32px;">
                             </div>
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="remove_favicon" id="removeSiteFavicon" value="1" {{ old('remove_favicon') ? 'checked' : '' }}>
@@ -358,7 +358,7 @@
                             <small class="text-muted d-block mb-1">Recommended size: 150x50px (PNG/SVG)</small>
                             @if($siteInfo->footer_logo)
                             <div class="mb-2">
-                                <img src="{{ asset('storage/' . $siteInfo->footer_logo) }}" class="img-thumbnail rounded" style="max-height: 80px;">
+                                <img src="{{ media_url($siteInfo->footer_logo) }}" class="img-thumbnail rounded" style="max-height: 80px;">
                             </div>
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="remove_footer_logo" id="removeSiteFooterLogo" value="1" {{ old('remove_footer_logo') ? 'checked' : '' }}>

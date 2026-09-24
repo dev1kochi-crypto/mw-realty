@@ -64,6 +64,22 @@ class InvoiceService
     /** Logo embedded as a data URI so it renders in the PDF (no remote fetch) and on the page. */
     private function logoDataUri(?string $logo): ?string
     {
+        // Cloudinary logo: fetch a 400px PNG rendition (keeps invoices small) and cache it a day.
+        if (CloudinaryMedia::isCloudinaryUrl($logo)) {
+            $uri = \Illuminate\Support\Facades\Cache::remember('invoice-logo:' . md5($logo), 86400, function () use ($logo) {
+                try {
+                    $response = \Illuminate\Support\Facades\Http::timeout(10)->get(str_replace('/upload/', '/upload/w_400,f_png/', $logo));
+                    return $response->successful() ? 'data:image/png;base64,' . base64_encode($response->body()) : null;
+                } catch (\Throwable) {
+                    return null;
+                }
+            });
+            if ($uri) {
+                return $uri;
+            }
+            $logo = null; // fall back to the bundled logo
+        }
+
         $candidates = array_filter([
             $logo ? storage_path('app/public/' . $logo) : null,
             public_path('frontend/assets/images/logo.png'),

@@ -494,7 +494,7 @@
                 <label class="form-label">OG Image</label>
                 <input type="file" name="metadata_og_image" class="form-control form-control-sm" accept="image/*">
                 @if(!empty($meta['og_image']))
-                    <img src="{{ asset('storage/' . $meta['og_image']) }}" class="mt-2 rounded" style="height:50px;">
+                    <img src="{{ media_url($meta['og_image']) }}" class="mt-2 rounded" style="height:50px;">
                     <div class="form-check mt-1">
                         <input type="checkbox" name="remove_metadata_og_image" value="1" class="form-check-input" id="removeMetaOgImage">
                         <label class="form-check-label small" for="removeMetaOgImage">Remove image</label>

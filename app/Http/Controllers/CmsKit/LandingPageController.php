@@ -286,6 +286,10 @@ class LandingPageController extends Controller
             app(\App\Services\ManagedFiles::class)->delete($page->metadata['og_image']);
         }
         Storage::disk('public')->deleteDirectory('landing-pages/content/' . $page->id);
+        if (\App\Services\CloudinaryMedia::enabled()) {
+            $cloudinary = app(\App\Services\CloudinaryMedia::class);
+            $cloudinary->deleteFolder($cloudinary->folderUrl('landing-pages/content/' . $page->id));
+        }
 
         $page->delete();
 
@@ -382,7 +386,7 @@ class LandingPageController extends Controller
         $filename = $this->uniqueFilename($disk, $directory, $this->sanitizeFilename($file->getClientOriginalName()));
         $path = $file->storeAs($directory, $filename, 'public');
 
-        return response()->json(['success' => true, 'url' => asset('storage/' . $path)]);
+        return response()->json(['success' => true, 'url' => media_url($path)]);
     }
 
     /**
@@ -433,9 +437,18 @@ class LandingPageController extends Controller
 
             $filename = $this->uniqueFilename($disk, $destDir, basename($tmpPath));
             $permPath = $destDir . '/' . $filename;
-            $disk->move($tmpPath, $permPath);
 
-            $html = str_replace($src, asset('storage/' . $permPath), $html);
+            // Permanent content images live on Cloudinary; the temp upload (used only for the
+            // editor preview) is removed once it's there.
+            if (\App\Services\CloudinaryMedia::enabled()) {
+                $url = app(\App\Services\CloudinaryMedia::class)->uploadFile($disk->path($tmpPath), $permPath);
+                $disk->delete($tmpPath);
+                $html = str_replace($src, $url, $html);
+                continue;
+            }
+
+            $disk->move($tmpPath, $permPath);
+            $html = str_replace($src, media_url($permPath), $html);
         }
 
         return $html;

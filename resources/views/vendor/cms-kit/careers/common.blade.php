@@ -90,7 +90,7 @@
                             @enderror
                             @if($section->banner)
                             <div class="mt-3">
-                                <img src="{{ asset('storage/' . $section->banner) }}" alt="{{ $section->banner_alt }}" class="img-fluid rounded border" style="max-height: 160px;">
+                                <img src="{{ media_url($section->banner) }}" alt="{{ $section->banner_alt }}" class="img-fluid rounded border" style="max-height: 160px;">
                             </div>
                             <div class="form-check mt-2">
                                 <input class="form-check-input" type="checkbox" name="remove_banner" id="removeCareerBanner" value="1" {{ old('remove_banner') ? 'checked' : '' }}>

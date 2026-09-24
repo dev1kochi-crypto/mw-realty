@@ -83,7 +83,7 @@
                     <input type="text" name="image_alt" class="form-control mt-2" placeholder="Image ALT text" value="{{ old('image_alt', $section->section_image_alt ?? '') }}">
                     @if($section?->section_image)
                         <div class="mt-2">
-                            <img src="{{ asset('storage/' . $section->section_image) }}" class="img-thumbnail" style="height: 70px;">
+                            <img src="{{ media_url($section->section_image) }}" class="img-thumbnail" style="height: 70px;">
                             <div class="form-check mt-1">
                                 <input class="form-check-input" type="checkbox" name="remove_image" id="removeImage" value="1">
                                 <label class="form-check-label" for="removeImage">Remove current image</label>
@@ -98,7 +98,7 @@
                     <input type="text" name="ceo_image_alt" class="form-control mt-2" placeholder="CEO image ALT text" value="{{ old('ceo_image_alt', $section->banner_alt ?? '') }}">
                     @if($section?->banner)
                         <div class="mt-2">
-                            <img src="{{ asset('storage/' . $section->banner) }}" class="img-thumbnail" style="height: 70px;">
+                            <img src="{{ media_url($section->banner) }}" class="img-thumbnail" style="height: 70px;">
                             <div class="form-check mt-1">
                                 <input class="form-check-input" type="checkbox" name="remove_ceo_image" id="removeCeoImage" value="1">
                                 <label class="form-check-label" for="removeCeoImage">Remove current CEO image</label>

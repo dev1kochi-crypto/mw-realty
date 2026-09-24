@@ -122,7 +122,7 @@
                                     @error('metadata.og_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     @if(!empty($page->metadata['og_image']))
                                     <div class="mt-2">
-                                        <img src="{{ asset('storage/' . $page->metadata['og_image']) }}" class="img-thumbnail" style="height: 60px;">
+                                        <img src="{{ media_url($page->metadata['og_image']) }}" class="img-thumbnail" style="height: 60px;">
                                         <div class="form-check mt-1">
                                             <input class="form-check-input" type="checkbox" name="remove_metadata_og_image" id="removeOgImage" value="1">
                                             <label class="form-check-label" for="removeOgImage">Remove current image</label>

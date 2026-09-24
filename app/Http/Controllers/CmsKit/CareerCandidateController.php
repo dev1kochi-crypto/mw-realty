@@ -184,7 +184,7 @@ class CareerCandidateController extends Controller
                     'designation' => $candidate->designation,
                     'submitted_at' => optional($candidate->submitted_at)->format('Y-m-d H:i:s'),
                     'additional_information' => $candidate->additional_information,
-                    'attachment' => $candidate->attachment ? asset('storage/' . $candidate->attachment) : '',
+                    'attachment' => $candidate->attachment ? media_url($candidate->attachment) : '',
                     'privacy' => $candidate->privacy ? 'Yes' : 'No',
                 ];
 

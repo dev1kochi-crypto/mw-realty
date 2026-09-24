@@ -61,7 +61,7 @@ class SeoMeta
             'canonical_url' => $row->getTranslation('canonical_url', $lang),
             'og_title' => $row->getTranslation('og_title', $lang),
             'og_description' => $row->getTranslation('og_description', $lang),
-            'og_image' => is_string($row->og_image) && $row->og_image !== '' ? asset('storage/' . $row->og_image) : null,
+            'og_image' => is_string($row->og_image) && $row->og_image !== '' ? media_url($row->og_image) : null,
             'other_meta_tags' => $row->getTranslation('other_meta_tags', $lang),
         ] : [];
 
