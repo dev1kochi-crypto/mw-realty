@@ -1,0 +1,1093 @@
+{
+    "nav": {
+        "home": "Home",
+        "commercial": "Commercial",
+        "agents": "Agents",
+        "agencies": "Agencies",
+        "blogs": "Blogs",
+        "about": "About Us",
+        "contact": "Contact Us",
+        "login": "Login",
+        "profile": "Profile",
+        "logout": "Logout",
+        "primary_aria": "Primary",
+        "mobile_aria": "Mobile",
+        "open_menu_aria": "Open menu",
+        "close_menu_aria": "Close menu"
+    },
+    "footer": {
+        "quick_links": {
+            "title": "Quick Links",
+            "home": "Home",
+            "about": "About Us",
+            "properties": "Properties",
+            "mortgage_calculator": "Mortgage Calculator",
+            "delhi_expo": "Delhi Expo",
+            "invest_in_dubai": "Invest in Dubai",
+            "contact": "Contact"
+        },
+        "properties_col": {
+            "title": "Properties",
+            "properties_in_dubai": "Properties in Dubai",
+            "properties_in_abu_dhabi": "Properties in Abu dhabi",
+            "properties_in_ajman": "Properties in Ajman",
+            "properties_in_ras_al_khaimah": "Properties in Ras Al Khaimah",
+            "sobha_siniya_island": "Sobha Siniya Island",
+            "sobha_elwood": "Sobha Elwood",
+            "binghatti": "Binghatti"
+        },
+        "buy": {
+            "title": "Buy",
+            "properties_for_sale": "Properties for Sale",
+            "guide_to_buying": "Guide to Buying",
+            "mortgages": "Mortgages",
+            "property_management": "Property Management",
+            "legal_services": "Legal Services"
+        },
+        "off_plan": {
+            "title": "Off-Plan",
+            "new_projects": "New Projects",
+            "guide_to_buying_off_plan": "Guide to Buying Off Plan",
+            "best_dubai_communities": "Best Dubai Communities",
+            "top_dubai_developers": "Top Dubai Developers",
+            "snagging_inspection": "Snagging & Inspection",
+            "upcoming_roadshows": "Upcoming Roadshows",
+            "branded_residences": "Branded Residences"
+        },
+        "legal": {
+            "title": "Legal",
+            "terms_of_use": "Terms of use",
+            "privacy_policy": "Privacy policy",
+            "security_policy": "Security Policy",
+            "cookie_settings": "Cookie settings"
+        },
+        "contact": {
+            "address_label": "Address",
+            "toll_free_label": "Toll Free",
+            "call_us_label": "Call Us",
+            "email_label": "Email"
+        },
+        "newsletter": {
+            "title": "Newsletter",
+            "placeholder": "Your email address",
+            "terms_text": "I have read and agree to the terms & conditions",
+            "error_agree": "Please agree to the terms & conditions to subscribe.",
+            "error_generic": "Something went wrong — please try again.",
+            "subscribe_aria": "Subscribe"
+        },
+        "copyright": {
+            "prefix": "Copyright ©",
+            "designed_by": "Designed by : Mighty Warners Technologies"
+        },
+        "social": {
+            "twitter": "Twitter",
+            "facebook": "Facebook",
+            "instagram": "Instagram",
+            "linkedin": "LinkedIn"
+        },
+        "bottom_nav": {
+            "home": "Home",
+            "buy": "Buy",
+            "properties": "Properties",
+            "login": "Login",
+            "aria_label": "Quick links"
+        }
+    },
+    "home": {
+        "hero": {
+            "tabs": {
+                "buy": "Buy",
+                "rent": "Rent",
+                "ready": "Ready",
+                "off_plan": "Off-Plan"
+            },
+            "search": {
+                "location_placeholder": "Enter location",
+                "bedroom_label": "Bedroom",
+                "price_range_label": "Price Range",
+                "property_type_label": "Property Type",
+                "submit": "Search"
+            },
+            "price": {
+                "min_label": "Min",
+                "max_label": "Max",
+                "quick_select": "Quick select",
+                "min_aria": "Minimum price",
+                "max_aria": "Maximum price"
+            },
+            "note_text_default": "Want to find out more about UAE real estate using AI?",
+            "note_badge_default": "Comming Soon",
+            "guide_text_default": "Let Us Guide Your Home",
+            "tabs_aria_label": "Listing type"
+        },
+        "bedroom_options": {
+            "studio": "Studio",
+            "one": "1 Bedroom",
+            "two": "2 Bedrooms",
+            "three": "3 Bedrooms",
+            "four": "4 Bedrooms",
+            "five": "5 Bedrooms",
+            "six": "6 Bedrooms",
+            "seven_plus": "7+ Bedrooms"
+        },
+        "property_types": {
+            "apartment": "Apartment",
+            "villa": "Villa",
+            "penthouse": "Penthouse",
+            "townhouse": "Townhouse",
+            "plot": "Plot",
+            "office": "Office"
+        },
+        "price_presets": {
+            "under_500k": "Under 500K",
+            "500k_1m": "500K – 1M",
+            "1m_2m": "1M – 2M",
+            "2m_5m": "2M – 5M",
+            "5m_10m": "5M – 10M",
+            "10m_plus": "10M+"
+        },
+        "badges": {
+            "verified": "Verified",
+            "premium": "Premium",
+            "advertisement": "Advertisement"
+        },
+        "aria": {
+            "save_property": "Save property",
+            "previous_photo": "Previous photo",
+            "next_photo": "Next photo",
+            "email": "Email",
+            "call": "Call",
+            "whatsapp": "WhatsApp",
+            "previous_premium_property": "Previous premium property",
+            "next_premium_property": "Next premium property",
+            "previous_places": "Previous places",
+            "next_places": "Next places",
+            "previous_luxury_project": "Previous luxury project",
+            "next_luxury_project": "Next luxury project",
+            "previous_realty_property": "Previous realty property",
+            "next_realty_property": "Next realty property",
+            "previous_testimonial": "Previous testimonial",
+            "next_testimonial": "Next testimonial"
+        },
+        "contact_card": {
+            "mail": "Mail",
+            "call_us": "Call us",
+            "chat_with_us": "Chat with us"
+        },
+        "find_properties": {
+            "view_all_static": "View All Properties",
+            "tall_alt": "All properties"
+        },
+        "communities_filters": {
+            "for_sale": "For Sale",
+            "for_rent": "For Rent",
+            "off_plan": "Off Plan"
+        },
+        "post_property": {
+            "step_label": "Step"
+        },
+        "contact": {
+            "eyebrow_default": "We're here to help",
+            "heading_default": "Connect with the experts who make property management simple.",
+            "photo_alt": "Modern living room managed by MW Realty",
+            "office_address_label": "Office Address",
+            "toll_free_label": "Toll Free",
+            "request_callback_label": "Request A Call Back",
+            "email_us_label": "Email Us",
+            "form": {
+                "name_label": "Name*",
+                "name_placeholder": "Your name",
+                "email_label": "Email*",
+                "email_placeholder": "Your email",
+                "phone_label": "phone*",
+                "phone_placeholder": "Your phone",
+                "interest_label": "what are you interested in?",
+                "interest_select_placeholder": "Select",
+                "interest_buy": "Buy a property",
+                "interest_rent": "Rent a property",
+                "interest_sell": "Sell / list a property",
+                "interest_management": "Property management",
+                "message_label": "Message",
+                "message_placeholder": "How can we help you?",
+                "submit": "Contact Our Expert"
+            }
+        }
+    },
+    "properties_listing": {
+        "filter_panel": {
+            "title": "Filters",
+            "close_aria": "Close filters",
+            "purpose_label": "Purpose",
+            "location_label": "Location",
+            "location_placeholder": "Enter location",
+            "property_type_label": "Property Type",
+            "all_type": "All type",
+            "price_title": "Price Range",
+            "min_label": "Min",
+            "max_label": "Max",
+            "min_aria": "Minimum price",
+            "max_aria": "Maximum price",
+            "quick_select": "Quick select",
+            "bedrooms_title": "Bedrooms",
+            "bathrooms_title": "Bathrooms",
+            "any": "Any",
+            "area_title": "Area (sq.ft)",
+            "area_min_placeholder": "0",
+            "area_max_placeholder": "10,000",
+            "area_min_aria": "Minimum area",
+            "area_max_aria": "Maximum area",
+            "features_title": "Property Features",
+            "feature_verified": "MW Verified Property",
+            "feature_floor_plans": "Properties with floor plans",
+            "amenities_title": "Amenities",
+            "amenity_furnished": "Furnished",
+            "amenity_community_pool": "Community Pool",
+            "amenity_parking": "Parking",
+            "amenity_gym": "Gym",
+            "amenity_security": "24/7 Security",
+            "amenity_balcony": "Balcony",
+            "amenity_concierge": "Concierge",
+            "amenity_private_pool": "Private Pool",
+            "reset": "Reset",
+            "apply": "Apply Filters"
+        },
+        "property_types": {
+            "apartment": "Apartment",
+            "villa": "Villa",
+            "townhouse": "Townhouse",
+            "penthouse": "Penthouse",
+            "duplex": "Duplex",
+            "studio": "Studio"
+        },
+        "price_presets": {
+            "under_500k": "Under 500K",
+            "500k_1m": "500K – 1M",
+            "1m_2m": "1M – 2M",
+            "2m_5m": "2M – 5M",
+            "5m_10m": "5M – 10M",
+            "10m_plus": "10M+"
+        },
+        "bedroom_options": {
+            "studio": "Studio",
+            "one": "1",
+            "two": "2",
+            "three": "3",
+            "four": "4",
+            "five_plus": "5+"
+        },
+        "bathroom_options": {
+            "one": "1",
+            "two": "2",
+            "three": "3",
+            "four": "4",
+            "five_plus": "5+"
+        },
+        "hero": {
+            "title": "Properties in Dubai",
+            "breadcrumb_aria": "Breadcrumb",
+            "breadcrumb_home": "Home"
+        },
+        "filter_bar": {
+            "purpose_label": "Purpose",
+            "buy": "Buy",
+            "rent": "Rent",
+            "off_plan": "Off-Plan",
+            "location_label": "Location",
+            "location_placeholder": "Enter location",
+            "property_type_label": "Property Type",
+            "all_type": "All type",
+            "bedrooms_label": "Bedrooms",
+            "select_bedrooms": "Select bedrooms",
+            "bathrooms_label": "Bathrooms",
+            "select_bathrooms": "Select bathrooms",
+            "more_filters_aria": "More filters",
+            "search": "Search"
+        },
+        "toolbar": {
+            "all": "All",
+            "ready": "Ready",
+            "off_plan": "Off Plan",
+            "sort_most_recent": "Most Recent",
+            "sort_price_low_high": "Price: Low to High",
+            "sort_price_high_low": "Price: High to Low",
+            "sort_most_popular": "Most Popular",
+            "views_aria": "Toggle properties view",
+            "grid_view_aria": "Grid view",
+            "list_view_aria": "List view",
+            "custom_request": "Custom Request",
+            "save_search": "Save Search",
+            "saving": "Saving…",
+            "search_saved": "Search Saved ✓",
+            "save_error": "Couldn't save — try again",
+            "clear_filters": "Clear Filters"
+        },
+        "ticker": {
+            "aria_label": "Recommended searches and off-plan investment links",
+            "recommended_searches": "Recommended Searches",
+            "bedroom_link_suffix": "Bedroom Properties for sale in dubai",
+            "invest_off_plan": "Invest in Off Plan Properties",
+            "off_plan_link_suffix": "Off Plan Properties in Abu Dhabi"
+        },
+        "listing": {
+            "title": "Properties for sale in dubai",
+            "count_suffix": "listings",
+            "email": "Email",
+            "call_us": "Call Us",
+            "whatsapp": "WhatsApp",
+            "save_property_aria": "Save property",
+            "previous_photo_aria": "Previous photo",
+            "next_photo_aria": "Next photo",
+            "pagination_aria": "Properties pagination",
+            "previous": "Previous",
+            "next": "Next"
+        },
+        "empty_state": {
+            "title": "No Properties Available",
+            "message": "No properties match your search right now — try adjusting your filters or broadening your criteria."
+        }
+    },
+    "custom_request": {
+        "dialog_aria_label": "Custom Property Request",
+        "title": "Custom Property Request",
+        "subtitle": "Tell us what you're looking for and we'll help you find it.",
+        "close_aria": "Close",
+        "section_personal_information": "Personal Information",
+        "first_name_label": "First Name",
+        "first_name_placeholder": "Enter first name",
+        "last_name_label": "Last Name",
+        "last_name_placeholder": "Enter last name",
+        "email_label": "Email",
+        "email_placeholder": "john@example.com",
+        "phone_label": "Phone",
+        "phone_placeholder": "Enter phone number",
+        "section_property_requirements": "Property Requirements",
+        "property_category_label": "Property Category",
+        "select_category": "Select category",
+        "category_apartment": "Apartment",
+        "category_villa": "Villa",
+        "category_townhouse": "Townhouse",
+        "category_penthouse": "Penthouse",
+        "category_commercial": "Commercial",
+        "specification_label": "Specification",
+        "specification_placeholder": "e.g. 3 BHK Apartment",
+        "price_range_label": "Price Range",
+        "price_range_placeholder": "e.g. AED 1M - AED 1.5M",
+        "area_label": "Area (sqft)",
+        "area_placeholder": "e.g. 1200 Sqft",
+        "preferred_location_label": "Preferred Location",
+        "preferred_location_placeholder": "e.g. Business Bay",
+        "additional_details_label": "Additional Details",
+        "additional_details_placeholder": "Amenities, floor, view etc.",
+        "section_preferences": "Preferences",
+        "move_in_timeline_label": "Move-in Timeline",
+        "select_timeline": "Select timeline",
+        "timeline_immediate": "Immediate",
+        "timeline_1_3_months": "1–3 Months",
+        "timeline_3_6_months": "3–6 Months",
+        "timeline_6_12_months": "6–12 Months",
+        "timeline_flexible": "Flexible",
+        "furnishing_status_label": "Furnishing Status",
+        "select_status": "Select status",
+        "furnishing_furnished": "Furnished",
+        "furnishing_unfurnished": "Unfurnished",
+        "furnishing_semi_furnished": "Semi-Furnished",
+        "furnishing_no_preference": "No Preference",
+        "whatsapp_consent_label": "WhatsApp Consent",
+        "whatsapp_consent_text": "I agree to receive updates about my property request via WhatsApp.",
+        "submit": "Submit Request",
+        "submitting": "Submitting…",
+        "terms_prefix": "By submitting this form you agree to our",
+        "terms_of_service": "Terms of Service",
+        "terms_and": "and",
+        "privacy_policy": "Privacy Policy",
+        "generic_error": "Something went wrong — please try again."
+    },
+    "commercial": {
+        "filter_panel": {
+            "title": "Filters",
+            "close_aria": "Close filters",
+            "location_label": "Location",
+            "location_placeholder": "Enter location",
+            "properties_label": "Properties",
+            "properties_placeholder": "Search by title, location",
+            "property_type_label": "Property Type",
+            "all_type": "All type",
+            "category_label": "Category",
+            "all_categories": "All categories",
+            "price_title": "Price Range",
+            "min_label": "Min",
+            "max_label": "Max",
+            "min_aria": "Minimum price",
+            "max_aria": "Maximum price",
+            "quick_select": "Quick select",
+            "bedrooms_title": "Bedrooms",
+            "bathrooms_title": "Bathrooms",
+            "any": "Any",
+            "area_title": "Area (sq.ft)",
+            "area_min_placeholder": "0",
+            "area_max_placeholder": "10,000",
+            "area_min_aria": "Minimum area",
+            "area_max_aria": "Maximum area",
+            "amenities_title": "Amenities",
+            "amenity_furnished": "Furnished",
+            "amenity_community_pool": "Community Pool",
+            "amenity_parking": "Parking",
+            "amenity_gym": "Gym",
+            "amenity_security": "24/7 Security",
+            "amenity_balcony": "Balcony",
+            "amenity_concierge": "Concierge",
+            "amenity_private_pool": "Private Pool",
+            "reset": "Reset",
+            "apply": "Apply Filters"
+        },
+        "price_presets": {
+            "under_500k": "Under 500K",
+            "500k_1m": "500K – 1M",
+            "1m_2m": "1M – 2M",
+            "2m_5m": "2M – 5M",
+            "5m_10m": "5M – 10M",
+            "10m_plus": "10M+"
+        },
+        "property_types": {
+            "hotel_apartment": "Hotel Apartment",
+            "loft": "Loft",
+            "villa": "Villa",
+            "apartment": "Apartment",
+            "penthouse": "Penthouse",
+            "town_house": "Town House",
+            "commercial": "Commercial"
+        },
+        "filter_bar_property_types": {
+            "office": "Office",
+            "retail_shop": "Retail Shop",
+            "warehouse": "Warehouse",
+            "showroom": "Showroom"
+        },
+        "categories": {
+            "all": "All categories",
+            "buy": "Buy",
+            "lease": "Lease",
+            "off_plan": "Off-Plan"
+        },
+        "hero": {
+            "default_title": "Commercial",
+            "breadcrumb_aria": "Breadcrumb",
+            "breadcrumb_home": "Home",
+            "breadcrumb_current": "Commercial"
+        },
+        "filter_bar": {
+            "location_label": "Location",
+            "location_placeholder": "Enter location",
+            "properties_label": "Properties",
+            "properties_placeholder": "Search by title, location",
+            "property_type_label": "Property Type",
+            "all_type": "All type",
+            "category_label": "Category",
+            "all_categories": "All categories",
+            "more_filters_aria": "More filters",
+            "search": "Search"
+        },
+        "card": {
+            "verified": "MW Verified",
+            "floor_label": "Floor",
+            "rera_label": "RERA",
+            "call_us": "Call Us",
+            "whatsapp": "WhatsApp",
+            "email": "Email",
+            "more_amenities_suffix": "more",
+            "previous_photo_aria": "Previous photo",
+            "next_photo_aria": "Next photo"
+        },
+        "empty_state": {
+            "title": "No Properties Available",
+            "message": "No commercial properties match your search right now — try adjusting your filters or broadening your criteria."
+        },
+        "pagination_aria": "Commercial properties pagination",
+        "previous": "Previous",
+        "next": "Next",
+        "clear_filters": "Clear Filters"
+    },
+    "empty_state": {
+        "default_title": "No Properties Available",
+        "default_message": "Try adjusting your filters or search criteria to find more results."
+    },
+    "property_details": {
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "breadcrumb_properties": "Properties in Dubai",
+        "gallery_prev_aria": "Previous photo",
+        "gallery_next_aria": "Next photo",
+        "meta_bedrooms_suffix": "Bedrooms",
+        "meta_bathrooms_suffix": "Bathrooms",
+        "meta_published_prefix": "Published",
+        "price_yearly_rent": "Yearly Rent",
+        "price_starting_price": "Starting Price",
+        "price_on_request": "Price on request",
+        "tabs_aria": "Property sections",
+        "tab_overview": "Overview",
+        "tab_features": "Features & Amenities",
+        "tab_gallery": "Gallery",
+        "overview_title": "About This Property",
+        "description_fallback": "A {type} located in {location}.",
+        "gallery_title": "Photo Gallery",
+        "pills": {
+            "rera_id": "Rera ID",
+            "status": "Status",
+            "type": "Type",
+            "bedrooms": "Bedrooms",
+            "bathrooms": "Bathrooms",
+            "location": "Location",
+            "size": "Size",
+            "garage": "Garage",
+            "year_built": "Year Built"
+        },
+        "agent_card": {
+            "serves_in_dubai": "Serves in Dubai",
+            "years_of_experience_prefix": "Years of Experience",
+            "preferred_areas_prefix": "Preferred Areas",
+            "call_aria": "Call {name}",
+            "whatsapp_aria": "WhatsApp {name}",
+            "email_aria": "Email {name}",
+            "view_details": "View Details"
+        },
+        "enquiry": {
+            "title": "Enquire About This Property",
+            "name_label": "Name*",
+            "name_placeholder": "Your name",
+            "email_label": "Email*",
+            "email_placeholder": "Your email",
+            "phone_label": "Phone",
+            "phone_placeholder": "Your phone",
+            "property_label": "Property",
+            "message_label": "Message",
+            "sending": "Sending…",
+            "submit": "Send Enquiry"
+        },
+        "ad": {
+            "label": "Advertisement",
+            "eyebrow": "MW Realty",
+            "title": "Sell Your Property Faster",
+            "text": "List with MW Realty and reach thousands of verified buyers across the UAE.",
+            "cta": "Post Your Property"
+        },
+        "similar": {
+            "title": "Similar Properties",
+            "previous_aria": "Previous properties",
+            "next_aria": "Next properties"
+        },
+        "not_found": {
+            "title": "Property Not Found",
+            "message": "This property listing doesn't exist or is no longer available.",
+            "back_link": "Back to Properties"
+        },
+        "generic_error": "Something went wrong — please try again."
+    },
+    "about": {
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "breadcrumb_current": "About Us",
+        "director": {
+            "read_message": "Read Director Message"
+        },
+        "steps": {
+            "heading": "Post Your property in 3 simple steps"
+        },
+        "why_choose_us": {
+            "heading": "Why Choose Us",
+            "photo_alt": "Residential tower at dusk"
+        },
+        "diversity": {
+            "pause_video_aria": "Pause video"
+        },
+        "newsletter": {
+            "title": "Newsletter",
+            "text": "Sign up to receive the latest articles",
+            "placeholder": "Enter your email address",
+            "submit": "Subscribe Now"
+        }
+    },
+    "contact_page": {
+        "page_title": "Contact Us",
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "breadcrumb_current": "Contact Us",
+        "form": {
+            "name_label": "Name*",
+            "name_placeholder": "Your name",
+            "email_label": "Email*",
+            "email_placeholder": "Your email",
+            "phone_label": "Phone",
+            "phone_placeholder": "Your phone",
+            "message_label": "Message",
+            "message_placeholder": "How can we help you?",
+            "sending": "Sending…",
+            "submit": "Send Message"
+        },
+        "info": {
+            "office_address_label": "Office Address",
+            "call_us_label": "Call Us",
+            "email_us_label": "Email Us",
+            "whatsapp_label": "WhatsApp",
+            "working_hours_label": "Working Hours",
+            "follow_us_label": "Follow Us"
+        },
+        "social": {
+            "twitter_aria": "Twitter",
+            "facebook_aria": "Facebook",
+            "instagram_aria": "Instagram",
+            "linkedin_aria": "LinkedIn"
+        },
+        "map_title": "Office location map",
+        "generic_error": "Something went wrong — please try again."
+    },
+    "agents": {
+        "hero_default_title": "Our Agent",
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "breadcrumb_current": "Agent",
+        "card": {
+            "serves_in_dubai": "Serves in Dubai",
+            "rent_prefix": "Rent",
+            "sell_prefix": "Sell",
+            "years_of_experience_prefix": "Years of Experience",
+            "preferred_areas_prefix": "Preferred Areas",
+            "view_details": "View Details"
+        }
+    },
+    "agencies": {
+        "hero_default_title": "Our Agencies",
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "breadcrumb_current": "Agencies",
+        "filter": {
+            "location_label": "Location",
+            "location_placeholder": "Enter location",
+            "name_label": "Agency Name",
+            "name_placeholder": "Search agency name",
+            "search": "Search",
+            "views_aria": "Toggle agencies view",
+            "grid_view_aria": "Grid view",
+            "list_view_aria": "List view"
+        },
+        "section_default_title": "Top Agencies",
+        "section_default_description": "Explore agency with a proven track record of high response rates and authentic listings.",
+        "no_results": "No agencies match your search.",
+        "card": {
+            "properties_prefix": "Properties",
+            "default_service_area": "Services Area : Dubai",
+            "call_aria": "Call {name}",
+            "email_aria": "Email {name}",
+            "view_details": "View Details"
+        }
+    },
+    "agent_details": {
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "breadcrumb_agents": "Agent",
+        "serves_in_dubai": "Serves in Dubai",
+        "share_label": "Share",
+        "share_x_aria": "Share on X",
+        "share_facebook_aria": "Share on Facebook",
+        "share_instagram_aria": "Share on Instagram",
+        "share_linkedin_aria": "Share on LinkedIn",
+        "years_of_experience_prefix": "Years of Experience",
+        "preferred_areas_prefix": "Preferred Areas",
+        "rent_prefix": "Rent",
+        "sell_prefix": "Sell",
+        "email": "Email",
+        "call_us": "Call Us",
+        "whatsapp": "WhatsApp",
+        "tabs": {
+            "about": "About Me",
+            "listings": "My Listing Properties"
+        },
+        "bio_fallback": "{name} is a Dubai-based real estate professional ready to help you buy, sell or rent.",
+        "other_properties_title": "Other Properties",
+        "previous_properties_aria": "Previous properties",
+        "next_properties_aria": "Next properties",
+        "verified": "Verified",
+        "save_property_aria": "Save property",
+        "previous_photo_aria": "Previous photo",
+        "next_photo_aria": "Next photo",
+        "not_found": {
+            "title": "Agent Not Found",
+            "message": "This agent profile doesn't exist or is no longer active.",
+            "back_link": "Back to Agents"
+        }
+    },
+    "agency_details": {
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "breadcrumb_agencies": "Agencies",
+        "since_prefix": "Since",
+        "call_aria": "Call {name}",
+        "email_aria": "Email {name}",
+        "whatsapp_aria": "WhatsApp {name}",
+        "default_service_area": "Services Area : Dubai",
+        "stats": {
+            "total_agent": "Total Agent",
+            "total_properties": "Total Properties",
+            "for_sale": "For Sale",
+            "for_rent": "For Rent"
+        },
+        "bio_fallback": "{name} is a Dubai-based real estate agency.",
+        "map_title": "Services Area — Dubai",
+        "properties_panel_title": "Properties",
+        "previous_properties_aria": "Previous properties",
+        "next_properties_aria": "Next properties",
+        "verified": "Verified",
+        "save_property_aria": "Save property",
+        "previous_photo_aria": "Previous photo",
+        "next_photo_aria": "Next photo",
+        "email": "Email",
+        "call_us": "Call Us",
+        "whatsapp": "WhatsApp",
+        "agents_panel_title": "Agent",
+        "view_all": "View All",
+        "previous_agents_aria": "Previous agents",
+        "next_agents_aria": "Next agents",
+        "serves_in_dubai": "Serves in Dubai",
+        "rent_prefix": "Rent",
+        "sell_prefix": "Sell",
+        "years_of_experience_prefix": "Years of Experience",
+        "preferred_areas_prefix": "Preferred Areas",
+        "view_details": "View Details",
+        "contact_info_title": "Contact Info",
+        "agency_details_subtitle": "Agency Details",
+        "orn_label": "ORN No",
+        "not_found": {
+            "title": "Agency Not Found",
+            "message": "This agency profile doesn't exist or is no longer active.",
+            "back_link": "Back to Agencies"
+        }
+    },
+    "blogs": {
+        "page_default_title": "Blog",
+        "heading_default": "Latest Articles",
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "all_label": "All",
+        "read_more": "Read More",
+        "pagination_aria": "Blog pagination",
+        "previous": "Previous",
+        "next": "Next"
+    },
+    "blog_details": {
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "breadcrumb_blog": "Blog",
+        "share_label": "Share this article",
+        "share_facebook_aria": "Share on Facebook",
+        "share_twitter_aria": "Share on Twitter",
+        "share_linkedin_aria": "Share on LinkedIn",
+        "share_instagram_aria": "Share on Instagram",
+        "pager_aria": "Post navigation",
+        "previous_post": "Previous Post",
+        "next_post": "Next Post",
+        "earliest_article": "You're on the earliest article",
+        "latest_article": "You're on the latest article",
+        "recent_blogs_title": "Recent Blogs",
+        "categories_title": "Categories",
+        "not_found": {
+            "title": "Post Not Found",
+            "message": "This blog post doesn't exist or has been removed.",
+            "back_link": "Back to Blog"
+        }
+    },
+    "login": {
+        "photo_alt": "Cozy Dubai apartment interior",
+        "tab_user": "User",
+        "tab_agent_agency": "Agent / Agency",
+        "title": "Welcome back",
+        "subtitle": "Please enter your details to sign in.",
+        "email_label": "Email",
+        "email_placeholder": "Enter your email",
+        "password_label": "Password",
+        "password_placeholder": "Enter your password",
+        "forgot_password": "Forgot your password?",
+        "submit": "Sign In",
+        "submitting": "Signing In…",
+        "signup_prompt": "Don't have an account?",
+        "signup_link": "Sign Up",
+        "divider_or": "OR",
+        "google_cta": "Continue with Google",
+        "generic_error": "Something went wrong — please try again.",
+        "agent_tab_hint": "Registered as an agent or agency? Switch to the Agent / Agency tab."
+    },
+    "signup": {
+        "photo_alt": "Cozy Dubai apartment interior",
+        "title": "Create your account",
+        "subtitle_user": "Sign up as a user to save favorites and enquire on properties.",
+        "subtitle_agent": "Sign up as an agent to list properties and manage your clients.",
+        "subtitle_agency": "Register your agency to list properties and manage your agents.",
+        "login_text_user": "Already have an account?",
+        "login_text_agent": "Already have an agent account?",
+        "login_text_agency": "Already have an agency account?",
+        "password_rules_title": "Password requirements",
+        "password_requirements_aria": "Password requirements",
+        "rule_length": "At least 8 characters",
+        "rule_lowercase": "One lowercase letter",
+        "rule_uppercase": "One uppercase letter",
+        "rule_number": "One number",
+        "rule_special": "One special character",
+        "strength_weak": "Weak",
+        "strength_medium": "Medium",
+        "strength_strong": "Strong",
+        "account_type_label": "Account Type",
+        "role_customer": "Customer",
+        "role_agent": "Agent",
+        "role_agency": "Agency",
+        "full_name_label": "Full Name",
+        "full_name_placeholder": "Enter your full name",
+        "email_label": "Email Address",
+        "email_placeholder": "Enter your email",
+        "phone_label": "Phone Number",
+        "phone_placeholder": "Enter phone number",
+        "email_invalid": "Please enter a valid email address.",
+        "phone_invalid": "Please enter a valid phone number.",
+        "password_label": "Password",
+        "password_create_placeholder": "Create a password",
+        "confirm_password_label": "Confirm Password",
+        "confirm_password_placeholder": "Re-enter your password",
+        "password_strength_label": "Password strength",
+        "passwords_match": "Passwords match",
+        "passwords_no_match": "Passwords do not match",
+        "agent_license_label": "RERA / Broker License No.",
+        "agent_license_placeholder": "Enter your license number",
+        "agency_name_label": "Agency Name",
+        "agency_name_placeholder": "Enter your agency name",
+        "agency_license_label": "Trade License Number",
+        "agency_license_placeholder": "Enter your trade license number",
+        "agency_contact_label": "Contact Person Name",
+        "agency_contact_placeholder": "Enter contact person name",
+        "agency_address_label": "Office Address",
+        "agency_address_placeholder": "Enter your office address",
+        "terms_prefix": "I agree to the",
+        "terms_link_text": "Terms & Conditions",
+        "terms_suffix": "and Privacy Policy.",
+        "sign_in_link": "Sign In",
+        "submit": "Create Account",
+        "submitting": "Creating Account…",
+        "divider_or": "OR",
+        "google_cta": "Continue with Google",
+        "generic_error": "Something went wrong — please try again."
+    },
+    "forgot_password": {
+        "photo_alt": "Cozy Dubai apartment interior",
+        "title": "Forgot your password?",
+        "subtitle": "Enter your email and we'll send you a link to reset it.",
+        "email_label": "Email",
+        "email_placeholder": "Enter your email",
+        "submit": "Send Reset Link",
+        "submitting": "Sending…",
+        "back_to_sign_in": "Back to Sign In",
+        "sent_title": "Check your email",
+        "sent_subtitle": "If an account exists for {email}, we've sent a link to reset your password. The link expires in 60 minutes.",
+        "generic_error": "Something went wrong — please try again."
+    },
+    "reset_password": {
+        "photo_alt": "Cozy Dubai apartment interior",
+        "invalid_title": "Invalid reset link",
+        "invalid_message": "This password reset link is invalid or incomplete. Please request a new one.",
+        "request_new_link": "Request New Link",
+        "done_title": "Password reset",
+        "done_message": "Your password has been reset — you can now sign in with your new password.",
+        "continue_to_sign_in": "Continue to Sign In",
+        "title": "Reset your password",
+        "subtitle": "Choose a new password for {email}.",
+        "new_password_label": "New Password",
+        "password_requirements_aria": "Password requirements",
+        "password_rules_title": "Password requirements",
+        "rule_length": "At least 8 characters",
+        "rule_lowercase": "One lowercase letter",
+        "rule_uppercase": "One uppercase letter",
+        "rule_number": "One number",
+        "rule_special": "One special character",
+        "password_create_placeholder": "Create a new password",
+        "confirm_password_label": "Confirm New Password",
+        "confirm_password_placeholder": "Re-enter your new password",
+        "password_strength_label": "Password strength",
+        "strength_weak": "Weak",
+        "strength_medium": "Medium",
+        "strength_strong": "Strong",
+        "passwords_match": "Passwords match",
+        "passwords_no_match": "Passwords do not match",
+        "submit": "Reset Password",
+        "submitting": "Resetting…",
+        "generic_error": "Something went wrong — please try again."
+    },
+    "verify_otp": {
+        "photo_alt": "Cozy Dubai apartment interior",
+        "verified_title": "Verified Successfully",
+        "verified_subtitle": "Your email has been verified.",
+        "verified_badge": "Verified and Secure",
+        "continue_to_account": "Continue to Account",
+        "failed_title": "Verification Failed",
+        "title": "Let's verify your email",
+        "masked_note": "We've sent a 4-digit code to your email.",
+        "auto_verify_note": "It'll auto-verify once entered.",
+        "verifying_note": "Verifying your code...",
+        "resend_prompt": "Didn't receive the code?",
+        "resend_sending": "Sending…",
+        "resend_in": "Resend in {seconds}s",
+        "resend": "Resend",
+        "resend_generic_error": "Could not resend the code — please try again.",
+        "default_invalid_code_error": "Invalid or expired code."
+    },
+    "profile": {
+        "nav": {
+            "overview": "Overview",
+            "wishlist": "Wishlist",
+            "saved_searches": "Saved Searches",
+            "enquiries": "My Enquiries",
+            "settings": "Account Settings"
+        },
+        "nav_aria": "Account dashboard",
+        "log_out": "Log Out",
+        "overview": {
+            "welcome_back": "Welcome back",
+            "subtitle": "Here's what's happening with your account.",
+            "stat_saved_properties": "Saved Properties",
+            "stat_saved_searches": "Saved Searches",
+            "stat_enquiries_sent": "Enquiries Sent",
+            "recent_activity": "Recent Activity",
+            "no_activity": "No activity yet — start browsing properties to save favorites and send enquiries."
+        },
+        "wishlist": {
+            "title": "Wishlist",
+            "subtitle": "Properties you've saved for later. Click the heart to remove one.",
+            "empty": "You haven't saved any properties yet.",
+            "remove_aria": "Remove from wishlist",
+            "furnished_badge": "Furnished",
+            "email": "Email",
+            "call_us": "Call Us",
+            "whatsapp": "WhatsApp"
+        },
+        "saved_searches": {
+            "title": "Saved Searches",
+            "subtitle": "Get notified when new listings match these criteria.",
+            "empty": "You haven't saved any searches yet.",
+            "view_results": "View Results",
+            "delete_aria": "Delete saved search"
+        },
+        "enquiries": {
+            "title": "My Enquiries",
+            "subtitle": "Messages you've sent to agents and agencies.",
+            "empty": "You haven't sent any enquiries yet.",
+            "table_property": "Property",
+            "table_sent_to": "Sent To",
+            "table_date": "Date",
+            "table_status": "Status"
+        },
+        "settings": {
+            "title": "Account Settings",
+            "subtitle": "Update your personal information and password.",
+            "change_photo": "Change Photo",
+            "photo_hint": "JPG or PNG, up to 2MB.",
+            "full_name_label": "Full Name",
+            "email_label": "Email Address",
+            "phone_label": "Phone Number",
+            "location_label": "Location",
+            "new_password_label": "New Password",
+            "new_password_placeholder": "Leave blank to keep current password",
+            "confirm_password_label": "Confirm New Password",
+            "confirm_password_placeholder": "Re-enter new password",
+            "submit": "Save Changes",
+            "submitting": "Saving…",
+            "generic_error": "Something went wrong — please try again."
+        }
+    },
+    "legal_page": {
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "unpublished_message": "This page hasn't been published yet.",
+        "not_found_title": "Page Not Found",
+        "not_found_message": "This page doesn't exist.",
+        "back_to_home": "Back to Home"
+    },
+    "thank_you": {
+        "title": "Thank You!",
+        "line1": "Your submission has been received.",
+        "line2": "We will be in touch and contact you soon!",
+        "cta": "Back to Homepage"
+    },
+    "not_found": {
+        "title": "Page Not Found",
+        "text": "Sorry, We can't find the page you're looking for.",
+        "cta": "Back to Homepage"
+    },
+    "chat_widget": {
+        "welcome_message": "Welcome to MW Realty! I'm {name}, your personal property finder. Tell me what you're dreaming of, and I'll pull up real matches for you in seconds.",
+        "generic_reply_error": "Sorry, something went wrong — please try again.",
+        "open_aria": "Open chat",
+        "close_aria": "Close chat",
+        "header_sub": "MW Realty AI Assistant",
+        "theme_switch_light": "Switch to light mode",
+        "theme_switch_dark": "Switch to dark mode",
+        "voice_mute": "Mute spoken replies",
+        "voice_read": "Read replies aloud",
+        "clear_conversation_aria": "Clear conversation",
+        "dialog_aria": "AI chat assistant",
+        "card": {
+            "bed_suffix": "bed",
+            "bath_suffix": "bath",
+            "details": "Details",
+            "enquire": "Enquire"
+        },
+        "enquiry_form": {
+            "name_placeholder": "Your name",
+            "phone_placeholder": "Phone",
+            "email_placeholder": "Email (optional)",
+            "sending": "Sending…",
+            "submit": "Send enquiry",
+            "generic_error": "Something went wrong — please try again."
+        },
+        "filters": {
+            "purpose_aria": "Purpose",
+            "purpose_placeholder": "Buy or rent?",
+            "buy": "Buy",
+            "rent": "Rent",
+            "type_aria": "Property type",
+            "type_placeholder": "Property type",
+            "apartment": "Apartment",
+            "villa": "Villa",
+            "townhouse": "Townhouse",
+            "penthouse": "Penthouse",
+            "bedrooms_aria": "Bedrooms",
+            "bedrooms_placeholder": "Bedrooms",
+            "studio": "Studio",
+            "budget_placeholder": "Max budget (AED)",
+            "apply": "Ask Remi"
+        },
+        "input": {
+            "filters_aria": "Search filters",
+            "voice_aria": "Ask by voice",
+            "listening_placeholder": "Listening…",
+            "ask_placeholder": "Ask about properties or buying process…",
+            "send_aria": "Send"
+        }
+    },
+    "property_type": {
+        "apartment": "Apartment",
+        "villa": "Villa",
+        "townhouse": "Townhouse",
+        "penthouse": "Penthouse",
+        "plot": "Plot",
+        "office": "Office",
+        "retail-shop": "Retail Shop",
+        "warehouse": "Warehouse",
+        "showroom": "Showroom"
+    },
+    "listing_type": {
+        "sale": "Buy",
+        "rent": "Rent"
+    },
+    "completion_status": {
+        "ready": "Ready",
+        "off_plan": "Off-Plan"
+    },
+    "furnished": {
+        "yes": "Furnished",
+        "no": "Unfurnished"
+    }
+}

@@ -6,11 +6,26 @@
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <div class="portal-section-title mb-0">{{ $isAdmin ? 'All Agents' : 'My Agents' }}</div>
     @if(!$isAdmin)
-    <a href="{{ route('portal.agents.create') }}" class="btn btn-portal-primary btn-sm">
-        <i class="fas fa-plus me-1"></i> Add Agent
-    </a>
+    <div class="d-flex align-items-center gap-2">
+        @if($agentSlots)
+        <span class="portal-muted small fw-semibold">
+            <i class="fas fa-users me-1"></i>{{ $agentSlots['used'] }}{{ $agentSlots['remaining'] === null ? '' : ' of ' . (int) $agentSlots['limit'] }} team agents
+        </span>
+        @endif
+        @if($agentSlots && $agentSlots['remaining'] === 0)
+        <a href="{{ route('portal.plans.index') }}" class="btn btn-portal-primary btn-sm"><i class="fas fa-rocket me-1"></i> Upgrade to add agents</a>
+        @else
+        <a href="{{ route('portal.agents.create') }}" class="btn btn-portal-primary btn-sm">
+            <i class="fas fa-plus me-1"></i> Add Agent
+        </a>
+        @endif
+    </div>
     @endif
 </div>
+
+@if(session('error'))
+<div class="alert alert-warning"><i class="fas fa-lock me-2"></i>{{ session('error') }}</div>
+@endif
 
 <div class="portal-card p-4">
     <div class="table-responsive">

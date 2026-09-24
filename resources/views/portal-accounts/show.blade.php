@@ -95,6 +95,20 @@
     .doc-upload-label { cursor: pointer; margin-bottom: 0; }
     .doc-flag-modal-content { border: none; border-radius: 20px; box-shadow: 0 24px 60px rgba(28,35,64,0.22); }
 
+    .request-changes-fab { position: fixed; right: 2rem; bottom: 2rem; z-index: 1030; display: inline-flex; align-items: center; gap: .55rem; padding: .85rem 1.15rem; border: 0; border-radius: 999px; color: #fff; font-weight: 800; background: linear-gradient(135deg, var(--dash-teal), #1685bf); box-shadow: 0 10px 28px rgba(4, 120, 180, .34); transition: transform .18s ease, box-shadow .18s ease; }
+    .request-changes-fab:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 14px 32px rgba(4, 120, 180, .42); }
+    .request-changes-modal .modal-content { border: 0; border-radius: 18px; box-shadow: 0 24px 60px rgba(28,35,64,.24); overflow: hidden; }
+    .request-changes-modal .modal-header { padding: 1.1rem 1.4rem; color: #fff; background: linear-gradient(120deg, var(--dash-navy), #176e9e); border: 0; }
+    .request-changes-modal .modal-title { font-weight: 800; font-size: 1rem; }
+    .request-changes-modal .btn-close { filter: brightness(0) invert(1); opacity: .85; }
+    .request-changes-modal .modal-body { padding: 1.25rem 1.4rem; }
+    .request-changes-modal .modal-footer { padding: .9rem 1.4rem 1.2rem; border-top: 1px solid var(--dash-border); }
+    .request-option { display: flex; align-items: flex-start; gap: .55rem; height: 100%; padding: .7rem .8rem; border: 1px solid var(--dash-border); border-radius: 10px; background: #fff; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+    .request-option:hover { border-color: var(--dash-teal); background: #f5fbfd; }
+    .request-option .form-check-input { flex: 0 0 auto; margin: .15rem 0 0; }
+    .request-option .form-check-input:checked { background-color: var(--dash-teal); border-color: var(--dash-teal); }
+    @media (max-width: 575.98px) { .request-changes-fab { right: 1rem; bottom: 1rem; padding: .75rem 1rem; } .request-changes-modal .modal-body { padding: 1rem; } }
+
     .agent-chip {
         display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
         border-radius: 12px; border: 1px solid var(--dash-border); padding: 0.6rem 0.9rem;
@@ -130,10 +144,17 @@
         $portalUser->type === 'agent'
             ? ['field' => 'rera_card_document', 'label' => 'RERA Broker Card', 'icon' => 'fa-address-card', 'path' => $portalUser->rera_card_document]
             : ['field' => 'trade_license_document', 'label' => 'Trade License', 'icon' => 'fa-file-contract', 'path' => $portalUser->trade_license_document],
+        $portalUser->type === 'agent'
+            ? ['field' => 'trade_license_document', 'label' => 'Trade License', 'icon' => 'fa-file-contract', 'path' => $portalUser->trade_license_document]
+            : null,
         $portalUser->type === 'company'
             ? ['field' => 'rera_certificate_document', 'label' => 'RERA Registration Certificate', 'icon' => 'fa-certificate', 'path' => $portalUser->rera_certificate_document]
             : null,
+        $portalUser->type === 'agent'
+            ? ['field' => 'rera_certificate_document', 'label' => 'RERA Registration Certificate', 'icon' => 'fa-certificate', 'path' => $portalUser->rera_certificate_document]
+            : null,
     ];
+
     $documents = collect(array_filter($documents))->map(function ($doc) use ($portalUser) {
         $doc['verification'] = $portalUser->documentStatus($doc['field']);
         return $doc;
@@ -154,6 +175,7 @@
             <div class="profile-badges d-flex gap-2">
                 <span class="badge bg-light text-dark border-0">{{ ucfirst($portalUser->type) }}</span>
                 <span class="badge {{ $statusMap[$portalUser->status] ?? 'bg-secondary' }}">{{ ucfirst($portalUser->status) }}</span>
+                <span class="badge bg-light text-dark border">KYC: {{ !$portalUser->kyc_user_submitted_at && $portalUser->status !== 'approved' ? 'Awaiting user submission' : ucfirst(str_replace('_', ' ', $portalUser->kyc_review_status)) }}</span>
             </div>
             <div class="profile-meta">
                 <span><i class="fas fa-envelope"></i> {{ $portalUser->email }}</span>
@@ -164,7 +186,7 @@
     </div>
     @can('portal-accounts.edit')
     <div class="profile-actions d-flex gap-2">
-        @if($portalUser->status !== 'approved')
+        @if($portalUser->status !== 'approved' && $portalUser->kyc_review_status === 'submitted' && $portalUser->kyc_user_submitted_at)
         <button type="button" class="btn btn-approve approve-item" data-id="{{ $portalUser->id }}"><i class="fas fa-check me-1"></i> Approve</button>
         @endif
         @if($portalUser->status !== 'rejected')
@@ -174,6 +196,16 @@
     </div>
     @endcan
 </div>
+
+@if($portalUser->kyc_review_status === 'changes_requested' && $portalUser->kyc_review_note)
+<div class="alert alert-warning">Requested KYC changes: {{ $portalUser->kyc_review_note }}</div>
+@endif
+@if(session('success'))
+<div class="alert alert-success">{{ session('success') }}</div>
+@endif
+@if(session('error'))
+<div class="alert alert-danger">{{ session('error') }}</div>
+@endif
 
 @can('portal-accounts.edit')
 <div class="modal fade" id="rejectReasonModal" tabindex="-1" aria-hidden="true">
@@ -212,6 +244,7 @@
         </div>
     </div>
 </div>
+
 @endcan
 
 <div class="row g-2 mb-3">
@@ -260,6 +293,7 @@
                     <div class="col-md-4 info-row"><div class="info-label">Nationality</div><div class="info-value">{{ $portalUser->nationality ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">Emirates ID No.</div><div class="info-value">{{ $portalUser->emirates_id_no ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">Passport No.</div><div class="info-value">{{ $portalUser->passport_no ?: '-' }}</div></div>
+                    <div class="col-md-4 info-row"><div class="info-label">Passport Expiry</div><div class="info-value">{{ $portalUser->passport_expiry?->format('d M Y') ?: '-' }}</div></div>
                 </div>
             </div>
             @can('portal-accounts.edit')
@@ -296,6 +330,10 @@
                         <label class="form-label">Passport No.</label>
                         <input type="text" name="passport_no" class="form-control form-control-sm" value="{{ $portalUser->passport_no }}">
                     </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Passport Expiry</label>
+                        <input type="date" name="passport_expiry" class="form-control form-control-sm" value="{{ $portalUser->passport_expiry?->format('Y-m-d') }}">
+                    </div>
                 </div>
                 <div class="d-flex gap-2 mt-3">
                     <button type="submit" class="btn btn-sm btn-success">Save</button>
@@ -314,7 +352,7 @@
             </h6>
             <div class="section-view" data-section="agent">
                 <div class="row">
-                    <div class="col-md-4 info-row"><div class="info-label">BRN</div><div class="info-value">{{ $portalUser->brn_number ?: '-' }}</div></div>
+                    <div class="col-md-4 info-row"><div class="info-label">BRN (Broker Registration No.)</div><div class="info-value">{{ $portalUser->brn_number ?: '-' }}</div></div>
                     <div class="col-md-8 info-row">
                         <div class="info-label">Affiliated Brokerage</div>
                         <div class="info-value">
@@ -325,13 +363,17 @@
                             @endif
                         </div>
                     </div>
+                    <div class="col-md-4 info-row"><div class="info-label">Trade License No.</div><div class="info-value">{{ $portalUser->trade_license_no ?: '-' }}</div></div>
+                    <div class="col-md-4 info-row"><div class="info-label">Trade License Expiry</div><div class="info-value">{{ $portalUser->trade_license_expiry?->format('d M Y') ?: '-' }}</div></div>
+                    <div class="col-md-4 info-row"><div class="info-label">TRN (VAT)</div><div class="info-value">{{ $portalUser->trn_number ?: '-' }}</div></div>
+                    <div class="col-md-4 info-row"><div class="info-label">TRN Expiry</div><div class="info-value">{{ $portalUser->trn_expiry?->format('d M Y') ?: '-' }}</div></div>
                 </div>
             </div>
             @can('portal-accounts.edit')
             <form class="section-edit d-none section-form" data-section="agent">
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label">BRN</label>
+                        <label class="form-label">BRN (Broker Registration No.)</label>
                         <input type="text" name="brn_number" class="form-control form-control-sm" value="{{ $portalUser->brn_number }}">
                     </div>
                     <div class="col-md-8">
@@ -343,6 +385,10 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="col-md-4"><label class="form-label">Trade License No.</label><input type="text" name="trade_license_no" class="form-control form-control-sm" value="{{ $portalUser->trade_license_no }}"></div>
+                    <div class="col-md-4"><label class="form-label">Trade License Expiry</label><input type="date" name="trade_license_expiry" class="form-control form-control-sm" value="{{ $portalUser->trade_license_expiry?->format('Y-m-d') }}"></div>
+                    <div class="col-md-4"><label class="form-label">TRN (VAT)</label><input type="text" name="trn_number" class="form-control form-control-sm" value="{{ $portalUser->trn_number }}"></div>
+                    <div class="col-md-4"><label class="form-label">TRN Expiry</label><input type="date" name="trn_expiry" class="form-control form-control-sm" value="{{ $portalUser->trn_expiry?->format('Y-m-d') }}"></div>
                 </div>
                 <div class="d-flex gap-2 mt-3">
                     <button type="submit" class="btn btn-sm btn-success">Save</button>
@@ -364,6 +410,7 @@
                     <div class="col-md-4 info-row"><div class="info-label">Trade License Expiry</div><div class="info-value">{{ $portalUser->trade_license_expiry?->format('d M Y') ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">ORN</div><div class="info-value">{{ $portalUser->orn_number ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">TRN (VAT)</div><div class="info-value">{{ $portalUser->trn_number ?: '-' }}</div></div>
+                    <div class="col-md-4 info-row"><div class="info-label">TRN Expiry</div><div class="info-value">{{ $portalUser->trn_expiry?->format('d M Y') ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">Authorized Signatory</div><div class="info-value">{{ $portalUser->authorized_signatory_name ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">Landline</div><div class="info-value">{{ $portalUser->landline ?: '-' }}</div></div>
                     <div class="col-md-12 info-row"><div class="info-label">Registered Office Address</div><div class="info-value">{{ $portalUser->office_address ?: '-' }}</div></div>
@@ -387,6 +434,10 @@
                     <div class="col-md-4">
                         <label class="form-label">TRN (VAT)</label>
                         <input type="text" name="trn_number" class="form-control form-control-sm" value="{{ $portalUser->trn_number }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">TRN Expiry</label>
+                        <input type="date" name="trn_expiry" class="form-control form-control-sm" value="{{ $portalUser->trn_expiry?->format('Y-m-d') }}">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Authorized Signatory</label>
@@ -541,6 +592,66 @@
                 @endforeach
             </div>
         </div>
+
+        @can('portal-accounts.edit')
+        @if($portalUser->status !== 'approved' && in_array($portalUser->kyc_review_status, ['submitted', 'changes_requested'], true) && ($portalUser->kyc_review_status === 'changes_requested' || $portalUser->kyc_user_submitted_at))
+        <button type="button" class="request-changes-fab" data-bs-toggle="modal" data-bs-target="#requestInfoModal"><i class="fas fa-comment-medical"></i> Request Changes</button>
+        <div class="modal fade request-changes-modal" id="requestInfoModal" tabindex="-1" aria-labelledby="requestInfoModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <form method="POST" action="{{ route('cms.portal-accounts.request-info', $portalUser->id) }}">
+                        @csrf
+                        <div class="modal-header">
+                            <div><h5 class="modal-title" id="requestInfoModalTitle"><i class="fas fa-clipboard-check me-2"></i>Request Profile Updates</h5><div class="small opacity-75 mt-1">Select what {{ $displayName }} needs to update.</div></div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted small mb-3">The selected items and your note will be sent by email and portal notification.</p>
+                            @php
+                                $profileRequestOptions = [
+                                    'identity' => 'Identity and contact details',
+                                    'registration_details' => $portalUser->type === 'agent' ? 'BRN and brokerage details' : 'Company and office details',
+                                    'tax_details' => 'Tax registration details (TRN)',
+                                    'public_profile' => 'Public profile, bio, and service areas',
+                                ];
+                            @endphp
+                            <div class="row g-2 mb-3">
+                                @foreach($profileRequestOptions as $value => $label)
+                                <div class="col-md-6">
+                                    <label class="request-option" for="request-item-{{ $value }}">
+                                        <input class="form-check-input" type="checkbox" name="request_items[]" value="{{ $value }}" id="request-item-{{ $value }}" {{ in_array($value, (array) old('request_items', []), true) ? 'checked' : '' }}>
+                                        <span class="small fw-semibold">{{ $label }}</span>
+                                    </label>
+                                </div>
+                                @endforeach
+                                @foreach($documents as $doc)
+                                <div class="col-md-6">
+                                    <label class="request-option" for="request-item-{{ $doc['field'] }}">
+                                        <input class="form-check-input" type="checkbox" name="request_items[]" value="{{ $doc['field'] }}" id="request-item-{{ $doc['field'] }}" {{ in_array($doc['field'], (array) old('request_items', []), true) ? 'checked' : '' }}>
+                                        <span class="small fw-semibold">{{ $doc['label'] }} document</span>
+                                    </label>
+                                </div>
+                                @endforeach
+                            </div>
+                            @error('request_items')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
+                            @error('request_items.*')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
+                            <label class="form-label small fw-semibold" for="request-info-note">Additional instructions <span class="text-muted fw-normal">(optional)</span></label>
+                            <textarea id="request-info-note" name="message" class="form-control @error('message') is-invalid @enderror" rows="3" maxlength="1500" placeholder="Add specific guidance, such as what needs correcting.">{{ old('message') }}</textarea>
+                            @error('message')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> Send Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        @if($errors->has('request_items') || $errors->has('request_items.*') || $errors->has('message'))
+        <script>document.addEventListener('DOMContentLoaded', function () { new bootstrap.Modal(document.getElementById('requestInfoModal')).show(); });</script>
+        @endif
+        @endif
+        @endcan
 
         <div class="dash-card">
             <h6><i class="fas fa-receipt"></i> Payment History

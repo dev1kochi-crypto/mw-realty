@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -167,6 +168,17 @@ class PortalPropertyController extends Controller
     }
 
     /** Feeds the Nearby Places tab's Type dropdown — the Place dropdown loads via AJAX once a Type is picked. */
+    /** Submitted nearby place ids, limited to shared places + the current user's own (no tagging someone else's). */
+    protected function allowedNearbyPlaceIds(Request $request): array
+    {
+        $ids = array_map('intval', (array) $request->input('nearby_places', []));
+        if (empty($ids)) {
+            return [];
+        }
+
+        return \App\Models\NearbyPlace::visibleTo($this->ownerId())->whereIn('id', $ids)->pluck('id')->all();
+    }
+
     protected function nearbyPlaceTypes()
     {
         return \App\Models\Filter::where('key', \App\Models\NearbyPlace::FILTER_KEY)->with('activeValues')->first();
@@ -238,10 +250,15 @@ class PortalPropertyController extends Controller
         return $result;
     }
 
-    public function index()
+    public function index(\App\Services\FeaturedListingService $featured)
     {
+        // Also applied by the scheduled properties:expire-featured command; running it here keeps
+        // this page correct even where the scheduler isn't running (e.g. local dev).
+        $featured->expire();
+
         $properties = Property::with('owner')
             ->when($this->ownerId(), fn ($q, $ownerId) => $q->where('portal_user_id', $ownerId))
+            ->orderBy('order_index')
             ->latest()
             ->paginate(15);
 
@@ -255,7 +272,41 @@ class PortalPropertyController extends Controller
             ];
         }
 
-        return view('portal.properties.index', ['properties' => $properties, 'isAdmin' => $this->isAdmin(), 'planUsage' => $planUsage]);
+        return view('portal.properties.index', [
+            'properties' => $properties,
+            'isAdmin' => $this->isAdmin(),
+            'planUsage' => $planUsage,
+            'featuredQuota' => $this->isAdmin() ? null : $featured->quota(Auth::guard('portal')->user()),
+        ]);
+    }
+
+    /**
+     * "Feature" button on a listing card. Agents/companies spend their plan's monthly quota
+     * (with a max duration); a Super Admin features without limits, optionally with an end date.
+     */
+    public function feature(Request $request, \App\Services\FeaturedListingService $featured, $id)
+    {
+        $property = $this->findOwned($id);
+        $request->validate(['days' => $this->isAdmin() ? 'nullable|integer|min:1|max:365' : 'required|integer|min:1']);
+
+        if ($this->isAdmin()) {
+            $property->update([
+                'featured' => true,
+                'featured_until' => $request->filled('days') ? now()->addDays((int) $request->input('days')) : null,
+            ]);
+        } else {
+            abort_unless(Auth::guard('portal')->user()->isApproved(), 403);
+            $featured->feature(Auth::guard('portal')->user(), $property, (int) $request->input('days'));
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function unfeature(\App\Services\FeaturedListingService $featured, $id)
+    {
+        $featured->stop($this->findOwned($id));
+
+        return response()->json(['success' => true]);
     }
 
     public function create()
@@ -370,7 +421,7 @@ class PortalPropertyController extends Controller
             $property->floorPlans()->create($row);
         }
 
-        $property->nearbyPlaces()->sync($request->input('nearby_places', []));
+        $property->nearbyPlaces()->sync($this->allowedNearbyPlaceIds($request));
 
         return redirect()->route('portal.properties.index')->with('success', 'Property created successfully.');
     }
@@ -413,6 +464,12 @@ class PortalPropertyController extends Controller
         $data['order_index'] = $request->input('order_index') ?: 0;
         if ($this->isAdmin()) {
             $data['featured'] = $request->has('featured');
+            if (!$data['featured']) {
+                $data['featured_until'] = null;
+                // Frees the owner's "at a time" featured slot too.
+                \App\Models\PropertyFeaturing::where('property_id', $id)->whereNull('stopped_at')->where('ends_at', '>', now())
+                    ->update(['stopped_at' => now()]);
+            }
         }
         if ($request->filled('slug')) {
             $data['slug'] = $request->input('slug');
@@ -481,7 +538,7 @@ class PortalPropertyController extends Controller
             $property->floorPlans()->create($row);
         }
 
-        $property->nearbyPlaces()->sync($request->input('nearby_places', []));
+        $property->nearbyPlaces()->sync($this->allowedNearbyPlaceIds($request));
 
         return redirect()->route('portal.properties.edit', $property->id)->with('success', 'Property updated successfully.');
     }
@@ -493,24 +550,71 @@ class PortalPropertyController extends Controller
         return response()->json(['success' => true]);
     }
 
-    /** Bulk "Delete Selected" from the listing page's checkboxes. */
-    public function bulkDestroy(Request $request)
+    /** "Bulk Actions" dropdown on the listing page: Mark Active / Mark Inactive / Delete Selected. */
+    public function bulkAction(Request $request)
     {
         $request->validate([
+            'action' => 'required|in:active,inactive,delete',
             'ids' => 'required|array|min:1',
             'ids.*' => 'integer',
         ]);
 
-        $properties = Property::with(['details', 'images', 'floorPlans'])
+        $query = Property::query()
             ->when($this->ownerId(), fn ($q, $ownerId) => $q->where('portal_user_id', $ownerId))
-            ->whereIn('id', $request->input('ids'))
-            ->get();
+            ->whereIn('id', $request->input('ids'));
 
-        foreach ($properties as $property) {
-            $this->deletePropertyWithFiles($property);
+        if ($request->input('action') === 'delete') {
+            $properties = $query->with(['details', 'images', 'floorPlans'])->get();
+            foreach ($properties as $property) {
+                $this->deletePropertyWithFiles($property);
+            }
+
+            return response()->json(['success' => true, 'affected' => $properties->count()]);
         }
 
-        return response()->json(['success' => true, 'deleted' => $properties->count()]);
+        $affected = $query->update(['status' => $request->input('action') === 'active']);
+
+        return response()->json(['success' => true, 'affected' => $affected]);
+    }
+
+    /**
+     * Drag-and-drop reorder of the listing cards. `order` is the new id sequence of the current
+     * page only, so the whole owner's list is renumbered with that page slice swapped in —
+     * otherwise items on other pages would collide with the new positions.
+     */
+    public function reorder(Request $request)
+    {
+        $request->validate([
+            'order' => 'required|array|min:1',
+            'order.*' => 'integer',
+        ]);
+
+        $allIds = Property::query()
+            ->when($this->ownerId(), fn ($q, $ownerId) => $q->where('portal_user_id', $ownerId))
+            ->orderBy('order_index')
+            ->latest()
+            ->pluck('id');
+
+        $pageIds = collect($request->input('order'))->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $allIds->contains($id))
+            ->values();
+
+        if ($pageIds->isEmpty()) {
+            return response()->json(['success' => true]);
+        }
+
+        // Slot the reordered page back in where that page's items currently start.
+        $start = $allIds->search(fn ($id) => $pageIds->contains($id));
+        $rest = $allIds->reject(fn ($id) => $pageIds->contains($id))->values();
+        $final = $rest->slice(0, $start)->concat($pageIds)->concat($rest->slice($start))->values();
+
+        DB::transaction(function () use ($final) {
+            foreach ($final as $index => $id) {
+                Property::whereKey($id)->update(['order_index' => $index + 1]);
+            }
+        });
+
+        return response()->json(['success' => true]);
     }
 
     protected function deletePropertyWithFiles(Property $property): void

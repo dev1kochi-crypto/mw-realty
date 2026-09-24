@@ -49,6 +49,7 @@ return [
         'properties' => true,
         'portal-accounts' => true,
         'plans' => true,
+        'coupons' => true,
     ],
 
     'careers' => [

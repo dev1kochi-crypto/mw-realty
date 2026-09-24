@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { useStaticText } from './useStaticText';
 
 // Module-level (not per-component ref()) so the conversation and open/closed
 // state survive SPA route navigation, and reset on a hard reload — matching
@@ -6,6 +7,10 @@ import { ref } from 'vue';
 const messages = ref([]);
 const loading = ref(false);
 const isOpen = ref(false);
+
+// Singleton, called once for this module (same pattern as the refs above), not per-usage —
+// avoids re-registering a language-change watcher every time welcomeText()/sendMessage() runs.
+const { t } = useStaticText();
 
 const HISTORY_LIMIT = 20;
 
@@ -16,7 +21,7 @@ let generation = 0;
 
 function welcomeText() {
     const name = window.MW_CHATBOT_NAME || 'Remi';
-    return `Welcome to MW Realty! I'm ${name}, your personal property finder. Tell me what you're dreaming of, and I'll pull up real matches for you in seconds.`;
+    return t('chat_widget.welcome_message').replace('{name}', name);
 }
 
 function open() {
@@ -59,7 +64,7 @@ function sendMessage(text) {
         })
         .catch(() => {
             if (requestGeneration !== generation) return;
-            messages.value.push({ role: 'model', text: 'Sorry, something went wrong — please try again.', properties: [] });
+            messages.value.push({ role: 'model', text: t('chat_widget.generic_reply_error'), properties: [] });
         })
         .finally(() => {
             if (requestGeneration === generation) loading.value = false;

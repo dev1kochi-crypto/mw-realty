@@ -1450,7 +1450,7 @@ header.is-scrolled .mw-header__currency span {
 }
 header.is-scrolled .mw-nav > li > a.is-active::after,
 header.is-scrolled .mw-nav > li > a:hover::after {
-  background: #244373;
+  background: linear-gradient(90deg, #c92844 0%, #6a3577 50%, #244373 100%);
 }
 header.is-scrolled .mw-header__login,
 header.is-scrolled .mw-header__lang,
@@ -1492,7 +1492,7 @@ header.mw-header--light .mw-nav > li > a {
 }
 header.mw-header--light .mw-nav > li > a.is-active::after,
 header.mw-header--light .mw-nav > li > a:hover::after {
-  background: #244373;
+  background: linear-gradient(90deg, #c92844 0%, #6a3577 50%, #244373 100%);
 }
 header.mw-header--light .mw-header__login,
 header.mw-header--light .mw-header__lang,
@@ -1594,7 +1594,10 @@ header .mw-nav > li > a {
   text-decoration: none;
   white-space: nowrap;
   padding: 6px 0;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, text-shadow 0.3s ease;
+}
+header .mw-nav > li > a:hover {
+  text-shadow: 0 0 12px rgba(201, 40, 68, 0.35);
 }
 header .mw-nav > li > a::after {
   content: "";
@@ -1604,10 +1607,10 @@ header .mw-nav > li > a::after {
   bottom: 0;
   height: 2px;
   border-radius: 2px;
-  background: #fff;
+  background: linear-gradient(90deg, #c92844 0%, #6a3577 50%, #244373 100%);
   transform: scaleX(0);
   transform-origin: center;
-  transition: transform 0.2s ease;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 header .mw-nav > li > a:hover::after, header .mw-nav > li > a.is-active::after {
   transform: scaleX(1);
@@ -2324,6 +2327,13 @@ body.home-page header:not(.is-scrolled) .mw-header__login {
   font-size: clamp(14px, 0.84vw, 16px);
   font-weight: 400;
   line-height: normal;
+}
+.mw-footer__copyright a {
+  color: inherit;
+  text-decoration: none;
+}
+.mw-footer__copyright a:hover {
+  text-decoration: underline;
 }
 .mw-footer__social {
   display: flex;
@@ -3393,6 +3403,17 @@ input:focus-visible ~ .crm-modal__checkbox-box {
   text-decoration: underline;
 }
 .crm-modal__terms a:hover {
+  color: #b9233c;
+}
+.crm-modal__feedback {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.crm-modal__feedback.is-success {
+  color: #1a7f4b;
+}
+.crm-modal__feedback.is-error {
   color: #b9233c;
 }
 
@@ -7985,11 +8006,6 @@ main {
 .agents-page {
   --about-pin-top: 80px;
 }
-.about-page .mw-footer__newsletter,
-.contact-page .mw-footer__newsletter,
-.agents-page .mw-footer__newsletter {
-  display: none;
-}
 .about-page .mw-header__actions .mw-dropdown:has(.mw-header__currency),
 .contact-page .mw-header__actions .mw-dropdown:has(.mw-header__currency),
 .agents-page .mw-header__actions .mw-dropdown:has(.mw-header__currency) {
@@ -8020,15 +8036,10 @@ main {
 .about-page header.mw-header--light .mw-nav > li > a,
 .contact-page header.mw-header--light .mw-nav > li > a,
 .agents-page header.mw-header--light .mw-nav > li > a {
-  padding: 0;
+  padding: 6px 0;
   color: #35373c;
   font-size: 16px;
   font-weight: 400;
-}
-.about-page header.mw-header--light .mw-nav > li > a::after,
-.contact-page header.mw-header--light .mw-nav > li > a::after,
-.agents-page header.mw-header--light .mw-nav > li > a::after {
-  content: none;
 }
 .about-page header.mw-header--light .mw-header__login,
 .about-page header.mw-header--light .mw-header__lang,
@@ -12876,6 +12887,45 @@ body.property-details-page main {
   font-size: 15px;
   font-weight: 500;
 }
+
+.mw-empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: clamp(48px, 6vw, 88px) 24px;
+}
+.mw-empty-state__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  background: #f4f8fb;
+  color: #244373;
+}
+.mw-empty-state__title {
+  margin: 0 0 8px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(18px, 1.4vw, 22px);
+  font-weight: 700;
+}
+.mw-empty-state__message {
+  margin: 0;
+  max-width: 380px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.mw-empty-state .mw-dubai-toolbar__clear,
+.mw-empty-state .mw-dubai-toolbar__save {
+  margin-top: 20px;
+}
 .mw-dubai-listing__grid {
   display: grid;
   gap: clamp(20px, 1.88vw, 36px) clamp(16px, 1.25vw, 24px);
@@ -13364,6 +13414,15 @@ body.property-details-page main {
   outline: none;
   border-color: #244373;
 }
+.mw-login-form__field input.is-invalid {
+  border-color: #c92844;
+}
+.mw-field-error {
+  margin: 6px 0 0;
+  color: #c92844;
+  font-size: 12px;
+  line-height: 1.4;
+}
 .mw-login-form .mw-password-field {
   position: relative;
 }
@@ -13579,6 +13638,11 @@ body.property-details-page main {
 }
 .mw-role-switch button:hover:not(.is-active) {
   color: #244373;
+}
+/* Login has two account types (User, Agent / Agency) instead of Signup's three. */
+.mw-role-switch.mw-login-role-switch {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 22px;
 }
 
 .mw-login-form__grid {
@@ -15386,6 +15450,26 @@ body.property-details-page main {
   background: radial-gradient(circle, rgba(201, 40, 68, 0.6) 0%, rgba(36, 67, 115, 0.35) 55%, rgba(36, 67, 115, 0) 100%);
   filter: blur(2px);
 }
+
+/* Signup's register request in flight: reuses the otherwise-dormant ambient orb (see the
+   component's own docblock) as an "engaging" busy state instead of a frozen page. */
+.mw-auth-glass.is-submitting {
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+.mw-auth-glass.is-submitting .mw-auth-glass__orb {
+  animation: mw-auth-glass-orb-pulse 1.8s ease-in-out infinite;
+}
+@keyframes mw-auth-glass-orb-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
 .mw-login-panel__form {
   position: relative;
 }
@@ -15555,6 +15639,15 @@ body.property-details-page main {
   animation: mw-otp-spin 0.7s linear infinite;
 }
 
+/* Same spinner reused inside the gradient submit button (Signup.vue) — needs light colors to
+   read against the red->navy background instead of the light-panel colors above. */
+.mw-login-form__submit .mw-otp-spinner {
+  margin-right: 8px;
+  border-color: rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  flex-shrink: 0;
+}
+
 @keyframes mw-otp-spin {
   to {
     transform: rotate(360deg);
@@ -15705,6 +15798,10 @@ body.property-details-page main {
   .mw-otp-ambient.is-verifying,
   .mw-otp-halo,
   .mw-otp-checkmark::after {
+    animation: none;
+  }
+  .mw-auth-glass.is-submitting .mw-auth-glass__orb,
+  .mw-otp-spinner {
     animation: none;
   }
 }

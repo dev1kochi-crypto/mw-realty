@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $siteInfo->company_name ?? config('cms-kit.common.name', 'CMS Kit') }} - @yield('title', 'Admin Dashboard')</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    @if(!empty($siteInfo->favicon))
-    <link rel="icon" type="image/png" href="{{ asset('storage/' . $siteInfo->favicon) }}">
-    @endif
+    <link rel="icon" type="image/png" href="{{ !empty($siteInfo->favicon) ? asset('storage/' . $siteInfo->favicon) : asset('frontend/assets/images/fav.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @php
@@ -149,6 +147,18 @@
                     @if(config('cms-kit.common.modules.plans', true) && $cmsUser->can('plans.view'))
                     <a class="nav-link @if(Route::is('cms.plans.*')) active @endif" href="{{ route('cms.plans.index') }}">
                         <i class="fas fa-layer-group"></i> Plans
+                    </a>
+                    @endif
+
+                    @if(config('cms-kit.common.modules.plans', true) && $cmsUser->can('plans.view'))
+                    <a class="nav-link @if(Route::is('cms.payments.*')) active @endif" href="{{ route('cms.payments.index') }}">
+                        <i class="fas fa-receipt"></i> Payments
+                    </a>
+                    @endif
+
+                    @if(config('cms-kit.common.modules.coupons', true) && $cmsUser->can('coupons.view'))
+                    <a class="nav-link @if(Route::is('cms.coupons.*')) active @endif" href="{{ route('cms.coupons.index') }}">
+                        <i class="fas fa-ticket-alt"></i> Coupons
                     </a>
                     @endif
 

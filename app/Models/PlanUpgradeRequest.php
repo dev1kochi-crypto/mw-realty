@@ -16,6 +16,13 @@ class PlanUpgradeRequest extends Model
         'decided_at',
         'decided_by',
         'decision_note',
+        'coupon_id',
+        'coupon_code',
+        'original_price',
+        'discount_amount',
+        'final_price',
+        'stripe_checkout_session_id',
+        'billing_interval',
     ];
 
     protected $casts = [
@@ -36,6 +43,11 @@ class PlanUpgradeRequest extends Model
     public function currentPlan()
     {
         return $this->belongsTo(Plan::class, 'current_plan_id');
+    }
+
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function decidedByAdmin()

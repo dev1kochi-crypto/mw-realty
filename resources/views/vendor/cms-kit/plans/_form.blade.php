@@ -64,9 +64,15 @@
         @error('billing_cycle')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-3">
-        <label class="form-label fw-bold">Price (AED) <span class="text-danger">*</span></label>
-        <input type="number" step="0.01" min="0" name="price" class="form-control @error('price') is-invalid @enderror" value="{{ old('price', $plan->price ?? 0) }}" required>
+        <label class="form-label fw-bold">Monthly Price (AED) <span class="text-danger">*</span></label>
+        <input type="number" step="0.01" min="0" name="price" id="monthlyPrice" class="form-control @error('price') is-invalid @enderror" value="{{ old('price', $plan->price ?? 0) }}" required>
         @error('price')<div class="invalid-feedback">{{ $message }}</div>@enderror
+    </div>
+    <div class="col-md-3">
+        <label class="form-label fw-bold">Yearly Price (AED)</label>
+        <input type="number" step="0.01" min="0" name="yearly_price" id="yearlyPrice" class="form-control @error('yearly_price') is-invalid @enderror" value="{{ old('yearly_price', $plan->yearly_price ?? '') }}" placeholder="Blank = monthly only">
+        <small class="text-muted" id="yearlyHint">Tip: 10× monthly = 2 months free.</small>
+        @error('yearly_price')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-3">
         <label class="form-label fw-bold">Property Limit</label>
@@ -75,6 +81,42 @@
     <div class="col-md-3">
         <label class="form-label">Sort Order</label>
         <input type="number" name="order_index" class="form-control" value="{{ old('order_index', $plan->order_index ?? ($nextOrder ?? 1)) }}" min="1">
+    </div>
+</div>
+
+<hr>
+<h6 class="fw-bold mb-1">Plan Limits</h6>
+<p class="text-muted small mb-3">Enforced in the agent/company portal and shown automatically on the pricing cards — no need to repeat these in Features.</p>
+<div class="row g-4">
+    <div class="col-md-3">
+        <label class="form-label fw-bold">Featured Listings</label>
+        <div class="input-group">
+            <input type="number" min="0" name="featured_per_month" class="form-control @error('featured_per_month') is-invalid @enderror" value="{{ old('featured_per_month', $plan->featured_per_month ?? 0) }}">
+            @php $period = old('featured_period', $plan->featured_period ?? 'concurrent'); @endphp
+            <select name="featured_period" class="form-select" style="max-width: 55%;">
+                <option value="concurrent" @selected($period === 'concurrent')>at a time</option>
+                <option value="month" @selected($period === 'month')>per month</option>
+            </select>
+        </div>
+        <small class="text-muted">0 = not included</small>
+        @error('featured_per_month')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+    </div>
+    <div class="col-md-3">
+        <label class="form-label fw-bold">Max Days per Featured Listing</label>
+        <input type="number" min="1" name="featured_max_days" class="form-control @error('featured_max_days') is-invalid @enderror" value="{{ old('featured_max_days', $plan->featured_max_days ?? '') }}" placeholder="Blank = no limit">
+        @error('featured_max_days')<div class="invalid-feedback">{{ $message }}</div>@enderror
+    </div>
+    <div class="col-md-3">
+        <label class="form-label fw-bold">Team Agents (companies)</label>
+        <input type="number" min="0" name="agent_limit" class="form-control @error('agent_limit') is-invalid @enderror" value="{{ old('agent_limit', $isEdit ? $plan->agent_limit : 0) }}" placeholder="Blank = unlimited">
+        <small class="text-muted">0 = not included, blank = unlimited</small>
+        @error('agent_limit')<div class="invalid-feedback">{{ $message }}</div>@enderror
+    </div>
+    <div class="col-md-3 d-flex align-items-center">
+        <div class="form-check form-switch mt-3">
+            <input class="form-check-input" type="checkbox" name="reports_access" id="reportsAccess" {{ old('reports_access', $plan->reports_access ?? false) ? 'checked' : '' }}>
+            <label class="form-check-label fw-bold" for="reportsAccess">Leads Reports Access</label>
+        </div>
     </div>
 </div>
 
@@ -94,6 +136,18 @@
 </div>
 
 @push('scripts')
+<script>
+(function () {
+    const monthly = document.getElementById('monthlyPrice'), yearly = document.getElementById('yearlyPrice'), hint = document.getElementById('yearlyHint');
+    function update() {
+        const m = parseFloat(monthly.value) || 0, y = parseFloat(yearly.value) || 0;
+        hint.textContent = m > 0 && y > 0
+            ? `≈ AED ${(y / 12).toFixed(0)}/month · customers save ${Math.round((1 - y / (m * 12)) * 100)}% vs monthly`
+            : 'Tip: 10× monthly = 2 months free.';
+    }
+    monthly.addEventListener('input', update); yearly.addEventListener('input', update); update();
+})();
+</script>
 <script>
 document.addEventListener('invalid', function(e) {
     let invalidTabPane = e.target.closest('.tab-pane');

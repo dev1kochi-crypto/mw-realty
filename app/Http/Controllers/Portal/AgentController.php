@@ -33,6 +33,21 @@ class AgentController extends Controller
         return $user && $user->type === 'company' ? $user : null;
     }
 
+    /** Team agent accounts are capped by the company's plan (agent_limit; null = unlimited). */
+    protected function redirectIfNoAgentSlots(PortalUser $company)
+    {
+        if ($company->remainingAgentSlots() !== 0) {
+            return null;
+        }
+
+        $limit = (int) $company->plan?->agent_limit;
+        $message = $limit > 0
+            ? "Your plan allows up to {$limit} team agent" . ($limit === 1 ? '' : 's') . '. Upgrade your plan to add more.'
+            : 'Team agent accounts are not included in your plan. Upgrade to add agents.';
+
+        return redirect()->route('portal.agents.index')->with('error', $message);
+    }
+
     public function index()
     {
         abort_unless($this->isAdmin() || $this->company(), 403);
@@ -46,12 +61,20 @@ class AgentController extends Controller
         return view('portal.agents.index', [
             'agents' => $agents,
             'isAdmin' => $this->isAdmin(),
+            'agentSlots' => $this->company() ? [
+                'used' => $this->company()->agents()->count(),
+                'limit' => $this->company()->plan?->agent_limit,
+                'remaining' => $this->company()->remainingAgentSlots(),
+            ] : null,
         ]);
     }
 
     public function create()
     {
         abort_unless($this->company(), 403);
+        if ($redirect = $this->redirectIfNoAgentSlots($this->company())) {
+            return $redirect;
+        }
 
         return view('portal.agents.create');
     }
@@ -60,6 +83,9 @@ class AgentController extends Controller
     {
         $company = $this->company();
         abort_unless($company, 403);
+        if ($redirect = $this->redirectIfNoAgentSlots($company)) {
+            return $redirect;
+        }
 
         $data = $request->validate([
             'name' => 'required|string|max:255',

@@ -7,7 +7,7 @@ use Illuminate\Notifications\Notification;
 
 /**
  * Database-only bell notification for Super Admin when an agent/company
- * registers (or resubmits after rejection). The actual email for this event
+ * submits (or resubmits) KYC for review. The actual email for this event
  * is sent separately via PortalAccountRegistered — this only feeds the bell.
  */
 class PortalRegistrationNotification extends Notification
@@ -28,8 +28,8 @@ class PortalRegistrationNotification extends Notification
             : $this->portalUser->name;
 
         return [
-            'title' => $this->isResubmission ? 'Account resubmitted for review' : 'New ' . ucfirst($this->portalUser->type) . ' registration',
-            'message' => $displayName . ($this->isResubmission ? ' updated their profile and is asking for another review.' : ' just registered and is awaiting approval.'),
+            'title' => $this->isResubmission ? 'KYC resubmitted for review' : 'KYC submitted for approval',
+            'message' => $displayName . ($this->isResubmission ? ' updated their KYC and is asking for another review.' : ' submitted their KYC profile for approval.'),
             'url' => route('cms.portal-accounts.show', ['id' => $this->portalUser->id, 'type' => $this->portalUser->type]),
             'icon' => $this->isResubmission ? 'fa-rotate-right' : 'fa-user-plus',
             'tone' => $this->isResubmission ? 'amber' : 'teal',

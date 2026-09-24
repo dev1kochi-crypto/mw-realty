@@ -21,15 +21,16 @@ class PlanController extends Controller
         $plans = Plan::withCount('subscribers')->orderBy('order_index', 'asc')->get();
         $languages = Language::where('status', true)->get();
 
-        // Estimated monthly revenue from currently assigned paid plans (no invoicing/billing yet —
-        // this is a live snapshot of assigned plans × price, not a transaction ledger). Summed at
-        // the database level so it stays cheap regardless of how many subscribers exist.
+        // Estimated monthly revenue from currently assigned paid plans — a live snapshot of
+        // assigned plans × price (yearly subscribers count as yearly price ÷ 12), not a ledger;
+        // see Payments for actual money received. Summed in the database to stay cheap.
         $monthlyRevenue = (float) PortalUser::query()
             ->join('plans', 'plans.id', '=', 'portal_users.plan_id')
             ->where('portal_users.status', 'approved')
             ->where('plans.billing_cycle', 'monthly')
             ->where('plans.price', '>', 0)
-            ->sum('plans.price');
+            ->selectRaw("SUM(CASE WHEN portal_users.billing_interval = 'yearly' AND plans.yearly_price > 0 THEN plans.yearly_price / 12 ELSE plans.price END) AS revenue")
+            ->value('revenue');
 
         $planStats = [
             'total_plans' => Plan::count(),
@@ -58,7 +59,7 @@ class PlanController extends Controller
             ->paginate(15, ['*'], 'payments_page')
             ->withQueryString();
 
-        $totalCollected = (float) PlanPayment::where('plan_id', $id)->sum('amount');
+        $totalCollected = (float) PlanPayment::paid()->where('plan_id', $id)->sum('amount');
         $activeSubscribers = PortalUser::where('plan_id', $id)->where('status', 'approved')->count();
 
         return view('cms-kit::plans.show', compact('plan', 'subscribers', 'recentPayments', 'totalCollected', 'activeSubscribers'));
@@ -76,8 +77,13 @@ class PlanController extends Controller
         $languages = Language::where('status', true)->get();
         $rules = [
             'price' => 'required|numeric|min:0',
+            'yearly_price' => 'nullable|numeric|min:0',
             'billing_cycle' => 'required|in:free,monthly,yearly,one_time',
             'property_limit' => 'nullable|integer|min:0',
+            'featured_per_month' => 'nullable|integer|min:0|max:1000',
+            'featured_max_days' => 'nullable|integer|min:1|max:365',
+            'featured_period' => 'nullable|in:concurrent,month',
+            'agent_limit' => 'nullable|integer|min:0|max:10000',
             'order_index' => 'nullable|integer|min:1',
         ];
         foreach ($languages as $lang) {
@@ -101,7 +107,10 @@ class PlanController extends Controller
         $request->validate($this->rules());
         $languages = Language::where('status', true)->pluck('code')->all();
 
-        $data = $request->only(['price', 'billing_cycle', 'property_limit']);
+        $data = $request->only(['price', 'yearly_price', 'billing_cycle', 'property_limit', 'featured_max_days', 'agent_limit']);
+        $data['featured_per_month'] = (int) $request->input('featured_per_month', 0);
+        $data['reports_access'] = $request->has('reports_access');
+        $data['featured_period'] = $request->input('featured_period', 'concurrent');
         $data['translations'] = $this->buildTranslations($request, $languages);
         $data['is_popular'] = $request->has('is_popular');
         $data['status'] = $request->has('status');
@@ -128,7 +137,10 @@ class PlanController extends Controller
         $request->validate($this->rules());
         $languages = Language::where('status', true)->pluck('code')->all();
 
-        $data = $request->only(['price', 'billing_cycle', 'property_limit']);
+        $data = $request->only(['price', 'yearly_price', 'billing_cycle', 'property_limit', 'featured_max_days', 'agent_limit']);
+        $data['featured_per_month'] = (int) $request->input('featured_per_month', 0);
+        $data['reports_access'] = $request->has('reports_access');
+        $data['featured_period'] = $request->input('featured_period', 'concurrent');
         $data['translations'] = $this->buildTranslations($request, $languages);
         $data['is_popular'] = $request->has('is_popular');
         $data['status'] = $request->has('status');

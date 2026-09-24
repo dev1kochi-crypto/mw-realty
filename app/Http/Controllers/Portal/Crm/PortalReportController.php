@@ -15,6 +15,13 @@ class PortalReportController extends Controller
     public function index(Request $request)
     {
         $ownerId = $this->ownerId();
+
+        // Leads reports are a plan entitlement (plans.reports_access); Super Admin always has them.
+        $portalUser = \Illuminate\Support\Facades\Auth::guard('portal')->user();
+        if ($portalUser && !$portalUser->hasReportsAccess()) {
+            return view('portal.crm.reports.locked', ['plan' => $portalUser->plan]);
+        }
+
         $rangeDays = in_array((int) $request->input('range'), [30, 90], true) ? (int) $request->input('range') : 30;
 
         $leadQuery = fn () => Lead::forOwner($ownerId);

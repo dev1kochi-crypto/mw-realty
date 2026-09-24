@@ -118,7 +118,7 @@
         }
 
         function selectedTableFieldsFromForm() {
-            const selected = new Set(['lead']);
+            const selected = new Set(['lead', 'phone']);
             leadTableFieldsForm.querySelectorAll('input[name="columns[]"]:checked').forEach(function (input) {
                 selected.add(input.value);
             });

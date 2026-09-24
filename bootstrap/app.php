@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('landing-pages:cleanup-temp-images')->daily();
+        $schedule->command('portal:notify-expiring-documents')->daily();
+        $schedule->command('properties:expire-featured')->everyFifteenMinutes();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         // Only the portal routes use Laravel's built-in auth/guest middleware
@@ -32,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'portal.or.cms' => \App\Http\Middleware\PortalOrCmsAuth::class,
             'customer.auth' => \App\Http\Middleware\EnsureCustomerAuthenticated::class,
+            'portal.approved' => \App\Http\Middleware\EnsurePortalAccountApproved::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

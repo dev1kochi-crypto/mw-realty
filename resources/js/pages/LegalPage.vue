@@ -3,10 +3,12 @@ import { nextTick, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useLegalPage } from '../composables/useLegalPage';
 import { useLanguages } from '../composables/useLanguages';
+import { useStaticText } from '../composables/useStaticText';
 
 const route = useRoute();
 const { legalPage, notFound, fetchLegalPage } = useLegalPage();
 const { selectedLanguage } = useLanguages();
+const { t } = useStaticText();
 
 function load() {
     fetchLegalPage(route.meta.legalKey, selectedLanguage.value?.code);
@@ -38,9 +40,9 @@ watch(legalPage, () => {
                     <h1 class="mw-about-title" data-reveal>{{ legalPage.title }}</h1>
                 </div>
             </div>
-            <nav class="mw-about-crumb" aria-label="Breadcrumb">
+            <nav class="mw-about-crumb" :aria-label="t('legal_page.breadcrumb_aria')">
                 <div class="container-ctn">
-                    <p><router-link to="/">Home</router-link><span class="mw-about-crumb__sep"> / </span><span>{{ legalPage.title }}</span></p>
+                    <p><router-link to="/">{{ t('legal_page.breadcrumb_home') }}</router-link><span class="mw-about-crumb__sep"> / </span><span>{{ legalPage.title }}</span></p>
                 </div>
             </nav>
         </section>
@@ -48,7 +50,7 @@ watch(legalPage, () => {
         <section class="mw-terms">
             <div class="container-ctn">
                 <div v-if="legalPage.content" class="mw-blog-details__content" data-reveal v-html="legalPage.content"></div>
-                <p v-else>This page hasn't been published yet.</p>
+                <p v-else>{{ t('legal_page.unpublished_message') }}</p>
             </div>
         </section>
     </main>
@@ -57,13 +59,13 @@ watch(legalPage, () => {
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>Page Not Found</h1>
+                    <h1 class="mw-about-title" data-reveal>{{ t('legal_page.not_found_title') }}</h1>
                 </div>
             </div>
         </section>
         <section class="mw-terms">
             <div class="container-ctn">
-                <p>This page doesn't exist. <router-link to="/">Back to Home</router-link></p>
+                <p>{{ t('legal_page.not_found_message') }} <router-link to="/">{{ t('legal_page.back_to_home') }}</router-link></p>
             </div>
         </section>
     </main>

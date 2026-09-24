@@ -3,10 +3,12 @@ import { computed, nextTick, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogPost } from '../composables/useBlogPost';
 import { useLanguages } from '../composables/useLanguages';
+import { useStaticText } from '../composables/useStaticText';
 
 const route = useRoute();
 const { blogPost, notFound, fetchBlogPost } = useBlogPost();
 const { selectedLanguage } = useLanguages();
+const { t } = useStaticText();
 
 function load() {
     fetchBlogPost(route.params.slug, selectedLanguage.value?.code);
@@ -45,9 +47,9 @@ const nextPost = computed(() => blogPost.value?.next || null);
                     <h1 class="mw-about-title" data-reveal>{{ post.title }}</h1>
                 </div>
             </div>
-            <nav class="mw-about-crumb" aria-label="Breadcrumb">
+            <nav class="mw-about-crumb" :aria-label="t('blog_details.breadcrumb_aria')">
                 <div class="container-ctn">
-                    <p><router-link to="/">Home</router-link><span class="mw-about-crumb__sep"> / </span><router-link to="/blogs">Blog</router-link><span v-if="post.category_label"><span class="mw-about-crumb__sep"> / </span><span>{{ post.category_label }}</span></span></p>
+                    <p><router-link to="/">{{ t('blog_details.breadcrumb_home') }}</router-link><span class="mw-about-crumb__sep"> / </span><router-link to="/blogs">{{ t('blog_details.breadcrumb_blog') }}</router-link><span v-if="post.category_label"><span class="mw-about-crumb__sep"> / </span><span>{{ post.category_label }}</span></span></p>
                 </div>
             </nav>
         </section>
@@ -80,48 +82,48 @@ const nextPost = computed(() => blogPost.value?.next || null);
                         <div class="mw-blog-details__content" v-html="post.content"></div>
 
                         <div class="mw-blog-details__share">
-                            <span>Share this article</span>
-                            <a href="#" aria-label="Share on Facebook"><img src="/frontend/assets/images/icons/social-facebook.svg" alt=""></a>
-                            <a href="#" aria-label="Share on Twitter"><img src="/frontend/assets/images/icons/social-twitter.svg" alt=""></a>
-                            <a href="#" aria-label="Share on LinkedIn"><img src="/frontend/assets/images/icons/social-linkedin.svg" alt=""></a>
-                            <a href="#" aria-label="Share on Instagram"><img src="/frontend/assets/images/icons/social-instagram.svg" alt=""></a>
+                            <span>{{ t('blog_details.share_label') }}</span>
+                            <a href="#" :aria-label="t('blog_details.share_facebook_aria')"><img src="/frontend/assets/images/icons/social-facebook.svg" alt=""></a>
+                            <a href="#" :aria-label="t('blog_details.share_twitter_aria')"><img src="/frontend/assets/images/icons/social-twitter.svg" alt=""></a>
+                            <a href="#" :aria-label="t('blog_details.share_linkedin_aria')"><img src="/frontend/assets/images/icons/social-linkedin.svg" alt=""></a>
+                            <a href="#" :aria-label="t('blog_details.share_instagram_aria')"><img src="/frontend/assets/images/icons/social-instagram.svg" alt=""></a>
                         </div>
 
-                        <nav class="mw-blog-details__pager" aria-label="Post navigation">
+                        <nav class="mw-blog-details__pager" :aria-label="t('blog_details.pager_aria')">
                             <router-link v-if="previousPost" :to="`/blog-details/${previousPost.slug}`" class="mw-blog-details__pager-item">
                                 <span class="mw-blog-details__pager-dir">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                                    Previous Post
+                                    {{ t('blog_details.previous_post') }}
                                 </span>
                                 <span class="mw-blog-details__pager-title">{{ previousPost.title }}</span>
                             </router-link>
                             <span v-else class="mw-blog-details__pager-item is-disabled" aria-disabled="true">
                                 <span class="mw-blog-details__pager-dir">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                                    Previous Post
+                                    {{ t('blog_details.previous_post') }}
                                 </span>
-                                <span class="mw-blog-details__pager-title">You're on the earliest article</span>
+                                <span class="mw-blog-details__pager-title">{{ t('blog_details.earliest_article') }}</span>
                             </span>
                             <router-link v-if="nextPost" :to="`/blog-details/${nextPost.slug}`" class="mw-blog-details__pager-item mw-blog-details__pager-item--next">
                                 <span class="mw-blog-details__pager-dir">
-                                    Next Post
+                                    {{ t('blog_details.next_post') }}
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
                                 </span>
                                 <span class="mw-blog-details__pager-title">{{ nextPost.title }}</span>
                             </router-link>
                             <span v-else class="mw-blog-details__pager-item mw-blog-details__pager-item--next is-disabled" aria-disabled="true">
                                 <span class="mw-blog-details__pager-dir">
-                                    Next Post
+                                    {{ t('blog_details.next_post') }}
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
                                 </span>
-                                <span class="mw-blog-details__pager-title">You're on the latest article</span>
+                                <span class="mw-blog-details__pager-title">{{ t('blog_details.latest_article') }}</span>
                             </span>
                         </nav>
                     </article>
 
                     <aside class="mw-blog-details__aside" data-sticky-sidebar>
                         <div class="mw-blog-details__aside-panel">
-                            <h3 class="mw-blog-details__aside-title">Recent Blogs</h3>
+                            <h3 class="mw-blog-details__aside-title">{{ t('blog_details.recent_blogs_title') }}</h3>
                             <div class="mw-blog-details__recent">
                                 <router-link v-for="recent in recentPosts" :key="recent.slug" :to="`/blog-details/${recent.slug}`" class="mw-blog-details__recent-item">
                                     <span class="mw-blog-details__recent-thumb">
@@ -136,7 +138,7 @@ const nextPost = computed(() => blogPost.value?.next || null);
                         </div>
 
                         <div class="mw-blog-details__aside-panel">
-                            <h3 class="mw-blog-details__aside-title">Categories</h3>
+                            <h3 class="mw-blog-details__aside-title">{{ t('blog_details.categories_title') }}</h3>
                             <div class="mw-blog-details__categories">
                                 <router-link v-for="category in categories" :key="category.key" to="/blogs" class="mw-blog-details__category">{{ category.label }}</router-link>
                             </div>
@@ -152,13 +154,13 @@ const nextPost = computed(() => blogPost.value?.next || null);
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>Post Not Found</h1>
+                    <h1 class="mw-about-title" data-reveal>{{ t('blog_details.not_found.title') }}</h1>
                 </div>
             </div>
         </section>
         <section class="mw-blog-details">
             <div class="container-ctn">
-                <p>This blog post doesn't exist or has been removed. <router-link to="/blogs">Back to Blog</router-link></p>
+                <p>{{ t('blog_details.not_found.message') }} <router-link to="/blogs">{{ t('blog_details.not_found.back_link') }}</router-link></p>
             </div>
         </section>
     </main>

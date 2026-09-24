@@ -2,11 +2,13 @@
 import { computed, nextTick, watch } from 'vue';
 import { useHomePage } from '../composables/useHomePage';
 import { useWishlist } from '../composables/useWishlist';
+import { useStaticText } from '../composables/useStaticText';
 
 // One fetch for the whole page (see routes/api.php -> Api\HomeController) instead of a
 // request per section — every section below just reads its own slice of `homePage.value`.
 const { homePage } = useHomePage();
 const { isWishlisted, toggleWishlist } = useWishlist();
+const { t } = useStaticText();
 
 const banner = computed(() => homePage.value?.banner || null);
 const brands = computed(() => homePage.value?.brands || []);
@@ -26,39 +28,46 @@ const contactInfo = computed(() => homePage.value?.contact || null);
 const heroLine1 = computed(() => banner.value?.line_1 || 'Your Trusted Partner in');
 const heroLine2 = computed(() => banner.value?.line_2 || 'Finding the Best Properties');
 const heroVideoUrl = computed(() => banner.value?.video_url || '/frontend/assets/video/banner.mp4');
-const heroNoteText = computed(() => banner.value?.note_text || 'Want to find out more about UAE real estate using AI?');
-const heroNoteBadge = computed(() => banner.value?.note_badge || 'Comming Soon');
-const heroGuideText = computed(() => banner.value?.note_link_text || 'Let Us Guide Your Home');
+const heroNoteText = computed(() => banner.value?.note_text || t('home.hero.note_text_default'));
+const heroNoteBadge = computed(() => banner.value?.note_badge || t('home.hero.note_badge_default'));
+const heroGuideText = computed(() => banner.value?.note_link_text || t('home.hero.guide_text_default'));
 const heroGuideUrl = computed(() => banner.value?.note_link_url || '#');
 
-const heroTabs = [
-    { filter: 'buy', label: 'Buy', active: true },
-    { filter: 'rent', label: 'Rent' },
-    { filter: 'ready', label: 'Ready' },
-    { filter: 'off-plan', label: 'Off-Plan' },
-];
+const heroTabs = computed(() => [
+    { filter: 'buy', label: t('home.hero.tabs.buy'), active: true },
+    { filter: 'rent', label: t('home.hero.tabs.rent') },
+    { filter: 'ready', label: t('home.hero.tabs.ready') },
+    { filter: 'off-plan', label: t('home.hero.tabs.off_plan') },
+]);
 
-const bedroomOptions = [
-    { value: 'studio', label: 'Studio' },
-    { value: '1', label: '1 Bedroom' },
-    { value: '2', label: '2 Bedrooms' },
-    { value: '3', label: '3 Bedrooms' },
-    { value: '4', label: '4 Bedrooms' },
-    { value: '5', label: '5 Bedrooms' },
-    { value: '6', label: '6 Bedrooms' },
-    { value: '7+', label: '7+ Bedrooms' },
-];
+const bedroomOptions = computed(() => [
+    { value: 'studio', label: t('home.bedroom_options.studio') },
+    { value: '1', label: t('home.bedroom_options.one') },
+    { value: '2', label: t('home.bedroom_options.two') },
+    { value: '3', label: t('home.bedroom_options.three') },
+    { value: '4', label: t('home.bedroom_options.four') },
+    { value: '5', label: t('home.bedroom_options.five') },
+    { value: '6', label: t('home.bedroom_options.six') },
+    { value: '7+', label: t('home.bedroom_options.seven_plus') },
+]);
 
-const propertyTypeOptions = ['Apartment', 'Villa', 'Penthouse', 'Townhouse', 'Plot', 'Office'];
+const propertyTypeOptions = computed(() => [
+    t('home.property_types.apartment'),
+    t('home.property_types.villa'),
+    t('home.property_types.penthouse'),
+    t('home.property_types.townhouse'),
+    t('home.property_types.plot'),
+    t('home.property_types.office'),
+]);
 
-const pricePresets = [
-    { min: 0, max: 500000, label: 'Under 500K' },
-    { min: 500000, max: 1000000, label: '500K – 1M' },
-    { min: 1000000, max: 2000000, label: '1M – 2M' },
-    { min: 2000000, max: 5000000, label: '2M – 5M' },
-    { min: 5000000, max: 10000000, label: '5M – 10M' },
-    { min: 10000000, max: 30000000, label: '10M+' },
-];
+const pricePresets = computed(() => [
+    { min: 0, max: 500000, label: t('home.price_presets.under_500k') },
+    { min: 500000, max: 1000000, label: t('home.price_presets.500k_1m') },
+    { min: 1000000, max: 2000000, label: t('home.price_presets.1m_2m') },
+    { min: 2000000, max: 5000000, label: t('home.price_presets.2m_5m') },
+    { min: 5000000, max: 10000000, label: t('home.price_presets.5m_10m') },
+    { min: 10000000, max: 30000000, label: t('home.price_presets.10m_plus') },
+]);
 
 const displayLogos = computed(() => brands.value.map((brand) => ({ src: brand.image_url, alt: brand.alt || '' })));
 
@@ -233,11 +242,11 @@ const realtyCards = computed(() => {
 const showRealty = computed(() => realtyCards.value.length > 0);
 
 // --- Communities ---
-const communityFilters = [
-    { filter: 'for-sale', label: 'For Sale', active: true },
-    { filter: 'for-rent', label: 'For Rent' },
-    { filter: 'off-plan', label: 'Off Plan' },
-];
+const communityFilters = computed(() => [
+    { filter: 'for-sale', label: t('home.communities_filters.for_sale'), active: true },
+    { filter: 'for-rent', label: t('home.communities_filters.for_rent') },
+    { filter: 'off-plan', label: t('home.communities_filters.off_plan') },
+]);
 const communitiesEyebrow = computed(() => communitiesSection.value?.eyebrow || 'Neighbourhood living');
 const communitiesTitle = computed(() => communitiesSection.value?.title || 'Popular Properties in Dubai Communities');
 const communitiesColumns = computed(() => {
@@ -281,8 +290,8 @@ watch([luxuryCards, realtyCards, testimonials], () => {
 });
 
 // --- Contact ---
-const contactEyebrow = computed(() => contactInfo.value?.eyebrow || "We're here to help");
-const contactHeading = computed(() => contactInfo.value?.title || 'Connect with the experts who make property management simple.');
+const contactEyebrow = computed(() => contactInfo.value?.eyebrow || t('home.contact.eyebrow_default'));
+const contactHeading = computed(() => contactInfo.value?.title || t('home.contact.heading_default'));
 const contactText = computed(() => contactInfo.value?.description || 'Experience hassle-free property management, expertly handled by professionals who understand your unique requirements.');
 const contactAddress = computed(() => contactInfo.value?.address || 'Office No: 703 - Churchill Tower Business Bay - Dubai, UAE');
 const contactTollFree = computed(() => contactInfo.value?.toll_free || '800644489');
@@ -301,18 +310,18 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     <h1 class="mw-hero__title">{{ heroLine1 }}</h1>
                     <p class="mw-hero__subtitle">{{ heroLine2 }}</p>
 
-                    <div class="mw-hero__tabs" role="tablist" aria-label="Listing type" data-tab-group>
+                    <div class="mw-hero__tabs" role="tablist" :aria-label="t('home.hero.tabs_aria_label')" data-tab-group>
                         <button v-for="tab in heroTabs" :key="tab.filter" type="button" class="mw-hero__tab" :class="{ 'is-active': tab.active }" data-tab :data-filter="tab.filter">{{ tab.label }}</button>
                     </div>
 
                     <form class="mw-hero__search" id="search" role="search" @submit.prevent>
                         <label class="mw-hero__field">
                             <img src="/frontend/assets/images/icons/location.svg" alt="">
-                            <input type="text" name="location" placeholder="Enter location">
+                            <input type="text" name="location" :placeholder="t('home.hero.search.location_placeholder')">
                         </label>
                         <div class="mw-hero__field mw-hero__field--select mw-dropdown" data-dropdown data-dropdown-trigger tabindex="0" role="button" aria-haspopup="listbox">
                             <img src="/frontend/assets/images/icons/bed.svg" alt="">
-                            <span data-dropdown-label>Bedroom</span>
+                            <span data-dropdown-label>{{ t('home.hero.search.bedroom_label') }}</span>
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" class="mw-hero__field-chevron">
                             <ul class="mw-dropdown__menu" data-dropdown-menu>
                                 <li v-for="opt in bedroomOptions" :key="opt.value"><button type="button" data-dropdown-option :data-value="opt.value">{{ opt.label }}</button></li>
@@ -321,27 +330,27 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                         <div class="mw-hero__field mw-hero__field--select mw-hero__price mw-dropdown" data-dropdown>
                             <button type="button" class="mw-hero__price-trigger" data-dropdown-trigger aria-haspopup="dialog">
                                 <img src="/frontend/assets/images/icons/tag-price.svg" alt="">
-                                <span data-dropdown-label>Price Range</span>
+                                <span data-dropdown-label>{{ t('home.hero.search.price_range_label') }}</span>
                                 <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" class="mw-hero__field-chevron">
                             </button>
                             <div class="mw-dropdown__menu mw-hero__price-panel" data-dropdown-menu>
                                 <div class="mw-hero__price-readout">
                                     <label class="mw-hero__price-input">
-                                        <span>Min</span>
-                                        <input type="text" inputmode="decimal" data-price-min-input aria-label="Minimum price" value="AED 0">
+                                        <span>{{ t('home.hero.price.min_label') }}</span>
+                                        <input type="text" inputmode="decimal" data-price-min-input :aria-label="t('home.hero.price.min_aria')" value="AED 0">
                                     </label>
                                     <label class="mw-hero__price-input">
-                                        <span>Max</span>
-                                        <input type="text" inputmode="decimal" data-price-max-input aria-label="Maximum price" value="AED 30M">
+                                        <span>{{ t('home.hero.price.max_label') }}</span>
+                                        <input type="text" inputmode="decimal" data-price-max-input :aria-label="t('home.hero.price.max_aria')" value="AED 30M">
                                     </label>
                                 </div>
                                 <div class="mw-hero__price-slider" data-price-slider>
                                     <div class="mw-hero__price-track"></div>
                                     <div class="mw-hero__price-fill" data-price-range></div>
-                                    <input type="range" name="min_price" min="0" max="30000000" step="50000" value="0" data-price-min aria-label="Minimum price">
-                                    <input type="range" name="max_price" min="0" max="30000000" step="50000" value="30000000" data-price-max aria-label="Maximum price">
+                                    <input type="range" name="min_price" min="0" max="30000000" step="50000" value="0" data-price-min :aria-label="t('home.hero.price.min_aria')">
+                                    <input type="range" name="max_price" min="0" max="30000000" step="50000" value="30000000" data-price-max :aria-label="t('home.hero.price.max_aria')">
                                 </div>
-                                <p class="mw-hero__price-presets-title">Quick select</p>
+                                <p class="mw-hero__price-presets-title">{{ t('home.hero.price.quick_select') }}</p>
                                 <div class="mw-hero__price-presets">
                                     <button v-for="preset in pricePresets" :key="preset.label" type="button" data-price-preset :data-min="preset.min" :data-max="preset.max">{{ preset.label }}</button>
                                 </div>
@@ -349,13 +358,13 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                         </div>
                         <div class="mw-hero__field mw-hero__field--select mw-dropdown" data-dropdown data-dropdown-trigger tabindex="0" role="button" aria-haspopup="listbox">
                             <img src="/frontend/assets/images/icons/building.svg" alt="">
-                            <span data-dropdown-label>Property Type</span>
+                            <span data-dropdown-label>{{ t('home.hero.search.property_type_label') }}</span>
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" class="mw-hero__field-chevron">
                             <ul class="mw-dropdown__menu" data-dropdown-menu>
                                 <li v-for="opt in propertyTypeOptions" :key="opt"><button type="button" data-dropdown-option>{{ opt }}</button></li>
                             </ul>
                         </div>
-                        <button type="submit" class="mw-hero__submit">Search</button>
+                        <button type="submit" class="mw-hero__submit">{{ t('home.hero.search.submit') }}</button>
                     </form>
 
                     <div class="mw-hero__foot">
@@ -405,15 +414,15 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                             </div>
                             <span class="mw-badge mw-badge--success mw-projects__verified">
                                 <img src="/frontend/assets/images/icons/verified.svg" alt="" width="18" height="18">
-                                Verified
+                                {{ t('home.badges.verified') }}
                             </span>
-                            <button type="button" class="mw-projects__save" :class="{ 'is-saved': isWishlisted(card.id) }" aria-label="Save property" :aria-pressed="isWishlisted(card.id)" @click.stop="toggleWishlist(card.id)">
+                            <button type="button" class="mw-projects__save" :class="{ 'is-saved': isWishlisted(card.id) }" :aria-label="t('home.aria.save_property')" :aria-pressed="isWishlisted(card.id)" @click.stop="toggleWishlist(card.id)">
                                 <img src="/frontend/assets/images/icons/heart.svg" alt="" width="24" height="24">
                             </button>
-                            <button type="button" class="mw-projects__nav mw-projects__nav--prev" data-gallery-prev aria-label="Previous photo" @click.stop>
+                            <button type="button" class="mw-projects__nav mw-projects__nav--prev" data-gallery-prev :aria-label="t('home.aria.previous_photo')" @click.stop>
                                 <img src="/frontend/assets/images/icons/chevron.svg" alt="">
                             </button>
-                            <button type="button" class="mw-projects__nav mw-projects__nav--next" data-gallery-next aria-label="Next photo" @click.stop>
+                            <button type="button" class="mw-projects__nav mw-projects__nav--next" data-gallery-next :aria-label="t('home.aria.next_photo')" @click.stop>
                                 <img src="/frontend/assets/images/icons/chevron.svg" alt="">
                             </button>
                             <div class="mw-projects__dots" data-gallery-dots></div>
@@ -422,17 +431,17 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 <span data-gallery-count>{{ card.images_count }}</span>
                             </span>
                             <div class="mw-projects__contact">
-                                <a href="mailto:info@mightywarnersrealty.com" class="mw-projects__contact-btn mw-projects__contact-btn--email" aria-label="Mail" @click.stop>
+                                <a href="mailto:info@mightywarnersrealty.com" class="mw-projects__contact-btn mw-projects__contact-btn--email" :aria-label="t('home.contact_card.mail')" @click.stop>
                                     <img src="/frontend/assets/images/icons/email.svg" alt="">
-                                    <span>Mail</span>
+                                    <span>{{ t('home.contact_card.mail') }}</span>
                                 </a>
-                                <a href="tel:+971585899990" class="mw-projects__contact-btn mw-projects__contact-btn--call" aria-label="Call us" @click.stop>
+                                <a href="tel:+971585899990" class="mw-projects__contact-btn mw-projects__contact-btn--call" :aria-label="t('home.contact_card.call_us')" @click.stop>
                                     <img src="/frontend/assets/images/icons/phone.svg" alt="">
-                                    <span>Call us</span>
+                                    <span>{{ t('home.contact_card.call_us') }}</span>
                                 </a>
-                                <a href="https://wa.me/971585899990" class="mw-projects__contact-btn mw-projects__contact-btn--whatsapp" aria-label="Chat with us" @click.stop>
+                                <a href="https://wa.me/971585899990" class="mw-projects__contact-btn mw-projects__contact-btn--whatsapp" :aria-label="t('home.contact_card.chat_with_us')" @click.stop>
                                     <img src="/frontend/assets/images/icons/whatsapp.svg" alt="">
-                                    <span>Chat with us</span>
+                                    <span>{{ t('home.contact_card.chat_with_us') }}</span>
                                 </a>
                             </div>
                         </div>
@@ -489,17 +498,17 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 </div>
                                 <span class="mw-highlight__badge">
                                     <img src="/frontend/assets/images/icons/star.svg" alt="" width="18" height="18">
-                                    Premium
+                                    {{ t('home.badges.premium') }}
                                 </span>
-                                <button type="button" class="mw-highlight__save" :class="{ 'is-saved': isWishlisted(card.id) }" aria-label="Save property" :aria-pressed="isWishlisted(card.id)" @click.stop="toggleWishlist(card.id)">
+                                <button type="button" class="mw-highlight__save" :class="{ 'is-saved': isWishlisted(card.id) }" :aria-label="t('home.aria.save_property')" :aria-pressed="isWishlisted(card.id)" @click.stop="toggleWishlist(card.id)">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path d="M16.696 3C14.652 3 12.887 4.197 12 5.943C11.113 4.197 9.348 3 7.304 3C4.374 3 2 5.457 2 8.481C2 11.505 3.817 14.277 6.165 16.554C8.513 18.831 12 21 12 21C12 21 15.374 18.867 17.835 16.554C20.46 14.088 22 11.514 22 8.481C22 5.448 19.626 3 16.696 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 </button>
-                                <button type="button" class="mw-highlight__shot mw-highlight__shot--prev" data-gallery-prev aria-label="Previous photo" @click.stop>
+                                <button type="button" class="mw-highlight__shot mw-highlight__shot--prev" data-gallery-prev :aria-label="t('home.aria.previous_photo')" @click.stop>
                                     <img src="/frontend/assets/images/icons/chevron.svg" alt="">
                                 </button>
-                                <button type="button" class="mw-highlight__shot mw-highlight__shot--next" data-gallery-next aria-label="Next photo" @click.stop>
+                                <button type="button" class="mw-highlight__shot mw-highlight__shot--next" data-gallery-next :aria-label="t('home.aria.next_photo')" @click.stop>
                                     <img src="/frontend/assets/images/icons/chevron.svg" alt="">
                                 </button>
                                 <div class="mw-highlight__dots" data-gallery-dots></div>
@@ -521,18 +530,18 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                     <span class="mw-highlight__stat"><img src="/frontend/assets/images/icons/area.svg" alt="" width="18" height="18">{{ card.area }}</span>
                                 </div>
                                 <div class="mw-highlight__contacts">
-                                    <a href="mailto:info@mightywarnersrealty.com" aria-label="Email" @click.stop><img src="/frontend/assets/images/icons/realty-email.svg" alt="" width="40" height="40"></a>
-                                    <a href="tel:+971585899990" aria-label="Call" @click.stop><img src="/frontend/assets/images/icons/realty-phone.svg" alt="" width="40" height="40"></a>
-                                    <a href="https://wa.me/971585899990" aria-label="WhatsApp" @click.stop><img src="/frontend/assets/images/icons/realty-whatsapp.svg" alt="" width="40" height="40"></a>
+                                    <a href="mailto:info@mightywarnersrealty.com" :aria-label="t('home.aria.email')" @click.stop><img src="/frontend/assets/images/icons/realty-email.svg" alt="" width="40" height="40"></a>
+                                    <a href="tel:+971585899990" :aria-label="t('home.aria.call')" @click.stop><img src="/frontend/assets/images/icons/realty-phone.svg" alt="" width="40" height="40"></a>
+                                    <a href="https://wa.me/971585899990" :aria-label="t('home.aria.whatsapp')" @click.stop><img src="/frontend/assets/images/icons/realty-whatsapp.svg" alt="" width="40" height="40"></a>
                                 </div>
                             </div>
                         </article>
                     </div>
                     <div class="mw-highlight__nav">
-                        <button type="button" data-highlight-prev class="mw-arrow-btn mw-arrow-btn--prev mw-highlight__nav-btn" aria-label="Previous premium property">
+                        <button type="button" data-highlight-prev class="mw-arrow-btn mw-arrow-btn--prev mw-highlight__nav-btn" :aria-label="t('home.aria.previous_premium_property')">
                             <img src="/frontend/assets/images/icons/luxury-nav-arrow.svg" alt="" width="24" height="24">
                         </button>
-                        <button type="button" data-highlight-next class="mw-arrow-btn mw-arrow-btn--next mw-highlight__nav-btn" aria-label="Next premium property">
+                        <button type="button" data-highlight-next class="mw-arrow-btn mw-arrow-btn--next mw-highlight__nav-btn" :aria-label="t('home.aria.next_premium_property')">
                             <img src="/frontend/assets/images/icons/luxury-nav-arrow.svg" alt="" width="24" height="24">
                         </button>
                     </div>
@@ -543,7 +552,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
         <section class="mw-home-banner" v-if="homeAd && homeAd.image_url">
             <div class="container-ctn">
                 <a :href="homeAd.link_url || '#'" class="mw-home-banner__card" :target="homeAd.link_url ? '_blank' : null" rel="noopener">
-                    <span class="mw-home-banner__label">Advertisement</span>
+                    <span class="mw-home-banner__label">{{ t('home.badges.advertisement') }}</span>
                     <picture>
                         <source v-if="homeAd.mobile_image_url" media="(max-width: 767px)" :srcset="homeAd.mobile_image_url">
                         <img :src="homeAd.image_url" :alt="homeAd.image_alt || homeAd.name" class="mw-home-banner__image" loading="lazy">
@@ -578,7 +587,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                     <img :src="step.iconSrc" alt="" class="mw-post-property__step-icon">
                                 </span>
                                 <div class="mw-post-property__step-body">
-                                    <p class="mw-post-property__step-label">Step {{ step.index }}</p>
+                                    <p class="mw-post-property__step-label">{{ t('home.post_property.step_label') }} {{ step.index }}</p>
                                     <h3 class="mw-post-property__step-title">{{ step.title }}</h3>
                                     <p class="mw-post-property__step-text">{{ step.text }}</p>
                                 </div>
@@ -597,10 +606,10 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                         <h2 class="mw-section-title">{{ popularPlacesTitle }}</h2>
                     </div>
                     <div class="mw-popular-places__nav">
-                        <button type="button" class="mw-arrow-btn mw-arrow-btn--prev mw-popular-places__nav-btn" data-places-prev aria-label="Previous places">
+                        <button type="button" class="mw-arrow-btn mw-arrow-btn--prev mw-popular-places__nav-btn" data-places-prev :aria-label="t('home.aria.previous_places')">
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" width="18" height="18">
                         </button>
-                        <button type="button" class="mw-arrow-btn mw-arrow-btn--next mw-popular-places__nav-btn" data-places-next aria-label="Next places">
+                        <button type="button" class="mw-arrow-btn mw-arrow-btn--next mw-popular-places__nav-btn" data-places-next :aria-label="t('home.aria.next_places')">
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" width="18" height="18">
                         </button>
                     </div>
@@ -638,10 +647,10 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 <img src="/frontend/assets/images/icons/luxury-cta-arrow.svg" alt="" width="18" height="18">
                             </a>
                             <div class="mw-luxury__nav">
-                                <button type="button" class="mw-arrow-btn mw-arrow-btn--prev mw-luxury__nav-btn" data-luxury-prev aria-label="Previous luxury project">
+                                <button type="button" class="mw-arrow-btn mw-arrow-btn--prev mw-luxury__nav-btn" data-luxury-prev :aria-label="t('home.aria.previous_luxury_project')">
                                     <img src="/frontend/assets/images/icons/luxury-nav-arrow.svg" alt="" width="24" height="24">
                                 </button>
-                                <button type="button" class="mw-arrow-btn mw-arrow-btn--next mw-luxury__nav-btn" data-luxury-next aria-label="Next luxury project">
+                                <button type="button" class="mw-arrow-btn mw-arrow-btn--next mw-luxury__nav-btn" data-luxury-next :aria-label="t('home.aria.next_luxury_project')">
                                     <img src="/frontend/assets/images/icons/luxury-nav-arrow.svg" alt="" width="24" height="24">
                                 </button>
                             </div>
@@ -652,8 +661,8 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                         <div class="mw-luxury__slider" data-luxury-slider>
                             <article v-for="(card, index) in luxuryCards" :key="index" class="mw-luxury__card">
                                 <img :src="card.image" :alt="card.name" class="mw-luxury__photo" :class="{ 'mw-luxury__photo--villa': card.villa }" loading="lazy">
-                                <span class="mw-luxury__tag">Buy</span>
-                                <button type="button" class="mw-luxury__save" aria-label="Save property" aria-pressed="false">
+                                <span class="mw-luxury__tag">{{ t('home.hero.tabs.buy') }}</span>
+                                <button type="button" class="mw-luxury__save" :aria-label="t('home.aria.save_property')" aria-pressed="false">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path d="M16.696 3C14.652 3 12.887 4.197 12 5.943C11.113 4.197 9.348 3 7.304 3C4.374 3 2 5.457 2 8.481C2 11.505 3.817 14.277 6.165 16.554C8.513 18.831 12 21 12 21C12 21 15.374 18.867 17.835 16.554C20.46 14.088 22 11.514 22 8.481C22 5.448 19.626 3 16.696 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
@@ -681,13 +690,13 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                     <div class="mw-luxury__foot">
                                         <span class="mw-luxury__price">{{ card.price }}</span>
                                         <div class="mw-luxury__contacts">
-                                            <a href="mailto:info@mightywarnersrealty.com" class="mw-luxury__contact" aria-label="Mail">
+                                            <a href="mailto:info@mightywarnersrealty.com" class="mw-luxury__contact" :aria-label="t('home.contact_card.mail')">
                                                 <img src="/frontend/assets/images/icons/luxury-email.svg" alt="" width="40" height="40">
                                             </a>
-                                            <a href="tel:+971585899990" class="mw-luxury__contact" aria-label="Call">
+                                            <a href="tel:+971585899990" class="mw-luxury__contact" :aria-label="t('home.aria.call')">
                                                 <img src="/frontend/assets/images/icons/luxury-phone.svg" alt="" width="40" height="40">
                                             </a>
-                                            <a href="https://wa.me/971585899990" class="mw-luxury__contact" aria-label="WhatsApp">
+                                            <a href="https://wa.me/971585899990" class="mw-luxury__contact" :aria-label="t('home.aria.whatsapp')">
                                                 <img src="/frontend/assets/images/icons/luxury-whatsapp.svg" alt="" width="40" height="40">
                                             </a>
                                         </div>
@@ -753,9 +762,9 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 <img :src="card.image" :alt="card.name" class="mw-realty__photo" loading="lazy">
                                 <span class="mw-badge mw-badge--success mw-realty__verified">
                                     <img src="/frontend/assets/images/icons/verified.svg" alt="" width="18" height="18">
-                                    Verified
+                                    {{ t('home.badges.verified') }}
                                 </span>
-                                <button type="button" class="mw-realty__save" aria-label="Save property" aria-pressed="false">
+                                <button type="button" class="mw-realty__save" :aria-label="t('home.aria.save_property')" aria-pressed="false">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path d="M16.696 3C14.652 3 12.887 4.197 12 5.943C11.113 4.197 9.348 3 7.304 3C4.374 3 2 5.457 2 8.481C2 11.505 3.817 14.277 6.165 16.554C8.513 18.831 12 21 12 21C12 21 15.374 18.867 17.835 16.554C20.46 14.088 22 11.514 22 8.481C22 5.448 19.626 3 16.696 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
@@ -777,19 +786,19 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 <div class="mw-realty__foot">
                                     <span class="mw-realty__price">{{ card.price }}</span>
                                     <div class="mw-realty__actions">
-                                        <a href="mailto:info@mightywarnersrealty.com" aria-label="Email"><img src="/frontend/assets/images/icons/realty-email.svg" alt="" width="40" height="40"></a>
-                                        <a href="tel:+971585899990" aria-label="Call"><img src="/frontend/assets/images/icons/realty-phone.svg" alt="" width="40" height="40"></a>
-                                        <a href="https://wa.me/971585899990" aria-label="WhatsApp"><img src="/frontend/assets/images/icons/realty-whatsapp.svg" alt="" width="40" height="40"></a>
+                                        <a href="mailto:info@mightywarnersrealty.com" :aria-label="t('home.aria.email')"><img src="/frontend/assets/images/icons/realty-email.svg" alt="" width="40" height="40"></a>
+                                        <a href="tel:+971585899990" :aria-label="t('home.aria.call')"><img src="/frontend/assets/images/icons/realty-phone.svg" alt="" width="40" height="40"></a>
+                                        <a href="https://wa.me/971585899990" :aria-label="t('home.aria.whatsapp')"><img src="/frontend/assets/images/icons/realty-whatsapp.svg" alt="" width="40" height="40"></a>
                                     </div>
                                 </div>
                             </div>
                         </article>
                     </div>
                     <div class="mw-realty__nav">
-                        <button type="button" data-realty-prev class="mw-arrow-btn mw-arrow-btn--prev mw-realty__nav-btn" aria-label="Previous realty property">
+                        <button type="button" data-realty-prev class="mw-arrow-btn mw-arrow-btn--prev mw-realty__nav-btn" :aria-label="t('home.aria.previous_realty_property')">
                             <img src="/frontend/assets/images/icons/luxury-nav-arrow.svg" alt="" width="24" height="24">
                         </button>
-                        <button type="button" data-realty-next class="mw-arrow-btn mw-arrow-btn--next mw-realty__nav-btn" aria-label="Next realty property">
+                        <button type="button" data-realty-next class="mw-arrow-btn mw-arrow-btn--next mw-realty__nav-btn" :aria-label="t('home.aria.next_realty_property')">
                             <img src="/frontend/assets/images/icons/luxury-nav-arrow.svg" alt="" width="24" height="24">
                         </button>
                     </div>
@@ -840,10 +849,10 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     </a>
 
                     <div class="mw-find-properties__card mw-find-properties__card--tall">
-                        <img src="/frontend/assets/images/home/find-tall.jpg" alt="All properties" loading="lazy">
+                        <img src="/frontend/assets/images/home/find-tall.jpg" :alt="t('home.find_properties.tall_alt')" loading="lazy">
                         <img class="mw-find-properties__mark" src="/frontend/assets/images/home/find-properties-mark.svg" alt="" aria-hidden="true">
                         <router-link to="/properties" class="mw-find-properties__cta">
-                            View All Properties
+                            {{ t('home.find_properties.view_all_static') }}
                             <img src="/frontend/assets/images/icons/find-cta-arrow.svg" alt="" width="18" height="18">
                         </router-link>
                     </div>
@@ -860,10 +869,10 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                         <p class="mw-section-text">{{ testimonialsDescription }}</p>
                     </div>
                     <div class="mw-testimonials__arrows">
-                        <button type="button" data-testimonials-prev class="mw-testimonials__arrow mw-testimonials__arrow--prev" aria-label="Previous testimonial">
+                        <button type="button" data-testimonials-prev class="mw-testimonials__arrow mw-testimonials__arrow--prev" :aria-label="t('home.aria.previous_testimonial')">
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" width="24" height="24">
                         </button>
-                        <button type="button" data-testimonials-next class="mw-testimonials__arrow mw-testimonials__arrow--next" aria-label="Next testimonial">
+                        <button type="button" data-testimonials-next class="mw-testimonials__arrow mw-testimonials__arrow--next" :aria-label="t('home.aria.next_testimonial')">
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" width="24" height="24">
                         </button>
                     </div>
@@ -917,46 +926,46 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             <div class="mw-contact__inner">
                 <div class="mw-contact__visual">
                     <div class="mw-contact__photo">
-                        <img src="/frontend/assets/images/home/contact-photo.jpg" alt="Modern living room managed by MW Realty" loading="lazy">
+                        <img src="/frontend/assets/images/home/contact-photo.jpg" :alt="t('home.contact.photo_alt')" loading="lazy">
                     </div>
 
                     <div class="mw-contact__form-card">
                         <form class="mw-contact__form" novalidate @submit.prevent>
                             <div class="mw-contact__field">
-                                <label for="contact-name">Name*</label>
-                                <input type="text" id="contact-name" name="name" placeholder="Your name" required>
+                                <label for="contact-name">{{ t('home.contact.form.name_label') }}</label>
+                                <input type="text" id="contact-name" name="name" :placeholder="t('home.contact.form.name_placeholder')" required>
                             </div>
 
                             <div class="mw-contact__field">
-                                <label for="contact-email">Email*</label>
-                                <input type="email" id="contact-email" name="email" placeholder="Your email" required>
+                                <label for="contact-email">{{ t('home.contact.form.email_label') }}</label>
+                                <input type="email" id="contact-email" name="email" :placeholder="t('home.contact.form.email_placeholder')" required>
                             </div>
 
                             <div class="mw-contact__field">
-                                <label for="contact-phone">phone*</label>
-                                <input type="tel" id="contact-phone" name="phone" placeholder="Your phone" required>
+                                <label for="contact-phone">{{ t('home.contact.form.phone_label') }}</label>
+                                <input type="tel" id="contact-phone" name="phone" :placeholder="t('home.contact.form.phone_placeholder')" required>
                             </div>
 
                             <div class="mw-contact__field mw-contact__field--select">
-                                <label for="contact-interest">what are you interested in?</label>
+                                <label for="contact-interest">{{ t('home.contact.form.interest_label') }}</label>
                                 <div class="mw-contact__select-wrap">
                                     <select id="contact-interest" name="interest" required>
-                                        <option value="" selected disabled hidden>Select</option>
-                                        <option value="buy">Buy a property</option>
-                                        <option value="rent">Rent a property</option>
-                                        <option value="sell">Sell / list a property</option>
-                                        <option value="management">Property management</option>
+                                        <option value="" selected disabled hidden>{{ t('home.contact.form.interest_select_placeholder') }}</option>
+                                        <option value="buy">{{ t('home.contact.form.interest_buy') }}</option>
+                                        <option value="rent">{{ t('home.contact.form.interest_rent') }}</option>
+                                        <option value="sell">{{ t('home.contact.form.interest_sell') }}</option>
+                                        <option value="management">{{ t('home.contact.form.interest_management') }}</option>
                                     </select>
                                     <img class="mw-contact__select-chevron" src="/frontend/assets/images/icons/chevron-down.svg" alt="" width="24" height="24">
                                 </div>
                             </div>
 
                             <div class="mw-contact__field">
-                                <label for="contact-message">Message</label>
-                                <textarea id="contact-message" name="message" rows="5" placeholder="How can we help you?"></textarea>
+                                <label for="contact-message">{{ t('home.contact.form.message_label') }}</label>
+                                <textarea id="contact-message" name="message" rows="5" :placeholder="t('home.contact.form.message_placeholder')"></textarea>
                             </div>
 
-                            <button type="submit" class="mw-contact__submit">Contact Our Expert</button>
+                            <button type="submit" class="mw-contact__submit">{{ t('home.contact.form.submit') }}</button>
                         </form>
                     </div>
                 </div>
@@ -970,7 +979,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                         <div class="mw-contact__row">
                             <span class="mw-contact__icon"><img src="/frontend/assets/images/icons/location.svg" alt="" width="24" height="24"></span>
                             <div class="mw-contact__row-body">
-                                <p class="mw-contact__row-label">Office Address</p>
+                                <p class="mw-contact__row-label">{{ t('home.contact.office_address_label') }}</p>
                                 <p class="mw-contact__row-value">{{ contactAddress }}</p>
                             </div>
                         </div>
@@ -978,7 +987,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                         <div class="mw-contact__row">
                             <span class="mw-contact__icon"><img src="/frontend/assets/images/icons/phone.svg" alt="" width="24" height="24"></span>
                             <div class="mw-contact__row-body">
-                                <p class="mw-contact__row-label">Toll Free</p>
+                                <p class="mw-contact__row-label">{{ t('home.contact.toll_free_label') }}</p>
                                 <a class="mw-contact__row-value mw-contact__row-value--link mw-contact__row-value--lg" :href="`tel:${contactTollFree}`">{{ contactTollFree }}</a>
                             </div>
                         </div>
@@ -986,7 +995,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                         <div class="mw-contact__row">
                             <span class="mw-contact__icon"><img src="/frontend/assets/images/icons/whatsapp.svg" alt="" width="24" height="24"></span>
                             <div class="mw-contact__row-body">
-                                <p class="mw-contact__row-label">Request A Call Back</p>
+                                <p class="mw-contact__row-label">{{ t('home.contact.request_callback_label') }}</p>
                                 <a class="mw-contact__row-value mw-contact__row-value--link mw-contact__row-value--lg" :href="`https://wa.me/${contactWhatsapp}`" target="_blank" rel="noopener">+{{ contactWhatsapp }}</a>
                             </div>
                         </div>
@@ -994,7 +1003,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                         <div class="mw-contact__row">
                             <span class="mw-contact__icon"><img src="/frontend/assets/images/icons/email.svg" alt="" width="24" height="24"></span>
                             <div class="mw-contact__row-body">
-                                <p class="mw-contact__row-label">Email Us</p>
+                                <p class="mw-contact__row-label">{{ t('home.contact.email_us_label') }}</p>
                                 <a class="mw-contact__row-value mw-contact__row-value--link" :href="`mailto:${contactEmail}`">{{ contactEmail }}</a>
                             </div>
                         </div>

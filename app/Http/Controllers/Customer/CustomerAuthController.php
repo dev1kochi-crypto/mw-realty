@@ -73,7 +73,7 @@ class CustomerAuthController extends Controller
         $code = (string) random_int(1000, 9999);
 
         try {
-            Mail::to($user->email)->send(new OtpCodeMail($user, $code));
+            Mail::to($user->email)->send(new OtpCodeMail($user->name, $code));
         } catch (\Throwable $e) {
             Log::error('Failed to send OTP code email: ' . $e->getMessage());
             return false;

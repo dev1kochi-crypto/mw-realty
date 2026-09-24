@@ -10,17 +10,37 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Global master list of nearby landmarks (schools, hospitals, restaurants, attractions, ...) that
- * properties can be tagged with — see Property::nearbyPlaces() / the property form's "Nearby
- * Places" tab. Lives under the portal/CRM area (not the admin CMS backend) since it's part of the
- * property/CRM workflow; only a Super Admin browsing the portal can manage it, matching the
- * sidebar link's existing $cmsActor gate.
+ * Nearby landmarks (schools, hospitals, restaurants, attractions, ...) that properties can be
+ * tagged with — see Property::nearbyPlaces() / the property form's "Nearby Places" tab.
+ *
+ * Two tiers: shared places (portal_user_id NULL) are managed by a Super Admin and visible to
+ * everyone; an Agent/Company can also add their own, which only they see and manage. Which one
+ * applies is decided by ownerId() — null means Super Admin (no scope), same as the properties side.
  */
 class NearbyPlaceController extends Controller
 {
     protected function isAdmin(): bool
     {
         return !Auth::guard('portal')->check() && (bool) Auth::guard('cms')->user()?->hasRole('superadmin');
+    }
+
+    protected function ownerId(): ?int
+    {
+        return Auth::guard('portal')->check() ? Auth::guard('portal')->user()->id : null;
+    }
+
+    protected function ensureAllowed(): void
+    {
+        abort_unless($this->isAdmin() || Auth::guard('portal')->check(), 403);
+    }
+
+    /** A place the current user may edit/toggle/delete: admin any, a portal user only their own. */
+    protected function findManageable($id): NearbyPlace
+    {
+        $this->ensureAllowed();
+
+        return NearbyPlace::when($this->ownerId(), fn ($q, $ownerId) => $q->where('portal_user_id', $ownerId))
+            ->findOrFail($id);
     }
 
     protected function typeFilter()
@@ -30,16 +50,28 @@ class NearbyPlaceController extends Controller
 
     public function index(Request $request)
     {
-        abort_unless($this->isAdmin(), 403);
+        $this->ensureAllowed();
 
-        $places = NearbyPlace::orderBy('category')->paginate(20);
+        $places = NearbyPlace::with('owner')
+            ->visibleTo($this->ownerId())
+            ->when($request->input('scope') === 'mine' && $this->ownerId(), fn ($q) => $q->where('portal_user_id', $this->ownerId()))
+            ->when($request->input('scope') === 'shared', fn ($q) => $q->whereNull('portal_user_id'))
+            ->orderByRaw('portal_user_id IS NULL')
+            ->orderBy('category')
+            ->paginate(20)
+            ->withQueryString();
 
-        return view('portal.nearby-places.index', compact('places'));
+        return view('portal.nearby-places.index', [
+            'places' => $places,
+            'isAdmin' => $this->isAdmin(),
+            'ownerId' => $this->ownerId(),
+            'scope' => $request->input('scope', 'all'),
+        ]);
     }
 
     public function create()
     {
-        abort_unless($this->isAdmin(), 403);
+        $this->ensureAllowed();
 
         $languages = Language::where('status', true)->get();
         $typeFilter = $this->typeFilter();
@@ -63,11 +95,12 @@ class NearbyPlaceController extends Controller
 
     public function store(Request $request)
     {
-        abort_unless($this->isAdmin(), 403);
+        $this->ensureAllowed();
 
         $request->validate($this->rules());
 
         NearbyPlace::create([
+            'portal_user_id' => $this->ownerId(),
             'category' => $request->input('category'),
             'translations' => $request->input('translations', []),
             'latitude' => $request->input('latitude'),
@@ -80,9 +113,7 @@ class NearbyPlaceController extends Controller
 
     public function edit($id)
     {
-        abort_unless($this->isAdmin(), 403);
-
-        $place = NearbyPlace::findOrFail($id);
+        $place = $this->findManageable($id);
         $languages = Language::where('status', true)->get();
         $typeFilter = $this->typeFilter();
         return view('portal.nearby-places.edit', compact('place', 'languages', 'typeFilter'));
@@ -90,9 +121,7 @@ class NearbyPlaceController extends Controller
 
     public function update(Request $request, $id)
     {
-        abort_unless($this->isAdmin(), 403);
-
-        $place = NearbyPlace::findOrFail($id);
+        $place = $this->findManageable($id);
         $request->validate($this->rules());
 
         $place->update([
@@ -108,9 +137,7 @@ class NearbyPlaceController extends Controller
 
     public function toggleStatus($id)
     {
-        abort_unless($this->isAdmin(), 403);
-
-        $place = NearbyPlace::findOrFail($id);
+        $place = $this->findManageable($id);
         $place->status = !$place->status;
         $place->save();
 
@@ -119,20 +146,19 @@ class NearbyPlaceController extends Controller
 
     public function destroy($id)
     {
-        abort_unless($this->isAdmin(), 403);
-
-        NearbyPlace::findOrFail($id)->delete();
+        $this->findManageable($id)->delete();
 
         return response()->json(['success' => true]);
     }
 
-    /** Feeds the property form's Type -> Place cascading picker. Reachable by any portal user (agent/company/admin). */
+    /** Feeds the property form's Type -> Place cascading picker: shared places plus the user's own. */
     public function byType(Request $request)
     {
         $places = NearbyPlace::active()
+            ->visibleTo($this->ownerId())
             ->when($request->input('type'), fn ($q, $type) => $q->where('category', $type))
-            ->get(['id', 'translations'])
-            ->map(fn ($p) => ['id' => $p->id, 'name' => $p->getTranslation('name')]);
+            ->get(['id', 'translations', 'portal_user_id'])
+            ->map(fn ($p) => ['id' => $p->id, 'name' => $p->getTranslation('name'), 'own' => !$p->isShared()]);
 
         return response()->json(['places' => $places]);
     }
