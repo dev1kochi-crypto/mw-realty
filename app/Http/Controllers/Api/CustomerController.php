@@ -35,7 +35,7 @@ class CustomerController extends Controller
             'wishlist_ids' => $user->wishlistProperties()->pluck('properties.id'),
             'user' => [
                 'name' => $user->name,
-                'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+                'avatar_url' => $user->avatar ? media_url($user->avatar) : null,
             ],
         ]);
     }
@@ -80,7 +80,7 @@ class CustomerController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'location' => $user->location,
-                'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+                'avatar_url' => $user->avatar ? media_url($user->avatar) : null,
             ],
             'stats' => [
                 'wishlist' => $wishlist->count(),
@@ -132,7 +132,7 @@ class CustomerController extends Controller
 
         return response()->json([
             'message' => 'Settings updated.',
-            'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+            'avatar_url' => $user->avatar ? media_url($user->avatar) : null,
         ]);
     }
 

@@ -82,7 +82,7 @@
                     <label class="form-label fw-bold">Global OG Image</label>
                     @if($metadata->og_image)
                         <div class="mb-3">
-                            <img src="{{ asset('storage/' . $metadata->og_image) }}" class="img-thumbnail rounded shadow-sm" style="max-height: 120px;">
+                            <img src="{{ media_url($metadata->og_image) }}" class="img-thumbnail rounded shadow-sm" style="max-height: 120px;">
                         </div>
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" name="remove_og_image" id="removeMetadataOgImage" value="1" {{ old('remove_og_image') ? 'checked' : '' }}>

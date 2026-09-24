@@ -157,7 +157,7 @@
                             @enderror
                             @if($banner->image)
                             <div class="mt-2 p-2 border rounded d-inline-block bg-white">
-                                <img src="{{ asset('storage/' . $banner->image) }}" style="height: 80px;">
+                                <img src="{{ media_url($banner->image) }}" style="height: 80px;">
                             </div>
                             <div class="form-check mt-2">
                                 <input class="form-check-input" type="checkbox" name="remove_image" id="removeBannerImage" value="1" {{ old('remove_image') ? 'checked' : '' }}>
@@ -204,7 +204,7 @@
                                     @if($banner->video_file)
                                     <div class="mt-2 p-2 border rounded d-inline-block bg-white">
                                         <video height="80" controls>
-                                            <source src="{{ asset('storage/' . $banner->video_file) }}">
+                                            <source src="{{ media_url($banner->video_file) }}">
                                             Your browser does not support the video tag.
                                         </video>
                                         <div class="small text-muted mt-1">{{ basename($banner->video_file) }}</div>
@@ -262,7 +262,7 @@
                             @if(!empty($avatars))
                             <div class="mt-2 d-flex gap-2 flex-wrap">
                                 @foreach($avatars as $avatar)
-                                <img src="{{ asset('storage/' . $avatar) }}" class="rounded-circle border" style="width: 30px; height: 30px; object-fit: cover;">
+                                <img src="{{ media_url($avatar) }}" class="rounded-circle border" style="width: 30px; height: 30px; object-fit: cover;">
                                 @endforeach
                             </div>
                             @endif

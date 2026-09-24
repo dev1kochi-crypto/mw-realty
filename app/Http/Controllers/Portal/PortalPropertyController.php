@@ -129,8 +129,9 @@ class PortalPropertyController extends Controller
      */
     protected function storeGalleryImage(UploadedFile $file, string $folder, string $referenceNo, int $number): void
     {
-        Storage::disk('public')->put(
-            $folder . '/' . $referenceNo . '-' . $number . '.jpeg',
+        app(\App\Services\PropertyGallery::class)->put(
+            $folder,
+            $referenceNo . '-' . $number . '.jpeg',
             $this->convertToJpeg($file->getRealPath())
         );
     }
@@ -382,7 +383,7 @@ class PortalPropertyController extends Controller
         $property = Property::create($data);
 
         if ($request->hasFile('images')) {
-            $folder = 'properties/' . $property->reference_no;
+            $folder = app(\App\Services\PropertyGallery::class)->folderValue('properties/' . $property->reference_no);
             $number = 0;
             $sequence = [];
             foreach ($request->file('images') as $file) {
@@ -495,7 +496,7 @@ class PortalPropertyController extends Controller
             if (!$property->reference_no) {
                 $property->update(['reference_no' => $this->generateReferenceNo()]);
             }
-            $folder = $property->image_path ?: ('properties/' . $property->reference_no);
+            $folder = app(\App\Services\PropertyGallery::class)->folderValue($property->image_path ?: ('properties/' . $property->reference_no));
             $number = $property->image_next_number;
             $sequence = $property->galleryNumbers();
             foreach ($request->file('images') as $file) {
@@ -625,7 +626,7 @@ class PortalPropertyController extends Controller
             $files->delete($property->image);
         }
         if ($property->image_path) {
-            Storage::disk('public')->deleteDirectory($property->image_path);
+            app(\App\Services\PropertyGallery::class)->deleteAll($property->image_path);
         }
         foreach ($property->images as $image) {
             $files->delete($image->image);
@@ -676,7 +677,7 @@ class PortalPropertyController extends Controller
         $numbers = $property->galleryNumbers();
 
         if (in_array($number, $numbers, true) && $property->image_path) {
-            Storage::disk('public')->delete($property->image_path . '/' . $property->reference_no . '-' . $number . '.jpeg');
+            app(\App\Services\PropertyGallery::class)->delete($property->image_path, $property->reference_no . '-' . $number . '.jpeg');
         }
 
         $property->update(['image_sequence' => implode(',', array_values(array_diff($numbers, [$number])))]);
@@ -690,7 +691,7 @@ class PortalPropertyController extends Controller
         $property = $this->findOwned($propertyId);
 
         if ($property->image_path) {
-            Storage::disk('public')->deleteDirectory($property->image_path);
+            app(\App\Services\PropertyGallery::class)->deleteAll($property->image_path);
         }
         $property->update(['image_sequence' => null]);
 

@@ -72,9 +72,9 @@ class HomePageService
             'line_1' => $banner->getTranslation('line_1', $lang),
             'line_2' => $banner->getTranslation('line_2', $lang),
             'content' => $banner->getTranslation('content', $lang),
-            'image_url' => $banner->image ? asset('storage/' . $banner->image) : null,
+            'image_url' => $banner->image ? media_url($banner->image) : null,
             'image_alt' => $banner->image_alt,
-            'video_url' => $banner->video_file ? asset('storage/' . $banner->video_file) : $banner->video_url,
+            'video_url' => $banner->video_file ? media_url($banner->video_file) : $banner->video_url,
             'note_text' => data_get($banner->translations, "{$lang}.extra_fields.note_text"),
             'note_badge' => data_get($banner->translations, "{$lang}.extra_fields.note_badge"),
             'note_link_text' => data_get($banner->translations, "{$lang}.extra_fields.note_link_text"),
@@ -90,7 +90,7 @@ class HomePageService
             ->get(['id', 'image', 'image_alt'])
             ->map(fn (Brand $brand) => [
                 'id' => $brand->id,
-                'image_url' => asset('storage/' . $brand->image),
+                'image_url' => media_url($brand->image),
                 'alt' => $brand->image_alt,
             ])->values()->all();
     }
@@ -104,8 +104,8 @@ class HomePageService
 
         return [
             'name' => $ad->name,
-            'image_url' => asset('storage/' . $ad->image),
-            'mobile_image_url' => $ad->mobile_image ? asset('storage/' . $ad->mobile_image) : null,
+            'image_url' => media_url($ad->image),
+            'mobile_image_url' => $ad->mobile_image ? media_url($ad->mobile_image) : null,
             'image_alt' => $ad->image_alt,
             'link_url' => $ad->link_url,
         ];
@@ -203,10 +203,10 @@ class HomePageService
         return [
             'eyebrow' => $section?->getTranslation('title_2', $lang) ?: 'The MW advantage',
             'title' => $section?->getTranslation('title', $lang) ?: 'Why Choose Us',
-            'image_url' => $section?->section_image ? asset('storage/' . $section->section_image) : null,
+            'image_url' => $section?->section_image ? media_url($section->section_image) : null,
             'image_alt' => $section?->section_image_alt,
             'items' => $items->map(fn ($item) => [
-                'icon_url' => $item->image ? asset('storage/' . $item->image) : null,
+                'icon_url' => $item->image ? media_url($item->image) : null,
                 'title' => $item->getTranslation('title', $lang),
                 'description' => $item->getTranslation('description', $lang),
             ])->values(),
@@ -222,7 +222,7 @@ class HomePageService
             'eyebrow' => $section?->getTranslation('title_1', $lang) ?: 'Neighbourhood living',
             'title' => $section?->getTranslation('title', $lang) ?: 'Popular Properties in Dubai Communities',
             'items' => $items->map(fn ($item) => [
-                'icon_url' => $item->image ? asset('storage/' . $item->image) : null,
+                'icon_url' => $item->image ? media_url($item->image) : null,
                 'name' => $item->getTranslation('title', $lang),
             ])->values(),
         ];
@@ -237,7 +237,7 @@ class HomePageService
             'eyebrow' => $section?->getTranslation('title_1', $lang) ?: 'Browse by type',
             'title' => $section?->getTranslation('title', $lang) ?: 'Find the Right Property Type',
             'items' => $items->map(fn ($item) => [
-                'image_url' => $item->image ? asset('storage/' . $item->image) : null,
+                'image_url' => $item->image ? media_url($item->image) : null,
                 'title' => $item->getTranslation('title', $lang),
                 'count' => $item->propertyCount(),
             ])->values(),
@@ -255,11 +255,11 @@ class HomePageService
             'description' => $section?->getTranslation('description', $lang) ?: null,
             'button_text' => $section?->getTranslation('button_text', $lang) ?: 'Start listing',
             'button_url' => $section?->getTranslation('button_url', $lang) ?: null,
-            'image_url' => $section?->section_image ? asset('storage/' . $section->section_image) : null,
+            'image_url' => $section?->section_image ? media_url($section->section_image) : null,
             'image_alt' => $section?->section_image_alt,
             'steps' => $steps->values()->map(fn ($step, $i) => [
                 'index' => str_pad($i + 1, 2, '0', STR_PAD_LEFT),
-                'icon_url' => $step->image ? asset('storage/' . $step->image) : null,
+                'icon_url' => $step->image ? media_url($step->image) : null,
                 'title' => $step->getTranslation('title', $lang),
                 'description' => $step->getTranslation('description', $lang),
             ])->values(),
@@ -276,7 +276,7 @@ class HomePageService
             'title' => $section?->getTranslation('title', $lang) ?: 'Most Popular Properties Places',
             'places' => $places->map(fn ($place) => [
                 'name' => $place->getTranslation('name', $lang),
-                'image_url' => $place->image ? asset('storage/' . $place->image) : null,
+                'image_url' => $place->image ? media_url($place->image) : null,
                 'image_alt' => $place->image_alt,
             ])->values(),
         ];
@@ -293,8 +293,8 @@ class HomePageService
             'description' => $section?->getTranslation('description', $lang) ?: null,
             'items' => $items->map(fn ($item) => [
                 'type' => $item->type === 'video' ? 'video' : 'quote',
-                'image_url' => $item->image ? asset('storage/' . $item->image) : null,
-                'video_url' => $item->video_file ? asset('storage/' . $item->video_file) : $item->video_url,
+                'image_url' => $item->image ? media_url($item->image) : null,
+                'video_url' => $item->video_file ? media_url($item->video_file) : $item->video_url,
                 'name' => $item->getTranslation('name', $lang),
                 'role' => $item->getTranslation('designation', $lang),
                 'content' => $item->getTranslation('content', $lang),
@@ -332,7 +332,7 @@ class HomePageService
                 'title' => $section?->getTranslation('title', $lang) ?: 'Get in Touch',
                 'description' => $section?->getTranslation('description', $lang) ?: 'Have questions about our properties or services? Our team is here to help you.',
                 'map_url' => $extra['map_url'] ?? null,
-                'image' => $section?->section_image ? asset('storage/'.$section->section_image) : null,
+                'image' => $section?->section_image ? media_url($section->section_image) : null,
                 'image_alt' => $section?->section_image_alt,
                 'address' => $info?->address,
                 'phone' => $info?->phone_1,
@@ -387,11 +387,11 @@ class HomePageService
                     'eyebrow' => $about?->getTranslation('title_2', $lang) ?: 'Overview',
                     'title' => $about?->getTranslation('title_1', $lang) ?: 'About Us',
                     'description' => $about?->getTranslation('description', $lang),
-                    'image_url' => $about?->section_image ? asset('storage/'.$about->section_image) : null,
+                    'image_url' => $about?->section_image ? media_url($about->section_image) : null,
                     'image_alt' => $about?->section_image_alt,
                 ],
                 'director' => [
-                    'image_url' => $about?->banner ? asset('storage/'.$about->banner) : null,
+                    'image_url' => $about?->banner ? media_url($about->banner) : null,
                     'image_alt' => $about?->banner_alt,
                     'name' => $about?->getTranslation('ceo_name', $lang),
                     'designation' => $about?->getTranslation('ceo_designation', $lang),
@@ -400,21 +400,21 @@ class HomePageService
                 'postPropertySteps' => PostPropertyStep::where('status', true)->orderBy('order_index')->take(10)->get()
                     ->values()->map(fn ($step, $i) => [
                         'index' => str_pad($i + 1, 2, '0', STR_PAD_LEFT),
-                        'icon_url' => $step->image ? asset('storage/'.$step->image) : null,
+                        'icon_url' => $step->image ? media_url($step->image) : null,
                         'title' => $step->getTranslation('title', $lang),
                         'description' => $step->getTranslation('description', $lang),
                     ])->values(),
                 'marketTrends' => [
                     'title' => $trends?->getTranslation('title', $lang) ?: 'Real Estate Market Trends & Investment Tips',
-                    'image_1_url' => $trends?->section_image ? asset('storage/'.$trends->section_image) : null,
+                    'image_1_url' => $trends?->section_image ? media_url($trends->section_image) : null,
                     'image_1_alt' => $trends?->section_image_alt,
-                    'image_2_url' => $trends?->banner ? asset('storage/'.$trends->banner) : null,
+                    'image_2_url' => $trends?->banner ? media_url($trends->banner) : null,
                     'image_2_alt' => $trends?->banner_alt,
                     'trends' => array_values(array_filter($trends?->getTranslation('trends', $lang) ?? [])),
                 ],
                 'whyChooseUsItems' => WhyChooseUsItem::where('status', true)->orderBy('order_index')->take(20)->get()
                     ->map(fn ($item) => [
-                        'icon_url' => $item->image ? asset('storage/'.$item->image) : null,
+                        'icon_url' => $item->image ? media_url($item->image) : null,
                         'label' => $item->getTranslation('title', $lang),
                     ])->values(),
                 'connectUs' => [
@@ -423,16 +423,16 @@ class HomePageService
                     'button_text' => $connect?->getTranslation('button_text', $lang),
                     'button_url' => $connect?->getTranslation('button_url', $lang) ?: '/contact',
                     'video_url' => ($connectExtra['video_source'] ?? null) === 'file' && !empty($connectExtra['video_file'])
-                        ? asset('storage/'.$connectExtra['video_file'])
+                        ? media_url($connectExtra['video_file'])
                         : ($connectExtra['video_url'] ?? null),
-                    'poster_url' => $connect?->section_image ? asset('storage/'.$connect->section_image) : null,
+                    'poster_url' => $connect?->section_image ? media_url($connect->section_image) : null,
                     'poster_alt' => $connect?->section_image_alt,
                 ],
                 'builders' => [
                     'title' => $builders?->getTranslation('title', $lang) ?: 'Our Builders',
                     'items' => OurBuilderItem::where('status', true)->orderBy('order_index')->take(20)->get()
                         ->map(fn ($item) => [
-                            'image_url' => $item->image ? asset('storage/'.$item->image) : null,
+                            'image_url' => $item->image ? media_url($item->image) : null,
                             'image_alt' => $item->image_alt,
                         ])->values(),
                 ],

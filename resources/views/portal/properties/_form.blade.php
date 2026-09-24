@@ -431,7 +431,7 @@
                 <div class="d-flex align-items-center gap-2 mb-2 repeater-row">
                     <div class="repeater-icon-preview">
                         @if(!empty($row['icon']))
-                            <img src="{{ str_starts_with($row['icon'], 'http') ? $row['icon'] : asset('storage/' . $row['icon']) }}">
+                            <img src="{{ str_starts_with($row['icon'], 'http') ? $row['icon'] : media_url($row['icon']) }}">
                         @else
                             <i class="fas fa-image text-muted"></i>
                         @endif
@@ -495,7 +495,7 @@
                         <input type="hidden" name="floor_plans[{{ $i }}][existing_image]" value="{{ $fp['image'] ?? '' }}">
                         <input type="file" name="floor_plans[{{ $i }}][image]" class="form-control form-control-sm" accept="image/*">
                         @if(!empty($fp['image']))
-                        <img src="{{ asset('storage/' . $fp['image']) }}" class="mt-1 rounded" style="height:40px;">
+                        <img src="{{ media_url($fp['image']) }}" class="mt-1 rounded" style="height:40px;">
                         @endif
                     </div>
                     <div class="col-md-1">
@@ -510,7 +510,7 @@
                     <label class="form-label fw-semibold">Downloadable Floor Plan File</label>
                     <input type="file" name="floor_plan_file" class="form-control">
                     @if($isEdit && $details?->floor_plan_file)
-                    <div class="mt-2"><a href="{{ asset('storage/' . $details->floor_plan_file) }}" target="_blank" class="small">Current file</a></div>
+                    <div class="mt-2"><a href="{{ media_url($details->floor_plan_file) }}" target="_blank" class="small">Current file</a></div>
                     @endif
                 </div>
             </div>
@@ -643,7 +643,7 @@
                     <label class="form-label fw-semibold">OG Image</label>
                     <input type="file" name="metadata_og_image" class="form-control" accept="image/*">
                     @if(!empty($meta['og_image']))
-                    <img src="{{ asset('storage/' . $meta['og_image']) }}" class="mt-2 rounded" style="height:50px;">
+                    <img src="{{ media_url($meta['og_image']) }}" class="mt-2 rounded" style="height:50px;">
                     @endif
                 </div>
                 <div class="col-md-6">

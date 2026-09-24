@@ -27,8 +27,8 @@ class PublicAdController extends Controller
 
         return response()->json([
             'name' => $ad->name,
-            'image_url' => asset('storage/' . $ad->image),
-            'mobile_image_url' => $ad->mobile_image ? asset('storage/' . $ad->mobile_image) : null,
+            'image_url' => media_url($ad->image),
+            'mobile_image_url' => $ad->mobile_image ? media_url($ad->mobile_image) : null,
             'image_alt' => $ad->image_alt,
             'link_url' => $ad->link_url,
         ]);

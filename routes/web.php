@@ -39,6 +39,16 @@ use App\Http\Controllers\SpaController;
 
 Route::get('/', [SpaController::class, 'staticPage'])->defaults('pageKey', 'home');
 
+// Media now lives on Cloudinary and the DB stores full URLs. Anything that still wraps one in
+// "/storage/…" (an old template, a cached view, an external link) is redirected to the real file.
+// Servers often collapse "https://" to "https:/" in paths, so both forms are accepted.
+Route::get('/storage/{url}', function (string $url) {
+    $url = preg_replace('#^(https?):/+#i', '$1://', $url);
+    abort_unless(\App\Services\CloudinaryMedia::isCloudinaryUrl($url), 404);
+
+    return redirect()->away($url, 301);
+})->where('url', 'https?:/.+');
+
 // Public, unauthenticated — any property-detail page can POST a lead here; it's
 // routed to the property's owning company/agent (see LeadCaptureController).
 Route::post('/leads/capture', [LeadCaptureController::class, 'store'])->name('leads.capture')->middleware('throttle:lead-capture');

@@ -191,7 +191,8 @@ class PropertySeeder extends Seeder
 
     private function attachGallery(Property $property, string $referenceNo, int $index): void
     {
-        $folder = 'properties/' . $referenceNo;
+        $gallery = app(\App\Services\PropertyGallery::class);
+        $folder = $gallery->folderValue('properties/' . $referenceNo); // Cloudinary folder URL when configured
         $count = 3;
         $sequence = [];
 
@@ -207,7 +208,7 @@ class PropertySeeder extends Seeder
                 continue;
             }
 
-            Storage::disk('public')->put("{$folder}/{$referenceNo}-{$n}.jpeg", $jpeg);
+            $gallery->put($folder, "{$referenceNo}-{$n}.jpeg", $jpeg);
             $sequence[] = $n;
         }
 

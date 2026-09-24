@@ -64,7 +64,7 @@
                 <div class="col-12">
                     <label class="form-label fw-bold">Current Logo</label>
                     <div class="mb-3">
-                        <img src="{{ asset('storage/' . $brand->image) }}" class="img-thumbnail rounded" style="height: 100px;">
+                        <img src="{{ media_url($brand->image) }}" class="img-thumbnail rounded" style="height: 100px;">
                     </div>
                     <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" name="remove_image" id="removeBrandImage" value="1" {{ old('remove_image') ? 'checked' : '' }}>

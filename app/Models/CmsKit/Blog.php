@@ -53,7 +53,7 @@ class Blog extends Model
         return [
             'meta_title' => $title ? "{$title} | MW Realty Blog" : 'MW Realty Blog',
             'meta_description' => \App\Support\SeoMeta::excerpt($this->getTranslation('content', $lang)),
-            'og_image' => $this->feature_image ? asset('storage/' . $this->feature_image) : null,
+            'og_image' => $this->feature_image ? media_url($this->feature_image) : null,
         ];
     }
 }

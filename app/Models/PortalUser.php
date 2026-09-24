@@ -182,7 +182,7 @@ class PortalUser extends Authenticatable
             'meta_title' => $name ? "{$name} | MW Realty {$label}" : "MW Realty {$label}",
             'meta_description' => \App\Support\SeoMeta::excerpt($this->getTranslation('bio', $lang))
                 ?? "Connect with {$name}, a trusted " . strtolower($label) . ' on MW Realty.',
-            'og_image' => $this->avatar ? asset('storage/' . $this->avatar) : null,
+            'og_image' => $this->avatar ? media_url($this->avatar) : null,
         ];
     }
 

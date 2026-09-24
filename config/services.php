@@ -65,6 +65,14 @@ return [
 
     // Plan subscriptions (see App\Services\StripeBillingService). Without a secret key the portal
     // falls back to the manual "request upgrade → Super Admin approves" flow.
+    // All public media (images/videos) — see App\Services\CloudinaryMedia. Blank = local disk.
+    'cloudinary' => [
+        'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+        'api_key' => env('CLOUDINARY_API_KEY'),
+        'api_secret' => env('CLOUDINARY_API_SECRET'),
+        'folder' => env('CLOUDINARY_FOLDER', 'MW'),
+    ],
+
     'stripe' => [
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),

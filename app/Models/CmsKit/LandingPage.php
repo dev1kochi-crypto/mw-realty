@@ -205,7 +205,7 @@ class LandingPage extends Model
             $tags[] = '<meta property="og:description" content="' . e($meta['og_description']) . '">';
         }
         if (!empty($meta['og_image'])) {
-            $tags[] = '<meta property="og:image" content="' . e(asset('storage/' . $meta['og_image'])) . '">';
+            $tags[] = '<meta property="og:image" content="' . e(media_url($meta['og_image'])) . '">';
         }
         if (!empty($meta['other_meta_tags'])) {
             // Raw HTML the admin typed themselves (e.g. <meta name="robots" ...>) — trusted the same

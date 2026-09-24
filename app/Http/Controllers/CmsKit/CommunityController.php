@@ -40,7 +40,7 @@ class CommunityController extends Controller
                 })
                 ->addColumn('image', function ($row) {
                     if ($row->image) {
-                        return '<img src="' . asset('storage/' . $row->image) . '" class="img-thumbnail" style="height: 40px;">';
+                        return '<img src="' . media_url($row->image) . '" class="img-thumbnail" style="height: 40px;">';
                     }
                     return '-';
                 })

@@ -895,7 +895,7 @@ class PortalUserController extends Controller
                 app(\App\Services\ManagedFiles::class)->delete($property->image);
             }
             if ($property->image_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->deleteDirectory($property->image_path);
+                app(\App\Services\PropertyGallery::class)->deleteAll($property->image_path);
             }
             foreach ($property->images as $image) {
                 app(\App\Services\ManagedFiles::class)->delete($image->image);

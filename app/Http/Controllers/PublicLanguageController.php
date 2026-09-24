@@ -23,7 +23,7 @@ class PublicLanguageController extends Controller
                 'name' => $language->name,
                 'code' => $language->code,
                 'is_default' => (bool) $language->is_default,
-                'flag_url' => $language->flag_image ? asset('storage/'.$language->flag_image) : null,
+                'flag_url' => $language->flag_image ? media_url($language->flag_image) : null,
             ]);
     }
 }

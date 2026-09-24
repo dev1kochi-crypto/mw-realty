@@ -46,7 +46,7 @@
                         <label class="form-label fw-bold">{{ $fieldLabels[$field] }}</label>
                         <div>
                             @if($candidate->attachment)
-                                <a href="{{ asset('storage/' . $candidate->attachment) }}" target="_blank" class="btn btn-outline-primary btn-sm">Open Attachment</a>
+                                <a href="{{ media_url($candidate->attachment) }}" target="_blank" class="btn btn-outline-primary btn-sm">Open Attachment</a>
                             @else
                                 <div class="form-control bg-light">-</div>
                             @endif

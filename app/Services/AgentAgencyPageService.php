@@ -45,7 +45,7 @@ class AgentAgencyPageService
             return [
                 'slug' => $agent->slug,
                 'name' => $agent->name,
-                'avatar_url' => $agent->avatar ? asset('storage/'.$agent->avatar) : null,
+                'avatar_url' => $agent->avatar ? media_url($agent->avatar) : null,
                 'years_of_experience' => $agent->years_of_experience,
                 'preferred_areas' => $agent->preferred_areas ?? [],
                 'badges' => $agent->badges ?? [],
@@ -99,7 +99,7 @@ class AgentAgencyPageService
             return [
                 'slug' => $agency->slug,
                 'name' => $agency->displayName(),
-                'logo_url' => $agency->avatar ? asset('storage/'.$agency->avatar) : null,
+                'logo_url' => $agency->avatar ? media_url($agency->avatar) : null,
                 'founding_year' => $agency->founding_year,
                 'office_address' => $agency->office_address,
                 'website' => $agency->website,
@@ -129,7 +129,7 @@ class AgentAgencyPageService
         return [
             'slug' => $agent->slug,
             'name' => $agent->name,
-            'avatar_url' => $agent->avatar ? asset('storage/'.$agent->avatar) : null,
+            'avatar_url' => $agent->avatar ? media_url($agent->avatar) : null,
             'years_of_experience' => $agent->years_of_experience,
             'preferred_areas' => $agent->preferred_areas ?? [],
             'rent_count' => $rentCount,
@@ -142,7 +142,7 @@ class AgentAgencyPageService
         return [
             'slug' => $agency->slug,
             'name' => $agency->displayName(),
-            'logo_url' => $agency->avatar ? asset('storage/'.$agency->avatar) : null,
+            'logo_url' => $agency->avatar ? media_url($agency->avatar) : null,
             'properties_count' => $agency->properties_count ?? 0,
             'office_address' => $agency->office_address,
             'email' => $agency->email,

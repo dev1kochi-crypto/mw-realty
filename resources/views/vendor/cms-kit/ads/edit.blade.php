@@ -53,7 +53,7 @@
                     @error('image')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     @if($ad->image)
                     <div class="mt-2">
-                        <img src="{{ asset('storage/' . $ad->image) }}" class="img-thumbnail" style="height: 70px;">
+                        <img src="{{ media_url($ad->image) }}" class="img-thumbnail" style="height: 70px;">
                     </div>
                     @endif
                     <input type="text" name="image_alt" class="form-control mt-2" placeholder="Image ALT text" value="{{ old('image_alt', $ad->image_alt) }}">
@@ -75,7 +75,7 @@
                     @error('mobile_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     @if($ad->mobile_image)
                     <div class="mt-2">
-                        <img src="{{ asset('storage/' . $ad->mobile_image) }}" class="img-thumbnail" style="height: 70px;">
+                        <img src="{{ media_url($ad->mobile_image) }}" class="img-thumbnail" style="height: 70px;">
                     </div>
                     @endif
                 </div>

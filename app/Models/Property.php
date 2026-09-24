@@ -84,14 +84,17 @@ class Property extends Model
         return array_values(array_filter(array_map('intval', explode(',', $this->image_sequence))));
     }
 
-    /** [{number, url}] in display order, for the gallery grid. */
+    /**
+     * [{number, url}] in display order, for the gallery grid. `image_path` is the gallery folder —
+     * a Cloudinary folder URL (…/image/upload/MW/properties/PROP021) or a legacy local folder.
+     */
     public function galleryImages(): array
     {
         if (!$this->image_path) {
             return [];
         }
         return collect($this->galleryNumbers())
-            ->map(fn ($n) => ['number' => $n, 'url' => asset('storage/' . $this->image_path . '/' . $this->reference_no . '-' . $n . '.jpeg')])
+            ->map(fn ($n) => ['number' => $n, 'url' => media_url(rtrim($this->image_path, '/') . '/' . $this->reference_no . '-' . $n . '.jpeg')])
             ->all();
     }
 

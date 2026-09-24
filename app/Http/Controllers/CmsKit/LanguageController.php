@@ -39,7 +39,7 @@ class LanguageController extends Controller
             return \Yajra\DataTables\Facades\DataTables::of($languages)
                 ->addColumn('flag_thumb', function ($row) {
                     if ($row->flag_image) {
-                        return '<img src="' . e(asset('storage/' . $row->flag_image)) . '" alt="' . e($row->flag_alt ?? '') . '" class="rounded border" style="height: 28px; width: auto;">';
+                        return '<img src="' . e(media_url($row->flag_image)) . '" alt="' . e($row->flag_alt ?? '') . '" class="rounded border" style="height: 28px; width: auto;">';
                     }
 
                     return '<span class="text-muted">—</span>';
@@ -60,7 +60,7 @@ class LanguageController extends Controller
                     return '<span class="text-muted">-</span>';
                 })
                 ->addColumn('actions', function ($row) {
-                    $flagUrl = $row->flag_image ? asset('storage/' . $row->flag_image) : '';
+                    $flagUrl = $row->flag_image ? media_url($row->flag_image) : '';
                     $langCode = strtolower((string) $row->code);
                     $vueTpl = config('cms-kit.static_translations.vue_editor_url');
                     $staticTextsUrl = is_string($vueTpl) && trim($vueTpl) !== ''

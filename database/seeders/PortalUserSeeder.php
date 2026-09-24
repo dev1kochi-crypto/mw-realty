@@ -107,6 +107,11 @@ class PortalUserSeeder extends Seeder
 
         $extension = pathinfo($relativePath, PATHINFO_EXTENSION);
         $destination = 'portal-users/' . $slug . '.' . $extension;
+
+        if (\App\Services\CloudinaryMedia::enabled()) {
+            return app(\App\Services\CloudinaryMedia::class)->uploadFile($source, $destination);
+        }
+
         Storage::disk('public')->put($destination, file_get_contents($source));
 
         return $destination;

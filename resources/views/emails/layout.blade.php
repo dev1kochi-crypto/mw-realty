@@ -22,7 +22,7 @@
                 <tr>
                     <td style="background-color:#264373; padding:22px 32px;">
                         @if($emailLogoPath)
-                            <img src="{{ asset('storage/' . $emailLogoPath) }}" alt="{{ $emailSiteInfo->logo_alt ?? $emailBrandName }}" style="max-height:36px; display:block; border:0;">
+                            <img src="{{ media_url($emailLogoPath) }}" alt="{{ $emailSiteInfo->logo_alt ?? $emailBrandName }}" style="max-height:36px; display:block; border:0;">
                         @else
                             <span style="color:#ffffff; font-size:18px; font-weight:bold; font-family: Arial, Helvetica, sans-serif;">{{ $emailBrandName }}</span>
                         @endif
