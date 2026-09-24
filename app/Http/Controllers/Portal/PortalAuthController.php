@@ -4,10 +4,7 @@ namespace App\Http\Controllers\Portal;
 
 use App\Models\PortalUser;
 use App\Models\Plan;
-use App\Models\CmsKit\Admin;
-use App\Models\CmsKit\SiteInformation;
-use App\Mail\PortalAccountRegistered;
-use App\Notifications\PortalRegistrationNotification;
+use App\Mail\OtpCodeMail;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -64,6 +61,7 @@ class PortalAuthController extends Controller
             'phone' => $request->input('phone'),
             'password' => Hash::make($request->input('password')),
             'status' => 'pending',
+            'kyc_review_status' => 'draft',
             'status_changed_at' => now(),
             'plan_id' => Plan::defaultFree()?->id,
 
@@ -85,37 +83,88 @@ class PortalAuthController extends Controller
 
         $this->storeKycDocuments($request, $portalUser);
 
-        $this->notifyAdminOfRegistration($portalUser);
+        // The account remains a KYC draft until the user completes email verification, their
+        // profile and documents, then explicitly submits it for admin review.
+        $sent = $this->issueOtp($portalUser);
 
-        return redirect()->route('portal.login')
-            ->with('success', 'Account created. You can log in now to review and complete your profile — you\'ll be able to add properties once Super Admin approves your account.');
+        return response()->json([
+            'otp_required' => true,
+            'user_id' => $portalUser->id,
+            'email_sent' => $sent,
+        ]);
     }
 
     /**
-     * A failed notification email must never break registration for the user — log and move on.
-     * The bell/database notification (for every superadmin, independent of the configured
-     * inbox above) is sent separately so one failing channel never blocks the other.
+     * Shared by register() and resendOtp() — same shape as
+     * CustomerAuthController::issueOtp(), sent synchronously so a code the user is waiting on
+     * right now can't sit in the jobs table until a queue worker runs.
      */
-    private function notifyAdminOfRegistration(PortalUser $portalUser): void
+    private function issueOtp(PortalUser $portalUser): bool
     {
-        try {
-            Admin::role('superadmin')->get()->each(
-                fn (Admin $admin) => $admin->notify(new PortalRegistrationNotification($portalUser))
-            );
-        } catch (\Throwable $e) {
-            Log::error('Failed to create portal registration bell notification: ' . $e->getMessage());
-        }
-
-        $adminEmail = SiteInformation::notificationEmail();
-        if (!$adminEmail) {
-            return;
-        }
+        $code = (string) random_int(1000, 9999);
 
         try {
-            Mail::to($adminEmail)->queue((new PortalAccountRegistered($portalUser))->afterCommit());
+            Mail::to($portalUser->email)->send(new OtpCodeMail($portalUser->displayName(), $code));
         } catch (\Throwable $e) {
-            Log::error('Failed to send portal registration notification email: ' . $e->getMessage());
+            Log::error('Failed to send portal OTP code email: ' . $e->getMessage());
+            return false;
         }
+
+        $portalUser->forceFill([
+            'otp_code' => Hash::make($code),
+            'otp_expires_at' => now()->addMinutes(10),
+        ])->save();
+
+        return true;
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|integer|exists:portal_users,id',
+            'code' => 'required|string',
+        ]);
+
+        $portalUser = PortalUser::findOrFail($request->input('user_id'));
+
+        if (
+            !$portalUser->otp_code
+            || !$portalUser->otp_expires_at
+            || $portalUser->otp_expires_at->isPast()
+            || !Hash::check($request->input('code'), $portalUser->otp_code)
+        ) {
+            return response()->json(['message' => 'Invalid or expired code.'], 422);
+        }
+
+        $portalUser->forceFill([
+            'otp_code' => null,
+            'otp_expires_at' => null,
+        ])->save();
+
+        Auth::guard('portal')->login($portalUser);
+        $request->session()->regenerate();
+        $request->session()->put('password_hash_portal', $portalUser->getAuthPassword());
+
+        return response()->json(['redirect' => route('portal.dashboard')]);
+    }
+
+    public function resendOtp(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|integer|exists:portal_users,id',
+        ]);
+
+        $portalUser = PortalUser::findOrFail($request->input('user_id'));
+
+        if (!$portalUser->otp_code) {
+            return response()->json(['message' => 'This account is already verified.'], 422);
+        }
+
+        if (!$this->issueOtp($portalUser)) {
+            return response()->json(['message' => 'Could not send the code right now — please try again in a moment.'], 503);
+        }
+
+        return response()->json(['message' => 'A new code has been sent.']);
     }
 
     private function storeKycDocuments(Request $request, PortalUser $portalUser): void

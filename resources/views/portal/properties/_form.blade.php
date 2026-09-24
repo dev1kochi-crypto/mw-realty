@@ -554,11 +554,12 @@
             <div class="property-tab-pane-head d-flex justify-content-between align-items-start">
                 <div>
                     <div class="property-tab-pane-title">Nearby Places</div>
-                    <div class="property-tab-pane-hint">Pick a type, then a specific place, and add it.</div>
+                    <div class="property-tab-pane-hint">Pick a type, then a specific place, and add it. Can't find it? Add your own place (opens in a new tab), then re-pick the type.</div>
                 </div>
-                @if($isAdmin ?? false)
-                <a href="{{ route('portal.nearby-places.index') }}" target="_blank" class="btn btn-sm portal-btn-ghost">Manage</a>
-                @endif
+                <div class="d-flex gap-2 flex-shrink-0">
+                    <a href="{{ route('portal.nearby-places.create') }}" target="_blank" class="btn btn-sm portal-btn-ghost"><i class="fas fa-plus me-1"></i>New Place</a>
+                    <a href="{{ route('portal.nearby-places.index') }}" target="_blank" class="btn btn-sm portal-btn-ghost">Manage</a>
+                </div>
             </div>
 
             <div class="row g-2 align-items-end mb-3">
@@ -1245,7 +1246,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 const places = data.places || [];
                 placeSelect.innerHTML = places.length
-                    ? '<option value="">Select place</option>' + places.map(p => `<option value="${p.id}" data-name="${p.name.replace(/"/g, '&quot;')}">${p.name}</option>`).join('')
+                    ? '<option value="">Select place</option>' + places.map(p => `<option value="${p.id}" data-name="${p.name.replace(/"/g, '&quot;')}">${p.name}${p.own ? ' (my place)' : ''}</option>`).join('')
                     : '<option value="">No places of this type yet</option>';
                 placeSelect.disabled = places.length === 0;
             });

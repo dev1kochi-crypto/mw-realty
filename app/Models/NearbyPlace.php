@@ -16,6 +16,7 @@ class NearbyPlace extends Model
     public const FILTER_KEY = 'nearby_place_type';
 
     protected $fillable = [
+        'portal_user_id',
         'category',
         'translations',
         'latitude',
@@ -34,6 +35,26 @@ class NearbyPlace extends Model
     public function properties()
     {
         return $this->belongsToMany(Property::class, 'property_nearby_place');
+    }
+
+    /** The Agent/Company who added this place; null for a shared, admin-managed place. */
+    public function owner()
+    {
+        return $this->belongsTo(PortalUser::class, 'portal_user_id');
+    }
+
+    public function isShared(): bool
+    {
+        return $this->portal_user_id === null;
+    }
+
+    /**
+     * Places a given portal user can see/tag: the shared list plus their own. A null
+     * $ownerId (Super Admin) sees everything.
+     */
+    public function scopeVisibleTo($query, ?int $ownerId)
+    {
+        return $query->when($ownerId, fn ($q) => $q->where(fn ($q) => $q->whereNull('portal_user_id')->orWhere('portal_user_id', $ownerId)));
     }
 
     public function scopeActive($query)

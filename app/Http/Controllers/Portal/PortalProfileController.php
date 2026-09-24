@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Portal;
 
+use App\Mail\OtpCodeMail;
 use App\Mail\PortalAccountRegistered;
 use App\Models\CmsKit\Admin;
 use App\Models\CmsKit\Language;
@@ -12,6 +13,7 @@ use App\Services\AutoTranslator;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -40,7 +42,13 @@ class PortalProfileController extends Controller
             $portalUser->type === 'agent'
                 ? ['field' => 'rera_card_document', 'label' => 'RERA Broker Card', 'icon' => 'fa-address-card']
                 : ['field' => 'trade_license_document', 'label' => 'Trade License', 'icon' => 'fa-file-contract'],
+            $portalUser->type === 'agent'
+                ? ['field' => 'trade_license_document', 'label' => 'Trade License', 'icon' => 'fa-file-contract']
+                : null,
             $portalUser->type === 'company'
+                ? ['field' => 'rera_certificate_document', 'label' => 'RERA Registration Certificate', 'icon' => 'fa-certificate']
+            : null,
+            $portalUser->type === 'agent'
                 ? ['field' => 'rera_certificate_document', 'label' => 'RERA Registration Certificate', 'icon' => 'fa-certificate']
                 : null,
         ])->filter()->map(function ($doc) use ($portalUser) {
@@ -67,12 +75,14 @@ class PortalProfileController extends Controller
             'nationality' => 'sometimes|nullable|string|max:100',
             'emirates_id_no' => 'sometimes|nullable|string|max:50',
             'passport_no' => 'sometimes|nullable|string|max:50',
+            'passport_expiry' => 'sometimes|nullable|date',
             'brn_number' => 'sometimes|nullable|string|max:50',
             'company_id' => ['sometimes', 'nullable', Rule::notIn([$portalUser->id]), Rule::exists('portal_users', 'id')->where('type', 'company')->where('status', 'approved')->where('is_active', true)],
             'trade_license_no' => 'sometimes|nullable|string|max:50',
             'trade_license_expiry' => 'sometimes|nullable|date',
             'orn_number' => 'sometimes|nullable|string|max:50',
             'trn_number' => 'sometimes|nullable|string|max:50',
+            'trn_expiry' => 'sometimes|nullable|date',
             'authorized_signatory_name' => 'sometimes|nullable|string|max:255',
             'landline' => 'sometimes|nullable|string|max:50',
             'office_address' => 'sometimes|nullable|string|max:255',
@@ -97,9 +107,9 @@ class PortalProfileController extends Controller
             abort_unless($request->input('section') === $portalUser->type, 422, 'This section does not apply to this account.');
         }
         $fieldsBySection = [
-            'identity' => ['name', 'company_name', 'phone', 'nationality', 'emirates_id_no', 'passport_no'],
-            'agent' => ['brn_number', 'company_id'],
-            'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'trn_number', 'authorized_signatory_name', 'landline', 'office_address'],
+            'identity' => ['name', 'company_name', 'phone', 'nationality', 'emirates_id_no', 'passport_no', 'passport_expiry'],
+            'agent' => ['brn_number', 'company_id', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
+            'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'trn_number', 'trn_expiry', 'authorized_signatory_name', 'landline', 'office_address'],
             'about' => ['years_of_experience', 'website', 'founding_year'],
         ];
 
@@ -139,7 +149,80 @@ class PortalProfileController extends Controller
             $portalUser->update($request->only($fieldsBySection[$request->input('section')]));
         }
 
+        if (in_array($request->input('section'), ['identity', 'agent', 'company'], true)
+            && $portalUser->kyc_review_status === 'submitted') {
+            $portalUser->forceFill(['kyc_review_status' => 'changes_requested'])->save();
+        }
+
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Step 1 of changing the login email: stage the new address and email a code to IT (not the
+     * current address) — proves the account actually owns the new inbox before anything changes.
+     * The real `email` column is untouched until verifyEmailChange() succeeds.
+     */
+    public function requestEmailChange(Request $request)
+    {
+        $portalUser = Auth::guard('portal')->user();
+
+        $request->validate([
+            'new_email' => ['required', 'email', Rule::unique('portal_users', 'email')->ignore($portalUser->id)],
+        ]);
+
+        $newEmail = $request->input('new_email');
+        $code = (string) random_int(1000, 9999);
+
+        try {
+            Mail::to($newEmail)->send(new OtpCodeMail($portalUser->displayName(), $code));
+        } catch (\Throwable $e) {
+            Log::error('Failed to send email-change OTP: ' . $e->getMessage());
+            return response()->json(['message' => 'Could not send the code right now — please try again in a moment.'], 503);
+        }
+
+        $portalUser->forceFill([
+            'pending_email' => $newEmail,
+            'otp_code' => Hash::make($code),
+            'otp_expires_at' => now()->addMinutes(10),
+        ])->save();
+
+        return response()->json(['success' => true, 'message' => 'A verification code was sent to ' . $newEmail . '.']);
+    }
+
+    /**
+     * Step 2: verifying the code swaps the real email in, then forces a fresh login — the
+     * session and every other device's session were authenticated under the old identity, and
+     * EnforceAccountSecurity's password-fingerprint check doesn't cover an email change, so this
+     * logout is the actual enforcement point.
+     */
+    public function verifyEmailChange(Request $request)
+    {
+        $portalUser = Auth::guard('portal')->user();
+
+        $request->validate(['code' => 'required|string']);
+
+        if (
+            !$portalUser->pending_email
+            || !$portalUser->otp_code
+            || !$portalUser->otp_expires_at
+            || $portalUser->otp_expires_at->isPast()
+            || !Hash::check($request->input('code'), $portalUser->otp_code)
+        ) {
+            return response()->json(['message' => 'Invalid or expired code.'], 422);
+        }
+
+        $portalUser->forceFill([
+            'email' => $portalUser->pending_email,
+            'pending_email' => null,
+            'otp_code' => null,
+            'otp_expires_at' => null,
+        ])->save();
+
+        Auth::guard('portal')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->json(['success' => true, 'redirect' => route('portal.login'), 'message' => 'Email updated — please log in again with your new email address.']);
     }
 
     public function uploadDocument(Request $request, $field)
@@ -164,6 +247,10 @@ class PortalProfileController extends Controller
         unset($statuses[$field]);
         $portalUser->document_status = $statuses;
 
+        if ($portalUser->kyc_review_status === 'submitted') {
+            $portalUser->kyc_review_status = 'changes_requested';
+        }
+
         $portalUser->save();
 
         return response()->json(['success' => true, 'path' => route('portal.profile.document', $field)]);
@@ -183,43 +270,62 @@ class PortalProfileController extends Controller
             unset($statuses[$field]);
             $portalUser->document_status = $statuses;
 
+            if ($portalUser->kyc_review_status === 'submitted') {
+                $portalUser->kyc_review_status = 'changes_requested';
+            }
+
             $portalUser->save();
         }
 
         return response()->json(['success' => true]);
     }
 
-    /**
-     * A rejected account fixes its profile, then explicitly asks for another look —
-     * flips back to pending and re-notifies admin, reusing the registration email.
-     */
-    public function resubmit()
+    /** The agent/company explicitly submits or resubmits their completed KYC for review. */
+    public function submitForApproval()
     {
         $portalUser = Auth::guard('portal')->user();
 
-        if ($portalUser->status !== 'rejected') {
-            return response()->json(['success' => false, 'message' => 'Only a rejected account can be resubmitted.'], 422);
+        if ($portalUser->status === 'approved') {
+            return response()->json(['success' => false, 'message' => 'This account is already approved.'], 422);
         }
 
-        $portalUser->status = 'pending';
-        $portalUser->status_changed_at = now();
-        $portalUser->rejection_reason = null;
-        $portalUser->save();
+        $legacyPendingNeedsSubmission = $portalUser->status === 'pending'
+            && $portalUser->kyc_review_status === 'submitted'
+            && !$portalUser->kyc_user_submitted_at;
+
+        if (!in_array($portalUser->kyc_review_status, ['draft', 'changes_requested'], true)
+            && !$legacyPendingNeedsSubmission) {
+            return response()->json(['success' => false, 'message' => 'Your KYC is already waiting for review.'], 422);
+        }
+
+        $isResubmission = $portalUser->kyc_review_status === 'changes_requested'
+            || $portalUser->status === 'rejected'
+            || $portalUser->kyc_user_submitted_at !== null;
+
+        $portalUser->forceFill([
+            'status' => 'pending',
+            'status_changed_at' => now(),
+            'rejection_reason' => null,
+            'kyc_review_status' => 'submitted',
+            'kyc_submitted_at' => now(),
+            'kyc_user_submitted_at' => now(),
+            'kyc_review_note' => null,
+        ])->save();
 
         try {
             Admin::role('superadmin')->get()->each(
-                fn (Admin $admin) => $admin->notify(new PortalRegistrationNotification($portalUser, true))
+                fn (Admin $admin) => $admin->notify(new PortalRegistrationNotification($portalUser, $isResubmission))
             );
         } catch (\Throwable $e) {
-            Log::error('Failed to create portal resubmission bell notification: ' . $e->getMessage());
+            Log::error('Failed to create portal KYC submission bell notification: ' . $e->getMessage());
         }
 
         $adminEmail = SiteInformation::notificationEmail();
         if ($adminEmail) {
             try {
-                Mail::to($adminEmail)->queue((new PortalAccountRegistered($portalUser, true))->afterCommit());
+                Mail::to($adminEmail)->queue((new PortalAccountRegistered($portalUser, $isResubmission))->afterCommit());
             } catch (\Throwable $e) {
-                Log::error('Failed to send portal resubmission notification email: ' . $e->getMessage());
+                Log::error('Failed to send portal KYC submission email: ' . $e->getMessage());
             }
         }
 

@@ -160,64 +160,144 @@
 <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
     <i class="fas fa-info-circle text-primary me-2"></i>
     Assign a plan to an Agent or Company from <a href="{{ route('cms.portal-accounts.index') }}">Agents & Companies</a>.
-    A plan's property limit is enforced when they add new listings from their portal.
+    Plan limits (listings, featured, team agents, reports) are enforced in their portal. Paid plans are sold monthly or yearly by card through Stripe; changes to prices create new Stripe prices automatically for new subscribers.
 </div>
 
-<div class="row g-4" id="plansGrid">
+@push('styles')
+<style>
+    #plansGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 1.25rem; }
+    .pc { position: relative; display: flex; flex-direction: column; height: 100%; border-radius: 18px; background: #fff; border: 1px solid var(--dash-border); box-shadow: 0 6px 20px rgba(28,35,64,0.06); overflow: hidden; transition: transform .15s ease, box-shadow .15s ease; }
+    .pc:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(28,35,64,0.12); }
+    .pc.is-popular { border: 2px solid var(--dash-teal); }
+    .pc.is-inactive { opacity: .6; }
+    .pc .plan-drag-handle { margin: 0; border-radius: 0; }
+    .pc-head { position: relative; padding: 1.25rem 1.25rem 1rem; color: #fff; background: linear-gradient(135deg, var(--pc-a), var(--pc-b)); }
+    .pc-head::after { content: ''; position: absolute; right: -40px; top: -40px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,.1); }
+    .pc-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.18); font-size: 1rem; }
+    .pc-name { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.15rem; margin: .6rem 0 .1rem; }
+    .pc-desc { font-size: .78rem; opacity: .85; min-height: 1.2em; }
+    .pc-badges { position: absolute; top: 1rem; right: 1rem; display: flex; gap: .35rem; z-index: 1; }
+    .pc-badge { font-size: .62rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; padding: .25rem .55rem; border-radius: 50px; background: rgba(255,255,255,.2); color: #fff; }
+    .pc-badge--popular { background: linear-gradient(135deg, var(--dash-amber), var(--dash-amber-2)); }
+    .pc-badge--off { background: rgba(0,0,0,.25); }
+    .pc-prices { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--dash-border); }
+    .pc-price { padding: .85rem 1rem; min-width: 0; }
+    .pc-price + .pc-price { border-left: 1px solid var(--dash-border); }
+    .pc-price__label { font-size: .64rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--dash-muted); }
+    .pc-price__value { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(1rem, 1.1vw + .45rem, 1.2rem); color: var(--dash-ink); line-height: 1.2; white-space: nowrap; }
+    .pc-price__value small { font-size: .7rem; color: var(--dash-muted); font-weight: 700; }
+    .pc-price__save { font-size: .68rem; font-weight: 800; color: var(--dash-green); }
+    .pc-stats { display: flex; flex-direction: column; gap: .4rem; padding: 1rem 1.25rem .5rem; }
+    .pc-stat { display: flex; align-items: flex-start; gap: .55rem; padding: .5rem .7rem; border-radius: 10px; background: var(--dash-bg-soft); font-size: .78rem; font-weight: 700; color: #3d4460; line-height: 1.35; overflow-wrap: anywhere; }
+    .pc-stat i { margin-top: .12rem; flex-shrink: 0; }
+    .pc-stat i { width: 1rem; text-align: center; color: var(--dash-teal); }
+    .pc-stat.is-off { color: var(--dash-slate-2); text-decoration: line-through; }
+    .pc-stat.is-off i { color: var(--dash-slate-2); }
+    .pc-features { list-style: none; padding: .5rem 1.25rem 0; margin: 0 0 1rem; flex: 1; }
+    .pc-features li { display: flex; gap: .45rem; font-size: .8rem; color: #4b5065; margin-bottom: .45rem; }
+    .pc-features li i { color: var(--dash-green); margin-top: .2rem; font-size: .72rem; }
+    .pc-foot { padding: .85rem 1.25rem; border-top: 1px solid var(--dash-border); background: var(--dash-bg-soft); }
+    .pc-subs { display: flex; justify-content: space-between; align-items: center; font-size: .76rem; font-weight: 700; color: var(--dash-navy); }
+    .pc-subs span { color: var(--dash-muted); font-weight: 600; }
+    .pc-actions { display: flex; align-items: center; justify-content: flex-end; gap: .4rem; margin-top: .75rem; }
+    .pc-stripe { font-size: .66rem; font-weight: 700; color: #635bff; }
+</style>
+@endpush
+
+@php
+    $tones = [['#264373', '#3a5794'], ['#04a1cc', '#2fc4e8'], ['#6d28d9', '#8b5cf6'], ['#0f9d58', '#34c880'], ['#b45309', '#f5a623']];
+    $icons = ['fa-seedling', 'fa-paper-plane', 'fa-rocket', 'fa-crown', 'fa-gem'];
+@endphp
+
+<div id="plansGrid">
     @forelse($plans as $plan)
     @php
-        $priceLabel = $plan->billing_cycle === 'free' ? 'Free' : 'AED ' . number_format($plan->price);
-        $suffix = ['monthly' => '/mo', 'yearly' => '/yr', 'one_time' => ' one-time'][$plan->billing_cycle] ?? '';
-        $limitLabel = $plan->isUnlimited() ? 'Unlimited properties' : $plan->property_limit . ' properties';
+        $tone = $tones[$loop->index % count($tones)];
+        $isFree = (float) $plan->price <= 0;
+        $lines = $plan->entitlementLines();
+        $yearlySubs = $plan->subscribers()->where('billing_interval', 'yearly')->count();
     @endphp
-    <div class="col-lg-3 col-md-6 plan-col" data-id="{{ $plan->id }}">
-        <div class="plan-card {{ $plan->is_popular ? 'is-popular' : '' }} {{ $plan->status ? '' : 'is-inactive' }}">
+    <div class="plan-col" data-id="{{ $plan->id }}">
+        <div class="pc {{ $plan->is_popular ? 'is-popular' : '' }} {{ $plan->status ? '' : 'is-inactive' }}">
             @if($canReorder)
             <div class="plan-drag-handle" title="Drag to reorder" draggable="true"><i class="fas fa-grip-lines"></i> Drag to reorder</div>
             @endif
-            @if($plan->is_popular)
-            <span class="plan-ribbon">Popular</span>
-            @endif
 
-            <div class="plan-name">{{ $plan->getTranslation('name') }}</div>
-            <div><span class="plan-price">{{ $priceLabel }}</span> <span class="plan-price-suffix">{{ $suffix }}</span></div>
-            <div class="plan-limit"><i class="fas fa-building"></i> {{ $limitLabel }}</div>
+            <div class="pc-head" style="--pc-a: {{ $tone[0] }}; --pc-b: {{ $tone[1] }};">
+                <div class="pc-badges">
+                    @if($plan->is_popular)<span class="pc-badge pc-badge--popular">Popular</span>@endif
+                    @unless($plan->status)<span class="pc-badge pc-badge--off">Inactive</span>@endunless
+                </div>
+                <div class="pc-icon"><i class="fas {{ $icons[min($loop->index, count($icons) - 1)] }}"></i></div>
+                <div class="pc-name">{{ $plan->getTranslation('name') }}</div>
+                <div class="pc-desc">{{ $plan->getTranslation('description') }}</div>
+            </div>
 
-            <ul class="plan-features">
+            <div class="pc-prices">
+                @if($isFree)
+                <div class="pc-price" style="grid-column: span 2;">
+                    <div class="pc-price__label">Price</div>
+                    <div class="pc-price__value">Free <small>forever</small></div>
+                </div>
+                @else
+                <div class="pc-price">
+                    <div class="pc-price__label">Monthly</div>
+                    <div class="pc-price__value">AED {{ number_format($plan->price) }}<small>/mo</small></div>
+                </div>
+                <div class="pc-price">
+                    <div class="pc-price__label">Yearly</div>
+                    @if($plan->hasYearly())
+                    <div class="pc-price__value">AED {{ number_format($plan->yearly_price) }}<small>/yr</small></div>
+                    @if($plan->yearlySavingsPercent() > 0)<div class="pc-price__save">Save {{ $plan->yearlySavingsPercent() }}%</div>@endif
+                    @else
+                    <div class="pc-price__value text-muted" style="font-size: .9rem;">Not offered</div>
+                    @endif
+                </div>
+                @endif
+            </div>
+
+            <div class="pc-stats">
+                @foreach([['fa-building', $lines[0]], ['fa-star', $lines[1]], ['fa-users', $lines[2]], ['fa-chart-line', $lines[3]]] as [$icon, [$text, $included]])
+                <div class="pc-stat {{ $included ? '' : 'is-off' }}" title="{{ $text }}"><i class="fas {{ $icon }}"></i><span>{{ $text }}</span></div>
+                @endforeach
+            </div>
+
+            <ul class="pc-features">
                 @forelse($plan->features as $feature)
                 <li><i class="fas fa-check-circle"></i> {{ $feature }}</li>
                 @empty
-                <li class="text-muted">No features listed.</li>
+                <li class="text-muted">No extra features listed.</li>
                 @endforelse
             </ul>
 
-            <div class="plan-meta-row">
-                <a href="{{ route('cms.plans.show', $plan->id) }}" class="plan-subscribers text-decoration-none"><i class="fas fa-users"></i>{{ $plan->subscribers_count }} subscriber{{ $plan->subscribers_count === 1 ? '' : 's' }}</a>
-                <div class="form-check form-switch mb-0">
-                    <input class="form-check-input toggle-status" type="checkbox" data-id="{{ $plan->id }}" {{ $plan->status ? 'checked' : '' }} {{ $cmsUser->can('plans.edit') ? '' : 'disabled' }}>
+            <div class="pc-foot">
+                <div class="pc-subs">
+                    <a href="{{ route('cms.plans.show', $plan->id) }}" class="text-decoration-none"><i class="fas fa-users me-1 text-muted"></i>{{ $plan->subscribers_count }} subscriber{{ $plan->subscribers_count === 1 ? '' : 's' }}</a>
+                    @if(!$isFree)<span>{{ $plan->subscribers_count - $yearlySubs }} monthly · {{ $yearlySubs }} yearly</span>@endif
                 </div>
-            </div>
-
-            <div class="plan-actions-row">
-                @if($cmsUser->can('plans.edit') || $cmsUser->can('plans.delete'))
-                <div class="form-check mb-0 me-auto">
-                    <input class="form-check-input plan-select-checkbox" type="checkbox" value="{{ $plan->id }}">
+                <div class="pc-actions">
+                    @if($cmsUser->can('plans.edit') || $cmsUser->can('plans.delete'))
+                    <div class="form-check mb-0 me-auto">
+                        <input class="form-check-input plan-select-checkbox" type="checkbox" value="{{ $plan->id }}" title="Select">
+                    </div>
+                    @endif
+                    @if($plan->stripe_product_id)<span class="pc-stripe me-1" title="Synced to Stripe"><i class="fab fa-stripe-s"></i> Stripe</span>@endif
+                    <div class="form-check form-switch mb-0 me-1" title="Active">
+                        <input class="form-check-input toggle-status" type="checkbox" data-id="{{ $plan->id }}" {{ $plan->status ? 'checked' : '' }} {{ $cmsUser->can('plans.edit') ? '' : 'disabled' }}>
+                    </div>
+                    <a href="{{ route('cms.plans.show', $plan->id) }}" class="btn btn-sm btn-outline-secondary" title="View plan details"><i class="fas fa-eye"></i></a>
+                    @if($cmsUser->can('plans.edit'))
+                    <a href="{{ route('cms.plans.edit', $plan->id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
+                    @endif
+                    @if($cmsUser->can('plans.delete'))
+                    <button type="button" class="btn btn-sm btn-outline-danger delete-item" data-id="{{ $plan->id }}" data-name="{{ $plan->getTranslation('name') }}" data-subscribers="{{ $plan->subscribers_count }}" title="Delete"><i class="fas fa-trash"></i></button>
+                    @endif
                 </div>
-                @endif
-                <a href="{{ route('cms.plans.show', $plan->id) }}" class="btn btn-sm btn-outline-secondary" title="View plan details"><i class="fas fa-eye"></i></a>
-                @if($cmsUser->can('plans.edit'))
-                <a href="{{ route('cms.plans.edit', $plan->id) }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
-                @endif
-                @if($cmsUser->can('plans.delete'))
-                <button type="button" class="btn btn-sm btn-outline-danger delete-item" data-id="{{ $plan->id }}" data-name="{{ $plan->getTranslation('name') }}" data-subscribers="{{ $plan->subscribers_count }}"><i class="fas fa-trash"></i></button>
-                @endif
             </div>
         </div>
     </div>
     @empty
-    <div class="col-12">
-        <div class="text-center text-muted py-5">No plans yet. Add your first plan to get started.</div>
-    </div>
+    <div class="text-center text-muted py-5" style="grid-column: 1 / -1;">No plans yet. Add your first plan to get started.</div>
     @endforelse
 </div>
 

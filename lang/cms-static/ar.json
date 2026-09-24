@@ -4,21 +4,21 @@
         "description": "Replace or extend these keys as you add static copy to the site."
     },
     "property_type": {
-        "apartment": "شقة",
-        "villa": "فيلا",
-        "townhouse": "منزل تاون",
-        "penthouse": "بنتهاوس"
+        "apartment": "Apartment",
+        "villa": "Villa",
+        "townhouse": "Townhouse",
+        "penthouse": "Penthouse"
     },
     "listing_type": {
-        "sale": "شراء",
-        "rent": "إيجار"
+        "sale": "Buy",
+        "rent": "Rent"
     },
     "completion_status": {
-        "ready": "جاهز",
-        "off_plan": "على الخريطة"
+        "ready": "Ready",
+        "off_plan": "Off-Plan"
     },
     "furnished": {
-        "yes": "مفروش",
-        "no": "غير مفروش"
+        "yes": "Furnished",
+        "no": "Unfurnished"
     }
 }

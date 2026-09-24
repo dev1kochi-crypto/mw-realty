@@ -8,8 +8,12 @@ use App\Models\PlanPayment;
 use App\Models\PlanUpgradeRequest;
 use App\Mail\PortalAccountApproved;
 use App\Mail\PortalAccountRejected;
+use App\Mail\PortalDocumentFlaggedMail;
+use App\Mail\PortalInfoRequestedMail;
 use App\Notifications\PortalAccountApprovedNotification;
 use App\Notifications\PortalAccountRejectedNotification;
+use App\Notifications\PortalDocumentFlaggedNotification;
+use App\Notifications\PortalInfoRequestedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
@@ -275,11 +279,11 @@ class PortalUserController extends Controller
             'emirates_id_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
             'passport_no' => 'nullable|string|max:50',
             'passport_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
+            'passport_expiry' => 'nullable|date',
 
             'brn_number' => 'nullable|string|max:50',
             'rera_card_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
             'company_id' => ['nullable', Rule::exists('portal_users', 'id')->where('type', 'company')],
-
             'trade_license_no' => 'nullable|string|max:50',
             'trade_license_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
             'trade_license_expiry' => 'nullable|date',
@@ -287,6 +291,7 @@ class PortalUserController extends Controller
             'rera_certificate_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
             'office_address' => 'nullable|string|max:255',
             'trn_number' => 'nullable|string|max:50',
+            'trn_expiry' => 'nullable|date',
             'authorized_signatory_name' => 'nullable|string|max:255',
             'landline' => 'nullable|string|max:50',
         ]);
@@ -301,21 +306,25 @@ class PortalUserController extends Controller
             'phone' => $request->input('phone'),
             'password' => Hash::make($request->input('password')),
             'status' => $request->input('status'),
+            'kyc_review_status' => $request->input('status') === 'approved' ? 'approved' : 'submitted',
+            'kyc_submitted_at' => $request->input('status') === 'approved' ? null : now(),
             'status_changed_at' => now(),
             'plan_id' => Plan::defaultFree()?->id,
 
             'nationality' => $request->input('nationality'),
             'emirates_id_no' => $request->input('emirates_id_no'),
             'passport_no' => $request->input('passport_no'),
+            'passport_expiry' => $request->input('passport_expiry'),
 
             'brn_number' => $type === 'agent' ? $request->input('brn_number') : null,
             'company_id' => $type === 'agent' ? $request->input('company_id') : null,
 
-            'trade_license_no' => $type === 'company' ? $request->input('trade_license_no') : null,
-            'trade_license_expiry' => $type === 'company' ? $request->input('trade_license_expiry') : null,
+            'trade_license_no' => $request->input('trade_license_no'),
+            'trade_license_expiry' => $request->input('trade_license_expiry'),
             'orn_number' => $type === 'company' ? $request->input('orn_number') : null,
             'office_address' => $type === 'company' ? $request->input('office_address') : null,
-            'trn_number' => $type === 'company' ? $request->input('trn_number') : null,
+            'trn_number' => $request->input('trn_number'),
+            'trn_expiry' => $request->input('trn_expiry'),
             'authorized_signatory_name' => $type === 'company' ? $request->input('authorized_signatory_name') : null,
             'landline' => $type === 'company' ? $request->input('landline') : null,
         ]);
@@ -358,7 +367,7 @@ class PortalUserController extends Controller
         // brokerage can have thousands of affiliated agents, so neither list loads unbounded.
         $payments = $portalUser->payments()->paginate(12, ['*'], 'payments_page')->withQueryString();
         $agents = $portalUser->agents()->orderBy('name')->paginate(10, ['*'], 'agents_page')->withQueryString();
-        $totalPaid = (float) PlanPayment::where('portal_user_id', $portalUser->id)->sum('amount');
+        $totalPaid = (float) PlanPayment::paid()->where('portal_user_id', $portalUser->id)->sum('amount');
         $languages = \App\Models\CmsKit\Language::active()->orderByDesc('is_default')->get(['name', 'code', 'is_default']);
 
         return view('portal-accounts.show', compact('portalUser', 'companies', 'payments', 'agents', 'totalPaid', 'languages'));
@@ -381,12 +390,14 @@ class PortalUserController extends Controller
             'nationality' => 'sometimes|nullable|string|max:100',
             'emirates_id_no' => 'sometimes|nullable|string|max:50',
             'passport_no' => 'sometimes|nullable|string|max:50',
+            'passport_expiry' => 'sometimes|nullable|date',
             'brn_number' => 'sometimes|nullable|string|max:50',
             'company_id' => ['sometimes', 'nullable', Rule::notIn([$portalUser->id]), Rule::exists('portal_users', 'id')->where('type', 'company')->where('status', 'approved')->where('is_active', true)],
             'trade_license_no' => 'sometimes|nullable|string|max:50',
             'trade_license_expiry' => 'sometimes|nullable|date',
             'orn_number' => 'sometimes|nullable|string|max:50',
             'trn_number' => 'sometimes|nullable|string|max:50',
+            'trn_expiry' => 'sometimes|nullable|date',
             'authorized_signatory_name' => 'sometimes|nullable|string|max:255',
             'landline' => 'sometimes|nullable|string|max:50',
             'office_address' => 'sometimes|nullable|string|max:255',
@@ -404,9 +415,9 @@ class PortalUserController extends Controller
             abort_unless($request->input('section') === $portalUser->type, 422, 'This section does not apply to this account.');
         }
         $fieldsBySection = [
-            'identity' => ['name', 'company_name', 'email', 'phone', 'nationality', 'emirates_id_no', 'passport_no'],
-            'agent' => ['brn_number', 'company_id'],
-            'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'trn_number', 'authorized_signatory_name', 'landline', 'office_address'],
+            'identity' => ['name', 'company_name', 'email', 'phone', 'nationality', 'emirates_id_no', 'passport_no', 'passport_expiry'],
+            'agent' => ['brn_number', 'company_id', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
+            'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'trn_number', 'trn_expiry', 'authorized_signatory_name', 'landline', 'office_address'],
             'about' => ['years_of_experience', 'website', 'founding_year'],
         ];
 
@@ -481,10 +492,15 @@ class PortalUserController extends Controller
     public function approve($id)
     {
         $portalUser = PortalUser::findOrFail($id);
+        if ($portalUser->kyc_review_status !== 'submitted' || !$portalUser->kyc_user_submitted_at) {
+            return response()->json(['success' => false, 'message' => 'This account has not submitted its KYC for review.'], 422);
+        }
         $previousStatus = $portalUser->status;
         $portalUser->status = 'approved';
         $portalUser->status_changed_at = now();
         $portalUser->rejection_reason = null;
+        $portalUser->kyc_review_status = 'approved';
+        $portalUser->kyc_review_note = null;
         $portalUser->save();
 
         $this->sendStatusEmail($portalUser, $previousStatus);
@@ -499,6 +515,8 @@ class PortalUserController extends Controller
         $portalUser->status = 'rejected';
         $portalUser->status_changed_at = now();
         $portalUser->rejection_reason = $request->input('reason');
+        $portalUser->kyc_review_status = 'changes_requested';
+        $portalUser->kyc_review_note = $request->input('reason');
         $portalUser->save();
 
         $this->sendStatusEmail($portalUser, $previousStatus);
@@ -515,9 +533,23 @@ class PortalUserController extends Controller
 
         $portalUser = PortalUser::findOrFail($id);
         $previousStatus = $portalUser->status;
+        if ($request->input('status') === 'approved'
+            && ($portalUser->kyc_review_status !== 'submitted' || !$portalUser->kyc_user_submitted_at)) {
+            return response()->json(['success' => false, 'message' => 'This account has not submitted its KYC for review.'], 422);
+        }
         $portalUser->status = $request->input('status');
         $portalUser->status_changed_at = now();
         $portalUser->rejection_reason = $portalUser->status === 'rejected' ? $request->input('reason') : null;
+        $portalUser->kyc_review_status = match ($portalUser->status) {
+            'approved' => 'approved',
+            'rejected' => 'changes_requested',
+            default => $portalUser->kyc_review_status === 'approved' ? 'submitted' : $portalUser->kyc_review_status,
+        };
+        if ($portalUser->status === 'approved') {
+            $portalUser->kyc_review_note = null;
+        } elseif ($portalUser->status === 'rejected') {
+            $portalUser->kyc_review_note = $request->input('reason');
+        }
         $portalUser->save();
 
         $this->sendStatusEmail($portalUser, $previousStatus);
@@ -532,12 +564,18 @@ class PortalUserController extends Controller
             'ids.*' => 'integer|exists:portal_users,id',
         ]);
 
-        $portalUsers = PortalUser::whereIn('id', $request->input('ids'))->where('status', '!=', 'approved')->get();
+        $portalUsers = PortalUser::whereIn('id', $request->input('ids'))
+            ->where('status', '!=', 'approved')
+            ->where('kyc_review_status', 'submitted')
+            ->whereNotNull('kyc_user_submitted_at')
+            ->get();
         foreach ($portalUsers as $portalUser) {
             $previousStatus = $portalUser->status;
             $portalUser->status = 'approved';
             $portalUser->status_changed_at = now();
             $portalUser->rejection_reason = null;
+            $portalUser->kyc_review_status = 'approved';
+            $portalUser->kyc_review_note = null;
             $portalUser->save();
 
             $this->sendStatusEmail($portalUser, $previousStatus);
@@ -669,7 +707,95 @@ class PortalUserController extends Controller
         $portalUser->document_status = $statuses;
         $portalUser->save();
 
+        // Only a rejection requires the user to actually do something — verified/pending
+        // verdicts don't need to interrupt them with a notification.
+        if ($request->input('status') === 'rejected') {
+            $note = $request->input('note');
+            $portalUser->forceFill([
+                'kyc_review_status' => 'changes_requested',
+                'kyc_review_note' => trim(PortalUser::documentLabel($field) . ($note ? ': ' . $note : ' needs to be updated.')),
+            ])->save();
+
+            try {
+                $portalUser->notify(new PortalDocumentFlaggedNotification($field));
+            } catch (\Throwable $e) {
+                Log::error('Failed to create document-flagged bell notification: ' . $e->getMessage());
+            }
+
+            try {
+                Mail::to($portalUser->email)->queue((new PortalDocumentFlaggedMail($portalUser, $field, $note))->afterCommit());
+            } catch (\Throwable $e) {
+                Log::error('Failed to send document-flagged notification email: ' . $e->getMessage());
+            }
+        }
+
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * General-purpose "please also send us X" ask. It notifies the portal user and returns
+     * an active KYC review to changes_requested so the user can update and resubmit.
+     */
+    public function requestInfo(Request $request, $id)
+    {
+        $portalUser = PortalUser::findOrFail($id);
+        $requestOptions = [
+            'identity' => 'Identity and contact details',
+            'registration_details' => $portalUser->type === 'agent' ? 'BRN and brokerage details' : 'Company and office details',
+            'tax_details' => 'Tax registration details (TRN)',
+            'public_profile' => 'Public profile, bio, and service areas',
+        ];
+        $documentFields = $portalUser->type === 'agent'
+            ? PortalUser::DOCUMENT_FIELDS
+            : ['emirates_id_document', 'passport_document', 'trade_license_document', 'rera_certificate_document'];
+        foreach ($documentFields as $field) {
+            $requestOptions[$field] = PortalUser::documentLabel($field) . ' document';
+        }
+
+        $validated = $request->validate([
+            'request_items' => ['required', 'array', 'min:1'],
+            'request_items.*' => ['required', 'string', Rule::in(array_keys($requestOptions))],
+            'message' => ['nullable', 'string', 'max:1500'],
+        ]);
+
+        $selectedItems = array_values(array_unique($validated['request_items']));
+        $message = "Please update the following:\n" . implode("\n", array_map(
+            fn (string $item) => '• ' . $requestOptions[$item],
+            $selectedItems
+        ));
+        if (filled($validated['message'] ?? null)) {
+            $message .= "\n\nAdditional instructions:\n" . trim($validated['message']);
+        }
+
+        if ($portalUser->status === 'approved') {
+            return back()->with('error', 'Approved accounts cannot be returned to KYC review from this action.');
+        }
+        if ($portalUser->kyc_review_status === 'submitted' && !$portalUser->kyc_user_submitted_at) {
+            return back()->with('error', 'The account must submit its KYC before you can request changes.');
+        }
+        if (!in_array($portalUser->kyc_review_status, ['submitted', 'changes_requested'], true)) {
+            return back()->with('error', 'The account must submit its KYC before you can request changes.');
+        }
+
+        $portalUser->forceFill([
+            'kyc_review_status' => 'changes_requested',
+            'kyc_review_note' => $message,
+        ])->save();
+
+        try {
+            $portalUser->notify(new PortalInfoRequestedNotification());
+        } catch (\Throwable $e) {
+            Log::error('Failed to create info-requested bell notification: ' . $e->getMessage());
+        }
+
+        try {
+            Mail::to($portalUser->email)->queue((new PortalInfoRequestedMail($portalUser, $message))->afterCommit());
+        } catch (\Throwable $e) {
+            Log::error('Failed to send info-requested notification email: ' . $e->getMessage());
+        }
+
+        return redirect()->route('cms.portal-accounts.show', ['id' => $portalUser->id, 'type' => $portalUser->type])
+            ->with('success', 'Your request has been sent to ' . $portalUser->displayName() . '.');
     }
 
     public function updatePaymentStatus(Request $request, $id)
@@ -696,13 +822,26 @@ class PortalUserController extends Controller
 
     public function approvePlanUpgradeRequest($id)
     {
-        $upgradeRequest = PlanUpgradeRequest::pending()->findOrFail($id);
-        $upgradeRequest->portalUser->update(['plan_id' => $upgradeRequest->plan_id]);
-        $upgradeRequest->update([
-            'status' => 'approved',
-            'decided_at' => now(),
-            'decided_by' => auth('cms')->id(),
-        ]);
+        $upgradeRequest = PlanUpgradeRequest::with(['portalUser', 'plan'])->pending()->findOrFail($id);
+
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($upgradeRequest) {
+                // Re-checks the coupon (expired / used up since the request?) before applying it.
+                app(\App\Services\CouponService::class)->redeem($upgradeRequest);
+                $upgradeRequest->portalUser->update(['plan_id' => $upgradeRequest->plan_id, 'billing_interval' => $upgradeRequest->billing_interval ?: 'monthly']);
+                $upgradeRequest->update([
+                    'status' => 'approved',
+                    'decided_at' => now(),
+                    'decided_by' => auth('cms')->id(),
+                ]);
+            });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Coupon ' . $upgradeRequest->coupon_code . ' can no longer be applied: ' . collect($e->errors())->flatten()->first()
+                    . ' Reject this request so the account can resubmit without it.',
+            ], 422);
+        }
 
         return response()->json(['success' => true]);
     }

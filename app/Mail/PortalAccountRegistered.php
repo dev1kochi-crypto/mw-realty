@@ -10,7 +10,7 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Sent to the site admin when a new agent/company self-registers on the portal.
+ * Sent to the site admin when an agent/company submits or resubmits KYC for review.
  */
 class PortalAccountRegistered extends Mailable
 {
@@ -27,8 +27,8 @@ class PortalAccountRegistered extends Mailable
             : $this->portalUser->name;
 
         $subject = $this->isResubmission
-            ? 'Resubmitted for Review — ' . $displayName
-            : 'New ' . ucfirst($this->portalUser->type) . ' Registration — ' . $displayName;
+            ? 'KYC Resubmitted for Review — ' . $displayName
+            : 'KYC Submitted for Approval — ' . $displayName;
 
         return new Envelope(subject: $subject);
     }
@@ -39,6 +39,15 @@ class PortalAccountRegistered extends Mailable
             ? ($this->portalUser->company_name ?: $this->portalUser->name)
             : $this->portalUser->name;
 
+        $requiredDocuments = $this->portalUser->type === 'agent'
+            ? PortalUser::DOCUMENT_FIELDS
+            : array_values(array_diff(PortalUser::DOCUMENT_FIELDS, ['rera_card_document']));
+
+        $missingDocuments = collect($requiredDocuments)
+            ->reject(fn ($field) => filled($this->portalUser->{$field}))
+            ->map(fn ($field) => PortalUser::documentLabel($field))
+            ->values();
+
         return new Content(
             view: 'emails.portal.registered',
             with: [
@@ -46,6 +55,9 @@ class PortalAccountRegistered extends Mailable
                 'displayName' => $displayName,
                 'isResubmission' => $this->isResubmission,
                 'reviewUrl' => route('cms.portal-accounts.show', ['id' => $this->portalUser->id, 'type' => $this->portalUser->type]),
+                'documentsUploadedCount' => count($requiredDocuments) - $missingDocuments->count(),
+                'documentsTotalCount' => count($requiredDocuments),
+                'missingDocuments' => $missingDocuments,
             ],
         );
     }

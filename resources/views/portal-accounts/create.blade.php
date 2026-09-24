@@ -107,6 +107,11 @@
                         <input type="file" name="passport_document" class="form-control @error('passport_document') is-invalid @enderror">
                         @error('passport_document')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Passport Expiry</label>
+                        <input type="date" name="passport_expiry" class="form-control @error('passport_expiry') is-invalid @enderror" value="{{ old('passport_expiry') }}">
+                        @error('passport_expiry')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                 </div>
             </div>
 
@@ -123,6 +128,11 @@
                         <input type="file" name="rera_card_document" class="form-control @error('rera_card_document') is-invalid @enderror">
                         @error('rera_card_document')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label">RERA Registration Certificate Copy</label>
+                        <input type="file" name="rera_certificate_document" class="form-control @error('rera_certificate_document') is-invalid @enderror">
+                        @error('rera_certificate_document')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                     <div class="col-md-12">
                         <label class="form-label">Affiliated Brokerage / Company</label>
                         <select name="company_id" class="form-select @error('company_id') is-invalid @enderror">
@@ -135,6 +145,31 @@
                         </select>
                         @error('company_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         <small class="text-muted d-block mt-1">Don't see the company? <a href="{{ route('cms.portal-accounts.create', ['type' => 'company']) }}">Add it first</a>.</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Trade License No.</label>
+                        <input type="text" name="trade_license_no" class="form-control @error('trade_license_no') is-invalid @enderror" value="{{ old('trade_license_no') }}">
+                        @error('trade_license_no')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Trade License Copy</label>
+                        <input type="file" name="trade_license_document" class="form-control @error('trade_license_document') is-invalid @enderror">
+                        @error('trade_license_document')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Trade License Expiry</label>
+                        <input type="date" name="trade_license_expiry" class="form-control @error('trade_license_expiry') is-invalid @enderror" value="{{ old('trade_license_expiry') }}">
+                        @error('trade_license_expiry')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">TRN (VAT No.)</label>
+                        <input type="text" name="trn_number" class="form-control @error('trn_number') is-invalid @enderror" value="{{ old('trn_number') }}">
+                        @error('trn_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">TRN Expiry</label>
+                        <input type="date" name="trn_expiry" class="form-control @error('trn_expiry') is-invalid @enderror" value="{{ old('trn_expiry') }}">
+                        @error('trn_expiry')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
             </div>
@@ -178,6 +213,11 @@
                         @error('trn_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-4">
+                        <label class="form-label">TRN Expiry</label>
+                        <input type="date" name="trn_expiry" class="form-control @error('trn_expiry') is-invalid @enderror" value="{{ old('trn_expiry') }}">
+                        @error('trn_expiry')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-md-4">
                         <label class="form-label">Authorized Signatory</label>
                         <input type="text" name="authorized_signatory_name" class="form-control @error('authorized_signatory_name') is-invalid @enderror" value="{{ old('authorized_signatory_name') }}">
                         @error('authorized_signatory_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -202,12 +242,19 @@
 @push('scripts')
 <script>
     const accountTypeEl = document.getElementById('accountType');
-    if (accountTypeEl) {
-        accountTypeEl.addEventListener('change', function () {
-            document.getElementById('companyNameField').style.display = this.value === 'company' ? '' : 'none';
-            document.getElementById('agentFields').style.display = this.value === 'agent' ? '' : 'none';
-            document.getElementById('companyFields').style.display = this.value === 'company' ? '' : 'none';
+    const syncAccountTypeFields = () => {
+        const type = accountTypeEl?.value || document.querySelector('input[name="type"]')?.value || 'agent';
+        const isCompany = type === 'company';
+        document.getElementById('companyNameField').style.display = isCompany ? '' : 'none';
+        document.getElementById('agentFields').style.display = isCompany ? 'none' : '';
+        document.getElementById('companyFields').style.display = isCompany ? '' : 'none';
+        document.querySelectorAll('#agentFields input, #agentFields select, #companyFields input, #companyFields select').forEach((field) => {
+            field.disabled = field.closest('#agentFields') ? isCompany : !isCompany;
         });
+    };
+    if (accountTypeEl) {
+        accountTypeEl.addEventListener('change', syncAccountTypeFields);
     }
+    syncAccountTypeFields();
 </script>
 @endpush

@@ -43,6 +43,10 @@ Route::get('/', [SpaController::class, 'staticPage'])->defaults('pageKey', 'home
 // routed to the property's owning company/agent (see LeadCaptureController).
 Route::post('/leads/capture', [LeadCaptureController::class, 'store'])->name('leads.capture')->middleware('throttle:lead-capture');
 
+// Properties listing "Custom Request" — no property to attach to, always an unassigned lead
+// (see LeadCaptureController::storeCustomRequest).
+Route::post('/leads/custom-request', [LeadCaptureController::class, 'storeCustomRequest'])->name('leads.custom-request')->middleware('throttle:lead-capture');
+
 // The public-site "customer" (buyer/visitor) account — guard 'web', separate from the
 // agent/company portal above. Real <form> POSTs (CustomerLogin.vue / CustomerSignup.vue),
 // same pattern as the portal's own login form.
@@ -352,6 +356,7 @@ Route::middleware(['web'])->group(function () {
                     Route::post('/portal-accounts/{id}/documents/{field}', [PortalUserController::class, 'uploadDocument'])->name('cms.portal-accounts.upload-document');
                     Route::delete('/portal-accounts/{id}/documents/{field}', [PortalUserController::class, 'removeDocument'])->name('cms.portal-accounts.remove-document');
                     Route::post('/portal-accounts/{id}/documents/{field}/status', [PortalUserController::class, 'updateDocumentStatus'])->name('cms.portal-accounts.update-document-status');
+                    Route::post('/portal-accounts/{id}/request-info', [PortalUserController::class, 'requestInfo'])->name('cms.portal-accounts.request-info');
                     Route::post('/portal-accounts/bulk-approve', [PortalUserController::class, 'bulkApprove'])->name('cms.portal-accounts.bulk-approve');
                 });
                 Route::middleware(['cms.permission:portal-accounts.delete'])->group(function () {
@@ -388,6 +393,36 @@ Route::middleware(['web'])->group(function () {
                 });
 
                 Route::get('/plans/{id}', [PlanController::class, 'show'])->name('cms.plans.show');
+            });
+
+            // Payments (every plan payment — Stripe card payments + manually recorded), under plans.view
+            Route::middleware(['cms.permission:plans.view'])->group(function () {
+                Route::get('/payments', [\App\Http\Controllers\CmsKit\PaymentController::class, 'index'])->name('cms.payments.index');
+                Route::get('/payments/export', [\App\Http\Controllers\CmsKit\PaymentController::class, 'export'])->name('cms.payments.export');
+                Route::get('/payments/{id}/invoice', [\App\Http\Controllers\CmsKit\PaymentController::class, 'show'])->name('cms.payments.show');
+                Route::get('/payments/{id}/invoice.pdf', [\App\Http\Controllers\CmsKit\PaymentController::class, 'pdf'])->name('cms.payments.pdf');
+            });
+
+            // Coupons (discount codes Agents/Companies can apply when requesting a paid plan)
+            Route::middleware(['cms.permission:coupons.view'])->group(function () {
+                Route::get('/coupons', [\App\Http\Controllers\CmsKit\CouponController::class, 'index'])->name('cms.coupons.index');
+
+                Route::middleware(['cms.permission:coupons.create'])->group(function () {
+                    Route::get('/coupons/create', [\App\Http\Controllers\CmsKit\CouponController::class, 'create'])->name('cms.coupons.create');
+                    Route::post('/coupons', [\App\Http\Controllers\CmsKit\CouponController::class, 'store'])->name('cms.coupons.store');
+                });
+
+                Route::middleware(['cms.permission:coupons.edit'])->group(function () {
+                    Route::get('/coupons/{id}/edit', [\App\Http\Controllers\CmsKit\CouponController::class, 'edit'])->name('cms.coupons.edit');
+                    Route::put('/coupons/{id}', [\App\Http\Controllers\CmsKit\CouponController::class, 'update'])->name('cms.coupons.update');
+                    Route::post('/coupons/{id}/toggle-status', [\App\Http\Controllers\CmsKit\CouponController::class, 'toggleStatus'])->name('cms.coupons.toggle-status');
+                });
+
+                Route::middleware(['cms.permission:coupons.delete'])->group(function () {
+                    Route::delete('/coupons/{id}', [\App\Http\Controllers\CmsKit\CouponController::class, 'destroy'])->name('cms.coupons.destroy');
+                });
+
+                Route::get('/coupons/{id}', [\App\Http\Controllers\CmsKit\CouponController::class, 'show'])->name('cms.coupons.show');
             });
 
             // Ad Management (image/GIF banners shown at a named placement — placement is free-text until the frontend design is final)
@@ -471,6 +506,8 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::middleware(['guest:portal'])->group(function () {
         Route::get('/register', [PortalAuthController::class, 'showRegister'])->name('register');
         Route::post('/register', [PortalAuthController::class, 'register'])->name('register.store')->middleware('throttle:portal-registration');
+        Route::post('/verify-otp', [PortalAuthController::class, 'verifyOtp'])->name('verify-otp')->middleware('throttle:otp-verify');
+        Route::post('/resend-otp', [PortalAuthController::class, 'resendOtp'])->name('resend-otp')->middleware('throttle:otp-verify');
         Route::get('/login', [PortalAuthController::class, 'showLogin'])->name('login');
         Route::post('/login', [PortalAuthController::class, 'login'])->name('login.store')->middleware('throttle:admin-login');
     });
@@ -486,7 +523,9 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('/profile', [PortalProfileController::class, 'update'])->name('profile.update');
         Route::post('/profile/documents/{field}', [PortalProfileController::class, 'uploadDocument'])->name('profile.upload-document');
         Route::delete('/profile/documents/{field}', [PortalProfileController::class, 'removeDocument'])->name('profile.remove-document');
-        Route::post('/profile/resubmit', [PortalProfileController::class, 'resubmit'])->name('profile.resubmit');
+        Route::post('/profile/resubmit', [PortalProfileController::class, 'submitForApproval'])->name('profile.resubmit');
+        Route::post('/profile/email/request', [PortalProfileController::class, 'requestEmailChange'])->name('profile.email.request')->middleware('throttle:otp-verify');
+        Route::post('/profile/email/verify', [PortalProfileController::class, 'verifyEmailChange'])->name('profile.email.verify')->middleware('throttle:otp-verify');
 
         // Bell-icon notifications
         Route::post('/notifications/{id}/read', [PortalNotificationController::class, 'markRead'])->name('notifications.read');
@@ -495,6 +534,16 @@ Route::prefix('portal')->name('portal.')->group(function () {
         // Self-service plan upgrade — portal guard only, a Super Admin doesn't request plans for itself.
         Route::get('/plans', [PortalPlanController::class, 'index'])->name('plans.index');
         Route::post('/plans/request', [PortalPlanController::class, 'request'])->name('plans.request');
+        Route::post('/plans/change-preview', [PortalPlanController::class, 'previewChange'])->name('plans.change-preview');
+        Route::post('/plans/subscription/keep-plan', [PortalPlanController::class, 'keepCurrentPlan'])->name('plans.subscription.keep-plan');
+        Route::get('/plans/payments', [PortalPlanController::class, 'payments'])->name('plans.payments');
+        Route::get('/plans/payments/{id}/invoice', [PortalPlanController::class, 'invoice'])->name('plans.payments.show');
+        Route::get('/plans/payments/{id}/invoice.pdf', [PortalPlanController::class, 'invoicePdf'])->name('plans.payments.pdf');
+        Route::get('/plans/checkout/success',[PortalPlanController::class, 'checkoutSuccess'])->name('plans.checkout.success');
+        Route::post('/plans/subscription/cancel', [PortalPlanController::class, 'cancelSubscription'])->name('plans.subscription.cancel');
+        Route::post('/plans/subscription/resume', [PortalPlanController::class, 'resumeSubscription'])->name('plans.subscription.resume');
+        Route::post('/plans/billing-portal', [PortalPlanController::class, 'billingPortal'])->name('plans.billing-portal');
+        Route::post('/plans/coupon-check',[PortalPlanController::class, 'checkCoupon'])->name('plans.coupon-check')->middleware('throttle:20,1');
 
         // Contact Us — portal guard only, reaches MW Realty support (not meaningful for admin browsing).
         Route::get('/contact', [\App\Http\Controllers\Portal\PortalContactController::class, 'index'])->name('contact.index');
@@ -506,13 +555,18 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::middleware(['portal.or.cms'])->group(function () {
         Route::get('/dashboard', [PortalDashboardController::class, 'index'])->name('dashboard');
 
-        Route::get('/properties', [PortalPropertyController::class, 'index'])->name('properties.index');
+        // Real (server-side) gating on top of the create()/store()/toggleStatus() controller's own
+        // inline "approved only" checks — index/edit/update/destroy had none at all before this.
+        Route::get('/properties', [PortalPropertyController::class, 'index'])->name('properties.index')->middleware('portal.approved');
         Route::get('/properties/create', [PortalPropertyController::class, 'create'])->name('properties.create');
         Route::post('/properties', [PortalPropertyController::class, 'store'])->name('properties.store');
-        Route::post('/properties/bulk-delete', [PortalPropertyController::class, 'bulkDestroy'])->name('properties.bulk-destroy');
-        Route::get('/properties/{id}/edit', [PortalPropertyController::class, 'edit'])->name('properties.edit');
-        Route::put('/properties/{id}', [PortalPropertyController::class, 'update'])->name('properties.update');
-        Route::delete('/properties/{id}', [PortalPropertyController::class, 'destroy'])->name('properties.destroy');
+        Route::post('/properties/bulk-action', [PortalPropertyController::class, 'bulkAction'])->name('properties.bulk-action')->middleware('portal.approved');
+        Route::post('/properties/{id}/feature', [PortalPropertyController::class, 'feature'])->name('properties.feature')->middleware('portal.approved');
+        Route::post('/properties/{id}/unfeature', [PortalPropertyController::class, 'unfeature'])->name('properties.unfeature')->middleware('portal.approved');
+        Route::post('/properties/reorder',[PortalPropertyController::class, 'reorder'])->name('properties.reorder')->middleware('portal.approved');
+        Route::get('/properties/{id}/edit', [PortalPropertyController::class, 'edit'])->name('properties.edit')->middleware('portal.approved');
+        Route::put('/properties/{id}', [PortalPropertyController::class, 'update'])->name('properties.update')->middleware('portal.approved');
+        Route::delete('/properties/{id}', [PortalPropertyController::class, 'destroy'])->name('properties.destroy')->middleware('portal.approved');
         Route::get('/properties/{id}', [PortalPropertyController::class, 'show'])->name('properties.show');
         Route::delete('/properties/{propertyId}/images/{imageId}', [PortalPropertyController::class, 'destroyImage'])->name('properties.images.destroy');
         Route::delete('/properties/{propertyId}/images', [PortalPropertyController::class, 'destroyAllImages'])->name('properties.images.destroy-all');
@@ -528,18 +582,21 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::get('/agents/create', [\App\Http\Controllers\Portal\AgentController::class, 'create'])->name('agents.create');
         Route::post('/agents', [\App\Http\Controllers\Portal\AgentController::class, 'store'])->name('agents.store');
 
-        // Nearby Places master list — global data (schools/hospitals/restaurants/...) properties
-        // can be tagged with; management restricted to a Super Admin browsing the portal (see
-        // NearbyPlaceController::isAdmin()), same gate as the sidebar link.
-        Route::get('/nearby-places', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'index'])->name('nearby-places.index');
+        // Nearby Places — shared list managed by Super Admin, plus each Agent/Company's own places
+        // (scoping is done in NearbyPlaceController). Approved accounts only, like Properties.
+        Route::middleware('portal.approved')->group(function () {
+        Route::get('/nearby-places',[\App\Http\Controllers\Portal\NearbyPlaceController::class, 'index'])->name('nearby-places.index');
         Route::get('/nearby-places/create', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'create'])->name('nearby-places.create');
         Route::post('/nearby-places', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'store'])->name('nearby-places.store');
         Route::get('/nearby-places/{id}/edit', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'edit'])->name('nearby-places.edit');
         Route::put('/nearby-places/{id}', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'update'])->name('nearby-places.update');
         Route::post('/nearby-places/{id}/toggle-status', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'toggleStatus'])->name('nearby-places.toggle-status');
         Route::delete('/nearby-places/{id}', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'destroy'])->name('nearby-places.destroy');
+        });
 
-        Route::prefix('crm')->name('crm.')->group(function () {
+        // Real (server-side) gating for Leads/Master/Reports — previously only cosmetically
+        // "locked" in the sidebar with no enforcement at all.
+        Route::prefix('crm')->name('crm.')->middleware('portal.approved')->group(function () {
             Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
             Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
             Route::put('/leads/table-columns', [LeadController::class, 'updateTableColumns'])->name('leads.table-columns.update');

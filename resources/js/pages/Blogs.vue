@@ -2,9 +2,11 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useBlogListing } from '../composables/useBlogListing';
 import { useLanguages } from '../composables/useLanguages';
+import { useStaticText } from '../composables/useStaticText';
 
 const { blogListing, fetchBlogListing } = useBlogListing();
 const { selectedLanguage } = useLanguages();
+const { t } = useStaticText();
 
 const currentPage = ref(1);
 const activeCategory = ref('all');
@@ -38,8 +40,8 @@ function goToPage(page) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-const pageTitle = computed(() => blogListing.value?.title || 'Blog');
-const heading = computed(() => blogListing.value?.heading || 'Latest Articles');
+const pageTitle = computed(() => blogListing.value?.title || t('blogs.page_default_title'));
+const heading = computed(() => blogListing.value?.heading || t('blogs.heading_default'));
 const description = computed(() => blogListing.value?.description || '');
 const categories = computed(() => blogListing.value?.categories || []);
 // "All" needs to stay in this same keyed list (not a separate static button) so Vue's list
@@ -47,7 +49,7 @@ const categories = computed(() => blogListing.value?.categories || []);
 // script (see the reveal-on-scroll comment above) restructures this DOM on first scan while
 // "All" is still the only button, and inserts new items relative to wherever "All" physically
 // ends up, which shoves it to the end if it isn't part of the same v-for.
-const pillOptions = computed(() => [{ key: 'all', label: 'All' }, ...categories.value]);
+const pillOptions = computed(() => [{ key: 'all', label: t('blogs.all_label') }, ...categories.value]);
 const pagination = computed(() => blogListing.value?.pagination || null);
 // The category filter is applied server-side (see fetchBlogListing/selectCategory) so this is
 // already the correct, correctly-paginated set for whichever category is currently selected —
@@ -73,9 +75,9 @@ const pageNumbers = computed(() => {
                     <h1 class="mw-about-title" data-reveal>{{ pageTitle }}</h1>
                 </div>
             </div>
-            <nav class="mw-about-crumb" aria-label="Breadcrumb">
+            <nav class="mw-about-crumb" :aria-label="t('blogs.breadcrumb_aria')">
                 <div class="container-ctn">
-                    <p><router-link to="/">Home</router-link><span class="mw-about-crumb__sep"> / </span><span>{{ pageTitle }}</span></p>
+                    <p><router-link to="/">{{ t('blogs.breadcrumb_home') }}</router-link><span class="mw-about-crumb__sep"> / </span><span>{{ pageTitle }}</span></p>
                 </div>
             </nav>
         </section>
@@ -105,15 +107,15 @@ const pageNumbers = computed(() => {
                             <p class="mw-blog-card__meta">{{ postMeta(post) }}</p>
                             <h3 class="mw-blog-card__title"><router-link :to="`/blog-details/${post.slug}`">{{ post.title }}</router-link></h3>
                             <p class="mw-blog-card__excerpt">{{ post.excerpt }}</p>
-                            <router-link :to="`/blog-details/${post.slug}`" class="mw-blog-card__link">Read More</router-link>
+                            <router-link :to="`/blog-details/${post.slug}`" class="mw-blog-card__link">{{ t('blogs.read_more') }}</router-link>
                         </div>
                     </article>
                 </div>
 
-                <nav v-if="pagination && pagination.last_page > 1" class="mw-blog__pagination" aria-label="Blog pagination">
-                    <button type="button" class="mw-blog__page mw-blog__page--prev" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">Previous</button>
+                <nav v-if="pagination && pagination.last_page > 1" class="mw-blog__pagination" :aria-label="t('blogs.pagination_aria')">
+                    <button type="button" class="mw-blog__page mw-blog__page--prev" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">{{ t('blogs.previous') }}</button>
                     <button v-for="page in pageNumbers" :key="page" type="button" class="mw-blog__page" :class="{ 'is-active': page === currentPage }" @click="goToPage(page)">{{ page }}</button>
-                    <button type="button" class="mw-blog__page mw-blog__page--next" :disabled="currentPage === pagination.last_page" @click="goToPage(currentPage + 1)">Next</button>
+                    <button type="button" class="mw-blog__page mw-blog__page--next" :disabled="currentPage === pagination.last_page" @click="goToPage(currentPage + 1)">{{ t('blogs.next') }}</button>
                 </nav>
             </div>
         </section>

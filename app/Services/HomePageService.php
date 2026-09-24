@@ -353,12 +353,12 @@ class HomePageService
     /** Site-wide footer content (SiteFooter.vue renders once, outside the router, so this is its own endpoint rather than folding into /api/home). */
     public function getFooterData(string $lang): array
     {
-        return Cache::remember("footer-data:{$lang}", self::CACHE_TTL, function () {
+        return Cache::remember("footer-data:{$lang}", self::CACHE_TTL, function () use ($lang) {
             $info = SiteInformation::first();
 
             return [
-                'company_name' => $info?->company_name,
-                'address' => $info?->address,
+                'company_name' => $info?->getTranslation('company_name', $lang),
+                'address' => $info?->getTranslation('address', $lang),
                 'toll_free' => $info?->toll_free,
                 'phone' => $info?->phone_1,
                 'email' => $info?->email_1,
@@ -422,7 +422,7 @@ class HomePageService
                     'text' => $connect?->getTranslation('title_2', $lang),
                     'button_text' => $connect?->getTranslation('button_text', $lang),
                     'button_url' => $connect?->getTranslation('button_url', $lang) ?: '/contact',
-                    'video_url' => $connectExtra['video_source'] === 'file' && !empty($connectExtra['video_file'])
+                    'video_url' => ($connectExtra['video_source'] ?? null) === 'file' && !empty($connectExtra['video_file'])
                         ? asset('storage/'.$connectExtra['video_file'])
                         : ($connectExtra['video_url'] ?? null),
                     'poster_url' => $connect?->section_image ? asset('storage/'.$connect->section_image) : null,

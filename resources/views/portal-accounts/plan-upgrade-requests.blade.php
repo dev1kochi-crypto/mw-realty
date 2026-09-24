@@ -19,6 +19,7 @@
                         <th>Account</th>
                         <th>Current Plan</th>
                         <th>Requested Plan</th>
+                        <th>Price</th>
                         <th>Requested</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -35,6 +36,14 @@
                         </td>
                         <td>{{ $req->currentPlan?->getTranslation('name') ?? 'No Plan' }}</td>
                         <td class="fw-semibold">{{ $req->plan->getTranslation('name') }}</td>
+                        <td>
+                            @if($req->coupon_code)
+                            <div class="fw-semibold">AED {{ number_format($req->final_price, 2) }} <span class="text-muted small text-decoration-line-through ms-1">{{ number_format($req->original_price, 2) }}</span></div>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-ticket-alt me-1"></i>{{ $req->coupon_code }} · −{{ number_format($req->discount_amount, 2) }}</span>
+                            @else
+                            AED {{ number_format($req->plan->price, 2) }}
+                            @endif
+                        </td>
                         <td>{{ $req->requested_at->format('d M Y H:i') }}</td>
                         <td class="text-end">
                             @can('portal-accounts.edit')
@@ -44,7 +53,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="5" class="text-center text-muted py-4">No pending plan requests.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-4">No pending plan requests.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -73,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!confirm('Approve this plan upgrade request?')) return;
             postAction(approveUrl.replace('__ID__', btn.dataset.id)).then(function (data) {
                 if (data.success) window.location.reload();
+                else alert(data.message || 'Could not approve this request.');
             });
         });
     });

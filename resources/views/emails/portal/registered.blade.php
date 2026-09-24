@@ -7,11 +7,11 @@
 
 @if($isResubmission ?? false)
 <p style="margin:0 0 16px;">
-    A previously rejected <strong>{{ $portalUser->type }}</strong> account has updated their profile and is asking for another review.
+    <strong>{{ $portalUser->type }}</strong> {{ $displayName }} has updated their KYC profile and resubmitted it for review.
 </p>
 @else
 <p style="margin:0 0 16px;">
-    A new <strong>{{ $portalUser->type }}</strong> account has just registered on the partner portal and is waiting for your review before they can list properties.
+    <strong>{{ $portalUser->type }}</strong> {{ $displayName }} has submitted their KYC profile for approval.
 </p>
 @endif
 
@@ -27,9 +27,13 @@
     </td></tr>
 </table>
 
-<table role="presentation" cellpadding="0" cellspacing="0">
-    <tr><td style="border-radius:8px; background-color:#04a1cc;">
-        <a href="{{ $reviewUrl }}" target="_blank" style="display:inline-block; padding:11px 22px; font-size:14px; font-weight:bold; color:#ffffff; text-decoration:none;">Review Account</a>
-    </td></tr>
-</table>
+<p style="margin:0 0 16px; font-size:13px;">
+    <strong>KYC documents: {{ $documentsUploadedCount }} of {{ $documentsTotalCount }} uploaded.</strong>
+    @if($missingDocuments->isNotEmpty())
+        <br>Still missing: {{ $missingDocuments->implode(', ') }}.
+    @endif
+</p>
+
+@section('cta_url', $reviewUrl)
+@section('cta_label', 'Review Account')
 @endsection

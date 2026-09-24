@@ -20,14 +20,13 @@ class DatabaseSeeder extends Seeder
        $this->call([
             CmsRolesPermissionsSeeder::class,
             SeoPageMetadataSeeder::class,
-            FilterSeeder::class,
             PlanSeeder::class,
             CrmAdminMasterDataSeeder::class,
-            // PortalUserSeeder must run before PropertySeeder — PropertySeeder assigns each
-            // demo property to a seeded agent/agency.
             PortalUserSeeder::class,
             PropertySeeder::class,
+            NearbyPlaceSeeder::class, // after PropertySeeder — tags properties by community
             CommercialPropertySeeder::class,
+            FilterSeeder::class,
         ]);
     }
 }

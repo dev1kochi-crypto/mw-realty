@@ -3,10 +3,14 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useOtpInputs } from '../composables/useOtpInputs';
 import { animateOtpFocus, animateDigitEntry, morphBoxesToGrid, collapseOtpBoxes, animateOtpSuccess, animateOtpFailure } from '../composables/useOtpAnimations';
+import { useStaticText } from '../composables/useStaticText';
 
+const { t } = useStaticText();
 const route = useRoute();
 const router = useRouter();
 const userId = route.query.user_id;
+const accountType = route.query.account_type || 'user';
+const apiPrefix = computed(() => (accountType === 'user' ? 'customer' : 'portal'));
 
 const otpBoxesWrap = ref(null);
 const checkmarkContainer = ref(null);
@@ -53,6 +57,7 @@ const errorMessage = ref(null);
 const resendError = ref(null);
 const resending = ref(false);
 const resendCooldown = ref(30);
+const redirectTarget = ref('/profile');
 let cooldownTimer = null;
 let errorAutoTimer = null;
 
@@ -101,7 +106,7 @@ async function submitCode() {
     const startedAt = Date.now();
 
     try {
-        const { data } = await window.axios.post('/customer/verify-otp', { user_id: userId, code: code.value });
+        const { data } = await window.axios.post(`/${apiPrefix.value}/verify-otp`, { user_id: userId, code: code.value });
         await holdMinimum(startedAt, 900);
 
         // The cluster shrinks down to a point BEFORE the template swaps to the success view —
@@ -109,6 +114,7 @@ async function submitCode() {
         // collapseOtpBoxes's docblock). The checkmark then grows in from that same point, so
         // the two halves read as one continuous "boxes collapse into a square" morph.
         await collapseOtpBoxes(otpBoxesWrap.value);
+        redirectTarget.value = data.redirect || '/profile';
         verified.value = true;
         await nextTick();
         animateOtpSuccess({
@@ -118,10 +124,10 @@ async function submitCode() {
             revealEls: revealEls.value,
         });
         setTimeout(() => {
-            window.location.href = data.redirect || '/profile';
+            window.location.href = redirectTarget.value;
         }, 1600);
     } catch (error) {
-        const message = error.response?.data?.message || 'Invalid or expired code.';
+        const message = error.response?.data?.message || t('verify_otp.default_invalid_code_error');
         await holdMinimum(startedAt, 900);
         await collapseOtpBoxes(otpBoxesWrap.value);
         verifying.value = false;
@@ -161,10 +167,10 @@ async function handleResend() {
     resending.value = true;
     resendError.value = null;
     try {
-        await window.axios.post('/customer/resend-otp', { user_id: userId });
+        await window.axios.post(`/${apiPrefix.value}/resend-otp`, { user_id: userId });
         startCooldown();
     } catch (error) {
-        resendError.value = error.response?.data?.message || 'Could not resend the code — please try again.';
+        resendError.value = error.response?.data?.message || t('verify_otp.resend_generic_error');
     } finally {
         resending.value = false;
     }
@@ -184,7 +190,12 @@ onBeforeUnmount(() => {
     clearTimeout(errorAutoTimer);
 });
 
-const maskedNote = computed(() => 'We\'ve sent a 4-digit code to your email.');
+const maskedNote = computed(() => t('verify_otp.masked_note'));
+const resendLabel = computed(() => {
+    if (resending.value) return t('verify_otp.resend_sending');
+    if (resendCooldown.value > 0) return t('verify_otp.resend_in').replace('{seconds}', resendCooldown.value);
+    return t('verify_otp.resend');
+});
 </script>
 
 <template>
@@ -193,7 +204,7 @@ const maskedNote = computed(() => 'We\'ve sent a 4-digit code to your email.');
             <div class="container-ctn">
                 <div class="mw-login-panel">
                     <div class="mw-login-panel__photo">
-                        <img src="/frontend/assets/images/login/panel-photo.png" alt="Cozy Dubai apartment interior">
+                        <img src="/frontend/assets/images/login/panel-photo.png" :alt="t('verify_otp.photo_alt')">
                     </div>
                     <div class="mw-login-panel__form mw-otp-card">
                         <div
@@ -211,15 +222,15 @@ const maskedNote = computed(() => 'We\'ve sent a 4-digit code to your email.');
                                     <div class="mw-otp-particles" ref="particlesContainer"></div>
                                 </div>
 
-                                <h1 class="mw-login-form__title" :ref="setRevealRef">Verified Successfully</h1>
-                                <p class="mw-login-form__subtitle" :ref="setRevealRef">Your email has been verified.</p>
+                                <h1 class="mw-login-form__title" :ref="setRevealRef">{{ t('verify_otp.verified_title') }}</h1>
+                                <p class="mw-login-form__subtitle" :ref="setRevealRef">{{ t('verify_otp.verified_subtitle') }}</p>
 
                                 <span class="mw-otp-badge" :ref="setRevealRef">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2l7 3v6c0 5-3.5 8.5-7 11-3.5-2.5-7-6-7-11V5l7-3Z" stroke="currentColor" stroke-width="1.6"/></svg>
-                                    Verified and Secure
+                                    {{ t('verify_otp.verified_badge') }}
                                 </span>
 
-                                <button type="button" class="mw-login-form__submit" :ref="setRevealRef" @click="() => (window.location.href = '/profile')">Continue to Account</button>
+                                <button type="button" class="mw-login-form__submit" :ref="setRevealRef" @click="() => (window.location.href = redirectTarget)">{{ t('verify_otp.continue_to_account') }}</button>
                             </div>
                         </template>
 
@@ -232,7 +243,7 @@ const maskedNote = computed(() => 'We\'ve sent a 4-digit code to your email.');
                                     </svg>
                                 </div>
 
-                                <h1 class="mw-login-form__title" :ref="setErrorRevealRef">Verification Failed</h1>
+                                <h1 class="mw-login-form__title" :ref="setErrorRevealRef">{{ t('verify_otp.failed_title') }}</h1>
                                 <p class="mw-login-form__subtitle" :ref="setErrorRevealRef">{{ errorMessage }}</p>
                             </div>
                         </template>
@@ -243,8 +254,8 @@ const maskedNote = computed(() => 'We\'ve sent a 4-digit code to your email.');
                                     <path d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4.5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </span>
-                            <h1 class="mw-login-form__title">Let's verify your email</h1>
-                            <p class="mw-login-form__subtitle">{{ maskedNote }}<br>It'll auto-verify once entered.</p>
+                            <h1 class="mw-login-form__title">{{ t('verify_otp.title') }}</h1>
+                            <p class="mw-login-form__subtitle">{{ maskedNote }}<br>{{ t('verify_otp.auto_verify_note') }}</p>
 
                             <p v-if="resendError" class="mw-form-feedback mw-form-feedback--error" role="alert">{{ resendError }}</p>
 
@@ -271,13 +282,13 @@ const maskedNote = computed(() => 'We\'ve sent a 4-digit code to your email.');
 
                             <p v-if="verifying" class="mw-otp-verifying">
                                 <span class="mw-otp-spinner"></span>
-                                Verifying your code...
+                                {{ t('verify_otp.verifying_note') }}
                             </p>
 
                             <p class="mw-otp-resend">
-                                Didn't receive the code?
+                                {{ t('verify_otp.resend_prompt') }}
                                 <button type="button" :disabled="resendCooldown > 0 || resending" @click="handleResend">
-                                    {{ resending ? 'Sending…' : (resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend') }}
+                                    {{ resendLabel }}
                                 </button>
                             </p>
                         </template>

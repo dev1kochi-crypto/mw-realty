@@ -48,8 +48,8 @@ class LeadTablePreferenceService
             self::PHONE => [
                 'label' => 'Phone',
                 'field' => 'formatted_phone',
-                'locked' => false,
-                'default' => false,
+                'locked' => true,
+                'default' => true,
                 'sortable' => true,
             ],
         ];
@@ -156,14 +156,19 @@ class LeadTablePreferenceService
         ));
     }
 
-    /** Protects the primary Lead field and ignores obsolete/unavailable values. */
+    /** Forces every locked field (Lead, Phone) on and ignores obsolete/unavailable values. */
     private function normaliseColumns(array $columns): array
     {
+        $available = $this->availableColumns();
         $selected = array_fill_keys(array_map('strval', $columns), true);
-        $selected[self::LEAD] = true;
+        foreach ($available as $key => $meta) {
+            if ($meta['locked']) {
+                $selected[$key] = true;
+            }
+        }
 
         return array_values(array_filter(
-            array_keys($this->availableColumns()),
+            array_keys($available),
             fn (string $column) => isset($selected[$column]),
         ));
     }

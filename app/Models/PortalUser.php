@@ -36,6 +36,7 @@ class PortalUser extends Authenticatable
         'name',
         'company_name',
         'email',
+        'pending_email',
         'phone',
         'whatsapp_number',
         'nationality',
@@ -44,16 +45,21 @@ class PortalUser extends Authenticatable
         'emirates_id_document',
         'passport_no',
         'passport_document',
+        'passport_expiry',
+        'passport_expiry_notified_at',
         'brn_number',
         'company_id',
         'rera_card_document',
         'trade_license_no',
         'trade_license_document',
         'trade_license_expiry',
+        'trade_license_expiry_notified_at',
         'orn_number',
         'rera_certificate_document',
         'office_address',
         'trn_number',
+        'trn_expiry',
+        'trn_expiry_notified_at',
         'authorized_signatory_name',
         'landline',
         'translations',
@@ -65,14 +71,28 @@ class PortalUser extends Authenticatable
         'badges',
         'metadata',
         'password',
+        'otp_code',
+        'otp_expires_at',
         'status',
         'status_changed_at',
         'is_active',
         'rejection_reason',
         'document_status',
+        'kyc_review_status',
+        'kyc_submitted_at',
+        'kyc_user_submitted_at',
+        'kyc_review_note',
         'plan_id',
         'payment_status',
         'last_payment_at',
+        'stripe_customer_id',
+        'stripe_subscription_id',
+        'subscription_status',
+        'subscription_renews_at',
+        'subscription_cancel_at_period_end',
+        'scheduled_plan_id',
+        'scheduled_interval',
+        'billing_interval',
     ];
 
     /**
@@ -84,6 +104,20 @@ class PortalUser extends Authenticatable
         'trade_license_document', 'rera_certificate_document',
     ];
 
+    /** Human-readable label for each of the DOCUMENT_FIELDS above, for admin/email/notification copy. */
+    public const DOCUMENT_LABELS = [
+        'emirates_id_document' => 'Emirates ID',
+        'passport_document' => 'Passport',
+        'rera_card_document' => 'RERA Card',
+        'trade_license_document' => 'Trade License',
+        'rera_certificate_document' => 'RERA Certificate',
+    ];
+
+    public static function documentLabel(string $field): string
+    {
+        return self::DOCUMENT_LABELS[$field] ?? Str::headline($field);
+    }
+
     /**
      * Recognition badges shown on the future public profile — admin-granted only, not something
      * an agent/company can award themselves.
@@ -93,13 +127,24 @@ class PortalUser extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'otp_code',
     ];
 
     protected $casts = [
         'password' => 'hashed',
+        'otp_expires_at' => 'datetime',
         'trade_license_expiry' => 'date',
+        'trade_license_expiry_notified_at' => 'date',
+        'passport_expiry' => 'date',
+        'passport_expiry_notified_at' => 'date',
+        'trn_expiry' => 'date',
+        'trn_expiry_notified_at' => 'date',
         'last_payment_at' => 'date',
+        'subscription_renews_at' => 'datetime',
+        'subscription_cancel_at_period_end' => 'boolean',
         'status_changed_at' => 'datetime',
+        'kyc_submitted_at' => 'datetime',
+        'kyc_user_submitted_at' => 'datetime',
         'is_active' => 'boolean',
         'document_status' => 'array',
         'translations' => 'array',
@@ -204,6 +249,40 @@ class PortalUser extends Authenticatable
         return max(0, $this->plan->property_limit - $used);
     }
 
+    /** Downgrade waiting for the next renewal (see StripeBillingService::scheduleDowngrade()). */
+    public function scheduledPlan()
+    {
+        return $this->belongsTo(Plan::class, 'scheduled_plan_id');
+    }
+
+    /** A Stripe subscription is billing this account (active or retrying a failed payment). */
+    public function hasStripeSubscription(): bool
+    {
+        return $this->stripe_subscription_id !== null
+            && in_array($this->subscription_status, ['active', 'trialing', 'past_due', 'unpaid'], true);
+    }
+
+    /** How many more team agents this company can add under its plan, or null if unlimited. */
+    public function remainingAgentSlots(): ?int
+    {
+        if (!$this->plan || !$this->plan->status) return 0;
+        if ($this->plan->agentsUnlimited()) {
+            return null;
+        }
+
+        return max(0, (int) $this->plan->agent_limit - $this->agents()->count());
+    }
+
+    public function hasReportsAccess(): bool
+    {
+        return (bool) ($this->plan?->status && $this->plan->reports_access);
+    }
+
+    public function featurings()
+    {
+        return $this->hasMany(PropertyFeaturing::class);
+    }
+
     public function leads()
     {
         return $this->hasMany(Lead::class);
@@ -222,6 +301,11 @@ class PortalUser extends Authenticatable
     public function leadTags()
     {
         return $this->hasMany(LeadTag::class);
+    }
+
+    public function planPayments()
+    {
+        return $this->hasMany(PlanPayment::class);
     }
 
     public function planUpgradeRequests()

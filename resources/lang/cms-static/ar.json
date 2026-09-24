@@ -1,0 +1,1093 @@
+{
+    "nav": {
+        "home": "الرئيسية",
+        "commercial": "تجاري",
+        "agents": "الوكلاء",
+        "agencies": "الوكالات",
+        "blogs": "المدونة",
+        "about": "من نحن",
+        "contact": "اتصل بنا",
+        "login": "تسجيل الدخول",
+        "profile": "الملف الشخصي",
+        "logout": "تسجيل الخروج",
+        "primary_aria": "الرئيسي",
+        "mobile_aria": "الجوال",
+        "open_menu_aria": "فتح القائمة",
+        "close_menu_aria": "إغلاق القائمة"
+    },
+    "footer": {
+        "quick_links": {
+            "title": "روابط سريعة",
+            "home": "الرئيسية",
+            "about": "من نحن",
+            "properties": "العقارات",
+            "mortgage_calculator": "حاسبة الرهن العقاري",
+            "delhi_expo": "معرض دلهي",
+            "invest_in_dubai": "الاستثمار في دبي",
+            "contact": "اتصل بنا"
+        },
+        "properties_col": {
+            "title": "العقارات",
+            "properties_in_dubai": "عقارات في دبي",
+            "properties_in_abu_dhabi": "عقارات في أبوظبي",
+            "properties_in_ajman": "عقارات في عجمان",
+            "properties_in_ras_al_khaimah": "عقارات في رأس الخيمة",
+            "sobha_siniya_island": "جزيرة صنية من شوبا",
+            "sobha_elwood": "شوبا إلوود",
+            "binghatti": "بنغاتي"
+        },
+        "buy": {
+            "title": "شراء",
+            "properties_for_sale": "عقارات للبيع",
+            "guide_to_buying": "دليل الشراء",
+            "mortgages": "الرهن العقاري",
+            "property_management": "إدارة العقارات",
+            "legal_services": "الخدمات القانونية"
+        },
+        "off_plan": {
+            "title": "على الخارطة",
+            "new_projects": "مشاريع جديدة",
+            "guide_to_buying_off_plan": "دليل الشراء على الخارطة",
+            "best_dubai_communities": "أفضل مجتمعات دبي",
+            "top_dubai_developers": "أفضل مطوري دبي",
+            "snagging_inspection": "الفحص والمعاينة",
+            "upcoming_roadshows": "الجولات الترويجية القادمة",
+            "branded_residences": "مساكن ذات علامة تجارية"
+        },
+        "legal": {
+            "title": "قانوني",
+            "terms_of_use": "شروط الاستخدام",
+            "privacy_policy": "سياسة الخصوصية",
+            "security_policy": "سياسة الأمان",
+            "cookie_settings": "إعدادات ملفات تعريف الارتباط"
+        },
+        "contact": {
+            "address_label": "العنوان",
+            "toll_free_label": "الرقم المجاني",
+            "call_us_label": "اتصل بنا",
+            "email_label": "البريد الإلكتروني"
+        },
+        "newsletter": {
+            "title": "النشرة الإخبارية",
+            "placeholder": "عنوان بريدك الإلكتروني",
+            "terms_text": "لقد قرأت ووافقت على الشروط والأحكام",
+            "error_agree": "يرجى الموافقة على الشروط والأحكام للاشتراك.",
+            "error_generic": "حدث خطأ ما — يرجى المحاولة مرة أخرى.",
+            "subscribe_aria": "اشتراك"
+        },
+        "copyright": {
+            "prefix": "حقوق النشر ©",
+            "designed_by": "تصميم : مايتي وارنرز تكنولوجيز"
+        },
+        "social": {
+            "twitter": "Twitter",
+            "facebook": "Facebook",
+            "instagram": "Instagram",
+            "linkedin": "LinkedIn"
+        },
+        "bottom_nav": {
+            "home": "الرئيسية",
+            "buy": "شراء",
+            "properties": "العقارات",
+            "login": "تسجيل الدخول",
+            "aria_label": "روابط سريعة"
+        }
+    },
+    "home": {
+        "hero": {
+            "tabs": {
+                "buy": "شراء",
+                "rent": "إيجار",
+                "ready": "جاهز",
+                "off_plan": "على الخارطة"
+            },
+            "search": {
+                "location_placeholder": "أدخل الموقع",
+                "bedroom_label": "غرف النوم",
+                "price_range_label": "نطاق السعر",
+                "property_type_label": "نوع العقار",
+                "submit": "بحث"
+            },
+            "price": {
+                "min_label": "الحد الأدنى",
+                "max_label": "الحد الأقصى",
+                "quick_select": "اختيار سريع",
+                "min_aria": "الحد الأدنى للسعر",
+                "max_aria": "الحد الأقصى للسعر"
+            },
+            "note_text_default": "هل ترغب في معرفة المزيد عن العقارات في الإمارات باستخدام الذكاء الاصطناعي؟",
+            "note_badge_default": "قريباً",
+            "guide_text_default": "دعنا نرشدك إلى منزلك",
+            "tabs_aria_label": "نوع الإعلان"
+        },
+        "bedroom_options": {
+            "studio": "استوديو",
+            "one": "غرفة نوم واحدة",
+            "two": "غرفتا نوم",
+            "three": "3 غرف نوم",
+            "four": "4 غرف نوم",
+            "five": "5 غرف نوم",
+            "six": "6 غرف نوم",
+            "seven_plus": "7 غرف نوم أو أكثر"
+        },
+        "property_types": {
+            "apartment": "شقة",
+            "villa": "فيلا",
+            "penthouse": "بنتهاوس",
+            "townhouse": "تاون هاوس",
+            "plot": "قطعة أرض",
+            "office": "مكتب"
+        },
+        "price_presets": {
+            "under_500k": "أقل من 500 ألف",
+            "500k_1m": "500 ألف – مليون",
+            "1m_2m": "مليون – 2 مليون",
+            "2m_5m": "2 – 5 مليون",
+            "5m_10m": "5 – 10 مليون",
+            "10m_plus": "أكثر من 10 مليون"
+        },
+        "badges": {
+            "verified": "موثّق",
+            "premium": "مميز",
+            "advertisement": "إعلان"
+        },
+        "aria": {
+            "save_property": "حفظ العقار",
+            "previous_photo": "الصورة السابقة",
+            "next_photo": "الصورة التالية",
+            "email": "البريد الإلكتروني",
+            "call": "اتصال",
+            "whatsapp": "واتساب",
+            "previous_premium_property": "العقار المميز السابق",
+            "next_premium_property": "العقار المميز التالي",
+            "previous_places": "الأماكن السابقة",
+            "next_places": "الأماكن التالية",
+            "previous_luxury_project": "المشروع الفاخر السابق",
+            "next_luxury_project": "المشروع الفاخر التالي",
+            "previous_realty_property": "العقار السابق",
+            "next_realty_property": "العقار التالي",
+            "previous_testimonial": "الشهادة السابقة",
+            "next_testimonial": "الشهادة التالية"
+        },
+        "contact_card": {
+            "mail": "مراسلة",
+            "call_us": "اتصل بنا",
+            "chat_with_us": "تواصل معنا"
+        },
+        "find_properties": {
+            "view_all_static": "عرض جميع العقارات",
+            "tall_alt": "جميع العقارات"
+        },
+        "communities_filters": {
+            "for_sale": "للبيع",
+            "for_rent": "للإيجار",
+            "off_plan": "على الخارطة"
+        },
+        "post_property": {
+            "step_label": "خطوة"
+        },
+        "contact": {
+            "eyebrow_default": "نحن هنا لمساعدتك",
+            "heading_default": "تواصل مع الخبراء الذين يجعلون إدارة العقارات أمراً بسيطاً.",
+            "photo_alt": "غرفة معيشة عصرية تديرها إم دبليو ريالتي",
+            "office_address_label": "عنوان المكتب",
+            "toll_free_label": "الخط المجاني",
+            "request_callback_label": "اطلب معاودة الاتصال",
+            "email_us_label": "راسلنا عبر البريد الإلكتروني",
+            "form": {
+                "name_label": "الاسم*",
+                "name_placeholder": "اسمك",
+                "email_label": "البريد الإلكتروني*",
+                "email_placeholder": "بريدك الإلكتروني",
+                "phone_label": "الهاتف*",
+                "phone_placeholder": "رقم هاتفك",
+                "interest_label": "ما الذي يهمك؟",
+                "interest_select_placeholder": "اختر",
+                "interest_buy": "شراء عقار",
+                "interest_rent": "استئجار عقار",
+                "interest_sell": "بيع \/ إدراج عقار",
+                "interest_management": "إدارة الأملاك",
+                "message_label": "الرسالة",
+                "message_placeholder": "كيف يمكننا مساعدتك؟",
+                "submit": "تواصل مع خبيرنا"
+            }
+        }
+    },
+    "properties_listing": {
+        "filter_panel": {
+            "title": "الفلاتر",
+            "close_aria": "إغلاق الفلاتر",
+            "purpose_label": "الغرض",
+            "location_label": "الموقع",
+            "location_placeholder": "أدخل الموقع",
+            "property_type_label": "نوع العقار",
+            "all_type": "جميع الأنواع",
+            "price_title": "نطاق السعر",
+            "min_label": "الحد الأدنى",
+            "max_label": "الحد الأقصى",
+            "min_aria": "الحد الأدنى للسعر",
+            "max_aria": "الحد الأقصى للسعر",
+            "quick_select": "اختيار سريع",
+            "bedrooms_title": "غرف النوم",
+            "bathrooms_title": "الحمامات",
+            "any": "الكل",
+            "area_title": "المساحة (قدم مربع)",
+            "area_min_placeholder": "0",
+            "area_max_placeholder": "10,000",
+            "area_min_aria": "الحد الأدنى للمساحة",
+            "area_max_aria": "الحد الأقصى للمساحة",
+            "features_title": "مزايا العقار",
+            "feature_verified": "عقار موثّق من MW",
+            "feature_floor_plans": "عقارات بها مخططات طابقية",
+            "amenities_title": "المرافق",
+            "amenity_furnished": "مفروش",
+            "amenity_community_pool": "مسبح مشترك",
+            "amenity_parking": "موقف سيارات",
+            "amenity_gym": "صالة رياضية",
+            "amenity_security": "أمن على مدار الساعة",
+            "amenity_balcony": "شرفة",
+            "amenity_concierge": "خدمة الكونسيرج",
+            "amenity_private_pool": "مسبح خاص",
+            "reset": "إعادة تعيين",
+            "apply": "تطبيق الفلاتر"
+        },
+        "property_types": {
+            "apartment": "شقة",
+            "villa": "فيلا",
+            "townhouse": "تاون هاوس",
+            "penthouse": "بنتهاوس",
+            "duplex": "دوبلكس",
+            "studio": "استوديو"
+        },
+        "price_presets": {
+            "under_500k": "أقل من 500 ألف",
+            "500k_1m": "500 ألف – مليون",
+            "1m_2m": "مليون – 2 مليون",
+            "2m_5m": "2 – 5 مليون",
+            "5m_10m": "5 – 10 مليون",
+            "10m_plus": "أكثر من 10 مليون"
+        },
+        "bedroom_options": {
+            "studio": "استوديو",
+            "one": "1",
+            "two": "2",
+            "three": "3",
+            "four": "4",
+            "five_plus": "+5"
+        },
+        "bathroom_options": {
+            "one": "1",
+            "two": "2",
+            "three": "3",
+            "four": "4",
+            "five_plus": "+5"
+        },
+        "hero": {
+            "title": "عقارات في دبي",
+            "breadcrumb_aria": "مسار التنقل",
+            "breadcrumb_home": "الرئيسية"
+        },
+        "filter_bar": {
+            "purpose_label": "الغرض",
+            "buy": "شراء",
+            "rent": "إيجار",
+            "off_plan": "على الخارطة",
+            "location_label": "الموقع",
+            "location_placeholder": "أدخل الموقع",
+            "property_type_label": "نوع العقار",
+            "all_type": "جميع الأنواع",
+            "bedrooms_label": "غرف النوم",
+            "select_bedrooms": "اختر عدد غرف النوم",
+            "bathrooms_label": "الحمامات",
+            "select_bathrooms": "اختر عدد الحمامات",
+            "more_filters_aria": "المزيد من الفلاتر",
+            "search": "بحث"
+        },
+        "toolbar": {
+            "all": "الكل",
+            "ready": "جاهز",
+            "off_plan": "على الخارطة",
+            "sort_most_recent": "الأحدث",
+            "sort_price_low_high": "السعر: من الأقل إلى الأعلى",
+            "sort_price_high_low": "السعر: من الأعلى إلى الأقل",
+            "sort_most_popular": "الأكثر رواجاً",
+            "views_aria": "تبديل طريقة عرض العقارات",
+            "grid_view_aria": "عرض شبكي",
+            "list_view_aria": "عرض قائمة",
+            "custom_request": "طلب مخصص",
+            "save_search": "حفظ البحث",
+            "saving": "جارٍ الحفظ…",
+            "search_saved": "تم حفظ البحث ✓",
+            "save_error": "تعذر الحفظ — حاول مرة أخرى",
+            "clear_filters": "مسح الفلاتر"
+        },
+        "ticker": {
+            "aria_label": "عمليات بحث موصى بها وروابط استثمارية على الخارطة",
+            "recommended_searches": "عمليات بحث موصى بها",
+            "bedroom_link_suffix": "عقارات بغرفة نوم للبيع في دبي",
+            "invest_off_plan": "استثمر في عقارات على الخارطة",
+            "off_plan_link_suffix": "عقارات على الخارطة في أبوظبي"
+        },
+        "listing": {
+            "title": "عقارات للبيع في دبي",
+            "count_suffix": "إعلان",
+            "email": "البريد الإلكتروني",
+            "call_us": "اتصل بنا",
+            "whatsapp": "واتساب",
+            "save_property_aria": "حفظ العقار",
+            "previous_photo_aria": "الصورة السابقة",
+            "next_photo_aria": "الصورة التالية",
+            "pagination_aria": "التنقل بين صفحات العقارات",
+            "previous": "السابق",
+            "next": "التالي"
+        },
+        "empty_state": {
+            "title": "لا توجد عقارات متاحة",
+            "message": "لا توجد عقارات مطابقة لبحثك حالياً — حاول تعديل الفلاتر أو توسيع نطاق البحث."
+        }
+    },
+    "custom_request": {
+        "dialog_aria_label": "طلب عقار مخصص",
+        "title": "طلب عقار مخصص",
+        "subtitle": "أخبرنا بما تبحث عنه وسنساعدك في إيجاده.",
+        "close_aria": "إغلاق",
+        "section_personal_information": "المعلومات الشخصية",
+        "first_name_label": "الاسم الأول",
+        "first_name_placeholder": "أدخل الاسم الأول",
+        "last_name_label": "اسم العائلة",
+        "last_name_placeholder": "أدخل اسم العائلة",
+        "email_label": "البريد الإلكتروني",
+        "email_placeholder": "john@example.com",
+        "phone_label": "الهاتف",
+        "phone_placeholder": "أدخل رقم الهاتف",
+        "section_property_requirements": "متطلبات العقار",
+        "property_category_label": "فئة العقار",
+        "select_category": "اختر الفئة",
+        "category_apartment": "شقة",
+        "category_villa": "فيلا",
+        "category_townhouse": "تاون هاوس",
+        "category_penthouse": "بنتهاوس",
+        "category_commercial": "تجاري",
+        "specification_label": "المواصفات",
+        "specification_placeholder": "مثال: شقة 3 غرف وصالة",
+        "price_range_label": "نطاق السعر",
+        "price_range_placeholder": "مثال: 1 مليون - 1.5 مليون درهم",
+        "area_label": "المساحة (قدم مربع)",
+        "area_placeholder": "مثال: 1200 قدم مربع",
+        "preferred_location_label": "الموقع المفضل",
+        "preferred_location_placeholder": "مثال: الخليج التجاري",
+        "additional_details_label": "تفاصيل إضافية",
+        "additional_details_placeholder": "المرافق، الطابق، الإطلالة، إلخ.",
+        "section_preferences": "التفضيلات",
+        "move_in_timeline_label": "الجدول الزمني للانتقال",
+        "select_timeline": "اختر الجدول الزمني",
+        "timeline_immediate": "فوري",
+        "timeline_1_3_months": "1–3 أشهر",
+        "timeline_3_6_months": "3–6 أشهر",
+        "timeline_6_12_months": "6–12 شهراً",
+        "timeline_flexible": "مرن",
+        "furnishing_status_label": "حالة الفرش",
+        "select_status": "اختر الحالة",
+        "furnishing_furnished": "مفروش",
+        "furnishing_unfurnished": "غير مفروش",
+        "furnishing_semi_furnished": "مفروش جزئياً",
+        "furnishing_no_preference": "لا تفضيل",
+        "whatsapp_consent_label": "الموافقة على واتساب",
+        "whatsapp_consent_text": "أوافق على تلقي تحديثات حول طلب العقار الخاص بي عبر واتساب.",
+        "submit": "إرسال الطلب",
+        "submitting": "جارٍ الإرسال…",
+        "terms_prefix": "بإرسال هذا النموذج فإنك توافق على",
+        "terms_of_service": "شروط الخدمة",
+        "terms_and": "و",
+        "privacy_policy": "سياسة الخصوصية",
+        "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى."
+    },
+    "commercial": {
+        "filter_panel": {
+            "title": "الفلاتر",
+            "close_aria": "إغلاق الفلاتر",
+            "location_label": "الموقع",
+            "location_placeholder": "أدخل الموقع",
+            "properties_label": "العقارات",
+            "properties_placeholder": "ابحث بالعنوان أو الموقع",
+            "property_type_label": "نوع العقار",
+            "all_type": "جميع الأنواع",
+            "category_label": "الفئة",
+            "all_categories": "جميع الفئات",
+            "price_title": "نطاق السعر",
+            "min_label": "الحد الأدنى",
+            "max_label": "الحد الأقصى",
+            "min_aria": "الحد الأدنى للسعر",
+            "max_aria": "الحد الأقصى للسعر",
+            "quick_select": "اختيار سريع",
+            "bedrooms_title": "غرف النوم",
+            "bathrooms_title": "الحمامات",
+            "any": "الكل",
+            "area_title": "المساحة (قدم مربع)",
+            "area_min_placeholder": "0",
+            "area_max_placeholder": "10,000",
+            "area_min_aria": "الحد الأدنى للمساحة",
+            "area_max_aria": "الحد الأقصى للمساحة",
+            "amenities_title": "المرافق",
+            "amenity_furnished": "مفروش",
+            "amenity_community_pool": "مسبح مشترك",
+            "amenity_parking": "موقف سيارات",
+            "amenity_gym": "صالة رياضية",
+            "amenity_security": "أمن على مدار الساعة",
+            "amenity_balcony": "شرفة",
+            "amenity_concierge": "خدمة الكونسيرج",
+            "amenity_private_pool": "مسبح خاص",
+            "reset": "إعادة تعيين",
+            "apply": "تطبيق الفلاتر"
+        },
+        "price_presets": {
+            "under_500k": "أقل من 500 ألف",
+            "500k_1m": "500 ألف – مليون",
+            "1m_2m": "مليون – 2 مليون",
+            "2m_5m": "2 – 5 مليون",
+            "5m_10m": "5 – 10 مليون",
+            "10m_plus": "أكثر من 10 مليون"
+        },
+        "property_types": {
+            "hotel_apartment": "شقة فندقية",
+            "loft": "لوفت",
+            "villa": "فيلا",
+            "apartment": "شقة",
+            "penthouse": "بنتهاوس",
+            "town_house": "تاون هاوس",
+            "commercial": "تجاري"
+        },
+        "filter_bar_property_types": {
+            "office": "مكتب",
+            "retail_shop": "محل تجاري",
+            "warehouse": "مستودع",
+            "showroom": "صالة عرض"
+        },
+        "categories": {
+            "all": "جميع الفئات",
+            "buy": "شراء",
+            "lease": "إيجار",
+            "off_plan": "على الخارطة"
+        },
+        "hero": {
+            "default_title": "تجاري",
+            "breadcrumb_aria": "مسار التنقل",
+            "breadcrumb_home": "الرئيسية",
+            "breadcrumb_current": "تجاري"
+        },
+        "filter_bar": {
+            "location_label": "الموقع",
+            "location_placeholder": "أدخل الموقع",
+            "properties_label": "العقارات",
+            "properties_placeholder": "ابحث بالعنوان أو الموقع",
+            "property_type_label": "نوع العقار",
+            "all_type": "جميع الأنواع",
+            "category_label": "الفئة",
+            "all_categories": "جميع الفئات",
+            "more_filters_aria": "المزيد من الفلاتر",
+            "search": "بحث"
+        },
+        "card": {
+            "verified": "موثّق من MW",
+            "floor_label": "الطابق",
+            "rera_label": "رقم ريرا",
+            "call_us": "اتصل بنا",
+            "whatsapp": "واتساب",
+            "email": "البريد الإلكتروني",
+            "more_amenities_suffix": "أخرى",
+            "previous_photo_aria": "الصورة السابقة",
+            "next_photo_aria": "الصورة التالية"
+        },
+        "empty_state": {
+            "title": "لا توجد عقارات متاحة",
+            "message": "لا توجد عقارات تجارية مطابقة لبحثك حالياً — حاول تعديل الفلاتر أو توسيع نطاق البحث."
+        },
+        "pagination_aria": "التنقل بين صفحات العقارات التجارية",
+        "previous": "السابق",
+        "next": "التالي",
+        "clear_filters": "مسح الفلاتر"
+    },
+    "empty_state": {
+        "default_title": "لا توجد عقارات متاحة",
+        "default_message": "حاول تعديل الفلاتر أو معايير البحث للعثور على مزيد من النتائج."
+    },
+    "property_details": {
+        "breadcrumb_aria": "مسار التنقل",
+        "breadcrumb_home": "الرئيسية",
+        "breadcrumb_properties": "عقارات في دبي",
+        "gallery_prev_aria": "الصورة السابقة",
+        "gallery_next_aria": "الصورة التالية",
+        "meta_bedrooms_suffix": "غرف نوم",
+        "meta_bathrooms_suffix": "حمامات",
+        "meta_published_prefix": "تاريخ النشر",
+        "price_yearly_rent": "الإيجار السنوي",
+        "price_starting_price": "السعر الابتدائي",
+        "price_on_request": "السعر عند الطلب",
+        "tabs_aria": "أقسام العقار",
+        "tab_overview": "نظرة عامة",
+        "tab_features": "المزايا والمرافق",
+        "tab_gallery": "معرض الصور",
+        "overview_title": "عن هذا العقار",
+        "description_fallback": "عقار من نوع {type} يقع في {location}.",
+        "gallery_title": "معرض الصور",
+        "pills": {
+            "rera_id": "رقم ريرا",
+            "status": "الحالة",
+            "type": "النوع",
+            "bedrooms": "غرف النوم",
+            "bathrooms": "الحمامات",
+            "location": "الموقع",
+            "size": "المساحة",
+            "garage": "المرآب",
+            "year_built": "سنة البناء"
+        },
+        "agent_card": {
+            "serves_in_dubai": "يعمل في دبي",
+            "years_of_experience_prefix": "سنوات الخبرة",
+            "preferred_areas_prefix": "المناطق المفضلة",
+            "call_aria": "اتصل بـ {name}",
+            "whatsapp_aria": "واتساب {name}",
+            "email_aria": "راسل {name}",
+            "view_details": "عرض التفاصيل"
+        },
+        "enquiry": {
+            "title": "استفسر عن هذا العقار",
+            "name_label": "الاسم*",
+            "name_placeholder": "اسمك",
+            "email_label": "البريد الإلكتروني*",
+            "email_placeholder": "بريدك الإلكتروني",
+            "phone_label": "الهاتف",
+            "phone_placeholder": "هاتفك",
+            "property_label": "العقار",
+            "message_label": "الرسالة",
+            "sending": "جارٍ الإرسال…",
+            "submit": "إرسال الاستفسار"
+        },
+        "ad": {
+            "label": "إعلان",
+            "eyebrow": "إم دبليو ريالتي",
+            "title": "بِع عقارك بشكل أسرع",
+            "text": "أدرج عقارك مع إم دبليو ريالتي وتواصل مع آلاف المشترين الموثوقين في الإمارات.",
+            "cta": "أضف عقارك"
+        },
+        "similar": {
+            "title": "عقارات مشابهة",
+            "previous_aria": "العقارات السابقة",
+            "next_aria": "العقارات التالية"
+        },
+        "not_found": {
+            "title": "العقار غير موجود",
+            "message": "إعلان هذا العقار غير موجود أو لم يعد متاحاً.",
+            "back_link": "العودة إلى العقارات"
+        },
+        "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى."
+    },
+    "about": {
+        "breadcrumb_aria": "مسار التنقل",
+        "breadcrumb_home": "الرئيسية",
+        "breadcrumb_current": "من نحن",
+        "director": {
+            "read_message": "اقرأ رسالة المدير"
+        },
+        "steps": {
+            "heading": "أضف عقارك في 3 خطوات بسيطة"
+        },
+        "why_choose_us": {
+            "heading": "لماذا تختارنا",
+            "photo_alt": "برج سكني عند الغسق"
+        },
+        "diversity": {
+            "pause_video_aria": "إيقاف الفيديو مؤقتاً"
+        },
+        "newsletter": {
+            "title": "النشرة الإخبارية",
+            "text": "اشترك لتصلك أحدث المقالات",
+            "placeholder": "أدخل عنوان بريدك الإلكتروني",
+            "submit": "اشترك الآن"
+        }
+    },
+    "contact_page": {
+        "page_title": "اتصل بنا",
+        "breadcrumb_aria": "مسار التنقل",
+        "breadcrumb_home": "الرئيسية",
+        "breadcrumb_current": "اتصل بنا",
+        "form": {
+            "name_label": "الاسم*",
+            "name_placeholder": "اسمك",
+            "email_label": "البريد الإلكتروني*",
+            "email_placeholder": "بريدك الإلكتروني",
+            "phone_label": "الهاتف",
+            "phone_placeholder": "هاتفك",
+            "message_label": "الرسالة",
+            "message_placeholder": "كيف يمكننا مساعدتك؟",
+            "sending": "جارٍ الإرسال…",
+            "submit": "إرسال الرسالة"
+        },
+        "info": {
+            "office_address_label": "عنوان المكتب",
+            "call_us_label": "اتصل بنا",
+            "email_us_label": "راسلنا",
+            "whatsapp_label": "واتساب",
+            "working_hours_label": "ساعات العمل",
+            "follow_us_label": "تابعنا"
+        },
+        "social": {
+            "twitter_aria": "تويتر",
+            "facebook_aria": "فيسبوك",
+            "instagram_aria": "إنستغرام",
+            "linkedin_aria": "لينكدإن"
+        },
+        "map_title": "خريطة موقع المكتب",
+        "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى."
+    },
+    "agents": {
+        "hero_default_title": "وكيلنا",
+        "breadcrumb_aria": "مسار التنقل",
+        "breadcrumb_home": "الرئيسية",
+        "breadcrumb_current": "الوكيل",
+        "card": {
+            "serves_in_dubai": "يعمل في دبي",
+            "rent_prefix": "إيجار",
+            "sell_prefix": "بيع",
+            "years_of_experience_prefix": "سنوات الخبرة",
+            "preferred_areas_prefix": "المناطق المفضلة",
+            "view_details": "عرض التفاصيل"
+        }
+    },
+    "agencies": {
+        "hero_default_title": "وكالاتنا",
+        "breadcrumb_aria": "مسار التنقل",
+        "breadcrumb_home": "الرئيسية",
+        "breadcrumb_current": "الوكالات",
+        "filter": {
+            "location_label": "الموقع",
+            "location_placeholder": "أدخل الموقع",
+            "name_label": "اسم الوكالة",
+            "name_placeholder": "ابحث باسم الوكالة",
+            "search": "بحث",
+            "views_aria": "تبديل طريقة عرض الوكالات",
+            "grid_view_aria": "عرض شبكي",
+            "list_view_aria": "عرض قائمة"
+        },
+        "section_default_title": "أفضل الوكالات",
+        "section_default_description": "استكشف وكالات ذات سجل حافل من معدلات استجابة عالية وإعلانات موثوقة.",
+        "no_results": "لا توجد وكالات مطابقة لبحثك.",
+        "card": {
+            "properties_prefix": "العقارات",
+            "default_service_area": "منطقة الخدمة: دبي",
+            "call_aria": "اتصل بـ {name}",
+            "email_aria": "راسل {name}",
+            "view_details": "عرض التفاصيل"
+        }
+    },
+    "agent_details": {
+        "breadcrumb_aria": "مسار التنقل",
+        "breadcrumb_home": "الرئيسية",
+        "breadcrumb_agents": "الوكيل",
+        "serves_in_dubai": "يعمل في دبي",
+        "share_label": "مشاركة",
+        "share_x_aria": "مشاركة على X",
+        "share_facebook_aria": "مشاركة على فيسبوك",
+        "share_instagram_aria": "مشاركة على إنستغرام",
+        "share_linkedin_aria": "مشاركة على لينكدإن",
+        "years_of_experience_prefix": "سنوات الخبرة",
+        "preferred_areas_prefix": "المناطق المفضلة",
+        "rent_prefix": "إيجار",
+        "sell_prefix": "بيع",
+        "email": "البريد الإلكتروني",
+        "call_us": "اتصل بنا",
+        "whatsapp": "واتساب",
+        "tabs": {
+            "about": "نبذة عني",
+            "listings": "عقاراتي المعروضة"
+        },
+        "bio_fallback": "{name} خبير عقاري مقيم في دبي وجاهز لمساعدتك في الشراء أو البيع أو الإيجار.",
+        "other_properties_title": "عقارات أخرى",
+        "previous_properties_aria": "العقارات السابقة",
+        "next_properties_aria": "العقارات التالية",
+        "verified": "موثّق",
+        "save_property_aria": "حفظ العقار",
+        "previous_photo_aria": "الصورة السابقة",
+        "next_photo_aria": "الصورة التالية",
+        "not_found": {
+            "title": "الوكيل غير موجود",
+            "message": "هذا الملف الشخصي للوكيل غير موجود أو لم يعد نشطاً.",
+            "back_link": "العودة إلى الوكلاء"
+        }
+    },
+    "agency_details": {
+        "breadcrumb_aria": "مسار التنقل",
+        "breadcrumb_home": "الرئيسية",
+        "breadcrumb_agencies": "الوكالات",
+        "since_prefix": "منذ",
+        "call_aria": "اتصل بـ {name}",
+        "email_aria": "راسل {name}",
+        "whatsapp_aria": "واتساب {name}",
+        "default_service_area": "منطقة الخدمة: دبي",
+        "stats": {
+            "total_agent": "إجمالي الوكلاء",
+            "total_properties": "إجمالي العقارات",
+            "for_sale": "للبيع",
+            "for_rent": "للإيجار"
+        },
+        "bio_fallback": "{name} وكالة عقارية مقرها دبي.",
+        "map_title": "منطقة الخدمة — دبي",
+        "properties_panel_title": "العقارات",
+        "previous_properties_aria": "العقارات السابقة",
+        "next_properties_aria": "العقارات التالية",
+        "verified": "موثّق",
+        "save_property_aria": "حفظ العقار",
+        "previous_photo_aria": "الصورة السابقة",
+        "next_photo_aria": "الصورة التالية",
+        "email": "البريد الإلكتروني",
+        "call_us": "اتصل بنا",
+        "whatsapp": "واتساب",
+        "agents_panel_title": "الوكيل",
+        "view_all": "عرض الكل",
+        "previous_agents_aria": "الوكلاء السابقون",
+        "next_agents_aria": "الوكلاء التاليون",
+        "serves_in_dubai": "يعمل في دبي",
+        "rent_prefix": "إيجار",
+        "sell_prefix": "بيع",
+        "years_of_experience_prefix": "سنوات الخبرة",
+        "preferred_areas_prefix": "المناطق المفضلة",
+        "view_details": "عرض التفاصيل",
+        "contact_info_title": "معلومات الاتصال",
+        "agency_details_subtitle": "تفاصيل الوكالة",
+        "orn_label": "رقم ORN",
+        "not_found": {
+            "title": "الوكالة غير موجودة",
+            "message": "هذا الملف الشخصي للوكالة غير موجود أو لم يعد نشطاً.",
+            "back_link": "العودة إلى الوكالات"
+        }
+    },
+    "blogs": {
+        "page_default_title": "المدونة",
+        "heading_default": "أحدث المقالات",
+        "breadcrumb_aria": "مسار التنقل",
+        "breadcrumb_home": "الرئيسية",
+        "all_label": "الكل",
+        "read_more": "اقرأ المزيد",
+        "pagination_aria": "التنقل بين صفحات المدونة",
+        "previous": "السابق",
+        "next": "التالي"
+    },
+    "blog_details": {
+        "breadcrumb_aria": "مسار التنقل",
+        "breadcrumb_home": "الرئيسية",
+        "breadcrumb_blog": "المدونة",
+        "share_label": "شارك هذا المقال",
+        "share_facebook_aria": "مشاركة على فيسبوك",
+        "share_twitter_aria": "مشاركة على تويتر",
+        "share_linkedin_aria": "مشاركة على لينكدإن",
+        "share_instagram_aria": "مشاركة على إنستغرام",
+        "pager_aria": "التنقل بين المقالات",
+        "previous_post": "المقال السابق",
+        "next_post": "المقال التالي",
+        "earliest_article": "أنت على أقدم مقال",
+        "latest_article": "أنت على أحدث مقال",
+        "recent_blogs_title": "أحدث المقالات",
+        "categories_title": "التصنيفات",
+        "not_found": {
+            "title": "المقال غير موجود",
+            "message": "هذا المقال غير موجود أو تمت إزالته.",
+            "back_link": "العودة إلى المدونة"
+        }
+    },
+    "login": {
+        "photo_alt": "شقة دافئة في دبي",
+        "tab_user": "مستخدم",
+        "tab_agent_agency": "وكيل \/ وكالة",
+        "title": "مرحباً بعودتك",
+        "subtitle": "يرجى إدخال بياناتك لتسجيل الدخول.",
+        "email_label": "البريد الإلكتروني",
+        "email_placeholder": "أدخل بريدك الإلكتروني",
+        "password_label": "كلمة المرور",
+        "password_placeholder": "أدخل كلمة المرور",
+        "forgot_password": "هل نسيت كلمة المرور؟",
+        "submit": "تسجيل الدخول",
+        "submitting": "جارٍ تسجيل الدخول…",
+        "signup_prompt": "ليس لديك حساب؟",
+        "signup_link": "إنشاء حساب",
+        "divider_or": "أو",
+        "google_cta": "المتابعة باستخدام Google",
+        "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى.",
+        "agent_tab_hint": "مسجّل كوكيل أو وكالة؟ انتقل إلى تبويب الوكيل \/ الوكالة."
+    },
+    "signup": {
+        "photo_alt": "شقة دافئة في دبي",
+        "title": "أنشئ حسابك",
+        "subtitle_user": "سجّل كمستخدم لحفظ المفضلة والاستفسار عن العقارات.",
+        "subtitle_agent": "سجّل كوكيل لعرض العقارات وإدارة عملائك.",
+        "subtitle_agency": "سجّل وكالتك لعرض العقارات وإدارة وكلائك.",
+        "login_text_user": "لديك حساب بالفعل؟",
+        "login_text_agent": "لديك حساب وكيل بالفعل؟",
+        "login_text_agency": "لديك حساب وكالة بالفعل؟",
+        "password_rules_title": "متطلبات كلمة المرور",
+        "password_requirements_aria": "متطلبات كلمة المرور",
+        "rule_length": "8 أحرف على الأقل",
+        "rule_lowercase": "حرف صغير واحد",
+        "rule_uppercase": "حرف كبير واحد",
+        "rule_number": "رقم واحد",
+        "rule_special": "رمز خاص واحد",
+        "strength_weak": "ضعيفة",
+        "strength_medium": "متوسطة",
+        "strength_strong": "قوية",
+        "account_type_label": "نوع الحساب",
+        "role_customer": "عميل",
+        "role_agent": "وكيل",
+        "role_agency": "وكالة",
+        "full_name_label": "الاسم الكامل",
+        "full_name_placeholder": "أدخل اسمك الكامل",
+        "email_label": "البريد الإلكتروني",
+        "email_placeholder": "أدخل بريدك الإلكتروني",
+        "phone_label": "رقم الهاتف",
+        "phone_placeholder": "أدخل رقم الهاتف",
+        "email_invalid": "يرجى إدخال بريد إلكتروني صحيح.",
+        "phone_invalid": "يرجى إدخال رقم هاتف صحيح.",
+        "password_label": "كلمة المرور",
+        "password_create_placeholder": "أنشئ كلمة مرور",
+        "confirm_password_label": "تأكيد كلمة المرور",
+        "confirm_password_placeholder": "أعد إدخال كلمة المرور",
+        "password_strength_label": "قوة كلمة المرور",
+        "passwords_match": "كلمتا المرور متطابقتان",
+        "passwords_no_match": "كلمتا المرور غير متطابقتين",
+        "agent_license_label": "رقم رخصة ريرا \/ الوسيط",
+        "agent_license_placeholder": "أدخل رقم رخصتك",
+        "agency_name_label": "اسم الوكالة",
+        "agency_name_placeholder": "أدخل اسم وكالتك",
+        "agency_license_label": "رقم الرخصة التجارية",
+        "agency_license_placeholder": "أدخل رقم رخصتك التجارية",
+        "agency_contact_label": "اسم الشخص المسؤول",
+        "agency_contact_placeholder": "أدخل اسم الشخص المسؤول",
+        "agency_address_label": "عنوان المكتب",
+        "agency_address_placeholder": "أدخل عنوان مكتبك",
+        "terms_prefix": "أوافق على",
+        "terms_link_text": "الشروط والأحكام",
+        "terms_suffix": "وسياسة الخصوصية.",
+        "sign_in_link": "تسجيل الدخول",
+        "submit": "إنشاء حساب",
+        "submitting": "جارٍ إنشاء الحساب…",
+        "divider_or": "أو",
+        "google_cta": "المتابعة باستخدام Google",
+        "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى."
+    },
+    "forgot_password": {
+        "photo_alt": "شقة دافئة في دبي",
+        "title": "هل نسيت كلمة المرور؟",
+        "subtitle": "أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيينها.",
+        "email_label": "البريد الإلكتروني",
+        "email_placeholder": "أدخل بريدك الإلكتروني",
+        "submit": "إرسال رابط إعادة التعيين",
+        "submitting": "جارٍ الإرسال…",
+        "back_to_sign_in": "العودة إلى تسجيل الدخول",
+        "sent_title": "تحقق من بريدك الإلكتروني",
+        "sent_subtitle": "إذا كان هناك حساب مرتبط بـ {email}، فقد أرسلنا رابطاً لإعادة تعيين كلمة المرور. ينتهي صلاحية الرابط خلال 60 دقيقة.",
+        "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى."
+    },
+    "reset_password": {
+        "photo_alt": "شقة دافئة في دبي",
+        "invalid_title": "رابط إعادة التعيين غير صالح",
+        "invalid_message": "رابط إعادة تعيين كلمة المرور هذا غير صالح أو غير مكتمل. يرجى طلب رابط جديد.",
+        "request_new_link": "طلب رابط جديد",
+        "done_title": "تم إعادة تعيين كلمة المرور",
+        "done_message": "تم إعادة تعيين كلمة مرورك — يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.",
+        "continue_to_sign_in": "المتابعة لتسجيل الدخول",
+        "title": "أعد تعيين كلمة المرور",
+        "subtitle": "اختر كلمة مرور جديدة لـ {email}.",
+        "new_password_label": "كلمة المرور الجديدة",
+        "password_requirements_aria": "متطلبات كلمة المرور",
+        "password_rules_title": "متطلبات كلمة المرور",
+        "rule_length": "8 أحرف على الأقل",
+        "rule_lowercase": "حرف صغير واحد",
+        "rule_uppercase": "حرف كبير واحد",
+        "rule_number": "رقم واحد",
+        "rule_special": "رمز خاص واحد",
+        "password_create_placeholder": "أنشئ كلمة مرور جديدة",
+        "confirm_password_label": "تأكيد كلمة المرور الجديدة",
+        "confirm_password_placeholder": "أعد إدخال كلمة المرور الجديدة",
+        "password_strength_label": "قوة كلمة المرور",
+        "strength_weak": "ضعيفة",
+        "strength_medium": "متوسطة",
+        "strength_strong": "قوية",
+        "passwords_match": "كلمتا المرور متطابقتان",
+        "passwords_no_match": "كلمتا المرور غير متطابقتين",
+        "submit": "إعادة تعيين كلمة المرور",
+        "submitting": "جارٍ إعادة التعيين…",
+        "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى."
+    },
+    "verify_otp": {
+        "photo_alt": "شقة دافئة في دبي",
+        "verified_title": "تم التحقق بنجاح",
+        "verified_subtitle": "تم التحقق من بريدك الإلكتروني.",
+        "verified_badge": "موثّق وآمن",
+        "continue_to_account": "المتابعة إلى حسابك",
+        "failed_title": "فشل التحقق",
+        "title": "لنتحقق من بريدك الإلكتروني",
+        "masked_note": "لقد أرسلنا رمزاً مكوناً من 4 أرقام إلى بريدك الإلكتروني.",
+        "auto_verify_note": "سيتم التحقق تلقائياً بمجرد إدخاله.",
+        "verifying_note": "جارٍ التحقق من الرمز...",
+        "resend_prompt": "لم تستلم الرمز؟",
+        "resend_sending": "جارٍ الإرسال…",
+        "resend_in": "إعادة الإرسال خلال {seconds} ثانية",
+        "resend": "إعادة الإرسال",
+        "resend_generic_error": "تعذر إعادة إرسال الرمز — يرجى المحاولة مرة أخرى.",
+        "default_invalid_code_error": "الرمز غير صالح أو منتهي الصلاحية."
+    },
+    "profile": {
+        "nav": {
+            "overview": "نظرة عامة",
+            "wishlist": "المفضلة",
+            "saved_searches": "عمليات البحث المحفوظة",
+            "enquiries": "استفساراتي",
+            "settings": "إعدادات الحساب"
+        },
+        "nav_aria": "لوحة تحكم الحساب",
+        "log_out": "تسجيل الخروج",
+        "overview": {
+            "welcome_back": "مرحباً بعودتك",
+            "subtitle": "إليك ما يحدث في حسابك.",
+            "stat_saved_properties": "العقارات المحفوظة",
+            "stat_saved_searches": "عمليات البحث المحفوظة",
+            "stat_enquiries_sent": "الاستفسارات المرسلة",
+            "recent_activity": "النشاط الأخير",
+            "no_activity": "لا يوجد نشاط بعد — ابدأ بتصفح العقارات لحفظ المفضلة وإرسال الاستفسارات."
+        },
+        "wishlist": {
+            "title": "المفضلة",
+            "subtitle": "العقارات التي حفظتها لوقت لاحق. انقر على القلب لإزالة أحدها.",
+            "empty": "لم تقم بحفظ أي عقارات بعد.",
+            "remove_aria": "إزالة من المفضلة",
+            "furnished_badge": "مفروش",
+            "email": "البريد الإلكتروني",
+            "call_us": "اتصل بنا",
+            "whatsapp": "واتساب"
+        },
+        "saved_searches": {
+            "title": "عمليات البحث المحفوظة",
+            "subtitle": "احصل على إشعار عند توفر إعلانات جديدة تطابق هذه المعايير.",
+            "empty": "لم تقم بحفظ أي عمليات بحث بعد.",
+            "view_results": "عرض النتائج",
+            "delete_aria": "حذف البحث المحفوظ"
+        },
+        "enquiries": {
+            "title": "استفساراتي",
+            "subtitle": "الرسائل التي أرسلتها إلى الوكلاء والوكالات.",
+            "empty": "لم ترسل أي استفسارات بعد.",
+            "table_property": "العقار",
+            "table_sent_to": "أُرسلت إلى",
+            "table_date": "التاريخ",
+            "table_status": "الحالة"
+        },
+        "settings": {
+            "title": "إعدادات الحساب",
+            "subtitle": "حدّث معلوماتك الشخصية وكلمة المرور.",
+            "change_photo": "تغيير الصورة",
+            "photo_hint": "JPG أو PNG، بحد أقصى 2 ميغابايت.",
+            "full_name_label": "الاسم الكامل",
+            "email_label": "البريد الإلكتروني",
+            "phone_label": "رقم الهاتف",
+            "location_label": "الموقع",
+            "new_password_label": "كلمة المرور الجديدة",
+            "new_password_placeholder": "اتركه فارغاً للاحتفاظ بكلمة المرور الحالية",
+            "confirm_password_label": "تأكيد كلمة المرور الجديدة",
+            "confirm_password_placeholder": "أعد إدخال كلمة المرور الجديدة",
+            "submit": "حفظ التغييرات",
+            "submitting": "جارٍ الحفظ…",
+            "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى."
+        }
+    },
+    "legal_page": {
+        "breadcrumb_aria": "مسار التنقل",
+        "breadcrumb_home": "الرئيسية",
+        "unpublished_message": "لم يتم نشر هذه الصفحة بعد.",
+        "not_found_title": "الصفحة غير موجودة",
+        "not_found_message": "هذه الصفحة غير موجودة.",
+        "back_to_home": "العودة إلى الرئيسية"
+    },
+    "thank_you": {
+        "title": "شكراً لك!",
+        "line1": "تم استلام طلبك.",
+        "line2": "سنتواصل معك قريباً!",
+        "cta": "العودة إلى الصفحة الرئيسية"
+    },
+    "not_found": {
+        "title": "الصفحة غير موجودة",
+        "text": "عذراً، لم نتمكن من العثور على الصفحة التي تبحث عنها.",
+        "cta": "العودة إلى الصفحة الرئيسية"
+    },
+    "chat_widget": {
+        "welcome_message": "مرحباً بك في إم دبليو ريالتي! أنا {name}، مساعدك الشخصي للبحث عن العقارات. أخبرني بما تحلم به، وسأجلب لك نتائج حقيقية في ثوانٍ.",
+        "generic_reply_error": "عذراً، حدث خطأ ما — يرجى المحاولة مرة أخرى.",
+        "open_aria": "فتح المحادثة",
+        "close_aria": "إغلاق المحادثة",
+        "header_sub": "مساعد إم دبليو ريالتي الذكي",
+        "theme_switch_light": "التبديل إلى الوضع الفاتح",
+        "theme_switch_dark": "التبديل إلى الوضع الداكن",
+        "voice_mute": "كتم الردود الصوتية",
+        "voice_read": "قراءة الردود بصوت عالٍ",
+        "clear_conversation_aria": "مسح المحادثة",
+        "dialog_aria": "مساعد الدردشة الذكي",
+        "card": {
+            "bed_suffix": "غرفة نوم",
+            "bath_suffix": "حمام",
+            "details": "التفاصيل",
+            "enquire": "استفسار"
+        },
+        "enquiry_form": {
+            "name_placeholder": "اسمك",
+            "phone_placeholder": "الهاتف",
+            "email_placeholder": "البريد الإلكتروني (اختياري)",
+            "sending": "جارٍ الإرسال…",
+            "submit": "إرسال الاستفسار",
+            "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى."
+        },
+        "filters": {
+            "purpose_aria": "الغرض",
+            "purpose_placeholder": "شراء أم إيجار؟",
+            "buy": "شراء",
+            "rent": "إيجار",
+            "type_aria": "نوع العقار",
+            "type_placeholder": "نوع العقار",
+            "apartment": "شقة",
+            "villa": "فيلا",
+            "townhouse": "تاون هاوس",
+            "penthouse": "بنتهاوس",
+            "bedrooms_aria": "غرف النوم",
+            "bedrooms_placeholder": "غرف النوم",
+            "studio": "استوديو",
+            "budget_placeholder": "الحد الأقصى للميزانية (درهم)",
+            "apply": "اسأل ريمي"
+        },
+        "input": {
+            "filters_aria": "فلاتر البحث",
+            "voice_aria": "اسأل بالصوت",
+            "listening_placeholder": "جارٍ الاستماع…",
+            "ask_placeholder": "اسأل عن العقارات أو إجراءات الشراء…",
+            "send_aria": "إرسال"
+        }
+    },
+    "property_type": {
+        "apartment": "شقة",
+        "villa": "فيلا",
+        "townhouse": "تاون هاوس",
+        "penthouse": "بنتهاوس",
+        "plot": "قطعة أرض",
+        "office": "مكتب",
+        "retail-shop": "محل تجاري",
+        "warehouse": "مستودع",
+        "showroom": "صالة عرض"
+    },
+    "listing_type": {
+        "sale": "شراء",
+        "rent": "إيجار"
+    },
+    "completion_status": {
+        "ready": "جاهز",
+        "off_plan": "على الخارطة"
+    },
+    "furnished": {
+        "yes": "مفروش",
+        "no": "غير مفروش"
+    }
+}

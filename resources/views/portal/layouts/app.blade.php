@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Dashboard') - Partner Portal</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" type="image/png" href="{{ !empty($siteInfo->favicon) ? asset('storage/' . $siteInfo->favicon) : asset('frontend/assets/images/fav.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,7 +32,7 @@
         .notif-icon.tone-red { background: linear-gradient(135deg, #dc3545, #ef6a76); }
         .notif-body { flex: 1; min-width: 0; }
         .notif-title { font-weight: 700; font-size: 0.83rem; color: #1c2340; }
-        .notif-message { font-size: 0.78rem; color: #6b7185; line-height: 1.4; }
+        .notif-message { display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 0.78rem; color: #6b7185; line-height: 1.4; }
         .notif-time { font-size: 0.68rem; color: #a3a8bb; margin-top: 0.2rem; }
         .notif-empty { padding: 2.5rem 1rem; text-align: center; color: #a3a8bb; font-size: 0.85rem; }
     </style>
@@ -63,6 +64,7 @@
                        data-bs-toggle="collapse" href="#masterMenu" role="button"
                        aria-expanded="@if(request()->routeIs('portal.crm.master.*')) true @else false @endif">
                         <i class="fas fa-layer-group"></i> <span>Master</span>
+                        @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                         <i class="fas fa-chevron-down ms-auto portal-nav-chevron"></i>
                     </a>
                     <div class="collapse portal-nav-submenu @if(request()->routeIs('portal.crm.master.*')) show @endif" id="masterMenu">
@@ -94,16 +96,16 @@
                     <i class="fas fa-user-tie"></i> Agents
                 </a>
                 @endif
-                @if($cmsActor)
                 <a href="{{ route('portal.nearby-places.index') }}" class="nav-link @if(request()->routeIs('portal.nearby-places.*')) active @endif">
                     <i class="fas fa-map-marker-alt"></i> Nearby Places
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
-                @endif
 
                 <div class="nav-section-label">Insights</div>
                 <a href="{{ route('portal.crm.reports.index') }}" class="nav-link @if(request()->routeIs('portal.crm.reports.*')) active @endif">
                     <i class="fas fa-chart-pie"></i> Reports
-                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>
+                    @elseif($owner && !$owner->hasReportsAccess())<span class="portal-nav-lock" title="Upgrade your plan to unlock reports"><i class="fas fa-lock"></i></span>@endif
                 </a>
 
                 @if($owner)

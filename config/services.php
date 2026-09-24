@@ -63,4 +63,13 @@ return [
         'model' => env('GROQ_MODEL', 'openai/gpt-oss-120b'),
     ],
 
+    // Plan subscriptions (see App\Services\StripeBillingService). Without a secret key the portal
+    // falls back to the manual "request upgrade → Super Admin approves" flow.
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'currency' => env('STRIPE_CURRENCY', 'aed'),
+    ],
+
 ];

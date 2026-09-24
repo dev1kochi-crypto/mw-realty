@@ -1,14 +1,17 @@
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useWishlist, patchSessionUser } from '../composables/useWishlist';
+import { useStaticText } from '../composables/useStaticText';
 
-const navTabs = [
-    { filter: 'overview', icon: 'icon-home.svg', label: 'Overview' },
-    { filter: 'wishlist', icon: 'heart.svg', label: 'Wishlist' },
-    { filter: 'saved-searches', icon: 'search.svg', label: 'Saved Searches' },
-    { filter: 'enquiries', icon: 'email.svg', label: 'My Enquiries' },
-    { filter: 'settings', icon: 'user.svg', label: 'Account Settings' },
-];
+const { t } = useStaticText();
+
+const navTabs = computed(() => [
+    { filter: 'overview', icon: 'icon-home.svg', label: t('profile.nav.overview') },
+    { filter: 'wishlist', icon: 'heart.svg', label: t('profile.nav.wishlist') },
+    { filter: 'saved-searches', icon: 'search.svg', label: t('profile.nav.saved_searches') },
+    { filter: 'enquiries', icon: 'email.svg', label: t('profile.nav.enquiries') },
+    { filter: 'settings', icon: 'user.svg', label: t('profile.nav.settings') },
+]);
 
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 const { toggleWishlist } = useWishlist();
@@ -116,7 +119,7 @@ function saveSettings() {
         }
     }).catch((error) => {
         const errors = error.response?.data?.errors;
-        const text = errors ? Object.values(errors).flat().join(' ') : 'Something went wrong — please try again.';
+        const text = errors ? Object.values(errors).flat().join(' ') : t('profile.settings.generic_error');
         settingsFeedback.value = { type: 'error', text };
     }).finally(() => {
         settingsSubmitting.value = false;
@@ -145,7 +148,7 @@ watch(dashboard, () => {
                             <p class="mw-dashboard__email">{{ dashboard.profile.email }}</p>
                         </div>
 
-                        <nav class="mw-dashboard__nav" data-tab-group data-filter-target="#dashboard-panels" aria-label="Account dashboard">
+                        <nav class="mw-dashboard__nav" data-tab-group data-filter-target="#dashboard-panels" :aria-label="t('profile.nav_aria')">
                             <button v-for="(tab, index) in navTabs" :key="tab.filter" type="button" :class="{ 'is-active': index === 0 }" data-tab :data-filter="tab.filter">
                                 <img :src="`/frontend/assets/images/icons/${tab.icon}`" alt="">
                                 {{ tab.label }}
@@ -156,7 +159,7 @@ watch(dashboard, () => {
                             <input type="hidden" name="_token" :value="csrfToken">
                             <button type="submit" class="mw-dashboard__logout" style="background: transparent; width: 100%; text-align: left; cursor: pointer;">
                                 <img src="/frontend/assets/images/icons/arrow-up-right.svg" alt="">
-                                Log Out
+                                {{ t('profile.log_out') }}
                             </button>
                         </form>
                     </aside>
@@ -164,27 +167,27 @@ watch(dashboard, () => {
                     <div class="mw-dashboard__content" id="dashboard-panels">
 
                         <div class="mw-dashboard__panel" data-category="overview">
-                            <h1 class="mw-dashboard__panel-title">Welcome back, {{ dashboard.profile.name }}</h1>
-                            <p class="mw-dashboard__panel-subtitle">Here's what's happening with your account.</p>
+                            <h1 class="mw-dashboard__panel-title">{{ t('profile.overview.welcome_back') }}, {{ dashboard.profile.name }}</h1>
+                            <p class="mw-dashboard__panel-subtitle">{{ t('profile.overview.subtitle') }}</p>
 
                             <div class="mw-dashboard__stats">
                                 <div class="mw-dashboard__stat">
                                     <span class="mw-dashboard__stat-value">{{ dashboard.stats.wishlist }}</span>
-                                    <span class="mw-dashboard__stat-label">Saved Properties</span>
+                                    <span class="mw-dashboard__stat-label">{{ t('profile.overview.stat_saved_properties') }}</span>
                                 </div>
                                 <div class="mw-dashboard__stat">
                                     <span class="mw-dashboard__stat-value">{{ dashboard.stats.saved_searches }}</span>
-                                    <span class="mw-dashboard__stat-label">Saved Searches</span>
+                                    <span class="mw-dashboard__stat-label">{{ t('profile.overview.stat_saved_searches') }}</span>
                                 </div>
                                 <div class="mw-dashboard__stat">
                                     <span class="mw-dashboard__stat-value">{{ dashboard.stats.enquiries }}</span>
-                                    <span class="mw-dashboard__stat-label">Enquiries Sent</span>
+                                    <span class="mw-dashboard__stat-label">{{ t('profile.overview.stat_enquiries_sent') }}</span>
                                 </div>
                             </div>
 
                             <div class="mw-dashboard__activity">
-                                <h3>Recent Activity</h3>
-                                <p v-if="!dashboard.activity.length" class="mw-dashboard__panel-subtitle">No activity yet — start browsing properties to save favorites and send enquiries.</p>
+                                <h3>{{ t('profile.overview.recent_activity') }}</h3>
+                                <p v-if="!dashboard.activity.length" class="mw-dashboard__panel-subtitle">{{ t('profile.overview.no_activity') }}</p>
                                 <div v-for="(item, index) in dashboard.activity" :key="index" class="mw-dashboard__activity-item">
                                     <span class="mw-dashboard__activity-item-icon"><img :src="`/frontend/assets/images/icons/${item.icon}`" alt=""></span>
                                     <span class="mw-dashboard__activity-item-text">
@@ -196,10 +199,10 @@ watch(dashboard, () => {
                         </div>
 
                         <div class="mw-dashboard__panel" data-category="wishlist" hidden>
-                            <h1 class="mw-dashboard__panel-title">Wishlist</h1>
-                            <p class="mw-dashboard__panel-subtitle">Properties you've saved for later. Click the heart to remove one.</p>
+                            <h1 class="mw-dashboard__panel-title">{{ t('profile.wishlist.title') }}</h1>
+                            <p class="mw-dashboard__panel-subtitle">{{ t('profile.wishlist.subtitle') }}</p>
 
-                            <p v-if="!dashboard.wishlist.length" class="mw-dashboard__panel-subtitle">You haven't saved any properties yet.</p>
+                            <p v-if="!dashboard.wishlist.length" class="mw-dashboard__panel-subtitle">{{ t('profile.wishlist.empty') }}</p>
 
                             <div class="mw-dashboard__wishlist-grid">
 
@@ -207,7 +210,7 @@ watch(dashboard, () => {
                                     <div class="mw-projects__media">
                                         <router-link :to="`/property-details/${property.slug}`"><img :src="property.image" :alt="property.name" class="mw-projects__photo"></router-link>
                                         <span v-if="property.purpose_badge" class="mw-dubai-card__purpose">{{ property.purpose_badge }}</span>
-                                        <button type="button" class="mw-dubai-card__fav is-saved" aria-label="Remove from wishlist" @click="removeFromWishlist(property.id)">
+                                        <button type="button" class="mw-dubai-card__fav is-saved" :aria-label="t('profile.wishlist.remove_aria')" @click="removeFromWishlist(property.id)">
                                             <img src="/frontend/assets/images/icons/heart.svg" alt="" width="18" height="18">
                                         </button>
                                         <span class="mw-dubai-card__type">{{ property.type }}</span>
@@ -215,7 +218,7 @@ watch(dashboard, () => {
                                     <div class="mw-dubai-card__body">
                                         <div class="mw-dubai-card__price-row">
                                             <span class="mw-dubai-card__price">{{ property.price }}</span>
-                                            <span v-if="property.furnished" class="mw-dubai-card__amenity">Furnished</span>
+                                            <span v-if="property.furnished" class="mw-dubai-card__amenity">{{ t('profile.wishlist.furnished_badge') }}</span>
                                         </div>
                                         <h3 class="mw-dubai-card__title"><router-link :to="`/property-details/${property.slug}`">{{ property.name }}</router-link></h3>
                                         <p class="mw-dubai-card__location">
@@ -232,15 +235,15 @@ watch(dashboard, () => {
                                             <div class="mw-dubai-card__contacts">
                                                 <a v-if="property.contact.email" :href="`mailto:${property.contact.email}`" class="mw-dubai-card__contact-btn">
                                                     <img src="/frontend/assets/images/icons/email.svg" alt="" width="16" height="16">
-                                                    Email
+                                                    {{ t('profile.wishlist.email') }}
                                                 </a>
                                                 <a v-if="property.contact.phone" :href="`tel:${property.contact.phone}`" class="mw-dubai-card__contact-btn">
                                                     <img src="/frontend/assets/images/icons/phone.svg" alt="" width="16" height="16">
-                                                    Call Us
+                                                    {{ t('profile.wishlist.call_us') }}
                                                 </a>
                                                 <a v-if="property.contact.whatsapp_number" :href="whatsappUrl(property.contact.whatsapp_number)" target="_blank" rel="noopener" class="mw-dubai-card__contact-btn">
                                                     <img src="/frontend/assets/images/icons/whatsapp.svg" alt="" width="16" height="16">
-                                                    WhatsApp
+                                                    {{ t('profile.wishlist.whatsapp') }}
                                                 </a>
                                             </div>
                                         </template>
@@ -251,10 +254,10 @@ watch(dashboard, () => {
                         </div>
 
                         <div class="mw-dashboard__panel" data-category="saved-searches" hidden>
-                            <h1 class="mw-dashboard__panel-title">Saved Searches</h1>
-                            <p class="mw-dashboard__panel-subtitle">Get notified when new listings match these criteria.</p>
+                            <h1 class="mw-dashboard__panel-title">{{ t('profile.saved_searches.title') }}</h1>
+                            <p class="mw-dashboard__panel-subtitle">{{ t('profile.saved_searches.subtitle') }}</p>
 
-                            <p v-if="!dashboard.saved_searches.length" class="mw-dashboard__panel-subtitle">You haven't saved any searches yet.</p>
+                            <p v-if="!dashboard.saved_searches.length" class="mw-dashboard__panel-subtitle">{{ t('profile.saved_searches.empty') }}</p>
 
                             <div class="mw-dashboard__searches">
                                 <div v-for="search in dashboard.saved_searches" :key="search.id" class="mw-dashboard__search-row">
@@ -263,8 +266,8 @@ watch(dashboard, () => {
                                         <p class="mw-dashboard__search-row-meta">{{ search.meta }}</p>
                                     </div>
                                     <div class="mw-dashboard__search-row-actions">
-                                        <router-link to="/properties" class="mw-dashboard__link-btn">View Results</router-link>
-                                        <button type="button" class="mw-dashboard__icon-btn" aria-label="Delete saved search" @click="deleteSavedSearch(search.id)">
+                                        <router-link to="/properties" class="mw-dashboard__link-btn">{{ t('profile.saved_searches.view_results') }}</router-link>
+                                        <button type="button" class="mw-dashboard__icon-btn" :aria-label="t('profile.saved_searches.delete_aria')" @click="deleteSavedSearch(search.id)">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
                                         </button>
                                     </div>
@@ -273,19 +276,19 @@ watch(dashboard, () => {
                         </div>
 
                         <div class="mw-dashboard__panel" data-category="enquiries" hidden>
-                            <h1 class="mw-dashboard__panel-title">My Enquiries</h1>
-                            <p class="mw-dashboard__panel-subtitle">Messages you've sent to agents and agencies.</p>
+                            <h1 class="mw-dashboard__panel-title">{{ t('profile.enquiries.title') }}</h1>
+                            <p class="mw-dashboard__panel-subtitle">{{ t('profile.enquiries.subtitle') }}</p>
 
-                            <p v-if="!dashboard.enquiries.length" class="mw-dashboard__panel-subtitle">You haven't sent any enquiries yet.</p>
+                            <p v-if="!dashboard.enquiries.length" class="mw-dashboard__panel-subtitle">{{ t('profile.enquiries.empty') }}</p>
 
                             <div v-else class="mw-dashboard__table-wrap">
                                 <table class="mw-dashboard__table">
                                     <thead>
                                         <tr>
-                                            <th>Property</th>
-                                            <th>Sent To</th>
-                                            <th>Date</th>
-                                            <th>Status</th>
+                                            <th>{{ t('profile.enquiries.table_property') }}</th>
+                                            <th>{{ t('profile.enquiries.table_sent_to') }}</th>
+                                            <th>{{ t('profile.enquiries.table_date') }}</th>
+                                            <th>{{ t('profile.enquiries.table_status') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -301,8 +304,8 @@ watch(dashboard, () => {
                         </div>
 
                         <div class="mw-dashboard__panel" data-category="settings" hidden>
-                            <h1 class="mw-dashboard__panel-title">Account Settings</h1>
-                            <p class="mw-dashboard__panel-subtitle">Update your personal information and password.</p>
+                            <h1 class="mw-dashboard__panel-title">{{ t('profile.settings.title') }}</h1>
+                            <p class="mw-dashboard__panel-subtitle">{{ t('profile.settings.subtitle') }}</p>
 
                             <form class="mw-dashboard__settings-form" @submit.prevent="saveSettings">
                                 <div class="mw-dashboard__avatar-upload">
@@ -310,44 +313,44 @@ watch(dashboard, () => {
                                         <img :src="avatarPreview || dashboard.profile.avatar_url || '/frontend/assets/images/home/testimonial-anna.jpg'" alt="">
                                     </span>
                                     <div>
-                                        <button type="button" class="mw-dashboard__link-btn" @click="avatarInput?.click()">Change Photo</button>
-                                        <p class="mw-dashboard__avatar-upload-hint">JPG or PNG, up to 2MB.</p>
+                                        <button type="button" class="mw-dashboard__link-btn" @click="avatarInput?.click()">{{ t('profile.settings.change_photo') }}</button>
+                                        <p class="mw-dashboard__avatar-upload-hint">{{ t('profile.settings.photo_hint') }}</p>
                                     </div>
                                     <input ref="avatarInput" type="file" accept="image/*" class="sr-only" @change="handleAvatarChange">
                                 </div>
 
                                 <div class="mw-dashboard__settings-grid">
                                     <div class="mw-login-form__field">
-                                        <label for="settings-name">Full Name</label>
+                                        <label for="settings-name">{{ t('profile.settings.full_name_label') }}</label>
                                         <input type="text" id="settings-name" v-model="settingsForm.name" autocomplete="name" required>
                                     </div>
                                     <div class="mw-login-form__field">
-                                        <label for="settings-email">Email Address</label>
+                                        <label for="settings-email">{{ t('profile.settings.email_label') }}</label>
                                         <input type="email" id="settings-email" v-model="settingsForm.email" autocomplete="email" required>
                                     </div>
                                     <div class="mw-login-form__field">
-                                        <label for="settings-phone">Phone Number</label>
+                                        <label for="settings-phone">{{ t('profile.settings.phone_label') }}</label>
                                         <input type="tel" id="settings-phone" v-model="settingsForm.phone" autocomplete="tel">
                                     </div>
                                     <div class="mw-login-form__field">
-                                        <label for="settings-location">Location</label>
+                                        <label for="settings-location">{{ t('profile.settings.location_label') }}</label>
                                         <input type="text" id="settings-location" v-model="settingsForm.location" autocomplete="address-level2">
                                     </div>
                                 </div>
 
                                 <div class="mw-dashboard__settings-grid">
                                     <div class="mw-login-form__field">
-                                        <label for="settings-password">New Password</label>
-                                        <input type="password" id="settings-password" v-model="settingsForm.password" placeholder="Leave blank to keep current password" autocomplete="new-password">
+                                        <label for="settings-password">{{ t('profile.settings.new_password_label') }}</label>
+                                        <input type="password" id="settings-password" v-model="settingsForm.password" :placeholder="t('profile.settings.new_password_placeholder')" autocomplete="new-password">
                                     </div>
                                     <div class="mw-login-form__field">
-                                        <label for="settings-password-confirm">Confirm New Password</label>
-                                        <input type="password" id="settings-password-confirm" v-model="settingsForm.password_confirmation" placeholder="Re-enter new password" autocomplete="new-password">
+                                        <label for="settings-password-confirm">{{ t('profile.settings.confirm_password_label') }}</label>
+                                        <input type="password" id="settings-password-confirm" v-model="settingsForm.password_confirmation" :placeholder="t('profile.settings.confirm_password_placeholder')" autocomplete="new-password">
                                     </div>
                                 </div>
 
                                 <p v-if="settingsFeedback" class="mw-form-feedback" :class="`mw-form-feedback--${settingsFeedback.type}`">{{ settingsFeedback.text }}</p>
-                                <button type="submit" class="mw-login-form__submit" :disabled="settingsSubmitting">{{ settingsSubmitting ? 'Saving…' : 'Save Changes' }}</button>
+                                <button type="submit" class="mw-login-form__submit" :disabled="settingsSubmitting">{{ settingsSubmitting ? t('profile.settings.submitting') : t('profile.settings.submit') }}</button>
                             </form>
                         </div>
 

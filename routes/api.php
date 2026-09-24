@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\NewsletterController;
 use App\Http\Controllers\Api\PropertiesController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\SiteInformationController;
+use App\Http\Controllers\Api\StaticTranslationController;
 use App\Http\Controllers\PropertyFilterController;
 use App\Http\Controllers\PublicAdController;
 use App\Http\Controllers\PublicLanguageController;
@@ -25,6 +26,10 @@ Route::get('/property-filters', [PropertyFilterController::class, 'index']);
 
 // Public, read-only — every page's header language dropdown, not just home.
 Route::get('/languages', [PublicLanguageController::class, 'index']);
+
+// Public, read-only — static UI copy (nav/footer/button labels etc.), keyed by ?lang=.
+// Same JSON files the admin's Languages > Translations screen edits.
+Route::get('/static-translations', [StaticTranslationController::class, 'index']);
 
 // Public, read-only — any page's ad slot (?placement=home, ?placement=property-details, ...).
 // Home's own ad is also included in /api/home for convenience, so the home page itself never
@@ -80,3 +85,6 @@ Route::get('/legal/{key}', [LegalController::class, 'show']);
 // Public — the floating AI chat widget's message endpoint. Grounded via Gemini function-calling
 // against PropertiesPageService; never returns free-hallucinated listings.
 Route::post('/chatbot/message', [ChatbotController::class, 'send'])->middleware('throttle:ai-chatbot');
+
+// Stripe plan-subscription events (signature-verified inside the controller) — /api/stripe/webhook
+Route::post('/stripe/webhook', \App\Http\Controllers\StripeWebhookController::class)->name('stripe.webhook');

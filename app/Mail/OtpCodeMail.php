@@ -2,20 +2,21 @@
 
 namespace App\Mail;
 
-use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-/** Sent on customer registration (and resend) with the plaintext code — see
- *  CustomerAuthController::register()/resendOtp(), which only ever stores the hashed version. */
+/** Sent on registration (and resend) with the plaintext code — see
+ *  CustomerAuthController::register()/resendOtp() and Portal\PortalAuthController's equivalents,
+ *  which only ever store the hashed version. Takes a plain name rather than a model so both the
+ *  customer (User) and portal (PortalUser) registration flows can share this one Mailable. */
 class OtpCodeMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public User $user, public string $code)
+    public function __construct(public string $name, public string $code)
     {
     }
 
@@ -29,7 +30,7 @@ class OtpCodeMail extends Mailable
         return new Content(
             view: 'emails.customer.otp-code',
             with: [
-                'name' => $this->user->name,
+                'name' => $this->name,
                 'code' => $this->code,
             ],
         );
