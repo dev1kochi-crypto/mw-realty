@@ -11,7 +11,12 @@ use App\Models\CmsKit\Career;
 use App\Models\Property;
 use App\Models\PortalUser;
 use App\Models\Plan;
+use App\Models\Lead;
+use App\Models\PlanPayment;
+use App\Models\PlanUpgradeRequest;
 use App\Services\Crm\LeadService;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class DashboardController extends Controller
 {
@@ -83,7 +88,7 @@ class DashboardController extends Controller
             ->orderBy('order_index')
             ->get();
 
-        $topOwners = PortalUser::approved()
+        $topOwners = PortalUser::approved()->with('plan')
             ->withCount(['properties', 'leads'])
             ->orderByDesc('properties_count')
             ->take(5)
@@ -93,20 +98,87 @@ class DashboardController extends Controller
 
         $latestProperties = Property::with('owner')->latest()->take(5)->get();
 
-        $paidUserPoints = PortalUser::query()->join('plans', 'plans.id', '=', 'portal_users.plan_id')
-            ->where('portal_users.status', 'approved')->where('portal_users.is_active', true)
-            ->where('plans.status', true)->where('plans.billing_cycle', 'monthly')
-            ->selectRaw('DATE(portal_users.created_at) as joined_on, SUM(plans.price) as price')
-            ->groupByRaw('DATE(portal_users.created_at)')->orderBy('joined_on')->get()
-            ->map(fn ($point) => ['date' => \Carbon\Carbon::parse($point->joined_on), 'price' => (float) $point->price])->values();
-
-        $revenueSeries = [
-            'daily' => $this->buildRevenueSeries($paidUserPoints, now()->subDays(29)->startOfDay(), 30, 'day', 'd M'),
-            'weekly' => $this->buildRevenueSeries($paidUserPoints, now()->subWeeks(11)->startOfWeek(), 12, 'week', 'd M'),
-            'monthly' => $this->buildRevenueSeries($paidUserPoints, now()->subMonths(11)->startOfMonth(), 12, 'month', 'M Y'),
+        // Period-over-period: last 30 days vs the 30 before, for the KPI deltas.
+        $now = now();
+        $curStart = $now->copy()->subDays(30);
+        $prevStart = $now->copy()->subDays(60);
+        $window = fn ($query) => [
+            'current' => (clone $query)->where('created_at', '>=', $curStart)->count(),
+            'previous' => (clone $query)->whereBetween('created_at', [$prevStart, $curStart])->count(),
+        ];
+        $trends = [
+            'leads' => $window(Lead::query()),
+            'properties' => $window(Property::query()),
+            'signups' => $window(PortalUser::query()),
+            'revenue' => [
+                'current' => (float) PlanPayment::paid()->where('paid_at', '>=', $curStart->toDateString())->sum('amount'),
+                'previous' => (float) PlanPayment::paid()->whereBetween('paid_at', [$prevStart->toDateString(), $curStart->toDateString()])->sum('amount'),
+            ],
         ];
 
+        // 12-week activity, bucketed in PHP so it stays DB-driver agnostic (these tables are small).
+        $weeksStart = $now->copy()->subWeeks(11)->startOfWeek();
+        $weekPoints = fn ($query) => $query->where('created_at', '>=', $weeksStart)->pluck('created_at')
+            ->map(fn ($d) => ['date' => Carbon::parse($d), 'value' => 1]);
+        $activity = [
+            'leads' => $this->bucket($weekPoints(Lead::query()), $weeksStart, 12, 'week', 'd M'),
+            'properties' => $this->bucket($weekPoints(Property::query()), $weeksStart, 12, 'week', 'd M'),
+            'signups' => $this->bucket($weekPoints(PortalUser::query()), $weeksStart, 12, 'week', 'd M'),
+        ];
+
+        // Collected revenue — actual paid invoices, as opposed to the MRR estimate above.
+        $payments = PlanPayment::paid()->whereNotNull('paid_at')
+            ->where('paid_at', '>=', $now->copy()->subMonths(11)->startOfMonth()->toDateString())
+            ->get(['paid_at', 'amount'])
+            ->map(fn ($p) => ['date' => Carbon::parse($p->paid_at), 'value' => (float) $p->amount]);
+        $collectedSeries = [
+            'daily' => $this->bucket($payments, $now->copy()->subDays(29)->startOfDay(), 30, 'day', 'd M'),
+            'weekly' => $this->bucket($payments, $weeksStart, 12, 'week', 'd M'),
+            'monthly' => $this->bucket($payments, $now->copy()->subMonths(11)->startOfMonth(), 12, 'month', 'M Y'),
+        ];
+
+        // Pipeline by stage. Stages are per-owner rows, so same-named stages are merged across owners.
+        $stagePipeline = Lead::query()
+            ->join('lead_stages', 'lead_stages.id', '=', 'leads.stage_id')
+            ->selectRaw('lead_stages.name, MIN(lead_stages.order_index) as sort, MAX(lead_stages.is_closed) as is_closed, COUNT(leads.id) as total')
+            ->groupBy('lead_stages.name')
+            ->orderBy('sort')
+            ->get();
+        $unstagedLeads = Lead::whereNull('stage_id')->count();
+
+        $leadSources = Lead::query()
+            ->join('lead_sources', 'lead_sources.id', '=', 'leads.source_id')
+            ->selectRaw('lead_sources.name, COUNT(leads.id) as total')
+            ->groupBy('lead_sources.name')
+            ->orderByDesc('total')
+            ->pluck('total', 'name');
+        $unsourcedLeads = Lead::whereNull('source_id')->count();
+
+        $accountStatus = [
+            'approved' => $stats['approved_agents'] + $stats['approved_companies'],
+            'pending' => $stats['pending_accounts'],
+            'rejected' => $stats['rejected_accounts'],
+        ];
+
+        $attention = [
+            'upgrade_requests' => PlanUpgradeRequest::pending()->count(),
+            'failed_payments' => PlanPayment::where('status', 'failed')->where('created_at', '>=', $curStart)->count(),
+            'recent_enquiries' => Enquiry::where('created_at', '>=', $now->copy()->subDays(7))->count(),
+            'inactive_properties' => $stats['total_properties'] - $stats['active_properties'],
+        ];
+
+        $stats['featured_properties'] = Property::where('featured', true)->count();
+
         return compact(
+            'trends',
+            'activity',
+            'collectedSeries',
+            'stagePipeline',
+            'unstagedLeads',
+            'leadSources',
+            'unsourcedLeads',
+            'accountStatus',
+            'attention',
             'stats',
             'pendingAccounts',
             'leadStatusBreakdown',
@@ -118,40 +190,27 @@ class DashboardController extends Controller
             'latestProperties',
             'paidSubscribers',
             'freeSubscribers',
-            'noPlan',
-            'revenueSeries'
+            'noPlan'
         );
     }
 
     /**
-     * Cumulative MRR at each bucket, approximated from currently-assigned
-     * paid plans against each subscriber's join date (no historical
-     * subscription/invoice log exists to derive this precisely).
+     * Sums each point's value into fixed day/week/month buckets starting at $start.
      */
-    private function buildRevenueSeries($points, \Carbon\Carbon $start, int $count, string $unit, string $labelFormat): array
+    private function bucket(Collection $points, Carbon $start, int $count, string $unit, string $labelFormat): array
     {
         $labels = [];
-        $data = [];
+        $edges = [];
+        $data = array_fill(0, $count, 0);
         $cursor = $start->copy();
-        $cumulative = 0.0;
-        $idx = 0;
-        $total = $points->count();
 
         for ($i = 0; $i < $count; $i++) {
-            $bucketEnd = match ($unit) {
+            $edges[] = [$cursor->copy(), match ($unit) {
                 'day' => $cursor->copy()->endOfDay(),
                 'week' => $cursor->copy()->endOfWeek(),
                 'month' => $cursor->copy()->endOfMonth(),
-            };
-
-            while ($idx < $total && $points[$idx]['date'] <= $bucketEnd) {
-                $cumulative += $points[$idx]['price'];
-                $idx++;
-            }
-
+            }];
             $labels[] = $cursor->format($labelFormat);
-            $data[] = round($cumulative, 2);
-
             $cursor = match ($unit) {
                 'day' => $cursor->addDay(),
                 'week' => $cursor->addWeek(),
@@ -159,6 +218,15 @@ class DashboardController extends Controller
             };
         }
 
-        return ['labels' => $labels, 'data' => $data];
+        foreach ($points as $point) {
+            foreach ($edges as $i => [$from, $to]) {
+                if ($point['date']->between($from, $to)) {
+                    $data[$i] += $point['value'];
+                    break;
+                }
+            }
+        }
+
+        return ['labels' => $labels, 'data' => array_map(fn ($v) => round($v, 2), $data)];
     }
 }

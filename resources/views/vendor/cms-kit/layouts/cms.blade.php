@@ -569,7 +569,7 @@
 
                 <div class="d-flex align-items-center gap-3">
                     @if($cmsUser->hasRole('superadmin'))
-                    <a href="{{ route('portal.crm.leads.index') }}" class="btn btn-premium btn-quicknav btn-sm">
+                    <a href="{{ route('portal.dashboard') }}" class="btn btn-premium btn-quicknav btn-sm">
                         <i class="fas fa-users"></i> CRM
                     </a>
                     @endif
