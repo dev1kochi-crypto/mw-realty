@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, nextTick, watch } from 'vue';
 import { useAboutPage } from '../composables/useAboutPage';
 import { useStaticText } from '../composables/useStaticText';
 
@@ -10,6 +10,14 @@ const { t } = useStaticText();
 // CMS field and simply doesn't render until an admin actually fills it in, rather than showing
 // fabricated company claims, quotes, or stats as if real.
 const { aboutPage } = useAboutPage();
+
+// The reveal-on-scroll / parallax / builders slider (legacy assets/js/script.js) only scan the
+// DOM once — the sections below are gated on the async /api/about fetch, so on a slower server
+// they render after that scan and stay at opacity 0. Re-run it once the data arrives
+// (window.MWRealty.refresh is idempotent).
+watch(aboutPage, () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+}, { immediate: true });
 
 const about = computed(() => aboutPage.value?.about || null);
 const aboutTitle = computed(() => about.value?.title || 'About Us');
