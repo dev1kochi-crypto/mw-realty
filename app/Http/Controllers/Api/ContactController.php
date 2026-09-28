@@ -14,6 +14,14 @@ use Illuminate\Support\Facades\Mail;
 /** Single aggregate endpoint for the standalone /contact page (GET /api/contact) plus its form submission. */
 class ContactController extends Controller
 {
+    /** The home page contact form's "I'm interested in" options. */
+    public const INTERESTS = [
+        'buy' => 'Buying',
+        'rent' => 'Renting',
+        'sell' => 'Selling',
+        'management' => 'Property Management',
+    ];
+
     public function __construct(private readonly HomePageService $homePage)
     {
     }
@@ -25,24 +33,35 @@ class ContactController extends Controller
         return response()->json($this->homePage->getContactPageData($lang));
     }
 
-    /** Public, unauthenticated — the /contact page form (POST /api/contact). Saves to Enquiries and emails admin. */
+    /**
+     * Public, unauthenticated — the /contact page form and the home page's contact section
+     * (POST /api/contact, `source=home`). Saves to Enquiries and emails admin. The home form also
+     * sends what the visitor is interested in (buy / rent / sell / management), and its message is optional.
+     */
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:50',
-            'message' => 'required|string|max:2000',
+            'interest' => 'nullable|in:' . implode(',', array_keys(self::INTERESTS)),
+            'message' => 'required_without:interest|nullable|string|max:2000',
+            'source' => 'nullable|in:contact,home',
             'recaptcha_token' => ['nullable', new RecaptchaRule()],
         ]);
+
+        $interest = self::INTERESTS[$request->input('interest')] ?? null;
+        $message = trim((string) $request->input('message'));
 
         $enquiry = Enquiry::create([
             'name' => $request->input('name'),
             'email' => $request->input('email'),
             'phone' => $request->input('phone'),
-            'message' => $request->input('message'),
+            // Interest leads the message too, so it's visible in the admin list and the notification email.
+            'message' => $interest ? trim("Interested in: {$interest}\n\n{$message}") : $message,
+            'extra_fields' => $interest ? ['interest' => $interest] : null,
             'page_url' => $request->header('referer'),
-            'page_source' => 'Contact Page',
+            'page_source' => $request->input('source') === 'home' ? 'Home Page' : 'Contact Page',
         ]);
 
         $adminEmail = SiteInformation::notificationEmail();

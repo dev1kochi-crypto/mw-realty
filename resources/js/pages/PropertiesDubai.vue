@@ -1,23 +1,24 @@
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref, toRef, watch } from 'vue';
+import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, toRef, watch } from 'vue';
 import { usePageWindow } from '../composables/usePageWindow';
 import { useRoute, useRouter } from 'vue-router';
 import { useProperties } from '../composables/useProperties';
 import { useLanguages } from '../composables/useLanguages';
 import { useWishlist } from '../composables/useWishlist';
-import { useRecaptcha } from '../composables/useRecaptcha';
 import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
 import { usePropertyFilters } from '../composables/usePropertyFilters';
 import EmptyState from '../components/EmptyState.vue';
 import LocationAutocomplete from '../components/LocationAutocomplete.vue';
+import { carryFilters, takeCarriedFilters } from '../composables/useListingCarry';
+// Leaflet only loads when the map view is actually opened.
+const PropertyMap = defineAsyncComponent(() => import('../components/PropertyMap.vue'));
 
 const route = useRoute();
 const router = useRouter();
 const { propertiesListing, fetchPropertiesListing } = useProperties();
 const { isWishlisted, toggleWishlist, authenticated } = useWishlist();
 const { selectedLanguage } = useLanguages();
-const { getRecaptchaToken } = useRecaptcha();
 const { t } = useStaticText();
 // Prices and the price filter are in AED; they're shown in the visitor's chosen currency.
 const { formatPrice, formatCompact, presetLabel } = useCurrency();
@@ -29,6 +30,18 @@ const { formatPrice, formatCompact, presetLabel } = useCurrency();
 // /premium-properties reuses this page for every premium (CRM-featured) listing — residential and
 // commercial together (API ?premium=1); the filter options follow that same set of listings.
 const premium = !!route.meta.premium;
+// /properties/map (and /premium-properties/map): same page and filters, results on a map instead of cards.
+const mapView = computed(() => !!route.meta.mapView);
+const listPath = premium ? '/premium-properties' : '/properties';
+const mapPath = listPath + '/map';
+const mapParams = ref({});
+const carryKey = premium ? 'premium' : 'properties';
+// List ⇄ map toggle: hand the current filters to the other view (they aren't in the URL).
+function carryToOtherView() {
+    carryFilters(carryKey, currentQuery());
+}
+// Set while we clear an incoming ?query ourselves, so the route.query watcher ignores that change.
+let clearingUrl = false;
 const { filters: adminFilters, loaded: filtersLoaded, byKey: adminFilter, options: adminOptions } = usePropertyFilters('listing', premium ? 'premium' : 'residential');
 // A top-bar field shows while the filters load, then only if the admin has that filter enabled.
 const showFilter = (key) => !filtersLoaded.value || !!adminFilter(key);
@@ -121,20 +134,27 @@ function currentQuery() {
 function load() {
     Object.keys(applied).forEach((k) => delete applied[k]);
     Object.assign(applied, snapshot());
-    const params = { lang: selectedLanguage.value?.code, page: currentPage.value, sort: applied.sort };
-    fields().forEach(([key]) => { if (applied[key]) params[key] = applied[key]; });
-    if (applied.amenities.length) params.amenities = applied.amenities;
-    if (applied.floor_plans) params.floor_plans = 1;
-    if (premium) params.premium = 1;
-    fetchPropertiesListing(params);
-    // Keep the URL in step with the filters, so the view can be shared/bookmarked and Back works.
-    const query = currentQuery();
-    if (JSON.stringify(query) !== JSON.stringify(route.query)) router.replace({ query });
+    const filterParams = {};
+    fields().forEach(([key]) => { if (applied[key]) filterParams[key] = applied[key]; });
+    if (applied.amenities.length) filterParams.amenities = applied.amenities;
+    if (applied.floor_plans) filterParams.floor_plans = 1;
+    mapParams.value = filterParams;
+    // The map view loads its own pins (PropertyMap.vue) — no page of cards needed.
+    if (!mapView.value) {
+        const params = { ...filterParams, lang: selectedLanguage.value?.code, page: currentPage.value, sort: applied.sort };
+        if (premium) params.premium = 1;
+        fetchPropertiesListing(params);
+    }
 }
 
+/** A filter change made on this page — filters stay in memory; any incoming ?query is cleared from the URL. */
 function applyFilters() {
     currentPage.value = 1;
     load();
+    if (Object.keys(route.query).length) {
+        clearingUrl = true;
+        router.replace({ query: {} });
+    }
 }
 
 /** Loads filter state from the URL (first visit, Home search/shortcuts, ticker links, saved searches, Back/Forward). */
@@ -332,63 +352,6 @@ function clearFilters() {
     applyFilters();
 }
 
-// "Custom Request" — a buyer describes a property they can't find in the listing, submitted as
-// an unassigned Lead (no property_id) so it lands on the admin's Unassigned Leads screen (see
-// Crm\LeadCaptureController::storeCustomRequest).
-const showCustomRequestModal = ref(false);
-const customRequestSubmitting = ref(false);
-const customRequestFeedback = ref(null);
-const customRequestForm = reactive({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    property_category: '',
-    specification: '',
-    price_range: '',
-    area: '',
-    preferred_location: '',
-    additional_details: '',
-    move_in_timeline: '',
-    furnishing_status: '',
-    whatsapp_consent: false,
-});
-
-function openCustomRequestModal() {
-    showCustomRequestModal.value = true;
-    document.body.classList.add('quote-modal-open');
-}
-
-function closeCustomRequestModal() {
-    showCustomRequestModal.value = false;
-    document.body.classList.remove('quote-modal-open');
-}
-
-async function submitCustomRequest() {
-    if (customRequestSubmitting.value) return;
-    customRequestSubmitting.value = true;
-    customRequestFeedback.value = null;
-
-    try {
-        const recaptcha_token = await getRecaptchaToken('custom_property_request');
-        const { data } = await window.axios.post('/leads/custom-request', {
-            ...customRequestForm,
-            recaptcha_token,
-        });
-        customRequestFeedback.value = { type: 'success', text: data.message };
-        Object.assign(customRequestForm, {
-            first_name: '', last_name: '', email: '', phone: '',
-            property_category: '', specification: '', price_range: '', area: '',
-            preferred_location: '', additional_details: '',
-            move_in_timeline: '', furnishing_status: '', whatsapp_consent: false,
-        });
-    } catch (error) {
-        customRequestFeedback.value = { type: 'error', text: error.response?.data?.message || t('custom_request.generic_error') };
-    } finally {
-        customRequestSubmitting.value = false;
-    }
-}
-
 // "Save Search" — stores the currently-applied filters so Profile.vue's Saved Searches tab can
 // list them and (eventually) notify on new matches. Mirrors the same criteria keys
 // CustomerController::savedSearchMeta() already reads to build that tab's summary line.
@@ -443,15 +406,20 @@ const pagination = computed(() => propertiesListing.value?.pagination || null);
 const pageNumbers = usePageWindow(currentPage, computed(() => pagination.value?.last_page));
 
 onMounted(() => {
-    readQuery(route.query);
+    // Filters arrive either in the URL (Home search, header Buy/Rent, ticker, saved searches) or
+    // carried over from the list/map toggle; after that they live in memory only.
+    const incoming = Object.keys(route.query).length ? route.query : (takeCarriedFilters(carryKey) || {});
+    readQuery(incoming);
     load();
 });
-// Same-page navigation (the ticker's "N Bedroom" links, Back/Forward) doesn't remount the page,
-// so re-read the URL whenever it no longer matches the filters on screen.
+// Links that land on this same page with a new ?query (header Buy/Rent, ticker "N Bedroom",
+// Back/Forward) don't remount it — pick those filters up. Our own URL clearing is ignored.
 watch(() => route.query, (query) => {
-    if (JSON.stringify(query) === JSON.stringify(currentQuery())) return;
+    if (clearingUrl) { clearingUrl = false; return; }
+    if (!Object.keys(query).length || JSON.stringify(query) === JSON.stringify(currentQuery())) return;
     readQuery(query);
-    applyFilters();
+    currentPage.value = 1;
+    load();
 });
 watch(selectedLanguage, load);
 
@@ -653,15 +621,27 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                             </ul>
                         </div>
                         <div class="mw-dubai-toolbar__views" role="group" :aria-label="t('properties_listing.toolbar.views_aria')">
-                            <button type="button" class="mw-dubai-toolbar__view-btn is-active" data-properties-view="grid" :aria-label="t('properties_listing.toolbar.grid_view_aria')" aria-pressed="true">
-                                <img src="/frontend/assets/images/agencies/icon-grid-view.svg" alt="" width="24" height="24">
-                            </button>
-                            <button type="button" class="mw-dubai-toolbar__view-btn" data-properties-view="list" :aria-label="t('properties_listing.toolbar.list_view_aria')" aria-pressed="false">
-                                <img src="/frontend/assets/images/agencies/icon-list-view.svg" alt="" width="24" height="24">
-                            </button>
+                            <template v-if="!mapView">
+                                <button type="button" class="mw-dubai-toolbar__view-btn is-active" data-properties-view="grid" :aria-label="t('properties_listing.toolbar.grid_view_aria')" aria-pressed="true">
+                                    <img src="/frontend/assets/images/agencies/icon-grid-view.svg" alt="" width="24" height="24">
+                                </button>
+                                <button type="button" class="mw-dubai-toolbar__view-btn" data-properties-view="list" :aria-label="t('properties_listing.toolbar.list_view_aria')" aria-pressed="false">
+                                    <img src="/frontend/assets/images/agencies/icon-list-view.svg" alt="" width="24" height="24">
+                                </button>
+                            </template>
+                            <template v-else>
+                                <router-link :to="listPath" class="mw-dubai-toolbar__view-btn" :aria-label="t('properties_listing.toolbar.grid_view_aria')" @click="carryToOtherView">
+                                    <img src="/frontend/assets/images/agencies/icon-grid-view.svg" alt="" width="24" height="24">
+                                </router-link>
+                                <router-link :to="listPath" class="mw-dubai-toolbar__view-btn" :aria-label="t('properties_listing.toolbar.list_view_aria')" @click="carryToOtherView">
+                                    <img src="/frontend/assets/images/agencies/icon-list-view.svg" alt="" width="24" height="24">
+                                </router-link>
+                            </template>
+                            <router-link :to="mapPath" @click="carryToOtherView" class="mw-dubai-toolbar__view-btn mw-map-toggle" :class="{ 'is-active': mapView }" :aria-label="t('map.map_view_aria', 'Map view')" :aria-pressed="mapView" :title="t('map.map_view_aria', 'Map view')">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5V4l-6 2.5z" /><path d="M9 4v13M15 6.5v13" /></svg>
+                            </router-link>
                         </div>
                         <div class="mw-dubai-toolbar__actions">
-                            <button type="button" class="quote-modal__btn quote-modal__btn--primary mw-dubai-toolbar__custom-request" @click="openCustomRequestModal">{{ t('properties_listing.toolbar.custom_request') }}</button>
                             <button type="button" class="mw-dubai-toolbar__save" :disabled="savingSearch" @click="saveSearch">{{ saveSearchLabel }}</button>
                             <button type="button" class="mw-dubai-toolbar__clear" :class="{ 'has-filters': filterCount }" :title="activeFilters.map((f) => `${f.label}: ${f.text}`).join(' · ')" @click="clearFilters">
                                 {{ t('properties_listing.toolbar.clear_filters') }}<span v-if="filterCount" class="mw-dubai-toolbar__clear-count">{{ filterCount }}</span>
@@ -672,7 +652,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
             </div>
         </section>
 
-        <section class="mw-dubai-ticker" :aria-label="t('properties_listing.ticker.aria_label')">
+        <section v-if="!mapView" class="mw-dubai-ticker" :aria-label="t('properties_listing.ticker.aria_label')">
             <div class="mw-dubai-ticker__viewport">
                 <div class="mw-dubai-ticker__track" data-ticker-track>
                     <div class="mw-dubai-ticker__group">
@@ -697,7 +677,12 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
             </div>
         </section>
 
-        <section class="mw-dubai-listing">
+        <!-- Map view: edge to edge, straight under the filter bar (no title / container). -->
+        <section v-if="mapView" class="mw-map-section">
+            <PropertyMap edge :segment="premium ? 'premium' : 'residential'" :params="mapParams" />
+        </section>
+
+        <section v-else class="mw-dubai-listing">
             <div class="container-ctn">
                 <div class="mw-dubai-listing__head">
                     <h2 class="mw-dubai-listing__title">{{ listingTitle }}</h2>
@@ -779,130 +764,5 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
             </div>
         </section>
 
-        <div v-if="showCustomRequestModal" class="quote-modal" role="dialog" aria-modal="true" :aria-label="t('custom_request.dialog_aria_label')">
-            <div class="quote-modal__backdrop" @click="closeCustomRequestModal"></div>
-            <div class="quote-modal__dialog">
-                <div class="quote-modal__panel">
-                    <div class="quote-modal__head">
-                        <div class="crm-modal__heading">
-                            <h3 class="quote-modal__title">{{ t('custom_request.title') }}</h3>
-                            <p class="crm-modal__subtitle">{{ t('custom_request.subtitle') }}</p>
-                        </div>
-                        <button type="button" class="crm-modal__close" :aria-label="t('custom_request.close_aria')" @click="closeCustomRequestModal">
-                            <svg viewBox="0 0 16 16" fill="none"><path d="M1 1l14 14M15 1L1 15" stroke="#414A66" stroke-width="1.5" stroke-linecap="round"/></svg>
-                        </button>
-                    </div>
-                    <form class="quote-modal__form crm-modal__form" @submit.prevent="submitCustomRequest">
-                        <div class="quote-modal__fields">
-                            <p v-if="customRequestFeedback" class="crm-modal__feedback" :class="customRequestFeedback.type === 'success' ? 'is-success' : 'is-error'">{{ customRequestFeedback.text }}</p>
-
-                            <h4 class="crm-modal__section-title">{{ t('custom_request.section_personal_information') }}</h4>
-                            <div class="crm-modal__row">
-                                <label class="crm-modal__field">
-                                    <span class="crm-modal__label">{{ t('custom_request.first_name_label') }}</span>
-                                    <input type="text" v-model="customRequestForm.first_name" :placeholder="t('custom_request.first_name_placeholder')" required>
-                                </label>
-                                <label class="crm-modal__field">
-                                    <span class="crm-modal__label">{{ t('custom_request.last_name_label') }}</span>
-                                    <input type="text" v-model="customRequestForm.last_name" :placeholder="t('custom_request.last_name_placeholder')">
-                                </label>
-                            </div>
-                            <div class="crm-modal__row">
-                                <label class="crm-modal__field">
-                                    <span class="crm-modal__label">{{ t('custom_request.email_label') }}</span>
-                                    <input type="email" v-model="customRequestForm.email" :placeholder="t('custom_request.email_placeholder')" required>
-                                </label>
-                                <label class="crm-modal__field">
-                                    <span class="crm-modal__label">{{ t('custom_request.phone_label') }}</span>
-                                    <input type="tel" v-model="customRequestForm.phone" :placeholder="t('custom_request.phone_placeholder')">
-                                </label>
-                            </div>
-
-                            <h4 class="crm-modal__section-title">{{ t('custom_request.section_property_requirements') }}</h4>
-                            <div class="crm-modal__row">
-                                <label class="crm-modal__field">
-                                    <span class="crm-modal__label">{{ t('custom_request.property_category_label') }}</span>
-                                    <select v-model="customRequestForm.property_category">
-                                        <option value="">{{ t('custom_request.select_category') }}</option>
-                                        <option value="apartment">{{ t('custom_request.category_apartment') }}</option>
-                                        <option value="villa">{{ t('custom_request.category_villa') }}</option>
-                                        <option value="townhouse">{{ t('custom_request.category_townhouse') }}</option>
-                                        <option value="penthouse">{{ t('custom_request.category_penthouse') }}</option>
-                                        <option value="commercial">{{ t('custom_request.category_commercial') }}</option>
-                                    </select>
-                                </label>
-                                <label class="crm-modal__field">
-                                    <span class="crm-modal__label">{{ t('custom_request.specification_label') }}</span>
-                                    <input type="text" v-model="customRequestForm.specification" :placeholder="t('custom_request.specification_placeholder')">
-                                </label>
-                            </div>
-                            <div class="crm-modal__row">
-                                <label class="crm-modal__field">
-                                    <span class="crm-modal__label">{{ t('custom_request.price_range_label') }}</span>
-                                    <input type="text" v-model="customRequestForm.price_range" :placeholder="t('custom_request.price_range_placeholder')">
-                                </label>
-                                <label class="crm-modal__field">
-                                    <span class="crm-modal__label">{{ t('custom_request.area_label') }}</span>
-                                    <input type="text" v-model="customRequestForm.area" :placeholder="t('custom_request.area_placeholder')">
-                                </label>
-                            </div>
-                            <label class="crm-modal__field crm-modal__field--full">
-                                <span class="crm-modal__label">{{ t('custom_request.preferred_location_label') }}</span>
-                                <input type="text" v-model="customRequestForm.preferred_location" :placeholder="t('custom_request.preferred_location_placeholder')">
-                            </label>
-                            <label class="crm-modal__field crm-modal__field--full">
-                                <span class="crm-modal__label">{{ t('custom_request.additional_details_label') }}</span>
-                                <textarea v-model="customRequestForm.additional_details" :placeholder="t('custom_request.additional_details_placeholder')"></textarea>
-                            </label>
-
-                            <h4 class="crm-modal__section-title">{{ t('custom_request.section_preferences') }}</h4>
-                            <div class="crm-modal__row">
-                                <label class="crm-modal__field">
-                                    <span class="crm-modal__label">{{ t('custom_request.move_in_timeline_label') }}</span>
-                                    <select v-model="customRequestForm.move_in_timeline">
-                                        <option value="">{{ t('custom_request.select_timeline') }}</option>
-                                        <option value="immediate">{{ t('custom_request.timeline_immediate') }}</option>
-                                        <option value="1-3-months">{{ t('custom_request.timeline_1_3_months') }}</option>
-                                        <option value="3-6-months">{{ t('custom_request.timeline_3_6_months') }}</option>
-                                        <option value="6-12-months">{{ t('custom_request.timeline_6_12_months') }}</option>
-                                        <option value="flexible">{{ t('custom_request.timeline_flexible') }}</option>
-                                    </select>
-                                </label>
-                                <label class="crm-modal__field">
-                                    <span class="crm-modal__label">{{ t('custom_request.furnishing_status_label') }}</span>
-                                    <select v-model="customRequestForm.furnishing_status">
-                                        <option value="">{{ t('custom_request.select_status') }}</option>
-                                        <option value="furnished">{{ t('custom_request.furnishing_furnished') }}</option>
-                                        <option value="unfurnished">{{ t('custom_request.furnishing_unfurnished') }}</option>
-                                        <option value="semi-furnished">{{ t('custom_request.furnishing_semi_furnished') }}</option>
-                                        <option value="no-preference">{{ t('custom_request.furnishing_no_preference') }}</option>
-                                    </select>
-                                </label>
-                            </div>
-
-                            <label class="crm-modal__checkbox">
-                                <input type="checkbox" v-model="customRequestForm.whatsapp_consent">
-                                <span class="crm-modal__checkbox-box"></span>
-                                <span class="crm-modal__checkbox-text">
-                                    <strong>{{ t('custom_request.whatsapp_consent_label') }}</strong>
-                                    <small>{{ t('custom_request.whatsapp_consent_text') }}</small>
-                                </span>
-                            </label>
-                        </div>
-                        <div class="crm-modal__footer">
-                            <button type="submit" class="quote-modal__btn crm-modal__submit" :disabled="customRequestSubmitting">
-                                {{ customRequestSubmitting ? t('custom_request.submitting') : t('custom_request.submit') }}
-                            </button>
-                            <p class="crm-modal__terms">
-                                {{ t('custom_request.terms_prefix') }}
-                                <router-link to="/terms-and-conditions" @click="closeCustomRequestModal">{{ t('custom_request.terms_of_service') }}</router-link>
-                                {{ t('custom_request.terms_and') }}
-                                <router-link to="/privacy-policy" @click="closeCustomRequestModal">{{ t('custom_request.privacy_policy') }}</router-link>.
-                            </p>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
     </main>
 </template>

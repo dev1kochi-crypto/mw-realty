@@ -1,9 +1,33 @@
 <script setup>
-import { computed, nextTick, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { useAboutPage } from '../composables/useAboutPage';
 import { useStaticText } from '../composables/useStaticText';
+import { useRecaptcha } from '../composables/useRecaptcha';
 
 const { t } = useStaticText();
+const { getRecaptchaToken } = useRecaptcha();
+const newsletterEmail = ref('');
+const newsletterSubmitting = ref(false);
+const newsletterFeedback = ref(null);
+
+async function submitNewsletter() {
+    if (newsletterSubmitting.value) return;
+    newsletterSubmitting.value = true;
+    newsletterFeedback.value = null;
+    try {
+        const recaptcha_token = await getRecaptchaToken('newsletter');
+        const { data } = await window.axios.post('/api/newsletter/subscribe', {
+            email: newsletterEmail.value,
+            recaptcha_token,
+        });
+        newsletterFeedback.value = { type: 'success', text: data.message };
+        newsletterEmail.value = '';
+    } catch (error) {
+        newsletterFeedback.value = { type: 'error', text: error.response?.data?.message || t('footer.newsletter.error_generic') };
+    } finally {
+        newsletterSubmitting.value = false;
+    }
+}
 
 // No lorem-ipsum / invented marketing copy on a live site (same principle as
 // HomePageService's developments() section) — every section below is gated on its own real
@@ -32,6 +56,35 @@ const director = computed(() => aboutPage.value?.director || null);
 const directorImage = computed(() => director.value?.image_url || null);
 const directorImageAlt = computed(() => director.value?.image_alt || '');
 const directorQuote = computed(() => director.value?.quote || null);
+const directorQuoteElement = ref(null);
+const directorQuoteExpanded = ref(false);
+const directorQuoteHasMore = ref(false);
+let directorQuoteResizeObserver = null;
+
+async function measureDirectorQuote() {
+    await nextTick();
+    const element = directorQuoteElement.value;
+    if (!element) {
+        directorQuoteHasMore.value = false;
+        return;
+    }
+
+    const collapsedHeight = parseFloat(getComputedStyle(element).getPropertyValue('--collapsed-height')) || 152;
+    directorQuoteHasMore.value = element.scrollHeight > collapsedHeight + 1;
+}
+
+watch(directorQuote, async () => {
+    directorQuoteExpanded.value = false;
+    await measureDirectorQuote();
+
+    if (directorQuoteElement.value && typeof ResizeObserver !== 'undefined') {
+        directorQuoteResizeObserver?.disconnect();
+        directorQuoteResizeObserver = new ResizeObserver(measureDirectorQuote);
+        directorQuoteResizeObserver.observe(directorQuoteElement.value);
+    }
+}, { flush: 'post' });
+
+onBeforeUnmount(() => directorQuoteResizeObserver?.disconnect());
 const directorByline = computed(() => {
     const name = director.value?.name;
     const designation = director.value?.designation;
@@ -122,9 +175,21 @@ const showBuilders = computed(() => (builders.value?.items || []).length > 0);
                     <div class="mw-about-director__media">
                         <img v-if="directorImage" :src="directorImage" :alt="directorImageAlt" data-parallax="0.22">
                         <div class="mw-about-director__card" data-reveal="up">
-                            <p class="mw-about-director__quote">{{ directorQuote }}</p>
+                            <p
+                                id="director-quote"
+                                ref="directorQuoteElement"
+                                class="mw-about-director__quote"
+                                :class="{ 'is-collapsed': !directorQuoteExpanded }"
+                            >{{ directorQuote }}</p>
                             <p v-if="directorByline" class="mw-about-director__byline">{{ directorByline }}</p>
-                            <a href="#" class="mw-btn mw-btn--gradient">{{ t('about.director.read_message') }}</a>
+                            <button
+                                v-if="directorQuoteHasMore"
+                                type="button"
+                                class="mw-btn mw-btn--gradient"
+                                aria-controls="director-quote"
+                                :aria-expanded="directorQuoteExpanded"
+                                @click="directorQuoteExpanded = !directorQuoteExpanded"
+                            >{{ t(directorQuoteExpanded ? 'about.director.show_less' : 'about.director.read_message') }}</button>
                         </div>
                     </div>
                 </div>
@@ -227,13 +292,16 @@ const showBuilders = computed(() => (builders.value?.items || []).length > 0);
                             <h2 class="mw-about-title">{{ t('about.newsletter.title') }}</h2>
                             <p class="mw-about-news__text">{{ t('about.newsletter.text') }}</p>
                         </div>
-                        <form class="mw-about-news__form" data-reveal style="--reveal-delay: 1" @submit.prevent>
-                            <input type="email" name="email" :placeholder="t('about.newsletter.placeholder')" required>
-                            <button type="submit">
-                                {{ t('about.newsletter.submit') }}
+                        <div class="mw-about-news__signup" data-reveal style="--reveal-delay: 1">
+                        <form class="mw-about-news__form" :class="{ 'is-submitting': newsletterSubmitting, 'is-subscribed': newsletterFeedback?.type === 'success' }" @submit.prevent="submitNewsletter">
+                            <input v-model="newsletterEmail" type="email" name="email" :placeholder="t('about.newsletter.placeholder')" :disabled="newsletterSubmitting" required>
+                            <button type="submit" :disabled="newsletterSubmitting">
+                                {{ newsletterSubmitting ? 'Sending…' : t('about.newsletter.submit') }}
                                 <img src="/frontend/assets/images/icons/about-newsletter-arrow.svg" alt="">
                             </button>
                         </form>
+                        <p v-if="newsletterFeedback" class="mw-form-feedback" :class="'mw-form-feedback--' + newsletterFeedback.type" role="status">{{ newsletterFeedback.text }}</p>
+                        </div>
                     </div>
                 </div>
             </section>

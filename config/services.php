@@ -45,6 +45,18 @@ return [
         'min_score' => env('RECAPTCHA_MIN_SCORE', 0.5),
     ],
 
+    // Basemap for the listing pages' map view (PropertyMap.vue). A vector style (MapLibre), so place
+    // labels follow the site language — English names, or Arabic when the site is in Arabic.
+    // Default: OpenFreeMap "Liberty" (full colour) — free, no key, no usage limits. Any MapLibre style URL works
+    // (e.g. MapTiler https://api.maptiler.com/maps/streets-v2/style.json?key=KEY).
+    // fallback_*: plain raster tiles, only used if the browser can't run WebGL.
+    'map_tiles' => [
+        'style' => env('MAP_STYLE_URL', 'https://tiles.openfreemap.org/styles/liberty'),
+        'attribution' => env('MAP_ATTRIBUTION', '<a href="https://openfreemap.org">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'),
+        'fallback_url' => env('MAP_FALLBACK_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+        'fallback_attribution' => '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    ],
+
     // "Continue with Google" — customer accounts only (see Customer\CustomerAuthController).
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),

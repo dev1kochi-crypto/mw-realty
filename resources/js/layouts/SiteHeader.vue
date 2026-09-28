@@ -16,7 +16,7 @@ const { t } = useStaticText();
 // Buy / Rent are the /properties listing pre-filtered by purpose (PropertiesDubai.vue reads
 // ?listing_type=), so they're told apart by the query rather than by a route of their own.
 const activeNav = computed(() => {
-    if (route.name === 'properties-dubai') {
+    if (route.name === 'properties-dubai' || route.name === 'properties-map') {
         return { sale: 'buy', rent: 'rent' }[route.query.listing_type] ?? '';
     }
     return route.meta.activeNav ?? '';

@@ -46,7 +46,25 @@ class Lead extends Model
     protected $casts = [
         'extra_fields' => 'array',
         'assigned_at' => 'datetime',
+        'closed_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // Stamp when the lead entered a closed stage (cleared if it moves back to an open one) —
+        // every stage change path (board drag, edit form, import) goes through here.
+        static::saving(function (Lead $lead) {
+            if (!$lead->isDirty('stage_id')) {
+                return;
+            }
+            $closed = $lead->stage_id && LeadStage::whereKey($lead->stage_id)->value('is_closed');
+            if (!$closed) {
+                $lead->closed_at = null;
+            } elseif (!$lead->closed_at || !LeadStage::whereKey($lead->getOriginal('stage_id'))->value('is_closed')) {
+                $lead->closed_at = now();
+            }
+        });
+    }
 
     public function property()
     {

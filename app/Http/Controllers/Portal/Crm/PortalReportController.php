@@ -3,67 +3,43 @@
 namespace App\Http\Controllers\Portal\Crm;
 
 use App\Http\Controllers\Portal\Crm\Concerns\ScopesPortalOwner;
-use App\Models\Lead;
-use App\Models\Property;
+use App\Services\Crm\PortalReportService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
+/**
+ * Reports — Leads, Properties, Revenue and (agencies only) Agents. The whole section is a plan
+ * entitlement (plans.reports_access); Super Admin always has it and sees every account's data.
+ */
 class PortalReportController extends Controller
 {
     use ScopesPortalOwner;
 
-    public function index(Request $request)
-    {
-        $ownerId = $this->ownerId();
+    public const REPORTS = ['leads' => 'Leads', 'properties' => 'Properties', 'revenue' => 'Revenue', 'agents' => 'Agents'];
 
-        // Leads reports are a plan entitlement (plans.reports_access); Super Admin always has them.
-        $portalUser = \Illuminate\Support\Facades\Auth::guard('portal')->user();
-        if ($portalUser && !$portalUser->hasReportsAccess()) {
-            return view('portal.crm.reports.locked', ['plan' => $portalUser->plan]);
+    public function __construct(private readonly PortalReportService $reports)
+    {
+    }
+
+    public function index(Request $request, string $report = 'leads')
+    {
+        $viewer = $this->owner();
+        if ($viewer && !$viewer->hasReportsAccess()) {
+            return view('portal.crm.reports.locked', ['plan' => $viewer->plan]);
         }
 
-        $rangeDays = in_array((int) $request->input('range'), [30, 90], true) ? (int) $request->input('range') : 30;
+        // Only an agency has agents to report on.
+        $available = collect(self::REPORTS)->when($viewer && $viewer->type !== 'company', fn ($r) => $r->except('agents'));
+        abort_unless($available->has($report), 404);
 
-        $leadQuery = fn () => Lead::forOwner($ownerId);
-        $propertyQuery = fn () => Property::when($ownerId, fn ($q) => $q->where('portal_user_id', $ownerId));
+        $days = array_key_exists((int) $request->input('range'), PortalReportService::RANGES) ? (int) $request->input('range') : 30;
 
-        $leadsByStatus = $leadQuery()->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
-
-        $leadsByStage = $leadQuery()
-            ->join('lead_stages', 'lead_stages.id', '=', 'leads.stage_id')
-            ->selectRaw('lead_stages.name, lead_stages.color, count(*) as total')
-            ->groupBy('lead_stages.id', 'lead_stages.name', 'lead_stages.color')
-            ->get();
-
-        $propertiesByStatus = $propertyQuery()
-            ->selectRaw("CASE WHEN status = 1 THEN 'active' ELSE 'inactive' END as status_label, count(*) as total")
-            ->groupBy('status_label')
-            ->pluck('total', 'status_label');
-
-        $leadsOverTime = $leadQuery()
-            ->where('created_at', '>=', now()->subDays($rangeDays)->startOfDay())
-            ->selectRaw('DATE(created_at) as day, count(*) as total')
-            ->groupBy('day')
-            ->orderBy('day')
-            ->pluck('total', 'day');
-
-        $totalLeads = $leadQuery()->count();
-        // "Closed" here means the pipeline stage marks it done (Closed Won/Lost)
-        // — the lead's own status is now just Active/Inactive, not a deal outcome.
-        $closedLeads = $leadQuery()->whereHas('stage', fn ($s) => $s->where('is_closed', true))->count();
-        $conversionRate = $totalLeads > 0 ? round($closedLeads / $totalLeads * 100, 1) : 0.0;
-
-        return view('portal.crm.reports.index', [
-            'leadsByStatus' => $leadsByStatus,
-            'leadsByStage' => $leadsByStage,
-            'propertiesByStatus' => $propertiesByStatus,
-            'leadsOverTime' => $leadsOverTime,
-            'totalLeads' => $totalLeads,
-            'closedLeads' => $closedLeads,
-            'conversionRate' => $conversionRate,
-            'rangeDays' => $rangeDays,
-            'activeProperties' => $propertyQuery()->where('status', true)->count(),
+        return view("portal.crm.reports.{$report}", [
+            'report' => $report,
+            'reports' => $available,
+            'days' => $days,
             'isAdmin' => $this->isAdmin(),
+            'data' => $this->reports->{$report}($viewer, $days),
         ]);
     }
 }

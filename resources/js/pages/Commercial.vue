@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue';
 import { usePageWindow } from '../composables/usePageWindow';
 import { useRoute, useRouter } from 'vue-router';
 import { useCommercial } from '../composables/useCommercial';
@@ -7,13 +7,21 @@ import { useLanguages } from '../composables/useLanguages';
 import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
 import { usePropertyFilters } from '../composables/usePropertyFilters';
+import { useWishlist } from '../composables/useWishlist';
 import EmptyState from '../components/EmptyState.vue';
 import LocationAutocomplete from '../components/LocationAutocomplete.vue';
+import { carryFilters, takeCarriedFilters } from '../composables/useListingCarry';
+// Leaflet only loads when the map view is actually opened.
+const PropertyMap = defineAsyncComponent(() => import('../components/PropertyMap.vue'));
 
 const route = useRoute();
 const router = useRouter();
+// /commercial/map: same page and filters, results on a map instead of cards.
+const mapView = computed(() => !!route.meta.mapView);
+const mapParams = ref({});
 const { commercialListing, fetchCommercialListing } = useCommercial();
 const { selectedLanguage } = useLanguages();
+const { authenticated } = useWishlist();
 const { t } = useStaticText();
 // Prices and the price filter are in AED; they're shown in the visitor's chosen currency.
 const { formatPrice, formatCompact, presetLabel } = useCurrency();
@@ -72,19 +80,31 @@ function load() {
     FIELDS.forEach(([key, r]) => { const v = String(r.value ?? '').trim(); if (v) params[key] = v; });
     if (amenities.value.length) params.amenities = [...amenities.value].sort();
     if (sort.value !== 'default') params.sort = sort.value;
-    fetchCommercialListing(params);
-
-    // Keep the URL in step so a filtered view can be shared/bookmarked.
-    const query = { ...params };
-    delete query.lang;
-    if (query.page === 1) delete query.page;
-    if (query.amenities) query.amenities = query.amenities.join(',');
-    if (JSON.stringify(query) !== JSON.stringify(route.query)) router.replace({ query });
+    const { lang, page, sort: _sort, ...filterParams } = params;
+    mapParams.value = filterParams;
+    // The map view loads its own pins (PropertyMap.vue) — no page of cards needed.
+    if (!mapView.value) fetchCommercialListing(params);
 }
 
+// List ⇄ map toggle: hand the current filters to the other view (they aren't in the URL).
+function carryToOtherView() {
+    carryFilters('commercial', filterQuery());
+}
+
+/** The current filters as a URL query (no page) — for switching between the list and the map. */
+function filterQuery() {
+    const query = {};
+    FIELDS.forEach(([key, r]) => { const v = String(r.value ?? '').trim(); if (v) query[key] = v; });
+    if (amenities.value.length) query.amenities = [...amenities.value].sort().join(',');
+    if (sort.value !== 'default') query.sort = sort.value;
+    return query;
+}
+
+/** A filter change made on this page — filters stay in memory; any incoming ?query is cleared from the URL. */
 function applyFilters() {
     currentPage.value = 1;
     load();
+    if (Object.keys(route.query).length) router.replace({ query: {} });
 }
 
 function readQuery(query) {
@@ -195,7 +215,62 @@ const panelFilterCount = computed(() => [completion, bathrooms, minPrice, maxPri
     - (minSqft.value && maxSqft.value ? 1 : 0)
     + amenities.value.length
     + (sort.value !== 'default' ? 1 : 0));
-const hasAnyFilter = computed(() => FIELDS.some(([, r]) => r.value) || amenities.value.length > 0 || sort.value !== 'default');
+const activeFilterCount = computed(() => {
+    let count = 0;
+    if (locationQuery.value || cityFilter.value || communityFilter.value) count++;
+    if (searchQuery.value) count++;
+    if (propertyType.value) count++;
+    if (listingCategory.value) count++;
+    if (completion.value) count++;
+    if (bathrooms.value) count++;
+    if (minPrice.value || maxPrice.value) count++;
+    if (minSqft.value || maxSqft.value) count++;
+    count += amenities.value.length;
+    if (sort.value !== 'default') count++;
+    return count;
+});
+const hasAnyFilter = computed(() => activeFilterCount.value > 0);
+
+const savingSearch = ref(false);
+const searchSaved = ref(false);
+const searchSaveError = ref(false);
+const saveSearchLabel = computed(() => {
+    if (savingSearch.value) return t('properties_listing.toolbar.saving');
+    if (searchSaved.value) return t('properties_listing.toolbar.search_saved');
+    if (searchSaveError.value) return t('properties_listing.toolbar.save_error');
+    return t('properties_listing.toolbar.save_search');
+});
+
+function saveSearch() {
+    if (!authenticated.value) {
+        window.location.href = '/login';
+        return;
+    }
+    if (savingSearch.value) return;
+
+    const criteria = {};
+    FIELDS.forEach(([key, field]) => {
+        const value = String(field.value ?? '').trim();
+        if (value) criteria[key] = value;
+    });
+    if (amenities.value.length) criteria.amenities = [...amenities.value].sort().join(',');
+    if (sort.value !== 'default') criteria.sort = sort.value;
+
+    savingSearch.value = true;
+    searchSaveError.value = false;
+    window.axios.post('/customer/saved-searches', {
+        title: commercialListing.value?.title || t('commercial.hero.default_title'),
+        criteria,
+    }).then(() => {
+        searchSaved.value = true;
+        setTimeout(() => { searchSaved.value = false; }, 2500);
+    }).catch(() => {
+        searchSaveError.value = true;
+        setTimeout(() => { searchSaveError.value = false; }, 2500);
+    }).finally(() => {
+        savingSearch.value = false;
+    });
+}
 
 function goToPage(page) {
     if (page < 1 || page > (pagination.value?.last_page || 1) || page === currentPage.value) return;
@@ -213,8 +288,10 @@ const resultsText = computed(() => {
 });
 
 onMounted(() => {
-    // Shareable/linked filters: /commercial?city=…&property_type=office&min_price=…
-    readQuery(route.query);
+    // Filters arrive either in the URL (links such as /commercial?city=…&property_type=office) or
+    // carried over from the list/map toggle; after that they live in memory only.
+    const incoming = Object.keys(route.query).length ? route.query : (takeCarriedFilters('commercial') || {});
+    readQuery(incoming);
     load();
 });
 watch(selectedLanguage, load);
@@ -365,15 +442,15 @@ function amenityOverflow(amenities) {
         <section class="mw-commercial-filter">
             <div class="container-ctn">
                 <form class="mw-commercial-filter__bar" role="search" @submit.prevent="submitSearch">
-                    <div class="mw-commercial-filter__field">
+                    <div class="mw-commercial-filter__field" :class="{ 'is-filled': locationQuery || cityFilter || communityFilter }">
                         <label for="commercial-location">{{ t('commercial.filter_bar.location_label') }}</label>
                         <LocationAutocomplete id="commercial-location" name="location" scope="commercial" v-model="locationInput" :placeholder="t('commercial.filter_bar.location_placeholder')" @select="onPlacePicked" @enter="submitSearch" />
                     </div>
-                    <div class="mw-commercial-filter__field">
+                    <div class="mw-commercial-filter__field" :class="{ 'is-filled': searchQuery }">
                         <label for="commercial-properties">{{ t('commercial.filter_bar.properties_label') }}</label>
                         <input type="text" id="commercial-properties" name="properties" :placeholder="t('commercial.filter_bar.properties_placeholder')" autocomplete="off" v-model="searchQuery" @keyup.enter="applyFilters">
                     </div>
-                    <div class="mw-commercial-filter__field mw-commercial-filter__field--select mw-dropdown" data-dropdown>
+                    <div class="mw-commercial-filter__field mw-commercial-filter__field--select mw-dropdown" :class="{ 'is-filled': propertyType }" data-dropdown>
                         <label>{{ t('commercial.filter_bar.property_type_label') }}</label>
                         <button type="button" class="mw-commercial-filter__select-trigger" data-dropdown-trigger aria-haspopup="listbox">
                             <span data-dropdown-label data-dropdown-label-reactive>{{ propertyTypeLabel }}</span>
@@ -387,7 +464,7 @@ function amenityOverflow(amenities) {
                             </li>
                         </ul>
                     </div>
-                    <div class="mw-commercial-filter__field mw-commercial-filter__field--select mw-commercial-filter__field--last mw-dropdown" data-dropdown>
+                    <div class="mw-commercial-filter__field mw-commercial-filter__field--select mw-commercial-filter__field--last mw-dropdown" :class="{ 'is-filled': listingCategory }" data-dropdown>
                         <label>{{ t('commercial.filter_bar.category_label') }}</label>
                         <button type="button" class="mw-commercial-filter__select-trigger" data-dropdown-trigger aria-haspopup="listbox">
                             <span data-dropdown-label data-dropdown-label-reactive>{{ categoryLabel }}</span>
@@ -406,15 +483,39 @@ function amenityOverflow(amenities) {
                         {{ t('commercial.filter_bar.search') }}
                     </button>
                 </form>
-                <div v-if="pagination" class="mw-commercial-filter__summary">
-                    <span>{{ resultsText }}</span>
-                    <button v-if="hasAnyFilter" type="button" class="mw-commercial-filter__clear" @click="clearFilters">{{ t('commercial.clear_filters') }}</button>
-                </div>
             </div>
         </section>
 
-        <section class="mw-commercial">
+        <div v-if="pagination || mapView" class="mw-commercial-toolbar">
             <div class="container-ctn">
+                <div class="mw-commercial-filter__actions">
+                    <div class="mw-dubai-toolbar__views" role="group" :aria-label="t('properties_listing.toolbar.views_aria', 'View')">
+                        <router-link to="/commercial" @click="carryToOtherView" class="mw-dubai-toolbar__view-btn" :class="{ 'is-active': !mapView }" :aria-label="t('properties_listing.toolbar.grid_view_aria', 'Grid view')" :aria-pressed="!mapView">
+                            <img src="/frontend/assets/images/agencies/icon-grid-view.svg" alt="" width="24" height="24">
+                        </router-link>
+                        <router-link to="/commercial/map" @click="carryToOtherView" class="mw-dubai-toolbar__view-btn mw-map-toggle" :class="{ 'is-active': mapView }" :aria-label="t('map.map_view_aria', 'Map view')" :aria-pressed="mapView" :title="t('map.map_view_aria', 'Map view')">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5V4l-6 2.5z" /><path d="M9 4v13M15 6.5v13" /></svg>
+                        </router-link>
+                    </div>
+                    <button type="button" class="mw-dubai-toolbar__save" :disabled="savingSearch" @click="saveSearch">{{ saveSearchLabel }}</button>
+                    <button type="button" class="mw-dubai-toolbar__clear" :class="{ 'has-filters': hasAnyFilter }" @click="clearFilters">
+                        {{ t('properties_listing.toolbar.clear_filters') }}<span v-if="activeFilterCount" class="mw-dubai-toolbar__clear-count">{{ activeFilterCount }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map view: edge to edge, straight under the filter bar (no title / container). -->
+        <section v-if="mapView" class="mw-map-section">
+            <PropertyMap edge segment="commercial" :params="mapParams" />
+        </section>
+
+        <section v-else class="mw-commercial">
+            <div class="container-ctn">
+                <div class="mw-commercial__head">
+                    <h2 class="mw-commercial__title">{{ commercialListing?.title || t('commercial.hero.default_title') }}</h2>
+                    <p class="mw-commercial__count">{{ resultsText }}</p>
+                </div>
                 <div class="mw-commercial__grid">
 
                     <article v-for="property in properties" :key="property.slug" class="mw-commercial-card" data-reveal>

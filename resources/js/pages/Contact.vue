@@ -100,6 +100,7 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useContactPage } from '../composables/useContactPage';
 import { useRecaptcha } from '../composables/useRecaptcha';
 import { useStaticText } from '../composables/useStaticText';
@@ -107,6 +108,7 @@ import { useStaticText } from '../composables/useStaticText';
 const { contactPage } = useContactPage();
 const { getRecaptchaToken } = useRecaptcha();
 const { t } = useStaticText();
+const router = useRouter();
 
 const form = reactive({ name: '', email: '', phone: '', message: '' });
 const submitting = ref(false);
@@ -119,15 +121,10 @@ async function handleSubmit() {
 
     try {
         const recaptcha_token = await getRecaptchaToken('contact');
-        const { data } = await window.axios.post('/api/contact', { ...form, recaptcha_token });
-        feedback.value = { type: 'success', text: data.message };
-        form.name = '';
-        form.email = '';
-        form.phone = '';
-        form.message = '';
+        await window.axios.post('/api/contact', { ...form, source: 'contact', recaptcha_token });
+        router.push({ path: '/thank-you', query: { type: 'contact', name: form.name.trim().split(/\s+/)[0] || undefined } });
     } catch (error) {
         feedback.value = { type: 'error', text: error.response?.data?.message || t('contact_page.generic_error') };
-    } finally {
         submitting.value = false;
     }
 }

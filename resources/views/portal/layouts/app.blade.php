@@ -114,8 +114,10 @@
 
                 @if($owner)
                 <div class="nav-section-label">Support</div>
+                @php $ticketsAwaitingReply = \App\Models\SupportTicket::where('portal_user_id', $owner->id)->where('status', \App\Models\SupportTicket::AWAITING_CLIENT)->count(); @endphp
                 <a href="{{ route('portal.contact.index') }}" class="nav-link @if(request()->routeIs('portal.contact.*')) active @endif">
                     <i class="fas fa-headset"></i> Contact Us
+                    @if($ticketsAwaitingReply > 0)<span class="badge bg-warning text-dark ms-auto" title="Tickets awaiting your reply">{{ $ticketsAwaitingReply }}</span>@endif
                 </a>
                 @endif
                 {{-- My Profile and Plans live in the account (avatar) menu at the top right. --}}

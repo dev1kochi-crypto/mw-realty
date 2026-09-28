@@ -6,6 +6,7 @@ import { useLanguages } from '../composables/useLanguages';
 import { useWishlist } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
+import ProfileRequestForm from '../components/ProfileRequestForm.vue';
 
 const route = useRoute();
 const { agency, notFound, fetchAgency } = useAgencyDetail();
@@ -81,6 +82,7 @@ function agencyAria(template, name) {
                                 <a v-if="agency.whatsapp_number" :href="`https://wa.me/${agency.whatsapp_number.replace(/[^0-9]/g, '')}`" target="_blank" rel="noopener" class="mw-agency-profile__icon-btn" :aria-label="agencyAria('agency_details.whatsapp_aria', agency.name)">
                                     <img src="/frontend/assets/images/icons/whatsapp.svg" alt="" width="24" height="24">
                                 </a>
+                                <ProfileRequestForm profile-type="agency" :profile-slug="agency.slug" />
                             </div>
                         </div>
 

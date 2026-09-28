@@ -147,8 +147,8 @@ async function handleNewsletterSubmit() {
 
                 <div class="mw-footer__newsletter">
                     <h3 class="mw-footer__newsletter-title">{{ t('footer.newsletter.title') }}</h3>
-                    <form class="mw-footer__newsletter-form" @submit.prevent="handleNewsletterSubmit">
-                        <input type="email" :placeholder="t('footer.newsletter.placeholder')" v-model="newsletterEmail" required>
+                    <form class="mw-footer__newsletter-form" :class="{ 'is-submitting': newsletterSubmitting, 'is-subscribed': newsletterFeedback?.type === 'success' }" @submit.prevent="handleNewsletterSubmit">
+                        <input type="email" :placeholder="t('footer.newsletter.placeholder')" v-model="newsletterEmail" :disabled="newsletterSubmitting" required>
                         <button type="submit" :aria-label="t('footer.newsletter.subscribe_aria')" :disabled="newsletterSubmitting">
                             <img src="/frontend/assets/images/icons/footer-arrow.svg" alt="" width="24" height="24">
                         </button>

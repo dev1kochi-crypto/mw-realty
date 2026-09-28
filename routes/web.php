@@ -63,6 +63,8 @@ Route::post('/leads/brochure-download', [LeadCaptureController::class, 'download
 // Properties listing "Custom Request" — no property to attach to, always an unassigned lead
 // (see LeadCaptureController::storeCustomRequest).
 Route::post('/leads/custom-request', [LeadCaptureController::class, 'storeCustomRequest'])->name('leads.custom-request')->middleware('throttle:lead-capture');
+Route::post('/leads/profile-request', [LeadCaptureController::class, 'storeProfileRequest'])->name('leads.profile-request')->middleware('throttle:lead-capture');
+Route::get('/newsletter/unsubscribe/{token}', [\App\Http\Controllers\Api\NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 
 // The public-site "customer" (buyer/visitor) account — guard 'web', separate from the
 // agent/company portal above. Real <form> POSTs (CustomerLogin.vue / CustomerSignup.vue),
@@ -522,6 +524,17 @@ Route::middleware(['web'])->group(function () {
                 Route::get('/payments/{id}/invoice.pdf', [\App\Http\Controllers\CmsKit\PaymentController::class, 'pdf'])->name('cms.payments.pdf');
             });
 
+            // Support Tickets — raised by Agents/Companies from portal Contact Us (see Portal\PortalContactController)
+            Route::middleware(['cms.permission:support-tickets.view'])->controller(\App\Http\Controllers\CmsKit\SupportTicketController::class)->group(function () {
+                Route::get('/support-tickets', 'index')->name('cms.support-tickets.index');
+                Route::get('/support-tickets/{ticket}', 'show')->name('cms.support-tickets.show');
+                Route::get('/support-tickets/{ticket}/attachments/{message}', 'attachment')->name('cms.support-tickets.attachment')->whereNumber('message');
+                Route::middleware(['cms.permission:support-tickets.edit'])->group(function () {
+                    Route::post('/support-tickets/{ticket}/reply', 'reply')->name('cms.support-tickets.reply');
+                    Route::put('/support-tickets/{ticket}', 'update')->name('cms.support-tickets.update');
+                });
+            });
+
             // Coupons (discount codes Agents/Companies can apply when requesting a paid plan)
             Route::middleware(['cms.permission:coupons.view'])->group(function () {
                 Route::get('/coupons', [\App\Http\Controllers\CmsKit\CouponController::class, 'index'])->name('cms.coupons.index');
@@ -687,9 +700,18 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::post('/properties/{id}/transfer', 'transferProperty')->name('properties.transfer')->middleware('portal.approved');
         });
 
-        // Contact Us — portal guard only, reaches MW Realty support (not meaningful for admin browsing).
-        Route::get('/contact', [\App\Http\Controllers\Portal\PortalContactController::class, 'index'])->name('contact.index');
-        Route::post('/contact', [\App\Http\Controllers\Portal\PortalContactController::class, 'store'])->name('contact.store');
+        // Contact Us — support tickets to MW Realty (portal guard only; admin side is cms.support-tickets.*).
+        // Reachable before KYC approval too, since getting unstuck is often exactly what they need help with.
+        Route::prefix('contact')->name('contact.')->controller(\App\Http\Controllers\Portal\PortalContactController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/tickets/create', 'create')->name('create');
+            Route::post('/tickets', 'store')->name('store')->middleware('throttle:10,1');
+            Route::get('/tickets/{ticket}', 'show')->name('show');
+            Route::post('/tickets/{ticket}/reply', 'reply')->name('reply')->middleware('throttle:20,1');
+            Route::post('/tickets/{ticket}/resolve', 'resolve')->name('resolve');
+            Route::post('/tickets/{ticket}/reopen', 'reopen')->name('reopen');
+            Route::get('/tickets/{ticket}/attachments/{message}', 'attachment')->name('attachment')->whereNumber('message');
+        });
     });
 
     // Shared by Super Admin (global view) and Agent/Company (own-data view) —
@@ -811,7 +833,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
                 Route::post('/sources/reorder', [LeadSourceController::class, 'reorder'])->name('sources.reorder');
             });
 
-            Route::get('/reports', [PortalReportController::class, 'index'])->name('reports.index');
+            Route::get('/reports/{report?}', [PortalReportController::class, 'index'])->name('reports.index')->whereIn('report', ['leads', 'properties', 'revenue', 'agents']);
         });
     });
 });
@@ -828,6 +850,7 @@ Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->middleware(['web',
 // else (auth/profile/thank-you) stays a bare Route::view since there's nothing to index.
 Route::get('/about', [SpaController::class, 'staticPage'])->defaults('pageKey', 'about');
 Route::get('/commercial', [SpaController::class, 'staticPage'])->defaults('pageKey', 'commercial');
+Route::get('/commercial/map', [SpaController::class, 'staticPage'])->defaults('pageKey', 'commercial');
 Route::get('/agents', [SpaController::class, 'staticPage'])->defaults('pageKey', 'agents');
 Route::get('/agent-details/{slug}', [SpaController::class, 'agentDetails']);
 Route::view('/agent-login', 'welcome');
@@ -850,7 +873,10 @@ Route::view('/forgot-password', 'welcome');
 Route::view('/reset-password', 'welcome');
 Route::view('/profile', 'welcome');
 Route::get('/properties', [SpaController::class, 'staticPage'])->defaults('pageKey', 'properties');
+// Map view of the same listings (same filters, same SEO page) — see PropertyMap.vue.
+Route::get('/properties/map', [SpaController::class, 'staticPage'])->defaults('pageKey', 'properties');
 Route::get('/premium-properties', [SpaController::class, 'staticPage'])->defaults('pageKey', 'premium-properties');
+Route::get('/premium-properties/map', [SpaController::class, 'staticPage'])->defaults('pageKey', 'premium-properties');
 Route::get('/property-details/{slug}', [SpaController::class, 'propertyDetails']);
 Route::get('/terms-and-conditions', [SpaController::class, 'staticPage'])->defaults('pageKey', 'terms');
 Route::get('/privacy-policy', [SpaController::class, 'staticPage'])->defaults('pageKey', 'privacy');
@@ -871,3 +897,7 @@ Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryControll
 Route::get('/{slug}', [\App\Http\Controllers\LandingPageController::class, 'show'])
     ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|market-insights|careers|contact|login|signup|verify-email|forgot-password|reset-password|profile|properties|premium-properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
     ->name('landing-pages.show');
+
+// Anything no route above claims (e.g. /some/unknown/page) — the site's own 404 page, served with a
+// real 404 status and the normal web middleware, instead of Laravel's bare "404 | Not Found" screen.
+Route::fallback([SpaController::class, 'missing']);

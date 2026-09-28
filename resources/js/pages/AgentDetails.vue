@@ -6,6 +6,7 @@ import { useLanguages } from '../composables/useLanguages';
 import { useWishlist } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
+import ProfileRequestForm from '../components/ProfileRequestForm.vue';
 
 const route = useRoute();
 const { agent, notFound, fetchAgent } = useAgentDetail();
@@ -104,6 +105,7 @@ const bioFallback = computed(() => t('agent_details.bio_fallback').replace('{nam
                                 <img src="/frontend/assets/images/icons/whatsapp.svg" alt="" width="18" height="18">
                                 {{ t('agent_details.whatsapp') }}
                             </a>
+                            <ProfileRequestForm profile-type="agent" :profile-slug="agent.slug" />
                         </div>
                     </div>
                 </article>

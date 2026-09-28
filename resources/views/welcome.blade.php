@@ -11,6 +11,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <script>window.MW_RECAPTCHA_SITE_KEY = @json(config('services.recaptcha.site_key'));</script>
+        <script>window.MW_MAP_TILES = @json(config('services.map_tiles'));</script>
         <script>window.MW_CHATBOT_NAME = @json(config('chatbot.persona_name'));</script>
         {{-- The portal/customer login+signup forms are real <form> POSTs (session redirect flow,
              not axios) — Laravel flashes validation errors and old() input to the session on

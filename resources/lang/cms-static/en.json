@@ -226,7 +226,8 @@
                 "interest_management": "Property management",
                 "message_label": "Message",
                 "message_placeholder": "How can we help you?",
-                "submit": "Contact Our Expert"
+                "submit": "Contact Our Expert",
+                "sending": "Sending…"
             }
         }
     },
@@ -621,7 +622,8 @@
         "breadcrumb_home": "Home",
         "breadcrumb_current": "About Us",
         "director": {
-            "read_message": "Read Director Message"
+            "read_message": "Read Director Message",
+            "show_less": "Show Less"
         },
         "steps": {
             "heading": "Post Your property in 3 simple steps"
@@ -1043,12 +1045,49 @@
         "title": "Thank You!",
         "line1": "Your submission has been received.",
         "line2": "We will be in touch and contact you soon!",
-        "cta": "Back to Homepage"
+        "cta": "Back to Homepage",
+        "title_named": "Thank you, {name}!",
+        "eyebrow": "Submission received",
+        "cta_browse": "Browse Properties",
+        "urgent": "Need something urgently?",
+        "contact": {
+            "line1": "Your message is on its way to our team.",
+            "line2": "A member of MW Realty will get back to you within one business day."
+        },
+        "enquiry": {
+            "line1": "Thanks for your interest — your enquiry is in.",
+            "line2": "A property advisor will call you shortly to understand exactly what you need."
+        },
+        "request": {
+            "line1": "Your property request has been received.",
+            "line2_agent": "Your agent is already on it and will share properties that match your brief.",
+            "line2_agency": "The agency is already on it and will share properties that match your brief."
+        },
+        "steps": {
+            "1_title": "Received",
+            "1_text": "Your details reached our team securely.",
+            "2_title": "We'll reach out",
+            "2_text": "An advisor contacts you by phone, email or WhatsApp.",
+            "3_title": "Find your place",
+            "3_text": "Get tailored options and expert guidance.",
+            "request_1_title": "Brief shared",
+            "request_1_text": "Your requirements are with the right specialist.",
+            "request_2_title": "Shortlisting",
+            "request_2_text": "Matching listings are hand-picked for you.",
+            "request_3_title": "Options in your inbox",
+            "request_3_text": "Review, shortlist and book your viewings."
+        }
     },
     "not_found": {
         "title": "Page Not Found",
         "text": "Sorry, We can't find the page you're looking for.",
-        "cta": "Back to Homepage"
+        "cta": "Back to Homepage",
+        "eyebrow": "Error 404",
+        "hint": "It may have been moved, sold or taken off the market — but your next home is still out there.",
+        "search_placeholder": "Search by city, community or building",
+        "search_button": "Search",
+        "popular": "Popular pages",
+        "contact": "Contact Us"
     },
     "chat_widget": {
         "welcome_message": "Welcome to MW Realty! I'm {name}, your personal property finder. Tell me what you're dreaming of, and I'll pull up real matches for you in seconds.",
@@ -1292,5 +1331,24 @@
     },
     "location_search": {
         "type_property": "Property"
+    },
+    "map": {
+        "aria_label": "Properties on a map",
+        "map_view_aria": "Map view",
+        "properties_short": "Properties",
+        "on_request": "On request",
+        "none_here": "No properties in this area",
+        "none": "No properties match your filters",
+        "show_all": "Show all results",
+        "in_area": "properties in this area",
+        "zoom_in": "zoom in to see all",
+        "loading": "Loading properties…",
+        "reset_dubai": "Back to Dubai",
+        "close": "Close",
+        "at_address": "properties at this address",
+        "all_at_address": "All properties here",
+        "bed": "Bed",
+        "premium": "Premium",
+        "view_details": "View Details"
     }
 }

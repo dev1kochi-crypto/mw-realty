@@ -8,6 +8,7 @@ import { useWishlist } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
 import { useLanguages } from '../composables/useLanguages';
+import { useRecaptcha } from '../composables/useRecaptcha';
 
 // One fetch for the whole page (see routes/api.php -> Api\HomeController) instead of a
 // request per section — every section below just reads its own slice of `homePage.value`.
@@ -18,6 +19,28 @@ const { t } = useStaticText();
 const { formatPrice, formatCompact, presetLabel } = useCurrency();
 const router = useRouter();
 const { selectedLanguage } = useLanguages();
+const { getRecaptchaToken } = useRecaptcha();
+
+// "Get in touch" section form — saved as an Enquiry (same endpoint as the /contact page), then
+// the visitor lands on the thank-you page.
+const contactForm = reactive({ name: '', email: '', phone: '', interest: '', message: '' });
+const contactSubmitting = ref(false);
+const contactError = ref(null);
+
+async function submitContactForm() {
+    if (contactSubmitting.value) return;
+    contactSubmitting.value = true;
+    contactError.value = null;
+    try {
+        const recaptcha_token = await getRecaptchaToken('home_contact');
+        await window.axios.post('/api/contact', { ...contactForm, source: 'home', recaptcha_token });
+        router.push({ path: '/thank-you', query: { type: 'enquiry', name: contactForm.name.trim().split(/\s+/)[0] || undefined } });
+    } catch (error) {
+        const fieldErrors = error.response?.data?.errors;
+        contactError.value = fieldErrors ? Object.values(fieldErrors).flat()[0] : (error.response?.data?.message || t('contact_page.generic_error'));
+        contactSubmitting.value = false;
+    }
+}
 
 const banner = computed(() => homePage.value?.banner || null);
 const brands = computed(() => homePage.value?.brands || []);
@@ -1060,26 +1083,26 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     </div>
 
                     <div class="mw-contact__form-card">
-                        <form class="mw-contact__form" novalidate @submit.prevent>
+                        <form class="mw-contact__form" @submit.prevent="submitContactForm">
                             <div class="mw-contact__field">
                                 <label for="contact-name">{{ t('home.contact.form.name_label') }}</label>
-                                <input type="text" id="contact-name" name="name" :placeholder="t('home.contact.form.name_placeholder')" required>
+                                <input type="text" id="contact-name" name="name" v-model="contactForm.name" maxlength="255" :placeholder="t('home.contact.form.name_placeholder')" required>
                             </div>
 
                             <div class="mw-contact__field">
                                 <label for="contact-email">{{ t('home.contact.form.email_label') }}</label>
-                                <input type="email" id="contact-email" name="email" :placeholder="t('home.contact.form.email_placeholder')" required>
+                                <input type="email" id="contact-email" name="email" v-model="contactForm.email" maxlength="255" :placeholder="t('home.contact.form.email_placeholder')" required>
                             </div>
 
                             <div class="mw-contact__field">
                                 <label for="contact-phone">{{ t('home.contact.form.phone_label') }}</label>
-                                <input type="tel" id="contact-phone" name="phone" :placeholder="t('home.contact.form.phone_placeholder')" required>
+                                <input type="tel" id="contact-phone" name="phone" v-model="contactForm.phone" maxlength="50" :placeholder="t('home.contact.form.phone_placeholder')" required>
                             </div>
 
                             <div class="mw-contact__field mw-contact__field--select">
                                 <label for="contact-interest">{{ t('home.contact.form.interest_label') }}</label>
                                 <div class="mw-contact__select-wrap">
-                                    <select id="contact-interest" name="interest" required>
+                                    <select id="contact-interest" name="interest" v-model="contactForm.interest" required>
                                         <option value="" selected disabled hidden>{{ t('home.contact.form.interest_select_placeholder') }}</option>
                                         <option value="buy">{{ t('home.contact.form.interest_buy') }}</option>
                                         <option value="rent">{{ t('home.contact.form.interest_rent') }}</option>
@@ -1092,10 +1115,11 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
 
                             <div class="mw-contact__field">
                                 <label for="contact-message">{{ t('home.contact.form.message_label') }}</label>
-                                <textarea id="contact-message" name="message" rows="5" :placeholder="t('home.contact.form.message_placeholder')"></textarea>
+                                <textarea id="contact-message" name="message" rows="5" v-model="contactForm.message" maxlength="2000" :placeholder="t('home.contact.form.message_placeholder')"></textarea>
                             </div>
 
-                            <button type="submit" class="mw-contact__submit">{{ t('home.contact.form.submit') }}</button>
+                            <p v-if="contactError" class="mw-form-feedback mw-form-feedback--error" role="alert">{{ contactError }}</p>
+                            <button type="submit" class="mw-contact__submit" :disabled="contactSubmitting">{{ contactSubmitting ? t('home.contact.form.sending') : t('home.contact.form.submit') }}</button>
                         </form>
                     </div>
                 </div>

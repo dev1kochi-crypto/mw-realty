@@ -10,9 +10,10 @@
          style="width: 72px; height: 72px; border-radius: 20px; background: linear-gradient(135deg, var(--portal-primary), var(--portal-accent)); color: #fff; font-size: 1.8rem;">
         <i class="fas fa-chart-line"></i>
     </div>
-    <h4 class="fw-bold mb-2">Unlock leads reports &amp; analytics</h4>
+    <h4 class="fw-bold mb-2">Unlock reports &amp; analytics</h4>
     <p class="portal-muted mb-4">
-        See leads by stage and status, conversion rate and lead trends over time.
+        Leads, Properties{{ $owner?->type === 'company' ? ' and Agents' : '' }} reports — lead trends, sources and conversion,
+        your best-performing listings{{ $owner?->type === 'company' ? ', and how each of your agents is doing' : '' }}.
         Reports aren't included in your {{ $plan?->getTranslation('name') ?? 'current' }} plan.
     </p>
     <a href="{{ route('portal.plans.index') }}" class="btn btn-portal-primary"><i class="fas fa-rocket me-2"></i>View Plans</a>

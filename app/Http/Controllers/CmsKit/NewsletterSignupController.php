@@ -21,13 +21,18 @@ class NewsletterSignupController extends Controller
                 ->editColumn('created_at', function ($row) {
                     return $row->created_at->format('d M Y H:i');
                 })
+                ->addColumn('subscription_status', function ($row) {
+                    return $row->is_subscribed
+                        ? '<span class="badge bg-success">Subscribed</span>'
+                        : '<span class="badge bg-secondary">Unsubscribed</span>';
+                })
                 ->addColumn('action', function ($row) {
                     if (auth('cms')->user()->can('newsletter.delete')) {
                         return '<button type="button" class="btn btn-sm btn-outline-danger delete-item" data-id="' . $row->id . '"><i class="fas fa-trash"></i></button>';
                     }
                     return '';
                 })
-                ->rawColumns(['select_all', 'action'])
+                ->rawColumns(['select_all', 'subscription_status', 'action'])
                 ->make(true);
         }
 
@@ -48,5 +53,4 @@ class NewsletterSignupController extends Controller
         return response()->json(['success' => true]);
     }
 }
-
 

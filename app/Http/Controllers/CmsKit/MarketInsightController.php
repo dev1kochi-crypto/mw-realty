@@ -137,7 +137,8 @@ class MarketInsightController extends Controller
         MarketInsight::where('order_index', '>=', $order)->increment('order_index');
         $data['order_index'] = $order;
 
-        MarketInsight::create($data);
+        $insight = MarketInsight::create($data);
+        app(\App\Services\NewsletterCampaignService::class)->publishInsight($insight);
 
         return redirect()->route('cms.market-insights.index')->with('success', 'Market insight created successfully.');
     }
@@ -175,6 +176,7 @@ class MarketInsightController extends Controller
         }
 
         $insight->update($data);
+        app(\App\Services\NewsletterCampaignService::class)->publishInsight($insight->fresh());
 
         return redirect()->route('cms.market-insights.index')->with('success', 'Market insight updated successfully.');
     }
@@ -281,6 +283,7 @@ class MarketInsightController extends Controller
     {
         $insight = MarketInsight::findOrFail($id);
         $insight->update(['status' => !$insight->status]);
+        app(\App\Services\NewsletterCampaignService::class)->publishInsight($insight);
 
         return response()->json(['success' => true]);
     }
@@ -340,7 +343,12 @@ class MarketInsightController extends Controller
             MarketInsight::whereIn('id', $ids)->get()->each(fn ($insight) => $this->deleteWithFiles($insight));
             $this->normalizeOrderIndex(MarketInsight::class);
         } elseif (in_array($action, ['active', 'inactive'], true)) {
-            MarketInsight::whereIn('id', $ids)->update(['status' => $action === 'active']);
+            MarketInsight::whereIn('id', $ids)->get()->each(function (MarketInsight $insight) use ($action) {
+                $insight->update(['status' => $action === 'active']);
+                if ($insight->status) {
+                    app(\App\Services\NewsletterCampaignService::class)->publishInsight($insight);
+                }
+            });
         }
 
         return response()->json(['success' => true]);

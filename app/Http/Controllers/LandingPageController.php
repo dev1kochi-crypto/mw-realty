@@ -16,7 +16,11 @@ class LandingPageController extends Controller
 {
     public function show(Request $request, string $slug)
     {
-        $page = LandingPage::where('slug', $slug)->where('status', true)->firstOrFail();
+        $page = LandingPage::where('slug', $slug)->where('status', true)->first();
+        if (!$page) {
+            // Not a landing page either — show the site's own 404 page (this route is the catch-all).
+            return app(\App\Http\Controllers\SpaController::class)->missing($request);
+        }
 
         $activeLangCodes = Language::where('status', true)->pluck('code')->all();
         $lang = $request->query('lang');

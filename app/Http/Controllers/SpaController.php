@@ -104,6 +104,21 @@ class SpaController extends Controller
         return $this->renderWithSeo(SeoMeta::resolve($portalUser->metadata, $fallback));
     }
 
+    /**
+     * Any public URL nothing else claims (Route::fallback, and a landing-page slug that doesn't
+     * exist) — the Vue app's own 404 page with a real 404 status, instead of Laravel's bare error
+     * screen. API calls keep a JSON 404; admin/portal keep their own error handling.
+     */
+    public function missing(Request $request)
+    {
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+        abort_if($request->is(config('cms-kit.common.auth.prefix', 'admin'), config('cms-kit.common.auth.prefix', 'admin') . '/*', 'portal', 'portal/*'), 404);
+
+        return $this->notFound($request, 'Page');
+    }
+
     private function notFound(Request $request, string $label): Response
     {
         $resolved = SeoMeta::resolve(null, [

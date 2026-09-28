@@ -43,6 +43,7 @@ class AgentAgencyPageService
             $activeProperties = Property::where('status', true)->where('agent_id', $agent->id);
 
             return [
+                'id' => $agent->id,
                 'slug' => $agent->slug,
                 'name' => $agent->name,
                 'avatar_url' => $agent->avatar ? media_url($agent->avatar) : null,
@@ -97,6 +98,7 @@ class AgentAgencyPageService
             $activeAgents = $agency->agents()->approved()->where('is_active', true);
 
             return [
+                'id' => $agency->id,
                 'slug' => $agency->slug,
                 'name' => $agency->displayName(),
                 'logo_url' => $agency->avatar ? media_url($agency->avatar) : null,

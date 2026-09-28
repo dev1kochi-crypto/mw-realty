@@ -27,6 +27,7 @@
                         <th style="width: 40px;"><input type="checkbox" id="selectAll" class="form-check-input"></th>
                         <th style="width: 50px;">#</th>
                         <th>Email</th>
+                        <th style="width: 140px;">Status</th>
                         <th style="width: 200px;">Subscribed At</th>
                         <th class="text-end pe-4" style="width: 100px;">Actions</th>
                     </tr>
@@ -53,10 +54,11 @@ $(function() {
             {data: 'select_all', name: 'select_all', orderable: false, searchable: false},
             {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
             {data: 'email', name: 'email'},
+            {data: 'subscription_status', name: 'is_subscribed', orderable: false, searchable: false},
             {data: 'created_at', name: 'created_at'},
             {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-end pe-4'}
         ],
-        order: [[3, 'desc']],
+        order: [[4, 'desc']],
         drawCallback: function() {
             toggleBulkButton();
         }

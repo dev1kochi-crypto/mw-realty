@@ -50,6 +50,7 @@ return [
         'portal-accounts' => true,
         'plans' => true,
         'coupons' => true,
+        'support-tickets' => true,
     ],
 
     'careers' => [

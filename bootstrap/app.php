@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('landing-pages:cleanup-temp-images')->daily();
         $schedule->command('portal:notify-expiring-documents')->daily();
         $schedule->command('properties:expire-featured')->everyFifteenMinutes();
+        $schedule->call(fn () => app(\App\Services\NewsletterCampaignService::class)->sendDueContent())->everyFifteenMinutes();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         // Only the portal routes use Laravel's built-in auth/guest middleware

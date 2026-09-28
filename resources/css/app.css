@@ -9,3 +9,20 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Listing toolbars — the map-view toggle (an inline SVG next to the grid/list image icons). */
+.mw-map-toggle { color: #244373; text-decoration: none; background: #fff; transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+.mw-map-toggle svg { display: block; width: 22px; height: 22px; }
+.mw-map-toggle:hover { border-color: #244373; color: #c92844; }
+.mw-map-toggle.is-active { color: #fff; }
+
+/* Map view section (/properties/map, /commercial/map): full width, flush under the filter bar. */
+.mw-map-section { margin: 0; padding: 0; }
+
+/* /commercial/map: the Commercial actions row sits right above the full-bleed map, so give it the
+   same breathing room and bottom rule as the Properties toolbar (.mw-dubai-toolbar). */
+.map-view-page .mw-commercial-toolbar { padding: 12px 0 14px; border-bottom: 1px solid #e1e8ed; }
+.mw-map-toggle.is-active svg { stroke-width: 2.1; }
+/* A broader theme rule greys every svg in the toolbar; the map icon must follow its button's colour
+   (navy normally, white when active). */
+.mw-map-toggle > svg { color: inherit !important; stroke: currentColor; }

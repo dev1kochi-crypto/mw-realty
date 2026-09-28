@@ -267,7 +267,8 @@ class BlogController extends Controller
             $data['metadata'] = $metadata;
         }
 
-        Blog::create($data);
+        $blog = Blog::create($data);
+        app(\App\Services\NewsletterCampaignService::class)->publishBlog($blog);
 
         return redirect()->route('cms.blogs.index')->with('success', 'Blog post created successfully.');
     }
@@ -340,6 +341,7 @@ class BlogController extends Controller
         }
 
         $blog->update($data);
+        app(\App\Services\NewsletterCampaignService::class)->publishBlog($blog->fresh());
 
         return redirect()->route('cms.blogs.index')->with('success', 'Blog post updated successfully.');
     }
@@ -376,6 +378,7 @@ class BlogController extends Controller
         $blog = Blog::findOrFail($id);
         $blog->status = !$blog->status;
         $blog->save();
+        app(\App\Services\NewsletterCampaignService::class)->publishBlog($blog);
 
         return response()->json(['success' => true]);
     }
@@ -462,7 +465,10 @@ class BlogController extends Controller
         }
 
         if (in_array($action, ['active', 'activate'], true)) {
-            Blog::whereIn('id', $ids)->update(['status' => true]);
+            Blog::whereIn('id', $ids)->get()->each(function (Blog $blog) {
+                $blog->update(['status' => true]);
+                app(\App\Services\NewsletterCampaignService::class)->publishBlog($blog);
+            });
         }
 
         if (in_array($action, ['inactive', 'deactivate'], true)) {
@@ -472,5 +478,3 @@ class BlogController extends Controller
         return response()->json(['success' => true]);
     }
 }
-
-

@@ -9,6 +9,7 @@ use App\Rules\RecaptchaRule;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 /** Public, unauthenticated — the footer newsletter form (POST /api/newsletter/subscribe). */
 class NewsletterController extends Controller
@@ -20,9 +21,19 @@ class NewsletterController extends Controller
             'recaptcha_token' => ['nullable', new RecaptchaRule()],
         ]);
 
-        $email = $request->input('email');
-        $alreadySubscribed = NewsletterSignup::where('email', $email)->exists();
-        $signup = NewsletterSignup::firstOrCreate(['email' => $email]);
+        $email = mb_strtolower(trim($request->input('email')));
+        $signup = NewsletterSignup::whereRaw('LOWER(email) = ?', [$email])->first();
+        $alreadySubscribed = $signup?->is_subscribed ?? false;
+
+        if (!$signup) {
+            $signup = NewsletterSignup::create([
+                'email' => $email,
+                'is_subscribed' => true,
+                'unsubscribe_token' => Str::random(64),
+            ]);
+        } elseif (!$signup->is_subscribed) {
+            $signup->update(['is_subscribed' => true, 'unsubscribe_token' => Str::random(64)]);
+        }
 
         if (!$alreadySubscribed) {
             $adminEmail = SiteInformation::notificationEmail();
@@ -31,6 +42,17 @@ class NewsletterController extends Controller
             }
         }
 
-        return response()->json(['message' => 'Thanks for subscribing!']);
+        return response()->json([
+            'already_subscribed' => $alreadySubscribed,
+            'message' => $alreadySubscribed ? 'You are already subscribed.' : 'Thanks for subscribing!',
+        ]);
+    }
+
+    public function unsubscribe(string $token)
+    {
+        $signup = NewsletterSignup::where('unsubscribe_token', $token)->firstOrFail();
+        $signup->update(['is_subscribed' => false]);
+
+        return view('emails.newsletter.unsubscribed');
     }
 }

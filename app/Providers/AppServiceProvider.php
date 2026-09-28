@@ -92,6 +92,12 @@ class AppServiceProvider extends ServiceProvider
             $view->with('pendingAgencyAgentCount', Auth::guard('cms')->check()
                 ? \App\Models\AgencyAgent::where('status', \App\Models\AgencyAgent::PENDING)->count()
                 : 0);
+            $view->with('unassignedLeadCount', Auth::guard('cms')->check()
+                ? \App\Models\Lead::whereNull('portal_user_id')->count()
+                : 0);
+            $view->with('supportTicketsNeedingReply', Auth::guard('cms')->check()
+                ? \App\Models\SupportTicket::needsAdminReply()->count()
+                : 0);
         });
     }
 }

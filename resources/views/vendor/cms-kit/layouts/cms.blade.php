@@ -137,12 +137,17 @@
                                     <span class="badge bg-danger ms-auto">{{ $pendingAgencyAgentCount }}</span>
                                     @endif
                                 </a>
+                                {{-- Only when something is waiting: with Stripe on, plans are bought directly at checkout, so
+                                     a request only happens on the manual fallback (Stripe off / non-Stripe plan). Still reachable
+                                     from the bell notification and the dashboard's "needs attention" card. --}}
+                                @if(($pendingUpgradeCount ?? 0) > 0 || request()->routeIs('cms.portal-accounts.plan-upgrade-requests'))
                                 <a class="nav-link py-2 d-flex align-items-center @if(request()->routeIs('cms.portal-accounts.plan-upgrade-requests')) active @endif" href="{{ route('cms.portal-accounts.plan-upgrade-requests') }}">
                                     Plan Requests
                                     @if(($pendingUpgradeCount ?? 0) > 0)
                                     <span class="badge bg-danger ms-auto">{{ $pendingUpgradeCount }}</span>
                                     @endif
                                 </a>
+                                @endif
 
                                 {{-- Frontend/customer user logins land here once frontend auth is integrated. --}}
                             </nav>
@@ -165,6 +170,16 @@
                     @if(config('cms-kit.common.modules.coupons', true) && $cmsUser->can('coupons.view'))
                     <a class="nav-link @if(Route::is('cms.coupons.*')) active @endif" href="{{ route('cms.coupons.index') }}">
                         <i class="fas fa-ticket-alt"></i> Coupons
+                    </a>
+                    @endif
+
+                    {{-- Portal Contact Us tickets from Agents/Companies — core client support, so it sits with the business items above. --}}
+                    @if(config('cms-kit.common.modules.support-tickets', true) && $cmsUser->can('support-tickets.view'))
+                    <a class="nav-link d-flex align-items-center @if(Route::is('cms.support-tickets.*')) active @endif" href="{{ route('cms.support-tickets.index') }}">
+                        <i class="fas fa-headset"></i> Support Tickets
+                        @if(($supportTicketsNeedingReply ?? 0) > 0)
+                        <span class="badge bg-danger ms-auto">{{ $supportTicketsNeedingReply }}</span>
+                        @endif
                     </a>
                     @endif
 
@@ -433,9 +448,16 @@
                                     Newsletter Signups
                                 </a>
                                 @endif
-                                <a class="nav-link py-2 @if(request()->routeIs('cms.unassigned-leads.*')) active @endif" href="{{ route('cms.unassigned-leads.index') }}">
-                                    Unassigned Property Leads
+                                {{-- Only when something is waiting — Custom Property Requests and enquiries on listings with no
+                                     owner land here; the bell notification links straight to it too. --}}
+                                @if(($unassignedLeadCount ?? 0) > 0 || request()->routeIs('cms.unassigned-leads.*'))
+                                <a class="nav-link py-2 d-flex align-items-center @if(request()->routeIs('cms.unassigned-leads.*')) active @endif" href="{{ route('cms.unassigned-leads.index') }}">
+                                    Unassigned Leads
+                                    @if(($unassignedLeadCount ?? 0) > 0)
+                                    <span class="badge bg-danger ms-auto">{{ $unassignedLeadCount }}</span>
+                                    @endif
                                 </a>
+                                @endif
                             </nav>
                         </div>
                     </div>

@@ -28,6 +28,13 @@ const routes = [
         meta: { title: 'Commercial Properties | MW Realty', bodyClass: 'agents-page commercial-page', activeNav: 'commercial' },
     },
     {
+        // Same page and filters as /commercial, results on a map (PropertyMap.vue).
+        path: '/commercial/map',
+        name: 'commercial-map',
+        component: () => import('../pages/Commercial.vue'),
+        meta: { title: 'Commercial Properties on Map | MW Realty', bodyClass: 'agents-page commercial-page map-view-page', activeNav: 'commercial', mapView: true },
+    },
+    {
         path: '/agents',
         name: 'agents',
         component: () => import('../pages/Agents.vue'),
@@ -140,12 +147,25 @@ const routes = [
         meta: { title: 'Properties in Dubai | MW Realty', bodyClass: 'agents-page properties-dubai-page' },
     },
     {
+        // Same page and filters as /properties, results on a map (PropertyMap.vue).
+        path: '/properties/map',
+        name: 'properties-map',
+        component: () => import('../pages/PropertiesDubai.vue'),
+        meta: { title: 'Properties on Map | MW Realty', bodyClass: 'agents-page properties-dubai-page map-view-page', mapView: true },
+    },
+    {
         // Same listing page and design, showing every premium (CRM-featured) listing —
         // residential and commercial, each card tagged with which it is. See PropertiesDubai.vue `premium`.
         path: '/premium-properties',
         name: 'premium-properties',
         component: () => import('../pages/PropertiesDubai.vue'),
         meta: { title: 'Premium Properties | MW Realty', bodyClass: 'agents-page properties-dubai-page premium-properties-page', premium: true },
+    },
+    {
+        path: '/premium-properties/map',
+        name: 'premium-properties-map',
+        component: () => import('../pages/PropertiesDubai.vue'),
+        meta: { title: 'Premium Properties on Map | MW Realty', bodyClass: 'agents-page properties-dubai-page premium-properties-page map-view-page', premium: true, mapView: true },
     },
     {
         path: '/property-details/:slug',

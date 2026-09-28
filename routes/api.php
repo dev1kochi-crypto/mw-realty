@@ -96,6 +96,10 @@ Route::get('/commercial', [CommercialController::class, 'index']);
 // Public, read-only — the /properties listing page.
 Route::get('/properties', [PropertiesController::class, 'index']);
 
+// Public, read-only — map pins for /properties/map, /commercial/map and /premium-properties/map
+// (same filters as the listings, limited to the visible map area). Before {slug} so "map" isn't a slug.
+Route::get('/properties/map', [\App\Http\Controllers\Api\PropertyMapController::class, 'index'])->middleware('throttle:120,1');
+
 // Public, read-only — the /property-details/{slug} page.
 Route::get('/properties/{slug}', [PropertyController::class, 'show']);
 

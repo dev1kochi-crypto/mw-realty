@@ -6,10 +6,12 @@ use App\Mail\NewLeadReceived;
 use App\Models\CmsKit\Admin;
 use App\Models\CmsKit\SiteInformation;
 use App\Models\Lead;
+use App\Models\PortalUser;
 use App\Models\Property;
 use App\Notifications\NewLeadNotification;
 use App\Rules\RecaptchaRule;
 use App\Services\Agency\LeadAssignmentService;
+use App\Services\Agency\AssignmentActor;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -27,6 +29,97 @@ use Illuminate\Support\Facades\Mail;
  */
 class LeadCaptureController extends Controller
 {
+    /** Capture a property-search request from an agent or agency profile and route it to that CRM. */
+    public function storeProfileRequest(Request $request, LeadAssignmentService $leadAssignment)
+    {
+        $data = $request->validate([
+            'profile_type' => 'required|in:agent,agency',
+            'profile_slug' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'property_category' => 'nullable|string|max:100',
+            'specification' => 'nullable|string|max:255',
+            'price_range' => 'nullable|string|max:255',
+            'area' => 'nullable|string|max:100',
+            'preferred_location' => 'nullable|string|max:255',
+            'additional_details' => 'nullable|string|max:2000',
+            'move_in_timeline' => 'nullable|string|max:100',
+            'furnishing_status' => 'nullable|string|max:100',
+            'whatsapp_consent' => 'nullable|boolean',
+            'recaptcha_token' => ['nullable', new RecaptchaRule()],
+        ]);
+
+        $profile = PortalUser::query()
+            ->where('slug', $data['profile_slug'])
+            ->where('type', $data['profile_type'] === 'agency' ? 'company' : 'agent')
+            ->approved()->where('is_active', true)->firstOrFail();
+        $agencyOwner = $data['profile_type'] === 'agent' && $profile->company_id
+            ? PortalUser::find($profile->company_id)
+            : null;
+        $agentIsAgencyMember = $agencyOwner?->hasEligibleAgent($profile->id) ?? false;
+        $ownerId = $agentIsAgencyMember ? $agencyOwner->id : $profile->id;
+        $name = trim($data['first_name'] . ' ' . ($data['last_name'] ?? ''));
+        $details = array_filter([
+            !empty($data['property_category']) ? 'Category: ' . $data['property_category'] : null,
+            !empty($data['specification']) ? 'Specification: ' . $data['specification'] : null,
+            !empty($data['price_range']) ? 'Budget: ' . $data['price_range'] : null,
+            !empty($data['area']) ? 'Area: ' . $data['area'] : null,
+            !empty($data['preferred_location']) ? 'Location: ' . $data['preferred_location'] : null,
+            !empty($data['move_in_timeline']) ? 'Move-in: ' . $data['move_in_timeline'] : null,
+            !empty($data['furnishing_status']) ? 'Furnishing: ' . $data['furnishing_status'] : null,
+            !empty($data['additional_details']) ? 'Notes: ' . $data['additional_details'] : null,
+        ]);
+
+        $lead = DB::transaction(function () use ($request, $data, $profile, $agentIsAgencyMember, $ownerId, $name, $details, $leadAssignment) {
+            $lead = Lead::create([
+                'portal_user_id' => $ownerId,
+                'agent_id' => $data['profile_type'] === 'agent' && !$agentIsAgencyMember ? $profile->id : null,
+                'user_id' => Auth::guard('web')->id(),
+                'name' => $name,
+                'email' => $data['email'],
+                'phone' => $data['phone'] ?? null,
+                'message' => $details ? implode(' | ', $details) : 'Custom property request submitted.',
+                'page_url' => $request->header('referer'),
+                'page_source' => $data['profile_type'] . '-profile-request',
+                'status' => 'active',
+                'extra_fields' => [
+                    'property_category' => $data['property_category'] ?? null,
+                    'specification' => $data['specification'] ?? null,
+                    'price_range' => $data['price_range'] ?? null,
+                    'area' => $data['area'] ?? null,
+                    'preferred_location' => $data['preferred_location'] ?? null,
+                    'move_in_timeline' => $data['move_in_timeline'] ?? null,
+                    'furnishing_status' => $data['furnishing_status'] ?? null,
+                    'additional_details' => $data['additional_details'] ?? null,
+                    'whatsapp_consent' => $request->boolean('whatsapp_consent'),
+                ],
+            ]);
+
+            if ($data['profile_type'] === 'agent' && $agentIsAgencyMember) {
+                $leadAssignment->assignManually($lead, $profile->id, AssignmentActor::system(), 'Custom request from agent profile');
+            } else {
+                $leadAssignment->assignNewLead($lead);
+            }
+
+            return $lead;
+        }, LeadAssignmentService::TRANSACTION_ATTEMPTS);
+
+        if ($owner = $lead->owner) {
+            try {
+                $owner->notify(new NewLeadNotification($lead));
+            } catch (\Throwable $e) {
+                Log::error('Failed to create profile-request lead notification: ' . $e->getMessage());
+            }
+            if ($owner->email) {
+                Mail::to($owner->email)->queue((new NewLeadReceived($lead))->afterCommit());
+            }
+        }
+
+        return response()->json(['message' => 'Thanks — your request has been sent to ' . $profile->displayName() . '.']);
+    }
+
     /** Record a lead before revealing the listing brochure URL. */
     public function downloadBrochure(Request $request, LeadAssignmentService $leadAssignment)
     {

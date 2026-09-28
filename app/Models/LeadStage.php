@@ -22,6 +22,19 @@ class LeadStage extends Model
         ['name' => 'Closed Lost', 'color' => '#ef4444', 'is_closed' => true],
     ];
 
+    /** Closed stages whose name reads as a lost deal; every other closed stage counts as won. */
+    public const LOST_PATTERN = '/\b(lost|drop|dropped|cancel|cancelled|canceled|reject|rejected|dead|junk)\b/i';
+
+    public static function nameIsLost(?string $name): bool
+    {
+        return (bool) preg_match(self::LOST_PATTERN, (string) $name);
+    }
+
+    public function isWon(): bool
+    {
+        return $this->is_closed && !self::nameIsLost($this->name);
+    }
+
     public function owner()
     {
         return $this->belongsTo(PortalUser::class, 'portal_user_id');
