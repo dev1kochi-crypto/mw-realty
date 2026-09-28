@@ -31,10 +31,6 @@ function submitSearch() {
 
 <template>
     <main>
-        <section class="mw-about-hero">
-            <div class="mw-about-hero__band"></div>
-        </section>
-
         <section class="nf">
             <div class="nf__orb nf__orb--red" aria-hidden="true"></div>
             <div class="nf__orb nf__orb--navy" aria-hidden="true"></div>
@@ -98,6 +94,8 @@ function submitSearch() {
     --nf-navy: #244373;
     position: relative;
     overflow: hidden;
+    /* Clears the fixed site header (same offset the grey title banner uses on other pages). */
+    margin-top: clamp(64px, 4.85vw, 74px);
     padding: clamp(40px, 5vw, 96px) 0 clamp(64px, 7vw, 130px);
     background:
         radial-gradient(circle at 1px 1px, rgba(36, 67, 115, 0.07) 1px, transparent 0) 0 0 / 26px 26px,

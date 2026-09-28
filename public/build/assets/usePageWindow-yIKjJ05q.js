@@ -1,0 +1,1 @@
+import{q as h,f as r}from"./app-MXRvtJxU.js";function i(n,o,e=5){return h(()=>{const t=Math.max(0,Number(r(o))||0);if(!t)return[];const m=Math.min(Math.max(1,Number(r(n))||1),t),a=Math.min(e,t),u=Math.min(Math.max(1,m-Math.floor(a/2)),t-a+1);return Array.from({length:a},(c,s)=>u+s)})}export{i as u};
