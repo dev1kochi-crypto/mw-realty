@@ -39,6 +39,9 @@ class HomePageService
 
     private const CACHE_TTL = 180; // seconds
 
+    /** Most listings in each Home slider (Premium Properties, Luxury Project, Realty Property). */
+    private const HOME_SLIDER_LIMIT = 12;
+
     public function getHomeData(string $lang): array
     {
         return Cache::remember("home-page:{$lang}", self::CACHE_TTL, fn () => [
@@ -118,7 +121,7 @@ class HomePageService
         $cities = is_array($cities) ? array_values(array_filter($cities, fn ($c) => trim((string) $c) !== '')) : [];
 
         $properties = Property::where('status', true)
-            ->latest('published_at')
+            ->displayOrder()
             ->take(8)
             ->get()
             ->map(function ($property) use ($lang, $cities) {
@@ -147,40 +150,87 @@ class HomePageService
             'title' => $section?->getTranslation('title_2', $lang) ?: 'Premium Properties',
             'description' => $section?->getTranslation('description', $lang) ?: 'A highlight of exclusive listings from our premium customers — featured homes selected for exceptional location, quality, and investment value.',
             'button_name' => $section?->getTranslation('button_name', $lang) ?: 'View More Details',
-            'button_url' => $section?->getTranslation('button_url', $lang) ?: null,
-            'properties' => $this->featuredOrLatestProperties(4)->map(fn ($p) => $this->mapProperty($p, $lang, true))->values(),
+            // "View More Details" opens the full Premium listing page unless the admin set another link.
+            'button_url' => $section?->getTranslation('button_url', $lang) ?: '/premium-properties',
+            // Premium = listings featured from the CRM (Properties and Commercial), in the CRM order.
+            'properties' => Property::where('status', true)->where('featured', true)->displayOrder()
+                ->take(self::HOME_SLIDER_LIMIT)->get()
+                ->map(fn ($p) => $this->mapProperty($p, $lang, true))->values(),
         ];
     }
 
     protected function luxury(string $lang): array
     {
         $section = SectionLabel::where('section_key', 'home-luxury-project')->where('status', true)->first();
+        [$min, $max] = $this->luxuryPriceRange();
 
-        $properties = Property::where('status', true)->orderByDesc('price')->take(4)->get()
+        $properties = $this->luxuryQuery()->take(self::HOME_SLIDER_LIMIT)->get()
             ->map(fn ($p) => array_merge($this->mapProperty($p, $lang), [
                 'stat1' => $p->bedrooms ? "{$p->bedrooms} Bed" : '—',
                 'stat2' => $p->bathrooms ? "{$p->bathrooms} Bath" : '—',
             ]))->values();
+
+        // "View More Details" → the Properties page with the same price filter (and its default
+        // Recommended order, i.e. the CRM order) unless the admin set another link.
+        $listingUrl = '/properties' . (($min !== null || $max !== null)
+            ? '?' . http_build_query(array_filter(['min_price' => $min, 'max_price' => $max], fn ($v) => $v !== null))
+            : '?sort=price_desc');
 
         return [
             'eyebrow' => $section?->getTranslation('title_1', $lang) ?: 'Signature collection',
             'title' => $section?->getTranslation('title_2', $lang) ?: 'Luxury Project',
             'description' => $section?->getTranslation('description', $lang) ?: null,
             'button_text' => $section?->getTranslation('button_name', $lang) ?: 'View More Details',
-            'button_url' => $section?->getTranslation('button_url', $lang) ?: null,
+            'button_url' => $section?->getTranslation('button_url', $lang) ?: $listingUrl,
+            // Empty when no listing matches — the Home page then hides the section.
             'properties' => $properties,
         ];
+    }
+
+    /**
+     * Admin > Common Titles > Luxury Project "Min / Max Price" (either may be empty = no limit).
+     * Read even while the section's text is switched off, since it only defines what counts as luxury.
+     *
+     * @return array{0: ?int, 1: ?int}
+     */
+    protected function luxuryPriceRange(): array
+    {
+        $extra = SectionLabel::where('section_key', 'home-luxury-project')->value('extra_fields');
+        $extra = is_array($extra) ? $extra : (json_decode((string) $extra, true) ?: []);
+        $num = fn ($v) => is_numeric($v) && $v >= 0 ? (int) $v : null;
+
+        return [$num($extra['min_price'] ?? null), $num($extra['max_price'] ?? null)];
+    }
+
+    /**
+     * Luxury listings: active residential (never commercial) within the admin's price range, in the
+     * CRM display order. With no range set yet, the most expensive residential listings instead.
+     */
+    protected function luxuryQuery()
+    {
+        [$min, $max] = $this->luxuryPriceRange();
+        $query = Property::where('status', true)->residential();
+
+        if ($min === null && $max === null) {
+            return $query->orderByDesc('price')->orderByDesc('id');
+        }
+
+        return $query
+            ->when($min !== null, fn ($q) => $q->where('price', '>=', $min))
+            ->when($max !== null, fn ($q) => $q->where('price', '<=', $max))
+            ->displayOrder();
     }
 
     protected function realty(string $lang): array
     {
         $section = SectionLabel::where('section_key', 'home-realty-property')->where('status', true)->first();
-        $excludeIds = Property::where('status', true)->orderByDesc('price')->take(4)->pluck('id');
+        // Skip the listings already shown in the Luxury slider so the two don't repeat.
+        $excludeIds = $this->luxuryQuery()->take(self::HOME_SLIDER_LIMIT)->pluck('id');
 
         $properties = Property::where('status', true)
             ->whereNotIn('id', $excludeIds)
-            ->latest('published_at')
-            ->take(4)
+            ->displayOrder()
+            ->take(self::HOME_SLIDER_LIMIT)
             ->get()
             ->map(fn ($p) => $this->mapProperty($p, $lang, true))
             ->values();
@@ -239,6 +289,7 @@ class HomePageService
             'items' => $items->map(fn ($item) => [
                 'image_url' => $item->image ? media_url($item->image) : null,
                 'title' => $item->getTranslation('title', $lang),
+                'property_type' => $item->property_type,
                 'count' => $item->propertyCount(),
             ])->values(),
         ];
@@ -439,23 +490,6 @@ class HomePageService
                 'seo' => SeoMeta::forStaticPage('about', $lang),
             ];
         });
-    }
-
-    /** Featured listings first, topped up with the latest others if fewer than $count are featured. */
-    protected function featuredOrLatestProperties(int $count)
-    {
-        $featured = Property::where('status', true)->where('featured', true)->latest('published_at')->take($count)->get();
-        if ($featured->count() >= $count) {
-            return $featured;
-        }
-
-        $filler = Property::where('status', true)
-            ->whereNotIn('id', $featured->pluck('id'))
-            ->latest('published_at')
-            ->take($count - $featured->count())
-            ->get();
-
-        return $featured->concat($filler);
     }
 
     /** Which admin-configured city tab (Developments) a listing's location text matches, if any. */

@@ -7,7 +7,12 @@
     <div class="col-md-6">
         <label class="form-label fw-bold">Key <span class="text-danger">*</span></label>
         <input type="text" name="key" class="form-control @error('key') is-invalid @enderror" value="{{ old('key', $isEdit ? $filter->key : '') }}" placeholder="e.g. property_type" required>
-        <small class="text-muted">Must match a property field this filter queries (property_type, location, listing_type, completion_status, bedrooms, bathrooms, price, sqft) — or a custom column added later.</small>
+        <small class="text-muted">
+            Must be one of the property fields the website can search:
+            <strong>{{ implode(', ', \App\Models\Filter::SELECT_KEYS) }}</strong> (Select) or
+            <strong>{{ implode(', ', \App\Models\Filter::NUMBER_KEYS) }}</strong> (Range / Number).
+            Enabled filters appear automatically on the Home search and the Properties page, per "Show on" below; other keys are ignored by the website.
+        </small>
         @error('key')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-6">

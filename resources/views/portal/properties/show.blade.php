@@ -146,13 +146,13 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <nav class="portal-muted small">
-        <a href="{{ route('portal.properties.index') }}" class="text-decoration-none">Properties</a>
+        <a href="{{ route($routePrefix . '.index') }}" class="text-decoration-none">{{ $sectionTitle }}</a>
         <i class="fas fa-chevron-right mx-1" style="font-size: 0.65rem;"></i>
         <span>{{ $property->reference_no }}</span>
     </nav>
     <div class="d-flex gap-2">
-        <a href="{{ route('portal.properties.index') }}" class="btn btn-portal-light btn-sm"><i class="fas fa-arrow-left me-1"></i>Back to List</a>
-        <a href="{{ route('portal.properties.edit', $property->id) }}" class="btn btn-portal-primary btn-sm"><i class="fas fa-edit me-1"></i>Edit</a>
+        <a href="{{ route($routePrefix . '.index') }}" class="btn btn-portal-light btn-sm"><i class="fas fa-arrow-left me-1"></i>Back to List</a>
+        <a href="{{ route($routePrefix . '.edit', $property->id) }}" class="btn btn-portal-primary btn-sm"><i class="fas fa-edit me-1"></i>Edit</a>
     </div>
 </div>
 

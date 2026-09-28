@@ -98,10 +98,10 @@
           .catch(() => { toggle.checked = !toggle.checked; alert('Could not update the status.'); });
     });
 
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', async function (e) {
         const btn = e.target.closest('.delete-place');
         if (!btn) return;
-        if (!confirm('Delete this nearby place? Any properties tagged with it will lose that tag.')) return;
+        if (!(await window.portalConfirm({ title: 'Delete this nearby place?', message: 'Any properties tagged with it will lose that tag.', confirmText: 'Delete', tone: 'danger' }))) return;
         fetch("{{ url('portal/nearby-places') }}/" + btn.dataset.id, {
             method: 'DELETE',
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },

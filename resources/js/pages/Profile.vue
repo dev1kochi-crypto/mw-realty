@@ -211,7 +211,7 @@ watch(dashboard, () => {
                                         <router-link :to="`/property-details/${property.slug}`"><img :src="property.image" :alt="property.name" class="mw-projects__photo"></router-link>
                                         <span v-if="property.purpose_badge" class="mw-dubai-card__purpose">{{ property.purpose_badge }}</span>
                                         <button type="button" class="mw-dubai-card__fav is-saved" :aria-label="t('profile.wishlist.remove_aria')" @click="removeFromWishlist(property.id)">
-                                            <img src="/frontend/assets/images/icons/heart.svg" alt="" width="18" height="18">
+                                            <img src="/frontend/assets/images/icons/heart-filled.svg" alt="" width="18" height="18">
                                         </button>
                                         <span class="mw-dubai-card__type">{{ property.type }}</span>
                                     </div>
@@ -266,7 +266,7 @@ watch(dashboard, () => {
                                         <p class="mw-dashboard__search-row-meta">{{ search.meta }}</p>
                                     </div>
                                     <div class="mw-dashboard__search-row-actions">
-                                        <router-link to="/properties" class="mw-dashboard__link-btn">{{ t('profile.saved_searches.view_results') }}</router-link>
+                                        <router-link :to="{ path: '/properties', query: search.criteria || {} }" class="mw-dashboard__link-btn">{{ t('profile.saved_searches.view_results') }}</router-link>
                                         <button type="button" class="mw-dashboard__icon-btn" :aria-label="t('profile.saved_searches.delete_aria')" @click="deleteSavedSearch(search.id)">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
                                         </button>

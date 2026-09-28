@@ -437,15 +437,17 @@
         e.stopPropagation();
       });
 
-      menu.querySelectorAll('[data-dropdown-option]').forEach(function (option) {
-        option.addEventListener('click', function (e) {
-          e.stopPropagation();
-          var label = dropdown.querySelector('[data-dropdown-label]');
-          if (label) label.textContent = option.textContent.trim();
-          menu.querySelectorAll('[data-dropdown-option]').forEach(function (o) { o.classList.remove('is-selected'); });
-          option.classList.add('is-selected');
-          close(dropdown);
-        });
+      // Delegated, so options rendered later (e.g. from the admin-managed filter API) behave the same.
+      // A label marked data-dropdown-label-reactive is owned by Vue: leave its text alone, or the
+      // framework loses track of it and the label stops following the real selection.
+      menu.addEventListener('click', function (e) {
+        var option = e.target.closest('[data-dropdown-option]');
+        if (!option || !menu.contains(option)) return;
+        var label = dropdown.querySelector('[data-dropdown-label]');
+        if (label && !label.hasAttribute('data-dropdown-label-reactive')) label.textContent = option.textContent.trim();
+        menu.querySelectorAll('[data-dropdown-option]').forEach(function (o) { o.classList.remove('is-selected'); });
+        option.classList.add('is-selected');
+        close(dropdown);
       });
     });
 
@@ -492,17 +494,21 @@
       var fill = root.querySelector('[data-price-range]');
       var wrap = root.closest('[data-dropdown]');
       if (!minInput || !maxInput || !wrap) return;
+      if (root.dataset.mwPriceBound) return;
+      root.dataset.mwPriceBound = '1';
 
       var minText = wrap.querySelector('[data-price-min-input]');
       var maxText = wrap.querySelector('[data-price-max-input]');
       var fieldLabel = wrap.querySelector('[data-dropdown-label]');
       var presets = Array.prototype.slice.call(wrap.querySelectorAll('[data-price-preset]'));
-      var absMin = Number(minInput.min);
-      var absMax = Number(minInput.max);
-      var step = Number(minInput.step) || 1;
+      // Read the bounds live: Vue may change the slider's max after binding (the admin price filter's
+      // range arrives asynchronously), and a stale cached max would misplace the fill and labels.
+      function absMin() { return Number(minInput.min); }
+      function absMax() { return Number(maxInput.max); }
+      function stepOf() { return Number(minInput.step) || 1; }
 
       function clamp(value, min, max) {
-        var snapped = Math.round(value / step) * step;
+        var snapped = Math.round(value / stepOf()) * stepOf();
         return Math.max(min, Math.min(max, snapped));
       }
 
@@ -514,9 +520,9 @@
           min = max;
         }
 
-        var span = absMax - absMin || 1;
-        var start = ((min - absMin) / span) * 100;
-        var end = ((max - absMin) / span) * 100;
+        var span = absMax() - absMin() || 1;
+        var start = ((min - absMin()) / span) * 100;
+        var end = ((max - absMin()) / span) * 100;
         if (fill) {
           fill.style.left = start + '%';
           fill.style.width = (end - start) + '%';
@@ -524,7 +530,7 @@
         if (minText && document.activeElement !== minText) minText.value = formatAed(min);
         if (maxText && document.activeElement !== maxText) maxText.value = formatAed(max);
         if (fieldLabel) {
-          fieldLabel.textContent = (min <= absMin && max >= absMax)
+          fieldLabel.textContent = (min <= absMin() && max >= absMax())
             ? 'Price Range'
             : formatAed(min) + ' – ' + formatAed(max);
         }
@@ -546,9 +552,9 @@
           return;
         }
         if (which === 'min') {
-          minInput.value = clamp(parsed, absMin, Number(maxInput.value));
+          minInput.value = clamp(parsed, absMin(), Number(maxInput.value));
         } else {
-          maxInput.value = clamp(parsed, Number(minInput.value), absMax);
+          maxInput.value = clamp(parsed, Number(minInput.value), absMax());
         }
         sync(false);
       }
@@ -694,7 +700,11 @@
     if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.slick !== 'function') return;
 
     var $ = window.jQuery;
-    var $slider = $('[data-places-slider]');
+    // Skip sliders already initialised or still empty (slides arrive via the async home API) —
+    // slick throws on an empty track, which used to abort every init after this one.
+    var $slider = $('[data-places-slider]').filter(function () {
+      return !$(this).hasClass('slick-initialized') && $(this).children().length > 0;
+    });
     if (!$slider.length) return;
 
     $slider.slick({
@@ -1777,37 +1787,23 @@
   // already removed from the DOM), and the few that touch the persistent
   // header/footer guard themselves against binding twice.
   function runAllInits() {
-    initHeaderScroll();
-    initMobileNav();
-    initBottomNav();
-    initCommunityPanels();
-    initTabGroups();
-    initDashboardRemovable();
-    initStickySidebars();
-    initPillTabDropdowns();
-    initCarousels();
-    initPopularPlacesSlider();
-    initLuxurySlider();
-    initHighlightSlider();
-    initProjectsSlider();
-    initCardGalleries();
-    initRealtySlider();
-    initAgentDetailTabs();
-    initAgenciesPage();
-    initPropertiesView();
-    initTestimonialsSlider();
-    initAboutBuildersSlider();
-    initAboutPage();
-    initPricingCycle();
-    initProjectSaves();
-    initForms();
-    initDropdowns();
-    initLanguageSwitch();
-    initPriceRange();
-    initPropertyTabs();
-    initStickyPropertyTabsBar();
-    initFloorPlanTabs();
-    initFancybox();
+    // Each init runs on its own: one failing (e.g. a third-party slider choking on half-rendered
+    // markup) must not stop the rest — dropdowns, price sliders and forms further down.
+    [
+      initHeaderScroll, initMobileNav, initBottomNav, initCommunityPanels, initTabGroups,
+      initDashboardRemovable, initStickySidebars, initPillTabDropdowns, initCarousels,
+      initPopularPlacesSlider, initLuxurySlider, initHighlightSlider, initProjectsSlider,
+      initCardGalleries, initRealtySlider, initAgentDetailTabs, initAgenciesPage, initPropertiesView,
+      initTestimonialsSlider, initAboutBuildersSlider, initAboutPage, initPricingCycle, initProjectSaves,
+      initForms, initDropdowns, initLanguageSwitch, initPriceRange, initPropertyTabs,
+      initStickyPropertyTabsBar, initFloorPlanTabs, initFancybox
+    ].forEach(function (init) {
+      try {
+        init();
+      } catch (e) {
+        if (window.console) console.warn('[MWRealty] ' + init.name + ' failed:', e);
+      }
+    });
   }
 
   document.addEventListener('DOMContentLoaded', runAllInits);

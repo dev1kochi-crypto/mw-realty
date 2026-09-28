@@ -41,6 +41,67 @@ class PortalPropertyController extends Controller
         return Auth::guard('portal')->check() ? Auth::guard('portal')->user()->id : null;
     }
 
+    /** Listings per page on the card grid — a multiple of the 4-column row so pages end on a full row. */
+    protected const PER_PAGE = 16;
+
+    /**
+     * Which CRM menu this controller serves. Commercial is the same table, form and screens,
+     * split only by `segment` (see PortalCommercialController). Plan property limits count both.
+     */
+    protected function segment(): string
+    {
+        return Property::SEGMENT_RESIDENTIAL;
+    }
+
+    /** Route-name prefix for this menu's own pages (index/create/store/edit/update/show/reorder/move). */
+    protected function routePrefix(): string
+    {
+        return $this->segment() === Property::SEGMENT_COMMERCIAL ? 'portal.commercial' : 'portal.properties';
+    }
+
+    /** Labels + route prefix the shared portal.properties.* views use to render either menu. */
+    protected function sectionData(): array
+    {
+        $commercial = $this->segment() === Property::SEGMENT_COMMERCIAL;
+
+        return [
+            'routePrefix' => $this->routePrefix(),
+            'segment' => $this->segment(),
+            'sectionTitle' => $commercial ? 'Commercial' : 'Properties',
+            'itemLabel' => $commercial ? 'Commercial Property' : 'Property',
+        ];
+    }
+
+    /** This menu's listings for the logged-in owner (every owner's for Super Admin), in display order. */
+    protected function orderedListings()
+    {
+        return Property::query()
+            ->segment($this->segment())
+            ->when($this->ownerId(), fn ($q, $ownerId) => $q->where('portal_user_id', $ownerId))
+            ->orderBy('order_index')
+            ->latest()
+            // Tie-breaker: without it rows sharing order_index/created_at come back in an arbitrary
+            // order per query, so a listing can repeat on one page and be missing from the next.
+            ->orderByDesc('id');
+    }
+
+    /** A listing opened through the other menu's URL (e.g. a dashboard link) goes to its own menu. */
+    protected function redirectToOwnMenu(Property $property, string $action)
+    {
+        if ($property->segment === $this->segment()) {
+            return null;
+        }
+        $prefix = $property->segment === Property::SEGMENT_COMMERCIAL ? 'portal.commercial' : 'portal.properties';
+
+        return redirect()->route("{$prefix}.{$action}", $property->id);
+    }
+
+    /** Free-text search on the listing page: title / address / community / city (any language), ref no, RERA, and owner for Super Admin. */
+    protected function applySearch($query, string $search): void
+    {
+        $query->portalSearch($search, $this->isAdmin());
+    }
+
     /**
      * Which agent_id to actually save, based on who's logged in:
      * - An Agent can only ever be assigned to their own listings.
@@ -251,17 +312,20 @@ class PortalPropertyController extends Controller
         return $result;
     }
 
-    public function index(\App\Services\FeaturedListingService $featured)
+    public function index(Request $request, \App\Services\FeaturedListingService $featured)
     {
         // Also applied by the scheduled properties:expire-featured command; running it here keeps
         // this page correct even where the scheduler isn't running (e.g. local dev).
-        $featured->expire();
+        $featured->sync();
 
-        $properties = Property::with('owner')
-            ->when($this->ownerId(), fn ($q, $ownerId) => $q->where('portal_user_id', $ownerId))
-            ->orderBy('order_index')
-            ->latest()
-            ->paginate(15);
+        $search = trim((string) $request->input('q', ''));
+        $search = mb_substr($search, 0, 100);
+
+        $query = $this->orderedListings()->with('owner');
+        if ($search !== '') {
+            $this->applySearch($query, $search);
+        }
+        $properties = $query->paginate(self::PER_PAGE)->withQueryString();
 
         $planUsage = null;
         if (!$this->isAdmin()) {
@@ -273,32 +337,63 @@ class PortalPropertyController extends Controller
             ];
         }
 
-        return view('portal.properties.index', [
+        return view('portal.properties.index', array_merge([
             'properties' => $properties,
+            'search' => $search,
+            // Listings on this page whose feature dates the viewer may change.
+            'featureEditable' => $featured->editableIds(
+                $this->isAdmin() ? null : Auth::guard('portal')->user(),
+                collect($properties->items())->filter(fn ($p) => $p->featured || $p->isFeatureScheduled())->pluck('id'),
+            ),
+            // Whole list size (unfiltered), for the "Move to position" picker.
+            'totalListings' => $this->orderedListings()->count(),
             'isAdmin' => $this->isAdmin(),
             'planUsage' => $planUsage,
             'featuredQuota' => $this->isAdmin() ? null : $featured->quota(Auth::guard('portal')->user()),
-        ]);
+        ], $this->sectionData()));
     }
 
     /**
-     * "Feature" button on a listing card. Agents/companies spend their plan's monthly quota
-     * (with a max duration); a Super Admin features without limits, optionally with an end date.
+     * Feature popup (listing cards and the Featured menu): book a start + end date. Agents/companies
+     * spend their plan's quota within its max duration; a Super Admin has no limits and may leave
+     * the end date open.
      */
     public function feature(Request $request, \App\Services\FeaturedListingService $featured, $id)
     {
         $property = $this->findOwned($id);
-        $request->validate(['days' => $this->isAdmin() ? 'nullable|integer|min:1|max:365' : 'required|integer|min:1']);
+        $request->validate([
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date' => ($this->isAdmin() ? 'nullable' : 'required') . '|date_format:Y-m-d',
+        ]);
 
         if ($this->isAdmin()) {
-            $property->update([
-                'featured' => true,
-                'featured_until' => $request->filled('days') ? now()->addDays((int) $request->input('days')) : null,
-            ]);
+            $featured->featureAsAdmin($property, $request->input('start_date'), $request->input('end_date'));
         } else {
             abort_unless(Auth::guard('portal')->user()->isApproved(), 403);
-            $featured->feature(Auth::guard('portal')->user(), $property, (int) $request->input('days'));
+            $featured->feature(Auth::guard('portal')->user(), $property, $request->input('start_date'), $request->input('end_date'));
         }
+
+        return response()->json(['success' => true]);
+    }
+
+    /** "Edit dates" on a live or scheduled feature (Featured menu / listing card). */
+    public function updateFeature(Request $request, \App\Services\FeaturedListingService $featured, $id)
+    {
+        $property = $this->findOwned($id);
+        $request->validate([
+            'start_date' => 'nullable|date_format:Y-m-d',
+            'end_date' => ($this->isAdmin() ? 'nullable' : 'required') . '|date_format:Y-m-d',
+        ]);
+        if (!$this->isAdmin()) {
+            abort_unless(Auth::guard('portal')->user()->isApproved(), 403);
+        }
+
+        $featured->reschedule(
+            $property,
+            $this->isAdmin() ? null : Auth::guard('portal')->user(),
+            $request->input('start_date'),
+            $request->input('end_date'),
+        );
 
         return response()->json(['success' => true]);
     }
@@ -322,7 +417,7 @@ class PortalPropertyController extends Controller
         $remainingSlots = $this->isAdmin() ? null : Auth::guard('portal')->user()->remainingPropertySlots();
 
         if ($remainingSlots === 0) {
-            return redirect()->route('portal.properties.index')
+            return redirect()->route($this->routePrefix() . '.index')
                 ->with('error', "You've reached your plan's property limit. Upgrade your plan to add more listings.");
         }
 
@@ -332,7 +427,7 @@ class PortalPropertyController extends Controller
             'isAdmin' => $this->isAdmin(),
             'remainingSlots' => $remainingSlots,
             'nearbyPlaceTypes' => $this->nearbyPlaceTypes(),
-        ], $this->agentAssignmentOptions()));
+        ], $this->agentAssignmentOptions(), $this->sectionData()));
     }
 
     public function store(\App\Http\Requests\PropertyRequest $request)
@@ -346,7 +441,7 @@ class PortalPropertyController extends Controller
             }
 
             if ($owner->remainingPropertySlots() === 0) {
-                return redirect()->route('portal.properties.index')
+                return redirect()->route($this->routePrefix() . '.index')
                     ->with('error', "You've reached your plan's property limit. Upgrade your plan to add more listings.");
             }
         }
@@ -364,7 +459,9 @@ class PortalPropertyController extends Controller
         $data['agent_id'] = $this->resolveAgentId($request);
         $data['translations'] = $request->input('translations', []);
         $data['status'] = $request->boolean('status') && ($this->isAdmin() || Auth::guard('portal')->user()->isApproved());
-        $data['featured'] = $this->isAdmin() && $request->has('featured');
+        // Featuring is booked afterwards from the listing card / Featured menu (dates + plan quota).
+        $data['featured'] = false;
+        $data['segment'] = $this->segment();
         $data['published_at'] = $request->input('published_at');
         // Column is NOT NULL with a schema default — an explicit null in the insert bypasses that
         // default, so it has to be resolved here instead of just passing the raw (possibly empty) input.
@@ -424,7 +521,7 @@ class PortalPropertyController extends Controller
 
         $property->nearbyPlaces()->sync($this->allowedNearbyPlaceIds($request));
 
-        return redirect()->route('portal.properties.index')->with('success', 'Property created successfully.');
+        return redirect()->route($this->routePrefix() . '.index')->with('success', $this->sectionData()['itemLabel'] . ' created successfully.');
     }
 
     protected function findOwned($id): Property
@@ -437,6 +534,9 @@ class PortalPropertyController extends Controller
     public function edit($id)
     {
         $property = $this->findOwned($id);
+        if ($redirect = $this->redirectToOwnMenu($property, 'edit')) {
+            return $redirect;
+        }
         $languages = Language::where('status', true)->get();
         $filterOptions = $this->selectFilterOptions();
         return view('portal.properties.edit', array_merge([
@@ -445,7 +545,7 @@ class PortalPropertyController extends Controller
             'filterOptions' => $filterOptions,
             'isAdmin' => $this->isAdmin(),
             'nearbyPlaceTypes' => $this->nearbyPlaceTypes(),
-        ], $this->agentAssignmentOptions()));
+        ], $this->agentAssignmentOptions(), $this->sectionData()));
     }
 
     public function update(\App\Http\Requests\PropertyRequest $request, $id)
@@ -463,15 +563,9 @@ class PortalPropertyController extends Controller
         $data['agent_id'] = $this->resolveAgentId($request);
         $data['published_at'] = $request->input('published_at');
         $data['order_index'] = $request->input('order_index') ?: 0;
-        if ($this->isAdmin()) {
-            $data['featured'] = $request->has('featured');
-            if (!$data['featured']) {
-                $data['featured_until'] = null;
-                // Frees the owner's "at a time" featured slot too.
-                \App\Models\PropertyFeaturing::where('property_id', $id)->whereNull('stopped_at')->where('ends_at', '>', now())
-                    ->update(['stopped_at' => now()]);
-            }
-        }
+        // `featured` is deliberately not touched here: the form has no Featured switch (featuring
+        // is booked with dates from the listing card / Featured menu), so reading it would
+        // un-feature the listing on every save.
         if ($request->filled('slug')) {
             $data['slug'] = $request->input('slug');
         }
@@ -541,7 +635,7 @@ class PortalPropertyController extends Controller
 
         $property->nearbyPlaces()->sync($this->allowedNearbyPlaceIds($request));
 
-        return redirect()->route('portal.properties.edit', $property->id)->with('success', 'Property updated successfully.');
+        return redirect()->route($this->routePrefix() . '.edit', $property->id)->with('success', $this->sectionData()['itemLabel'] . ' updated successfully.');
     }
 
     public function destroy($id)
@@ -590,11 +684,7 @@ class PortalPropertyController extends Controller
             'order.*' => 'integer',
         ]);
 
-        $allIds = Property::query()
-            ->when($this->ownerId(), fn ($q, $ownerId) => $q->where('portal_user_id', $ownerId))
-            ->orderBy('order_index')
-            ->latest()
-            ->pluck('id');
+        $allIds = $this->orderedListings()->pluck('id');
 
         $pageIds = collect($request->input('order'))->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $allIds->contains($id))
@@ -607,15 +697,56 @@ class PortalPropertyController extends Controller
         // Slot the reordered page back in where that page's items currently start.
         $start = $allIds->search(fn ($id) => $pageIds->contains($id));
         $rest = $allIds->reject(fn ($id) => $pageIds->contains($id))->values();
-        $final = $rest->slice(0, $start)->concat($pageIds)->concat($rest->slice($start))->values();
-
-        DB::transaction(function () use ($final) {
-            foreach ($final as $index => $id) {
-                Property::whereKey($id)->update(['order_index' => $index + 1]);
-            }
-        });
+        $this->saveOrder($rest->slice(0, $start)->concat($pageIds)->concat($rest->slice($start))->values());
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * "Move to top / bottom / position #N" on a listing card — works across pages (drag only
+     * reaches the cards on the current page). `position` is 1-based over this menu's whole list.
+     */
+    public function move(Request $request, $id)
+    {
+        $request->validate(['position' => 'required']);
+        $property = $this->findOwned($id);
+
+        $allIds = $this->orderedListings()->pluck('id');
+        abort_unless($allIds->contains($property->id), 404);
+
+        $position = match ($request->input('position')) {
+            'top' => 1,
+            'bottom' => $allIds->count(),
+            default => (int) $request->input('position'),
+        };
+        if ($position < 1 || $position > $allIds->count()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['position' => 'Choose a position between 1 and ' . $allIds->count() . '.']);
+        }
+
+        $rest = $allIds->reject(fn ($listingId) => $listingId === $property->id)->values();
+        $rest->splice($position - 1, 0, [$property->id]);
+        $this->saveOrder($rest);
+
+        return response()->json([
+            'success' => true,
+            'position' => $position,
+            // The page the listing now sits on, so the UI can jump there.
+            'page' => (int) ceil($position / self::PER_PAGE),
+        ]);
+    }
+
+    /** Renumbers order_index 1..n in the given id order (only rows whose value actually changes). */
+    protected function saveOrder(\Illuminate\Support\Collection $orderedIds): void
+    {
+        $current = Property::whereIn('id', $orderedIds)->pluck('order_index', 'id');
+
+        DB::transaction(function () use ($orderedIds, $current) {
+            foreach ($orderedIds->values() as $index => $id) {
+                if ((int) ($current[$id] ?? -1) !== $index + 1) {
+                    Property::whereKey($id)->update(['order_index' => $index + 1]);
+                }
+            }
+        });
     }
 
     protected function deletePropertyWithFiles(Property $property): void
@@ -660,13 +791,16 @@ class PortalPropertyController extends Controller
     public function show($id)
     {
         $property = $this->findOwned($id);
+        if ($redirect = $this->redirectToOwnMenu($property, 'show')) {
+            return $redirect;
+        }
         $languages = Language::where('status', true)->get();
 
-        return view('portal.properties.show', [
+        return view('portal.properties.show', array_merge([
             'property' => $property,
             'languages' => $languages,
             'isAdmin' => $this->isAdmin(),
-        ]);
+        ], $this->sectionData()));
     }
 
     /** $number is the gallery position suffix from the filename ({reference_no}-{number}.jpeg). */

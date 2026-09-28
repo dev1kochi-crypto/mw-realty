@@ -20,7 +20,7 @@ use Illuminate\Support\Str;
  */
 class CommercialPropertySeeder extends Seeder
 {
-    private const LOCATIONS = [
+    protected const LOCATIONS = [
         ['value' => 'business-bay', 'en' => 'Business Bay', 'ar' => 'الخليج التجاري'],
         ['value' => 'downtown-dubai', 'en' => 'Downtown Dubai', 'ar' => 'وسط مدينة دبي'],
         ['value' => 'dubai-marina', 'en' => 'Dubai Marina', 'ar' => 'مرسى دبي'],
@@ -29,14 +29,28 @@ class CommercialPropertySeeder extends Seeder
         ['value' => 'arabian-ranches', 'en' => 'Arabian Ranches', 'ar' => 'المرابع العربية'],
     ];
 
-    private const PROPERTY_TYPES = [
+    protected const PROPERTY_TYPES = [
         ['value' => 'office', 'en' => 'Office', 'ar' => 'مكتب'],
         ['value' => 'retail-shop', 'en' => 'Retail Shop', 'ar' => 'محل تجاري'],
         ['value' => 'warehouse', 'en' => 'Warehouse', 'ar' => 'مستودع'],
         ['value' => 'showroom', 'en' => 'Showroom', 'ar' => 'صالة عرض'],
     ];
 
-    private const IMAGE_POOL = [
+    /** Amenity labels — the English wording is what the Commercial page's amenity filters match on. */
+    protected const AMENITIES = [
+        'internet' => ['en' => 'High-Speed Internet', 'ar' => 'إنترنت عالي السرعة'],
+        'reception' => ['en' => 'Reception', 'ar' => 'استقبال'],
+        'security' => ['en' => '24/7 Security', 'ar' => 'أمن على مدار الساعة'],
+        'pantry' => ['en' => 'Pantry', 'ar' => 'مطبخ صغير'],
+        'meeting-rooms' => ['en' => 'Meeting Rooms', 'ar' => 'غرف اجتماعات'],
+        'metro' => ['en' => 'Metro Access', 'ar' => 'قريب من المترو'],
+        'loading-bay' => ['en' => 'Loading Bay', 'ar' => 'رصيف تحميل'],
+        'gym' => ['en' => 'Gym', 'ar' => 'صالة رياضية'],
+        'concierge' => ['en' => 'Concierge', 'ar' => 'خدمة الكونسيرج'],
+        'central-ac' => ['en' => 'Central A/C', 'ar' => 'تكييف مركزي'],
+    ];
+
+    protected const IMAGE_POOL = [
         'frontend/assets/images/home/realty-card-1.jpg',
         'frontend/assets/images/home/realty-card-2.jpg',
         'frontend/assets/images/home/realty-card-3.jpg',
@@ -48,7 +62,7 @@ class CommercialPropertySeeder extends Seeder
         'frontend/assets/images/about/diversity.jpg',
     ];
 
-    private const LISTINGS = [
+    protected const LISTINGS = [
         ['type' => 'office', 'listing' => 'sale', 'location' => 'business-bay', 'sqft' => 1200, 'price' => 1850000, 'title_en' => 'Fitted Office Space in Business Bay Tower', 'title_ar' => 'مكتب مجهز في برج الخليج التجاري', 'floor' => 12, 'furnished' => true],
         ['type' => 'retail-shop', 'listing' => 'rent', 'location' => 'downtown-dubai', 'sqft' => 850, 'price' => 180000, 'title_en' => 'Ground Floor Retail Shop in Downtown Dubai', 'title_ar' => 'محل تجاري بالطابق الأرضي في وسط مدينة دبي', 'floor' => 0, 'furnished' => false],
         ['type' => 'warehouse', 'listing' => 'sale', 'location' => 'al-furjan', 'sqft' => 8000, 'price' => 3200000, 'title_en' => 'Logistics Warehouse with Loading Bay in Al Furjan', 'title_ar' => 'مستودع لوجستي مع رصيف تحميل في الفرجان', 'floor' => 0, 'furnished' => false],
@@ -65,7 +79,7 @@ class CommercialPropertySeeder extends Seeder
         $typeFilterId = Filter::where('key', 'property_type')->value('id');
         $categoryFilterId = Filter::where('key', 'category')->value('id');
 
-        foreach (self::LOCATIONS as $i => $loc) {
+        foreach (static::LOCATIONS as $i => $loc) {
             if ($locationFilterId) {
                 FilterValue::firstOrCreate(
                     ['filter_id' => $locationFilterId, 'value' => $loc['value']],
@@ -74,7 +88,7 @@ class CommercialPropertySeeder extends Seeder
             }
         }
 
-        foreach (self::PROPERTY_TYPES as $i => $type) {
+        foreach (static::PROPERTY_TYPES as $i => $type) {
             if ($typeFilterId) {
                 FilterValue::firstOrCreate(
                     ['filter_id' => $typeFilterId, 'value' => $type['value']],
@@ -91,10 +105,10 @@ class CommercialPropertySeeder extends Seeder
             ->map(fn ($ref) => (int) substr($ref, 4))
             ->max())) + 1;
 
-        foreach (self::LISTINGS as $i => $listing) {
+        foreach (static::LISTINGS as $i => $listing) {
             $number = $startNumber + $i;
             $referenceNo = 'COMM' . str_pad((string) $number, 3, '0', STR_PAD_LEFT);
-            $location = collect(self::LOCATIONS)->firstWhere('value', $listing['location']);
+            $location = collect(static::LOCATIONS)->firstWhere('value', $listing['location']);
             $slug = Str::slug($listing['title_en'] . '-' . $referenceNo);
 
             $translations = [
@@ -126,19 +140,20 @@ class CommercialPropertySeeder extends Seeder
                 'reference_no' => $referenceNo,
                 'rera_id' => 'RERA-COMM-' . random_int(10000, 99999),
                 'listing_type' => $listing['listing'],
-                'completion_status' => 'ready',
+                'completion_status' => $listing['completion'] ?? 'ready',
                 'property_type' => $listing['type'],
                 'category' => $categoryFilterId ? 'commercial' : null,
+                'segment' => Property::SEGMENT_COMMERCIAL,
                 'location' => $locationFilterId ? $listing['location'] : null,
                 'postal_code' => '00000',
                 'latitude' => 25.05 + ($i * 0.01),
                 'longitude' => 55.15 + ($i * 0.01),
                 'bedrooms' => null,
-                'bathrooms' => $listing['type'] === 'office' ? 1 : null,
+                'bathrooms' => $listing['bathrooms'] ?? ($listing['type'] === 'office' ? 1 : null),
                 'sqft' => $listing['sqft'],
                 'price' => $listing['price'],
                 'currency' => 'AED',
-                'featured' => $i < 3,
+                'featured' => $listing['featured'] ?? $i < 3,
                 'status' => true,
                 'published_at' => now()->subDays(10 - $i),
                 'order_index' => 1000 + $i,
@@ -147,29 +162,27 @@ class CommercialPropertySeeder extends Seeder
             PropertyDetail::create([
                 'property_id' => $property->id,
                 'floor' => (string) $listing['floor'],
-                'parking' => 1,
+                'parking' => $listing['parking'] ?? 1,
                 'furnished' => $listing['furnished'],
                 'direct_from_owner' => 'No',
                 'view' => 'Street View',
-                'amenities' => [
-                    ['icon' => null, 'label' => ['en' => 'High-Speed Internet', 'ar' => 'إنترنت عالي السرعة']],
-                    ['icon' => null, 'label' => ['en' => 'Reception', 'ar' => 'استقبال']],
-                    ['icon' => null, 'label' => ['en' => '24/7 Security', 'ar' => 'أمن على مدار الساعة']],
-                ],
+                'amenities' => collect($listing['amenities'] ?? ['internet', 'reception', 'security'])
+                    ->map(fn ($key) => ['icon' => null, 'label' => static::AMENITIES[$key]])
+                    ->all(),
             ]);
 
             $this->attachGallery($property, $referenceNo, $i);
         }
     }
 
-    private function attachGallery(Property $property, string $referenceNo, int $index): void
+    protected function attachGallery(Property $property, string $referenceNo, int $index): void
     {
         $folder = 'properties/' . $referenceNo;
         $count = 3;
         $sequence = [];
 
         for ($n = 1; $n <= $count; $n++) {
-            $sourceRelative = self::IMAGE_POOL[($index * $count + $n - 1) % count(self::IMAGE_POOL)];
+            $sourceRelative = static::IMAGE_POOL[($index * $count + $n - 1) % count(static::IMAGE_POOL)];
             $sourcePath = public_path($sourceRelative);
             if (!is_file($sourcePath)) {
                 continue;

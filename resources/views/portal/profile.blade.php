@@ -629,9 +629,9 @@
             });
     }));
 
-    document.querySelectorAll('.doc-remove-btn').forEach(btn => btn.addEventListener('click', function () {
+    document.querySelectorAll('.doc-remove-btn').forEach(btn => btn.addEventListener('click', async function () {
         const field = this.closest('.doc-card').dataset.field;
-        if (!confirm('Remove this document?')) return;
+        if (!(await window.portalConfirm({ title: 'Remove this document?', message: 'You can upload it again later.', confirmText: 'Remove', tone: 'danger' }))) return;
         fetch(base + '/documents/' + field, {
             method: 'DELETE',
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },

@@ -141,7 +141,7 @@ const bioFallback = computed(() => t('agent_details.bio_fallback').replace('{nam
                                 {{ t('agent_details.verified') }}
                             </span>
                             <button type="button" class="mw-agent-prop__save" :class="{ 'is-saved': isWishlisted(property.id) }" :aria-label="t('agent_details.save_property_aria')" :aria-pressed="isWishlisted(property.id)" @click.stop="toggleWishlist(property.id)">
-                                <img src="/frontend/assets/images/icons/heart.svg" alt="" width="24" height="24">
+                                <img :src="isWishlisted(property.id) ? '/frontend/assets/images/icons/heart-filled.svg' : '/frontend/assets/images/icons/heart.svg'" alt="" width="24" height="24">
                             </button>
                             <button type="button" class="mw-agent-prop__nav mw-agent-prop__nav--prev" data-gallery-prev :aria-label="t('agent_details.previous_photo_aria')" @click.stop>
                                 <img src="/frontend/assets/images/icons/chevron.svg" alt="">

@@ -36,7 +36,7 @@ class PropertyPageService
                 ->where(function ($q) use ($property) {
                     $q->where('property_type', $property->property_type)->orWhere('location', $property->location);
                 })
-                ->orderByDesc('featured')->orderByDesc('published_at')->take(6)->get();
+                ->displayOrder()->take(6)->get();
 
             return [
                 'id' => $property->id,

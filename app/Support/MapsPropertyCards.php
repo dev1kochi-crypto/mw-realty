@@ -52,6 +52,8 @@ trait MapsPropertyCards
             'type' => $property->filterLabel('property_type', $lang) ?: '—',
             'price' => $property->price ? $property->currency . ' ' . number_format($property->price) : 'Price on request',
             'purpose_badge' => $purposeBadge ?: null,
+            // 'commercial' | 'residential' — the Premium page tags each card with it.
+            'segment' => $property->segment === Property::SEGMENT_COMMERCIAL ? 'commercial' : 'residential',
             'furnished' => (bool) ($property->details?->furnished),
             'contact' => [
                 'phone' => $contact?->phone,

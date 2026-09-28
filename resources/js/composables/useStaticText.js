@@ -5,6 +5,7 @@ import { useLanguages } from './useLanguages';
 // component that calls useStaticText(), so the JSON only loads once per language.
 const translations = ref({});
 const loadedCode = ref(null);
+const reportedMissing = new Set();
 let pendingCode = null;
 
 function lookup(tree, dotPath) {
@@ -29,9 +30,16 @@ function fetchTranslations(code) {
 /**
  * GET /api/static-translations -> Api\StaticTranslationController -> the same JSON files
  * the admin's Languages > Translations screen edits (CMS\SiteManager\Services\StaticTranslationService).
- * t('nav.home') looks up a dot-path key; the raw key is returned if the site hasn't been
- * (re)built with real copy yet, so a missing translation is visible rather than blank.
+ * t('nav.home') looks up a dot-path key. When a key is missing from the language file (e.g. a
+ * server whose cms-static JSON is older than the code), it falls back to a readable version of
+ * the key's last segment ('home.badges.verified' -> 'Verified') instead of showing the raw key
+ * to visitors; the missing key is logged to the console so it can still be spotted and added.
  */
+function humanize(key) {
+    const last = String(key).split('.').pop().replace(/[_-]+/g, ' ').trim();
+    return last ? last.charAt(0).toUpperCase() + last.slice(1) : key;
+}
+
 export function useStaticText() {
     const { selectedLanguage } = useLanguages();
 
@@ -39,9 +47,15 @@ export function useStaticText() {
         if (lang?.code) fetchTranslations(lang.code);
     }, { immediate: true });
 
-    function t(key, fallback = key) {
+    function t(key, fallback) {
         const value = lookup(translations.value, key);
-        return typeof value === 'string' && value !== '' ? value : fallback;
+        if (typeof value === 'string' && value !== '') return value;
+        // Only report once the file has actually loaded — before that every key is "missing".
+        if (loadedCode.value && fallback === undefined && !reportedMissing.has(key)) {
+            reportedMissing.add(key);
+            console.warn(`[i18n] Missing translation: ${key}`);
+        }
+        return fallback ?? humanize(key);
     }
 
     return { t };

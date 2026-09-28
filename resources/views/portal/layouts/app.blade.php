@@ -76,19 +76,17 @@
                     </div>
                 </div>
 
-                @if($owner)
-                <div class="nav-section-label">Account</div>
-                <a href="{{ route('portal.profile.edit') }}" class="nav-link @if(request()->routeIs('portal.profile.*')) active @endif">
-                    <i class="fas fa-user-edit"></i> My Profile
-                    @if($notApproved)
-                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">!</span>
-                    @endif
-                </a>
-                @endif
-
                 <div class="nav-section-label">Listings</div>
                 <a href="{{ route('portal.properties.index') }}" class="nav-link @if(request()->routeIs('portal.properties.*')) active @endif">
                     <i class="fas fa-building"></i> Properties
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
+                </a>
+                <a href="{{ route('portal.commercial.index') }}" class="nav-link @if(request()->routeIs('portal.commercial.*')) active @endif">
+                    <i class="fas fa-store"></i> Commercial
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
+                </a>
+                <a href="{{ route('portal.featured.index') }}" class="nav-link @if(request()->routeIs('portal.featured.*')) active @endif">
+                    <i class="fas fa-star"></i> Premium
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
                 @if($cmsActor || $owner?->type === 'company')
@@ -113,12 +111,8 @@
                 <a href="{{ route('portal.contact.index') }}" class="nav-link @if(request()->routeIs('portal.contact.*')) active @endif">
                     <i class="fas fa-headset"></i> Contact Us
                 </a>
-
-                <div class="nav-section-label">Billing</div>
-                <a href="{{ route('portal.plans.index') }}" class="nav-link @if(request()->routeIs('portal.plans.*')) active @endif">
-                    <i class="fas fa-layer-group"></i> Plans
-                </a>
                 @endif
+                {{-- My Profile and Plans live in the account (avatar) menu at the top right. --}}
             </nav>
         </aside>
 
@@ -275,6 +269,94 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {{-- Shared confirm dialog — use window.portalConfirm({...}) instead of the browser's confirm(). --}}
+    <div class="modal fade portal-dialog" id="portalConfirmModal" tabindex="-1" aria-labelledby="portalConfirmTitle" aria-describedby="portalConfirmText" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <button type="button" class="btn-close portal-dialog__close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-body">
+                    <div class="portal-dialog__icon" id="portalConfirmIcon"><i class="fas fa-exclamation"></i></div>
+                    <h5 class="portal-dialog__title" id="portalConfirmTitle">Are you sure?</h5>
+                    <p class="portal-dialog__text" id="portalConfirmText"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-portal-light" id="portalConfirmCancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn portal-dialog__ok" id="portalConfirmOk">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        /**
+         * Styled replacement for window.confirm(). Resolves true on Confirm, false on Cancel / Esc /
+         * close. tone: 'danger' (red, deletes), 'warning' (amber, stop / turn off), 'primary'.
+         *
+         *   if (!(await portalConfirm({ title: 'Remove premium?', message: '…', confirmText: 'Remove', tone: 'warning' }))) return;
+         *
+         * Forms can ask too, with no script: <form data-confirm="Message" data-confirm-title="…"
+         * data-confirm-ok="…" data-confirm-tone="danger">.
+         */
+        const el = document.getElementById('portalConfirmModal');
+        const modal = new bootstrap.Modal(el);
+        const ICONS = { danger: 'fa-trash-alt', warning: 'fa-exclamation', primary: 'fa-question' };
+        let settle = null;
+
+        window.portalConfirm = function (opts) {
+            opts = typeof opts === 'string' ? { message: opts } : (opts || {});
+            const tone = ICONS[opts.tone] ? opts.tone : 'danger';
+            document.getElementById('portalConfirmTitle').textContent = opts.title || 'Are you sure?';
+            document.getElementById('portalConfirmText').textContent = opts.message || '';
+            document.getElementById('portalConfirmCancel').textContent = opts.cancelText || 'Cancel';
+            const ok = document.getElementById('portalConfirmOk');
+            ok.textContent = opts.confirmText || 'Confirm';
+            ok.className = 'btn portal-dialog__ok portal-dialog__ok--' + tone;
+            const icon = document.getElementById('portalConfirmIcon');
+            icon.className = 'portal-dialog__icon portal-dialog__icon--' + tone;
+            icon.innerHTML = '<i class="fas ' + (opts.icon || ICONS[tone]) + '"></i>';
+
+            if (settle) settle(false); // a second call replaces an unanswered one
+            return new Promise(function (resolve) {
+                settle = function (answer) { settle = null; resolve(answer); };
+                modal.show();
+            });
+        };
+
+        document.getElementById('portalConfirmOk').addEventListener('click', function () {
+            const done = settle;
+            settle = null;
+            modal.hide();
+            if (done) done(true);
+        });
+        el.addEventListener('shown.bs.modal', function () { document.getElementById('portalConfirmOk').focus(); });
+        el.addEventListener('hidden.bs.modal', function () { if (settle) settle(false); });
+
+        // <form data-confirm="…">: ask first, then submit for real. Registered before the
+        // "Processing…" spinner handler below, so a cancelled confirm never shows a spinner.
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            if (!(form instanceof HTMLFormElement) || !form.dataset.confirm || form.dataset.confirmed === '1') return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const submitter = e.submitter;
+            window.portalConfirm({
+                title: form.dataset.confirmTitle,
+                message: form.dataset.confirm,
+                confirmText: form.dataset.confirmOk,
+                tone: form.dataset.confirmTone,
+            }).then(function (yes) {
+                if (!yes) return;
+                form.dataset.confirmed = '1';
+                form.requestSubmit(submitter && submitter.form === form ? submitter : undefined);
+                // requestSubmit dispatches synchronously, so the flag has done its job — clear it so
+                // the form asks again if the page is shown again (e.g. Back from Stripe).
+                delete form.dataset.confirmed;
+            });
+        }, true);
+    })();
+    </script>
 
     <script>
     (function () {

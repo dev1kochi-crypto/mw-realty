@@ -24,6 +24,11 @@ use Illuminate\Support\Facades\Route;
 // into /api/home below.
 Route::get('/property-filters', [PropertyFilterController::class, 'index']);
 
+// Public, read-only — location autocomplete (cities, communities, addresses) for the Home search,
+// the Properties listing and the Commercial page. Throttled: it runs on every few keystrokes.
+Route::get('/location-suggestions', [\App\Http\Controllers\Api\LocationSuggestionController::class, 'index'])
+    ->middleware('throttle:120,1');
+
 // Public, read-only — every page's header language dropdown, not just home.
 Route::get('/languages', [PublicLanguageController::class, 'index']);
 

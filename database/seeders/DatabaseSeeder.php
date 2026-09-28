@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             PropertySeeder::class,
             NearbyPlaceSeeder::class, // after PropertySeeder — tags properties by community
             CommercialPropertySeeder::class,
+            MoreCommercialPropertySeeder::class,
             FilterSeeder::class,
         ]);
     }

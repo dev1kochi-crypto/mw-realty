@@ -93,6 +93,8 @@ class CustomerController extends Controller
                 'id' => $s->id,
                 'title' => $s->title,
                 'meta' => $this->savedSearchMeta($s->criteria ?? []),
+                // The listing page's own query string — "View results" reopens exactly this search.
+                'criteria' => $s->criteria ?: new \stdClass(),
             ])->values(),
             'enquiries' => $leads->map(fn ($l) => [
                 'id' => $l->id,
@@ -166,6 +168,7 @@ class CustomerController extends Controller
             'id' => $savedSearch->id,
             'title' => $savedSearch->title,
             'meta' => $this->savedSearchMeta($savedSearch->criteria ?? []),
+            'criteria' => $savedSearch->criteria ?: new \stdClass(),
         ]);
     }
 
@@ -184,7 +187,12 @@ class CustomerController extends Controller
         if (!empty($criteria['location'])) $parts[] = $criteria['location'];
         if (!empty($criteria['property_type'])) $parts[] = ucfirst($criteria['property_type']);
         if (!empty($criteria['bedrooms'])) $parts[] = $criteria['bedrooms'] . ' Bed';
+        if (!empty($criteria['listing_type'])) $parts[] = $criteria['listing_type'] === 'rent' ? 'For rent' : 'For sale';
+        if (!empty($criteria['completion_status'])) $parts[] = ucfirst(str_replace('_', '-', $criteria['completion_status']));
         if (!empty($criteria['category'])) $parts[] = ucfirst(str_replace('_', ' ', $criteria['category']));
+        if (!empty($criteria['min_price']) || !empty($criteria['max_price'])) {
+            $parts[] = 'AED ' . number_format((float) ($criteria['min_price'] ?? 0)) . ' – ' . (!empty($criteria['max_price']) ? number_format((float) $criteria['max_price']) : 'any');
+        }
 
         return $parts ? implode(' · ', $parts) : 'All properties';
     }

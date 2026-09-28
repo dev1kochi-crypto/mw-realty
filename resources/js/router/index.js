@@ -116,6 +116,14 @@ const routes = [
         meta: { title: 'Properties in Dubai | MW Realty', bodyClass: 'agents-page properties-dubai-page' },
     },
     {
+        // Same listing page and design, showing every premium (CRM-featured) listing —
+        // residential and commercial, each card tagged with which it is. See PropertiesDubai.vue `premium`.
+        path: '/premium-properties',
+        name: 'premium-properties',
+        component: () => import('../pages/PropertiesDubai.vue'),
+        meta: { title: 'Premium Properties | MW Realty', bodyClass: 'agents-page properties-dubai-page premium-properties-page', premium: true },
+    },
+    {
         path: '/property-details/:slug',
         name: 'property-details',
         component: () => import('../pages/PropertyDetails.vue'),

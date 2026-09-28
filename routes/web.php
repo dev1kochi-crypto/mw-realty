@@ -572,6 +572,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('/properties', [PortalPropertyController::class, 'store'])->name('properties.store');
         Route::post('/properties/bulk-action', [PortalPropertyController::class, 'bulkAction'])->name('properties.bulk-action')->middleware('portal.approved');
         Route::post('/properties/{id}/feature', [PortalPropertyController::class, 'feature'])->name('properties.feature')->middleware('portal.approved');
+        Route::put('/properties/{id}/feature', [PortalPropertyController::class, 'updateFeature'])->name('properties.feature.update')->middleware('portal.approved');
         Route::post('/properties/{id}/unfeature', [PortalPropertyController::class, 'unfeature'])->name('properties.unfeature')->middleware('portal.approved');
         Route::post('/properties/reorder',[PortalPropertyController::class, 'reorder'])->name('properties.reorder')->middleware('portal.approved');
         Route::get('/properties/{id}/edit', [PortalPropertyController::class, 'edit'])->name('properties.edit')->middleware('portal.approved');
@@ -582,6 +583,25 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::delete('/properties/{propertyId}/images', [PortalPropertyController::class, 'destroyAllImages'])->name('properties.images.destroy-all');
         Route::post('/properties/{propertyId}/images/reorder', [PortalPropertyController::class, 'reorderImages'])->name('properties.images.reorder');
         Route::post('/properties/{id}/toggle-status', [PortalPropertyController::class, 'toggleStatus'])->name('properties.toggle-status');
+        Route::post('/properties/{id}/move', [PortalPropertyController::class, 'move'])->name('properties.move')->middleware('portal.approved');
+
+        // Commercial — same table/form/screens as Properties, segment = commercial (see
+        // PortalCommercialController). Per-listing AJAX actions reuse the properties.* routes above.
+        Route::prefix('commercial')->name('commercial.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'index'])->name('index')->middleware('portal.approved');
+            Route::get('/create', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'store'])->name('store');
+            Route::post('/reorder', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'reorder'])->name('reorder')->middleware('portal.approved');
+            Route::post('/{id}/move', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'move'])->name('move')->middleware('portal.approved');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'edit'])->name('edit')->middleware('portal.approved');
+            Route::put('/{id}', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'update'])->name('update')->middleware('portal.approved');
+            Route::get('/{id}', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'show'])->name('show');
+        });
+
+        // Featured — every featured/scheduled listing (Properties + Commercial) and "Add Featured".
+        Route::get('/featured', [\App\Http\Controllers\Portal\PortalFeaturedController::class, 'index'])->name('featured.index')->middleware('portal.approved');
+        Route::post('/featured', [\App\Http\Controllers\Portal\PortalFeaturedController::class, 'store'])->name('featured.store')->middleware('portal.approved');
+        Route::get('/featured/eligible', [\App\Http\Controllers\Portal\PortalFeaturedController::class, 'eligible'])->name('featured.eligible')->middleware(['portal.approved', 'throttle:120,1']);
         // Feeds the property form's Type -> Place cascading Nearby Places picker — reachable by
         // both a portal agent/company and an admin browsing the portal.
         Route::get('/properties/nearby-places-by-type', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'byType'])->name('properties.nearby-places-by-type');
@@ -680,6 +700,7 @@ Route::view('/forgot-password', 'welcome');
 Route::view('/reset-password', 'welcome');
 Route::view('/profile', 'welcome');
 Route::get('/properties', [SpaController::class, 'staticPage'])->defaults('pageKey', 'properties');
+Route::get('/premium-properties', [SpaController::class, 'staticPage'])->defaults('pageKey', 'premium-properties');
 Route::get('/property-details/{slug}', [SpaController::class, 'propertyDetails']);
 Route::get('/terms-and-conditions', [SpaController::class, 'staticPage'])->defaults('pageKey', 'terms');
 Route::get('/privacy-policy', [SpaController::class, 'staticPage'])->defaults('pageKey', 'privacy');
@@ -698,5 +719,5 @@ Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryControll
 // must always get first chance to match. The (?!...) guard is a belt-and-braces exclusion of the
 // app's other top-level path segments, in case any of them is ever reached without a deeper segment.
 Route::get('/{slug}', [\App\Http\Controllers\LandingPageController::class, 'show'])
-    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|contact|login|signup|verify-email|forgot-password|reset-password|profile|properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
+    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|contact|login|signup|verify-email|forgot-password|reset-password|profile|properties|premium-properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
     ->name('landing-pages.show');

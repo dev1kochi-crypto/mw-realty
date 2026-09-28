@@ -1,15 +1,21 @@
 @extends('portal.layouts.app')
 
-@section('title', 'Properties')
+@section('title', $sectionTitle)
 
 @section('content')
+@php
+    // Drag reorder only makes sense on the unfiltered list (a search result isn't a contiguous
+    // slice of the display order); the per-card "Move to" actions work either way.
+    $canDrag = $search === '' && $properties->count() > 1;
+    $positionOffset = ($properties->currentPage() - 1) * $properties->perPage();
+@endphp
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <div class="d-flex align-items-center gap-3">
         <div class="form-check mb-0">
             <input class="form-check-input" type="checkbox" id="selectAllProperties" @if($properties->isEmpty()) disabled @endif>
             <label class="form-check-label" for="selectAllProperties">Select All</label>
         </div>
-        <div class="portal-section-title mb-0">{{ $isAdmin ? 'All Properties' : 'My Properties' }}</div>
+        <div class="portal-section-title mb-0">{{ $isAdmin ? 'All ' . $sectionTitle : 'My ' . $sectionTitle }}</div>
     </div>
     <div class="d-flex align-items-center gap-2">
         <div id="bulkActionsBar" class="dropdown d-none">
@@ -23,58 +29,42 @@
                 <li><button class="dropdown-item bulk-action-btn" type="button" data-action="delete"><i class="fas fa-trash text-danger me-2"></i>Delete Selected</button></li>
             </ul>
         </div>
-        <a href="{{ route('portal.properties.create') }}" class="btn btn-portal-primary btn-sm">
-            <i class="fas fa-plus me-1"></i> Add Property
+        <a href="{{ route($routePrefix . '.create') }}" class="btn btn-portal-primary btn-sm">
+            <i class="fas fa-plus me-1"></i> Add {{ $itemLabel }}
         </a>
     </div>
 </div>
 
-@if($planUsage)
-    @if($planUsage['remaining'] === 0)
-        <div class="alert alert-danger d-flex justify-content-between align-items-center mb-3">
-            <span><i class="fas fa-exclamation-triangle me-2"></i>You've used all {{ $planUsage['used'] }} of your {{ $planUsage['plan']?->getTranslation('name') ?? 'plan' }} listings. Upgrade to add more.</span>
+{{-- One compact toolbar: search + plan usage chips (details in each chip's tooltip). --}}
+<div class="portal-list-toolbar mb-3">
+    <form method="GET" action="{{ route($routePrefix . '.index') }}" class="portal-list-search" role="search">
+        <div class="portal-list-search__field">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <input type="search" name="q" value="{{ $search }}" class="form-control" maxlength="100"
+                   placeholder="Search by title, ref no, RERA, address, community or city{{ $isAdmin ? ', agent / agency' : '' }}" aria-label="Search {{ strtolower($sectionTitle) }}">
         </div>
-    @elseif($planUsage['plan'])
-        <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
-            <span><i class="fas fa-layer-group me-2"></i>{{ $planUsage['plan']->getTranslation('name') }} plan &mdash;
-                {{ $planUsage['remaining'] === null ? 'unlimited listings' : $planUsage['used'] . ' of ' . $planUsage['plan']->property_limit . ' listings used' }}</span>
-        </div>
-    @endif
-@endif
-
-@if($featuredQuota)
-<div class="portal-featured-quota mb-3">
-    <span class="portal-featured-quota__icon"><i class="fas fa-star"></i></span>
-    @if($featuredQuota['limit'] > 0)
-    <div class="flex-grow-1">
-        @if($featuredQuota['per_month'])
-        <div class="fw-bold">Featured listings: {{ $featuredQuota['used'] }} of {{ $featuredQuota['limit'] }} used this month</div>
-        @else
-        <div class="fw-bold">Featured listings: {{ $featuredQuota['used'] }} of {{ $featuredQuota['limit'] }} featured now</div>
+        @if($search !== '')
+        <a href="{{ route($routePrefix . '.index') }}" class="portal-list-search__clear" title="Clear search" aria-label="Clear search"><i class="fas fa-times"></i></a>
         @endif
-        <div class="small portal-muted">
-            {{ $featuredQuota['max_days'] ? 'Each feature runs up to ' . $featuredQuota['max_days'] . ' days.' : 'No limit on how long each feature runs.' }}
-            @if($featuredQuota['per_month'])
-            Quota resets on {{ now()->addMonthNoOverflow()->startOfMonth()->format('d M') }}.
-            @else
-            A slot frees up as soon as a feature ends or you stop it.
-            @endif
-        </div>
+        <button type="submit" class="btn btn-portal-primary btn-sm px-3">Search</button>
+    </form>
+    @if($planUsage || $featuredQuota)
+    <div class="portal-list-toolbar__chips">
+        @include('portal.properties._usage_chips')
     </div>
-    @else
-    <div class="flex-grow-1">
-        <div class="fw-bold">Get more eyes on your listings</div>
-        <div class="small portal-muted">Featured listings appear first on the website. Not included in your plan.</div>
-    </div>
-    <a href="{{ route('portal.plans.index') }}" class="btn btn-portal-primary btn-sm">Upgrade</a>
     @endif
 </div>
+
+@if($search !== '')
+<p class="portal-muted small mb-3">
+    {{ $properties->total() }} result{{ $properties->total() === 1 ? '' : 's' }} for &ldquo;<strong>{{ $search }}</strong>&rdquo;. Drag to reorder is off while searching &mdash; use <i class="fas fa-sort"></i> <strong>Move to</strong> on a card instead.
+</p>
 @endif
 
 @forelse($properties as $property)
     @if($loop->first)
-    @if($properties->count() > 1)
-    <p class="portal-muted small mb-2"><i class="fas fa-grip-vertical me-1"></i> Drag a card by its handle to change the display order.</p>
+    @if($canDrag)
+    <p class="portal-muted small mb-2"><i class="fas fa-grip-vertical me-1"></i> Drag a card by its handle to reorder this page, or use <i class="fas fa-sort"></i> <strong>Move to</strong> on a card to send it to any position &mdash; e.g. from the last page to the top.</p>
     @endif
     <div class="row g-4" id="propertyGrid">
     @endif
@@ -92,6 +82,8 @@
             ->filter()
             ->implode(', ')
             ?: ($property->location ? ($property->filterLabel('location') ?: $property->location) : null);
+        $scheduled = $property->isFeatureScheduled();
+        $position = $search === '' ? $positionOffset + $loop->iteration : null;
     @endphp
     <div class="col-sm-6 col-lg-4 col-xl-3 portal-property-col" data-id="{{ $property->id }}">
         <div class="portal-property-card" data-property-row>
@@ -99,7 +91,7 @@
                 <div class="form-check portal-property-card__checkbox">
                     <input class="form-check-input property-select-checkbox" type="checkbox" value="{{ $property->id }}" aria-label="Select this property">
                 </div>
-                @if($properties->count() > 1)
+                @if($canDrag)
                 <span class="portal-property-card__drag" title="Drag to reorder" aria-label="Drag to reorder"><i class="fas fa-grip-vertical"></i></span>
                 @endif
                 <img src="{{ $thumb ?: 'https://placehold.co/400x240?text=No+Image' }}" alt="">
@@ -107,7 +99,9 @@
                 <span class="portal-property-card__badge">{{ $listingLabel }}</span>
                 @endif
                 @if($property->featured)
-                <span class="portal-property-card__badge portal-property-card__badge--featured"><i class="fas fa-star"></i> Featured</span>
+                <span class="portal-property-card__badge portal-property-card__badge--featured"><i class="fas fa-star"></i> Premium</span>
+                @elseif($scheduled)
+                <span class="portal-property-card__badge portal-property-card__badge--scheduled"><i class="far fa-clock"></i> Scheduled</span>
                 @endif
             </div>
             <div class="portal-property-card__body">
@@ -134,23 +128,45 @@
                     @if($isAdmin)<span>{{ $ownerLabel }}</span>@endif
                 </div>
 
-                <div class="portal-property-card__feature {{ $property->featured ? 'is-featured' : '' }}">
+                <div class="portal-property-card__feature {{ $property->featured ? 'is-featured' : ($scheduled ? 'is-scheduled' : '') }}">
                     @if($property->featured)
-                        <span><i class="fas fa-star me-1"></i>{{ $property->featured_until ? 'Featured · ends ' . $property->featured_until->format('d M, h:i A') : 'Featured · no end date' }}</span>
-                        <button type="button" class="btn btn-link btn-sm p-0 unfeature-property" data-id="{{ $property->id }}">Stop</button>
-                    @elseif($isAdmin || ($featuredQuota && $featuredQuota['remaining'] > 0))
-                        <button type="button" class="btn btn-link btn-sm p-0 feature-property" data-id="{{ $property->id }}" @disabled(!$property->status) title="{{ $property->status ? '' : 'Activate the listing to feature it' }}"><i class="far fa-star me-1"></i>Feature this listing</button>
-                    @elseif($featuredQuota && $featuredQuota['limit'] > 0)
-                        <span class="portal-muted"><i class="far fa-star me-1"></i>{{ $featuredQuota['per_month'] ? 'Monthly featured quota used' : 'All featured slots in use' }}</span>
+                        <span><i class="fas fa-star me-1"></i>{{ $property->featured_until ? 'Premium · ends ' . $property->featured_until->format('d M Y') : 'Premium · no end date' }}</span>
+                        <span class="portal-property-card__feature-actions">
+                            @if(isset($featureEditable[$property->id]))<button type="button" class="btn btn-link btn-sm p-0 edit-feature-dates" data-id="{{ $property->id }}" data-title="{{ $property->getTranslation('title') }}" data-thumb="{{ $thumb }}" data-ref="{{ $property->reference_no }}" data-live="1" data-start="{{ ($property->featured_from ?? now())->format('Y-m-d') }}" data-end="{{ $property->featured_until?->format('Y-m-d') }}">Edit</button>@endif
+                            <button type="button" class="btn btn-link btn-sm p-0 unfeature-property" data-id="{{ $property->id }}" data-scheduled="0">Stop</button>
+                        </span>
+                    @elseif($scheduled)
+                        <span title="{{ $property->featured_until ? 'Ends ' . $property->featured_until->format('d M Y') : 'No end date' }}"><i class="far fa-clock me-1"></i>Starts {{ $property->featured_from->format('d M') }}{{ $property->featured_until ? ' → ' . $property->featured_until->format('d M') : '' }}</span>
+                        <span class="portal-property-card__feature-actions">
+                            @if(isset($featureEditable[$property->id]))<button type="button" class="btn btn-link btn-sm p-0 edit-feature-dates" data-id="{{ $property->id }}" data-title="{{ $property->getTranslation('title') }}" data-thumb="{{ $thumb }}" data-ref="{{ $property->reference_no }}" data-live="0" data-start="{{ $property->featured_from->format('Y-m-d') }}" data-end="{{ $property->featured_until?->format('Y-m-d') }}">Edit</button>@endif
+                            <button type="button" class="btn btn-link btn-sm p-0 unfeature-property" data-id="{{ $property->id }}" data-scheduled="1">Cancel</button>
+                        </span>
+                    @elseif($isAdmin || ($featuredQuota && $featuredQuota['limit'] > 0))
+                        <button type="button" class="btn btn-link btn-sm p-0 feature-property" data-id="{{ $property->id }}"
+                                data-title="{{ $property->getTranslation('title') }}" data-thumb="{{ $thumb }}" data-ref="{{ $property->reference_no }}"
+                                @disabled(!$isAdmin && !$property->status) title="{{ $isAdmin || $property->status ? '' : 'Activate the listing to make it premium' }}"><i class="far fa-star me-1"></i>Make premium</button>
                     @else
-                        <a href="{{ route('portal.plans.index') }}" class="portal-muted text-decoration-none"><i class="fas fa-lock me-1"></i>Featuring needs a paid plan</a>
+                        <a href="{{ route('portal.plans.index') }}" class="portal-muted text-decoration-none"><i class="fas fa-lock me-1"></i>Premium needs a paid plan</a>
                     @endif
                 </div>
 
                 <div class="portal-property-card__actions">
-                    <a href="{{ route('portal.properties.show', $property->id) }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-eye me-1"></i>View</a>
-                    <a href="{{ route('portal.properties.edit', $property->id) }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-edit me-1"></i>Edit</a>
-                    <button type="button" class="portal-btn-ghost btn btn-sm delete-property" data-id="{{ $property->id }}"><i class="fas fa-trash me-1"></i>Delete</button>
+                    <a href="{{ route($routePrefix . '.show', $property->id) }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-eye me-1"></i>View</a>
+                    <a href="{{ route($routePrefix . '.edit', $property->id) }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-edit me-1"></i>Edit</a>
+                    <button type="button" class="portal-btn-ghost btn btn-sm portal-property-card__icon-btn delete-property" data-id="{{ $property->id }}" title="Delete" aria-label="Delete"><i class="fas fa-trash"></i></button>
+                    @if($totalListings > 1)
+                    <div class="dropdown">
+                        <button type="button" class="portal-btn-ghost btn btn-sm portal-property-card__icon-btn" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" title="Move to" aria-label="Move to position">
+                            <i class="fas fa-sort"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Move to{{ $position ? ' · now #' . $position . ' of ' . $totalListings : '' }}</h6></li>
+                            <li><button class="dropdown-item move-property" type="button" data-id="{{ $property->id }}" data-position="top" @disabled($position === 1)><i class="fas fa-angle-double-up me-2"></i>Top (position 1)</button></li>
+                            <li><button class="dropdown-item move-property" type="button" data-id="{{ $property->id }}" data-position="bottom" @disabled($position === $totalListings)><i class="fas fa-angle-double-down me-2"></i>Bottom (position {{ $totalListings }})</button></li>
+                            <li><button class="dropdown-item move-property-to" type="button" data-id="{{ $property->id }}" data-title="{{ $property->getTranslation('title') }}" data-current="{{ $position }}"><i class="fas fa-hashtag me-2"></i>Position&hellip;</button></li>
+                        </ul>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -160,46 +176,41 @@
     @endif
 @empty
     <div class="portal-card p-5 text-center portal-empty">
-        No properties yet. <a href="{{ route('portal.properties.create') }}">Add your first listing</a>.
+        @if($search !== '')
+            Nothing matches &ldquo;{{ $search }}&rdquo;. <a href="{{ route($routePrefix . '.index') }}">Clear the search</a>.
+        @else
+            No {{ strtolower($sectionTitle) }} yet. <a href="{{ route($routePrefix . '.create') }}">Add your first listing</a>.
+        @endif
     </div>
 @endforelse
 
-<div class="mt-4">{{ $properties->links('pagination::bootstrap-5') }}</div>
+@if($properties->total() > 0)
+<div class="mt-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span class="portal-muted small">Showing {{ $properties->firstItem() }}–{{ $properties->lastItem() }} of {{ $properties->total() }}</span>
+    <div>{{ $properties->onEachSide(1)->links('pagination::bootstrap-5') }}</div>
+</div>
+@endif
 
-{{-- Feature listing modal --}}
-<div class="modal fade" id="featureModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <form class="modal-content" id="featureForm">
+@include('portal.properties._feature_modal')
+
+{{-- Move to position modal --}}
+<div class="modal fade" id="moveModal" tabindex="-1" aria-labelledby="moveModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <form class="modal-content" id="moveForm" novalidate>
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-star text-warning me-2"></i>Feature this listing</h5>
+                <h5 class="modal-title" id="moveModalTitle"><i class="fas fa-sort me-2"></i>Move to position</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="portal-muted small">Featured listings are highlighted and shown first on the website.</p>
-                <label class="form-label fw-semibold" for="featureDays">How many days?</label>
-                @if($isAdmin)
-                <input type="number" class="form-control" id="featureDays" min="1" max="365" placeholder="Leave blank for no end date">
-                @else
-                @php $maxDays = $featuredQuota['max_days'] ?? 30; @endphp
-                <select class="form-select" id="featureDays">
-                    @foreach(array_unique(array_filter([1, 3, 5, 7, 10, 15, 20, 30, $maxDays], fn ($d) => $d <= $maxDays)) as $d)
-                    <option value="{{ $d }}" @selected($d === $maxDays)>{{ $d }} day{{ $d === 1 ? '' : 's' }}</option>
-                    @endforeach
-                </select>
-                <div class="form-text">
-                    Your plan allows up to {{ $maxDays }} days per featured listing.
-                    @if($featuredQuota['per_month'] ?? false)
-                    This uses 1 of your {{ $featuredQuota['remaining'] }} remaining feature(s) this month, even if you stop it early.
-                    @else
-                    This uses 1 of your {{ $featuredQuota['remaining'] ?? 0 }} free featured slot(s) until it ends.
-                    @endif
-                </div>
-                @endif
-                <div class="alert alert-danger small mt-3 mb-0 d-none" id="featureError"></div>
+                <p class="small portal-muted mb-2 text-truncate" id="moveTitle"></p>
+                <label class="form-label fw-semibold" for="movePosition">New position</label>
+                <input type="number" class="form-control" id="movePosition" min="1" max="{{ $totalListings }}" required>
+                <div class="form-text">1 is shown first. {{ $totalListings }} listings in total, {{ $properties->perPage() }} per page.</div>
+                <div class="alert alert-danger small mt-3 mb-0 d-none" id="moveError"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-portal-light btn-sm" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-portal-primary btn-sm" id="featureSubmit"><i class="fas fa-star me-1"></i>Feature</button>
+                <button type="submit" class="btn btn-portal-primary btn-sm" id="moveSubmit">Move</button>
             </div>
         </form>
     </div>
@@ -208,59 +219,130 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('click', function (e) {
+    const JSON_HEADERS = { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'Content-Type': 'application/json' };
+
+    const cardTitle = el => el.closest('.portal-property-card')?.querySelector('.portal-property-card__title')?.textContent.trim();
+
+    document.addEventListener('click', async function (e) {
         const btn = e.target.closest('.delete-property');
         if (!btn) return;
-        if (!confirm('Delete this property?')) return;
+        const name = cardTitle(btn);
+        const ok = await window.portalConfirm({
+            title: @json('Delete this ' . strtolower($itemLabel) . '?'),
+            message: (name ? '“' + name + '” ' : 'This listing ') + 'and all its photos will be removed. This can\'t be undone.',
+            confirmText: 'Delete',
+            tone: 'danger',
+        });
+        if (!ok) return;
         fetch("{{ url('portal/properties') }}/" + btn.dataset.id, {
             method: 'DELETE',
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
         }).then(() => location.reload());
     });
 
-    // Feature / stop featuring a listing (plan quota enforced server-side).
-    (function () {
-        const modalEl = document.getElementById('featureModal');
-        const modal = new bootstrap.Modal(modalEl);
-        const form = document.getElementById('featureForm');
-        const errorBox = document.getElementById('featureError');
-        const submitBtn = document.getElementById('featureSubmit');
-        let propertyId = null;
-        const headers = { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'Content-Type': 'application/json' };
-
-        document.addEventListener('click', function (e) {
-            const featureBtn = e.target.closest('.feature-property');
-            if (featureBtn) {
-                propertyId = featureBtn.dataset.id;
-                errorBox.classList.add('d-none');
-                modal.show();
-                return;
-            }
-            const stopBtn = e.target.closest('.unfeature-property');
-            if (stopBtn) {
-                if (!confirm(@json($featuredQuota && $featuredQuota['per_month'] ? 'Stop featuring this listing? The feature still counts toward this month.' : 'Stop featuring this listing?'))) return;
-                stopBtn.disabled = true;
-                fetch("{{ url('portal/properties') }}/" + stopBtn.dataset.id + '/unfeature', { method: 'POST', headers })
-                    .then(r => { if (!r.ok) throw new Error(); location.reload(); })
-                    .catch(() => { stopBtn.disabled = false; alert('Could not stop featuring. Please try again.'); });
-            }
+    // Feature (opens the shared popup) / stop or cancel a feature.
+    document.addEventListener('click', async function (e) {
+        const featureBtn = e.target.closest('.feature-property');
+        if (featureBtn) {
+            window.openFeatureModal({ id: featureBtn.dataset.id, title: featureBtn.dataset.title, thumb: featureBtn.dataset.thumb, ref: featureBtn.dataset.ref });
+            return;
+        }
+        const editBtn = e.target.closest('.edit-feature-dates');
+        if (editBtn) {
+            const d = editBtn.dataset;
+            window.openFeatureEditModal({ id: d.id, title: d.title, thumb: d.thumb, ref: d.ref, live: d.live === '1', start: d.start, end: d.end });
+            return;
+        }
+        const stopBtn = e.target.closest('.unfeature-property');
+        if (!stopBtn) return;
+        const name = cardTitle(stopBtn);
+        const ok = await window.portalConfirm(stopBtn.dataset.scheduled === '1' ? {
+            title: 'Cancel scheduled premium?',
+            message: (name ? '“' + name + '” won\'t be premium. ' : '') + 'The booking is removed, so it no longer counts toward your plan.',
+            confirmText: 'Cancel premium',
+            cancelText: 'Keep it',
+            tone: 'warning',
+        } : {
+            title: 'Remove premium now?',
+            message: (name ? '“' + name + '” ' : 'This listing ') + 'loses its Premium badge and top placement on the website right away.'
+                + @json($featuredQuota && $featuredQuota['per_month'] ? ' It still counts toward this month\'s quota.' : ''),
+            confirmText: 'Remove premium',
+            cancelText: 'Keep premium',
+            tone: 'warning',
         });
+        if (!ok) return;
+        stopBtn.disabled = true;
+        fetch("{{ url('portal/properties') }}/" + stopBtn.dataset.id + '/unfeature', { method: 'POST', headers: JSON_HEADERS })
+            .then(r => { if (!r.ok) throw new Error(); location.reload(); })
+            .catch(() => { stopBtn.disabled = false; alert('Could not update premium. Please try again.'); });
+    });
 
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const days = document.getElementById('featureDays').value;
-            submitBtn.disabled = true;
-            errorBox.classList.add('d-none');
-            fetch("{{ url('portal/properties') }}/" + propertyId + '/feature', {
-                method: 'POST', headers, body: JSON.stringify({ days: days || null }),
-            })
+    // Move to top / bottom / position — renumbers the whole list server-side (so it works across
+    // pages), then opens the page the listing landed on and highlights it.
+    (function () {
+        const moveUrl = id => @json(route($routePrefix . '.move', '__ID__')).replace('__ID__', id);
+        const searching = @json($search !== '');
+        const baseUrl = @json(route($routePrefix . '.index'));
+        const modalEl = document.getElementById('moveModal');
+        const modal = new bootstrap.Modal(modalEl);
+        const input = document.getElementById('movePosition');
+        const errorBox = document.getElementById('moveError');
+        const submitBtn = document.getElementById('moveSubmit');
+        let moveId = null;
+
+        function move(id, position) {
+            return fetch(moveUrl(id), { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ position }) })
                 .then(async r => {
                     const data = await r.json().catch(() => ({}));
-                    if (!r.ok) throw new Error(Object.values(data.errors || {})[0]?.[0] || data.message || 'Could not feature this listing.');
-                    location.reload();
-                })
-                .catch(err => { errorBox.textContent = err.message; errorBox.classList.remove('d-none'); submitBtn.disabled = false; });
+                    if (!r.ok) throw new Error(Object.values(data.errors || {})[0]?.[0] || data.message || 'Could not move this listing.');
+                    if (searching) { location.reload(); return; }
+                    const url = new URL(baseUrl, location.origin);
+                    if (data.page > 1) url.searchParams.set('page', data.page);
+                    url.hash = 'property-' + id;
+                    location.href = url.toString();
+                });
+        }
+
+        document.addEventListener('click', function (e) {
+            const quick = e.target.closest('.move-property');
+            if (quick) {
+                quick.disabled = true;
+                move(quick.dataset.id, quick.dataset.position).catch(err => { quick.disabled = false; alert(err.message); });
+                return;
+            }
+            const to = e.target.closest('.move-property-to');
+            if (to) {
+                moveId = to.dataset.id;
+                document.getElementById('moveTitle').textContent = to.dataset.title + (to.dataset.current ? ' — now #' + to.dataset.current : '');
+                input.value = to.dataset.current || '';
+                errorBox.classList.add('d-none');
+                submitBtn.disabled = false;
+                modal.show();
+            }
         });
+        modalEl.addEventListener('shown.bs.modal', () => input.select());
+
+        document.getElementById('moveForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const position = parseInt(input.value, 10);
+            const max = parseInt(input.max, 10);
+            if (!position || position < 1 || position > max) {
+                errorBox.textContent = 'Enter a position between 1 and ' + max + '.';
+                errorBox.classList.remove('d-none');
+                return;
+            }
+            submitBtn.disabled = true;
+            move(moveId, position).catch(err => { errorBox.textContent = err.message; errorBox.classList.remove('d-none'); submitBtn.disabled = false; });
+        });
+
+        const m = location.hash.match(/^#property-(\d+)$/);
+        const moved = m && document.querySelector('.portal-property-col[data-id="' + m[1] + '"]');
+        if (moved) {
+            moved.scrollIntoView({ block: 'center' });
+            moved.classList.add('is-moved');
+            setTimeout(() => moved.classList.remove('is-moved'), 2400);
+            history.replaceState(null, '', location.pathname + location.search);
+        }
     })();
 
     // Per-card Active/Inactive switch.
@@ -320,20 +402,21 @@
         }
 
         document.querySelectorAll('.bulk-action-btn').forEach(function (btn) {
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', async function () {
                 const action = btn.dataset.action;
                 const ids = checkboxes().filter(cb => cb.checked).map(cb => cb.value);
                 if (ids.length === 0) return;
-                if (action === 'delete' && !confirm('Delete ' + ids.length + ' selected propert' + (ids.length === 1 ? 'y' : 'ies') + '? This cannot be undone.')) return;
+                if (action === 'delete' && !(await window.portalConfirm({
+                    title: 'Delete ' + ids.length + ' listing' + (ids.length === 1 ? '' : 's') + '?',
+                    message: 'The selected listing' + (ids.length === 1 ? '' : 's') + ' and all their photos will be removed. This can\'t be undone.',
+                    confirmText: 'Delete ' + ids.length,
+                    tone: 'danger',
+                }))) return;
 
                 btn.disabled = true;
                 fetch("{{ route('portal.properties.bulk-action') }}", {
                     method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
+                    headers: JSON_HEADERS,
                     body: JSON.stringify({ ids: ids, action: action }),
                 })
                     .then(r => { if (!r.ok) throw new Error(); location.reload(); })
@@ -344,11 +427,11 @@
         refreshBar();
     })();
 
-    // Drag-and-drop reorder of the cards. Only the grip handle arms a drag, so the card's
-    // buttons, links and checkbox behave normally.
+    // Drag-and-drop reorder of the cards on this page. Only the grip handle arms a drag, so the
+    // card's buttons, links and checkbox behave normally.
     (function () {
         const grid = document.getElementById('propertyGrid');
-        if (!grid) return;
+        if (!grid || !grid.querySelector('.portal-property-card__drag')) return;
         let dragEl = null;
 
         grid.addEventListener('mousedown', function (e) {
@@ -380,15 +463,11 @@
             dragEl = null;
 
             const order = Array.from(grid.querySelectorAll('.portal-property-col')).map(col => col.dataset.id);
-            fetch("{{ route('portal.properties.reorder') }}", {
+            fetch("{{ route($routePrefix . '.reorder') }}", {
                 method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
+                headers: JSON_HEADERS,
                 body: JSON.stringify({ order: order }),
-            }).then(r => { if (!r.ok) throw new Error(); })
+            }).then(r => { if (!r.ok) throw new Error(); location.reload(); })
               .catch(() => { alert('Could not save the new order.'); location.reload(); });
         });
         document.addEventListener('mouseup', function () {

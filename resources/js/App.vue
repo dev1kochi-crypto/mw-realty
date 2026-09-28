@@ -19,7 +19,12 @@ watch(
 
 <template>
     <SiteHeader />
-    <router-view />
+    <!-- Keyed by route name: two routes sharing a component (/properties and /premium-properties
+         both use PropertiesDubai.vue) get a fresh instance, while a query-only change (filters,
+         paging) on the same route keeps the page as it is. -->
+    <router-view v-slot="{ Component, route: current }">
+        <component :is="Component" :key="current.name" />
+    </router-view>
     <SiteFooter />
     <ChatWidget />
 </template>

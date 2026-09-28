@@ -68,8 +68,8 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.force-delete-lead-btn').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                if (!confirm('Permanently delete this lead? This cannot be undone.')) return;
+            btn.addEventListener('click', async function () {
+                if (!(await window.portalConfirm({ title: 'Delete this lead forever?', message: 'It will be permanently removed and can\'t be restored.', confirmText: 'Delete forever', tone: 'danger' }))) return;
                 const form = document.getElementById('forceDeleteLeadForm');
                 form.action = "{{ url('portal/crm/leads') }}/" + btn.dataset.id + '/force';
                 form.submit();

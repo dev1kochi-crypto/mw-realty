@@ -335,7 +335,7 @@
         <a href="{{ route('portal.properties.index') }}" class="dl-stat g-violet">
             <div class="dl-stat-top"><span class="dl-stat-ic"><i class="fas fa-star"></i></span>@if($featuredExpiring > 0)<span class="dl-delta warn">{{ $featuredExpiring }} expiring</span>@endif</div>
             <div class="dl-stat-value num"><span class="dz-count" data-to="{{ $stats['featured_properties'] }}">{{ $stats['featured_properties'] }}</span></div>
-            <div class="dl-stat-label">Featured</div>
+            <div class="dl-stat-label">Premium</div>
             <div class="dl-stat-note">{{ $stats['total_properties'] ? round($stats['featured_properties'] / $stats['total_properties'] * 100) : 0 }}% of listings promoted</div>
             <div class="dl-stat-meter"><span style="width: {{ $stats['total_properties'] ? round($stats['featured_properties'] / $stats['total_properties'] * 100) : 0 }}%;"></span></div>
         </a>
@@ -486,7 +486,7 @@
                 <div class="dl-mini">
                     <div><span class="num">{{ $stats['active_properties'] }}</span><small>Active</small></div>
                     <div><span class="num">{{ $stats['inactive_properties'] }}</span><small>Inactive</small></div>
-                    <div><span class="num">{{ $stats['featured_properties'] }}</span><small>Featured</small></div>
+                    <div><span class="num">{{ $stats['featured_properties'] }}</span><small>Premium</small></div>
                 </div>
             @else
                 <div class="dl-empty">No properties yet.</div>

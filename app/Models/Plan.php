@@ -125,10 +125,10 @@ class Plan extends Model
     public function entitlementLines(): array
     {
         $featured = $this->includesFeatured()
-            ? $this->featured_per_month . ' featured listing' . ($this->featured_per_month === 1 ? '' : 's')
+            ? $this->featured_per_month . ' premium listing' . ($this->featured_per_month === 1 ? '' : 's')
                 . ($this->featuredPerMonth() ? ' / month' : '')
                 . ($this->featured_max_days ? ' (max ' . $this->featured_max_days . ' days)' : '')
-            : 'Featured listings';
+            : 'Premium listings';
 
         $agents = match (true) {
             $this->agentsUnlimited() => 'Unlimited team agents',

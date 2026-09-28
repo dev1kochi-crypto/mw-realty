@@ -12,18 +12,36 @@
 
 @push('styles')
 <style>
-    .pl-hero { position: relative; overflow: hidden; border-radius: var(--portal-radius); padding: 2rem; color: #fff; background: linear-gradient(120deg, var(--portal-primary-dark), var(--portal-primary) 55%, var(--portal-accent)); box-shadow: 0 18px 40px rgba(36, 67, 115, 0.25); margin-bottom: 2rem; }
-    .pl-hero::after { content: ''; position: absolute; right: -80px; top: -80px; width: 260px; height: 260px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); }
-    .pl-hero::before { content: ''; position: absolute; right: 120px; bottom: -110px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255, 255, 255, 0.06); }
-    .pl-hero__eyebrow { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.8; }
-    .pl-hero__title { font-size: 1.7rem; font-weight: 800; margin: 0.25rem 0 0.4rem; }
-    .pl-hero__sub { opacity: 0.85; margin: 0; max-width: 520px; }
-    .pl-usage { position: relative; z-index: 1; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(6px); border-radius: 14px; padding: 1rem 1.25rem; min-width: 260px; }
-    .pl-usage__bar { height: 8px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); overflow: hidden; margin: 0.6rem 0 0.35rem; }
-    .pl-usage__fill { height: 100%; border-radius: 8px; background: linear-gradient(90deg, #fde68a, #fbbf24); }
-    .pl-usage__link { display: flex; align-items: center; justify-content: center; margin-top: 0.85rem; padding: 0.5rem 0.75rem; border-radius: 10px; background: rgba(255, 255, 255, 0.95); color: var(--portal-primary-dark); font-weight: 700; font-size: 0.82rem; text-decoration: none; transition: transform 0.15s ease; }
-    .pl-usage__link:hover { color: var(--portal-primary-dark); transform: translateY(-1px); }
-    .pl-usage__fill.is-full { background: linear-gradient(90deg, #fca5a5, #ef4444); }
+    /* Compact summary bar: plan, usage, subscription status and billing actions in one row */
+    .pl-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.8rem 1rem; border-radius: 14px; background: var(--portal-surface); border: 1px solid var(--portal-border); box-shadow: var(--portal-shadow); }
+    .pl-bar__main { display: flex; align-items: center; gap: 0.8rem; min-width: 0; flex: 1 1 420px; }
+    .pl-bar__icon { width: 2.4rem; height: 2.4rem; flex-shrink: 0; border-radius: 11px; display: flex; align-items: center; justify-content: center; color: #fff; background: linear-gradient(135deg, var(--portal-primary), var(--portal-accent)); }
+    .pl-bar__title { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-weight: 800; color: var(--portal-text); }
+    .pl-bar__meta { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--portal-muted); margin-top: 0.15rem; }
+    .pl-bar__meta strong { color: var(--portal-text); font-weight: 700; }
+    .pl-bar__usage { display: inline-flex; align-items: center; gap: 0.45rem; }
+    .pl-bar__meter { width: 64px; height: 6px; border-radius: 50px; background: var(--portal-bg); overflow: hidden; }
+    .pl-bar__meter span { display: block; height: 100%; border-radius: 50px; background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+    .pl-bar__meter span.is-full { background: linear-gradient(90deg, #fca5a5, #ef4444); }
+    .pl-bar__sep { color: #c3c9dc; }
+    .pl-bar__actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    /* Billing period toggle + coupon, one row above the plans */
+    .pl-controls { display: flex; align-items: center; justify-content: center; gap: 0.75rem 1.25rem; flex-wrap: wrap; margin: 0 0 1.5rem; }
+    .pl-coupon { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.3rem 0.35rem 0.3rem 0.3rem; border-radius: 50px; background: var(--portal-surface); border: 1px dashed rgba(36, 67, 115, 0.35); }
+    .pl-coupon__form { display: flex; align-items: center; gap: 0.4rem; }
+    .pl-coupon__icon { width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; background: linear-gradient(135deg, var(--portal-accent), #f97316); color: #fff; }
+    .pl-coupon__form .form-control { width: 150px; height: 2rem; padding: 0 0.6rem; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.06em; border: 0; box-shadow: none; background: transparent; }
+    .pl-coupon__form .btn { border-radius: 50px; }
+    .pl-coupon__status { font-size: 0.75rem; color: var(--portal-muted); padding-right: 0.6rem; max-width: 260px; }
+    .pl-coupon.is-applied { border-style: solid; border-color: #16a34a; background: #f0fdf4; }
+    @media (max-width: 575.98px) {
+        .pl-coupon { border-radius: 14px; width: 100%; }
+        .pl-coupon__form { width: 100%; }
+        .pl-coupon__form .form-control { flex: 1; width: auto; }
+        .pl-coupon__status { max-width: none; padding: 0 0.4rem 0.2rem; }
+        .pl-bar__actions { width: 100%; }
+    }
 
     .pl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; align-items: stretch; padding-top: 0.75rem; }
     .pl-card { position: relative; display: flex; flex-direction: column; background: var(--portal-surface); border: 1px solid var(--portal-border); border-radius: 20px; padding: 1.75rem 1.5rem 1.5rem; box-shadow: var(--portal-shadow); transition: transform 0.2s ease, box-shadow 0.2s ease; }
@@ -64,34 +82,24 @@
     .pl-card--popular .pl-btn--muted { background: rgba(255, 255, 255, 0.12); color: rgba(255, 255, 255, 0.8); }
     .pl-btn--current { background: rgba(22, 163, 74, 0.1); color: #16a34a; cursor: default; }
 
-    .pl-sub { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1rem 1.25rem; border-radius: 16px; background: var(--portal-surface); border: 1px solid var(--portal-border); box-shadow: var(--portal-shadow); }
-    .pl-sub__icon { width: 2.6rem; height: 2.6rem; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #635bff, #8b85ff); color: #fff; }
     .pl-sub__badge { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.2rem 0.6rem; border-radius: 50px; }
     .pl-sub__badge--ok { background: rgba(22, 163, 74, 0.12); color: #16a34a; }
     .pl-sub__badge--warn { background: rgba(245, 158, 11, 0.15); color: #b45309; }
-    .pl-coupon { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1rem 1.25rem; border-radius: 16px; background: var(--portal-surface); border: 1px dashed rgba(36, 67, 115, 0.35); box-shadow: var(--portal-shadow); }
-    .pl-coupon__icon { width: 2.6rem; height: 2.6rem; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--portal-accent), #f97316); color: #fff; }
-    .pl-coupon__form { display: flex; gap: 0.5rem; }
-    .pl-coupon__form .form-control { width: 190px; font-weight: 700; letter-spacing: 0.06em; border-radius: 10px; }
-    .pl-coupon.is-applied { border-style: solid; border-color: #16a34a; background: linear-gradient(135deg, #f0fdf4, #fff); }
     .pl-discount { margin: -0.75rem 0 1.25rem; font-size: 0.82rem; font-weight: 700; color: #16a34a; }
     .pl-discount.is-invalid { color: var(--portal-muted); font-weight: 600; }
     .pl-card--popular .pl-discount { color: #86efac; }
     .pl-card--popular .pl-discount.is-invalid { color: rgba(255, 255, 255, 0.6); }
     .pl-price__old { font-size: 1rem; font-weight: 700; color: var(--portal-muted); text-decoration: line-through; margin-left: 0.25rem; }
     .pl-card--popular .pl-price__old { color: rgba(255, 255, 255, 0.55); }
-    @media (max-width: 575.98px) { .pl-coupon__form { width: 100%; } .pl-coupon__form .form-control { flex: 1; width: auto; } }
 
     .pl-note { text-align: center; color: var(--portal-muted); font-size: 0.85rem; margin-top: 2rem; }
 
     @media (min-width: 1200px) { .pl-card--popular { transform: scale(1.03); } .pl-card--popular:hover { transform: scale(1.03) translateY(-6px); } }
-    @media (max-width: 575.98px) { .pl-hero { padding: 1.5rem; } .pl-hero__title { font-size: 1.35rem; } .pl-usage { min-width: 0; width: 100%; } }
 </style>
 @endpush
 
 @push('styles')
 <style>
-    .pl-toggle-wrap { display: flex; justify-content: center; margin: 0 0 1.75rem; }
     .pl-toggle { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.3rem; border-radius: 50px; background: var(--portal-surface); border: 1px solid var(--portal-border); box-shadow: var(--portal-shadow); }
     .pl-toggle button { border: 0; background: transparent; padding: 0.55rem 1.4rem; border-radius: 50px; font-weight: 700; font-size: 0.9rem; color: var(--portal-muted); transition: all 0.2s ease; }
     .pl-toggle button.is-active { background: linear-gradient(135deg, var(--portal-primary), var(--portal-primary-dark)); color: #fff; box-shadow: 0 8px 18px rgba(36, 67, 115, 0.3); }
@@ -166,67 +174,53 @@
 @endphp
 
 @section('content')
-<div class="pl-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
-    <div style="position: relative; z-index: 1;">
-        <div class="pl-hero__eyebrow"><i class="fas fa-layer-group me-1"></i> Plans &amp; Billing</div>
-        <h1 class="pl-hero__title">Grow faster with the right plan</h1>
-        <p class="pl-hero__sub">
-            List more properties, get featured placement and unlock the full CRM.
-            {{ $stripeEnabled ? 'Pay securely by card — your plan activates instantly and renews automatically.' : 'Upgrade anytime — our team activates it after a quick review.' }}
-        </p>
-        @if($pendingRequest)
-        <span class="badge rounded-pill bg-warning text-dark mt-3 px-3 py-2"><i class="fas fa-clock me-1"></i> Upgrade to {{ $pendingRequest->plan->getTranslation('name') }} pending review</span>
-        @endif
-    </div>
-    <div class="pl-usage">
-        <div class="d-flex justify-content-between align-items-center">
-            <span class="small fw-semibold" style="opacity: 0.85;">Current plan</span>
-            <span class="fw-bold">{{ $currentPlan?->getTranslation('name') ?? 'None' }}@if($currentPlan && (float) $currentPlan->price > 0) · {{ ucfirst($currentInterval) }}@endif</span>
-        </div>
-        <div class="pl-usage__bar"><div class="pl-usage__fill {{ $limit && $used >= $limit ? 'is-full' : '' }}" style="width: {{ $usagePct }}%;"></div></div>
-        <div class="small" style="opacity: 0.85;">
-            {{ $used }} {{ $limit ? 'of ' . $limit : '' }} listings used{{ $limit ? '' : ' · Unlimited' }}
-        </div>
-        @if($hasPayments)
-        <a href="{{ route('portal.plans.payments') }}" class="pl-usage__link">
-            <i class="fas fa-receipt me-1"></i> Payment History <i class="fas fa-arrow-right ms-1"></i>
-        </a>
-        @endif
-    </div>
-</div>
-
-@if(request('checkout') === 'cancelled')
-<div class="alert alert-warning"><i class="fas fa-info-circle me-2"></i>Checkout was cancelled — you haven't been charged.</div>
-@endif
-
-@if($subscribed)
 @php
-    $subStatus = [
+    $scheduled = $subscribed ? $owner->scheduledPlan : null;
+    $subStatus = $subscribed ? ([
         'active' => ['pl-sub__badge--ok', 'Active'], 'trialing' => ['pl-sub__badge--ok', 'Trial'],
         'past_due' => ['pl-sub__badge--warn', 'Payment failed — retrying'], 'unpaid' => ['pl-sub__badge--warn', 'Unpaid'],
-    ][$owner->subscription_status] ?? ['pl-sub__badge--warn', ucfirst((string) $owner->subscription_status)];
-    $scheduled = $owner->scheduledPlan;
+    ][$owner->subscription_status] ?? ['pl-sub__badge--warn', ucfirst((string) $owner->subscription_status)]) : null;
 @endphp
-<div class="pl-sub mb-4">
-    <span class="pl-sub__icon"><i class="fas fa-credit-card"></i></span>
-    <div class="flex-grow-1">
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span class="fw-bold">{{ $currentPlan?->getTranslation('name') }} · {{ ucfirst($currentInterval) }} subscription</span>
-            <span class="pl-sub__badge {{ $subStatus[0] }}">{{ $subStatus[1] }}</span>
-        </div>
-        <div class="small portal-muted">
-            @if($owner->subscription_cancel_at_period_end)
-                Auto-renew is off — your plan ends on <strong>{{ $owner->subscription_renews_at?->format('d M Y') }}</strong>, then moves to Free.
-            @elseif($scheduled)
-                You keep {{ $currentPlan?->getTranslation('name') }} until <strong>{{ $owner->subscription_renews_at?->format('d M Y') }}</strong>, then
-                <strong>{{ $scheduled->getTranslation('name') }} ({{ $owner->scheduled_interval ?: 'monthly' }})</strong> starts at AED {{ number_format($scheduled->priceFor($owner->scheduled_interval ?: 'monthly'), 2) }}/{{ $intervalWord($owner->scheduled_interval ?: 'monthly') }}.
-            @else
-                Renews automatically on <strong>{{ $owner->subscription_renews_at?->format('d M Y') ?? '—' }}</strong> for AED {{ number_format($currentPlan?->priceFor($currentInterval) ?? 0, 2) }}.
-            @endif
-            @if($owner->subscription_status === 'past_due') Update your card to keep your plan. @endif
+
+{{-- One compact summary bar (current plan, usage, subscription, billing actions) so the plans stay in view. --}}
+<div class="pl-bar mb-3">
+    <div class="pl-bar__main">
+        <span class="pl-bar__icon"><i class="fas fa-layer-group"></i></span>
+        <div class="min-w-0">
+            <div class="pl-bar__title">
+                <span>{{ $currentPlan?->getTranslation('name') ?? 'No plan' }}@if($currentPlan && (float) $currentPlan->price > 0) · {{ ucfirst($currentInterval) }}@endif</span>
+                @if($subStatus)<span class="pl-sub__badge {{ $subStatus[0] }}">{{ $subStatus[1] }}</span>@endif
+                @if($pendingRequest)<span class="pl-sub__badge pl-sub__badge--warn"><i class="fas fa-clock me-1"></i>{{ $pendingRequest->plan->getTranslation('name') }} pending review</span>@endif
+            </div>
+            <div class="pl-bar__meta">
+                <span class="pl-bar__usage" title="Properties and Commercial combined">
+                    <span class="pl-bar__meter"><span class="{{ $limit && $used >= $limit ? 'is-full' : '' }}" style="width: {{ $usagePct }}%;"></span></span>
+                    {{ $used }}{{ $limit ? ' / ' . $limit : '' }} listings{{ $limit ? '' : ' · unlimited' }}
+                </span>
+                @if($subscribed)
+                <span class="pl-bar__sep" aria-hidden="true">·</span>
+                <span>
+                    @if($owner->subscription_cancel_at_period_end)
+                        Auto-renew off — ends <strong>{{ $owner->subscription_renews_at?->format('d M Y') }}</strong>, then Free
+                    @elseif($scheduled)
+                        <strong>{{ $scheduled->getTranslation('name') }} ({{ $owner->scheduled_interval ?: 'monthly' }})</strong> starts <strong>{{ $owner->subscription_renews_at?->format('d M Y') }}</strong> at AED {{ number_format($scheduled->priceFor($owner->scheduled_interval ?: 'monthly'), 2) }}/{{ $intervalWord($owner->scheduled_interval ?: 'monthly') }}
+                    @else
+                        Renews <strong>{{ $owner->subscription_renews_at?->format('d M Y') ?? '—' }}</strong> · AED {{ number_format($currentPlan?->priceFor($currentInterval) ?? 0, 2) }}
+                    @endif
+                    @if($owner->subscription_status === 'past_due') — update your card to keep your plan. @endif
+                </span>
+                @elseif(!$stripeEnabled)
+                <span class="pl-bar__sep" aria-hidden="true">·</span>
+                <span>Upgrades are activated by our team after a quick review.</span>
+                @endif
+            </div>
         </div>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
+    <div class="pl-bar__actions">
+        @if($hasPayments)
+        <a href="{{ route('portal.plans.payments') }}" class="btn btn-portal-light btn-sm"><i class="fas fa-receipt me-1"></i>Payment history</a>
+        @endif
+        @if($subscribed)
         <form action="{{ route('portal.plans.billing-portal') }}" method="POST">@csrf
             <button class="btn btn-portal-light btn-sm"><i class="fas fa-file-invoice me-1"></i>Card &amp; invoices</button>
         </form>
@@ -239,43 +233,49 @@
             <button class="btn btn-portal-primary btn-sm"><i class="fas fa-redo me-1"></i>Resume auto-renew</button>
         </form>
         @else
-        <form action="{{ route('portal.plans.subscription.cancel') }}" method="POST" onsubmit="return confirm('Turn off auto-renew? You keep your plan until the end of the period you already paid for.');">@csrf
+        <form action="{{ route('portal.plans.subscription.cancel') }}" method="POST"
+              data-confirm-title="Turn off auto-renew?" data-confirm="You keep your plan until {{ $owner->subscription_renews_at?->format('d M Y') ?? 'the end of the period you already paid for' }}, then move to Free."
+              data-confirm-ok="Turn off" data-confirm-tone="warning">@csrf
             <button class="btn btn-portal-light btn-sm text-danger"><i class="fas fa-ban me-1"></i>Cancel auto-renew</button>
         </form>
         @endif
+        @endif
     </div>
 </div>
+
+@if(request('checkout') === 'cancelled')
+<div class="alert alert-warning py-2"><i class="fas fa-info-circle me-2"></i>Checkout was cancelled — you haven't been charged.</div>
 @endif
 
 @if($errors->has('coupon_code'))
-<div class="alert alert-danger"><i class="fas fa-ticket-alt me-2"></i>{{ $errors->first('coupon_code') }}</div>
+<div class="alert alert-danger py-2"><i class="fas fa-ticket-alt me-2"></i>{{ $errors->first('coupon_code') }}</div>
 @endif
 
-@unless($pendingRequest)
-<div class="pl-coupon mb-4">
-    <span class="pl-coupon__icon"><i class="fas fa-ticket-alt"></i></span>
-    <div class="flex-grow-1">
-        <div class="fw-bold">Have a coupon code?</div>
-        <div class="small portal-muted" id="couponStatus">Apply it to see your discounted price before choosing a plan.</div>
-    </div>
-    <form id="couponForm" class="pl-coupon__form">
-        <input type="text" id="couponInput" class="form-control text-uppercase" placeholder="ENTER CODE" maxlength="40" value="{{ old('coupon_code') }}" autocomplete="off">
-        <button type="submit" class="btn btn-portal-primary btn-sm" id="couponApply">Apply</button>
-        <button type="button" class="btn btn-portal-light btn-sm d-none" id="couponRemove">Remove</button>
-    </form>
-</div>
-@endunless
-
-@if($hasYearly)
-<div class="pl-toggle-wrap">
+{{-- Billing period toggle + coupon on one line --}}
+@if($hasYearly || !$pendingRequest)
+<div class="pl-controls">
+    @if($hasYearly)
     <div class="pl-toggle" role="tablist" aria-label="Billing period">
         <button type="button" data-interval-toggle="monthly" class="{{ $defaultInterval === 'monthly' ? 'is-active' : '' }}">Monthly</button>
         <button type="button" data-interval-toggle="yearly" class="{{ $defaultInterval === 'yearly' ? 'is-active' : '' }}">
             Yearly @if($maxSaving > 0)<span class="pl-toggle__save">Save up to {{ $maxSaving }}%</span>@endif
         </button>
     </div>
+    @endif
+    @unless($pendingRequest)
+    <div class="pl-coupon">
+        <form id="couponForm" class="pl-coupon__form">
+            <span class="pl-coupon__icon" aria-hidden="true"><i class="fas fa-ticket-alt"></i></span>
+            <input type="text" id="couponInput" class="form-control text-uppercase" placeholder="Coupon code" aria-label="Coupon code" maxlength="40" value="{{ old('coupon_code') }}" autocomplete="off">
+            <button type="submit" class="btn btn-portal-primary btn-sm" id="couponApply">Apply</button>
+            <button type="button" class="btn btn-portal-light btn-sm d-none" id="couponRemove">Remove</button>
+        </form>
+        <div class="pl-coupon__status" id="couponStatus">Have a coupon? Apply it to see discounted prices.</div>
+    </div>
+    @endunless
 </div>
 @endif
+
 
 <div class="pl-grid">
     @foreach($plans as $plan)
@@ -365,7 +365,9 @@
                 @endif
             </button>
             @elseif($online && !$subscribed && !$pendingRequest)
-            <form action="{{ route('portal.plans.request') }}" method="POST" class="js-plan-form" onsubmit="return confirm('You will be taken to Stripe to pay securely by card.');">
+            <form action="{{ route('portal.plans.request') }}" method="POST" class="js-plan-form"
+                  data-confirm-title="Continue to secure payment?" data-confirm="You'll be taken to Stripe to pay securely by card. Your plan activates as soon as the payment goes through."
+                  data-confirm-ok="Continue to payment" data-confirm-tone="primary">
                 @csrf
                 <input type="hidden" name="plan_id" value="{{ $plan->id }}">
                 <input type="hidden" name="interval" value="{{ $effective }}">

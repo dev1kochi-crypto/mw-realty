@@ -319,7 +319,8 @@
             "saving": "جارٍ الحفظ…",
             "search_saved": "تم حفظ البحث ✓",
             "save_error": "تعذر الحفظ — حاول مرة أخرى",
-            "clear_filters": "مسح الفلاتر"
+            "clear_filters": "مسح الفلاتر",
+            "sort_recommended": "موصى به"
         },
         "ticker": {
             "aria_label": "عمليات بحث موصى بها وروابط استثمارية على الخارطة",
@@ -438,7 +439,20 @@
             "amenity_concierge": "خدمة الكونسيرج",
             "amenity_private_pool": "مسبح خاص",
             "reset": "إعادة تعيين",
-            "apply": "تطبيق الفلاتر"
+            "apply": "تطبيق الفلاتر",
+            "completion_title": "حالة الإنجاز",
+            "completion_ready": "جاهز",
+            "completion_off_plan": "على الخارطة",
+            "sort_title": "ترتيب حسب",
+            "sort_recent": "الأحدث",
+            "sort_price_low_high": "السعر: من الأقل للأعلى",
+            "sort_price_high_low": "السعر: من الأعلى للأقل",
+            "amenity_pantry": "مطبخ صغير",
+            "amenity_meeting_rooms": "غرف اجتماعات",
+            "amenity_metro": "قريب من المترو",
+            "amenity_central_ac": "تكييف مركزي",
+            "amenity_loading_bay": "رصيف تحميل",
+            "sort_recommended": "موصى به"
         },
         "price_presets": {
             "under_500k": "أقل من 500 ألف",
@@ -505,7 +519,8 @@
         "pagination_aria": "التنقل بين صفحات العقارات التجارية",
         "previous": "السابق",
         "next": "التالي",
-        "clear_filters": "مسح الفلاتر"
+        "clear_filters": "مسح الفلاتر",
+        "results_count": "{count} عقار تجاري"
     },
     "empty_state": {
         "default_title": "لا توجد عقارات متاحة",
@@ -1089,5 +1104,11 @@
     "furnished": {
         "yes": "مفروش",
         "no": "غير مفروش"
+    },
+    "premium_listing": {
+        "hero_title": "عقارات متميزة",
+        "all_title": "جميع العقارات المتميزة",
+        "tag_commercial": "تجاري",
+        "tag_residential": "سكني"
     }
 }

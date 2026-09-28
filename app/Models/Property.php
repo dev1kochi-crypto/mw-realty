@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Property extends Model
 {
+    /** `segment` values — which CRM menu (Properties / Commercial) a listing belongs to. */
+    public const SEGMENT_RESIDENTIAL = 'residential';
+    public const SEGMENT_COMMERCIAL = 'commercial';
+
     protected $fillable = [
         'portal_user_id',
         'agent_id',
@@ -17,6 +21,7 @@ class Property extends Model
         'completion_status',
         'property_type',
         'category',
+        'segment',
         'location',
         'postal_code',
         'latitude',
@@ -32,6 +37,7 @@ class Property extends Model
         'image_sequence',
         'image_next_number',
         'featured',
+        'featured_from',
         'featured_until',
         'status',
         'published_at',
@@ -45,6 +51,7 @@ class Property extends Model
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
         'featured' => 'boolean',
+        'featured_from' => 'datetime',
         'featured_until' => 'datetime',
         'status' => 'boolean',
         'published_at' => 'datetime',
@@ -138,6 +145,67 @@ class Property extends Model
     public function scopeActive($query)
     {
         return $query->where('status', true);
+    }
+
+    public function scopeSegment($query, string $segment)
+    {
+        return $query->where('segment', $segment);
+    }
+
+    /** The website's /properties listing — everything that isn't in the Commercial menu. */
+    public function scopeResidential($query)
+    {
+        return $query->where('segment', '!=', self::SEGMENT_COMMERCIAL);
+    }
+
+    public function scopeCommercial($query)
+    {
+        return $query->where('segment', self::SEGMENT_COMMERCIAL);
+    }
+
+    /**
+     * CRM listing search (Properties / Commercial pages, the Featured picker): title, address,
+     * community and city in any active language, plus reference no and RERA. Not case-sensitive.
+     * With $includeOwner (Super Admin), it also matches the agent / agency name.
+     */
+    public function scopePortalSearch($query, string $search, bool $includeOwner = false)
+    {
+        $like = '%' . mb_strtolower($search) . '%';
+        $languages = \App\Models\CmsKit\Language::where('status', true)->pluck('code')
+            ->filter(fn ($code) => preg_match('/^[A-Za-z_-]{2,10}$/', $code))
+            ->push(config('app.fallback_locale', 'en'))
+            ->unique();
+
+        return $query->where(function ($q) use ($like, $languages, $includeOwner) {
+            $q->whereRaw('LOWER(reference_no) LIKE ?', [$like])
+                ->orWhereRaw('LOWER(rera_id) LIKE ?', [$like]);
+            foreach ($languages as $code) {
+                foreach (['title', 'address', 'community', 'city'] as $field) {
+                    $q->orWhereRaw("LOWER(JSON_UNQUOTE(JSON_EXTRACT(translations, '$.\"{$code}\".\"{$field}\"'))) LIKE ?", [$like]);
+                }
+            }
+            if ($includeOwner) {
+                $q->orWhereHas('owner', fn ($o) => $o->whereRaw('LOWER(name) LIKE ?', [$like])->orWhereRaw('LOWER(company_name) LIKE ?', [$like]));
+            }
+        });
+    }
+
+    /**
+     * The website's default listing order: exactly the CRM display order (drag and drop / "Move to"
+     * on the portal Properties and Commercial pages), then newest. Premium (featured) listings get no
+     * priority here — they have their own Home section and /premium-properties page.
+     */
+    public function scopeDisplayOrder($query)
+    {
+        return $query->orderBy('order_index')
+            ->orderByDesc('published_at')
+            ->orderByDesc('id');
+    }
+
+    /** Has a feature booked that hasn't started yet (see FeaturedListingService). */
+    public function isFeatureScheduled(): bool
+    {
+        return !$this->featured && $this->featured_from && $this->featured_from->isFuture();
     }
 
     /** Dummy SEO content generated from the property's own real fields, used by SeoMeta::resolve()

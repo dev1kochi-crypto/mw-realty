@@ -126,8 +126,8 @@
         });
 
         document.querySelectorAll('.delete-source-btn').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                if (!confirm('Delete this source?')) return;
+            btn.addEventListener('click', async function () {
+                if (!(await window.portalConfirm({ title: 'Delete this source?', message: 'It will be removed from your lead sources.', confirmText: 'Delete', tone: 'danger' }))) return;
                 fetch("{{ url('portal/crm/master/sources') }}/" + btn.dataset.id, {
                     method: 'DELETE',
                     headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },

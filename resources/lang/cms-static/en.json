@@ -319,7 +319,8 @@
             "saving": "Saving…",
             "search_saved": "Search Saved ✓",
             "save_error": "Couldn't save — try again",
-            "clear_filters": "Clear Filters"
+            "clear_filters": "Clear Filters",
+            "sort_recommended": "Recommended"
         },
         "ticker": {
             "aria_label": "Recommended searches and off-plan investment links",
@@ -438,7 +439,20 @@
             "amenity_concierge": "Concierge",
             "amenity_private_pool": "Private Pool",
             "reset": "Reset",
-            "apply": "Apply Filters"
+            "apply": "Apply Filters",
+            "completion_title": "Completion",
+            "completion_ready": "Ready",
+            "completion_off_plan": "Off-Plan",
+            "sort_title": "Sort by",
+            "sort_recent": "Most recent",
+            "sort_price_low_high": "Price: low to high",
+            "sort_price_high_low": "Price: high to low",
+            "amenity_pantry": "Pantry",
+            "amenity_meeting_rooms": "Meeting Rooms",
+            "amenity_metro": "Metro Access",
+            "amenity_central_ac": "Central A/C",
+            "amenity_loading_bay": "Loading Bay",
+            "sort_recommended": "Recommended"
         },
         "price_presets": {
             "under_500k": "Under 500K",
@@ -505,7 +519,8 @@
         "pagination_aria": "Commercial properties pagination",
         "previous": "Previous",
         "next": "Next",
-        "clear_filters": "Clear Filters"
+        "clear_filters": "Clear Filters",
+        "results_count": "{count} commercial properties"
     },
     "empty_state": {
         "default_title": "No Properties Available",
@@ -1089,5 +1104,11 @@
     "furnished": {
         "yes": "Furnished",
         "no": "Unfurnished"
+    },
+    "premium_listing": {
+        "hero_title": "Premium Properties",
+        "all_title": "All Premium Properties",
+        "tag_commercial": "Commercial",
+        "tag_residential": "Residential"
     }
 }

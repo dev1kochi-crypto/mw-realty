@@ -165,8 +165,8 @@
         });
 
         document.querySelectorAll('.delete-stage-btn').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                if (!confirm('Delete this stage?')) return;
+            btn.addEventListener('click', async function () {
+                if (!(await window.portalConfirm({ title: 'Delete this stage?', message: 'It will be removed from your lead pipeline.', confirmText: 'Delete', tone: 'danger' }))) return;
                 fetch("{{ url('portal/crm/master/stages') }}/" + btn.dataset.id, {
                     method: 'DELETE',
                     headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
