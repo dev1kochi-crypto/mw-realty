@@ -24,6 +24,14 @@ return [
         'meta_title' => 'Real Estate Blog | MW Realty',
         'meta_description' => 'Insights, guides, and market trends for buyers, tenants, and investors navigating the UAE real estate market.',
     ],
+    'market-insights' => [
+        'meta_title' => 'UAE Real Estate Market Insights | MW Realty',
+        'meta_description' => 'Market reports, price trends and investment analysis for Dubai and the wider UAE property market, from the MW Realty team.',
+    ],
+    'careers' => [
+        'meta_title' => 'Careers at MW Realty | Join Our Team',
+        'meta_description' => 'Explore open roles at MW Realty and build your career in UAE real estate with a team that puts clients first.',
+    ],
     'properties' => [
         'meta_title' => 'Properties for Sale & Rent in the UAE | MW Realty',
         'meta_description' => 'Browse verified residential listings across Dubai and the UAE. Find your next home or investment with MW Realty.',

@@ -136,7 +136,11 @@ class PortalPlanController extends Controller
                         return back()->with('success', $billing->changePlan($owner, $plan, $interval, $pricing, $request->integer('proration_date') ?: null));
                     }
                 } elseif (StripeBillingService::supportsPlan($plan, $interval)) {
-                    return redirect()->away($billing->createCheckout($owner, $plan, $interval, $pricing));
+                    return redirect()->route('portal.plans.checkout', array_filter([
+                        'plan_id' => $plan->id,
+                        'interval' => $interval,
+                        'coupon_code' => $pricing['coupon']->code ?? null,
+                    ]));
                 }
             } catch (\Stripe\Exception\ApiErrorException $e) {
                 StripeBillingService::logError($e, 'plan change');
@@ -169,6 +173,82 @@ class PortalPlanController extends Controller
         }
 
         return back()->with('success', 'Upgrade request submitted' . ($pricing ? ' with coupon ' . $pricing['coupon']->code : '') . ' — Super Admin will review it shortly.');
+    }
+
+    /**
+     * First subscription, paid on our own checkout page: card fields are Stripe Elements, so the
+     * card goes from the browser straight to Stripe.
+     */
+    public function checkout(Request $request)
+    {
+        try {
+            [$owner, $plan, $interval, $pricing] = $this->checkoutTarget($request);
+        } catch (ValidationException $e) {
+            return redirect()->route('portal.plans.index')->withErrors($e->errors());
+        }
+
+        return view('portal.plans.checkout', [
+            'owner' => $owner,
+            'plan' => $plan,
+            'interval' => $interval,
+            'pricing' => $pricing,
+            'price' => $plan->priceFor($interval),
+            'total' => $pricing['final'] ?? $plan->priceFor($interval),
+            'stripeKey' => config('services.stripe.key'),
+            'currency' => strtoupper(config('services.stripe.currency', 'aed')),
+        ]);
+    }
+
+    /** Checkout step 1: the unpaid subscription + client secret the card fields confirm. */
+    public function checkoutIntent(Request $request, StripeBillingService $billing)
+    {
+        [$owner, $plan, $interval, $pricing] = $this->checkoutTarget($request);
+
+        try {
+            return response()->json(['success' => true] + $billing->createSubscriptionIntent($owner, $plan, $interval, $pricing));
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            StripeBillingService::logError($e, 'checkout intent');
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /** Checkout step 2: after the card payment is confirmed, activate the plan (the webhook does the same). */
+    public function checkoutComplete(Request $request, StripeBillingService $billing)
+    {
+        $request->validate(['subscription_id' => 'required|string|starts_with:sub_']);
+        $subscriptionId = $request->input('subscription_id');
+
+        $upgrade = PlanUpgradeRequest::where('stripe_subscription_id', $subscriptionId)
+            ->where('portal_user_id', Auth::guard('portal')->id())->first();
+        abort_unless($upgrade && StripeBillingService::enabled(), 404);
+
+        try {
+            $upgrade = $billing->fulfillSubscription($subscriptionId) ?? $upgrade;
+            $card = $billing->subscriptionCard($subscriptionId);
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            StripeBillingService::logError($e, 'checkout completion');
+            $card = null;
+        }
+
+        return response()->json([
+            'success' => true,
+            'activated' => $upgrade->status === 'approved',
+            'plan' => $upgrade->plan->getTranslation('name'),
+            'card' => $card,
+            'redirect' => route('portal.plans.index'),
+        ]);
+    }
+
+    /** Plan + interval + coupon for a first online subscription, or 4xx when it can't be bought here. */
+    private function checkoutTarget(Request $request): array
+    {
+        [$owner, $plan, $interval, $pricing] = $this->resolveChange($request);
+
+        abort_unless(StripeBillingService::supportsPlan($plan, $interval), 404);
+        abort_if($owner->hasStripeSubscription(), 422, 'You already have a subscription — change plans from the Plans page.');
+        abort_if($owner->hasPendingPlanUpgradeRequest(), 422, 'You already have a pending plan request.');
+
+        return [$owner, $plan, $interval, $pricing];
     }
 
     /** Stripe Checkout success redirect — activates the plan right away (the webhook does the same). */

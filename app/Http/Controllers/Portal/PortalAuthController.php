@@ -70,7 +70,6 @@ class PortalAuthController extends Controller
             'passport_no' => $request->input('passport_no'),
 
             'brn_number' => $request->input('type') === 'agent' ? $request->input('brn_number') : null,
-            'company_id' => $request->input('type') === 'agent' ? $request->input('company_id') : null,
 
             'trade_license_no' => $request->input('type') === 'company' ? $request->input('trade_license_no') : null,
             'trade_license_expiry' => $request->input('type') === 'company' ? $request->input('trade_license_expiry') : null,
@@ -82,6 +81,17 @@ class PortalAuthController extends Controller
         ]);
 
         $this->storeKycDocuments($request, $portalUser);
+
+        // Picking an agency at sign-up is a join request (agency accepts, admin approves) — the
+        // agent starts out independent either way, on the same single account.
+        if ($portalUser->isAgent() && $request->filled('company_id')) {
+            try {
+                app(\App\Services\Agency\AgencyMembershipService::class)
+                    ->requestToJoin($portalUser, PortalUser::findOrFail($request->input('company_id')));
+            } catch (\Illuminate\Validation\ValidationException) {
+                // Agency not currently accepting agents — the agent can request again from My Agency.
+            }
+        }
 
         // The account remains a KYC draft until the user completes email verification, their
         // profile and documents, then explicitly submits it for admin review.
@@ -101,13 +111,18 @@ class PortalAuthController extends Controller
      */
     private function issueOtp(PortalUser $portalUser): bool
     {
-        $code = (string) random_int(1000, 9999);
+        // OTP_ENABLED=false (testing): skip the email and accept the static OTP_STATIC_CODE.
+        if (!config('auth.otp.enabled')) {
+            $code = (string) config('auth.otp.static_code');
+        } else {
+            $code = (string) random_int(1000, 9999);
 
-        try {
-            Mail::to($portalUser->email)->send(new OtpCodeMail($portalUser->displayName(), $code));
-        } catch (\Throwable $e) {
-            Log::error('Failed to send portal OTP code email: ' . $e->getMessage());
-            return false;
+            try {
+                Mail::to($portalUser->email)->send(new OtpCodeMail($portalUser->displayName(), $code));
+            } catch (\Throwable $e) {
+                Log::error('Failed to send portal OTP code email: ' . $e->getMessage());
+                return false;
+            }
         }
 
         $portalUser->forceFill([

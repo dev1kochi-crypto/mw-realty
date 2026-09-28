@@ -31,7 +31,8 @@ class LeadController extends Controller
         ]);
 
         $owner = PortalUser::findOrFail($request->input('portal_user_id'));
-        $lead->update(['portal_user_id' => $owner->id]);
+        // Same path as a CRM owner change: resets the agent and writes assignment history.
+        app(\App\Services\Crm\LeadService::class)->assignOwner($lead, $owner->id);
 
         try {
             $owner->notify(new NewLeadNotification($lead));

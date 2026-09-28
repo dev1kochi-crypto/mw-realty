@@ -9,9 +9,11 @@ use App\Models\Lead;
 use App\Models\Property;
 use App\Notifications\NewLeadNotification;
 use App\Rules\RecaptchaRule;
+use App\Services\Agency\LeadAssignmentService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -25,7 +27,32 @@ use Illuminate\Support\Facades\Mail;
  */
 class LeadCaptureController extends Controller
 {
-    public function store(Request $request)
+    /** Record a lead before revealing the listing brochure URL. */
+    public function downloadBrochure(Request $request, LeadAssignmentService $leadAssignment)
+    {
+        $data = $request->validate([
+            'property_id' => 'required|integer|exists:properties,id',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:50',
+            'recaptcha_token' => ['nullable', new RecaptchaRule()],
+        ]);
+        $property = Property::where('status', true)->findOrFail($data['property_id']);
+        abort_unless($property->brochure_path, 404);
+
+        $request->merge([
+            'message' => 'Requested the property brochure for ' . ($property->getTranslation('title') ?: $property->reference_no),
+            'page_source' => 'brochure-download',
+        ]);
+        $this->store($request, $leadAssignment);
+
+        return response()->json([
+            'message' => 'Your brochure is ready to download.',
+            'brochure_url' => media_url($property->brochure_path),
+        ]);
+    }
+
+    public function store(Request $request, LeadAssignmentService $leadAssignment)
     {
         $request->validate([
             'property_id' => 'required|integer|exists:properties,id',
@@ -41,7 +68,8 @@ class LeadCaptureController extends Controller
 
         $property = Property::findOrFail($request->input('property_id'));
 
-        $lead = Lead::create([
+        // Created and assigned (property agent / agency round-robin / agency-unassigned) together.
+        $lead = DB::transaction(fn () => $leadAssignment->assignNewLead(Lead::create([
             'property_id' => $property->id,
             'portal_user_id' => $property->portal_user_id,
             'user_id' => Auth::guard('web')->id(),
@@ -54,17 +82,19 @@ class LeadCaptureController extends Controller
             'page_url' => $request->header('referer'),
             'page_source' => $request->input('page_source', 'property-detail'),
             'status' => 'active',
-        ]);
+        ])), LeadAssignmentService::TRANSACTION_ATTEMPTS);
 
-        if ($property->owner) {
+        // The owning account (agency / agent) — the assigned agent, if different, is notified by
+        // LeadAssignmentService. A house listing routed to an agent now has an owner too.
+        if ($owner = $lead->owner) {
             try {
-                $property->owner->notify(new NewLeadNotification($lead));
+                $owner->notify(new NewLeadNotification($lead));
             } catch (\Throwable $e) {
                 Log::error('Failed to create new-lead bell notification: ' . $e->getMessage());
             }
 
-            if ($property->owner->email) {
-                Mail::to($property->owner->email)->queue((new NewLeadReceived($lead))->afterCommit());
+            if ($owner->email) {
+                Mail::to($owner->email)->queue((new NewLeadReceived($lead))->afterCommit());
             }
         } else {
             $this->notifyAdminOfUnassignedLead($lead);

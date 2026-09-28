@@ -128,7 +128,7 @@
                     @endforeach
                 </select>
                 @error('company_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                <div class="portal-form-hint">Every individual broker with a BRN (Broker Registration No.) must be affiliated with a registered brokerage in Dubai. Don't see your company? Ask them to register first, or leave this blank and add it later.</div>
+                <div class="portal-form-hint">Every individual broker with a BRN (Broker Registration No.) must be affiliated with a registered brokerage in Dubai. Choosing one sends that agency a join request — once they accept and Super Admin approves, you become their agent. Don't see your company? Leave this blank and request it later from My Agency.</div>
             </div>
         </div>
     </div>

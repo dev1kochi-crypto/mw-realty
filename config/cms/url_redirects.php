@@ -44,6 +44,9 @@ return [
         'career' => [
             'detail' => '/careers/{slug}',
         ],
+        'market-insight' => [
+            'detail' => '/market-insights/{slug}',
+        ],
     ],
 
     /**
@@ -59,6 +62,11 @@ return [
         'career' => [
             'enabled' => true,
             'target_url' => '/careers',
+            'status_code' => 301,
+        ],
+        'market-insight' => [
+            'enabled' => true,
+            'target_url' => '/market-insights',
             'status_code' => 301,
         ],
     ],

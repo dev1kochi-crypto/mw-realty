@@ -116,20 +116,26 @@
                          below the "Website Content" label is CMS content for the public site, not the product itself. --}}
                     @if(config('cms-kit.common.modules.portal-accounts', true) && ($cmsUser->hasRole('superadmin') || $cmsUser->can('portal-accounts.view')))
                     <div class="nav-item sidebar-group">
-                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.portal-accounts.*')) active @endif"
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.portal-accounts.*', 'cms.agency-agents.*')) active @endif"
                            data-bs-toggle="collapse" href="#clientsMenu" role="button"
-                           aria-expanded="@if(request()->routeIs('cms.portal-accounts.*')) true @else false @endif">
+                           aria-expanded="@if(request()->routeIs('cms.portal-accounts.*', 'cms.agency-agents.*')) true @else false @endif">
                             <i class="fas fa-address-card"></i>
                             <span>Clients</span>
                             <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
                         </a>
-                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.portal-accounts.*')) show @endif" id="clientsMenu">
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.portal-accounts.*', 'cms.agency-agents.*')) show @endif" id="clientsMenu">
                             <nav class="nav flex-column">
                                <a class="nav-link py-2 @if(request()->routeIs('cms.portal-accounts.*') && request()->query('type') === 'company') active @endif" href="{{ route('cms.portal-accounts.index', ['type' => 'company']) }}">
                                     Companies
                                 </a>
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.portal-accounts.*') && request()->query('type') === 'agent') active @endif" href="{{ route('cms.portal-accounts.index', ['type' => 'agent']) }}">
                                     Agents
+                                </a>
+                                <a class="nav-link py-2 d-flex align-items-center @if(request()->routeIs('cms.agency-agents.*')) active @endif" href="{{ route('cms.agency-agents.index') }}">
+                                    Agency Agents
+                                    @if(($pendingAgencyAgentCount ?? 0) > 0)
+                                    <span class="badge bg-danger ms-auto">{{ $pendingAgencyAgentCount }}</span>
+                                    @endif
                                 </a>
                                 <a class="nav-link py-2 d-flex align-items-center @if(request()->routeIs('cms.portal-accounts.plan-upgrade-requests')) active @endif" href="{{ route('cms.portal-accounts.plan-upgrade-requests') }}">
                                     Plan Requests
@@ -451,6 +457,32 @@
                                     Categories
                                 </a>
                                 @endif
+                            </nav>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(config('cms-kit.common.modules.blogs', true) && $cmsUser->can('market-insights.view'))
+                    @php $insightsOpen = request()->routeIs('cms.market-insights.*') || request()->routeIs('cms.market-insight-topics.*') || request()->routeIs('cms.market-insight-regions.*'); @endphp
+                    <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if($insightsOpen) active @endif"
+                           data-bs-toggle="collapse" href="#marketInsightsMenu" role="button"
+                           aria-expanded="{{ $insightsOpen ? 'true' : 'false' }}">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Market Insights</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu @if($insightsOpen) show @endif" id="marketInsightsMenu">
+                            <nav class="nav flex-column">
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.market-insights.*')) active @endif" href="{{ route('cms.market-insights.index') }}">
+                                    All Insights
+                                </a>
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.market-insight-topics.*')) active @endif" href="{{ route('cms.market-insight-topics.index') }}">
+                                    Topics
+                                </a>
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.market-insight-regions.*')) active @endif" href="{{ route('cms.market-insight-regions.index') }}">
+                                    Regions
+                                </a>
                             </nav>
                         </div>
                     </div>

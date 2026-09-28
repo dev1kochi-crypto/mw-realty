@@ -72,12 +72,23 @@ class PortalPropertyController extends Controller
         ];
     }
 
-    /** This menu's listings for the logged-in owner (every owner's for Super Admin), in display order. */
-    protected function orderedListings()
+    protected function viewer(): ?\App\Models\PortalUser
+    {
+        return Auth::guard('portal')->user();
+    }
+
+    /**
+     * This menu's listings in display order: every owner's for Super Admin; otherwise the viewer's
+     * own — plus, unless $strict, the agency listings assigned to an agency agent. Reordering is
+     * always $strict (an agent never renumbers the agency's list).
+     */
+    protected function orderedListings(bool $strict = false)
     {
         return Property::query()
             ->segment($this->segment())
-            ->when($this->ownerId(), fn ($q, $ownerId) => $q->where('portal_user_id', $ownerId))
+            ->when($this->ownerId(), fn ($q, $ownerId) => $strict
+                ? $q->where('portal_user_id', $ownerId)
+                : $q->accessibleBy($this->viewer()))
             ->orderBy('order_index')
             ->latest()
             // Tie-breaker: without it rows sharing order_index/created_at come back in an arbitrary
@@ -103,31 +114,62 @@ class PortalPropertyController extends Controller
     }
 
     /**
-     * Which agent_id to actually save, based on who's logged in:
-     * - An Agent can only ever be assigned to their own listings.
-     * - A Company can only assign one of its own agents (or none) — a submitted
-     *   agent_id belonging to someone else's roster is silently ignored.
-     * - Super Admin can assign any agent (or none).
+     * Which agent_id to actually save. Agent selection is always optional for an agency, but when
+     * one is given it is validated here, never trusted from the form:
+     * - An Agent login is always the listing's agent (own listing, or an agency listing assigned to them).
+     * - An agency listing (Company login, or Super Admin editing one) only accepts an active,
+     *   approved agent of that same agency.
+     * - An independent agent's listing is always that agent's.
+     * - A house listing (Super Admin, no owner) accepts any active, approved agent.
      */
-    protected function resolveAgentId(Request $request): ?int
+    protected function resolveAgentId(Request $request, ?\App\Models\PortalUser $listingOwner): ?int
     {
-        $user = Auth::guard('portal')->user();
+        $user = $this->viewer();
 
-        if ($user && $user->type === 'agent') {
+        if ($user && $user->isAgent()) {
             return $user->id;
         }
 
-        if ($user && $user->type === 'company') {
-            $requested = $request->input('agent_id');
-            return $requested && $user->agents()->where('id', $requested)->exists() ? (int) $requested : null;
+        $requested = $request->filled('agent_id') ? (int) $request->input('agent_id') : null;
+        $owner = $user ?? $listingOwner;
+
+        if ($owner && $owner->isAgent()) {
+            return $owner->id;
+        }
+        if (!$requested) {
+            return null;
         }
 
-        if ($this->isAdmin()) {
-            $requested = $request->input('agent_id');
-            return $requested ? (int) $requested : null;
+        $valid = $owner
+            ? $owner->hasEligibleAgent($requested)
+            : \App\Models\PortalUser::whereKey($requested)->where('type', 'agent')->approved()->where('is_active', true)->exists();
+
+        if (!$valid) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['agent_id' => 'Choose an active, approved agent from this agency.']);
         }
 
-        return null;
+        return $requested;
+    }
+
+    /** Property-history row for an agent change (or the initial assignment on create). */
+    protected function recordAgentChange(Property $property, ?int $fromAgent, ?int $toAgent, bool $created = false): void
+    {
+        if (!$created && $fromAgent === $toAgent) {
+            return;
+        }
+
+        $action = match (true) {
+            $created => 'created',
+            $fromAgent === null => 'agent_assigned',
+            $toAgent === null => 'agent_unassigned',
+            default => 'agent_changed',
+        };
+        $agencyId = $property->owner?->isAgency() ? $property->portal_user_id : null;
+
+        app(\App\Services\Agency\AgencyMembershipService::class)->recordPropertyChange(
+            $property, $action, $created ? null : $agencyId, $agencyId, $fromAgent, $toAgent,
+            \App\Services\Agency\AssignmentActor::current(),
+        );
     }
 
     /**
@@ -143,7 +185,8 @@ class PortalPropertyController extends Controller
         }
 
         if ($user && $user->type === 'company') {
-            return ['lockedAgent' => null, 'lockedAgency' => $user, 'agentOptions' => $user->agents()->orderBy('name')->get(), 'agencyOptions' => collect()];
+            // Only active, approved agents of this agency can be picked; "no agent" is always allowed.
+            return ['lockedAgent' => null, 'lockedAgency' => $user, 'agentOptions' => $user->eligibleAgentsQuery()->reorder('portal_users.name')->get(), 'agencyOptions' => collect()];
         }
 
         return [
@@ -329,7 +372,7 @@ class PortalPropertyController extends Controller
 
         $planUsage = null;
         if (!$this->isAdmin()) {
-            $owner = Auth::guard('portal')->user();
+            $owner = $this->viewer()->listingOwner();
             $planUsage = [
                 'plan' => $owner->plan,
                 'used' => $owner->properties()->count(),
@@ -414,7 +457,8 @@ class PortalPropertyController extends Controller
 
         $languages = Language::where('status', true)->get();
         $filterOptions = $this->selectFilterOptions();
-        $remainingSlots = $this->isAdmin() ? null : Auth::guard('portal')->user()->remainingPropertySlots();
+        // An agency agent lists on behalf of their agency, so the agency's plan limit applies.
+        $remainingSlots = $this->isAdmin() ? null : $this->viewer()->listingOwner()->remainingPropertySlots();
 
         if ($remainingSlots === 0) {
             return redirect()->route($this->routePrefix() . '.index')
@@ -432,15 +476,20 @@ class PortalPropertyController extends Controller
 
     public function store(\App\Http\Requests\PropertyRequest $request)
     {
+        $listingOwner = null;
         if (!$this->isAdmin()) {
             $owner = \App\Models\PortalUser::lockForUpdate()->findOrFail(Auth::guard('portal')->id());
+            // Locked too, so two simultaneous adds can't both take the last slot of the plan.
+            $listingOwner = $owner->isAgencyAgent()
+                ? \App\Models\PortalUser::lockForUpdate()->findOrFail($owner->company_id)
+                : $owner;
 
             if ($owner->status !== 'approved') {
                 return redirect()->route('portal.dashboard')
                     ->with('error', 'Your account needs to be approved by Super Admin before you can add properties.');
             }
 
-            if ($owner->remainingPropertySlots() === 0) {
+            if ($listingOwner->remainingPropertySlots() === 0) {
                 return redirect()->route($this->routePrefix() . '.index')
                     ->with('error', "You've reached your plan's property limit. Upgrade your plan to add more listings.");
             }
@@ -455,8 +504,11 @@ class PortalPropertyController extends Controller
         // the gallery folder/filename key (see storeGalleryImage()) and has to be final and unique.
         $data['reference_no'] = $this->generateReferenceNo();
         // null when Super Admin creates it directly (a house/MW Realty listing with no portal owner)
-        $data['portal_user_id'] = $this->ownerId();
-        $data['agent_id'] = $this->resolveAgentId($request);
+        // An agency agent's listing belongs to the agency (they stay its agent).
+        $data['portal_user_id'] = $listingOwner?->id;
+        $data['agent_id'] = $this->resolveAgentId($request, $listingOwner);
+        $data['created_by_type'] = $this->isAdmin() ? 'admin' : ($this->viewer()->isAgency() ? 'agency' : 'agent');
+        $data['created_by_id'] = $this->isAdmin() ? Auth::guard('cms')->id() : $this->viewer()->id;
         $data['translations'] = $request->input('translations', []);
         $data['status'] = $request->boolean('status') && ($this->isAdmin() || Auth::guard('portal')->user()->isApproved());
         // Featuring is booked afterwards from the listing card / Featured menu (dates + plan quota).
@@ -478,6 +530,10 @@ class PortalPropertyController extends Controller
         $data['metadata'] = $metadata;
 
         $property = Property::create($data);
+        if ($request->hasFile('brochure')) {
+            $property->update(['brochure_path' => app(\App\Services\ManagedFiles::class)->store($request->file('brochure'), 'properties/brochures')]);
+        }
+        $this->recordAgentChange($property, null, $property->agent_id, created: true);
 
         if ($request->hasFile('images')) {
             $folder = app(\App\Services\PropertyGallery::class)->folderValue('properties/' . $property->reference_no);
@@ -524,6 +580,7 @@ class PortalPropertyController extends Controller
         return redirect()->route($this->routePrefix() . '.index')->with('success', $this->sectionData()['itemLabel'] . ' created successfully.');
     }
 
+    /** Owner-only (delete, feature, reorder, status) — never an agency agent on the agency's listing. */
     protected function findOwned($id): Property
     {
         return Property::with(['details', 'images', 'floorPlans', 'nearbyPlaces', 'agent'])
@@ -531,9 +588,17 @@ class PortalPropertyController extends Controller
             ->findOrFail($id);
     }
 
+    /** View / edit — the owner, or the agency agent the agency assigned this listing to. */
+    protected function findAccessible($id): Property
+    {
+        return Property::with(['details', 'images', 'floorPlans', 'nearbyPlaces', 'agent', 'owner'])
+            ->when($this->ownerId(), fn ($q) => $q->accessibleBy($this->viewer()))
+            ->findOrFail($id);
+    }
+
     public function edit($id)
     {
-        $property = $this->findOwned($id);
+        $property = $this->findAccessible($id);
         if ($redirect = $this->redirectToOwnMenu($property, 'edit')) {
             return $redirect;
         }
@@ -550,7 +615,8 @@ class PortalPropertyController extends Controller
 
     public function update(\App\Http\Requests\PropertyRequest $request, $id)
     {
-        $property = $this->findOwned($id);
+        $property = $this->findAccessible($id);
+        $previousAgentId = $property->agent_id;
 
         // reference_no is deliberately excluded — it's fixed at creation (read-only in the form)
         // since it's also the gallery folder/filename key; changing it would orphan existing photos.
@@ -560,7 +626,7 @@ class PortalPropertyController extends Controller
         ]);
         $data['translations'] = $request->input('translations', []);
         $data['status'] = $request->has('status');
-        $data['agent_id'] = $this->resolveAgentId($request);
+        $data['agent_id'] = $this->resolveAgentId($request, $property->owner);
         $data['published_at'] = $request->input('published_at');
         $data['order_index'] = $request->input('order_index') ?: 0;
         // `featured` is deliberately not touched here: the form has no Featured switch (featuring
@@ -583,6 +649,13 @@ class PortalPropertyController extends Controller
         $data['metadata'] = $metadata;
 
         $property->update($data);
+        if ($request->hasFile('brochure')) {
+            if ($property->brochure_path) {
+                app(\App\Services\ManagedFiles::class)->delete($property->brochure_path);
+            }
+            $property->update(['brochure_path' => app(\App\Services\ManagedFiles::class)->store($request->file('brochure'), 'properties/brochures')]);
+        }
+        $this->recordAgentChange($property, $previousAgentId, $property->agent_id);
 
         if ($request->hasFile('images')) {
             // Backfills a reference_no for any property that predates this feature — shouldn't
@@ -684,7 +757,7 @@ class PortalPropertyController extends Controller
             'order.*' => 'integer',
         ]);
 
-        $allIds = $this->orderedListings()->pluck('id');
+        $allIds = $this->orderedListings(strict: true)->pluck('id');
 
         $pageIds = collect($request->input('order'))->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $allIds->contains($id))
@@ -711,7 +784,7 @@ class PortalPropertyController extends Controller
         $request->validate(['position' => 'required']);
         $property = $this->findOwned($id);
 
-        $allIds = $this->orderedListings()->pluck('id');
+        $allIds = $this->orderedListings(strict: true)->pluck('id');
         abort_unless($allIds->contains($property->id), 404);
 
         $position = match ($request->input('position')) {
@@ -790,7 +863,7 @@ class PortalPropertyController extends Controller
 
     public function show($id)
     {
-        $property = $this->findOwned($id);
+        $property = $this->findAccessible($id);
         if ($redirect = $this->redirectToOwnMenu($property, 'show')) {
             return $redirect;
         }
@@ -806,7 +879,7 @@ class PortalPropertyController extends Controller
     /** $number is the gallery position suffix from the filename ({reference_no}-{number}.jpeg). */
     public function destroyImage($propertyId, $number)
     {
-        $property = $this->findOwned($propertyId);
+        $property = $this->findAccessible($propertyId);
         $number = (int) $number;
         $numbers = $property->galleryNumbers();
 
@@ -822,7 +895,7 @@ class PortalPropertyController extends Controller
     /** "Remove All" on the gallery — deletes the whole per-property image folder in one go. */
     public function destroyAllImages($propertyId)
     {
-        $property = $this->findOwned($propertyId);
+        $property = $this->findAccessible($propertyId);
 
         if ($property->image_path) {
             app(\App\Services\PropertyGallery::class)->deleteAll($property->image_path);
@@ -838,7 +911,7 @@ class PortalPropertyController extends Controller
      */
     public function reorderImages(Request $request, $propertyId)
     {
-        $property = $this->findOwned($propertyId);
+        $property = $this->findAccessible($propertyId);
 
         $request->validate([
             'order' => 'required|array',

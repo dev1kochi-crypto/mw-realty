@@ -9,6 +9,11 @@ use App\Http\Controllers\CmsKit\LuxuryProjectController;
 use App\Http\Controllers\CmsKit\AboutUsController;
 use App\Http\Controllers\CmsKit\BlogCategoryController;
 use App\Http\Controllers\CmsKit\BlogController;
+use App\Http\Controllers\CmsKit\MarketInsightController;
+use App\Http\Controllers\CmsKit\MarketInsightTermController;
+use App\Http\Controllers\CmsKit\CareerController;
+use App\Http\Controllers\CmsKit\CareerDepartmentController;
+use App\Http\Controllers\CmsKit\CareerCandidateController;
 use App\Http\Controllers\CmsKit\MarketTrendController;
 use App\Http\Controllers\CmsKit\WhyChooseUsController;
 use App\Http\Controllers\CmsKit\OurBuilderController;
@@ -52,6 +57,7 @@ Route::get('/storage/{url}', function (string $url) {
 // Public, unauthenticated — any property-detail page can POST a lead here; it's
 // routed to the property's owning company/agent (see LeadCaptureController).
 Route::post('/leads/capture', [LeadCaptureController::class, 'store'])->name('leads.capture')->middleware('throttle:lead-capture');
+Route::post('/leads/brochure-download', [LeadCaptureController::class, 'downloadBrochure'])->name('leads.brochure-download')->middleware('throttle:lead-capture');
 
 // Properties listing "Custom Request" — no property to attach to, always an unassigned lead
 // (see LeadCaptureController::storeCustomRequest).
@@ -275,6 +281,86 @@ Route::middleware(['web'])->group(function () {
                 });
             });
 
+            // Market Insights (page header + posts with topic, region, headline figures and report PDF)
+            Route::middleware(['cms.permission:market-insights.view'])->group(function () {
+                Route::get('/market-insights', [MarketInsightController::class, 'index'])->name('cms.market-insights.index');
+                Route::post('/market-insights/update-section', [MarketInsightController::class, 'updateSection'])->name('cms.market-insights.update-section')->middleware('cms.permission:market-insights.edit');
+
+                Route::middleware(['cms.permission:market-insights.create'])->group(function () {
+                    Route::get('/market-insights/create', [MarketInsightController::class, 'create'])->name('cms.market-insights.create');
+                    Route::post('/market-insights', [MarketInsightController::class, 'store'])->name('cms.market-insights.store');
+                });
+
+                Route::middleware(['cms.permission:market-insights.edit'])->group(function () {
+                    Route::get('/market-insights/{id}/edit', [MarketInsightController::class, 'edit'])->name('cms.market-insights.edit');
+                    Route::put('/market-insights/{id}', [MarketInsightController::class, 'update'])->name('cms.market-insights.update');
+                    Route::post('/market-insights/{id}/toggle-status', [MarketInsightController::class, 'toggleStatus'])->name('cms.market-insights.toggle-status');
+                    Route::post('/market-insights/{id}/toggle-featured', [MarketInsightController::class, 'toggleFeatured'])->name('cms.market-insights.toggle-featured');
+                    Route::post('/market-insights/reorder', [MarketInsightController::class, 'reorder'])->name('cms.market-insights.reorder');
+                });
+
+                Route::middleware(['cms.permission:market-insights.delete'])->group(function () {
+                    Route::delete('/market-insights/{id}', [MarketInsightController::class, 'destroy'])->name('cms.market-insights.destroy');
+                    Route::post('/market-insights/bulk-action', [MarketInsightController::class, 'bulkAction'])->name('cms.market-insights.bulk-action');
+                });
+
+                // Topics / Regions — admin-managed, translatable lists the insight form picks from.
+                // One controller for both; the route's 'type' default says which list.
+                foreach (['topic' => 'topics', 'region' => 'regions'] as $termType => $termPath) {
+                    $termName = "cms.market-insight-{$termPath}";
+                    $termUrl = "/market-insights/{$termPath}";
+                    Route::get($termUrl, [MarketInsightTermController::class, 'index'])->defaults('type', $termType)->name("{$termName}.index");
+                    Route::middleware(['cms.permission:market-insights.create'])->group(function () use ($termType, $termName, $termUrl) {
+                        Route::get("{$termUrl}/create", [MarketInsightTermController::class, 'create'])->defaults('type', $termType)->name("{$termName}.create");
+                        Route::post($termUrl, [MarketInsightTermController::class, 'store'])->defaults('type', $termType)->name("{$termName}.store");
+                    });
+                    Route::middleware(['cms.permission:market-insights.edit'])->group(function () use ($termType, $termName, $termUrl) {
+                        Route::get("{$termUrl}/{id}/edit", [MarketInsightTermController::class, 'edit'])->whereNumber('id')->defaults('type', $termType)->name("{$termName}.edit");
+                        Route::put("{$termUrl}/{id}", [MarketInsightTermController::class, 'update'])->whereNumber('id')->defaults('type', $termType)->name("{$termName}.update");
+                        Route::post("{$termUrl}/{id}/toggle-status", [MarketInsightTermController::class, 'toggleStatus'])->whereNumber('id')->defaults('type', $termType)->name("{$termName}.toggle-status");
+                        Route::post("{$termUrl}/reorder", [MarketInsightTermController::class, 'reorder'])->defaults('type', $termType)->name("{$termName}.reorder");
+                    });
+                    Route::middleware(['cms.permission:market-insights.delete'])->group(function () use ($termType, $termName, $termUrl) {
+                        Route::delete("{$termUrl}/{id}", [MarketInsightTermController::class, 'destroy'])->whereNumber('id')->defaults('type', $termType)->name("{$termName}.destroy");
+                        Route::post("{$termUrl}/bulk-action", [MarketInsightTermController::class, 'bulkAction'])->defaults('type', $termType)->name("{$termName}.bulk-action");
+                    });
+                }
+            });
+
+            // Careers — overrides the vendor package's own /careers routes (same URIs, registered
+            // first, see the Blogs note above) so this app's copies of the controllers run: they
+            // store uploads through ManagedFiles (Cloudinary) instead of the local public disk.
+            Route::middleware(['cms.permission:careers.view'])->group(function () {
+                Route::get('/careers/common', [CareerController::class, 'common'])->name('cms.careers.common');
+                Route::post('/careers/common', [CareerController::class, 'updateSection'])->name('cms.careers.update-section')->middleware('cms.permission:careers.edit');
+
+                Route::get('/careers/vacancies', [CareerController::class, 'vacancies'])->name('cms.careers.vacancies.index');
+                Route::get('/careers/create', [CareerController::class, 'create'])->name('cms.careers.create')->middleware('cms.permission:careers.create');
+                Route::post('/careers', [CareerController::class, 'store'])->name('cms.careers.store')->middleware('cms.permission:careers.create');
+                Route::get('/careers/{id}/edit', [CareerController::class, 'edit'])->whereNumber('id')->name('cms.careers.edit')->middleware('cms.permission:careers.edit');
+                Route::put('/careers/{id}', [CareerController::class, 'update'])->whereNumber('id')->name('cms.careers.update')->middleware('cms.permission:careers.edit');
+                Route::delete('/careers/{id}', [CareerController::class, 'destroy'])->whereNumber('id')->name('cms.careers.destroy')->middleware('cms.permission:careers.delete');
+                Route::post('/careers/{id}/toggle-status', [CareerController::class, 'toggleStatus'])->whereNumber('id')->name('cms.careers.toggle-status')->middleware('cms.permission:careers.edit');
+                Route::post('/careers/reorder', [CareerController::class, 'reorder'])->name('cms.careers.reorder')->middleware('cms.permission:careers.edit');
+                Route::post('/careers/bulk-action', [CareerController::class, 'bulkAction'])->name('cms.careers.bulk-action')->middleware('cms.permission:careers.edit');
+
+                Route::get('/careers/departments', [CareerDepartmentController::class, 'index'])->name('cms.careers.departments.index');
+                Route::get('/careers/departments/create', [CareerDepartmentController::class, 'create'])->name('cms.careers.departments.create')->middleware('cms.permission:careers.create');
+                Route::post('/careers/departments', [CareerDepartmentController::class, 'store'])->name('cms.careers.departments.store')->middleware('cms.permission:careers.create');
+                Route::get('/careers/departments/{id}/edit', [CareerDepartmentController::class, 'edit'])->name('cms.careers.departments.edit')->middleware('cms.permission:careers.edit');
+                Route::put('/careers/departments/{id}', [CareerDepartmentController::class, 'update'])->name('cms.careers.departments.update')->middleware('cms.permission:careers.edit');
+                Route::delete('/careers/departments/{id}', [CareerDepartmentController::class, 'destroy'])->name('cms.careers.departments.destroy')->middleware('cms.permission:careers.delete');
+                Route::post('/careers/departments/{id}/toggle-status', [CareerDepartmentController::class, 'toggleStatus'])->name('cms.careers.departments.toggle-status')->middleware('cms.permission:careers.edit');
+                Route::post('/careers/departments/reorder', [CareerDepartmentController::class, 'reorder'])->name('cms.careers.departments.reorder')->middleware('cms.permission:careers.edit');
+                Route::post('/careers/departments/bulk-action', [CareerDepartmentController::class, 'bulkAction'])->name('cms.careers.departments.bulk-action')->middleware('cms.permission:careers.edit');
+
+                Route::get('/careers/candidates', [CareerCandidateController::class, 'index'])->name('cms.careers.candidates.index');
+                Route::get('/careers/candidates/export', [CareerCandidateController::class, 'export'])->name('cms.careers.candidates.export')->middleware('cms.permission:careers.export');
+                Route::get('/careers/candidates/{id}', [CareerCandidateController::class, 'show'])->name('cms.careers.candidates.show')->middleware('cms.permission:careers.show');
+                Route::delete('/careers/candidates/{id}', [CareerCandidateController::class, 'destroy'])->name('cms.careers.candidates.destroy')->middleware('cms.permission:careers.delete');
+                Route::post('/careers/candidates/bulk-action', [CareerCandidateController::class, 'bulkAction'])->name('cms.careers.candidates.bulk-action')->middleware('cms.permission:careers.delete');
+            });
+
             // Our Builders (section + items)
             Route::middleware(['cms.permission:our-builders.view'])->group(function () {
                 Route::get('/our-builders', [OurBuilderController::class, 'index'])->name('cms.our-builders.index');
@@ -372,6 +458,16 @@ Route::middleware(['web'])->group(function () {
                 Route::middleware(['cms.permission:portal-accounts.delete'])->group(function () {
                     Route::delete('/portal-accounts/{id}', [PortalUserController::class, 'destroy'])->name('cms.portal-accounts.destroy');
                     Route::post('/portal-accounts/bulk-delete', [PortalUserController::class, 'bulkDelete'])->name('cms.portal-accounts.bulk-delete');
+                });
+
+                // Agency ⇄ agent memberships awaiting approval, and active ones (suspend / remove).
+                Route::get('/agency-agents', [\App\Http\Controllers\CmsKit\AgencyAgentController::class, 'index'])->name('cms.agency-agents.index');
+                Route::middleware(['cms.permission:portal-accounts.edit'])->group(function () {
+                    Route::post('/agency-agents/{id}/approve', [\App\Http\Controllers\CmsKit\AgencyAgentController::class, 'approve'])->name('cms.agency-agents.approve');
+                    Route::post('/agency-agents/{id}/reject', [\App\Http\Controllers\CmsKit\AgencyAgentController::class, 'reject'])->name('cms.agency-agents.reject');
+                    Route::post('/agency-agents/{id}/suspend', [\App\Http\Controllers\CmsKit\AgencyAgentController::class, 'suspend'])->name('cms.agency-agents.suspend');
+                    Route::post('/agency-agents/{id}/reactivate', [\App\Http\Controllers\CmsKit\AgencyAgentController::class, 'reactivate'])->name('cms.agency-agents.reactivate');
+                    Route::post('/agency-agents/{id}/remove', [\App\Http\Controllers\CmsKit\AgencyAgentController::class, 'remove'])->name('cms.agency-agents.remove');
                 });
 
                 Route::get('/plan-upgrade-requests', [PortalUserController::class, 'planUpgradeRequests'])->name('cms.portal-accounts.plan-upgrade-requests');
@@ -520,6 +616,10 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('/resend-otp', [PortalAuthController::class, 'resendOtp'])->name('resend-otp')->middleware('throttle:otp-verify');
         Route::get('/login', [PortalAuthController::class, 'showLogin'])->name('login');
         Route::post('/login', [PortalAuthController::class, 'login'])->name('login.store')->middleware('throttle:admin-login');
+
+        // Set-password link for an agent account an agency created (emailed on admin approval).
+        Route::get('/agent-setup/{agent}', [\App\Http\Controllers\Portal\AgentAccountSetupController::class, 'show'])->name('agent-setup.show')->middleware('signed');
+        Route::post('/agent-setup/{agent}', [\App\Http\Controllers\Portal\AgentAccountSetupController::class, 'store'])->name('agent-setup.store')->middleware(['signed', 'throttle:otp-verify']);
     });
 
     Route::middleware(['auth:portal'])->group(function () {
@@ -542,10 +642,18 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('/notifications/read-all', [PortalNotificationController::class, 'markAllRead'])->name('notifications.read-all');
 
         // Self-service plan upgrade — portal guard only, a Super Admin doesn't request plans for itself.
-        Route::get('/plans', [PortalPlanController::class, 'index'])->name('plans.index');
-        Route::post('/plans/request', [PortalPlanController::class, 'request'])->name('plans.request');
-        Route::post('/plans/change-preview', [PortalPlanController::class, 'previewChange'])->name('plans.change-preview');
-        Route::post('/plans/subscription/keep-plan', [PortalPlanController::class, 'keepCurrentPlan'])->name('plans.subscription.keep-plan');
+        // Choosing/buying a plan unlocks only after KYC approval; payment history, invoices and
+        // managing an existing subscription stay reachable regardless.
+        Route::middleware('portal.approved')->group(function () {
+            Route::get('/plans', [PortalPlanController::class, 'index'])->name('plans.index');
+            Route::post('/plans/request', [PortalPlanController::class, 'request'])->name('plans.request');
+            Route::get('/plans/checkout', [PortalPlanController::class, 'checkout'])->name('plans.checkout');
+            Route::post('/plans/checkout/intent', [PortalPlanController::class, 'checkoutIntent'])->name('plans.checkout.intent')->middleware('throttle:10,1');
+            Route::post('/plans/checkout/complete', [PortalPlanController::class, 'checkoutComplete'])->name('plans.checkout.complete');
+            Route::post('/plans/change-preview',[PortalPlanController::class, 'previewChange'])->name('plans.change-preview');
+            Route::post('/plans/subscription/keep-plan', [PortalPlanController::class, 'keepCurrentPlan'])->name('plans.subscription.keep-plan');
+            Route::post('/plans/coupon-check',[PortalPlanController::class, 'checkCoupon'])->name('plans.coupon-check')->middleware('throttle:20,1');
+        });
         Route::get('/plans/payments', [PortalPlanController::class, 'payments'])->name('plans.payments');
         Route::get('/plans/payments/{id}/invoice', [PortalPlanController::class, 'invoice'])->name('plans.payments.show');
         Route::get('/plans/payments/{id}/invoice.pdf', [PortalPlanController::class, 'invoicePdf'])->name('plans.payments.pdf');
@@ -553,7 +661,18 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('/plans/subscription/cancel', [PortalPlanController::class, 'cancelSubscription'])->name('plans.subscription.cancel');
         Route::post('/plans/subscription/resume', [PortalPlanController::class, 'resumeSubscription'])->name('plans.subscription.resume');
         Route::post('/plans/billing-portal', [PortalPlanController::class, 'billingPortal'])->name('plans.billing-portal');
-        Route::post('/plans/coupon-check',[PortalPlanController::class, 'checkCoupon'])->name('plans.coupon-check')->middleware('throttle:20,1');
+
+        // My Agency — an agent's own agency membership: invitations, join requests, leaving.
+        Route::prefix('agency')->name('agency.')->controller(\App\Http\Controllers\Portal\AgencyController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/search', 'searchAgencies')->name('search')->middleware('throttle:120,1');
+            Route::post('/request', 'requestToJoin')->name('request')->middleware('portal.approved');
+            Route::post('/requests/{id}/cancel', 'cancelRequest')->name('requests.cancel');
+            Route::post('/invitations/{id}/accept', 'acceptInvitation')->name('invitations.accept')->middleware('portal.approved');
+            Route::post('/invitations/{id}/decline', 'declineInvitation')->name('invitations.decline');
+            Route::post('/leave', 'leave')->name('leave');
+            Route::post('/properties/{id}/transfer', 'transferProperty')->name('properties.transfer')->middleware('portal.approved');
+        });
 
         // Contact Us — portal guard only, reaches MW Realty support (not meaningful for admin browsing).
         Route::get('/contact', [\App\Http\Controllers\Portal\PortalContactController::class, 'index'])->name('contact.index');
@@ -607,10 +726,22 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::get('/properties/nearby-places-by-type', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'byType'])->name('properties.nearby-places-by-type');
 
         // Agent roster — a Company manages its own agents; Super Admin sees every
-        // agent across every agency (see AgentController::isAdmin()/company()).
+        // agent across every agency (see AgentController::isAdmin()/company()). Approved accounts only.
+        Route::middleware('portal.approved')->group(function () {
         Route::get('/agents', [\App\Http\Controllers\Portal\AgentController::class, 'index'])->name('agents.index');
         Route::get('/agents/create', [\App\Http\Controllers\Portal\AgentController::class, 'create'])->name('agents.create');
         Route::post('/agents', [\App\Http\Controllers\Portal\AgentController::class, 'store'])->name('agents.store');
+        Route::controller(\App\Http\Controllers\Portal\AgentController::class)->prefix('agents')->name('agents.')->group(function () {
+            Route::post('/invite', 'invite')->name('invite');
+            Route::get('/{id}', 'show')->name('show')->whereNumber('id');
+            Route::post('/{id}/accept-request', 'acceptRequest')->name('accept-request');
+            Route::post('/{id}/decline-request', 'declineRequest')->name('decline-request');
+            Route::post('/{id}/cancel', 'cancel')->name('cancel');
+            Route::post('/{id}/suspend', 'suspend')->name('suspend');
+            Route::post('/{id}/reactivate', 'reactivate')->name('reactivate');
+            Route::post('/{id}/remove', 'remove')->name('remove');
+        });
+        });
 
         // Nearby Places — shared list managed by Super Admin, plus each Agent/Company's own places
         // (scoping is done in NearbyPlaceController). Approved accounts only, like Properties.
@@ -644,6 +775,8 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::put('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
             Route::delete('/leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
             Route::post('/leads/{id}/notes', [LeadNoteController::class, 'store'])->name('leads.notes.store');
+            Route::post('/leads/{id}/assign', [LeadController::class, 'assign'])->name('leads.assign');
+            Route::post('/leads-distribute', [LeadController::class, 'distributeUnassigned'])->name('leads.distribute');
 
             Route::prefix('master')->name('master.')->group(function () {
                 Route::get('/stages', [LeadStageController::class, 'index'])->name('stages.index');
@@ -692,6 +825,10 @@ Route::view('/agency-login', 'welcome');
 Route::view('/agency-signup', 'welcome');
 Route::get('/blogs', [SpaController::class, 'staticPage'])->defaults('pageKey', 'blog');
 Route::get('/blog-details/{slug}', [SpaController::class, 'blogDetails']);
+Route::get('/market-insights', [SpaController::class, 'staticPage'])->defaults('pageKey', 'market-insights');
+Route::get('/market-insights/{slug}', [SpaController::class, 'marketInsightDetails']);
+Route::get('/careers', [SpaController::class, 'staticPage'])->defaults('pageKey', 'careers');
+Route::get('/careers/{slug}', [SpaController::class, 'careerDetails']);
 Route::get('/contact', [SpaController::class, 'staticPage'])->defaults('pageKey', 'contact');
 Route::view('/login', 'welcome');
 Route::view('/signup', 'welcome');
@@ -719,5 +856,5 @@ Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryControll
 // must always get first chance to match. The (?!...) guard is a belt-and-braces exclusion of the
 // app's other top-level path segments, in case any of them is ever reached without a deeper segment.
 Route::get('/{slug}', [\App\Http\Controllers\LandingPageController::class, 'show'])
-    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|contact|login|signup|verify-email|forgot-password|reset-password|profile|properties|premium-properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
+    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|market-insights|careers|contact|login|signup|verify-email|forgot-password|reset-password|profile|properties|premium-properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
     ->name('landing-pages.show');

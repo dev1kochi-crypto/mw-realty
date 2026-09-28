@@ -54,11 +54,6 @@
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('portal.plans.index') }}" class="btn btn-portal-light btn-sm"><i class="fas fa-arrow-left me-1"></i>Back to Plans</a>
-        @if($stripeEnabled && $owner->stripe_customer_id)
-        <form action="{{ route('portal.plans.billing-portal') }}" method="POST">@csrf
-            <button class="btn btn-portal-primary btn-sm"><i class="fas fa-file-invoice me-1"></i>Card &amp; all invoices</button>
-        </form>
-        @endif
     </div>
 </div>
 

@@ -38,6 +38,7 @@ class PropertyRequest extends FormRequest
             'currency' => 'sometimes|required|string|size:3|alpha',
             'image' => 'nullable|image|max:4096',
             'image_alt' => 'nullable|string|max:255',
+            'brochure' => 'nullable|file|mimes:pdf|max:20480',
             'images' => 'nullable|array|max:30',
             'images.*' => 'required|image|max:4096',
             'amenities' => 'nullable|array|max:100',

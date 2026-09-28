@@ -70,13 +70,18 @@ class CustomerAuthController extends Controller
      */
     private function issueOtp(User $user): bool
     {
-        $code = (string) random_int(1000, 9999);
+        // OTP_ENABLED=false (testing): skip the email and accept the static OTP_STATIC_CODE.
+        if (!config('auth.otp.enabled')) {
+            $code = (string) config('auth.otp.static_code');
+        } else {
+            $code = (string) random_int(1000, 9999);
 
-        try {
-            Mail::to($user->email)->send(new OtpCodeMail($user->name, $code));
-        } catch (\Throwable $e) {
-            Log::error('Failed to send OTP code email: ' . $e->getMessage());
-            return false;
+            try {
+                Mail::to($user->email)->send(new OtpCodeMail($user->name, $code));
+            } catch (\Throwable $e) {
+                Log::error('Failed to send OTP code email: ' . $e->getMessage());
+                return false;
+            }
         }
 
         $user->forceFill([

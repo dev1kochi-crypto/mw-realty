@@ -22,6 +22,7 @@ class PlanUpgradeRequest extends Model
         'discount_amount',
         'final_price',
         'stripe_checkout_session_id',
+        'stripe_subscription_id',
         'billing_interval',
     ];
 

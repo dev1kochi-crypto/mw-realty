@@ -45,7 +45,7 @@ return [
         'blogs' => true,
         'landing-pages' => true,
         'ads' => true,
-        'careers' => false,
+        'careers' => true,
         'properties' => true,
         'portal-accounts' => true,
         'plans' => true,

@@ -77,7 +77,6 @@ class PortalProfileController extends Controller
             'passport_no' => 'sometimes|nullable|string|max:50',
             'passport_expiry' => 'sometimes|nullable|date',
             'brn_number' => 'sometimes|nullable|string|max:50',
-            'company_id' => ['sometimes', 'nullable', Rule::notIn([$portalUser->id]), Rule::exists('portal_users', 'id')->where('type', 'company')->where('status', 'approved')->where('is_active', true)],
             'trade_license_no' => 'sometimes|nullable|string|max:50',
             'trade_license_expiry' => 'sometimes|nullable|date',
             'orn_number' => 'sometimes|nullable|string|max:50',
@@ -108,7 +107,9 @@ class PortalProfileController extends Controller
         }
         $fieldsBySection = [
             'identity' => ['name', 'company_name', 'phone', 'nationality', 'emirates_id_no', 'passport_no', 'passport_expiry'],
-            'agent' => ['brn_number', 'company_id', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
+            // company_id is deliberately absent: joining/leaving an agency goes through My Agency
+            // (invitation / join request + admin approval), never a free profile field.
+            'agent' => ['brn_number', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
             'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'trn_number', 'trn_expiry', 'authorized_signatory_name', 'landline', 'office_address'],
             'about' => ['years_of_experience', 'website', 'founding_year'],
         ];

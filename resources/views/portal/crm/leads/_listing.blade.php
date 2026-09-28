@@ -1,6 +1,6 @@
 {{-- Filters + stats cards + table + pagination — reloaded via AJAX (LeadController::index
      with an XHR header) after Create/Edit/Delete so the page never has to fully reload. --}}
-@php($activeFilterCount = collect(['search', 'owner_id', 'stage_id', 'source_id', 'tag_id', 'date_from', 'date_to'])->filter(fn ($key) => filled(request($key)))->count())
+@php($activeFilterCount = collect(['search', 'owner_id', 'agent_id', 'stage_id', 'source_id', 'tag_id', 'date_from', 'date_to'])->filter(fn ($key) => filled(request($key)))->count())
 <div class="portal-card portal-filter-bar mb-3">
     <div class="portal-filter-bar__header d-flex flex-wrap align-items-center gap-2">
         <span class="portal-filter-bar__icon"><i class="fas fa-sliders" aria-hidden="true"></i></span>
@@ -27,6 +27,21 @@
                     <option value="">All owners</option>
                     @foreach($owners as $owner)
                     <option value="{{ $owner->id }}" {{ (string) request('owner_id') === (string) $owner->id ? 'selected' : '' }}>{{ $owner->displayName() }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        @endif
+        @if($agencyAgents->isNotEmpty() || $isAgencyViewer)
+        <div class="portal-filter-field portal-filter-field--owner">
+            <label class="form-label mb-1">Agent</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
+                <select name="agent_id" class="form-select">
+                    <option value="">All agents</option>
+                    <option value="unassigned" {{ request('agent_id') === 'unassigned' ? 'selected' : '' }}>Unassigned</option>
+                    @foreach($agencyAgents as $agencyAgent)
+                    <option value="{{ $agencyAgent->id }}" {{ (string) request('agent_id') === (string) $agencyAgent->id ? 'selected' : '' }}>{{ $agencyAgent->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -119,6 +134,9 @@
                     @if($isAdmin && $hasTableField('owner'))
                     <th data-column-key="owner">Owner</th>
                     @endif
+                    @if($hasTableField('agent'))
+                    <th data-column-key="agent">Assigned Agent</th>
+                    @endif
                     @if($hasTableField('stage'))
                     <th data-column-key="stage">Stage</th>
                     @endif
@@ -169,6 +187,18 @@
                             {{ $lead->owner->displayName() }}
                         @else
                             <span class="text-muted">-</span>
+                        @endif
+                    </td>
+                    @endif
+                    @if($hasTableField('agent'))
+                    <td data-column-key="agent" data-search="{{ $lead->agent?->name ?? 'Unassigned' }}" data-order="{{ $lead->agent?->name ?? '' }}">
+                        @if($lead->agent)
+                            <div class="fw-semibold">{{ $lead->agent->name }}</div>
+                        @else
+                            <span class="badge bg-warning-subtle text-warning-emphasis">Unassigned</span>
+                        @endif
+                        @if($lead->assignmentLabel() && $lead->agent)
+                            <div class="text-muted" style="font-size: 0.72rem;">{{ $lead->assignmentLabel() }}</div>
                         @endif
                     </td>
                     @endif

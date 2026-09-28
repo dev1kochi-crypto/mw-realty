@@ -68,6 +68,30 @@ const routes = [
         meta: { title: 'Blog Details | MW Realty', bodyClass: 'agents-page blog-details-page', activeNav: 'blogs' },
     },
     {
+        path: '/market-insights',
+        name: 'market-insights',
+        component: () => import('../pages/MarketInsights.vue'),
+        meta: { title: 'Market Insights | MW Realty', bodyClass: 'agents-page market-insights-page', activeNav: 'market-insights' },
+    },
+    {
+        path: '/market-insights/:slug',
+        name: 'market-insight-details',
+        component: () => import('../pages/MarketInsightDetails.vue'),
+        meta: { title: 'Market Insights | MW Realty', bodyClass: 'agents-page market-insight-details-page', activeNav: 'market-insights' },
+    },
+    {
+        path: '/careers',
+        name: 'careers',
+        component: () => import('../pages/Careers.vue'),
+        meta: { title: 'Careers | MW Realty', bodyClass: 'agents-page careers-page', activeNav: 'careers' },
+    },
+    {
+        path: '/careers/:slug',
+        name: 'career-details',
+        component: () => import('../pages/CareerDetails.vue'),
+        meta: { title: 'Careers | MW Realty', bodyClass: 'agents-page career-details-page', activeNav: 'careers' },
+    },
+    {
         path: '/contact',
         name: 'contact',
         component: () => import('../pages/Contact.vue'),

@@ -89,6 +89,9 @@ class AppServiceProvider extends ServiceProvider
             $view->with('pendingUpgradeCount', Auth::guard('cms')->check()
                 ? \App\Models\PlanUpgradeRequest::pending()->count()
                 : 0);
+            $view->with('pendingAgencyAgentCount', Auth::guard('cms')->check()
+                ? \App\Models\AgencyAgent::where('status', \App\Models\AgencyAgent::PENDING)->count()
+                : 0);
         });
     }
 }

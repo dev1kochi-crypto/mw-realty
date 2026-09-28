@@ -1120,6 +1120,34 @@ body.portal-body {
     animation: portal-upgrade-rocket 2.2s ease-in-out infinite;
 }
 
+/* Pending KYC — shown but inert until Super Admin approves the account. */
+.btn-portal-upgrade-cta.is-locked {
+    background: #94a3b8;
+    box-shadow: none;
+    animation: none;
+    cursor: not-allowed;
+    opacity: 0.85;
+}
+
+.btn-portal-upgrade-cta.is-locked:hover { transform: none; }
+.btn-portal-upgrade-cta.is-locked i { animation: none; }
+
+/* Count bubble inside .portal-lang-tabs pills (e.g. Agents tabs). */
+.portal-tab-count {
+    display: inline-block;
+    min-width: 1.4rem;
+    margin-left: 0.35rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 50px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-align: center;
+    background: var(--portal-border);
+    color: var(--portal-muted);
+}
+
+.portal-lang-tabs .nav-link.active .portal-tab-count { background: rgba(255, 255, 255, 0.25); color: #fff; }
+
 .btn-portal-upgrade-shine {
     position: absolute;
     top: 0;

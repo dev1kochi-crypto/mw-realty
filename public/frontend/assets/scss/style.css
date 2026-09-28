@@ -8012,55 +8012,17 @@ main {
 .agents-page {
   --about-pin-top: 80px;
 }
-.about-page .mw-header__actions .mw-dropdown:has(.mw-header__currency),
-.contact-page .mw-header__actions .mw-dropdown:has(.mw-header__currency),
-.agents-page .mw-header__actions .mw-dropdown:has(.mw-header__currency) {
-  display: none;
-}
+/* Inner pages share the home header's menu design (same links, typography, buttons and the
+   currency switcher), only kept a little more compact so each page's hero offset still fits. */
 .about-page header.mw-header--light,
 .contact-page header.mw-header--light,
 .agents-page header.mw-header--light {
-  padding: 13px 0;
-}
-@media (min-width: 1200px) {
-  .about-page header.mw-header--light,
-  .contact-page header.mw-header--light,
-  .agents-page header.mw-header--light {
-    padding: 13px 0;
-  }
+  padding: 12px 0;
 }
 .about-page header.mw-header--light .mw-header__logo,
 .contact-page header.mw-header--light .mw-header__logo,
 .agents-page header.mw-header--light .mw-header__logo {
-  width: 85px;
-}
-.about-page header.mw-header--light .mw-nav,
-.contact-page header.mw-header--light .mw-nav,
-.agents-page header.mw-header--light .mw-nav {
-  gap: 50px;
-}
-.about-page header.mw-header--light .mw-nav > li > a,
-.contact-page header.mw-header--light .mw-nav > li > a,
-.agents-page header.mw-header--light .mw-nav > li > a {
-  padding: 6px 0;
-  color: #35373c;
-  font-size: 16px;
-  font-weight: 400;
-}
-.about-page header.mw-header--light .mw-header__login,
-.about-page header.mw-header--light .mw-header__lang,
-.contact-page header.mw-header--light .mw-header__login,
-.contact-page header.mw-header--light .mw-header__lang,
-.agents-page header.mw-header--light .mw-header__login,
-.agents-page header.mw-header--light .mw-header__lang {
-  min-height: 0;
-  padding: 15px 20px;
-  border-radius: 5px;
-  border-color: #e1e8ed;
-  background: #fff;
-  backdrop-filter: none;
-  font-size: 16px;
-  font-weight: 600;
+  width: clamp(96px, 5.4vw, 104px);
 }
 .about-page .mw-about-steps__num,
 .contact-page .mw-about-steps__num,
@@ -16062,4 +16024,1900 @@ body.property-details-page main {
     display: flex;
     flex-wrap: wrap;
   }
+}
+
+/* ==========================================================================
+   Header — "Explore" dropdown (About / Contact / Blog / Careers)
+   ========================================================================== */
+@media (min-width: 1200px) and (max-width: 1439px) {
+  header .mw-nav {
+    gap: clamp(14px, 1.45vw, 22px);
+  }
+  header .mw-nav > li > a,
+  header .mw-nav > li > .mw-nav__trigger {
+    font-size: 14px;
+  }
+  header .mw-header__actions {
+    gap: 8px;
+  }
+  header .mw-header__login,
+  header .mw-header__lang,
+  header .mw-header__currency {
+    padding: 8px 12px;
+  }
+}
+header .mw-nav__item--has-sub {
+  position: relative;
+}
+header .mw-nav > li > .mw-nav__trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: clamp(14px, 0.83vw, 16px);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.2s ease, text-shadow 0.3s ease;
+}
+header .mw-nav > li > .mw-nav__trigger::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 18px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #c92844 0%, #6a3577 50%, #244373 100%);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+header .mw-nav > li > .mw-nav__trigger:hover::after,
+header .mw-nav > li > .mw-nav__trigger.is-active::after {
+  transform: scaleX(1);
+}
+header .mw-nav > li > .mw-nav__trigger:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+header .mw-nav__chevron {
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+header .mw-nav__item--has-sub:hover .mw-nav__chevron,
+header .mw-nav__item--has-sub.is-open .mw-nav__chevron {
+  transform: rotate(180deg);
+}
+header.is-scrolled .mw-nav > li > .mw-nav__trigger {
+  color: #141415;
+}
+header.mw-header--light .mw-nav > li > .mw-nav__trigger {
+  color: #35373c;
+}
+header .mw-nav__submenu {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  min-width: 210px;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e1e8ed;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -6px) scale(0.97);
+  transform-origin: top center;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+  z-index: 30;
+}
+/* Invisible bridge over the gap, so moving the pointer from the trigger to the menu keeps it open. */
+header .mw-nav__submenu::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -16px;
+  height: 16px;
+}
+header .mw-nav__item--has-sub:hover .mw-nav__submenu,
+header .mw-nav__item--has-sub:focus-within .mw-nav__submenu,
+header .mw-nav__item--has-sub.is-open .mw-nav__submenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0) scale(1);
+}
+header .mw-nav__submenu li {
+  list-style: none;
+}
+header .mw-nav__submenu li + li {
+  margin-top: 2px;
+}
+header .mw-nav__submenu a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  color: #35373c;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+header .mw-nav__submenu a::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-top: 1.6px solid currentColor;
+  border-right: 1.6px solid currentColor;
+  transform: rotate(45deg) translateX(-4px);
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+header .mw-nav__submenu a:hover,
+header .mw-nav__submenu a:focus-visible {
+  background: #f4f8fb;
+  color: #244373;
+  outline: none;
+}
+header .mw-nav__submenu a:hover::after,
+header .mw-nav__submenu a:focus-visible::after {
+  opacity: 1;
+  transform: rotate(45deg) translateX(0);
+}
+header .mw-nav__submenu a.is-active {
+  background: #eff3f6;
+  color: #244373;
+  font-weight: 600;
+}
+
+/* Mobile drawer — "Explore" accordion */
+.mw-mobile-nav__group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 4px;
+  border: 0;
+  border-bottom: 1px solid #e1e8ed;
+  background: none;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+.mw-mobile-nav__group-toggle:hover,
+.mw-mobile-nav__group-toggle.is-active {
+  color: #244373;
+}
+.mw-mobile-nav__group-toggle svg {
+  transition: transform 0.25s ease;
+}
+.mw-mobile-nav__group.is-open .mw-mobile-nav__group-toggle svg {
+  transform: rotate(180deg);
+}
+.mw-mobile-nav nav .mw-mobile-nav__sub {
+  margin: 4px 0 0;
+  padding: 0 0 0 14px;
+  border-left: 2px solid #e1e8ed;
+}
+.mw-mobile-nav nav .mw-mobile-nav__sub li + li {
+  margin-top: 0;
+}
+.mw-mobile-nav nav .mw-mobile-nav__sub a {
+  padding: 10px 4px;
+  font-size: 15px;
+  font-weight: 500;
+  border-bottom: 0;
+}
+
+/* ==========================================================================
+   Careers — /careers listing and /careers/{slug} vacancy pages
+   ========================================================================== */
+.mw-careers-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  color: #c92844;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.mw-careers-eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #c92844 0%, #244373 100%);
+}
+.mw-careers-eyebrow--light {
+  color: #fff;
+}
+.mw-careers-eyebrow--light::before {
+  background: rgba(255, 255, 255, 0.7);
+}
+.mw-careers-section-head {
+  margin-bottom: clamp(28px, 2.6vw, 48px);
+  text-align: center;
+}
+.mw-careers-section-head__title {
+  font-size: clamp(28px, 2.4vw, 46px);
+}
+.mw-careers-section-head--split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  text-align: left;
+}
+
+/* Intro */
+.mw-careers-intro {
+  padding: clamp(48px, 5.2vw, 100px) 0;
+}
+.mw-careers-intro__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(32px, 5vw, 96px);
+}
+@media (max-width: 991px) {
+  .mw-careers-intro__layout {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-careers-intro__title {
+  margin-bottom: 18px;
+  font-size: clamp(30px, 2.8vw, 54px);
+}
+.mw-careers-intro__text {
+  max-width: 580px;
+  margin: 0 0 clamp(24px, 2vw, 34px);
+  color: #35373c;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(15px, 0.94vw, 18px);
+  line-height: 1.8;
+}
+.mw-careers-intro__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: clamp(24px, 2vw, 36px);
+}
+.mw-careers-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 150px;
+  padding: 18px 22px;
+  border: 1px solid #e1e8ed;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+.mw-careers-stat__value {
+  background: linear-gradient(90deg, #ca2844 0%, #244373 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(32px, 2.4vw, 44px);
+  font-weight: 600;
+  line-height: 1;
+}
+.mw-careers-stat__label {
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+.mw-careers-intro__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.mw-careers-intro__actions .mw-btn--outline {
+  min-height: 60px;
+  padding: 20px 30px;
+  border-radius: 0;
+  font-weight: 700;
+}
+.mw-careers-intro__media {
+  position: relative;
+  aspect-ratio: 4/3;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px -20px rgba(36, 67, 115, 0.35);
+}
+.mw-careers-intro__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.mw-careers-intro__badge {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+.mw-careers-intro__badge strong {
+  color: #244373;
+  font-size: 16px;
+  font-weight: 800;
+}
+.mw-careers-intro__badge span {
+  color: #6a6a6a;
+  font-size: 13px;
+}
+
+/* Perks */
+.mw-careers-perks {
+  padding: clamp(48px, 5.2vw, 100px) 0;
+  background: #eff3f6;
+  border-top: 1px solid #e1e8ed;
+  border-bottom: 1px solid #e1e8ed;
+}
+.mw-careers-perks__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(16px, 1.6vw, 28px);
+}
+@media (max-width: 1199px) {
+  .mw-careers-perks__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 575px) {
+  .mw-careers-perks__grid {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-careers-perk {
+  padding: clamp(24px, 2vw, 34px);
+  border: 1px solid #e1e8ed;
+  border-radius: 14px;
+  background: #fff;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.mw-careers-perk:hover {
+  box-shadow: 0 20px 40px -12px rgba(36, 67, 115, 0.22);
+  transform: translateY(-4px);
+}
+.mw-careers-perk__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ca2844 0%, #244373 100%);
+  color: #fff;
+}
+.mw-careers-perk__icon svg {
+  width: 26px;
+  height: 26px;
+}
+.mw-careers-perk__title {
+  margin: 0 0 10px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+.mw-careers-perk__text {
+  margin: 0;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* Openings + filters */
+.mw-careers-openings {
+  padding: clamp(48px, 5.2vw, 100px) 0;
+}
+#openings,
+#apply,
+#job-apply {
+  scroll-margin-top: 110px;
+}
+.mw-careers-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+.mw-careers-filters__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+  margin: 0;
+}
+.mw-careers-filters__field span {
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mw-careers-filters__field select,
+.mw-career-form__select {
+  width: 100%;
+  height: 50px;
+  padding: 0 40px 0 14px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23244373' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.mw-careers-filters__field select:focus,
+.mw-career-form__select:focus {
+  outline: none;
+  border-color: #244373;
+}
+.mw-careers-filters__clear {
+  height: 50px;
+  padding: 0 16px;
+  border: 0;
+  background: none;
+  color: #c92844;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+@media (max-width: 767px) {
+  .mw-careers-filters,
+  .mw-careers-filters__field {
+    width: 100%;
+  }
+}
+.mw-careers-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: opacity 0.2s ease;
+}
+.mw-careers-jobs.is-loading {
+  opacity: 0.55;
+  pointer-events: none;
+}
+.mw-career-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(20px, 2.4vw, 48px);
+  padding: clamp(22px, 2vw, 32px) clamp(22px, 2.2vw, 36px);
+  border: 1px solid #e1e8ed;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+}
+.mw-career-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #ca2844 0%, #244373 100%);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mw-career-card:hover {
+  border-color: #cfd9e3;
+  box-shadow: 0 18px 40px -14px rgba(36, 67, 115, 0.25);
+  transform: translateY(-2px);
+}
+.mw-career-card:hover::before {
+  transform: scaleY(1);
+}
+@media (max-width: 767px) {
+  .mw-career-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+.mw-career-card__main {
+  min-width: 0;
+}
+.mw-career-card__tag {
+  display: inline-flex;
+  margin-bottom: 10px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: #eff3f6;
+  color: #244373;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+.mw-career-card__title {
+  margin: 0 0 8px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(18px, 1.2vw, 22px);
+  font-weight: 700;
+}
+.mw-career-card__title a {
+  color: #141415;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.mw-career-card__title a:hover {
+  color: #244373;
+}
+.mw-career-card__text {
+  max-width: 760px;
+  margin: 0 0 12px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.mw-career-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mw-career-card__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  color: #35373c;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+.mw-career-card__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+@media (max-width: 767px) {
+  .mw-career-card__side {
+    align-items: flex-start;
+  }
+}
+.mw-career-card__date {
+  color: #848484;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+}
+.mw-career-card__cta svg {
+  transition: transform 0.2s ease;
+}
+.mw-career-card:hover .mw-career-card__cta svg {
+  transform: translateX(3px);
+}
+.mw-careers-empty {
+  padding: clamp(36px, 4vw, 64px) 24px;
+  border: 1px dashed #cfd9e3;
+  border-radius: 14px;
+  background: #f8fafc;
+  text-align: center;
+}
+.mw-careers-empty h3 {
+  margin: 0 0 10px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+.mw-careers-empty p {
+  max-width: 520px;
+  margin: 0 auto 22px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.mw-careers-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* General application band */
+.mw-careers-apply {
+  position: relative;
+  padding: clamp(56px, 5.8vw, 110px) 0;
+  background: linear-gradient(120deg, #1b3459 0%, #244373 55%, #6a3577 100%);
+  overflow: hidden;
+}
+.mw-careers-apply::before {
+  content: "";
+  position: absolute;
+  right: -160px;
+  top: -160px;
+  width: 460px;
+  height: 460px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(202, 40, 68, 0.45) 0%, rgba(202, 40, 68, 0) 70%);
+  pointer-events: none;
+}
+.mw-careers-apply__layout {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: start;
+  gap: clamp(32px, 5vw, 96px);
+}
+@media (max-width: 991px) {
+  .mw-careers-apply__layout {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-careers-apply__title {
+  margin-bottom: 18px;
+  color: #fff;
+  font-size: clamp(30px, 2.6vw, 50px);
+}
+.mw-careers-apply__text {
+  margin: 0 0 28px;
+  color: rgba(255, 255, 255, 0.82);
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(15px, 0.94vw, 17px);
+  line-height: 1.8;
+}
+.mw-careers-apply__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mw-careers-apply__steps li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+}
+.mw-careers-apply__steps span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 800;
+}
+.mw-careers-apply__card {
+  padding: clamp(24px, 2.4vw, 40px);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.4);
+}
+
+/* Application form (CareerApplyForm.vue) */
+.mw-career-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.mw-career-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+@media (max-width: 575px) {
+  .mw-career-form__grid {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-career-form .mw-page-contact__field label,
+.mw-career-form__label {
+  color: #000;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.mw-career-form .mw-page-contact__field label > span[aria-hidden],
+.mw-career-form__label > span[aria-hidden] {
+  color: #c92844;
+}
+.mw-career-form .mw-page-contact__field input {
+  height: 50px;
+  font-size: 15px;
+}
+.mw-career-form .mw-page-contact__field textarea {
+  height: 104px;
+  min-height: 104px;
+  font-size: 15px;
+}
+.mw-career-form .has-error input,
+.mw-career-form .has-error textarea,
+.mw-career-form .has-error .mw-career-form__drop {
+  border-color: #e0433e;
+}
+.mw-career-form__error {
+  color: #e0433e;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+.mw-career-form__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+.mw-career-form .mw-page-contact__field .mw-career-form__drop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1.5px dashed #cfd9e3;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #244373;
+  font-weight: 400;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.mw-career-form__drop svg {
+  flex-shrink: 0;
+}
+.mw-career-form .mw-page-contact__field .mw-career-form__drop:hover,
+.mw-career-form .mw-page-contact__field .mw-career-form__drop.is-dragging,
+.mw-career-form .mw-page-contact__field .mw-career-form__drop:focus-within {
+  border-color: #244373;
+  background: #eff3f6;
+}
+.mw-career-form .mw-page-contact__field .mw-career-form__drop.has-file {
+  border-style: solid;
+  border-color: #1a9c5a;
+  background: #f1faf5;
+}
+.mw-career-form__drop-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #35373c;
+  font-size: 14px;
+}
+.mw-career-form__drop-text strong {
+  color: #244373;
+}
+.mw-career-form__drop-text small {
+  color: #848484;
+  font-size: 12px;
+}
+.mw-career-form__file {
+  min-width: 0;
+  overflow: hidden;
+  color: #141415;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mw-career-form__remove {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #c92844;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.mw-career-form__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  color: #35373c;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.mw-career-form__consent input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: #244373;
+}
+.mw-career-form__consent a {
+  color: #244373;
+  font-weight: 600;
+}
+.mw-career-form__consent.has-error {
+  color: #e0433e;
+}
+.mw-career-form__submit {
+  align-self: flex-start;
+  min-height: 56px;
+  padding: 18px 34px;
+  font-size: 15px;
+}
+.mw-career-form__submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Vacancy page */
+.mw-career-details {
+  padding: clamp(36px, 3.6vw, 70px) 0 clamp(56px, 5.2vw, 100px);
+}
+.mw-career-details__lead {
+  margin: 0 0 18px;
+  color: #35373c;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(16px, 1.05vw, 19px);
+  line-height: 1.75;
+}
+.mw-career-details__chips {
+  margin-bottom: clamp(24px, 2.4vw, 36px);
+  padding-bottom: clamp(24px, 2.4vw, 36px);
+  border-bottom: 1px solid #e1e8ed;
+}
+.mw-career-details__section + .mw-career-details__section {
+  margin-top: clamp(28px, 2.6vw, 40px);
+}
+.mw-career-details__heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(20px, 1.35vw, 24px);
+  font-weight: 700;
+}
+.mw-career-details__heading::before {
+  content: "";
+  width: 4px;
+  height: 22px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ca2844 0%, #244373 100%);
+}
+.mw-career-details__apply {
+  margin-top: clamp(36px, 3.4vw, 56px);
+  padding: clamp(24px, 2.4vw, 40px);
+  border: 1px solid #e1e8ed;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+.mw-career-details__apply-text {
+  margin: -6px 0 22px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+}
+.mw-career-summary__list {
+  margin: 0 0 20px;
+}
+.mw-career-summary__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef2f5;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+}
+.mw-career-summary__row:first-child {
+  padding-top: 0;
+}
+.mw-career-summary__row dt {
+  color: #848484;
+  font-weight: 500;
+}
+.mw-career-summary__row dd {
+  margin: 0;
+  color: #141415;
+  font-weight: 700;
+  text-align: right;
+}
+.mw-career-summary__cta {
+  width: 100%;
+  min-height: 54px;
+  padding: 16px 24px;
+}
+.mw-career-related {
+  display: flex;
+  flex-direction: column;
+}
+.mw-career-related__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef2f5;
+  text-decoration: none;
+}
+.mw-career-related__item:first-child {
+  padding-top: 0;
+}
+.mw-career-related__title {
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  transition: color 0.2s ease;
+}
+.mw-career-related__item:hover .mw-career-related__title {
+  color: #244373;
+}
+.mw-career-related__meta {
+  color: #848484;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+}
+.mw-career-related__all {
+  display: inline-block;
+  margin-top: 14px;
+  color: #244373;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* The global `* { color; font-size }` reset would otherwise restyle these nested elements. */
+header .mw-nav__trigger span,
+.mw-mobile-nav__group-toggle span,
+.mw-career-form__consent span,
+.mw-career-form .mw-page-contact__field label > span[aria-hidden],
+.mw-career-form__label > span[aria-hidden],
+.mw-career-form__drop-text strong,
+.mw-career-summary__row dt,
+.mw-career-summary__row dd {
+  font-size: inherit;
+}
+header .mw-nav__trigger span,
+.mw-mobile-nav__group-toggle span,
+.mw-career-form__consent span {
+  color: inherit;
+  font-weight: inherit;
+}
+.mw-careers-apply__steps span {
+  color: #fff;
+}
+header .mw-nav__chevron,
+.mw-mobile-nav__group-toggle svg,
+.mw-career-form__drop svg,
+.mw-career-card__cta svg,
+.mw-careers-perk__icon svg {
+  color: inherit;
+}
+/* Light (inner-page) header: the currency chevron must be dark like the language one — it was
+   only ever shown on the transparent home header before, where it is inverted to white. */
+header.mw-header--light .mw-header__currency img:not(.mw-header__lang-flag),
+header.is-scrolled .mw-header__currency img:not(.mw-header__lang-flag) {
+  filter: none;
+}
+header .mw-nav__chevron *,
+.mw-mobile-nav__group-toggle svg *,
+.mw-career-form__drop svg *,
+.mw-career-card__cta svg *,
+.mw-careers-perk__icon svg * {
+  color: inherit;
+}
+.mw-career-form__consent a {
+  font-size: inherit;
+}
+.mw-career-form__drop-text {
+  display: block;
+}
+.mw-career-form__drop-text small {
+  display: block;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   Market Insights — /market-insights listing and /market-insights/{slug}
+   ========================================================================== */
+.mw-insight-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border: 1px solid #d5deea;
+  border-radius: 100px;
+  background: #fff;
+  color: #244373;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+a.mw-insight-chip:hover {
+  border-color: #244373;
+}
+.mw-insight-chip--solid {
+  border-color: #244373;
+  background: #244373;
+  color: #fff;
+}
+.mw-insight-chip--light {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+a.mw-insight-chip--light:hover {
+  background: #fff;
+  color: #244373;
+}
+.mw-insight-trend {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.mw-insight-trend svg {
+  width: 13px;
+  height: 13px;
+}
+.mw-insight-trend svg * {
+  color: inherit;
+}
+.mw-insight-trend--up {
+  background: rgba(26, 156, 90, 0.14);
+  color: #1a9c5a;
+}
+.mw-insight-trend--down {
+  background: rgba(224, 67, 62, 0.14);
+  color: #e0433e;
+}
+.mw-insight-trend--flat {
+  background: rgba(132, 132, 132, 0.16);
+  color: #6a6a6a;
+}
+
+/* Featured report */
+.mw-insights-featured {
+  position: relative;
+  z-index: 1;
+  padding-top: clamp(36px, 3.6vw, 70px);
+}
+.mw-insights-featured__card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 30px 60px -24px rgba(20, 39, 74, 0.45);
+}
+@media (max-width: 991px) {
+  .mw-insights-featured__card {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-insights-featured__media {
+  position: relative;
+  display: block;
+  min-height: 320px;
+  overflow: hidden;
+}
+.mw-insights-featured__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mw-insights-featured__card:hover .mw-insights-featured__media img {
+  transform: scale(1.04);
+}
+.mw-insights-featured__badge {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #ca2844 0%, #6a3577 100%);
+  color: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mw-insights-featured__body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(28px, 3vw, 56px);
+}
+.mw-insights-featured__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+.mw-insights-featured__region,
+.mw-insight-card__region {
+  color: #c92844;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mw-insights-featured__title {
+  margin: 0 0 14px;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(26px, 2.1vw, 40px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.mw-insights-featured__title a {
+  color: #14274a;
+  text-decoration: none;
+}
+.mw-insights-featured__title a:hover {
+  color: #244373;
+}
+.mw-insights-featured__summary {
+  margin: 0 0 16px;
+  color: #35373c;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(15px, 0.94vw, 17px);
+  line-height: 1.75;
+}
+.mw-insights-featured__meta {
+  margin: 0 0 26px;
+  color: #848484;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+}
+.mw-insights-featured__cta {
+  min-height: 54px;
+  padding: 16px 28px;
+}
+.mw-insights-featured__cta svg {
+  transition: transform 0.2s ease;
+}
+.mw-insights-featured__cta:hover svg {
+  transform: translateX(3px);
+}
+.mw-insights-featured__stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 26px;
+  width: 100%;
+  border-top: 1px solid #eef2f5;
+  margin-block-start: 28px;
+}
+.mw-insights-featured__stat strong {
+  color: #14274a;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(28px, 2vw, 36px);
+  font-weight: 600;
+  line-height: 1;
+}
+.mw-insights-featured__stat span:not(.mw-insight-trend) {
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Grid + filters */
+.mw-insights-list {
+  padding: clamp(48px, 4.6vw, 88px) 0 clamp(56px, 5.2vw, 100px);
+}
+.mw-insights-list--related {
+  padding-top: 0;
+}
+.mw-insights-list__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.mw-insights-list__title {
+  margin: 0;
+  color: #14274a;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(28px, 2.2vw, 42px);
+  font-weight: 600;
+}
+.mw-insights-region {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+.mw-insights-region span {
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mw-insights-region select {
+  height: 44px;
+  min-width: 170px;
+  padding: 0 38px 0 14px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23244373' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  cursor: pointer;
+}
+.mw-insights-region select:focus {
+  outline: none;
+  border-color: #244373;
+}
+.mw-insights-topics {
+  display: flex;
+  gap: 8px;
+  margin-bottom: clamp(24px, 2.2vw, 36px);
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.mw-insights-topics::-webkit-scrollbar {
+  display: none;
+}
+.mw-insights-topics__item {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border: 1px solid #e1e8ed;
+  border-radius: 100px;
+  background: #fff;
+  color: #35373c;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.mw-insights-topics__item:hover {
+  border-color: #244373;
+  color: #244373;
+}
+.mw-insights-topics__item.is-active {
+  border-color: #14274a;
+  background: #14274a;
+  color: #fff;
+}
+.mw-insights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(18px, 1.8vw, 32px);
+  transition: opacity 0.2s ease;
+}
+.mw-insights-grid.is-loading {
+  opacity: 0.55;
+  pointer-events: none;
+}
+@media (max-width: 1199px) {
+  .mw-insights-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .mw-insights-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-insights-empty {
+  padding: clamp(36px, 4vw, 64px) 24px;
+  border: 1px dashed #cfd9e3;
+  border-radius: 14px;
+  background: #f8fafc;
+  text-align: center;
+}
+.mw-insights-empty h3 {
+  margin: 0 0 10px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+.mw-insights-empty p {
+  margin: 0 0 20px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+}
+
+/* Card */
+.mw-insight-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e1e8ed;
+  border-radius: 16px;
+  background: #fff;
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+}
+.mw-insight-card:hover {
+  border-color: #cfd9e3;
+  box-shadow: 0 22px 44px -18px rgba(20, 39, 74, 0.3);
+  transform: translateY(-4px);
+}
+.mw-insight-card__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 16/10;
+  overflow: hidden;
+}
+.mw-insight-card__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mw-insight-card:hover .mw-insight-card__media img {
+  transform: scale(1.05);
+}
+.mw-insight-card__media::after {
+  content: "";
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(180deg, rgba(20, 39, 74, 0) 0%, rgba(20, 39, 74, 0.7) 100%);
+}
+.mw-insight-card__media .mw-insight-chip {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  z-index: 1;
+}
+.mw-insight-card__stat {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+.mw-insight-card__stat strong {
+  color: #fff;
+  font-family: "Playfair Display", serif;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+}
+.mw-insight-card__stat .mw-insight-trend {
+  background: rgba(255, 255, 255, 0.92);
+}
+.mw-insight-card__stat small {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mw-insight-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 20px 22px 22px;
+}
+.mw-insight-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+.mw-insight-card__meta span:not(.mw-insight-card__region) {
+  color: #848484;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+}
+.mw-insight-card__title {
+  margin: 0 0 10px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.mw-insight-card__title a {
+  color: #141415;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.mw-insight-card__title a:hover {
+  color: #244373;
+}
+.mw-insight-card__summary {
+  display: -webkit-box;
+  margin: 0 0 18px;
+  overflow: hidden;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.mw-insight-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #eef2f5;
+}
+.mw-insight-card__read {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #848484;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+}
+.mw-insight-card__pdf {
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(202, 40, 68, 0.1);
+  color: #c92844;
+  font-size: 11px;
+  font-weight: 800;
+}
+.mw-insight-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #244373;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.mw-insight-card__link svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+.mw-insight-card__link svg * {
+  color: inherit;
+}
+.mw-insight-card__link:hover svg {
+  transform: translateX(3px);
+}
+
+/* Key figures */
+
+/* Body */
+
+.mw-insight-takeaways {
+  margin-bottom: clamp(28px, 2.6vw, 40px);
+  padding: clamp(22px, 2vw, 32px);
+  border: 1px solid #dfe7f1;
+  border-left: 4px solid #244373;
+  border-radius: 12px;
+  background: #f5f8fc;
+}
+.mw-insight-takeaways__title {
+  margin: 0 0 14px;
+  color: #14274a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.mw-insight-takeaways ul {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mw-insight-takeaways li {
+  position: relative;
+  padding-left: 32px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.55;
+}
+.mw-insight-takeaways li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #244373 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E") no-repeat center;
+}
+.mw-insight-content h2 {
+  color: #14274a;
+}
+
+.mw-insight-panel {
+  padding: clamp(20px, 1.8vw, 26px);
+  border: 1px solid #e1e8ed;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.mw-insight-panel__title {
+  margin: 0 0 10px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+}
+.mw-insight-panel__text {
+  margin: 0 0 18px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.mw-insight-panel__cta {
+  width: 100%;
+  min-height: 50px;
+  padding: 14px 20px;
+}
+
+.mw-insight-panel__topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mw-insight-share {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.mw-insight-share__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  background: #fff;
+  color: #244373;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.mw-insight-share__item:hover {
+  border-color: #244373;
+  background: #f5f8fc;
+}
+.mw-insights-featured__title a,
+.mw-insight-card__title a{
+  font: inherit;
+}
+.mw-insight-content p,
+.mw-insight-content li {
+  color: #35373c;
+  font-size: 17px;
+  line-height: 1.85;
+}
+.mw-insight-content h2 {
+  font-size: clamp(22px, 1.5vw, 26px);
+}
+.mw-insights-list__text {
+  max-width: 760px;
+  margin: 8px 0 0;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+
+/* Market Insights article page — one two-column layout from the top */
+.mw-insight-article {
+  padding: clamp(36px, 3.4vw, 64px) 0 clamp(56px, 5vw, 96px);
+}
+.mw-insight-article__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 370px);
+  align-items: start;
+  gap: clamp(28px, 3.2vw, 56px);
+}
+@media (max-width: 991px) {
+  .mw-insight-article__layout {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-insight-article__main {
+  min-width: 0;
+}
+.mw-insight-banner {
+  position: relative;
+  margin: 0 0 24px;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #eff3f6;
+}
+.mw-insight-banner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.mw-insight-banner__tags {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mw-insight-byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 24px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e1e8ed;
+}
+.mw-insight-byline__author {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: auto;
+}
+.mw-insight-byline__author > span:last-child {
+  display: flex;
+  flex-direction: column;
+}
+.mw-insight-byline__author strong {
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+.mw-insight-byline__author small {
+  color: #848484;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+}
+.mw-insight-byline__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ca2844 0%, #6a3577 100%);
+  color: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+}
+.mw-insight-byline__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+}
+.mw-insight-byline__item + .mw-insight-byline__item::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #c3ccd6;
+}
+.mw-insight-lead {
+  margin-bottom: 28px;
+  color: #14274a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(18px, 1.25vw, 22px);
+  font-weight: 500;
+  line-height: 1.6;
+}
+.mw-insight-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.mw-insight-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 18px 16px;
+  border: 1px solid #e1e8ed;
+  border-top: 3px solid #cfd9e3;
+  border-radius: 12px;
+  background: #fff;
+}
+.mw-insight-figure--up {
+  border-top-color: #1a9c5a;
+}
+.mw-insight-figure--down {
+  border-top-color: #e0433e;
+}
+.mw-insight-figure__value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #14274a;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(26px, 1.9vw, 34px);
+  font-weight: 600;
+  line-height: 1;
+}
+.mw-insight-figure__label {
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.mw-insight-sharebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: clamp(28px, 2.6vw, 40px);
+  padding-top: 24px;
+  border-top: 1px solid #e1e8ed;
+}
+.mw-insight-sharebar__label {
+  margin-right: 6px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+.mw-insight-sharebar .mw-insight-share__item {
+  min-height: 40px;
+  padding: 8px 16px;
+}
+.mw-insight-article__aside {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.mw-insight-glance__list {
+  margin: 0 0 18px;
+}
+.mw-insight-glance__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px solid #eef2f5;
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+.mw-insight-glance__row:first-child {
+  padding-top: 0;
+}
+.mw-insight-glance__row dt {
+  color: #848484;
+  font-size: 14px;
+  font-weight: 500;
+}
+.mw-insight-glance__row dd {
+  margin: 0;
+  color: #141415;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+}
+.mw-insight-glance .mw-insight-panel__cta,
+.mw-insight-panel--expert .mw-insight-panel__cta {
+  gap: 8px;
+}
+.mw-insight-glance .mw-insight-panel__cta svg * {
+  color: inherit;
+}
+.mw-insight-panel--expert {
+  border: 0;
+  background: linear-gradient(140deg, #14274a 0%, #244373 60%, #4a3474 100%);
+}
+.mw-insight-panel--expert .mw-insight-panel__title {
+  color: #fff;
+}
+.mw-insight-panel--expert .mw-insight-panel__text {
+  color: rgba(255, 255, 255, 0.8);
 }

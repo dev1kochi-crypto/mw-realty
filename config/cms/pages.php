@@ -7,6 +7,8 @@ return [
         ['key' => 'agencies', 'name' => 'Agencies'],
         ['key' => 'agents', 'name' => 'Agents'],
         ['key' => 'blog', 'name' => 'Blog'],
+        ['key' => 'market-insights', 'name' => 'Market Insights'],
+        ['key' => 'careers', 'name' => 'Careers'],
         ['key' => 'properties', 'name' => 'Properties'],
         ['key'=> 'commercial', 'name' => 'Commercial'],
         ['key' => 'residential', 'name' => 'Residential'],

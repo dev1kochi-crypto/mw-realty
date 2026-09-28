@@ -324,12 +324,11 @@
             </div>
             <div class="col-md-8">
                 <label class="form-label">Affiliated Brokerage</label>
-                <select name="company_id" class="form-select form-select-sm">
-                    <option value="">Unaffiliated</option>
-                    @foreach($companies as $company)
-                    <option value="{{ $company->id }}" {{ $portalUser->company_id === $company->id ? 'selected' : '' }}>{{ $company->company_name ?: $company->name }}</option>
-                    @endforeach
-                </select>
+                {{-- Joining / leaving an agency needs the agency's acceptance and admin approval — see My Agency. --}}
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" value="{{ $portalUser->company?->displayName() ?? 'Independent agent' }}" disabled>
+                    <a href="{{ route('portal.agency.index') }}" class="btn btn-outline-secondary">Manage in My Agency</a>
+                </div>
             </div>
             <div class="col-md-4"><label class="form-label">Trade License No.</label><input type="text" name="trade_license_no" class="form-control form-control-sm" value="{{ $portalUser->trade_license_no }}"></div>
             <div class="col-md-4"><label class="form-label">Trade License Expiry</label><input type="date" name="trade_license_expiry" class="form-control form-control-sm" value="{{ $portalUser->trade_license_expiry?->format('Y-m-d') }}"></div>

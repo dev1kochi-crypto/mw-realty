@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
             CommercialPropertySeeder::class,
             MoreCommercialPropertySeeder::class,
             FilterSeeder::class,
+            MarketInsightSeeder::class,
+            CareerSeeder::class,
         ]);
     }
 }

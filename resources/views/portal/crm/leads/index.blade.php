@@ -17,6 +17,12 @@
         <a href="{{ route('portal.crm.leads.trashed') }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-trash-can me-1"></i> Deleted Leads</a>
         <button type="button" id="openLeadImportModal" class="portal-btn-ghost btn btn-sm"><i class="fas fa-file-import me-1"></i> Import</button>
         <button type="button" id="openLeadExportModal" class="portal-btn-ghost btn btn-sm"><i class="fas fa-file-export me-1"></i> Export</button>
+        @if($isAgencyViewer && $unassignedCount > 0 && $agencyAgents->isNotEmpty())
+        <form method="POST" action="{{ route('portal.crm.leads.distribute') }}" class="m-0" onsubmit="return confirm('Round-robin all {{ $unassignedCount }} unassigned lead(s) across your active agents?');">
+            @csrf
+            <button type="submit" class="portal-btn-ghost btn btn-sm"><i class="fas fa-shuffle me-1"></i> Distribute {{ $unassignedCount }} unassigned</button>
+        </form>
+        @endif
         <button type="button" id="openCreateLeadModal" class="btn btn-portal-primary btn-sm"><i class="fas fa-plus me-1"></i> Add Lead</button>
     </div>
 </div>
@@ -584,6 +590,7 @@
                 document.getElementById('leadViewReceived').textContent = data.created_at || '-';
                 document.getElementById('leadViewMessage').textContent = data.message || '-';
                 renderNotesList(data.notes_history);
+                renderAssignment(data);
 
                 const tagsContainer = document.getElementById('leadViewTags');
                 tagsContainer.innerHTML = '';
@@ -626,6 +633,66 @@
                 bootstrap.Alert.getOrCreateInstance(alertEl).close();
             }, 4000);
         }
+
+        function renderAssignment(data) {
+            document.getElementById('leadViewAgent').textContent = data.agent_name || (data.owner_is_agency ? 'Unassigned (agency level)' : '-');
+            document.getElementById('leadViewAssignmentType').textContent = data.assignment_label && data.agent_name
+                ? data.assignment_label + (data.assigned_at ? ' · ' + data.assigned_at : '') : '';
+
+            const controls = document.getElementById('leadViewAssignControls');
+            const select = document.getElementById('leadViewAssignSelect');
+            document.getElementById('leadViewAssignError').classList.add('d-none');
+            controls.classList.toggle('d-none', !data.can_assign);
+            select.innerHTML = '';
+            if (data.can_assign) {
+                const none = document.createElement('option');
+                none.value = '';
+                none.textContent = '— Unassigned (agency level) —';
+                select.appendChild(none);
+                (data.agent_options || []).forEach(function (agent) {
+                    const option = document.createElement('option');
+                    option.value = agent.id;
+                    option.textContent = agent.name;
+                    option.selected = agent.id === data.agent_id;
+                    select.appendChild(option);
+                });
+            }
+
+            const historyWrap = document.getElementById('leadViewAssignmentHistoryWrap');
+            const history = document.getElementById('leadViewAssignmentHistory');
+            history.innerHTML = '';
+            (data.assignment_history || []).forEach(function (row) {
+                const li = document.createElement('li');
+                li.className = 'mb-1';
+                li.textContent = row.assigned_at + ' — ' + (row.agent_name || 'Unassigned') + ' · ' + row.label
+                    + (row.by ? ' (by ' + row.by + ')' : '') + (row.note ? ' — ' + row.note : '');
+                history.appendChild(li);
+            });
+            historyWrap.classList.toggle('d-none', !(data.assignment_history || []).length);
+        }
+
+        document.getElementById('leadViewAssignBtn').addEventListener('click', function () {
+            const btn = this;
+            const error = document.getElementById('leadViewAssignError');
+            btn.disabled = true;
+            error.classList.add('d-none');
+            fetch("{{ url('portal/crm/leads') }}/" + currentViewedLeadId + '/assign', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                body: JSON.stringify({ agent_id: document.getElementById('leadViewAssignSelect').value || null }),
+            })
+                .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+                .then(function (res) {
+                    if (!res.ok) {
+                        const errors = res.body.errors ? Object.values(res.body.errors).flat() : [];
+                        throw new Error(errors[0] || res.body.message || 'Could not assign this lead.');
+                    }
+                    openViewModal(currentViewedLeadId);
+                    window.reloadLeadsListing();
+                })
+                .catch(function (e) { error.textContent = e.message; error.classList.remove('d-none'); })
+                .finally(function () { btn.disabled = false; });
+        });
 
         window.reloadLeadsListing = function () {
             if (leadsDataTable) {

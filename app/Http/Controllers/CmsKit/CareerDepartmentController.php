@@ -127,7 +127,7 @@ class CareerDepartmentController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('select_all', fn ($row) => '<input type="checkbox" class="row-checkbox form-check-input" value="' . $row->id . '">')
-                ->addColumn('title', fn ($row) => e($row->getTranslation('title')))
+                ->addColumn('title', fn ($row) => $row->getTranslation('title')) // DataTables escapes non-raw columns itself
                 ->addColumn('description', function ($row) {
                     return e(Str::limit(strip_tags((string) $row->getTranslation('description')), 90));
                 })

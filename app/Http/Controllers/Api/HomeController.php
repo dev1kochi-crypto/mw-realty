@@ -28,6 +28,13 @@ class HomeController extends Controller
     {
         $lang = $request->input('lang', app()->getLocale());
 
-        return response()->json($this->homePage->getHomeData($lang));
+        $data = $this->homePage->getHomeData($lang);
+        foreach (['developments', 'premiumProperties', 'luxury', 'realty'] as $section) {
+            if (isset($data[$section]['properties'])) {
+                $data[$section]['properties'] = collect($data[$section]['properties'])->shuffle()->values()->all();
+            }
+        }
+
+        return response()->json($data);
     }
 }

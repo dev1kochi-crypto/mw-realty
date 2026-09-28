@@ -58,6 +58,26 @@
                     </div>
                 </div>
 
+                {{-- Who is working this lead, how it got to them, and (for the owning agency / Super Admin) reassignment. --}}
+                <div class="portal-lead-view-section mb-3" id="leadViewAssignment">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                        <div>
+                            <div class="portal-lead-view-label">Assigned agent</div>
+                            <div class="portal-lead-view-value fw-semibold" id="leadViewAgent">-</div>
+                            <div class="text-muted small" id="leadViewAssignmentType"></div>
+                        </div>
+                        <div class="d-none d-flex gap-2 align-items-center" id="leadViewAssignControls">
+                            <select class="form-select form-select-sm" id="leadViewAssignSelect" style="min-width: 190px;" aria-label="Assign to agent"></select>
+                            <button type="button" class="btn btn-sm btn-portal-primary text-nowrap" id="leadViewAssignBtn">Assign</button>
+                        </div>
+                    </div>
+                    <div class="text-danger small mt-1 d-none" id="leadViewAssignError"></div>
+                    <details class="mt-2 d-none" id="leadViewAssignmentHistoryWrap">
+                        <summary class="small text-muted">Assignment history</summary>
+                        <ul class="list-unstyled small mb-0 mt-2" id="leadViewAssignmentHistory"></ul>
+                    </details>
+                </div>
+
                 <div class="portal-lead-view-section mb-3">
                     <div class="portal-lead-view-label mb-2">Tags</div>
                     <div class="d-flex flex-wrap gap-2" id="leadViewTags">—</div>

@@ -29,7 +29,7 @@ class LeadService
      */
     public function filteredQuery(?int $ownerId, array $filters = []): Builder
     {
-        $query = Lead::with(['owner', 'stage', 'source', 'tags'])
+        $query = Lead::with(['owner', 'agent', 'stage', 'source', 'tags'])
             ->withCount('notesHistory')
             ->forOwner($ownerId)
             ->latest();
@@ -49,6 +49,13 @@ class LeadService
 
         if (!empty($filters['owner_id'])) {
             $query->where('portal_user_id', $filters['owner_id']);
+        }
+
+        // Assigned agent (agency view). "unassigned" = agency-level leads nobody is working yet.
+        if (!empty($filters['agent_id'])) {
+            $filters['agent_id'] === 'unassigned'
+                ? $query->whereNull('leads.agent_id')
+                : $query->where('leads.agent_id', (int) $filters['agent_id']);
         }
 
         if (!empty($filters['stage_id'])) {
@@ -114,9 +121,20 @@ class LeadService
      */
     public function getLead(?int $ownerId, $id, bool $withTrashed = false): Lead
     {
-        $query = $withTrashed ? Lead::withTrashed() : Lead::with(['property', 'owner', 'stage', 'source', 'tags']);
+        $query = $withTrashed ? Lead::withTrashed() : Lead::with(['property', 'owner', 'agent', 'stage', 'source', 'tags']);
 
         return $query->forOwner($ownerId)->findOrFail($id);
+    }
+
+    /**
+     * Like getLead(), but only the owning account (never an agency agent who is merely assigned
+     * the lead) — used for delete / restore / force-delete / reassign.
+     */
+    public function getOwnedLead(?int $ownerId, $id, bool $withTrashed = false): Lead
+    {
+        $query = $withTrashed ? Lead::withTrashed() : Lead::with(['property', 'owner', 'agent']);
+
+        return $query->ownedBy($ownerId)->findOrFail($id);
     }
 
     /** Trashed (soft-deleted) leads for this owner, most recently deleted first. */
@@ -124,7 +142,7 @@ class LeadService
     {
         return Lead::onlyTrashed()
             ->with(['property', 'owner', 'stage', 'source'])
-            ->forOwner($ownerId)
+            ->ownedBy($ownerId)
             ->orderByDesc('deleted_at')
             ->paginate($perPage)
             ->withQueryString();
@@ -178,7 +196,34 @@ class LeadService
     /** The one place a Lead's owner is (re)assigned — CRUD, import, and any future bulk-assign/API path all call this. */
     public function assignOwner(Lead $lead, int $ownerId): Lead
     {
-        $lead->update(['portal_user_id' => $ownerId]);
+        $owner = \App\Models\PortalUser::findOrFail($ownerId);
+
+        // A new owner means the old agent assignment no longer applies: an agent owner works it
+        // themselves, an agency gets it agency-level unassigned (it decides who works it).
+        \Illuminate\Support\Facades\DB::transaction(function () use ($lead, $owner) {
+            $previousAgentId = $lead->agent_id;
+            $agentId = $owner->isAgent() ? $owner->id : null;
+            $type = $owner->isAgent() ? Lead::ASSIGN_PROPERTY_AGENT : Lead::ASSIGN_AGENCY_UNASSIGNED;
+
+            $lead->update([
+                'portal_user_id' => $owner->id,
+                'agent_id' => $agentId,
+                'assignment_type' => $type,
+                'assigned_at' => $agentId ? now() : null,
+            ]);
+
+            \App\Models\LeadAssignmentHistory::create([
+                'lead_id' => $lead->id,
+                'agency_id' => $owner->isAgency() ? $owner->id : null,
+                'agent_id' => $agentId,
+                'previous_agent_id' => $previousAgentId,
+                'assignment_type' => $type,
+                'assigned_by_type' => \App\Services\Agency\AssignmentActor::current()->type,
+                'assigned_by_id' => \App\Services\Agency\AssignmentActor::current()->id,
+                'note' => 'Transferred to ' . $owner->displayName(),
+                'assigned_at' => now(),
+            ]);
+        });
 
         return $lead;
     }
@@ -253,7 +298,7 @@ class LeadService
      */
     public function deleteMany(array $ids, ?int $ownerId): int
     {
-        $leads = Lead::forOwner($ownerId)->whereIn('id', $ids)->get();
+        $leads = Lead::ownedBy($ownerId)->whereIn('id', $ids)->get();
         $leads->each(fn (Lead $lead) => $this->deleteLead($lead));
 
         return $leads->count();

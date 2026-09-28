@@ -16,7 +16,9 @@ class PropertyPageService
 
     public function getPropertyDetail(string $lang, string $slug): ?array
     {
-        return Cache::remember("property-detail:{$lang}:{$slug}", self::CACHE_TTL, function () use ($lang, $slug) {
+        $version = Property::where('slug', $slug)->value('updated_at') ?? 'missing';
+
+        return Cache::remember("property-detail:{$lang}:{$slug}:{$version}", self::CACHE_TTL, function () use ($lang, $slug) {
             $property = Property::where('status', true)->where('slug', $slug)->with(['details', 'agent', 'owner'])->first();
             if (!$property) {
                 return null;
@@ -57,6 +59,7 @@ class PropertyPageService
                 'completion_status_label' => $property->filterLabel('completion_status', $lang),
                 'rera_id' => $property->rera_id,
                 'reference_no' => $property->reference_no,
+                'brochure_available' => (bool) $property->brochure_path,
                 'garage' => $details?->garage,
                 'parking' => $details?->parking,
                 'year_built' => $details?->year_built,

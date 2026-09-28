@@ -17,6 +17,9 @@ class Lead extends Model
     protected $fillable = [
         'property_id',
         'portal_user_id',
+        'agent_id',
+        'assignment_type',
+        'assigned_at',
         'user_id',
         'name',
         'email',
@@ -34,8 +37,15 @@ class Lead extends Model
         'extra_fields',
     ];
 
+    public const ASSIGN_PROPERTY_AGENT = 'property_agent';
+    public const ASSIGN_ROUND_ROBIN = 'round_robin';
+    public const ASSIGN_AGENCY_UNASSIGNED = 'agency_unassigned';
+    public const ASSIGN_MANUAL = 'manual';
+    public const ASSIGN_REASSIGNED = 'reassigned';
+
     protected $casts = [
         'extra_fields' => 'array',
+        'assigned_at' => 'datetime',
     ];
 
     public function property()
@@ -75,9 +85,67 @@ class Lead extends Model
         return $this->hasMany(LeadNote::class);
     }
 
+    /** The agent working this lead (null = agency-level unassigned). */
+    public function agent()
+    {
+        return $this->belongsTo(PortalUser::class, 'agent_id');
+    }
+
+    public function assignmentHistory()
+    {
+        return $this->hasMany(LeadAssignmentHistory::class)->orderBy('assigned_at')->orderBy('id');
+    }
+
+    /**
+     * Every CRM lead query goes through here, so this is the one place lead visibility is decided.
+     * null = Super Admin's global view. See scopeVisibleTo() for the per-account rules.
+     */
     public function scopeForOwner($query, ?int $ownerId)
     {
+        if (!$ownerId) {
+            return $query;
+        }
+
+        $viewer = PortalUser::query()->select(['id', 'type', 'company_id'])->find($ownerId);
+
+        return $viewer ? $this->scopeVisibleTo($query, $viewer) : $query->whereRaw('1 = 0');
+    }
+
+    /**
+     * - Agency / independent agent: every lead they own.
+     * - Agency agent: their own personal leads, plus the agency's leads assigned to them — only
+     *   while they are still in that agency (a departed agent loses sight of the agency's leads,
+     *   but the assignment itself stays on record).
+     */
+    public function scopeVisibleTo($query, PortalUser $viewer)
+    {
+        return $query->where(function ($q) use ($viewer) {
+            $q->where('leads.portal_user_id', $viewer->id);
+
+            if ($viewer->type === 'agent' && $viewer->company_id) {
+                $q->orWhere(fn ($assigned) => $assigned
+                    ->where('leads.agent_id', $viewer->id)
+                    ->where('leads.portal_user_id', $viewer->company_id));
+            }
+        });
+    }
+
+    /** Strict ownership — delete/restore/reassign are for the owning account only, never an assigned agent. */
+    public function scopeOwnedBy($query, ?int $ownerId)
+    {
         return $query->when($ownerId, fn ($q) => $q->where('leads.portal_user_id', $ownerId));
+    }
+
+    public function assignmentLabel(): ?string
+    {
+        return match ($this->assignment_type) {
+            self::ASSIGN_PROPERTY_AGENT => 'Property agent',
+            self::ASSIGN_ROUND_ROBIN => 'Round robin',
+            self::ASSIGN_AGENCY_UNASSIGNED => 'Unassigned',
+            self::ASSIGN_MANUAL => 'Manual',
+            self::ASSIGN_REASSIGNED => 'Reassigned',
+            default => null,
+        };
     }
 
     public function getFormattedPhoneAttribute(): ?string

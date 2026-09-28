@@ -13,6 +13,8 @@ use App\Models\LeadSource;
 use App\Models\LeadStage;
 use App\Models\LeadTag;
 use App\Models\PortalUser;
+use App\Services\Agency\AssignmentActor;
+use App\Services\Agency\LeadAssignmentService;
 use App\Services\Crm\LeadNoteService;
 use App\Services\Crm\LeadService;
 use App\Services\Crm\LeadTablePreferenceService;
@@ -45,6 +47,7 @@ class LeadController extends Controller
             'search' => $request->input('search'),
             'status' => $request->input('status'),
             'owner_id' => $request->input('owner_id'),
+            'agent_id' => $request->input('agent_id'),
             'stage_id' => $request->input('stage_id'),
             'source_id' => $request->input('source_id'),
             'tag_id' => $request->input('tag_id'),
@@ -88,6 +91,9 @@ class LeadController extends Controller
             'currentOwnerId' => $this->effectiveOwnerId(),
             'leadTableColumns' => $this->leadTablePreferenceService->getUserColumns(),
             'leadTableFields' => $this->leadTablePreferenceService->availableColumns(),
+            'isAgencyViewer' => (bool) $this->owner()?->isAgency(),
+            'agencyAgents' => $this->owner()?->isAgency() ? $this->owner()->eligibleAgentsQuery()->get(['portal_users.id', 'portal_users.name']) : collect(),
+            'unassignedCount' => $this->owner()?->isAgency() ? Lead::where('portal_user_id', $this->owner()->id)->whereNull('agent_id')->count() : 0,
         ];
 
         // The "reload after Create/Edit/Delete" AJAX call re-requests this same
@@ -147,6 +153,19 @@ class LeadController extends Controller
         return $this->leadService->getLead($this->ownerId(), $id, $withTrashed);
     }
 
+    /** Owning account only — an agency agent can work an assigned agency lead but not delete/restore it. */
+    protected function findStrictlyOwned($id, bool $withTrashed = false): Lead
+    {
+        return $this->leadService->getOwnedLead($this->ownerId(), $id, $withTrashed);
+    }
+
+    /** The owning agency (or Super Admin) may hand an agency lead to one of that agency's agents. */
+    protected function canAssign(Lead $lead): bool
+    {
+        return ($this->isAdmin() || ($this->ownerId() && $lead->portal_user_id === $this->ownerId()))
+            && $lead->owner?->isAgency();
+    }
+
     /**
      * JSON payload for the Lead View/Edit modal — the lead's own values plus
      * the Stage/Source/Tag master data scoped to *the viewer's own* owner
@@ -181,6 +200,20 @@ class LeadController extends Controller
             'tag_ids' => $lead->tags->pluck('id'),
             'property_title' => $lead->property?->getTranslation('title'),
             'owner_name' => $lead->owner?->displayName(),
+            'owner_is_agency' => (bool) $lead->owner?->isAgency(),
+            'agent_id' => $lead->agent_id,
+            'agent_name' => $lead->agent?->name,
+            'assignment_label' => $lead->assignmentLabel(),
+            'assigned_at' => $lead->assigned_at?->format('d M Y, H:i'),
+            'can_assign' => $canAssign = $this->canAssign($lead),
+            'agent_options' => $canAssign ? $lead->owner->eligibleAgentsQuery()->get(['portal_users.id', 'portal_users.name']) : [],
+            'assignment_history' => $lead->assignmentHistory()->with('agent:id,name')->get()->map(fn ($row) => [
+                'assigned_at' => $row->assigned_at->format('d M Y, H:i'),
+                'agent_name' => $row->agent?->name,
+                'label' => (new Lead(['assignment_type' => $row->assignment_type]))->assignmentLabel() ?? $row->assignment_type,
+                'by' => $row->assigned_by_type === 'system' ? null : ucfirst($row->assigned_by_type),
+                'note' => $row->note,
+            ]),
             'stage_name' => $lead->stage?->name,
             'stage_color' => $lead->stage?->color,
             'source_name' => $lead->source?->name,
@@ -285,7 +318,7 @@ class LeadController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $this->leadService->deleteLead($this->findOwned($id));
+        $this->leadService->deleteLead($this->findStrictlyOwned($id));
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Lead deleted.']);
@@ -322,16 +355,51 @@ class LeadController extends Controller
 
     public function restore($id)
     {
-        $this->leadService->restoreLead($this->findOwned($id, withTrashed: true));
+        $this->leadService->restoreLead($this->findStrictlyOwned($id, withTrashed: true));
 
         return redirect()->route('portal.crm.leads.trashed')->with('success', 'Lead restored.');
     }
 
     public function forceDestroy($id)
     {
-        $this->leadService->forceDeleteLead($this->findOwned($id, withTrashed: true));
+        $this->leadService->forceDeleteLead($this->findStrictlyOwned($id, withTrashed: true));
 
         return redirect()->route('portal.crm.leads.trashed')->with('success', 'Lead permanently deleted.');
+    }
+
+    /** Manual assign / reassign / unassign (agent_id null) of an agency lead — owning agency or Super Admin. */
+    public function assign(Request $request, LeadAssignmentService $assignment, $id)
+    {
+        $lead = $this->isAdmin() ? Lead::with('owner')->findOrFail($id) : $this->findStrictlyOwned($id);
+        abort_unless($this->canAssign($lead), 403);
+
+        $data = $request->validate([
+            'agent_id' => ['nullable', 'integer'],
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $assignment->assignManually($lead, isset($data['agent_id']) ? (int) $data['agent_id'] : null, AssignmentActor::current(), $data['note'] ?? null);
+        $lead->load('agent');
+
+        $message = $lead->agent ? "Lead assigned to {$lead->agent->name}." : 'Lead moved back to agency level.';
+
+        return $request->wantsJson()
+            ? response()->json(['success' => true, 'message' => $message, 'agent_id' => $lead->agent_id])
+            : back()->with('success', $message);
+    }
+
+    /** Round-robins every agency-level unassigned lead across the agency's active agents, on request only. */
+    public function distributeUnassigned(Request $request, LeadAssignmentService $assignment)
+    {
+        $agency = $this->owner();
+        abort_unless($agency?->isAgency(), 403);
+
+        $count = $assignment->distributeUnassigned($agency, AssignmentActor::portal($agency));
+        $message = $count ? "{$count} unassigned " . ($count === 1 ? 'lead' : 'leads') . ' distributed.' : 'No active agents to distribute to.';
+
+        return $request->wantsJson()
+            ? response()->json(['success' => true, 'message' => $message, 'count' => $count])
+            : redirect()->route('portal.crm.leads.index')->with('success', $message);
     }
 
     public function export(Request $request)

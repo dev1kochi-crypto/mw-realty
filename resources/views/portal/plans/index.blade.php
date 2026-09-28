@@ -221,9 +221,6 @@
         <a href="{{ route('portal.plans.payments') }}" class="btn btn-portal-light btn-sm"><i class="fas fa-receipt me-1"></i>Payment history</a>
         @endif
         @if($subscribed)
-        <form action="{{ route('portal.plans.billing-portal') }}" method="POST">@csrf
-            <button class="btn btn-portal-light btn-sm"><i class="fas fa-file-invoice me-1"></i>Card &amp; invoices</button>
-        </form>
         @if($scheduled)
         <form action="{{ route('portal.plans.subscription.keep-plan') }}" method="POST">@csrf
             <button class="btn btn-portal-primary btn-sm"><i class="fas fa-undo me-1"></i>Keep {{ $currentPlan?->getTranslation('name') }}</button>
@@ -365,10 +362,7 @@
                 @endif
             </button>
             @elseif($online && !$subscribed && !$pendingRequest)
-            <form action="{{ route('portal.plans.request') }}" method="POST" class="js-plan-form"
-                  data-confirm-title="Continue to secure payment?" data-confirm="You'll be taken to Stripe to pay securely by card. Your plan activates as soon as the payment goes through."
-                  data-confirm-ok="Continue to payment" data-confirm-tone="primary">
-                @csrf
+            <form action="{{ route('portal.plans.checkout') }}" method="GET" class="js-plan-form" data-no-spinner="1">
                 <input type="hidden" name="plan_id" value="{{ $plan->id }}">
                 <input type="hidden" name="interval" value="{{ $effective }}">
                 <input type="hidden" name="coupon_code" value="">

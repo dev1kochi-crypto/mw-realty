@@ -262,7 +262,12 @@ class PortalUser extends Authenticatable
             && in_array($this->subscription_status, ['active', 'trialing', 'past_due', 'unpaid'], true);
     }
 
-    /** How many more team agents this company can add under its plan, or null if unlimited. */
+    /**
+     * How many more team agents this company can add under its plan, or null if unlimited.
+     * Every relationship the agency itself opened (active, suspended, awaiting approval, invited)
+     * holds a slot, so it can't get past its limit by stacking up invitations or pending adds. An
+     * agent's unanswered join request doesn't — it's checked when the agency accepts it.
+     */
     public function remainingAgentSlots(): ?int
     {
         if (!$this->plan || !$this->plan->status) return 0;
@@ -270,7 +275,110 @@ class PortalUser extends Authenticatable
             return null;
         }
 
-        return max(0, (int) $this->plan->agent_limit - $this->agents()->count());
+        return max(0, (int) $this->plan->agent_limit - $this->usedAgentSlots());
+    }
+
+    public function usedAgentSlots(): int
+    {
+        return $this->agencyMemberships()->open()->where('status', '!=', AgencyAgent::REQUESTED)->count();
+    }
+
+    // --- Account types -------------------------------------------------------------------
+    // Stored as type (company|agent) + company_id; the three business account types derive from it.
+
+    public const ACCOUNT_AGENCY = 'agency';
+    public const ACCOUNT_AGENCY_AGENT = 'agency_agent';
+    public const ACCOUNT_INDIVIDUAL_AGENT = 'individual_agent';
+
+    public function isAgency(): bool
+    {
+        return $this->type === 'company';
+    }
+
+    public function isAgent(): bool
+    {
+        return $this->type === 'agent';
+    }
+
+    /** An agent currently working under an agency (company_id is only ever set by an approved membership). */
+    public function isAgencyAgent(): bool
+    {
+        return $this->type === 'agent' && $this->company_id !== null;
+    }
+
+    public function isIndependentAgent(): bool
+    {
+        return $this->type === 'agent' && $this->company_id === null;
+    }
+
+    public function accountType(): string
+    {
+        return match (true) {
+            $this->isAgency() => self::ACCOUNT_AGENCY,
+            $this->isAgencyAgent() => self::ACCOUNT_AGENCY_AGENT,
+            default => self::ACCOUNT_INDIVIDUAL_AGENT,
+        };
+    }
+
+    /** Every agency relationship this agent has ever had (invitations, requests, stints). */
+    public function memberships()
+    {
+        return $this->hasMany(AgencyAgent::class, 'agent_id');
+    }
+
+    /** Every agent relationship this agency has ever had. */
+    public function agencyMemberships()
+    {
+        return $this->hasMany(AgencyAgent::class, 'agency_id');
+    }
+
+    /** The agent's membership in its current agency (approved or suspended), if any. */
+    public function currentMembership()
+    {
+        return $this->hasOne(AgencyAgent::class, 'agent_id')->member()->latestOfMany();
+    }
+
+    /**
+     * Agents that may receive properties/leads for an agency: approved membership, approved +
+     * active account, and still pointing at that agency. Ordered by id so round-robin is stable.
+     */
+    public function eligibleAgentsQuery()
+    {
+        return PortalUser::query()
+            ->where('portal_users.type', 'agent')
+            ->where('portal_users.company_id', $this->id)
+            ->where('portal_users.status', 'approved')
+            ->where('portal_users.is_active', true)
+            ->whereExists(fn ($q) => $q->from('agency_agents')
+                ->whereColumn('agency_agents.agent_id', 'portal_users.id')
+                ->where('agency_agents.agency_id', $this->id)
+                ->where('agency_agents.status', AgencyAgent::APPROVED))
+            ->orderBy('portal_users.id');
+    }
+
+    public function hasEligibleAgent(int $agentId): bool
+    {
+        return $this->isAgency() && $this->eligibleAgentsQuery()->whereKey($agentId)->exists();
+    }
+
+    /**
+     * The account a new listing is owned by / counted against: an agency agent lists on behalf of
+     * its agency (agency plan limits apply), everyone else lists for themselves.
+     */
+    public function listingOwner(): PortalUser
+    {
+        return $this->isAgencyAgent() && $this->company ? $this->company : $this;
+    }
+
+    /** Leads assigned to this agent to work (across owners — see Lead::scopeVisibleTo()). */
+    public function assignedLeads()
+    {
+        return $this->hasMany(Lead::class, 'agent_id');
+    }
+
+    public function leadAssignmentSetting()
+    {
+        return $this->hasOne(AgencyLeadAssignmentSetting::class, 'agency_id');
     }
 
     public function hasReportsAccess(): bool

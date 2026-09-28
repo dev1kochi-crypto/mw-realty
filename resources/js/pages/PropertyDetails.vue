@@ -34,6 +34,10 @@ watch(property, () => {
 const enquiryForm = reactive({ name: '', email: '', phone: '', message: '' });
 const enquirySubmitting = ref(false);
 const enquiryFeedback = ref(null);
+const brochureOpen = ref(false);
+const brochureSubmitting = ref(false);
+const brochureFeedback = ref(null);
+const brochureForm = reactive({ name: '', email: '', phone: '' });
 
 watch(
     () => property.value?.name,
@@ -67,6 +71,29 @@ async function handleEnquirySubmit() {
         enquiryFeedback.value = { type: 'error', text: error.response?.data?.message || t('property_details.generic_error') };
     } finally {
         enquirySubmitting.value = false;
+    }
+}
+
+async function handleBrochureSubmit() {
+    if (brochureSubmitting.value || !property.value?.brochure_available) return;
+    brochureSubmitting.value = true;
+    brochureFeedback.value = null;
+    try {
+        const recaptcha_token = await getRecaptchaToken('brochure_download');
+        const { data } = await window.axios.post('/leads/brochure-download', {
+            property_id: property.value.id,
+            ...brochureForm,
+            recaptcha_token,
+        });
+        brochureFeedback.value = { type: 'success', text: data.message, url: data.brochure_url };
+    } catch (error) {
+        const errors = error.response?.data?.errors;
+        brochureFeedback.value = {
+            type: 'error',
+            text: errors ? Object.values(errors).flat()[0] : (error.response?.data?.message || t('property_details.generic_error')),
+        };
+    } finally {
+        brochureSubmitting.value = false;
     }
 }
 
@@ -157,6 +184,9 @@ function agentAria(template, name) {
                             <span class="mw-property__price-amount">{{ property.price }}</span>
                         </strong>
                         <strong v-else class="mw-property__price-value">{{ t('property_details.price_on_request') }}</strong>
+                        <button v-if="property.brochure_available" type="button" class="mw-brochure-button" @click="brochureOpen = true; brochureFeedback = null">
+                            <span aria-hidden="true">↓</span> Download Brochure
+                        </button>
                     </div>
                 </div>
 
@@ -367,4 +397,44 @@ function agentAria(template, name) {
             </div>
         </section>
     </main>
+
+    <Teleport to="body">
+        <div v-if="brochureOpen" class="mw-brochure-overlay" @click.self="brochureOpen = false" @keydown.esc="brochureOpen = false">
+            <section class="mw-brochure-dialog" role="dialog" aria-modal="true" aria-labelledby="brochure-title">
+                <button type="button" class="mw-brochure-close" aria-label="Close" @click="brochureOpen = false">×</button>
+                <div class="mw-brochure-icon" aria-hidden="true">↓</div>
+                <h2 id="brochure-title">Get the property brochure</h2>
+                <p>Share your contact details to access the brochure.</p>
+                <form v-if="!brochureFeedback || brochureFeedback.type !== 'success'" class="mw-brochure-form" @submit.prevent="handleBrochureSubmit">
+                    <label>Name<input v-model="brochureForm.name" required autocomplete="name" maxlength="255"></label>
+                    <label>Email<input v-model="brochureForm.email" required type="email" autocomplete="email" maxlength="255"></label>
+                    <label>Phone<input v-model="brochureForm.phone" required type="tel" autocomplete="tel" maxlength="50"></label>
+                    <p v-if="brochureFeedback" class="mw-brochure-feedback is-error" role="alert">{{ brochureFeedback.text }}</p>
+                    <button type="submit" class="mw-brochure-submit" :disabled="brochureSubmitting">
+                        {{ brochureSubmitting ? 'Preparing…' : 'Continue to download' }}
+                    </button>
+                </form>
+                <div v-else class="mw-brochure-success" role="status">
+                    <p>{{ brochureFeedback.text }}</p>
+                    <a :href="brochureFeedback.url" target="_blank" rel="noopener" @click="brochureOpen = false">Download PDF</a>
+                </div>
+            </section>
+        </div>
+    </Teleport>
 </template>
+
+<style scoped>
+.mw-brochure-button{display:flex;align-items:center;gap:9px;margin-top:16px;padding:11px 17px;border:0;border-radius:10px;background:#203f68;color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 8px 20px #203f6830;transition:transform .2s,box-shadow .2s,background .2s}
+.mw-brochure-button:hover{transform:translateY(-2px);background:#c3264b;box-shadow:0 12px 24px #c3264b40}
+.mw-brochure-button span{font-size:22px;line-height:14px}
+.mw-brochure-overlay{position:fixed;z-index:10000;inset:0;display:grid;place-items:center;padding:20px;background:#101c2dcc;backdrop-filter:blur(6px);animation:brochureFade .18s ease-out}
+.mw-brochure-dialog{position:relative;width:min(100%,450px);padding:36px;border-radius:22px;background:#fff;box-shadow:0 28px 90px #08162d55;animation:brochurePop .28s cubic-bezier(.2,.8,.2,1)}
+.mw-brochure-close{position:absolute;top:14px;right:17px;border:0;background:transparent;color:#64748b;font-size:28px;cursor:pointer}
+.mw-brochure-icon{display:grid;place-items:center;width:48px;height:48px;margin-bottom:17px;border-radius:15px;background:#edf3fa;color:#203f68;font-size:30px}
+.mw-brochure-dialog h2{margin:0 0 8px;color:#142943;font-size:24px}.mw-brochure-dialog>p{margin:0 0 22px;color:#64748b}
+.mw-brochure-form{display:grid;gap:14px}.mw-brochure-form label{display:grid;gap:6px;color:#263951;font-size:13px;font-weight:600}.mw-brochure-form input{width:100%;height:46px;padding:0 12px;border:1px solid #d7dfeb;border-radius:9px;font-family:inherit;font-size:15px;font-weight:400}.mw-brochure-form input:focus{outline:2px solid #203f6833;border-color:#203f68}
+.mw-brochure-submit,.mw-brochure-success a{display:inline-flex;justify-content:center;align-items:center;min-height:48px;padding:0 18px;border:0;border-radius:10px;background:#203f68;color:#fff;text-decoration:none;font-weight:700;cursor:pointer;transition:transform .2s,background .2s}.mw-brochure-submit:hover,.mw-brochure-success a:hover{transform:translateY(-2px);background:#c3264b}.mw-brochure-submit:disabled{opacity:.65;cursor:wait}
+.mw-brochure-feedback{margin:0;font-size:13px}.is-error{color:#b4233f}.mw-brochure-success p{color:#18794e}.mw-brochure-success a{width:100%}
+@keyframes brochureFade{from{opacity:0}to{opacity:1}}@keyframes brochurePop{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:500px){.mw-brochure-dialog{padding:28px 22px;border-radius:18px}}
+</style>

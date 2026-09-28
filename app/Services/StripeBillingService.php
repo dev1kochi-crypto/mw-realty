@@ -453,32 +453,139 @@ class StripeBillingService
 
         return DB::transaction(function () use ($session) {
             $request = PlanUpgradeRequest::where('stripe_checkout_session_id', $session->id)->lockForUpdate()->first();
-            if (!$request) {
-                return null;
-            }
-            if ($request->status === 'approved') {
-                return $request;
-            }
 
-            $user = $request->portalUser;
-            $user->forceFill([
-                'plan_id' => $request->plan_id,
-                'billing_interval' => $request->billing_interval ?: 'monthly',
-                'scheduled_plan_id' => null,
-                'scheduled_interval' => null,
-            ])->save();
-            $request->update(['status' => 'approved', 'decided_at' => now(), 'decision_note' => 'Paid online via Stripe']);
-            $this->recordCouponUse($request);
-
-            if ($session->subscription) {
-                $this->applySubscription($user->fresh(), $session->subscription);
-            }
-            if ($session->invoice) {
-                $this->recordInvoice($session->invoice);
-            }
-
-            return $request;
+            return $request ? $this->activateRequest($request, $session->subscription, $session->invoice) : null;
         });
+    }
+
+    /**
+     * On-site checkout, step 1: creates the subscription unpaid (default_incomplete) and returns the
+     * client secret the page's Stripe card fields confirm. Card details go from the browser straight
+     * to Stripe; this server never sees them. A 100%-off first invoice needs no payment and comes
+     * back already active (client_secret null).
+     */
+    public function createSubscriptionIntent(PortalUser $user, Plan $plan, string $interval, ?array $pricing): array
+    {
+        $this->cancelAbandonedIntents($user);
+
+        $request = PlanUpgradeRequest::create([
+            'portal_user_id' => $user->id,
+            'plan_id' => $plan->id,
+            'billing_interval' => $interval,
+            'current_plan_id' => $user->plan_id,
+            'status' => 'checkout',
+            'requested_at' => now(),
+            'coupon_id' => $pricing['coupon']->id ?? null,
+            'coupon_code' => $pricing['coupon']->code ?? null,
+            'original_price' => $plan->priceFor($interval),
+            'discount_amount' => $pricing['discount'] ?? null,
+            'final_price' => $pricing['final'] ?? $plan->priceFor($interval),
+        ]);
+
+        $metadata = [
+            'portal_user_id' => $user->id,
+            'plan_id' => $plan->id,
+            'interval' => $interval,
+            'upgrade_request_id' => $request->id,
+            'coupon_id' => $pricing['coupon']->id ?? '',
+        ];
+
+        $params = [
+            'customer' => $this->ensureCustomer($user),
+            'items' => [['price' => $this->ensurePrice($plan, $interval)]],
+            'metadata' => $metadata,
+            'payment_behavior' => 'default_incomplete',
+            'payment_settings' => ['save_default_payment_method' => 'on_subscription', 'payment_method_types' => ['card']],
+            'expand' => ['latest_invoice.confirmation_secret'],
+        ];
+        if ($pricing) {
+            $params['discounts'] = [['coupon' => $this->ensureCoupon($pricing['coupon'])]];
+        }
+
+        $subscription = $this->client()->subscriptions->create($params);
+        $request->update(['stripe_subscription_id' => $subscription->id]);
+
+        $invoice = $subscription->latest_invoice;
+
+        return [
+            'subscription_id' => $subscription->id,
+            'client_secret' => in_array($subscription->status, ['active', 'trialing'], true) ? null : $invoice?->confirmation_secret?->client_secret,
+            'amount_due' => round(((int) ($invoice?->amount_due ?? 0)) / 100, 2),
+        ];
+    }
+
+    /**
+     * On-site checkout, step 2 (and the subscription webhooks): activates the plan once the first
+     * invoice is paid. Safe to call repeatedly. Returns null while the payment isn't through.
+     */
+    public function fulfillSubscription(string $subscriptionId): ?PlanUpgradeRequest
+    {
+        $subscription = $this->client()->subscriptions->retrieve($subscriptionId, ['expand' => ['latest_invoice']]);
+        if (!in_array($subscription->status, ['active', 'trialing'], true)) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($subscription) {
+            $request = PlanUpgradeRequest::where('stripe_subscription_id', $subscription->id)->lockForUpdate()->first();
+
+            return $request ? $this->activateRequest($request, $subscription, $subscription->latest_invoice) : null;
+        });
+    }
+
+    /** Brand + last 4 of the card a subscription is billed to, for the "Paid" screen. */
+    public function subscriptionCard(string $subscriptionId): ?array
+    {
+        $subscription = $this->client()->subscriptions->retrieve($subscriptionId, ['expand' => ['default_payment_method']]);
+        $card = $subscription->default_payment_method?->card;
+
+        return $card ? ['brand' => $card->brand, 'last4' => $card->last4] : null;
+    }
+
+    /** Earlier on-site checkouts the user left unpaid: cancel their incomplete subscriptions. */
+    private function cancelAbandonedIntents(PortalUser $user): void
+    {
+        PlanUpgradeRequest::where('portal_user_id', $user->id)
+            ->where('status', 'checkout')
+            ->whereNotNull('stripe_subscription_id')
+            ->where('requested_at', '>=', now()->subDay())
+            ->get()
+            ->each(function (PlanUpgradeRequest $request) {
+                try {
+                    $sub = $this->client()->subscriptions->retrieve($request->stripe_subscription_id);
+                    if ($sub->status === 'incomplete') {
+                        $this->client()->subscriptions->cancel($sub->id);
+                    }
+                } catch (\Stripe\Exception\ApiErrorException $e) {
+                    self::logError($e, 'abandoned checkout cleanup');
+                }
+            });
+    }
+
+    /** Shared by both checkout flows: switch the account to the paid plan and record the first invoice. */
+    private function activateRequest(PlanUpgradeRequest $request, $subscription, $invoice): PlanUpgradeRequest
+    {
+        if ($request->status === 'approved') {
+            return $request;
+        }
+
+        $user = $request->portalUser;
+        $user->forceFill([
+            'plan_id' => $request->plan_id,
+            'billing_interval' => $request->billing_interval ?: 'monthly',
+            'scheduled_plan_id' => null,
+            'scheduled_interval' => null,
+        ])->save();
+        $request->update(['status' => 'approved', 'decided_at' => now(), 'decision_note' => 'Paid online via Stripe']);
+        $this->recordCouponUse($request);
+
+        if ($subscription) {
+            $this->applySubscription($user->fresh(), $subscription);
+        }
+        if ($invoice) {
+            $this->recordInvoice($invoice);
+        }
+
+        return $request;
     }
 
     /** Syncs local subscription fields (and plan, if changed in Stripe) from a Subscription object. */
@@ -487,6 +594,12 @@ class StripeBillingService
         $sub = $this->toArray($subscription);
         $user ??= $this->userForSubscription($sub);
         if (!$user) {
+            return;
+        }
+
+        // An on-site checkout whose first payment hasn't gone through (or never will) isn't the
+        // account's subscription yet — leave the account exactly as it is.
+        if (in_array($sub['status'] ?? null, ['incomplete', 'incomplete_expired'], true)) {
             return;
         }
 
@@ -526,8 +639,10 @@ class StripeBillingService
     /** customer.subscription.deleted — the paid period is over: drop to the Free plan. */
     public function endSubscription(PortalUser $user, string $subscriptionId): void
     {
-        if ($user->stripe_subscription_id && $user->stripe_subscription_id !== $subscriptionId) {
-            return; // an older subscription ending after the user already started a new one
+        // Only the account's own subscription: not an older one ending after the user started a new
+        // one, nor an unpaid on-site checkout attempt being cancelled.
+        if ($user->stripe_subscription_id !== $subscriptionId) {
+            return;
         }
 
         $user->forceFill([
@@ -632,6 +747,11 @@ class StripeBillingService
         $customer = is_array($inv['customer'] ?? null) ? $inv['customer']['id'] : ($inv['customer'] ?? null);
         $user = $customer ? PortalUser::where('stripe_customer_id', $customer)->first() : null;
         if (!$user || empty($inv['id'])) {
+            return null;
+        }
+        // A declined card on the first invoice is shown on the checkout page and can be retried
+        // there; the account never had this plan, so it isn't a failed payment of theirs.
+        if (($inv['billing_reason'] ?? null) === 'subscription_create') {
             return null;
         }
         $user->forceFill(['payment_status' => 'unpaid'])->save();

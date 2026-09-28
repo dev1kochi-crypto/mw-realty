@@ -4,11 +4,13 @@ use App\Http\Controllers\Api\AboutController;
 use App\Http\Controllers\Api\AgencyController;
 use App\Http\Controllers\Api\AgentController;
 use App\Http\Controllers\Api\BlogController;
+use App\Http\Controllers\Api\CareerController;
 use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\CommercialController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\LegalController;
+use App\Http\Controllers\Api\MarketInsightController;
 use App\Http\Controllers\Api\NewsletterController;
 use App\Http\Controllers\Api\PropertiesController;
 use App\Http\Controllers\Api\PropertyController;
@@ -63,6 +65,16 @@ Route::get('/about', [AboutController::class, 'index']);
 // Public, read-only — the /blogs listing page (paginated) and /blog-details/{slug} page.
 Route::get('/blogs', [BlogController::class, 'index']);
 Route::get('/blogs/{slug}', [BlogController::class, 'show']);
+
+// Public, read-only — the /market-insights listing page (paginated) and /market-insights/{slug} page.
+Route::get('/market-insights', [MarketInsightController::class, 'index']);
+Route::get('/market-insights/{slug}', [MarketInsightController::class, 'show']);
+
+// Public — the /careers listing page, /careers/{slug} vacancy page, and the application form
+// on both (saves to Careers > Candidates and emails admin).
+Route::get('/careers', [CareerController::class, 'index']);
+Route::post('/careers/apply', [CareerController::class, 'apply'])->middleware('throttle:form-submit');
+Route::get('/careers/{slug}', [CareerController::class, 'show']);
 
 // Public, read-only — the /agents listing page and /agent-details/{slug} page.
 Route::get('/agents', [AgentController::class, 'index']);

@@ -15,6 +15,7 @@ class LeadTablePreferenceService
     public const EMAIL = 'email';
     public const PHONE = 'phone';
     public const OWNER = 'owner';
+    public const AGENT = 'agent';
     public const STAGE = 'stage';
     public const STATUS = 'status';
     public const SOURCE = 'source';
@@ -59,6 +60,18 @@ class LeadTablePreferenceService
                 'label' => 'Owner',
                 'field' => 'owner.display_name',
                 'locked' => false,
+                'default' => true,
+                'sortable' => true,
+            ];
+        }
+
+        // Who is working each lead — an agency's core view (always shown), optional for Super Admin.
+        $viewer = $this->ownerContext->owner();
+        if ($this->ownerContext->isAdmin() || $viewer?->isAgency()) {
+            $columns[self::AGENT] = [
+                'label' => 'Assigned Agent',
+                'field' => 'agent.name',
+                'locked' => (bool) $viewer?->isAgency(),
                 'default' => true,
                 'sortable' => true,
             ];

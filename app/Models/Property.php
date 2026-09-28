@@ -13,6 +13,8 @@ class Property extends Model
     protected $fillable = [
         'portal_user_id',
         'agent_id',
+        'created_by_type',
+        'created_by_id',
         'translations',
         'slug',
         'reference_no',
@@ -33,6 +35,7 @@ class Property extends Model
         'currency',
         'image',
         'image_alt',
+        'brochure_path',
         'image_path',
         'image_sequence',
         'image_next_number',
@@ -71,6 +74,32 @@ class Property extends Model
     public function agent()
     {
         return $this->belongsTo(PortalUser::class, 'agent_id');
+    }
+
+    public function assignmentHistory()
+    {
+        return $this->hasMany(PropertyAssignmentHistory::class)->latest('id');
+    }
+
+    /**
+     * Listings a portal account may see and edit: its own, plus — for an agency agent — the
+     * agency's listings assigned to them. Delete / reorder / feature stay owner-only.
+     */
+    public function scopeAccessibleBy($query, ?PortalUser $viewer)
+    {
+        if (!$viewer) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($viewer) {
+            $q->where('properties.portal_user_id', $viewer->id);
+
+            if ($viewer->type === 'agent' && $viewer->company_id) {
+                $q->orWhere(fn ($assigned) => $assigned
+                    ->where('properties.agent_id', $viewer->id)
+                    ->where('properties.portal_user_id', $viewer->company_id));
+            }
+        });
     }
 
     public function images()

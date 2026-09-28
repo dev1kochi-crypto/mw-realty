@@ -89,9 +89,15 @@
                     <i class="fas fa-star"></i> Premium
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
+                @if($owner?->type === 'agent')
+                <a href="{{ route('portal.agency.index') }}" class="nav-link @if(request()->routeIs('portal.agency.*')) active @endif">
+                    <i class="fas fa-building-user"></i> My Agency
+                </a>
+                @endif
                 @if($cmsActor || $owner?->type === 'company')
                 <a href="{{ route('portal.agents.index') }}" class="nav-link @if(request()->routeIs('portal.agents.*')) active @endif">
                     <i class="fas fa-user-tie"></i> Agents
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
                 @endif
                 <a href="{{ route('portal.nearby-places.index') }}" class="nav-link @if(request()->routeIs('portal.nearby-places.*')) active @endif">
@@ -134,10 +140,16 @@
                     </a>
                     @endif
                     @if($owner && !$owner->plan?->isTopTier())
-                    <a href="{{ route('portal.plans.index') }}" class="btn-portal-upgrade-cta">
-                        <span class="btn-portal-upgrade-shine"></span>
-                        <i class="fas fa-rocket"></i> Upgrade Plan
-                    </a>
+                        @if($owner->status !== 'approved')
+                        <span class="btn-portal-upgrade-cta is-locked" title="Unlocks after KYC approval" aria-disabled="true">
+                            <i class="fas fa-lock"></i> Upgrade Plan
+                        </span>
+                        @else
+                        <a href="{{ route('portal.plans.index') }}" class="btn-portal-upgrade-cta">
+                            <span class="btn-portal-upgrade-shine"></span>
+                            <i class="fas fa-rocket"></i> Upgrade Plan
+                        </a>
+                        @endif
                     @endif
                     <a href="/" target="_blank" class="portal-btn-ghost btn btn-sm">
                         <i class="fas fa-external-link-alt me-1"></i> View Site
@@ -200,7 +212,7 @@
                             <li><hr class="dropdown-divider"></li>
                             @if($owner)
                             <li><a class="dropdown-item" href="{{ route('portal.profile.edit') }}"><i class="fas fa-user-edit me-2"></i>My Profile</a></li>
-                            <li><a class="dropdown-item" href="{{ route('portal.plans.index') }}"><i class="fas fa-layer-group me-2"></i>Plans</a></li>
+                            <li><a class="dropdown-item" href="{{ route('portal.plans.index') }}"><i class="fas fa-layer-group me-2"></i>Plans @if($owner->status !== 'approved')<i class="fas fa-lock ms-1 text-warning small" title="Unlocks after KYC approval"></i>@endif</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form action="{{ route('portal.logout') }}" method="POST" class="m-0">

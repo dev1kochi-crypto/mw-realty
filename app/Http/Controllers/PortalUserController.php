@@ -317,7 +317,6 @@ class PortalUserController extends Controller
             'passport_expiry' => $request->input('passport_expiry'),
 
             'brn_number' => $type === 'agent' ? $request->input('brn_number') : null,
-            'company_id' => $type === 'agent' ? $request->input('company_id') : null,
 
             'trade_license_no' => $request->input('trade_license_no'),
             'trade_license_expiry' => $request->input('trade_license_expiry'),
@@ -330,6 +329,13 @@ class PortalUserController extends Controller
         ]);
 
         $this->storeKycDocuments($request, $portalUser);
+
+        // Admin-created agent placed straight into an agency: recorded as an admin-approved membership.
+        if ($type === 'agent' && $request->filled('company_id')) {
+            app(\App\Services\Agency\AgencyMembershipService::class)->adminAssignAgency(
+                $portalUser, PortalUser::findOrFail($request->input('company_id')), \Illuminate\Support\Facades\Auth::guard('cms')->id(),
+            );
+        }
 
         if ($portalUser->status === 'approved') {
             $this->sendStatusEmail($portalUser, 'pending');
@@ -416,7 +422,7 @@ class PortalUserController extends Controller
         }
         $fieldsBySection = [
             'identity' => ['name', 'company_name', 'email', 'phone', 'nationality', 'emirates_id_no', 'passport_no', 'passport_expiry'],
-            'agent' => ['brn_number', 'company_id', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
+            'agent' => ['brn_number', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
             'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'trn_number', 'trn_expiry', 'authorized_signatory_name', 'landline', 'office_address'],
             'about' => ['years_of_experience', 'website', 'founding_year'],
         ];
@@ -441,6 +447,15 @@ class PortalUserController extends Controller
             $portalUser->save();
         } else {
             $portalUser->update($request->only($fieldsBySection[$request->input('section')]));
+        }
+
+        // Agency changes still go through the membership service so the history is kept.
+        if ($request->input('section') === 'agent' && $request->has('company_id')) {
+            app(\App\Services\Agency\AgencyMembershipService::class)->adminAssignAgency(
+                $portalUser,
+                $request->filled('company_id') ? PortalUser::findOrFail($request->input('company_id')) : null,
+                \Illuminate\Support\Facades\Auth::guard('cms')->id(),
+            );
         }
 
         return response()->json(['success' => true]);

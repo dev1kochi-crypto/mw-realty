@@ -275,14 +275,23 @@ return [
             'required' => ['title', 'content', 'published_at', 'feature_image', 'feature_image_alt'],
         ],
     ],
+    // Market Insights (Admin > Market Insights, public /market-insights). Topics and regions are
+    // managed in the admin (Market Insights > Topics / Regions — market_insight_terms table).
+    'market_insights' => [
+        'max_stats' => 4,
+        'image_max_kb' => 4096,
+        'report_file_max_kb' => 10240,
+    ],
     'careers' => [
         'section' => [
             'title' => true,
             'description' => true,
             'banner' => true,
             'banner_alt' => true,
-            'filter_enabled' => true,
-            'filters' => true,
+            // Off: the public /careers page always offers Department / Job Type / Location filters,
+            // built from the values active vacancies actually use (see CareerPageService).
+            'filter_enabled' => false,
+            'filters' => false,
             'filterable_columns' => ['job_type', 'department', 'location', 'country', 'base'],
             'extra_fields' => [],
             'required' => ['title'],
@@ -340,12 +349,13 @@ return [
         'departments' => [
             'columns' => [
                 'title' => true,
-                'description' => true,
+                'description' => false,
                 'order' => true,
                 'status' => true,
             ],
             'title' => true,
-            'description' => true,
+            // Off: departments only appear as a label/filter on the public careers pages.
+            'description' => false,
             'stats' => false,
             'order' => true,
             'status' => true,

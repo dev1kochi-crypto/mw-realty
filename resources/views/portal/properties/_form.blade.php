@@ -54,6 +54,9 @@
         <button type="button" role="tab" class="property-tab-link" data-bs-toggle="pill" data-bs-target="#tab-images">
             <span class="property-tab-icon"><i class="fas fa-images"></i></span> <span>Images</span>
         </button>
+        <button type="button" role="tab" class="property-tab-link" data-bs-toggle="pill" data-bs-target="#tab-brochure">
+            <span class="property-tab-icon"><i class="fas fa-file-pdf"></i></span> <span>Brochure</span>
+        </button>
         <button type="button" role="tab" class="property-tab-link" data-bs-toggle="pill" data-bs-target="#tab-nearby">
             <span class="property-tab-icon"><i class="fas fa-location-dot"></i></span> <span>Nearby Places</span>
         </button>
@@ -289,15 +292,16 @@
                         <input type="text" class="form-control" value="{{ $lockedAgency->displayName() }}" disabled>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">Assigned Agent</label>
-                        <select name="agent_id" class="form-select">
-                            <option value="">— No agent assigned —</option>
+                        <label class="form-label fw-bold">Assigned Agent <span class="text-muted fw-normal">(optional)</span></label>
+                        <select name="agent_id" class="form-select @error('agent_id') is-invalid @enderror">
+                            <option value="">— No agent (enquiries round-robin across your agents) —</option>
                             @foreach($agentOptions as $agent)
                             <option value="{{ $agent->id }}" {{ (string) $val('agent_id') === (string) $agent->id ? 'selected' : '' }}>{{ $agent->name }}</option>
                             @endforeach
                         </select>
+                        @error('agent_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         @if($agentOptions->isEmpty())
-                        <div class="form-text">You haven't added any agents yet. <a href="{{ route('portal.agents.create') }}" target="_blank">Add one</a>.</div>
+                        <div class="form-text">No active agents yet — that's fine, the listing publishes normally and enquiries come to your agency. <a href="{{ route('portal.agents.index') }}" target="_blank">Manage agents</a>.</div>
                         @endif
                     </div>
                 @else
@@ -547,6 +551,23 @@
                 <div class="dz-message"><i class="fas fa-cloud-upload-alt me-1"></i> Drop gallery photos here, or click to browse</div>
             </div>
             <input type="file" name="images[]" id="galleryInput" class="d-none" multiple accept="image/*">
+        </div>
+
+        {{-- Brochure --}}
+        <div class="tab-pane fade" id="tab-brochure" role="tabpanel">
+            <div class="property-tab-pane-head">
+                <div class="property-tab-pane-title">Property Brochure</div>
+                <div class="property-tab-pane-hint">Upload a PDF for visitors to download after submitting their contact details.</div>
+            </div>
+            <div class="p-3 border rounded-3">
+                <label class="form-label fw-semibold" for="brochureUpload">Brochure PDF</label>
+                <input type="file" name="brochure" id="brochureUpload" class="form-control" accept="application/pdf,.pdf">
+                <div class="form-text">PDF only. Maximum file size: 20 MB.</div>
+                @if($isEdit && $property->brochure_path)
+                    <a class="small d-inline-block mt-2" href="{{ media_url($property->brochure_path) }}" target="_blank" rel="noopener">View current brochure</a>
+                @endif
+                @error('brochure')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+            </div>
         </div>
 
         {{-- Nearby Places --}}

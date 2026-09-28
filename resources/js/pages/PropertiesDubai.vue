@@ -167,6 +167,10 @@ function optionsFor(key, anyLabel, current) {
 }
 const listingTypeOptions = computed(() => optionsFor('listing_type', t('properties_listing.filter_bar.any_purpose', 'Any'), listingType.value));
 const completionOptions = computed(() => optionsFor('completion_status', t('properties_listing.toolbar.all'), completion.value));
+const completionPillsKey = computed(() => completionOptions.value.map((o) => `${o.value}:${o.label}`).join('|'));
+watch(completionPillsKey, () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+});
 const propertyTypeOptions = computed(() => optionsFor('property_type', t('properties_listing.filter_bar.all_type'), propertyType.value));
 const bedroomOptions = computed(() => optionsFor('bedrooms', t('properties_listing.filter_bar.select_bedrooms'), bedroomsFilter.value));
 const bathroomOptions = computed(() => optionsFor('bathrooms', t('properties_listing.filter_bar.select_bathrooms'), bathroomsFilter.value));
@@ -632,7 +636,11 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
         <section class="mw-dubai-toolbar">
             <div class="container-ctn">
                 <div class="mw-dubai-toolbar__row">
-                    <div v-if="showFilter('completion_status')" class="mw-pill-tabs" role="group">
+                    <!-- Keyed by its option list: assets/js/script.js moves these buttons into its own
+                         mobile-dropdown wrapper on first scan, so options that arrive later (from the
+                         filters API) would be inserted after "All" instead of before it. A new key
+                         rebuilds the group in the right order, and the watcher below re-scans it. -->
+                    <div v-if="showFilter('completion_status')" :key="completionPillsKey" class="mw-pill-tabs" role="group">
                         <button v-for="opt in completionOptions" :key="opt.value" type="button" data-tab :class="{ 'is-active': opt.value === completion }" :aria-pressed="opt.value === completion" @click="selectCompletion(opt.value)">{{ opt.label }}</button>
                     </div>
                     <div class="mw-dubai-toolbar__right">

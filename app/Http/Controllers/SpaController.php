@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\CmsKit\Blog;
+use App\Models\CmsKit\Career;
+use App\Models\CmsKit\MarketInsight;
+use App\Services\CareerPageService;
 use App\Models\Property;
 use App\Models\PortalUser;
 use App\Support\SeoMeta;
@@ -50,6 +53,32 @@ class SpaController extends Controller
         $fallback = array_merge($blog->seoFallback(), ['canonical_url' => $request->url()]);
 
         return $this->renderWithSeo(SeoMeta::resolve($blog->metadata, $fallback));
+    }
+
+    public function marketInsightDetails(Request $request, string $slug): Response
+    {
+        $insight = MarketInsight::where('slug', $slug)->where('status', true)->first();
+
+        if (!$insight) {
+            return $this->notFound($request, 'Market Insight');
+        }
+
+        $fallback = array_merge($insight->seoFallback(), ['canonical_url' => $request->url()]);
+
+        return $this->renderWithSeo(SeoMeta::resolve($insight->metadata, $fallback));
+    }
+
+    public function careerDetails(Request $request, string $slug, CareerPageService $careerPage): Response
+    {
+        $career = Career::active()->where('slug', $slug)->first();
+
+        if (!$career) {
+            return $this->notFound($request, 'Job Opening');
+        }
+
+        $fallback = array_merge($careerPage->seoFallback($career), ['canonical_url' => $request->url()]);
+
+        return $this->renderWithSeo(SeoMeta::resolve($career->metadata, $fallback));
     }
 
     public function agentDetails(Request $request, string $slug): Response
