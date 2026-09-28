@@ -4,11 +4,14 @@ import { useChatbot } from '../composables/useChatbot';
 import { useRecaptcha } from '../composables/useRecaptcha';
 import { useSpeech } from '../composables/useSpeech';
 import { useStaticText } from '../composables/useStaticText';
+import { useCurrency } from '../composables/useCurrency';
 
 const { messages, loading, isOpen, open, sendMessage, clearMessages } = useChatbot();
 const { getRecaptchaToken } = useRecaptcha();
 const { recognitionSupported, synthesisSupported, listening, startListening, stopListening, speak, cancelSpeech } = useSpeech();
 const { t } = useStaticText();
+// Prices arrive in AED (price_value) and are shown in the visitor's chosen currency.
+const { selectedCurrency, toAed } = useCurrency();
 
 const botName = window.MW_CHATBOT_NAME || 'Remi';
 const draft = ref('');
@@ -81,7 +84,11 @@ function applyFilters() {
     if (filters.bedrooms) parts.push(`${filters.bedrooms}-bedroom`);
     parts.push(filters.type || 'properties');
     if (filters.purpose) parts.push(`for ${filters.purpose}`);
-    if (filters.budget) parts.push(`under AED ${filters.budget}`);
+    // The budget is typed in the visitor's currency; listings are searched in AED.
+    if (filters.budget) {
+        const amount = Number(String(filters.budget).replace(/[^\d.]/g, ''));
+        parts.push(amount ? `under AED ${Math.round(toAed(amount))}` : `under AED ${filters.budget}`);
+    }
 
     showFilters.value = false;
     const text = parts.join(' ') + '.';
@@ -195,7 +202,7 @@ async function submitEnquiry() {
                                     <img src="/frontend/assets/images/icons/location.svg" alt="">
                                     {{ p.location }}
                                 </p>
-                                <p class="mw-chatbot__card-price">{{ p.price }}</p>
+                                <p class="mw-chatbot__card-price">{{ p.price_value ? `${selectedCurrency.code} ${Math.round(p.price_value * selectedCurrency.rate).toLocaleString('en-US')}` : p.price }}</p>
                                 <div class="mw-chatbot__card-stats">
                                     <span>{{ p.beds }} {{ t('chat_widget.card.bed_suffix') }}</span>
                                     <span>{{ p.baths }} {{ t('chat_widget.card.bath_suffix') }}</span>
@@ -250,7 +257,7 @@ async function submitEnquiry() {
                         <option value="studio">{{ t('chat_widget.filters.studio') }}</option>
                         <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
                     </select>
-                    <input v-model="filters.budget" type="text" inputmode="numeric" :placeholder="t('chat_widget.filters.budget_placeholder')">
+                    <input v-model="filters.budget" type="text" inputmode="numeric" :placeholder="t('chat_widget.filters.budget_placeholder').replace('AED', selectedCurrency.code)">
                 </div>
                 <button type="button" class="mw-chatbot__filters-apply" @click="applyFilters">{{ t('chat_widget.filters.apply') }}</button>
             </div>

@@ -5,12 +5,15 @@ import { useAgencyDetail } from '../composables/useAgencyDetail';
 import { useLanguages } from '../composables/useLanguages';
 import { useWishlist } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
+import { useCurrency } from '../composables/useCurrency';
 
 const route = useRoute();
 const { agency, notFound, fetchAgency } = useAgencyDetail();
 const { selectedLanguage } = useLanguages();
 const { isWishlisted, toggleWishlist } = useWishlist();
 const { t } = useStaticText();
+// Prices arrive in AED (price_value) and are shown in the visitor's chosen currency.
+const { formatPrice } = useCurrency();
 
 function load() {
     fetchAgency(route.params.slug, selectedLanguage.value?.code);
@@ -141,7 +144,7 @@ function agencyAria(template, name) {
                                 </span>
                                 <div class="mw-agent-prop__overlay">
                                     <span class="mw-agent-prop__type">{{ property.type }}</span>
-                                    <span class="mw-agent-prop__price">{{ property.price }}</span>
+                                    <span class="mw-agent-prop__price">{{ formatPrice(property.price_value, property.price) }}</span>
                                 </div>
                             </div>
                             <div class="mw-agent-prop__body">

@@ -34,6 +34,9 @@ Route::get('/location-suggestions', [\App\Http\Controllers\Api\LocationSuggestio
 // Public, read-only — every page's header language dropdown, not just home.
 Route::get('/languages', [PublicLanguageController::class, 'index']);
 
+// Public, read-only — the header currency switcher (prices are stored in AED; the site converts for display).
+Route::get('/currencies', [\App\Http\Controllers\Api\CurrencyController::class, 'index']);
+
 // Public, read-only — static UI copy (nav/footer/button labels etc.), keyed by ?lang=.
 // Same JSON files the admin's Languages > Translations screen edits.
 Route::get('/static-translations', [StaticTranslationController::class, 'index']);

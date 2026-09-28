@@ -6,6 +6,7 @@ import { usePropertyFilters } from '../composables/usePropertyFilters';
 import LocationAutocomplete from '../components/LocationAutocomplete.vue';
 import { useWishlist } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
+import { useCurrency } from '../composables/useCurrency';
 import { useLanguages } from '../composables/useLanguages';
 
 // One fetch for the whole page (see routes/api.php -> Api\HomeController) instead of a
@@ -13,6 +14,8 @@ import { useLanguages } from '../composables/useLanguages';
 const { homePage } = useHomePage();
 const { isWishlisted, toggleWishlist } = useWishlist();
 const { t } = useStaticText();
+// Prices arrive in AED (price_value) and are shown in the visitor's chosen currency.
+const { formatPrice, formatCompact, presetLabel } = useCurrency();
 const router = useRouter();
 const { selectedLanguage } = useLanguages();
 
@@ -62,7 +65,11 @@ const pricePresets = computed(() => [
     [2000000, 5000000, '2m_5m'], [5000000, 10000000, '5m_10m'], [10000000, Infinity, '10m_plus'],
 ]
     .filter(([min]) => min < priceMax.value)
-    .map(([min, max, key]) => ({ min, max: Math.min(max, priceMax.value), label: t(`home.price_presets.${key}`) })));
+    .map(([min, max, key]) => ({
+        min,
+        max: Math.min(max, priceMax.value),
+        label: presetLabel(min, Math.min(max, priceMax.value), { top: max === Infinity, baseLabel: t(`home.price_presets.${key}`), under: t('home.price_presets.under_word', 'Under') }),
+    })));
 
 // The selected tab is stored as "key:value" (not the tab object), so it survives heroTabs being
 // rebuilt when the admin labels arrive. "Buy" is selected by default.
@@ -167,6 +174,7 @@ const projectCards = computed(() => {
         area: p.area ?? '—',
         type: p.type,
         price: p.price,
+        priceValue: p.price_value,
     }));
 });
 
@@ -213,6 +221,7 @@ const highlightCards = computed(() => {
         baths: p.baths,
         area: p.area,
         price: p.price,
+        priceValue: p.price_value,
     }));
 });
 
@@ -286,6 +295,7 @@ const luxuryCards = computed(() => {
         stat2: p.stat2,
         area: p.area,
         price: p.price,
+        priceValue: p.price_value,
     }));
 });
 const showLuxury = computed(() => luxuryCards.value.length > 0);
@@ -330,6 +340,7 @@ const realtyCards = computed(() => {
         baths: p.baths,
         area: p.area,
         price: p.price,
+        priceValue: p.price_value,
     }));
 });
 const showRealty = computed(() => realtyCards.value.length > 0);
@@ -452,11 +463,11 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 <div class="mw-hero__price-readout">
                                     <label class="mw-hero__price-input">
                                         <span>{{ t('home.hero.price.min_label') }}</span>
-                                        <input type="text" inputmode="decimal" data-price-min-input :aria-label="t('home.hero.price.min_aria')" value="AED 0">
+                                        <input type="text" inputmode="decimal" data-price-min-input :aria-label="t('home.hero.price.min_aria')" :value="formatCompact(0)">
                                     </label>
                                     <label class="mw-hero__price-input">
                                         <span>{{ t('home.hero.price.max_label') }}</span>
-                                        <input type="text" inputmode="decimal" data-price-max-input :aria-label="t('home.hero.price.max_aria')" :value="`AED ${priceMax / 1000000}M`">
+                                        <input type="text" inputmode="decimal" data-price-max-input :aria-label="t('home.hero.price.max_aria')" :value="formatCompact(priceMax)">
                                     </label>
                                 </div>
                                 <div class="mw-hero__price-slider" data-price-slider>
@@ -467,7 +478,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 </div>
                                 <p class="mw-hero__price-presets-title">{{ t('home.hero.price.quick_select') }}</p>
                                 <div class="mw-hero__price-presets">
-                                    <button v-for="preset in pricePresets" :key="preset.label" type="button" data-price-preset :data-min="preset.min" :data-max="preset.max">{{ preset.label }}</button>
+                                    <button v-for="preset in pricePresets" :key="`${preset.min}-${preset.max}`" type="button" data-price-preset :data-min="preset.min" :data-max="preset.max">{{ preset.label }}</button>
                                 </div>
                             </div>
                         </div>
@@ -579,7 +590,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                             <div class="mw-projects__divider"></div>
                             <div class="mw-projects__foot-row">
                                 <span class="mw-projects__type">{{ card.type }}</span>
-                                <span class="mw-projects__price">{{ card.price }}</span>
+                                <span class="mw-projects__price">{{ formatPrice(card.priceValue, card.price) }}</span>
                             </div>
                         </div>
                     </article>
@@ -637,7 +648,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 </span>
                             </div>
                             <div class="mw-highlight__body">
-                                <span class="mw-highlight__price">{{ card.price }}</span>
+                                <span class="mw-highlight__price">{{ formatPrice(card.priceValue, card.price) }}</span>
                                 <h3 class="mw-highlight__name"><router-link v-if="card.slug" :to="`/property-details/${card.slug}`">{{ card.name }}</router-link><template v-else>{{ card.name }}</template></h3>
                                 <p class="mw-highlight__location">
                                     <img src="/frontend/assets/images/icons/location.svg" alt="" width="18" height="18">
@@ -807,7 +818,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                         </span>
                                     </div>
                                     <div class="mw-luxury__foot">
-                                        <span class="mw-luxury__price">{{ card.price }}</span>
+                                        <span class="mw-luxury__price">{{ formatPrice(card.priceValue, card.price) }}</span>
                                         <div class="mw-luxury__contacts">
                                             <a href="mailto:info@mightywarnersrealty.com" class="mw-luxury__contact" :aria-label="t('home.contact_card.mail')">
                                                 <img src="/frontend/assets/images/icons/luxury-email.svg" alt="" width="40" height="40">
@@ -903,7 +914,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 </div>
                                 <div class="mw-realty__divider"></div>
                                 <div class="mw-realty__foot">
-                                    <span class="mw-realty__price">{{ card.price }}</span>
+                                    <span class="mw-realty__price">{{ formatPrice(card.priceValue, card.price) }}</span>
                                     <div class="mw-realty__actions">
                                         <a href="mailto:info@mightywarnersrealty.com" :aria-label="t('home.aria.email')"><img src="/frontend/assets/images/icons/realty-email.svg" alt="" width="40" height="40"></a>
                                         <a href="tel:+971585899990" :aria-label="t('home.aria.call')"><img src="/frontend/assets/images/icons/realty-phone.svg" alt="" width="40" height="40"></a>

@@ -2,12 +2,15 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useLanguages } from '../composables/useLanguages';
+import { useCurrency } from '../composables/useCurrency';
 import { useWishlist } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
 
 const route = useRoute();
 const isHome = computed(() => route.meta.headerVariant === 'home');
 const { languages, selectedLanguage, selectLanguage } = useLanguages();
+// Prices are stored in AED; the chosen currency only changes how they are shown (see useCurrency).
+const { currencies, selectedCurrency, selectCurrency } = useCurrency();
 const { t } = useStaticText();
 
 // Buy / Rent are the /properties listing pre-filtered by purpose (PropertiesDubai.vue reads
@@ -162,15 +165,14 @@ function logout(e) {
                         </ul>
                     </div>
                     <div class="mw-dropdown" data-dropdown>
-                        <button type="button" class="mw-header__currency" data-dropdown-trigger>
-                            <span data-dropdown-label>AED</span>
+                        <button type="button" class="mw-header__currency" data-dropdown-trigger :aria-label="t('nav.currency_aria', 'Currency')">
+                            <span>{{ selectedCurrency.code }}</span>
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" width="14" height="14">
                         </button>
                         <ul class="mw-dropdown__menu" data-dropdown-menu>
-                            <li><button type="button" class="is-selected" data-dropdown-option>AED</button></li>
-                            <li><button type="button" data-dropdown-option>USD</button></li>
-                            <li><button type="button" data-dropdown-option>EUR</button></li>
-                            <li><button type="button" data-dropdown-option>GBP</button></li>
+                            <li v-for="currency in currencies" :key="currency.code">
+                                <button type="button" :class="{ 'is-selected': selectedCurrency.code === currency.code }" :title="currency.name" data-dropdown-option @click="selectCurrency(currency.code)">{{ currency.code }}</button>
+                            </li>
                         </ul>
                     </div>
                     <button type="button" class="mobile-menu-toggle" data-bs-toggle="offcanvas" data-bs-target="#mobile-nav" :aria-label="t('nav.open_menu_aria')" aria-controls="mobile-nav" aria-expanded="false">
@@ -241,15 +243,14 @@ function logout(e) {
                         </ul>
                     </div>
                     <div class="mw-dropdown" data-dropdown>
-                        <button type="button" class="mw-header__currency" data-dropdown-trigger>
-                            <span data-dropdown-label>AED</span>
+                        <button type="button" class="mw-header__currency" data-dropdown-trigger :aria-label="t('nav.currency_aria', 'Currency')">
+                            <span>{{ selectedCurrency.code }}</span>
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" width="14" height="14">
                         </button>
                         <ul class="mw-dropdown__menu" data-dropdown-menu>
-                            <li><button type="button" class="is-selected" data-dropdown-option>AED</button></li>
-                            <li><button type="button" data-dropdown-option>USD</button></li>
-                            <li><button type="button" data-dropdown-option>EUR</button></li>
-                            <li><button type="button" data-dropdown-option>GBP</button></li>
+                            <li v-for="currency in currencies" :key="currency.code">
+                                <button type="button" :class="{ 'is-selected': selectedCurrency.code === currency.code }" :title="currency.name" data-dropdown-option @click="selectCurrency(currency.code)">{{ currency.code }}</button>
+                            </li>
                         </ul>
                     </div>
                 </div>

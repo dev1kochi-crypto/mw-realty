@@ -39,17 +39,32 @@ const typeLabel = (type) => ({
     property: t('location_search.type_property', 'Property'),
 }[type] || type);
 
+// Only one suggestions request is ever in flight: a newer search aborts the previous one.
+let controller = null;
+function cancelPending() {
+    if (controller) controller.abort();
+    controller = null;
+}
+
 function fetchSuggestions(term) {
+    cancelPending();
+    controller = new AbortController();
     const id = ++requestId;
     loading.value = true;
-    window.axios.get('/api/location-suggestions', { params: { q: term, lang: selectedLanguage.value?.code, scope: props.scope } })
+    window.axios.get('/api/location-suggestions', {
+        params: { q: term, lang: selectedLanguage.value?.code, scope: props.scope },
+        signal: controller.signal,
+    })
         .then((res) => {
             if (id !== requestId) return; // a newer keystroke's request supersedes this one
             suggestions.value = res.data.suggestions || [];
             active.value = -1;
             open.value = true;
         })
-        .catch(() => { if (id === requestId) suggestions.value = []; })
+        .catch((err) => {
+            if (window.axios.isCancel?.(err) || err?.name === 'CanceledError') return; // aborted on purpose
+            if (id === requestId) suggestions.value = [];
+        })
         .finally(() => { if (id === requestId) loading.value = false; });
 }
 
@@ -58,12 +73,17 @@ function onInput(e) {
     emit('update:modelValue', value);
     emit('select', null);
     clearTimeout(timer);
+    // The text changed, so any request still in flight is for old text — cancel it now.
+    cancelPending();
+    requestId++;
+    loading.value = false;
     if (value.trim().length < 2) {
         suggestions.value = [];
         open.value = false;
         return;
     }
-    timer = setTimeout(() => fetchSuggestions(value.trim()), 250);
+    // Wait for a pause in typing, so a burst of keystrokes sends one request, not one per key.
+    timer = setTimeout(() => fetchSuggestions(value.trim()), 350);
 }
 
 function pick(s) {
@@ -91,7 +111,7 @@ function onBlur() { setTimeout(() => { open.value = false; }, 150); }
 function onFocus() { if (suggestions.value.length && props.modelValue.trim().length >= 2) open.value = true; }
 
 watch(() => props.modelValue, (v) => { if (!v) { suggestions.value = []; open.value = false; } });
-onBeforeUnmount(() => clearTimeout(timer));
+onBeforeUnmount(() => { clearTimeout(timer); cancelPending(); });
 
 const showEmpty = computed(() => open.value && !loading.value && !suggestions.value.length && props.modelValue.trim().length >= 2);
 </script>

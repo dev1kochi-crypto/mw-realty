@@ -5,12 +5,15 @@ import { usePropertyDetail } from '../composables/usePropertyDetail';
 import { useLanguages } from '../composables/useLanguages';
 import { useRecaptcha } from '../composables/useRecaptcha';
 import { useStaticText } from '../composables/useStaticText';
+import { useCurrency } from '../composables/useCurrency';
 
 const route = useRoute();
 const { property, notFound, fetchProperty } = usePropertyDetail();
 const { selectedLanguage } = useLanguages();
 const { getRecaptchaToken } = useRecaptcha();
 const { t } = useStaticText();
+// Prices arrive in AED (price_value) and are shown in the visitor's chosen currency.
+const { selectedCurrency, formatAmount, formatPrice } = useCurrency();
 
 function load() {
     fetchProperty(route.params.slug, selectedLanguage.value?.code);
@@ -180,8 +183,8 @@ function agentAria(template, name) {
                     <div class="mw-property__price">
                         <span class="mw-property__price-label">{{ property.listing_type === 'rent' ? t('property_details.price_yearly_rent') : t('property_details.price_starting_price') }}</span>
                         <strong v-if="property.price" class="mw-property__price-value">
-                            <span class="mw-property__price-currency">{{ property.currency }}</span>
-                            <span class="mw-property__price-amount">{{ property.price }}</span>
+                            <span class="mw-property__price-currency">{{ property.price_value ? selectedCurrency.code : property.currency }}</span>
+                            <span class="mw-property__price-amount">{{ property.price_value ? formatAmount(property.price_value) : property.price }}</span>
                         </strong>
                         <strong v-else class="mw-property__price-value">{{ t('property_details.price_on_request') }}</strong>
                         <button v-if="property.brochure_available" type="button" class="mw-brochure-button" @click="brochureOpen = true; brochureFeedback = null">
@@ -358,7 +361,7 @@ function agentAria(template, name) {
                             </span>
                             <div class="mw-agent-prop__overlay">
                                 <span class="mw-agent-prop__type">{{ similar.type }}</span>
-                                <span class="mw-agent-prop__price">{{ similar.price }}</span>
+                                <span class="mw-agent-prop__price">{{ formatPrice(similar.price_value, similar.price) }}</span>
                             </div>
                         </router-link>
                         <div class="mw-agent-prop__body">

@@ -96,6 +96,7 @@ class CommercialPageService
             'cta' => $property->listing_type === 'rent' ? 'For Rent' : 'Buy Now',
             'cta_variant' => $property->listing_type === 'rent' ? 'sell' : null,
             'service' => $service ? '+' . number_format($service) . ' service' : null,
+            'service_value' => $service ?: null, // AED, converted on the frontend
             'description' => $property->getTranslation('key_features', $lang),
             'floor' => $details?->floor,
             'rera_id' => $property->rera_id,

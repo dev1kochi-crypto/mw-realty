@@ -8,6 +8,7 @@ use App\Http\Controllers\CmsKit\PopularPlaceController;
 use App\Http\Controllers\CmsKit\LuxuryProjectController;
 use App\Http\Controllers\CmsKit\AboutUsController;
 use App\Http\Controllers\CmsKit\BlogCategoryController;
+use App\Http\Controllers\CmsKit\CurrencyController;
 use App\Http\Controllers\CmsKit\BlogController;
 use App\Http\Controllers\CmsKit\MarketInsightController;
 use App\Http\Controllers\CmsKit\MarketInsightTermController;
@@ -94,6 +95,18 @@ Route::prefix('customer')->middleware('customer.auth')->group(function () {
 Route::middleware(['web'])->group(function () {
     Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->group(function () {
         Route::middleware(['cms.auth'])->group(function () {
+
+            // Currencies (website currency switcher; prices are stored in AED)
+            Route::middleware(['cms.permission:currencies.view'])->group(function () {
+                Route::get('/currencies', [CurrencyController::class, 'index'])->name('cms.currencies.index');
+                Route::post('/currencies', [CurrencyController::class, 'store'])->middleware('cms.permission:currencies.create')->name('cms.currencies.store');
+                Route::middleware(['cms.permission:currencies.edit'])->group(function () {
+                    Route::put('/currencies/{id}', [CurrencyController::class, 'update'])->name('cms.currencies.update');
+                    Route::post('/currencies/{id}/toggle-status', [CurrencyController::class, 'toggleStatus'])->name('cms.currencies.toggle-status');
+                    Route::post('/currencies/{id}/set-default', [CurrencyController::class, 'setDefault'])->name('cms.currencies.set-default');
+                });
+                Route::delete('/currencies/{id}', [CurrencyController::class, 'destroy'])->middleware('cms.permission:currencies.delete')->name('cms.currencies.destroy');
+            });
 
             // Filters
             Route::middleware(['cms.permission:filters.view'])->group(function () {

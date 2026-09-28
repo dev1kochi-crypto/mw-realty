@@ -19,7 +19,8 @@
         "market_insights": "Market Insights",
         "explore": "Explore",
         "blog": "Blog",
-        "careers": "Careers"
+        "careers": "Careers",
+        "currency_aria": "Currency"
     },
     "footer": {
         "quick_links": {
@@ -159,7 +160,8 @@
             "1m_2m": "1M – 2M",
             "2m_5m": "2M – 5M",
             "5m_10m": "5M – 10M",
-            "10m_plus": "10M+"
+            "10m_plus": "10M+",
+            "under_word": "Under"
         },
         "badges": {
             "verified": "Verified",
@@ -280,7 +282,8 @@
             "1m_2m": "1M – 2M",
             "2m_5m": "2M – 5M",
             "5m_10m": "5M – 10M",
-            "10m_plus": "10M+"
+            "10m_plus": "10M+",
+            "under_word": "Under"
         },
         "bedroom_options": {
             "studio": "Studio",
@@ -475,7 +478,8 @@
             "1m_2m": "1M – 2M",
             "2m_5m": "2M – 5M",
             "5m_10m": "5M – 10M",
-            "10m_plus": "10M+"
+            "10m_plus": "10M+",
+            "under_word": "Under"
         },
         "property_types": {
             "hotel_apartment": "Hotel Apartment",

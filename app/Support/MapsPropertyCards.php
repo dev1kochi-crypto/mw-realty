@@ -51,6 +51,8 @@ trait MapsPropertyCards
             'area' => $property->sqft ? number_format($property->sqft) . ' sq.ft' : '—',
             'type' => $property->filterLabel('property_type', $lang) ?: '—',
             'price' => $property->price ? $property->currency . ' ' . number_format($property->price) : 'Price on request',
+            // Raw AED amount — the frontend converts it to the visitor's chosen currency (null = on request).
+            'price_value' => $property->price ? (float) $property->price : null,
             'purpose_badge' => $purposeBadge ?: null,
             // 'commercial' | 'residential' — the Premium page tags each card with it.
             'segment' => $property->segment === Property::SEGMENT_COMMERCIAL ? 'commercial' : 'residential',

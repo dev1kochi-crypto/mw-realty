@@ -7,6 +7,7 @@ import { useLanguages } from '../composables/useLanguages';
 import { useWishlist } from '../composables/useWishlist';
 import { useRecaptcha } from '../composables/useRecaptcha';
 import { useStaticText } from '../composables/useStaticText';
+import { useCurrency } from '../composables/useCurrency';
 import { usePropertyFilters } from '../composables/usePropertyFilters';
 import EmptyState from '../components/EmptyState.vue';
 import LocationAutocomplete from '../components/LocationAutocomplete.vue';
@@ -18,6 +19,8 @@ const { isWishlisted, toggleWishlist, authenticated } = useWishlist();
 const { selectedLanguage } = useLanguages();
 const { getRecaptchaToken } = useRecaptcha();
 const { t } = useStaticText();
+// Prices and the price filter are in AED; they're shown in the visitor's chosen currency.
+const { formatPrice, formatCompact, presetLabel } = useCurrency();
 
 // --- Filters -------------------------------------------------------------------------------------
 // Options, labels and which filters exist all come from Admin > Filters ("Show on: Listing") via
@@ -227,7 +230,7 @@ const pricePresets = computed(() => [
     [2000000, 5000000, '2m_5m'], [5000000, 10000000, '5m_10m'], [10000000, Infinity, '10m_plus'],
 ]
     .filter(([lo]) => lo < priceCeiling.value)
-    .map(([lo, hi, key]) => [lo, Math.min(hi, priceCeiling.value), key]));
+    .map(([lo, hi, key]) => [lo, Math.min(hi, priceCeiling.value), key, hi === Infinity]));
 
 /** Puts the panel's price slider back in line with the applied price filter. */
 function syncPriceSlider() {
@@ -251,10 +254,8 @@ const priceFillStyle = computed(() => ({
     width: `${((priceHi.value - priceLo.value) / priceCeiling.value) * 100}%`,
 }));
 
-const formatAed = (v) => {
-    const n = Number(v);
-    return 'AED ' + (n >= 1e6 ? `${+(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${+(n / 1e3).toFixed(0)}K` : n);
-};
+// Filter values stay in AED; only the text is in the chosen currency.
+const formatAed = (v) => formatCompact(v);
 
 /** "Apply" in the More filters panel. */
 function applyPanel() {
@@ -517,7 +518,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                     </div>
                     <p class="mw-hero__price-presets-title">{{ t('properties_listing.filter_panel.quick_select') }}</p>
                     <div class="mw-hero__price-presets">
-                        <button v-for="p in pricePresets" :key="p[2]" type="button" :class="{ 'is-active': priceLo === p[0] && priceHi === p[1] }" @click="pickPricePreset(p)">{{ t(`properties_listing.price_presets.${p[2]}`) }}</button>
+                        <button v-for="p in pricePresets" :key="p[2]" type="button" :class="{ 'is-active': priceLo === p[0] && priceHi === p[1] }" @click="pickPricePreset(p)">{{ presetLabel(p[0], p[1], { top: p[3], baseLabel: t(`properties_listing.price_presets.${p[2]}`), under: t('properties_listing.price_presets.under_word', 'Under') }) }}</button>
                     </div>
                 </section>
 
@@ -730,7 +731,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                         </div>
                         <div class="mw-dubai-card__body">
                             <div class="mw-dubai-card__price-row">
-                                <span class="mw-dubai-card__price">{{ property.price }}</span>
+                                <span class="mw-dubai-card__price">{{ formatPrice(property.price_value, property.price) }}</span>
                             </div>
                             <h3 class="mw-dubai-card__title"><router-link :to="`/property-details/${property.slug}`">{{ property.name }}</router-link></h3>
                             <p class="mw-dubai-card__location">

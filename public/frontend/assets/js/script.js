@@ -460,7 +460,10 @@
     }
   }
 
+  // Amounts are AED; when the Vue currency switcher is loaded (window.MWCurrency, see
+  // resources/js/composables/useCurrency.js) they are shown in — and typed in — the visitor's currency.
   function formatAed(value) {
+    if (window.MWCurrency) return window.MWCurrency.formatCompact(Number(value));
     var n = Number(value);
     if (n >= 1000000) {
       var millions = n / 1000000;
@@ -473,6 +476,10 @@
   }
 
   function parseAed(str) {
+    if (window.MWCurrency) {
+      var aed = window.MWCurrency.parseToAed(str);
+      return isNaN(aed) ? NaN : Math.round(aed);
+    }
     var raw = String(str || '').trim().toUpperCase().replace(/AED/g, '').replace(/,/g, '').replace(/\s/g, '');
     if (!raw) return NaN;
     var mult = 1;
@@ -500,7 +507,9 @@
       var minText = wrap.querySelector('[data-price-min-input]');
       var maxText = wrap.querySelector('[data-price-max-input]');
       var fieldLabel = wrap.querySelector('[data-dropdown-label]');
-      var presets = Array.prototype.slice.call(wrap.querySelectorAll('[data-price-preset]'));
+      // Looked up live: Vue re-renders the preset buttons (labels/range arrive after binding), and
+      // listeners bound to the first set of buttons would be lost with them.
+      function presetButtons() { return Array.prototype.slice.call(wrap.querySelectorAll('[data-price-preset]')); }
       // Read the bounds live: Vue may change the slider's max after binding (the admin price filter's
       // range arrives asynchronously), and a stale cached max would misplace the fill and labels.
       function absMin() { return Number(minInput.min); }
@@ -536,7 +545,7 @@
         }
 
         if (!fromPreset) {
-          presets.forEach(function (btn) {
+          presetButtons().forEach(function (btn) {
             var matches = Number(btn.getAttribute('data-min')) === min && Number(btn.getAttribute('data-max')) === max;
             btn.classList.toggle('is-selected', matches);
           });
@@ -575,19 +584,28 @@
         field.addEventListener('blur', function () { applyTyped(which); });
       });
 
-      presets.forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
+      // Delegated to the presets' container (which Vue keeps), so re-rendered buttons still work.
+      // stopPropagation keeps the click from reaching the dropdown's own toggle and closing it.
+      var presetsBox = presetButtons()[0] && presetButtons()[0].parentElement;
+      if (presetsBox) {
+        presetsBox.addEventListener('click', function (e) {
+          var btn = e.target.closest('[data-price-preset]');
+          if (!btn) return;
           e.preventDefault();
           e.stopPropagation();
           minInput.value = btn.getAttribute('data-min');
           maxInput.value = btn.getAttribute('data-max');
-          presets.forEach(function (b) { b.classList.remove('is-selected'); });
+          presetButtons().forEach(function (b) { b.classList.remove('is-selected'); });
           btn.classList.add('is-selected');
           sync(true);
         });
-      });
+      }
 
       sync(false);
+      // Re-render the labels when the visitor switches currency (the values stay in AED).
+      window.addEventListener('mw:currency-change', function () {
+        if (document.body.contains(root)) sync(false);
+      });
     });
   }
 

@@ -171,20 +171,25 @@
                     <div class="sidebar-section-label">Website Content</div>
 
                     {{-- Site Settings Group --}}
-                    @if((config('cms-kit.common.modules.languages', true) && $cmsUser->can('languages.view')) || $cmsUser->can('site-information.view'))
+                    @if((config('cms-kit.common.modules.languages', true) && $cmsUser->can('languages.view')) || $cmsUser->can('site-information.view') || $cmsUser->can('currencies.view'))
                         <div class="nav-item sidebar-group">
-                            <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) active @endif" 
-                            data-bs-toggle="collapse" href="#settingsMenu" role="button" 
-                            aria-expanded="@if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) true @else false @endif">
+                            <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*') || request()->routeIs('cms.currencies.*')) active @endif"
+                            data-bs-toggle="collapse" href="#settingsMenu" role="button"
+                            aria-expanded="@if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*') || request()->routeIs('cms.currencies.*')) true @else false @endif">
                                 <i class="fas fa-cog"></i>
                                 <span>General Settings</span>
                                 <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
                             </a>
-                            <div class="collapse sidebar-submenu @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) show @endif" id="settingsMenu">
+                            <div class="collapse sidebar-submenu @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*') || request()->routeIs('cms.currencies.*')) show @endif" id="settingsMenu">
                                 <nav class="nav flex-column">
                                     @if(config('cms-kit.common.modules.languages', true) && $cmsUser->can('languages.view'))
                                     <a class="nav-link py-2 @if(request()->routeIs('cms.languages.index') || request()->routeIs('cms.languages.static-texts.*') || request()->routeIs('cms.languages.translations*')) active @endif" href="{{ route('cms.languages.index') }}">
                                         Languages
+                                    </a>
+                                    @endif
+                                    @if($cmsUser->can('currencies.view'))
+                                    <a class="nav-link py-2 @if(request()->routeIs('cms.currencies.*')) active @endif" href="{{ route('cms.currencies.index') }}">
+                                        Currencies
                                     </a>
                                     @endif
                                     @if($cmsUser->can('site-information.view'))

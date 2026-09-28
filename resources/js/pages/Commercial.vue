@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useCommercial } from '../composables/useCommercial';
 import { useLanguages } from '../composables/useLanguages';
 import { useStaticText } from '../composables/useStaticText';
+import { useCurrency } from '../composables/useCurrency';
 import { usePropertyFilters } from '../composables/usePropertyFilters';
 import EmptyState from '../components/EmptyState.vue';
 import LocationAutocomplete from '../components/LocationAutocomplete.vue';
@@ -14,6 +15,8 @@ const router = useRouter();
 const { commercialListing, fetchCommercialListing } = useCommercial();
 const { selectedLanguage } = useLanguages();
 const { t } = useStaticText();
+// Prices and the price filter are in AED; they're shown in the visitor's chosen currency.
+const { formatPrice, formatCompact, presetLabel } = useCurrency();
 
 // Property type options, price/area bounds and counts come from the live Commercial-menu listings
 // (GET /api/property-filters?scope=commercial), so the dropdown only offers types that exist.
@@ -155,7 +158,7 @@ const pricePresets = computed(() => [
     [2000000, 5000000, '2m_5m'], [5000000, 10000000, '5m_10m'], [10000000, Infinity, '10m_plus'],
 ]
     .filter(([lo]) => lo < priceCeiling.value)
-    .map(([lo, hi, key]) => [lo, Math.min(hi, priceCeiling.value), key]));
+    .map(([lo, hi, key]) => [lo, Math.min(hi, priceCeiling.value), key, hi === Infinity]));
 
 function syncPriceSlider() {
     priceLo.value = Number(minPrice.value) || 0;
@@ -175,10 +178,8 @@ const priceFillStyle = computed(() => ({
     left: `${(priceLo.value / priceCeiling.value) * 100}%`,
     width: `${((priceHi.value - priceLo.value) / priceCeiling.value) * 100}%`,
 }));
-const formatAed = (v) => {
-    const n = Number(v);
-    return 'AED ' + (n >= 1e6 ? `${+(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${+(n / 1e3).toFixed(0)}K` : n);
-};
+// Filter values stay in AED; only the text is in the chosen currency.
+const formatAed = (v) => formatCompact(v);
 
 /** "Apply Filters" in the panel. */
 function applyPanel() {
@@ -289,7 +290,7 @@ function amenityOverflow(amenities) {
                 </div>
                 <p class="mw-hero__price-presets-title">{{ t('commercial.filter_panel.quick_select') }}</p>
                 <div class="mw-hero__price-presets">
-                    <button v-for="p in pricePresets" :key="p[2]" type="button" :class="{ 'is-active': priceLo === p[0] && priceHi === p[1] }" @click="pickPricePreset(p)">{{ t(`commercial.price_presets.${p[2]}`) }}</button>
+                    <button v-for="p in pricePresets" :key="p[2]" type="button" :class="{ 'is-active': priceLo === p[0] && priceHi === p[1] }" @click="pickPricePreset(p)">{{ presetLabel(p[0], p[1], { top: p[3], baseLabel: t(`commercial.price_presets.${p[2]}`), under: t('commercial.price_presets.under_word', 'Under') }) }}</button>
                 </div>
             </section>
 
@@ -443,8 +444,8 @@ function amenityOverflow(amenities) {
                         </div>
                         <div class="mw-commercial-card__body">
                             <div class="mw-commercial-card__price-row">
-                                <span v-if="property.service" class="mw-commercial-card__service">{{ property.service }}</span>
-                                <span class="mw-commercial-card__price">{{ property.price }}</span>
+                                <span v-if="property.service" class="mw-commercial-card__service">{{ property.service_value ? `+${formatPrice(property.service_value)} service` : property.service }}</span>
+                                <span class="mw-commercial-card__price">{{ formatPrice(property.price_value, property.price) }}</span>
                             </div>
                             <h3 class="mw-commercial-card__title"><router-link :to="`/property-details/${property.slug}`">{{ property.name }}</router-link></h3>
                             <p class="mw-commercial-card__location">

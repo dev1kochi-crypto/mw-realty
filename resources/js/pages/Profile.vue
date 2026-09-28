@@ -2,8 +2,20 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useWishlist, patchSessionUser } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
+import { useCurrency } from '../composables/useCurrency';
 
 const { t } = useStaticText();
+// Prices arrive in AED (price_value) and are shown in the visitor's chosen currency.
+const { formatPrice, formatAmount, selectedCurrency } = useCurrency();
+
+/** The saved search's summary line, with its AED price range shown in the chosen currency. */
+function savedSearchMeta(search) {
+    const min = Number(search.criteria?.min_price) || 0;
+    const max = Number(search.criteria?.max_price) || 0;
+    if (!search.meta || (!min && !max)) return search.meta;
+    const range = `${selectedCurrency.value.code} ${formatAmount(min)} – ${max ? formatAmount(max) : 'any'}`;
+    return search.meta.replace(/AED [\d,.]+ – (?:[\d,.]+|any)/, range);
+}
 
 const navTabs = computed(() => [
     { filter: 'overview', icon: 'icon-home.svg', label: t('profile.nav.overview') },
@@ -217,7 +229,7 @@ watch(dashboard, () => {
                                     </div>
                                     <div class="mw-dubai-card__body">
                                         <div class="mw-dubai-card__price-row">
-                                            <span class="mw-dubai-card__price">{{ property.price }}</span>
+                                            <span class="mw-dubai-card__price">{{ formatPrice(property.price_value, property.price) }}</span>
                                             <span v-if="property.furnished" class="mw-dubai-card__amenity">{{ t('profile.wishlist.furnished_badge') }}</span>
                                         </div>
                                         <h3 class="mw-dubai-card__title"><router-link :to="`/property-details/${property.slug}`">{{ property.name }}</router-link></h3>
@@ -263,7 +275,7 @@ watch(dashboard, () => {
                                 <div v-for="search in dashboard.saved_searches" :key="search.id" class="mw-dashboard__search-row">
                                     <div class="mw-dashboard__search-row-info">
                                         <p class="mw-dashboard__search-row-title">{{ search.title }}</p>
-                                        <p class="mw-dashboard__search-row-meta">{{ search.meta }}</p>
+                                        <p class="mw-dashboard__search-row-meta">{{ savedSearchMeta(search) }}</p>
                                     </div>
                                     <div class="mw-dashboard__search-row-actions">
                                         <router-link :to="{ path: '/properties', query: search.criteria || {} }" class="mw-dashboard__link-btn">{{ t('profile.saved_searches.view_results') }}</router-link>

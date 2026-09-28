@@ -49,6 +49,7 @@ class PropertyPageService
                 'location' => $location,
                 'address' => $property->getTranslation('address', $lang),
                 'price' => $property->price ? number_format($property->price) : null,
+                'price_value' => $property->price ? (float) $property->price : null, // AED, converted on the frontend
                 'currency' => $property->currency,
                 'beds' => $property->bedrooms,
                 'baths' => $property->bathrooms,

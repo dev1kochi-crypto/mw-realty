@@ -10,10 +10,10 @@ use App\Models\PropertyDetail;
 use App\Models\PropertyFloorPlan;
 use App\Services\Agency\AgencyMembershipService;
 use App\Services\Agency\AssignmentActor;
+use App\Support\DemoPropertyMedia;
 use App\Support\LocationFilter;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -26,7 +26,7 @@ use Illuminate\Support\Str;
  * furnished and parking rotate across sets so those filters (and their combinations) match too.
  *
  * Idempotent: listings are keyed by slug, so re-running only adds what is missing.
- * Photos are hard links to one shared set of demo images (no extra disk space per listing).
+ * Photos come from DemoPropertyMedia: uploaded to Cloudinary when configured, else hard-linked locally.
  *
  *   php artisan db:seed --class=DemoFilterCoveragePropertiesSeeder
  */
@@ -98,27 +98,10 @@ class DemoFilterCoveragePropertiesSeeder extends Seeder
     private const ADJECTIVES = ['Modern', 'Spacious', 'Luxury', 'Elegant', 'Bright', 'Premium', 'Family', 'Stylish'];
     private const VIEWS = ['Sea View', 'Skyline View', 'Community View', 'Garden View', 'Pool View', 'Golf Course View'];
 
-    private const DEMO_IMAGES = [
-        'frontend/assets/images/home/project-card-1.jpg',
-        'frontend/assets/images/home/project-card-2.jpg',
-        'frontend/assets/images/home/project-card-3.jpg',
-        'frontend/assets/images/home/project-card-4.jpg',
-        'frontend/assets/images/home/project-card-5.jpg',
-        'frontend/assets/images/home/project-card-6.jpg',
-        'frontend/assets/images/home/luxury-card-1.jpg',
-        'frontend/assets/images/home/luxury-card-2.jpg',
-        'frontend/assets/images/home/luxury-card-3.jpg',
-        'frontend/assets/images/home/realty-card-1.jpg',
-        'frontend/assets/images/home/realty-card-2.jpg',
-        'frontend/assets/images/home/realty-card-3.jpg',
-        'frontend/assets/images/home/realty-card-4.jpg',
-    ];
-    private const FLOOR_PLAN_IMAGE = 'frontend/assets/images/property-details/floorplan.png';
-    private const MASTER_FOLDER = 'properties/_demo-masters';
 
     private int $nextReference;
     private int $nextOrder;
-    private array $masters = [];
+    private DemoPropertyMedia $media;
     private int $created = 0;
 
     public function run(): void
@@ -127,7 +110,7 @@ class DemoFilterCoveragePropertiesSeeder extends Seeder
             throw new \RuntimeException('DemoFilterCoveragePropertiesSeeder is restricted to the local environment.');
         }
 
-        $this->prepareMasterImages();
+        $this->media = app(DemoPropertyMedia::class);
         $this->nextReference = (int) Property::where('reference_no', 'like', 'PROP%')
             ->pluck('reference_no')->map(fn ($ref) => (int) substr($ref, 4))->max() + 1;
         $this->nextOrder = (int) Property::max('order_index') + 1;
@@ -362,12 +345,11 @@ class DemoFilterCoveragePropertiesSeeder extends Seeder
             'view' => self::VIEWS[($set + $n) % count(self::VIEWS)],
         ]);
 
-        $this->attachGallery($property, $set * 50 + $n);
+        $this->media->attachGallery($property, $set * 50 + $n);
 
         // Every 5th listing gets a floor plan (the "Floor plans" filter).
         if ($n % 5 === 0) {
-            $planPath = "properties/{$reference}/floor-plan-1.png";
-            $this->linkFile(self::MASTER_FOLDER . '/floorplan.png', $planPath);
+            $planPath = $this->media->floorPlanImage($property);
             PropertyFloorPlan::create([
                 'property_id' => $property->id,
                 'label' => $spec['beds'] ? "{$spec['beds']} Bedroom" : 'Typical Floor',
@@ -388,54 +370,4 @@ class DemoFilterCoveragePropertiesSeeder extends Seeder
         $this->created++;
     }
 
-    private function attachGallery(Property $property, int $seed): void
-    {
-        $folder = 'properties/' . $property->reference_no;
-        $numbers = [];
-        for ($number = 1; $number <= 3; $number++) {
-            $master = $this->masters[($seed * 3 + $number - 1) % count($this->masters)];
-            $this->linkFile($master, "{$folder}/{$property->reference_no}-{$number}.jpeg");
-            $numbers[] = $number;
-        }
-
-        $property->update([
-            'image_path' => $folder,
-            'image_sequence' => implode(',', $numbers),
-            'image_next_number' => max($numbers),
-        ]);
-    }
-
-    /** One copy of each demo image on the public disk; listing galleries hard-link to these. */
-    private function prepareMasterImages(): void
-    {
-        $disk = Storage::disk('public');
-        foreach (self::DEMO_IMAGES as $index => $image) {
-            $target = self::MASTER_FOLDER . '/demo-' . ($index + 1) . '.jpeg';
-            if (!$disk->exists($target) && is_file(public_path($image))) {
-                $disk->put($target, file_get_contents(public_path($image)));
-            }
-            if ($disk->exists($target)) {
-                $this->masters[] = $target;
-            }
-        }
-        if (!$this->masters) {
-            throw new \RuntimeException('No demo images found under public/frontend/assets/images/home.');
-        }
-        if (!$disk->exists(self::MASTER_FOLDER . '/floorplan.png')) {
-            $disk->put(self::MASTER_FOLDER . '/floorplan.png', file_get_contents(public_path(self::FLOOR_PLAN_IMAGE)));
-        }
-    }
-
-    /** Hard link (no extra disk space); falls back to a copy where links aren't supported. */
-    private function linkFile(string $from, string $to): void
-    {
-        $disk = Storage::disk('public');
-        if ($disk->exists($to)) {
-            return;
-        }
-        $disk->makeDirectory(dirname($to));
-        if (!@link($disk->path($from), $disk->path($to))) {
-            $disk->copy($from, $to);
-        }
-    }
 }
