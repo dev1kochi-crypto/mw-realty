@@ -6,6 +6,7 @@ import { usePropertyFilters } from '../composables/usePropertyFilters';
 import LocationAutocomplete from '../components/LocationAutocomplete.vue';
 import { useWishlist } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
+import { useLanguages } from '../composables/useLanguages';
 
 // One fetch for the whole page (see routes/api.php -> Api\HomeController) instead of a
 // request per section — every section below just reads its own slice of `homePage.value`.
@@ -13,6 +14,7 @@ const { homePage } = useHomePage();
 const { isWishlisted, toggleWishlist } = useWishlist();
 const { t } = useStaticText();
 const router = useRouter();
+const { selectedLanguage } = useLanguages();
 
 const banner = computed(() => homePage.value?.banner || null);
 const brands = computed(() => homePage.value?.brands || []);
@@ -83,7 +85,7 @@ const heroTypeLabel = computed(() => propertyTypeOptions.value.find((o) => o.val
  */
 function submitHeroSearch() {
     const place = heroSearch.place;
-    if (place?.type === 'address' && place.slug) {
+    if (['address', 'property'].includes(place?.type) && place.slug) {
         router.push(`/property-details/${place.slug}`);
         return;
     }
@@ -108,20 +110,53 @@ const projectsEyebrow = computed(() => developments.value?.eyebrow || 'UAE devel
 const projectsTitle = computed(() => developments.value?.title || 'Browse New Projects in the UAE');
 const projectsButtonLabel = computed(() => developments.value?.button_name || 'View All Properties');
 
+// City tabs: "All" uses the listings already in /api/home; clicking a city asks the API for that
+// city's listings (GET /api/home/developments?city=) instead of hiding cards from the first 8.
+const activeCity = ref('');
+const cityProperties = ref(null);
+const cityLoading = ref(false);
+let cityRequestId = 0;
+
 const projectFilters = computed(() => {
     const cities = developments.value?.cities || [];
     return [
-        { filter: 'all', label: 'All', active: true },
-        ...cities.map((city) => ({ filter: slugify(city), label: city })),
+        { filter: 'all', city: '', label: 'All' },
+        ...cities.map((city) => ({ filter: slugify(city), city, label: city })),
     ];
 });
 
+function selectProjectCity(city) {
+    if (city === activeCity.value) return;
+    activeCity.value = city;
+    if (!city) {
+        cityProperties.value = null;
+        return;
+    }
+    const requestId = ++cityRequestId;
+    cityLoading.value = true;
+    const lang = selectedLanguage.value?.code;
+    window.axios.get('/api/home/developments', { params: { city, lang } }).then((res) => {
+        if (requestId === cityRequestId) cityProperties.value = res.data?.properties || [];
+    }).catch(() => {
+        if (requestId === cityRequestId) cityProperties.value = [];
+    }).finally(() => {
+        if (requestId === cityRequestId) cityLoading.value = false;
+    });
+}
+
+// A language switch reloads /api/home — drop back to "All" so the cards match the new language.
+watch(developments, () => {
+    cityRequestId++;
+    activeCity.value = '';
+    cityProperties.value = null;
+    cityLoading.value = false;
+});
+
 const projectCards = computed(() => {
-    const properties = developments.value?.properties || [];
+    const properties = (activeCity.value ? cityProperties.value : developments.value?.properties) || [];
     return properties.map((p) => ({
         id: p.id,
         slug: p.slug,
-        category: p.category,
         images: p.images,
         images_count: p.images_count,
         isAbsoluteImage: true,
@@ -136,17 +171,25 @@ const projectCards = computed(() => {
 });
 
 // Nothing to show until real listings exist — no lorem-ipsum placeholder cards on a live site.
-const showDevelopments = computed(() => projectCards.value.length > 0);
+// Based on the "All" listings, so a city tab with no results keeps the section (and its tabs) visible.
+const showDevelopments = computed(() => (developments.value?.properties || []).length > 0);
+
+// "View All Properties" carries the chosen city over to the listing page.
+const projectsViewAllLink = computed(() => (activeCity.value ? { path: '/properties', query: { location: activeCity.value } } : '/properties'));
 
 function slugify(value) {
     return String(value).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-// The project cards' photo gallery slider and the "All / Dubai / Abu Dhabi ..." tab filter
-// are wired up by the legacy assets/js/script.js, which only scans the DOM once — once the
-// real data replaces the placeholder cards above, the freshly rendered elements need that
-// binding run again (window.MWRealty.refresh is idempotent, safe to call repeatedly).
+// The project cards' photo gallery slider (and the mobile slick carousel) are wired up by the
+// legacy assets/js/script.js, which only scans the DOM once — whenever the cards change, the
+// freshly rendered elements need that binding run again (window.MWRealty.refresh is idempotent).
+// This watcher runs before Vue patches the DOM, so the mobile carousel is torn down first —
+// slick moves the cards into its own wrappers, which Vue can't patch.
 watch(projectCards, () => {
+    const $ = window.jQuery;
+    const $slider = $ && $('[data-projects-slider]');
+    if ($slider && $slider.hasClass('slick-initialized')) $slider.slick('unslick');
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
 
@@ -208,9 +251,12 @@ const popularPlacesTitle = computed(() => popularPlacesSection.value?.title || '
 
 const popularPlaces = computed(() => {
     const places = popularPlacesSection.value?.places || [];
+    // Each card opens the listing page filtered to that place (free-text location match, so an
+    // admin label like "Sharja" still finds "Sharjah" listings).
     return places.map((p) => ({
         imageSrc: p.image_url,
         name: p.name,
+        to: { path: '/properties', query: p.name ? { location: p.name } : {} },
     }));
 });
 
@@ -231,6 +277,7 @@ const luxuryCards = computed(() => {
     const properties = luxuryProject.value?.properties || [];
     return properties.map((p) => ({
         id: p.id,
+        slug: p.slug,
         image: p.images?.[0],
         villa: String(p.type || '').toLowerCase().includes('villa'),
         name: p.name,
@@ -242,6 +289,16 @@ const luxuryCards = computed(() => {
     }));
 });
 const showLuxury = computed(() => luxuryCards.value.length > 0);
+
+// Luxury / Realty cards open their property's detail page. Handled on the slider container
+// (not per card) because slick's infinite mode clones the cards, and clones have no Vue
+// listeners — they do keep data-property-slug. The save/contact buttons and links keep their
+// own behaviour.
+function openPropertyCard(event) {
+    if (event.target.closest('button, a')) return;
+    const slug = event.target.closest('[data-property-slug]')?.getAttribute('data-property-slug');
+    if (slug) router.push(`/property-details/${slug}`);
+}
 
 // --- Why Choose Us ---
 const whyChooseUsEyebrow = computed(() => whyChooseUsSection.value?.eyebrow || 'The MW advantage');
@@ -265,6 +322,7 @@ const realtyCards = computed(() => {
     const properties = realtyProperty.value?.properties || [];
     return properties.map((p) => ({
         id: p.id,
+        slug: p.slug,
         image: p.image,
         name: p.name,
         location: p.location,
@@ -294,6 +352,25 @@ const communitiesColumns = computed(() => {
     return columns.filter((col) => col.length);
 });
 const showCommunities = computed(() => (communitiesSection.value?.items || []).length > 0);
+
+// A community row opens the listing page filtered to that community + the active tab
+// (For Sale / For Rent / Off Plan). Handled on the panels wrapper because script.js clones the
+// For Sale grid into the For Rent / Off Plan panels, and those clones have no Vue listeners.
+const COMMUNITY_TAB_QUERY = {
+    'for-sale': { listing_type: 'sale' },
+    'for-rent': { listing_type: 'rent' },
+    'off-plan': { completion_status: 'off_plan' },
+};
+function openCommunity(event) {
+    const row = event.target.closest('[data-community]');
+    if (!row) return;
+    event.preventDefault();
+    const tab = row.closest('[data-category]')?.getAttribute('data-category');
+    router.push({
+        path: '/properties',
+        query: { ...(COMMUNITY_TAB_QUERY[tab] || COMMUNITY_TAB_QUERY['for-sale']), location: row.getAttribute('data-community') },
+    });
+}
 
 // --- Find Properties ---
 const findPropertiesModifiers = ['penthouse-1', 'villa', 'penthouse-2', 'plot'];
@@ -440,13 +517,16 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                 </div>
 
                 <div class="mw-projects__filters">
-                    <div class="mw-pill-tabs" data-tab-group data-filter-target="#projects-grid">
-                        <button v-for="f in projectFilters" :key="f.filter" type="button" :class="{ 'is-active': f.active }" data-tab :data-filter="f.filter">{{ f.label }}</button>
+                    <div class="mw-pill-tabs" role="tablist">
+                        <button v-for="f in projectFilters" :key="f.filter" type="button" role="tab" data-tab :class="{ 'is-active': f.city === activeCity }" :aria-selected="f.city === activeCity" :disabled="cityLoading && f.city === activeCity" @click="selectProjectCity(f.city)">{{ f.label }}</button>
                     </div>
                 </div>
 
-                <div class="mw-projects__grid" id="projects-grid" data-projects-slider>
-                    <article v-for="(card, index) in projectCards" :key="index" class="mw-projects__card" :data-category="card.category">
+                <p v-if="activeCity && cityLoading && !cityProperties" class="mw-projects__empty" style="text-align: center; padding: 40px 0;">{{ t('home.projects.loading', 'Loading properties…') }}</p>
+                <p v-else-if="activeCity && !cityLoading && !projectCards.length" class="mw-projects__empty" style="text-align: center; padding: 40px 0;">{{ t('home.projects.no_results', 'No properties found in this city yet.') }}</p>
+
+                <div v-else class="mw-projects__grid" id="projects-grid" data-projects-slider :style="cityLoading ? 'opacity: .5;' : ''">
+                    <article v-for="card in projectCards" :key="card.id" class="mw-projects__card">
                         <div class="mw-projects__media" data-card-gallery role="link" tabindex="0" @click="card.slug && $router.push(`/property-details/${card.slug}`)" @keydown.enter="card.slug && $router.push(`/property-details/${card.slug}`)" :style="card.slug ? 'cursor: pointer;' : ''">
                             <div class="mw-projects__slides" data-gallery-track>
                                 <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-projects__photo" loading="lazy">
@@ -506,7 +586,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                 </div>
 
                 <div class="mw-projects__actions">
-                    <router-link to="/properties" class="mw-btn mw-btn--solid">
+                    <router-link :to="projectsViewAllLink" class="mw-btn mw-btn--solid">
                         {{ projectsButtonLabel }}
                         <img src="/frontend/assets/images/icons/arrow-up-right.svg" alt="" class="mw-projects__view-all-icon">
                     </router-link>
@@ -655,7 +735,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                 </div>
 
                 <div class="mw-popular-places__slider" data-places-slider>
-                    <a v-for="(place, index) in popularPlaces" :key="index" href="#" class="mw-popular-places__card">
+                    <a v-for="(place, index) in popularPlaces" :key="index" :href="router.resolve(place.to).href" class="mw-popular-places__card" @click.prevent="router.push(place.to)">
                         <div class="mw-popular-places__media">
                             <img :src="place.imageSrc" :alt="place.name" loading="lazy">
                             <div class="mw-popular-places__foot">
@@ -697,8 +777,8 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     </div>
 
                     <div class="mw-luxury__stage">
-                        <div class="mw-luxury__slider" data-luxury-slider>
-                            <article v-for="(card, index) in luxuryCards" :key="index" class="mw-luxury__card">
+                        <div class="mw-luxury__slider" data-luxury-slider @click="openPropertyCard">
+                            <article v-for="(card, index) in luxuryCards" :key="index" class="mw-luxury__card" :data-property-slug="card.slug" :style="card.slug ? 'cursor: pointer;' : ''">
                                 <img :src="card.image" :alt="card.name" class="mw-luxury__photo" :class="{ 'mw-luxury__photo--villa': card.villa }" loading="lazy">
                                 <span class="mw-luxury__tag">{{ t('home.hero.tabs.buy') }}</span>
                                 <button type="button" class="mw-luxury__save" :class="{ 'is-saved': isWishlisted(card.id) }" :aria-label="t('home.aria.save_property')" :aria-pressed="isWishlisted(card.id)" @click.stop="toggleWishlist(card.id)">
@@ -795,8 +875,8 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                 </div>
 
                 <div class="mw-realty__carousel">
-                    <div class="mw-realty__track" data-realty-slider>
-                        <article v-for="(card, index) in realtyCards" :key="index" class="mw-realty__card">
+                    <div class="mw-realty__track" data-realty-slider @click="openPropertyCard">
+                        <article v-for="(card, index) in realtyCards" :key="index" class="mw-realty__card" :data-property-slug="card.slug" :style="card.slug ? 'cursor: pointer;' : ''">
                             <div class="mw-realty__media">
                                 <img :src="card.image" :alt="card.name" class="mw-realty__photo" loading="lazy">
                                 <span class="mw-badge mw-badge--success mw-realty__verified">
@@ -858,10 +938,10 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     </div>
                 </div>
 
-                <div id="communities-panels">
+                <div id="communities-panels" @click="openCommunity">
                     <div class="mw-communities__grid" data-category="for-sale">
                         <div v-for="(col, ci) in communitiesColumns" :key="ci" class="mw-communities__col">
-                            <a v-for="(row, ri) in col" :key="ri" href="#" class="mw-communities__row" :class="{ 'mw-communities__row--last': ri === col.length - 1 }">
+                            <a v-for="(row, ri) in col" :key="ri" :href="`/properties?listing_type=sale&location=${encodeURIComponent(row.name)}`" :data-community="row.name" class="mw-communities__row" :class="{ 'mw-communities__row--last': ri === col.length - 1 }">
                                 <img class="mw-communities__icon" :src="row.icon" alt="" width="24" height="24">
                                 <span class="mw-communities__name">{{ row.name }}</span>
                             </a>

@@ -37,4 +37,16 @@ class HomeController extends Controller
 
         return response()->json($data);
     }
+
+    /** GET /api/home/developments?city=Ajman — the Developments section's listings for one city tab. */
+    public function developments(Request $request)
+    {
+        $lang = $request->input('lang', app()->getLocale());
+        $city = $request->input('city');
+        $city = is_string($city) ? mb_substr($city, 0, 100) : null;
+
+        $properties = $this->homePage->developmentProperties($lang, $city);
+
+        return response()->json(['properties' => collect($properties)->shuffle()->values()->all()]);
+    }
 }

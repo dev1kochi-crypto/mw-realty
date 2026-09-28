@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { usePageWindow } from '../composables/usePageWindow';
 import { useRoute, useRouter } from 'vue-router';
 import { useCommercial } from '../composables/useCommercial';
 import { useLanguages } from '../composables/useLanguages';
@@ -46,7 +47,7 @@ function onPlacePicked(place) {
     locationQuery.value = place ? '' : locationInput.value;
 }
 function submitSearch() {
-    if (pickedPlace.value?.type === 'address' && pickedPlace.value.slug) {
+    if (['address', 'property'].includes(pickedPlace.value?.type) && pickedPlace.value.slug) {
         router.push(`/property-details/${pickedPlace.value.slug}`);
         return;
     }
@@ -204,10 +205,7 @@ function goToPage(page) {
 
 const properties = computed(() => commercialListing.value?.properties || []);
 const pagination = computed(() => commercialListing.value?.pagination || null);
-const pageNumbers = computed(() => {
-    if (!pagination.value) return [];
-    return Array.from({ length: pagination.value.last_page }, (_, i) => i + 1);
-});
+const pageNumbers = usePageWindow(currentPage, computed(() => pagination.value?.last_page));
 const resultsText = computed(() => {
     const total = pagination.value?.total ?? 0;
     return t('commercial.results_count', '{count} commercial properties').replace('{count}', total.toLocaleString());

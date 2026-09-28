@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref, toRef, watch } from 'vue';
+import { usePageWindow } from '../composables/usePageWindow';
 import { useRoute, useRouter } from 'vue-router';
 import { useProperties } from '../composables/useProperties';
 import { useLanguages } from '../composables/useLanguages';
@@ -64,7 +65,7 @@ function onPlacePicked(place) {
 }
 /** Search button / Enter in the location box. */
 function submitSearch() {
-    if (pickedPlace.value?.type === 'address' && pickedPlace.value.slug) {
+    if (['address', 'property'].includes(pickedPlace.value?.type) && pickedPlace.value.slug) {
         router.push(`/property-details/${pickedPlace.value.slug}`);
         return;
     }
@@ -438,10 +439,7 @@ function goToPage(page) {
 
 const properties = computed(() => propertiesListing.value?.properties || []);
 const pagination = computed(() => propertiesListing.value?.pagination || null);
-const pageNumbers = computed(() => {
-    if (!pagination.value) return [];
-    return Array.from({ length: pagination.value.last_page }, (_, i) => i + 1);
-});
+const pageNumbers = usePageWindow(currentPage, computed(() => pagination.value?.last_page));
 
 onMounted(() => {
     readQuery(route.query);

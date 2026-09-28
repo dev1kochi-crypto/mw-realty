@@ -36,6 +36,7 @@ const typeLabel = (type) => ({
     city: t('location_search.type_city', 'City'),
     community: t('location_search.type_community', 'Community'),
     address: t('location_search.type_address', 'Address'),
+    property: t('location_search.type_property', 'Property'),
 }[type] || type);
 
 function fetchSuggestions(term) {

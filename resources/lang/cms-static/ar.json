@@ -40,7 +40,9 @@
             "properties_in_ras_al_khaimah": "عقارات في رأس الخيمة",
             "sobha_siniya_island": "جزيرة صنية من شوبا",
             "sobha_elwood": "شوبا إلوود",
-            "binghatti": "بنغاتي"
+            "binghatti": "بنغاتي",
+            "properties_in": "عقارات في",
+            "premium_properties": "العقارات المميزة"
         },
         "buy": {
             "title": "شراء",
@@ -48,7 +50,12 @@
             "guide_to_buying": "دليل الشراء",
             "mortgages": "الرهن العقاري",
             "property_management": "إدارة العقارات",
-            "legal_services": "الخدمات القانونية"
+            "legal_services": "الخدمات القانونية",
+            "apartments_for_sale": "شقق للبيع",
+            "villas_for_sale": "فلل للبيع",
+            "townhouses_for_sale": "تاون هاوس للبيع",
+            "penthouses_for_sale": "بنتهاوس للبيع",
+            "ready_to_move": "جاهز للسكن"
         },
         "off_plan": {
             "title": "على الخارطة",
@@ -58,7 +65,9 @@
             "top_dubai_developers": "أفضل مطوري دبي",
             "snagging_inspection": "الفحص والمعاينة",
             "upcoming_roadshows": "الجولات الترويجية القادمة",
-            "branded_residences": "مساكن ذات علامة تجارية"
+            "branded_residences": "مساكن ذات علامة تجارية",
+            "all_off_plan": "جميع مشاريع على الخارطة",
+            "off_plan_in": "على الخارطة في"
         },
         "legal": {
             "title": "قانوني",
@@ -108,7 +117,7 @@
                 "off_plan": "على الخارطة"
             },
             "search": {
-                "location_placeholder": "أدخل الموقع",
+                "location_placeholder": "ابحث بالموقع أو اسم العقار",
                 "bedroom_label": "غرف النوم",
                 "price_range_label": "نطاق السعر",
                 "property_type_label": "نوع العقار",
@@ -211,7 +220,7 @@
                 "interest_select_placeholder": "اختر",
                 "interest_buy": "شراء عقار",
                 "interest_rent": "استئجار عقار",
-                "interest_sell": "بيع \/ إدراج عقار",
+                "interest_sell": "بيع / إدراج عقار",
                 "interest_management": "إدارة الأملاك",
                 "message_label": "الرسالة",
                 "message_placeholder": "كيف يمكننا مساعدتك؟",
@@ -224,8 +233,8 @@
             "title": "الفلاتر",
             "close_aria": "إغلاق الفلاتر",
             "purpose_label": "الغرض",
-            "location_label": "الموقع",
-            "location_placeholder": "أدخل الموقع",
+            "location_label": "الموقع / اسم العقار",
+            "location_placeholder": "ابحث بالموقع أو اسم العقار",
             "property_type_label": "نوع العقار",
             "all_type": "جميع الأنواع",
             "price_title": "نطاق السعر",
@@ -298,8 +307,8 @@
             "buy": "شراء",
             "rent": "إيجار",
             "off_plan": "على الخارطة",
-            "location_label": "الموقع",
-            "location_placeholder": "أدخل الموقع",
+            "location_label": "الموقع / اسم العقار",
+            "location_placeholder": "ابحث بالموقع أو اسم العقار",
             "property_type_label": "نوع العقار",
             "all_type": "جميع الأنواع",
             "bedrooms_label": "غرف النوم",
@@ -413,8 +422,8 @@
         "filter_panel": {
             "title": "الفلاتر",
             "close_aria": "إغلاق الفلاتر",
-            "location_label": "الموقع",
-            "location_placeholder": "أدخل الموقع",
+            "location_label": "الموقع / اسم العقار",
+            "location_placeholder": "ابحث بالموقع أو اسم العقار",
             "properties_label": "العقارات",
             "properties_placeholder": "ابحث بالعنوان أو الموقع",
             "property_type_label": "نوع العقار",
@@ -496,8 +505,8 @@
             "breadcrumb_current": "تجاري"
         },
         "filter_bar": {
-            "location_label": "الموقع",
-            "location_placeholder": "أدخل الموقع",
+            "location_label": "الموقع / اسم العقار",
+            "location_placeholder": "ابحث بالموقع أو اسم العقار",
             "properties_label": "العقارات",
             "properties_placeholder": "ابحث بالعنوان أو الموقع",
             "property_type_label": "نوع العقار",
@@ -818,7 +827,7 @@
     "login": {
         "photo_alt": "شقة دافئة في دبي",
         "tab_user": "مستخدم",
-        "tab_agent_agency": "وكيل \/ وكالة",
+        "tab_agent_agency": "وكيل / وكالة",
         "title": "مرحباً بعودتك",
         "subtitle": "يرجى إدخال بياناتك لتسجيل الدخول.",
         "email_label": "البريد الإلكتروني",
@@ -833,7 +842,7 @@
         "divider_or": "أو",
         "google_cta": "المتابعة باستخدام Google",
         "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى.",
-        "agent_tab_hint": "مسجّل كوكيل أو وكالة؟ انتقل إلى تبويب الوكيل \/ الوكالة."
+        "agent_tab_hint": "مسجّل كوكيل أو وكالة؟ انتقل إلى تبويب الوكيل / الوكالة."
     },
     "signup": {
         "photo_alt": "شقة دافئة في دبي",
@@ -873,7 +882,7 @@
         "password_strength_label": "قوة كلمة المرور",
         "passwords_match": "كلمتا المرور متطابقتان",
         "passwords_no_match": "كلمتا المرور غير متطابقتين",
-        "agent_license_label": "رقم رخصة ريرا \/ الوسيط",
+        "agent_license_label": "رقم رخصة ريرا / الوسيط",
         "agent_license_placeholder": "أدخل رقم رخصتك",
         "agency_name_label": "اسم الوكالة",
         "agency_name_placeholder": "أدخل اسم وكالتك",
@@ -1276,5 +1285,8 @@
             "message": "تم شغل هذه الوظيفة أو لم تعد متاحة.",
             "back_link": "عرض الوظائف الحالية"
         }
+    },
+    "location_search": {
+        "type_property": "عقار"
     }
 }

@@ -557,12 +557,12 @@
         <div class="tab-pane fade" id="tab-brochure" role="tabpanel">
             <div class="property-tab-pane-head">
                 <div class="property-tab-pane-title">Property Brochure</div>
-                <div class="property-tab-pane-hint">Upload a PDF for visitors to download after submitting their contact details.</div>
+                <div class="property-tab-pane-hint">Upload a brochure (PDF, image, Word, Excel or PowerPoint) for visitors to download after submitting their contact details.</div>
             </div>
             <div class="p-3 border rounded-3">
-                <label class="form-label fw-semibold" for="brochureUpload">Brochure PDF</label>
-                <input type="file" name="brochure" id="brochureUpload" class="form-control" accept="application/pdf,.pdf">
-                <div class="form-text">PDF only. Maximum file size: 20 MB.</div>
+                <label class="form-label fw-semibold" for="brochureUpload">Brochure File</label>
+                <input type="file" name="brochure" id="brochureUpload" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx">
+                <div class="form-text">PDF, JPG, PNG, WEBP, DOC, DOCX, XLS, XLSX, CSV, PPT or PPTX. Maximum file size: 20 MB.</div>
                 @if($isEdit && $property->brochure_path)
                     <a class="small d-inline-block mt-2" href="{{ media_url($property->brochure_path) }}" target="_blank" rel="noopener">View current brochure</a>
                 @endif

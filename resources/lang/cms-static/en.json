@@ -40,7 +40,9 @@
             "properties_in_ras_al_khaimah": "Properties in Ras Al Khaimah",
             "sobha_siniya_island": "Sobha Siniya Island",
             "sobha_elwood": "Sobha Elwood",
-            "binghatti": "Binghatti"
+            "binghatti": "Binghatti",
+            "properties_in": "Properties in",
+            "premium_properties": "Premium Properties"
         },
         "buy": {
             "title": "Buy",
@@ -48,7 +50,12 @@
             "guide_to_buying": "Guide to Buying",
             "mortgages": "Mortgages",
             "property_management": "Property Management",
-            "legal_services": "Legal Services"
+            "legal_services": "Legal Services",
+            "apartments_for_sale": "Apartments for Sale",
+            "villas_for_sale": "Villas for Sale",
+            "townhouses_for_sale": "Townhouses for Sale",
+            "penthouses_for_sale": "Penthouses for Sale",
+            "ready_to_move": "Ready to Move In"
         },
         "off_plan": {
             "title": "Off-Plan",
@@ -58,7 +65,9 @@
             "top_dubai_developers": "Top Dubai Developers",
             "snagging_inspection": "Snagging & Inspection",
             "upcoming_roadshows": "Upcoming Roadshows",
-            "branded_residences": "Branded Residences"
+            "branded_residences": "Branded Residences",
+            "all_off_plan": "All Off-Plan Projects",
+            "off_plan_in": "Off-Plan in"
         },
         "legal": {
             "title": "Legal",
@@ -108,7 +117,7 @@
                 "off_plan": "Off-Plan"
             },
             "search": {
-                "location_placeholder": "Enter location",
+                "location_placeholder": "Search location or property title",
                 "bedroom_label": "Bedroom",
                 "price_range_label": "Price Range",
                 "property_type_label": "Property Type",
@@ -224,8 +233,8 @@
             "title": "Filters",
             "close_aria": "Close filters",
             "purpose_label": "Purpose",
-            "location_label": "Location",
-            "location_placeholder": "Enter location",
+            "location_label": "Location / Title",
+            "location_placeholder": "Search location or property title",
             "property_type_label": "Property Type",
             "all_type": "All type",
             "price_title": "Price Range",
@@ -298,8 +307,8 @@
             "buy": "Buy",
             "rent": "Rent",
             "off_plan": "Off-Plan",
-            "location_label": "Location",
-            "location_placeholder": "Enter location",
+            "location_label": "Location / Title",
+            "location_placeholder": "Search location or property title",
             "property_type_label": "Property Type",
             "all_type": "All type",
             "bedrooms_label": "Bedrooms",
@@ -413,8 +422,8 @@
         "filter_panel": {
             "title": "Filters",
             "close_aria": "Close filters",
-            "location_label": "Location",
-            "location_placeholder": "Enter location",
+            "location_label": "Location / Title",
+            "location_placeholder": "Search location or property title",
             "properties_label": "Properties",
             "properties_placeholder": "Search by title, location",
             "property_type_label": "Property Type",
@@ -496,8 +505,8 @@
             "breadcrumb_current": "Commercial"
         },
         "filter_bar": {
-            "location_label": "Location",
-            "location_placeholder": "Enter location",
+            "location_label": "Location / Title",
+            "location_placeholder": "Search location or property title",
             "properties_label": "Properties",
             "properties_placeholder": "Search by title, location",
             "property_type_label": "Property Type",
@@ -1276,5 +1285,8 @@
             "message": "This role has been filled or is no longer open.",
             "back_link": "See current openings"
         }
+    },
+    "location_search": {
+        "type_property": "Property"
     }
 }

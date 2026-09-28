@@ -15,6 +15,7 @@ use App\Models\CmsKit\SiteInformation;
 use App\Models\CmsKit\Testimonial;
 use App\Models\CmsKit\WhyChooseUsItem;
 use App\Models\Property;
+use App\Support\LocationFilter;
 use App\Support\MapsPropertyCards;
 use App\Support\SeoMeta;
 use Illuminate\Support\Facades\Cache;
@@ -120,25 +121,39 @@ class HomePageService
         $cities = $section?->getTranslation('cities', $lang);
         $cities = is_array($cities) ? array_values(array_filter($cities, fn ($c) => trim((string) $c) !== '')) : [];
 
-        $properties = Property::where('status', true)
-            ->displayOrder()
-            ->take(8)
-            ->get()
-            ->map(function ($property) use ($lang, $cities) {
-                $mapped = $this->mapProperty($property, $lang);
-                $mapped['category'] = $this->matchCityCategory($mapped['location'], $property->getTranslation('address', $lang), $cities);
-                return $mapped;
-            })
-            ->values();
-
         return [
             'eyebrow' => $section?->getTranslation('title_1', $lang) ?: 'UAE Developments',
             'title' => $section?->getTranslation('title_2', $lang) ?: 'Browse New Projects in the UAE',
             'button_name' => $section?->getTranslation('button_name', $lang) ?: 'View All Properties',
             'button_url' => $section?->getTranslation('button_url', $lang) ?: null,
             'cities' => $cities,
-            'properties' => $properties,
+            'properties' => $this->developmentProperties($lang),
         ];
+    }
+
+    /**
+     * Listings for the Developments section — every city ("All" tab, part of /api/home) or one
+     * city tab (GET /api/home/developments?city=Ajman, fetched when the tab is clicked). The city
+     * is matched loosely (address/community/city contains it) so an admin tab label like "Sharja"
+     * still finds "Sharjah" listings.
+     */
+    public function developmentProperties(string $lang, ?string $city = null): array
+    {
+        $city = $city !== null && trim($city) !== '' ? trim($city) : null;
+
+        return Cache::remember('home-developments:' . $lang . ':' . md5((string) $city), self::CACHE_TTL, function () use ($lang, $city) {
+            $query = Property::where('status', true);
+            if ($city) {
+                LocationFilter::apply($query, null, null, $city);
+            }
+
+            return $query->displayOrder()
+                ->take(8)
+                ->get()
+                ->map(fn ($property) => $this->mapProperty($property, $lang))
+                ->values()
+                ->all();
+        });
     }
 
     protected function premiumProperties(string $lang): array
@@ -490,18 +505,5 @@ class HomePageService
                 'seo' => SeoMeta::forStaticPage('about', $lang),
             ];
         });
-    }
-
-    /** Which admin-configured city tab (Developments) a listing's location text matches, if any. */
-    protected function matchCityCategory(string $location, ?string $address, array $cities): ?string
-    {
-        $haystack = Str::lower($location . ' ' . $address);
-        foreach ($cities as $cityName) {
-            if ($cityName !== '' && Str::contains($haystack, Str::lower($cityName))) {
-                return Str::slug($cityName);
-            }
-        }
-
-        return null;
     }
 }

@@ -22,6 +22,39 @@ watch(selectedLanguage, () => fetchSiteInformation(selectedLanguage.value?.code)
 
 const copyrightYear = new Date().getFullYear();
 
+// Link columns. Quick Links are the site pages (the header covers Buy/Rent/Commercial/Agents/Agencies); the Properties / Buy / Off-Plan columns open
+// the listing page pre-filtered (same query keys as the header's Buy/Rent and the listing filters).
+const FOOTER_CITIES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Umm Al Quwain'];
+const listing = (query) => ({ path: '/properties', query });
+
+const quickLinks = computed(() => [
+    { to: '/', label: t('nav.home') },
+    { to: '/market-insights', label: t('nav.market_insights', 'Market Insights') },
+    { to: '/about', label: t('nav.about') },
+    { to: '/blogs', label: t('nav.blog', 'Blog') },
+    { to: '/careers', label: t('nav.careers', 'Careers') },
+    { to: '/contact', label: t('nav.contact') },
+]);
+
+const propertyLinks = computed(() => [
+    ...FOOTER_CITIES.map((city) => ({ to: listing({ location: city }), label: `${t('footer.properties_col.properties_in', 'Properties in')} ${city}` })),
+    { to: '/premium-properties', label: t('footer.properties_col.premium_properties', 'Premium Properties') },
+]);
+
+const buyLinks = computed(() => [
+    { to: listing({ listing_type: 'sale' }), label: t('footer.buy.properties_for_sale') },
+    { to: listing({ listing_type: 'sale', property_type: 'apartment' }), label: t('footer.buy.apartments_for_sale', 'Apartments for Sale') },
+    { to: listing({ listing_type: 'sale', property_type: 'villa' }), label: t('footer.buy.villas_for_sale', 'Villas for Sale') },
+    { to: listing({ listing_type: 'sale', property_type: 'townhouse' }), label: t('footer.buy.townhouses_for_sale', 'Townhouses for Sale') },
+    { to: listing({ listing_type: 'sale', property_type: 'penthouse' }), label: t('footer.buy.penthouses_for_sale', 'Penthouses for Sale') },
+    { to: listing({ listing_type: 'sale', completion_status: 'ready' }), label: t('footer.buy.ready_to_move', 'Ready to Move In') },
+]);
+
+const offPlanLinks = computed(() => [
+    { to: listing({ completion_status: 'off_plan' }), label: t('footer.off_plan.all_off_plan', 'All Off-Plan Projects') },
+    ...FOOTER_CITIES.map((city) => ({ to: listing({ completion_status: 'off_plan', location: city }), label: `${t('footer.off_plan.off_plan_in', 'Off-Plan in')} ${city}` })),
+]);
+
 const { getRecaptchaToken } = useRecaptcha();
 const newsletterEmail = ref('');
 const newsletterAgreed = ref(false);
@@ -60,47 +93,25 @@ async function handleNewsletterSubmit() {
                 <div>
                     <h3 class="mw-footer__col-title">{{ t('footer.quick_links.title') }}</h3>
                     <ul class="mw-footer__links">
-                        <li><router-link to="/">{{ t('footer.quick_links.home') }}</router-link></li>
-                        <li><router-link to="/about">{{ t('footer.quick_links.about') }}</router-link></li>
-                        <li><a href="#">{{ t('footer.quick_links.properties') }}</a></li>
-                        <li><a href="#">{{ t('footer.quick_links.mortgage_calculator') }}</a></li>
-                        <li><a href="#">{{ t('footer.quick_links.delhi_expo') }}</a></li>
-                        <li><a href="#">{{ t('footer.quick_links.invest_in_dubai') }}</a></li>
-                        <li><router-link to="/contact">{{ t('footer.quick_links.contact') }}</router-link></li>
+                        <li v-for="link in quickLinks" :key="link.label"><router-link :to="link.to">{{ link.label }}</router-link></li>
                     </ul>
                 </div>
                 <div>
                     <h3 class="mw-footer__col-title">{{ t('footer.properties_col.title') }}</h3>
                     <ul class="mw-footer__links">
-                        <li><router-link to="/properties">{{ t('footer.properties_col.properties_in_dubai') }}</router-link></li>
-                        <li><a href="#">{{ t('footer.properties_col.properties_in_abu_dhabi') }}</a></li>
-                        <li><a href="#">{{ t('footer.properties_col.properties_in_ajman') }}</a></li>
-                        <li><a href="#">{{ t('footer.properties_col.properties_in_ras_al_khaimah') }}</a></li>
-                        <li><a href="#">{{ t('footer.properties_col.sobha_siniya_island') }}</a></li>
-                        <li><a href="#">{{ t('footer.properties_col.sobha_elwood') }}</a></li>
-                        <li><a href="#">{{ t('footer.properties_col.binghatti') }}</a></li>
+                        <li v-for="link in propertyLinks" :key="link.label"><router-link :to="link.to">{{ link.label }}</router-link></li>
                     </ul>
                 </div>
                 <div>
                     <h3 class="mw-footer__col-title">{{ t('footer.buy.title') }}</h3>
                     <ul class="mw-footer__links">
-                        <li><a href="#">{{ t('footer.buy.properties_for_sale') }}</a></li>
-                        <li><a href="#">{{ t('footer.buy.guide_to_buying') }}</a></li>
-                        <li><a href="#">{{ t('footer.buy.mortgages') }}</a></li>
-                        <li><a href="#">{{ t('footer.buy.property_management') }}</a></li>
-                        <li><a href="#">{{ t('footer.buy.legal_services') }}</a></li>
+                        <li v-for="link in buyLinks" :key="link.label"><router-link :to="link.to">{{ link.label }}</router-link></li>
                     </ul>
                 </div>
                 <div>
                     <h3 class="mw-footer__col-title">{{ t('footer.off_plan.title') }}</h3>
                     <ul class="mw-footer__links">
-                        <li><a href="#">{{ t('footer.off_plan.new_projects') }}</a></li>
-                        <li><a href="#">{{ t('footer.off_plan.guide_to_buying_off_plan') }}</a></li>
-                        <li><a href="#">{{ t('footer.off_plan.best_dubai_communities') }}</a></li>
-                        <li><a href="#">{{ t('footer.off_plan.top_dubai_developers') }}</a></li>
-                        <li><a href="#">{{ t('footer.off_plan.snagging_inspection') }}</a></li>
-                        <li><a href="#">{{ t('footer.off_plan.upcoming_roadshows') }}</a></li>
-                        <li><a href="#">{{ t('footer.off_plan.branded_residences') }}</a></li>
+                        <li v-for="link in offPlanLinks" :key="link.label"><router-link :to="link.to">{{ link.label }}</router-link></li>
                     </ul>
                 </div>
                 <div>

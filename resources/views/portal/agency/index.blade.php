@@ -82,7 +82,7 @@
                 <li class="portal-muted">No agency history yet.</li>
                 @endforelse
             </ul>
-            {{ $history->links() }}
+            {{ $history->links('pagination::bootstrap-5') }}
         </div>
     </div>
 </div>
@@ -107,7 +107,7 @@
             @endforeach
         </tbody>
     </table>
-    <div class="mt-2">{{ $personalProperties->links() }}</div>
+    <div class="mt-2">{{ $personalProperties->links('pagination::bootstrap-5') }}</div>
 </div>
 @endif
 @endsection

@@ -57,7 +57,7 @@
     </div>
 </div>
 
-<div class="mt-3">{{ $leads->links() }}</div>
+<div class="mt-3">{{ $leads->links('pagination::bootstrap-5') }}</div>
 
 <form id="forceDeleteLeadForm" method="POST" class="d-none">
     @csrf

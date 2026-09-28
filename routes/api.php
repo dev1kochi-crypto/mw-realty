@@ -48,6 +48,9 @@ Route::get('/ads', [PublicAdController::class, 'index']);
 // post-property-steps, popular-places, testimonials, contact). See HomePageService.
 Route::get('/home', [HomeController::class, 'index']);
 
+// Public, read-only — the home Developments section's city tabs (?city=Ajman), fetched on tab click.
+Route::get('/home/developments', [HomeController::class, 'developments']);
+
 // Public, read-only — the standalone /contact page in one request (title, description,
 // map embed url, hero image, office address/phone/email/whatsapp/hours, social links).
 Route::get('/contact', [ContactController::class, 'index']);

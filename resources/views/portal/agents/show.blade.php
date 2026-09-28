@@ -39,7 +39,7 @@
                     @endforelse
                 </tbody>
             </table>
-            <div class="mt-2">{{ $properties->links() }}</div>
+            <div class="mt-2">{{ $properties->links('pagination::bootstrap-5') }}</div>
         </div>
 
         <div class="portal-card p-4 mb-3">

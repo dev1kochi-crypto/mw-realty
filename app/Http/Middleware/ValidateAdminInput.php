@@ -24,7 +24,10 @@ class ValidateAdminInput
             $isDocument = str_contains($field, 'document') || str_contains($field, 'resume');
             $isVideo = str_contains($field, 'video');
             $isSpreadsheet = str_ends_with($name, '.import');
+            // Property brochure / floor-plan file: PDF, image or an office document.
+            $isBrochure = str_contains($field, 'brochure') || $field === 'floor_plan_file';
             $rules[$field] = match (true) {
+                $isBrochure => 'file|extensions:' . \App\Http\Requests\PropertyRequest::BROCHURE_EXTENSIONS . '|max:20480',
                 $isDocument => 'file|mimes:jpg,jpeg,png,pdf|extensions:jpg,jpeg,png,pdf|max:4096',
                 $isVideo => 'file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|extensions:mp4,mov,avi|max:51200',
                 $isSpreadsheet => 'file|mimes:xlsx,xls,csv|extensions:xlsx,xls,csv|max:10240',

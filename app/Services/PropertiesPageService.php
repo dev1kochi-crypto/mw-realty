@@ -36,7 +36,7 @@ class PropertiesPageService
             . ($location ?: 'all') . ':' . ($propertyType ?: 'all') . ':' . ($category ?: 'all')
             . ':' . ($bedrooms ?: 'any') . ':' . ($bathrooms ?: 'any') . ':' . md5(json_encode($refine));
 
-        return Cache::remember($cacheKey . ':' . uniqid('', true), self::CACHE_TTL, function () use ($lang, $location, $propertyType, $category, $bedrooms, $bathrooms, $page, $perPage, $refine) {
+        $data = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($lang, $location, $propertyType, $category, $bedrooms, $bathrooms, $page, $perPage, $refine) {
             // /premium-properties: every featured ("premium") listing, residential and commercial.
             // Otherwise /properties: commercial-menu listings live on /commercial only.
             $query = $refine['premium']
@@ -55,6 +55,12 @@ class PropertiesPageService
                 'seo' => SeoMeta::forStaticPage($refine['premium'] ? 'premium-properties' : 'properties', $lang),
             ];
         });
+
+        if ($refine['sort'] === 'default') {
+            $data['properties'] = collect($data['properties'])->shuffle()->values()->all();
+        }
+
+        return $data;
     }
 
     /**
@@ -93,8 +99,8 @@ class PropertiesPageService
             'price_desc' => $query->orderByDesc('price'),
             'popular' => $query->withCount('leads')->orderByDesc('leads_count'),
             'recent' => $query->orderByDesc('published_at'),
-            // Default / Recommended order is randomized by each public request.
-            default => $query->inRandomOrder(),
+            // Keep database sorting cheap. Default results are shuffled after the cached page is loaded.
+            default => $query->displayOrder()->orderByDesc('id'),
         };
     }
 

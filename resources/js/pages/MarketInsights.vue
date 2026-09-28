@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, watch } from 'vue';
+import { usePageWindow } from '../composables/usePageWindow';
 import { useRoute, useRouter } from 'vue-router';
 import InsightCard from '../components/InsightCard.vue';
 import InsightTrend from '../components/InsightTrend.vue';
@@ -61,7 +62,7 @@ const regions = computed(() => insightsListing.value?.regions || []);
 const featured = computed(() => insightsListing.value?.featured || null);
 const posts = computed(() => insightsListing.value?.posts || []);
 const pagination = computed(() => insightsListing.value?.pagination || null);
-const pageNumbers = computed(() => Array.from({ length: pagination.value?.last_page || 0 }, (_, i) => i + 1));
+const pageNumbers = usePageWindow(currentPage, computed(() => pagination.value?.last_page));
 const hasFilters = computed(() => Boolean(activeTopic.value || activeRegion.value));
 </script>
 

@@ -44,7 +44,7 @@ class CommercialPageService
         $cacheKey = "commercial-listing:{$lang}:{$page}:{$perPage}:"
             . md5(json_encode([$location, $propertyType, $search, $listingCategory, $bathrooms, $refine]));
 
-        return Cache::remember($cacheKey . ':' . uniqid('', true), self::CACHE_TTL, function () use ($lang, $location, $propertyType, $search, $listingCategory, $bathrooms, $page, $perPage, $refine, $listingPage) {
+        $data = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($lang, $location, $propertyType, $search, $listingCategory, $bathrooms, $page, $perPage, $refine, $listingPage) {
             $section = SectionLabel::where('section_key', 'commercial')->where('status', true)->first();
             $query = Property::where('status', true)->commercial()->with('details');
 
@@ -75,6 +75,12 @@ class CommercialPageService
                 'seo' => SeoMeta::forStaticPage('commercial', $lang),
             ];
         });
+
+        if ($refine['sort'] === 'default') {
+            $data['properties'] = collect($data['properties'])->shuffle()->values()->all();
+        }
+
+        return $data;
     }
 
     private function mapCommercialCard(Property $property, string $lang): array

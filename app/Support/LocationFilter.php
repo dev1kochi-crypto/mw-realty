@@ -15,6 +15,9 @@ class LocationFilter
 {
     private const LANGS = ['en', 'ar'];
 
+    /** Free-text search (and autocomplete) matches a location or the listing title. */
+    private const SEARCH_FIELDS = ['address', 'community', 'city', 'title'];
+
     /**
      * @param  string|null  $city       exact city (chosen from a suggestion)
      * @param  string|null  $community  exact community (chosen from a suggestion)
@@ -31,7 +34,7 @@ class LocationFilter
         if ($text) {
             $slug = str_replace(' ', '-', mb_strtolower($text));
             $query->where(function ($q) use ($text, $slug) {
-                foreach (['address', 'community', 'city'] as $field) {
+                foreach (self::SEARCH_FIELDS as $field) {
                     self::anyLang($q, $field, 'like', "%{$text}%");
                 }
                 $q->orWhere('location', 'like', "%{$slug}%");
@@ -42,19 +45,19 @@ class LocationFilter
     }
 
     /**
-     * Autocomplete: matching cities, communities and property addresses for $term.
+     * Autocomplete: matching cities, communities, listing titles and property addresses for $term.
      * Cities/communities are de-duplicated with a listing count; addresses point at their property.
      *
      * @return array<int, array{type: string, label: string, sub: ?string, count?: int, slug?: string}>
      */
-    public static function suggest(Builder $scope, string $term, string $lang, int $limit = 8): array
+    public static function suggest(Builder $scope, string $term, string $lang, int $limit = 10): array
     {
         $needle = mb_strtolower($term);
         $matches = fn (?string $v) => $v !== null && $v !== '' && str_contains(mb_strtolower($v), $needle);
 
         $candidates = (clone $scope)
             ->where(function ($q) use ($term) {
-                foreach (['address', 'community', 'city'] as $field) {
+                foreach (self::SEARCH_FIELDS as $field) {
                     self::anyLang($q, $field, 'like', "%{$term}%");
                 }
             })
@@ -81,6 +84,16 @@ class LocationFilter
 
         $cities = $group('city');
         $communities = $group('community', fn ($p) => $field($p, 'city'));
+        // Listings whose title matches — picking one opens that property.
+        $properties = $candidates->filter(fn ($p) => $hit($p, 'title') && $field($p, 'title'))
+            ->take(5)
+            ->map(fn ($p) => [
+                'type' => 'property',
+                'label' => $field($p, 'title'),
+                'sub' => collect([$field($p, 'community'), $field($p, 'city')])->filter()->unique()->implode(', ') ?: null,
+                'slug' => $p->slug,
+            ])
+            ->values();
         $addresses = $candidates->filter(fn ($p) => $hit($p, 'address') && $field($p, 'address'))
             ->take(5)
             ->map(fn ($p) => [
@@ -91,7 +104,8 @@ class LocationFilter
             ])
             ->values();
 
-        return $cities->take(3)->concat($communities->take(4))->concat($addresses)->take($limit)->values()->all();
+        return $cities->take(3)->concat($communities->take(4))->concat($properties)->concat($addresses->take(3))
+            ->take($limit)->values()->all();
     }
 
     private static function anyLang($q, string $field, string $operator, string $value): void

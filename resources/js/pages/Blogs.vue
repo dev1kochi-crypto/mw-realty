@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { usePageWindow } from '../composables/usePageWindow';
 import { useBlogListing } from '../composables/useBlogListing';
 import { useLanguages } from '../composables/useLanguages';
 import { useStaticText } from '../composables/useStaticText';
@@ -60,11 +61,7 @@ function postMeta(post) {
     return [post.author_name, post.published_at, post.read_time].filter(Boolean).join(' · ');
 }
 
-const pageNumbers = computed(() => {
-    if (!pagination.value) return [];
-    const { last_page: lastPage } = pagination.value;
-    return Array.from({ length: lastPage }, (_, i) => i + 1);
-});
+const pageNumbers = usePageWindow(currentPage, computed(() => pagination.value?.last_page));
 </script>
 
 <template>

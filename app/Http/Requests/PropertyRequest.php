@@ -9,6 +9,9 @@ use Illuminate\Validation\Rule;
 
 class PropertyRequest extends FormRequest
 {
+    /** Brochure / floor-plan file types: PDF, images and office documents. */
+    public const BROCHURE_EXTENSIONS = 'pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv,ppt,pptx';
+
     public function authorize(): bool { return true; } // The controller scopes ownership before persistence.
 
     public function rules(): array
@@ -38,7 +41,7 @@ class PropertyRequest extends FormRequest
             'currency' => 'sometimes|required|string|size:3|alpha',
             'image' => 'nullable|image|max:4096',
             'image_alt' => 'nullable|string|max:255',
-            'brochure' => 'nullable|file|mimes:pdf|max:20480',
+            'brochure' => 'nullable|file|extensions:' . self::BROCHURE_EXTENSIONS . '|max:20480',
             'images' => 'nullable|array|max:30',
             'images.*' => 'required|image|max:4096',
             'amenities' => 'nullable|array|max:100',

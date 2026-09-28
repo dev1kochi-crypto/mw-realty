@@ -46,5 +46,5 @@
     </div>
 </div>
 
-<div class="mt-3">{{ $agents->links() }}</div>
+<div class="mt-3">{{ $agents->links('pagination::bootstrap-5') }}</div>
 @endsection

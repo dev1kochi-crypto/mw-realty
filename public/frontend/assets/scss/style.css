@@ -12219,7 +12219,14 @@ body.property-details-page main {
 }
 .mw-property-agent .mw-agent-card__body {
   gap: clamp(8px, 1vw, 10px);
-  padding: clamp(14px, 1.6vw, 16px);
+  /* Left inset matches the head's, so the text sits beside (not under) the overhanging avatar. */
+  padding: clamp(14px, 1.6vw, 16px) clamp(14px, 1.6vw, 16px) clamp(14px, 1.6vw, 16px) clamp(128px, 8vw, 137px);
+}
+@media (max-width: 767px) {
+  /* Phones: the avatar sits inside the head (position: static), so no inset is needed. */
+  .mw-property-agent .mw-agent-card__body {
+    padding: 16px 14px;
+  }
 }
 .mw-property-agent__stat {
   margin: 0;
