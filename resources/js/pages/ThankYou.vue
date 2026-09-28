@@ -1,22 +1,23 @@
 <script setup>
 import { computed } from 'vue';
-import { useRoute } from 'vue-router';
 import { useStaticText } from '../composables/useStaticText';
 import { useSiteInformation } from '../composables/useSiteInformation';
 
 /**
- * Landing page after a public form is sent — Contact page (?type=contact), home page "Get in touch"
- * (?type=enquiry) and the agent/agency Custom Property Request (?type=request&to=agent|agency).
+ * Landing page after a public form is sent — Contact page (type contact), home page "Get in touch"
+ * (type enquiry) and the agent/agency Custom Property Request (type request, to agent|agency).
+ * These arrive as browser history state (router.push({ state: { thankYou } })), not in the URL, so
+ * no form data is ever visible in the address bar; the state survives a refresh too.
  * `name` (first name only) personalises the heading. Every string has a translation key with an
  * English fallback, so a language file that hasn't got the new keys yet still reads correctly.
  */
-const route = useRoute();
 const { t } = useStaticText();
 const { siteInformation } = useSiteInformation();
 
-const type = computed(() => (['contact', 'enquiry', 'request'].includes(route.query.type) ? route.query.type : 'default'));
-const firstName = computed(() => String(route.query.name || '').trim().slice(0, 30));
-const toAgency = computed(() => route.query.to === 'agency');
+const sent = (window.history.state && window.history.state.thankYou) || {};
+const type = computed(() => (['contact', 'enquiry', 'request'].includes(sent.type) ? sent.type : 'default'));
+const firstName = computed(() => String(sent.name || '').trim().slice(0, 30));
+const toAgency = computed(() => sent.to === 'agency');
 
 const copy = computed(() => {
     const key = `thank_you.${type.value}`;

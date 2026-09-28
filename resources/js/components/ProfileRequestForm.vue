@@ -35,7 +35,7 @@ async function submit() {
             recaptcha_token,
         });
         closeDrawer();
-        router.push({ path: '/thank-you', query: { type: 'request', to: props.profileType, name: form.first_name.trim() || undefined } });
+        router.push({ path: '/thank-you', state: { thankYou: { type: 'request', to: props.profileType, name: form.first_name.trim() } } });
     } catch (error) {
         feedback.value = { type: 'error', text: error.response?.data?.message || t('custom_request.generic_error') };
         submitting.value = false;

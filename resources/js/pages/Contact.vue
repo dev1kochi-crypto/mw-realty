@@ -122,7 +122,7 @@ async function handleSubmit() {
     try {
         const recaptcha_token = await getRecaptchaToken('contact');
         await window.axios.post('/api/contact', { ...form, source: 'contact', recaptcha_token });
-        router.push({ path: '/thank-you', query: { type: 'contact', name: form.name.trim().split(/\s+/)[0] || undefined } });
+        router.push({ path: '/thank-you', state: { thankYou: { type: 'contact', name: form.name.trim().split(/\s+/)[0] || '' } } });
     } catch (error) {
         feedback.value = { type: 'error', text: error.response?.data?.message || t('contact_page.generic_error') };
         submitting.value = false;

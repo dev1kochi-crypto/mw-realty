@@ -34,7 +34,7 @@ async function submitContactForm() {
     try {
         const recaptcha_token = await getRecaptchaToken('home_contact');
         await window.axios.post('/api/contact', { ...contactForm, source: 'home', recaptcha_token });
-        router.push({ path: '/thank-you', query: { type: 'enquiry', name: contactForm.name.trim().split(/\s+/)[0] || undefined } });
+        router.push({ path: '/thank-you', state: { thankYou: { type: 'enquiry', name: contactForm.name.trim().split(/\s+/)[0] || '' } } });
     } catch (error) {
         const fieldErrors = error.response?.data?.errors;
         contactError.value = fieldErrors ? Object.values(fieldErrors).flat()[0] : (error.response?.data?.message || t('contact_page.generic_error'));
