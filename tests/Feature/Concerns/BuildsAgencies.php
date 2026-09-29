@@ -91,7 +91,7 @@ trait BuildsAgencies
     protected function enquire(Property $property, string $name = 'Buyer'): Lead
     {
         $this->postJson('/leads/capture', [
-            'property_id' => $property->id, 'name' => $name, 'email' => 'buyer@example.test', 'message' => 'Interested',
+            'property_id' => $property->id, 'name' => $name, 'email' => \Illuminate\Support\Str::slug($name) . '@example.test', 'message' => 'Interested',
         ])->assertOk();
 
         return Lead::latest('id')->firstOrFail();

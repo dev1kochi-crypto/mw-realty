@@ -291,6 +291,9 @@ class LeadController extends Controller
             'alternateContacts' => $details->alternateContacts($lead),
             'enquiryDetails' => $details->enquiryDetails($lead),
             'timeline' => $details->timeline($lead),
+            // Listings this lead bought / rented (Mark as sold on a listing card).
+            'purchases' => \App\Models\Property::where('sold_lead_id', $lead->id)->orderByDesc('sold_at')
+                ->get(['id', 'translations', 'reference_no', 'segment', 'currency', 'price', 'sold_at', 'sold_type', 'sold_price', 'rented_until']),
             'sourceHistory' => $details->sourceHistory($lead),
             'notes' => $lead->notesHistory->where('type', \App\Models\LeadNote::TYPE_NOTE)->sortByDesc('id')->values(),
             'stages' => $stages,

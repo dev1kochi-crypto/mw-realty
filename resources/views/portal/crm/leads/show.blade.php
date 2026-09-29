@@ -189,6 +189,28 @@
                 </div>
 
                 <div class="col-lg-5">
+                    @if($purchases->isNotEmpty())
+                    {{-- Purchases — listings marked sold / rented to this lead --}}
+                    <section class="portal-lp-card">
+                        <header class="portal-lp-card-head"><h2><i class="fas fa-handshake me-1"></i>Purchases</h2></header>
+                        <div class="portal-lp-card-body">
+                            @foreach($purchases as $purchase)
+                            <div class="d-flex justify-content-between gap-2 py-2 @if(!$loop->last) border-bottom @endif">
+                                <div class="min-w-0">
+                                    <a href="{{ route(($purchase->segment === \App\Models\Property::SEGMENT_COMMERCIAL ? 'portal.commercial' : 'portal.properties') . '.show', $purchase->id) }}" class="fw-semibold text-decoration-none d-block text-truncate">{{ $purchase->getTranslation('title') ?: 'Property' }}</a>
+                                    <div class="small text-muted">
+                                        {{ $purchase->sold_type === \App\Models\Property::RENTED ? 'Rented' : 'Bought' }} {{ $purchase->sold_at?->format('d M Y') }}
+                                        @if($purchase->rented_until) &middot; until {{ $purchase->rented_until->format('d M Y') }}@endif
+                                        @if($purchase->reference_no) &middot; {{ $purchase->reference_no }}@endif
+                                    </div>
+                                </div>
+                                <span class="fw-bold text-nowrap">{{ ($purchase->currency ?: 'AED') . ' ' . number_format((float) $purchase->sold_price) }}</span>
+                            </div>
+                            @endforeach
+                        </div>
+                    </section>
+                    @endif
+
                     {{-- Tags --}}
                     <section class="portal-lp-card" data-card id="leadTagsCard">
                         <header class="portal-lp-card-head">

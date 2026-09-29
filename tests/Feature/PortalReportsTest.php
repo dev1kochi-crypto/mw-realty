@@ -51,7 +51,7 @@ class PortalReportsTest extends TestCase
         }
     }
 
-    public function test_revenue_counts_won_deals_at_property_price_and_excludes_lost(): void
+    public function test_sales_counts_won_deals_at_property_price_and_excludes_lost(): void
     {
         $agency = $this->agency([], $this->plan(['reports_access' => true]));
         $agent = $this->memberAgent($agency, attributes: ['name' => 'Alice Member']);
@@ -69,25 +69,39 @@ class PortalReportsTest extends TestCase
         $this->assertNotNull($wonLead->fresh()->closed_at, 'closed_at is stamped when entering a closed stage');
         $this->assertNull($openLead->fresh()->closed_at);
 
-        $data = app(\App\Services\Crm\PortalReportService::class)->revenue($agency, 30);
+        $data = app(\App\Services\Crm\PortalReportService::class)->sales($agency, 30);
         $this->assertEquals(1500000, $data['kpis']['won_value']);
         $this->assertSame(1, $data['kpis']['won_count']);
         $this->assertEquals(900000, $data['kpis']['lost_value'], '"Dropped" counts as lost, not won');
         $this->assertEquals(50.0, $data['kpis']['win_rate']);
         $this->assertEquals(120000, $data['kpis']['pipeline_value']);
-        $this->assertNull($data['plans'], 'plan revenue is Super Admin only');
+        $this->assertSame(1, $data['deals']->total(), 'the deal list shows won deals by default');
+        $this->assertNull($data['plans'], 'plan sales are Super Admin only');
 
         $this->signIn($agency);
-        $this->get('/portal/crm/reports/revenue?range=90')->assertOk()
+        $this->get('/portal/crm/reports/revenue?range=90')->assertRedirect('/portal/crm/reports/sales?range=90');
+        $this->get('/portal/crm/reports/sales?range=90')->assertOk()
             ->assertSee('AED 1,500,000')->assertSee('Winning Buyer')->assertSee('Alice Member')
-            ->assertDontSee('MW Realty Plan Revenue');
+            ->assertDontSee('MW Realty Plan Sales');
+        $this->get('/portal/crm/reports/sales?range=90&outcome=lost')->assertOk()->assertSee('Gone Buyer');
+
+        $names = fn (array $filters) => app(\App\Services\Crm\PortalReportService::class)->salesDeals($agency, 90, $filters)->pluck('leads.name')->all();
+        $this->assertSame(['Winning Buyer'], $names([]));
+        $this->assertSame(['Gone Buyer'], $names(['outcome' => 'lost']));
+        $this->assertSame(['Gone Buyer'], $names(['outcome' => 'all', 'q' => 'Gone']));
+        $this->assertSame([], $names(['listing' => 'rent']));
+
+        $csv = $this->get('/portal/crm/reports/sales?range=90&export=csv');
+        $csv->assertOk();
+        $this->assertStringContainsString('Winning Buyer', $csv->streamedContent());
+        $this->assertStringContainsString('1500000', $csv->streamedContent());
 
         // Moving back to an open stage clears the close date.
         $wonLead->update(['stage_id' => $open->id]);
         $this->assertNull($wonLead->fresh()->closed_at);
     }
 
-    public function test_super_admin_revenue_includes_plan_revenue(): void
+    public function test_super_admin_sales_includes_plan_sales(): void
     {
         $agency = $this->agency();
         \App\Models\PlanPayment::create([
@@ -97,7 +111,7 @@ class PortalReportsTest extends TestCase
         ]);
 
         $this->signIn($this->superAdmin(), 'cms');
-        $this->get('/portal/crm/reports/revenue')->assertOk()->assertSee('MW Realty Plan Revenue')->assertSee('AED 499');
+        $this->get('/portal/crm/reports/sales')->assertOk()->assertSee('MW Realty Plan Sales')->assertSee('AED 499');
     }
 
     public function test_super_admin_sees_every_agencys_agents(): void

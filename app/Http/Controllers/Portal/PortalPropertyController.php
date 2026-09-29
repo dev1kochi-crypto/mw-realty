@@ -86,6 +86,8 @@ class PortalPropertyController extends Controller
     {
         return Property::query()
             ->segment($this->segment())
+            // Sold / rented listings move to the Sold Listings menu.
+            ->available()
             ->when($this->ownerId(), fn ($q, $ownerId) => $strict
                 ? $q->where('portal_user_id', $ownerId)
                 : $q->accessibleBy($this->viewer()))
@@ -740,7 +742,8 @@ class PortalPropertyController extends Controller
             return response()->json(['success' => true, 'affected' => $properties->count()]);
         }
 
-        $affected = $query->update(['status' => $request->input('action') === 'active']);
+        // A sold / rented listing stays off the website until it's reverted.
+        $affected = $query->available()->update(['status' => $request->input('action') === 'active']);
 
         return response()->json(['success' => true, 'affected' => $affected]);
     }
@@ -929,6 +932,9 @@ class PortalPropertyController extends Controller
     {
         $property = $this->findOwned($id);
         abort_unless($this->isAdmin() || Auth::guard('portal')->user()->isApproved(), 403);
+        if ($property->isSold()) {
+            return response()->json(['message' => 'This listing is marked ' . $property->sold_type . '. Revert it to available first (Sold Listings).'], 422);
+        }
         $property->status = !$property->status;
         $property->save();
 

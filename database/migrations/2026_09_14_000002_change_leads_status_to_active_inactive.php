@@ -12,6 +12,15 @@ return new class extends Migration
 {
     public function up()
     {
+        // SQLite (the test database) has no MODIFY — rebuild the column the portable way.
+        if (DB::getDriverName() !== 'mysql') {
+            \Illuminate\Support\Facades\Schema::table('leads', fn ($t) => $t->string('status', 20)->default('active')->change());
+            DB::table('leads')->where('status', 'closed')->update(['status' => 'inactive']);
+            DB::table('leads')->whereIn('status', ['new', 'contacted'])->update(['status' => 'active']);
+
+            return;
+        }
+
         DB::statement("ALTER TABLE leads MODIFY status VARCHAR(20) NOT NULL DEFAULT 'active'");
 
         DB::table('leads')->where('status', 'closed')->update(['status' => 'inactive']);

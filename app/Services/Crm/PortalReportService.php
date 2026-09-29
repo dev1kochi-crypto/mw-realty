@@ -14,7 +14,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Portal Reports (Leads / Properties / Agents). Every query is scoped the same way the CRM and
+ * Portal Reports (Leads / Properties / Sales / Agents). Every query is scoped the same way the CRM and
  * Properties screens already are — Lead::forOwner / Property::accessibleBy — so a report can
  * never show more than the account can open elsewhere. A null viewer is Super Admin (all data).
  */
@@ -168,27 +168,50 @@ class PortalReportService
         return now()->subDays($days - 1)->startOfDay();
     }
 
+    public const SALE_OUTCOMES = ['won' => 'Won', 'lost' => 'Lost', 'all' => 'Won & Lost'];
+
+    /** A deal's value: the recorded sold / rent price when this lead is the listing's buyer, else the listed price. */
+    public const DEAL_VALUE = 'CASE WHEN properties.sold_lead_id = leads.id AND properties.sold_price IS NOT NULL THEN properties.sold_price ELSE properties.price END';
+
     /**
-     * Deal revenue for everyone (a won lead is worth its property's price, AED), plus MW Realty's
-     * own plan revenue for Super Admin. Won/lost = closed stage, split by LeadStage::nameIsLost().
+     * Sales for everyone (a won lead is worth its property's price, AED), plus MW Realty's own plan
+     * sales for Super Admin. Won/lost = closed stage, split by LeadStage::nameIsLost(). `deals` is the
+     * full, paginated list of every closed deal in the range (filters: q, outcome, listing).
      */
-    public function revenue(?PortalUser $viewer, int $days): array
+    public function sales(?PortalUser $viewer, int $days, array $filters = []): array
     {
         $since = $this->since($days);
         $previousSince = $since->copy()->subDays($days);
 
-        $closedStages = LeadStage::where('is_closed', true)->get(['id', 'name']);
-        [$lostStages, $wonStages] = $closedStages->partition(fn ($s) => LeadStage::nameIsLost($s->name));
-        $wonIds = $wonStages->pluck('id')->all() ?: [0];
-        $lostIds = $lostStages->pluck('id')->all() ?: [0];
+        [$closedIds, $wonIds, $lostIds] = $this->closedStageIds();
 
         $deals = fn () => Lead::forOwner($viewer?->id)->join('properties', 'properties.id', '=', 'leads.property_id');
         $won = fn () => $deals()->whereIn('leads.stage_id', $wonIds);
+        $wonInRange = fn () => $won()->where('leads.closed_at', '>=', $since);
+        $lostInRange = fn () => $deals()->whereIn('leads.stage_id', $lostIds)->where('leads.closed_at', '>=', $since);
+        $open = fn () => $deals()->where(fn ($q) => $q->whereNull('leads.stage_id')->orWhereNotIn('leads.stage_id', $closedIds));
 
-        $wonValue = (float) $won()->where('leads.closed_at', '>=', $since)->sum('properties.price');
-        $wonCount = $won()->where('leads.closed_at', '>=', $since)->count();
-        $previousWon = (float) $won()->whereBetween('leads.closed_at', [$previousSince, $since])->sum('properties.price');
-        $lostCount = $deals()->whereIn('leads.stage_id', $lostIds)->where('leads.closed_at', '>=', $since)->count();
+        // One aggregate query per bucket instead of a sum() + count() pair each.
+        $totals = fn ($query) => $query->selectRaw('count(*) as deals, COALESCE(SUM(' . self::DEAL_VALUE . '), 0) as total')->first();
+        $wonNow = $totals($wonInRange());
+        $wonBefore = $totals($won()->whereBetween('leads.closed_at', [$previousSince, $since]));
+        $lostNow = $totals($lostInRange());
+        $openNow = $totals($open());
+        $allTime = $totals($won());
+
+        $wonValue = (float) $wonNow->total;
+        $wonCount = (int) $wonNow->deals;
+        $previousWon = (float) $wonBefore->total;
+        $lostCount = (int) $lostNow->deals;
+
+        $labels = $this->labels->values();
+        $label = fn (string $key, ?string $value) => $value
+            ? (($labels[$key][$value] ?? null)?->getTranslation('label') ?? ucwords(str_replace('-', ' ', $value)))
+            : 'Not set';
+        $groupBy = fn (string $column, string $key) => $wonInRange()
+            ->selectRaw("properties.{$column} as grp, SUM(" . self::DEAL_VALUE . ") as total, count(*) as deals")
+            ->groupBy("properties.{$column}")->orderByDesc('total')->limit(8)->get()
+            ->map(fn ($row) => (object) ['name' => $label($key, $row->grp), 'total' => (float) $row->total, 'deals' => (int) $row->deals]);
 
         $data = [
             'kpis' => [
@@ -196,27 +219,34 @@ class PortalReportService
                 'change' => $previousWon > 0 ? round(($wonValue - $previousWon) / $previousWon * 100) : null,
                 'won_count' => $wonCount,
                 'average' => $wonCount > 0 ? $wonValue / $wonCount : 0.0,
-                'lost_value' => (float) $deals()->whereIn('leads.stage_id', $lostIds)->where('leads.closed_at', '>=', $since)->sum('properties.price'),
+                'lost_value' => (float) $lostNow->total,
+                'lost_count' => $lostCount,
                 'win_rate' => ($wonCount + $lostCount) > 0 ? round($wonCount / ($wonCount + $lostCount) * 100, 1) : null,
                 // Open pipeline: every not-yet-closed lead on a listing, at that listing's price.
-                'pipeline_value' => (float) $deals()->where(fn ($q) => $q->whereNull('leads.stage_id')->orWhereNotIn('leads.stage_id', $closedStages->pluck('id')->all() ?: [0]))->sum('properties.price'),
-                'pipeline_count' => $deals()->where(fn ($q) => $q->whereNull('leads.stage_id')->orWhereNotIn('leads.stage_id', $closedStages->pluck('id')->all() ?: [0]))->count(),
+                'pipeline_value' => (float) $openNow->total,
+                'pipeline_count' => (int) $openNow->deals,
+                'all_time_value' => (float) $allTime->total,
+                'all_time_count' => (int) $allTime->deals,
             ],
-            'overTime' => $this->perDay($won()->where('leads.closed_at', '>=', $since), 'leads.closed_at', $days, 'SUM(properties.price)'),
-            'byListingType' => $won()->where('leads.closed_at', '>=', $since)
-                ->selectRaw('properties.listing_type, SUM(properties.price) as total')->groupBy('properties.listing_type')
+            'overTime' => $this->perDay($wonInRange(), 'leads.closed_at', $days, 'SUM(' . self::DEAL_VALUE . ')'),
+            'byListingType' => $wonInRange()
+                ->selectRaw('properties.listing_type, SUM(' . self::DEAL_VALUE . ') as total')->groupBy('properties.listing_type')
                 ->pluck('total', 'listing_type')->mapWithKeys(fn ($total, $type) => [ucfirst($type ?: 'Other') => (float) $total]),
-            'recentDeals' => $won()->where('leads.closed_at', '>=', $since)
-                ->with(['agent:id,name', 'stage:id,name'])
-                ->select('leads.id', 'leads.name', 'leads.agent_id', 'leads.stage_id', 'leads.closed_at', 'properties.id as property_id',
-                    'properties.translations as property_translations', 'properties.reference_no', 'properties.listing_type', 'properties.price')
-                ->orderByDesc('leads.closed_at')->limit(10)->get(),
+            'byPropertyType' => $groupBy('property_type', 'property_type'),
+            'byLocation' => $groupBy('location', 'location'),
             'byAgent' => $viewer?->type === 'company' || !$viewer
-                ? $won()->where('leads.closed_at', '>=', $since)->whereNotNull('leads.agent_id')
+                ? $wonInRange()->whereNotNull('leads.agent_id')
                     ->join('portal_users as agents', 'agents.id', '=', 'leads.agent_id')
-                    ->selectRaw('agents.name, SUM(properties.price) as total, count(*) as deals')
+                    ->selectRaw('agents.name, SUM(' . self::DEAL_VALUE . ') as total, count(*) as deals')
                     ->groupBy('agents.id', 'agents.name')->orderByDesc('total')->limit(10)->get()
                 : collect(),
+            // Super Admin: sales per account (agency / independent agent).
+            'byAccount' => !$viewer
+                ? $wonInRange()->join('portal_users as owners', 'owners.id', '=', 'leads.portal_user_id')
+                    ->selectRaw('owners.name, owners.company_name, owners.type, SUM(' . self::DEAL_VALUE . ') as total, count(*) as deals')
+                    ->groupBy('owners.id', 'owners.name', 'owners.company_name', 'owners.type')->orderByDesc('total')->limit(10)->get()
+                : collect(),
+            'deals' => $this->salesDeals($viewer, $days, $filters)->paginate(20)->withQueryString(),
             'plans' => null,
         ];
 
@@ -239,6 +269,58 @@ class PortalReportService
 
         return $data;
     }
+
+    /** Every closed deal in the range, newest first — the Sales list and its CSV export share this. */
+    public function salesDeals(?PortalUser $viewer, int $days, array $filters = [])
+    {
+        [, $wonIds, $lostIds] = $this->closedStageIds();
+        $outcome = array_key_exists($filters['outcome'] ?? '', self::SALE_OUTCOMES) ? $filters['outcome'] : 'won';
+        $search = trim((string) ($filters['q'] ?? ''));
+        $listing = in_array($filters['listing'] ?? '', ['sale', 'rent'], true) ? $filters['listing'] : null;
+
+        return Lead::forOwner($viewer?->id)
+            ->join('properties', 'properties.id', '=', 'leads.property_id')
+            ->whereIn('leads.stage_id', match ($outcome) {
+                'won' => $wonIds,
+                'lost' => $lostIds,
+                default => array_merge($wonIds, $lostIds),
+            })
+            ->where('leads.closed_at', '>=', $this->since($days))
+            ->when($listing, fn ($q) => $q->where('properties.listing_type', $listing))
+            ->when($search !== '', function ($q) use ($search) {
+                $like = '%' . $search . '%';
+                $q->where(fn ($w) => $w->where('leads.name', 'like', $like)
+                    ->orWhere('leads.email', 'like', $like)
+                    ->orWhere('leads.phone', 'like', $like)
+                    ->orWhere('properties.reference_no', 'like', $like)
+                    ->orWhere('properties.translations', 'like', $like)
+                    ->orWhereIn('leads.agent_id', PortalUser::where('name', 'like', $like)->select('id')));
+            })
+            ->with(['agent:id,name', 'stage:id,name,color', 'owner:id,name,company_name,type'])
+            ->select('leads.id', 'leads.name', 'leads.email', 'leads.phone', 'leads.phone_country_code', 'leads.portal_user_id',
+                'leads.agent_id', 'leads.stage_id', 'leads.created_at', 'leads.closed_at', 'properties.id as property_id',
+                'properties.translations as property_translations', 'properties.reference_no', 'properties.listing_type',
+                'properties.property_type', 'properties.location', 'properties.price')
+            ->selectRaw(self::DEAL_VALUE . ' as deal_value')
+            ->orderByDesc('leads.closed_at')->orderByDesc('leads.id');
+    }
+
+    /** [closed, won, lost] stage ids — never empty, so whereIn() / whereNotIn() stay valid. */
+    private function closedStageIds(): array
+    {
+        return $this->closedStageIds ??= (function () {
+            $closedStages = LeadStage::where('is_closed', true)->get(['id', 'name']);
+            [$lostStages, $wonStages] = $closedStages->partition(fn ($s) => LeadStage::nameIsLost($s->name));
+
+            return [
+                $closedStages->pluck('id')->all() ?: [0],
+                $wonStages->pluck('id')->all() ?: [0],
+                $lostStages->pluck('id')->all() ?: [0],
+            ];
+        })();
+    }
+
+    private ?array $closedStageIds = null;
 
     /** Per-day totals with zero-filled gaps (monthly buckets for the 12-month range) — counts by default, or any aggregate. */
     private function perDay($query, string $column, int $days, string $aggregate = 'count(*)'): Collection

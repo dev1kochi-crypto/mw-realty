@@ -16,7 +16,9 @@ return new class extends Migration
         // A Google-created account has no password to check — raw SQL rather than
         // Schema::table()->change(): a column-attribute change needs doctrine/dbal,
         // which this project doesn't otherwise depend on.
-        DB::statement('ALTER TABLE users MODIFY password VARCHAR(255) NULL');
+        DB::getDriverName() === 'mysql'
+            ? DB::statement('ALTER TABLE users MODIFY password VARCHAR(255) NULL')
+            : Schema::table('users', fn (Blueprint $table) => $table->string('password')->nullable()->change());
     }
 
     public function down(): void

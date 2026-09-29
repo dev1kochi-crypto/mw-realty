@@ -14,6 +14,13 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // SQLite (the test database) has no MODIFY — Laravel 12 can change() the column natively there.
+        if (DB::getDriverName() !== 'mysql') {
+            \Illuminate\Support\Facades\Schema::table('leads', fn ($t) => $t->unsignedBigInteger('portal_user_id')->nullable()->change());
+
+            return;
+        }
+
         DB::statement('ALTER TABLE leads MODIFY portal_user_id BIGINT UNSIGNED NULL');
     }
 

@@ -47,6 +47,9 @@
 
             @php
                 $notApproved = $owner && $owner->status !== 'approved';
+                // "Sold Listings" only appears once something has been marked sold / rented (indexed exists()).
+                $hasSoldListings = ($owner || $cmsActor) && \App\Models\Property::soldOrRented()
+                    ->when($owner, fn ($q) => $q->accessibleBy($owner))->exists();
             @endphp
             <nav class="nav flex-column">
                 <a href="{{ route('portal.dashboard') }}" class="nav-link @if(request()->routeIs('portal.dashboard')) active @endif">
@@ -89,6 +92,11 @@
                     <i class="fas fa-star"></i> Premium
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
+                @if($hasSoldListings)
+                <a href="{{ route('portal.sold.index') }}" class="nav-link @if(request()->routeIs('portal.sold.*')) active @endif">
+                    <i class="fas fa-handshake"></i> Sold Listings
+                </a>
+                @endif
                 @if(!$owner && $cmsActor?->hasRole('superadmin'))
                 {{-- Home "Realty Property" list — Super Admin only. --}}
                 <a href="{{ route('portal.marketing.index') }}" class="nav-link @if(request()->routeIs('portal.marketing.*')) active @endif">

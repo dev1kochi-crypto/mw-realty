@@ -153,6 +153,11 @@
                 <div class="portal-property-card__actions">
                     <a href="{{ route($routePrefix . '.show', $property->id) }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-eye me-1"></i>View</a>
                     <a href="{{ route($routePrefix . '.edit', $property->id) }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-edit me-1"></i>Edit</a>
+                    <button type="button" class="portal-btn-ghost btn btn-sm portal-property-card__icon-btn mark-sold-property" data-id="{{ $property->id }}"
+                            data-title="{{ $property->getTranslation('title') }}" data-ref="{{ $property->reference_no }}" data-thumb="{{ $thumb }}"
+                            data-price="{{ $property->price ? (float) $property->price : '' }}" data-currency="{{ $property->currency ?: 'AED' }}"
+                            data-type="{{ $property->listing_type === 'rent' ? 'rented' : 'sold' }}"
+                            title="Mark as sold / rented" aria-label="Mark as sold or rented"><i class="fas fa-handshake"></i></button>
                     <button type="button" class="portal-btn-ghost btn btn-sm portal-property-card__icon-btn delete-property" data-id="{{ $property->id }}" title="Delete" aria-label="Delete"><i class="fas fa-trash"></i></button>
                     @if($totalListings > 1)
                     <div class="dropdown">
@@ -192,6 +197,7 @@
 @endif
 
 @include('portal.properties._feature_modal')
+@include('portal.properties._sold_modal')
 
 {{-- Move to position modal --}}
 <div class="modal fade" id="moveModal" tabindex="-1" aria-labelledby="moveModalTitle" aria-hidden="true">

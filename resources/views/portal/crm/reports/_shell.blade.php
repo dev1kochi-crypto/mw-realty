@@ -34,7 +34,7 @@
 <nav class="rp-tabs mb-4">
     @foreach($reports as $key => $label)
     <a href="{{ route('portal.crm.reports.index', ['report' => $key, 'range' => $days]) }}" class="rp-tab @if($report === $key) is-active @endif">
-        <i class="fas {{ ['leads' => 'fa-address-book', 'properties' => 'fa-building', 'revenue' => 'fa-coins', 'agents' => 'fa-user-tie'][$key] }}"></i>{{ $label }}
+        <i class="fas {{ ['leads' => 'fa-address-book', 'properties' => 'fa-building', 'sales' => 'fa-handshake', 'agents' => 'fa-user-tie'][$key] }}"></i>{{ $label }}
     </a>
     @endforeach
 </nav>

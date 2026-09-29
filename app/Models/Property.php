@@ -46,7 +46,19 @@ class Property extends Model
         'published_at',
         'order_index',
         'metadata',
+        'sold_at',
+        'sold_type',
+        'sold_price',
+        'sold_commission',
+        'rented_until',
+        'sold_lead_id',
+        'sold_agent_id',
+        'sold_notes',
+        'status_before_sold',
     ];
+
+    public const SOLD = 'sold';
+    public const RENTED = 'rented';
 
     protected $casts = [
         'translations' => 'array',
@@ -59,7 +71,39 @@ class Property extends Model
         'status' => 'boolean',
         'published_at' => 'datetime',
         'metadata' => 'array',
+        'sold_at' => 'datetime',
+        'sold_price' => 'decimal:2',
+        'sold_commission' => 'decimal:2',
+        'rented_until' => 'date',
+        'status_before_sold' => 'boolean',
     ];
+
+    /** The lead who bought / rented this listing (see PropertySaleService). */
+    public function soldLead()
+    {
+        return $this->belongsTo(Lead::class, 'sold_lead_id');
+    }
+
+    public function soldAgent()
+    {
+        return $this->belongsTo(PortalUser::class, 'sold_agent_id');
+    }
+
+    public function isSold(): bool
+    {
+        return $this->sold_at !== null;
+    }
+
+    /** Still on the market — neither sold nor rented. */
+    public function scopeAvailable($query)
+    {
+        return $query->whereNull('properties.sold_at');
+    }
+
+    public function scopeSoldOrRented($query)
+    {
+        return $query->whereNotNull('properties.sold_at');
+    }
 
     public function details()
     {

@@ -739,6 +739,12 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('/properties/{id}/toggle-status', [PortalPropertyController::class, 'toggleStatus'])->name('properties.toggle-status');
         Route::post('/properties/{id}/move', [PortalPropertyController::class, 'move'])->name('properties.move')->middleware('portal.approved');
 
+        // Mark as sold / rented (both menus' cards) + the Sold Listings menu.
+        Route::get('/properties/{id}/sale-leads', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'leadOptions'])->name('properties.sale-leads')->middleware('portal.approved');
+        Route::post('/properties/{id}/mark-sold', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'markSold'])->name('properties.mark-sold')->middleware('portal.approved');
+        Route::post('/properties/{id}/revert-sold', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'revert'])->name('properties.revert-sold')->middleware('portal.approved');
+        Route::get('/sold-listings', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'soldIndex'])->name('sold.index')->middleware('portal.approved');
+
         // Commercial — same table/form/screens as Properties, segment = commercial (see
         // PortalCommercialController). Per-listing AJAX actions reuse the properties.* routes above.
         Route::prefix('commercial')->name('commercial.')->group(function () {
@@ -850,7 +856,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
                 Route::post('/sources/reorder', [LeadSourceController::class, 'reorder'])->name('sources.reorder');
             });
 
-            Route::get('/reports/{report?}', [PortalReportController::class, 'index'])->name('reports.index')->whereIn('report', ['leads', 'properties', 'revenue', 'agents']);
+            Route::get('/reports/{report?}', [PortalReportController::class, 'index'])->name('reports.index')->whereIn('report', ['leads', 'properties', 'sales', 'revenue', 'agents']);
         });
     });
 });
