@@ -21,16 +21,16 @@
                         <i class="fas fa-users text-muted"></i>
                     </div>
                     <div>
-                        <span class="d-block fw-semibold" style="font-size: 1.05rem;">{{ $leads->count() }} {{ Str::plural('lead', $leads->count()) }}</span>
-                        <span class="d-block text-muted" style="font-size: 0.8rem;">Matching your current search and filters</span>
+                        <span class="d-block fw-semibold" style="font-size: 1.05rem;" id="leadExportCount">0 leads</span>
+                        <span class="d-block text-muted" style="font-size: 0.8rem;" id="leadExportScope">Selected in the table</span>
                     </div>
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
-                <a href="{{ route('portal.crm.leads.export', request()->query()) }}" id="leadExportDownloadBtn" class="btn btn-portal-primary px-4">
+                <button type="button" id="leadExportDownloadBtn" class="btn btn-portal-primary px-4">
                     <i class="fas fa-download me-1"></i> Download
-                </a>
+                </button>
             </div>
         </div>
     </div>
@@ -44,10 +44,33 @@
         const openExportButton = document.getElementById('openLeadExportModal');
 
         openExportButton?.addEventListener('click', function () {
+            const selection = window.getLeadSelection();
+            if (!selection.count) return;
+            document.getElementById('leadExportCount').textContent = selection.count + (selection.count === 1 ? ' lead' : ' leads');
+            document.getElementById('leadExportScope').textContent = selection.all
+                ? 'All leads matching your filters' + (selection.exclude.length ? ', minus ' + selection.exclude.length + ' unticked' : '')
+                : 'Selected in the table';
             exportModal.show();
         });
 
+        // POST the selection (it can be thousands of ids, too long for a URL); the browser stays on
+        // the page and downloads the file the server sends back.
         document.getElementById('leadExportDownloadBtn')?.addEventListener('click', function () {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = @json(route('portal.crm.leads.export'));
+            form.hidden = true;
+            const body = window.appendLeadSelection(new URLSearchParams({ _token: @json(csrf_token()) }));
+            body.forEach(function (value, key) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            });
+            document.body.appendChild(form);
+            form.submit();
+            form.remove();
             setTimeout(function () { exportModal.hide(); }, 300);
         });
     });

@@ -89,6 +89,12 @@
                     <i class="fas fa-star"></i> Premium
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
+                @if(!$owner && $cmsActor?->hasRole('superadmin'))
+                {{-- Home "Realty Property" list — Super Admin only. --}}
+                <a href="{{ route('portal.marketing.index') }}" class="nav-link @if(request()->routeIs('portal.marketing.*')) active @endif">
+                    <i class="fas fa-bullhorn"></i> Marketing Properties
+                </a>
+                @endif
                 @if($owner?->type === 'agent')
                 <a href="{{ route('portal.agency.index') }}" class="nav-link @if(request()->routeIs('portal.agency.*')) active @endif">
                     <i class="fas fa-building-user"></i> My Agency
@@ -442,6 +448,37 @@
                 }).then(function () { window.location.reload(); });
             });
         }
+    })();
+    </script>
+
+    {{-- Toasts: top-right, auto-dismiss. window.portalToast('success' | 'danger' | 'info', message). --}}
+    <div class="portal-toast-stack" id="portalToastStack" aria-live="polite" aria-atomic="false"></div>
+    <script>
+    (function () {
+        const icons = { success: 'fa-circle-check', danger: 'fa-circle-exclamation', info: 'fa-circle-info' };
+        window.portalToast = function (type, message, duration) {
+            type = icons[type] ? type : 'info';
+            duration = duration || (type === 'danger' ? 6000 : 3500);
+            const stack = document.getElementById('portalToastStack');
+            const toast = document.createElement('div');
+            toast.className = 'portal-toast portal-toast-' + type;
+            toast.setAttribute('role', type === 'danger' ? 'alert' : 'status');
+            toast.style.setProperty('--toast-duration', duration + 'ms');
+            toast.innerHTML = '<i class="fas ' + icons[type] + ' portal-toast-icon" aria-hidden="true"></i><div class="portal-toast-text"></div>'
+                + '<button type="button" class="portal-toast-close" aria-label="Dismiss"><i class="fas fa-xmark"></i></button><span class="portal-toast-progress"></span>';
+            toast.querySelector('.portal-toast-text').textContent = message;
+            stack.appendChild(toast);
+            requestAnimationFrame(function () { toast.classList.add('is-shown'); });
+
+            function dismiss() {
+                if (toast.classList.contains('is-leaving')) return;
+                toast.classList.add('is-leaving');
+                setTimeout(function () { toast.remove(); }, 300);
+            }
+            const timer = setTimeout(dismiss, duration);
+            toast.querySelector('.portal-toast-close').addEventListener('click', function () { clearTimeout(timer); dismiss(); });
+            return toast;
+        };
     })();
     </script>
 

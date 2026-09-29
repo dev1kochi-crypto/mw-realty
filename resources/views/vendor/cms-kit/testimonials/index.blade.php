@@ -38,7 +38,7 @@
                     <div class="row g-3">
                         @if(config('cms-kit.database.testimonials.section.title'))
                         <div class="col-md-4">
-                            <label class="form-label fw-bold">Title {!! in_array('title', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                            <label class="form-label fw-bold">Heading <small class="text-muted fw-normal">(e.g. Why Our Clients Trust Us)</small> {!! in_array('title', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                             <input type="text" name="translations[{{ $lang->code }}][section_title]" class="form-control @error("translations.{$lang->code}.section_title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.section_title", $section->translations[$lang->code]['section_title'] ?? '') }}" {{ in_array('title', $sectionRequired) ? 'required' : '' }}>
                             @error("translations.{$lang->code}.section_title")
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -48,7 +48,7 @@
 
                         @if(config('cms-kit.database.testimonials.section.sub_heading_1'))
                         <div class="col-md-4">
-                            <label class="form-label fw-bold">Sub Heading 1 {!! in_array('sub_heading_1', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                            <label class="form-label fw-bold">Eyebrow <small class="text-muted fw-normal">(small text above the heading)</small> {!! in_array('sub_heading_1', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                             <input type="text" name="translations[{{ $lang->code }}][section_sub_heading_1]" class="form-control @error("translations.{$lang->code}.section_sub_heading_1") is-invalid @enderror" value="{{ old("translations.{$lang->code}.section_sub_heading_1", $section->translations[$lang->code]['section_sub_heading_1'] ?? '') }}" {{ in_array('sub_heading_1', $sectionRequired) ? 'required' : '' }}>
                             @error("translations.{$lang->code}.section_sub_heading_1")
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -69,7 +69,8 @@
                         @if(config('cms-kit.database.testimonials.section.description'))
                         <div class="col-12 mt-3">
                             <label class="form-label fw-bold">Description{{ $showLanguageUi ? ' (' . strtoupper($lang->code) . ')' : '' }} {!! in_array('description', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                            <textarea name="description[{{ $lang->code }}]" class="form-control tinymce-editor @error("description.{$lang->code}") is-invalid @enderror" rows="3">{{ old("description.{$lang->code}", $section->description[$lang->code] ?? '') }}</textarea>
+                            {{-- Plain text: the site prints it as-is under the heading, so no rich-text editor. --}}
+                            <textarea name="description[{{ $lang->code }}]" class="form-control @error("description.{$lang->code}") is-invalid @enderror" rows="3" maxlength="500" placeholder="Shown under the heading, e.g. Discover what our customers are saying about their experiences.">{{ old("description.{$lang->code}", $section->translations[$lang->code]['description'] ?? '') }}</textarea>
                             @error("description.{$lang->code}")
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror

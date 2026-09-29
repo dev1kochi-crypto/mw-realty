@@ -3,28 +3,24 @@
 namespace App\Exports;
 
 use App\Models\Lead;
-use App\Services\Crm\LeadService;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
 /**
- * Exports Leads using the exact same owner+filter query the Lead listing
- * shows on screen (via LeadService::filteredQuery) — Export always matches
- * whatever the user currently has filtered/searched for.
+ * Exports the leads of a query built by LeadService — filteredQuery() (everything the listing
+ * shows) or selectedQuery() (the toolbar selection) — so Export always matches the screen.
  */
 class LeadsExport implements FromQuery, WithHeadings, WithMapping
 {
-    public function __construct(
-        private readonly ?int $ownerId,
-        private readonly array $filters,
-        private readonly LeadService $leadService,
-    ) {
+    public function __construct(private readonly Builder $query)
+    {
     }
 
     public function query()
     {
-        return $this->leadService->filteredQuery($this->ownerId, $this->filters);
+        return $this->query->with(['owner', 'agent', 'stage', 'source', 'tags']);
     }
 
     public function headings(): array

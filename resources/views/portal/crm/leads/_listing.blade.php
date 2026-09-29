@@ -107,20 +107,13 @@
 </div>
 
 
-<div id="leadBulkActionsBar" class="portal-card p-2 px-3 mb-3 d-none d-flex align-items-center justify-content-between">
-    <span class="small fw-semibold"><span id="leadSelectedCount">0</span> selected</span>
-    <button type="button" class="btn btn-sm btn-outline-danger" id="bulkDeleteLeadsBtn">
-        <i class="fas fa-trash-can me-1"></i> Delete Selected
-    </button>
-</div>
-
 @php($hasTableField = fn (string $field) => in_array($field, $leadTableColumns, true))
 <div class="portal-card p-3 p-md-4">
     <div class="portal-table-toolbar">
         <span id="leadTableScrollHint" class="portal-table-scroll-hint d-none"><i class="fas fa-arrows-left-right me-1" aria-hidden="true"></i>Scroll horizontally to see all selected fields</span>
     </div>
     <div class="table-responsive">
-        <table class="table portal-table mb-0" id="leadsDataTable" data-has-rows="{{ $leads->isNotEmpty() ? 'true' : 'false' }}">
+        <table class="table portal-table mb-0" id="leadsDataTable" data-has-rows="{{ $leads->isNotEmpty() ? 'true' : 'false' }}" data-total-rows="{{ $leads->count() }}">
             <thead>
                 <tr>
                     <th style="width: 2.5rem;"><input type="checkbox" class="form-check-input" id="selectAllLeads"></th>
@@ -168,9 +161,12 @@
                         <div class="d-flex align-items-center gap-2">
                             <span class="portal-lead-avatar">{{ strtoupper(mb_substr($lead->name ?: '?', 0, 1)) }}</span>
                             <div class="min-w-0">
-                                <button type="button" class="portal-lead-name-button view-lead-btn" data-id="{{ $lead->id }}" aria-label="View details for {{ $lead->name ?: 'lead' }}">
+                                <a href="{{ route('portal.crm.leads.show', $lead->id) }}" class="portal-lead-name-button text-decoration-none" aria-label="View details for {{ $lead->name ?: 'lead' }}">
                                     {{ $lead->name ?: 'Unknown' }}
-                                </button>
+                                </a>
+                                @if($lead->enquiry_count > 1)
+                                <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis ms-1" style="font-size: 0.68rem;" title="Enquired {{ $lead->enquiry_count }} times{{ $lead->last_enquired_at ? ' — latest ' . $lead->last_enquired_at->format('d M Y') : '' }}">&times;{{ $lead->enquiry_count }}</span>
+                                @endif
                                 <div class="text-muted text-truncate" style="font-size: 0.78rem; max-width: 180px;">{{ $lead->email ?: $lead->formatted_phone ?: '-' }}</div>
                             </div>
                         </div>

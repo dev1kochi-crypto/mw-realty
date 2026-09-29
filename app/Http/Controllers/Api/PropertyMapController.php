@@ -24,7 +24,7 @@ class PropertyMapController extends Controller
 
     public function index(Request $request)
     {
-        $segment = in_array($request->input('segment'), ['commercial', 'premium'], true) ? $request->input('segment') : 'residential';
+        $segment = in_array($request->input('segment'), ['commercial', 'premium', 'marketing'], true) ? $request->input('segment') : 'residential';
 
         // Same "category means purpose when it's sale/rent/off_plan" rule as PropertiesController.
         $legacyCategory = $request->input('category');

@@ -18,7 +18,7 @@ class PropertyFilterController extends Controller
 {
     public function index(Request $request)
     {
-        $request->validate(['page' => 'sometimes|in:home,listing', 'lang' => 'sometimes|string|max:10', 'scope' => 'sometimes|in:residential,commercial,premium']);
+        $request->validate(['page' => 'sometimes|in:home,listing', 'lang' => 'sometimes|string|max:10', 'scope' => 'sometimes|in:residential,commercial,premium,marketing']);
         $page = $request->input('page', 'home'); // "home" or "listing"
         $lang = $request->input('lang', app()->getLocale());
         // Which listings option counts and slider bounds come from: /properties (default),
@@ -26,6 +26,7 @@ class PropertyFilterController extends Controller
         $listings = fn () => match ($request->input('scope')) {
             'commercial' => Property::active()->commercial(),
             'premium' => Property::active()->where('featured', true),
+            'marketing' => Property::active()->marketing(),
             default => Property::active()->residential(),
         };
 

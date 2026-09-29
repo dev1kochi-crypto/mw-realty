@@ -35,7 +35,12 @@ class Lead extends Model
         'source_id',
         'notes',
         'extra_fields',
+        'enquiry_count',
+        'last_enquired_at',
     ];
+
+    /** Set (not persisted) when a new enquiry was merged into this existing lead instead of creating one. */
+    public bool $wasMerged = false;
 
     public const ASSIGN_PROPERTY_AGENT = 'property_agent';
     public const ASSIGN_ROUND_ROBIN = 'round_robin';
@@ -47,6 +52,7 @@ class Lead extends Model
         'extra_fields' => 'array',
         'assigned_at' => 'datetime',
         'closed_at' => 'datetime',
+        'last_enquired_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -64,6 +70,89 @@ class Lead extends Model
                 $lead->closed_at = now();
             }
         });
+
+        // Every email / phone the lead has used is kept, so duplicate detection matches on any of
+        // them — an edited primary email/phone is added, the previous one stays as an alternate.
+        static::saved(function (Lead $lead) {
+            if ($lead->wasRecentlyCreated || $lead->wasChanged(['email', 'phone'])) {
+                $lead->recordContacts($lead->email, $lead->phone, $lead->phone_country_code);
+            }
+        });
+
+        // Activity history: every stage / source / status / contact-detail change, whichever
+        // screen made it, lands in the lead's timeline (LeadNoteService).
+        static::updated(function (Lead $lead) {
+            if (!self::$logActivity) {
+                return;
+            }
+            $log = app(\App\Services\Crm\LeadNoteService::class);
+
+            if ($lead->wasChanged('stage_id')) {
+                $from = LeadStage::find($lead->getOriginal('stage_id'));
+                $to = LeadStage::find($lead->stage_id);
+                $log->log($lead, 'stage', 'Stage changed from ' . ($from?->name ?? 'No stage') . ' to ' . ($to?->name ?? 'No stage'), [
+                    'from' => $from?->name, 'to' => $to?->name, 'color' => $to?->color,
+                ]);
+            }
+            if ($lead->wasChanged('source_id')) {
+                $from = LeadSource::find($lead->getOriginal('source_id'))?->name;
+                $to = LeadSource::find($lead->source_id)?->name;
+                $log->log($lead, 'source', 'Source changed from ' . ($from ?? 'No source') . ' to ' . ($to ?? 'No source'), ['from' => $from, 'to' => $to]);
+            }
+            if ($lead->wasChanged('status')) {
+                $log->log($lead, 'status', 'Status changed from ' . ucfirst((string) $lead->getOriginal('status')) . ' to ' . ucfirst((string) $lead->status));
+            }
+
+            $labels = ['name' => 'Name', 'email' => 'Email', 'phone' => 'Phone', 'company' => 'Company', 'country' => 'Country', 'message' => 'Enquiry message'];
+            $changed = array_keys(array_intersect_key($lead->getChanges(), $labels));
+            if ($lead->wasChanged('phone_country_code') && !in_array('phone', $changed)) {
+                $changed[] = 'phone';
+            }
+            if ($changed) {
+                $lines = array_map(function ($field) use ($lead, $labels) {
+                    if ($field === 'message') {
+                        return 'Enquiry message updated';
+                    }
+                    $old = $field === 'phone' ? trim($lead->getOriginal('phone_country_code') . ' ' . $lead->getOriginal('phone')) : $lead->getOriginal($field);
+                    $new = $field === 'phone' ? $lead->formatted_phone : $lead->{$field};
+
+                    return $labels[$field] . ': ' . (filled($old) ? $old : '—') . ' → ' . (filled($new) ? $new : '—');
+                }, $changed);
+                $log->log($lead, 'details', implode("\n", $lines), ['fields' => $changed]);
+            }
+        });
+    }
+
+    /** Off while a system clean-up / merge writes to a lead, so it doesn't show up as team activity. */
+    private static bool $logActivity = true;
+
+    public static function withoutActivityLog(callable $callback): mixed
+    {
+        $previous = self::$logActivity;
+        self::$logActivity = false;
+        try {
+            return $callback();
+        } finally {
+            self::$logActivity = $previous;
+        }
+    }
+
+    /** Adds the given email / phone to this lead's known contacts (already-known ones are ignored). */
+    public function recordContacts(?string $email, ?string $phone, ?string $countryCode = null): void
+    {
+        $rows = array_map(
+            fn ($row) => $row + ['lead_id' => $this->id, 'created_at' => now(), 'updated_at' => now()],
+            LeadContact::rowsFor($email, $phone, $countryCode)
+        );
+
+        if ($rows) {
+            LeadContact::insertOrIgnore($rows);
+        }
+    }
+
+    public function contacts()
+    {
+        return $this->hasMany(LeadContact::class)->orderBy('id');
     }
 
     public function property()

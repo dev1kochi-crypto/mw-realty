@@ -34,14 +34,20 @@ class PropertiesPageService
         $refine = $this->normaliseRefine($refine);
         $cacheKey = "properties-listing:{$lang}:{$page}:{$perPage}:"
             . ($location ?: 'all') . ':' . ($propertyType ?: 'all') . ':' . ($category ?: 'all')
-            . ':' . ($bedrooms ?: 'any') . ':' . ($bathrooms ?: 'any') . ':' . md5(json_encode($refine));
+            . ':' . ($bedrooms ?: 'any') . ':' . ($bathrooms ?: 'any') . ':' . md5(json_encode($refine))
+            // Marketing list edits (add / remove / reorder) show straight away, not after the TTL.
+            . ($refine['marketing'] ? ':' . \App\Models\MarketingProperty::max('updated_at') . ':' . \App\Models\MarketingProperty::count()
+                . ':' . \App\Models\CmsKit\SectionLabel::where('section_key', 'home-realty-property')->value('updated_at') : '');
 
         $data = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($lang, $location, $propertyType, $category, $bedrooms, $bathrooms, $page, $perPage, $refine) {
             // /premium-properties: every featured ("premium") listing, residential and commercial.
             // Otherwise /properties: commercial-menu listings live on /commercial only.
-            $query = $refine['premium']
-                ? Property::where('status', true)->where('featured', true)
-                : Property::where('status', true)->residential();
+            // /marketing-properties: Super Admin's hand-picked list (residential + commercial).
+            $query = match (true) {
+                $refine['marketing'] => Property::where('status', true)->marketing(),
+                $refine['premium'] => Property::where('status', true)->where('featured', true),
+                default => Property::where('status', true)->residential(),
+            };
             $this->applyFilters($query, $location, $propertyType, $category, $bedrooms, $bathrooms, $refine);
             $paginator = $query->paginate($perPage, ['*'], 'page', $page);
 
@@ -52,15 +58,32 @@ class PropertiesPageService
                     'last_page' => $paginator->lastPage(),
                     'total' => $paginator->total(),
                 ],
-                'seo' => SeoMeta::forStaticPage($refine['premium'] ? 'premium-properties' : 'properties', $lang),
+                'seo' => SeoMeta::forStaticPage($refine['marketing'] ? 'marketing-properties' : ($refine['premium'] ? 'premium-properties' : 'properties'), $lang),
+                // The view-all page's heading / intro come from the same CMS section as the home
+                // "Realty Property" block (Common Titles › Realty Property).
+                'section' => $refine['marketing'] ? $this->marketingSection($lang) : null,
             ];
         });
 
-        if ($refine['sort'] === 'default') {
+        // Recommended order is shuffled for variety — except the Marketing list, which keeps the
+        // order Super Admin arranged.
+        if ($refine['sort'] === 'default' && !$refine['marketing']) {
             $data['properties'] = collect($data['properties'])->shuffle()->values()->all();
         }
 
         return $data;
+    }
+
+    /** Common Titles › Realty Property, as shown above the home section it heads. */
+    private function marketingSection(string $lang): ?array
+    {
+        $section = \App\Models\CmsKit\SectionLabel::where('section_key', 'home-realty-property')->where('status', true)->first();
+
+        return $section ? [
+            'eyebrow' => $section->getTranslation('title_1', $lang),
+            'title' => $section->getTranslation('title_2', $lang),
+            'description' => $section->getTranslation('description', $lang),
+        ] : null;
     }
 
     /**
@@ -100,7 +123,7 @@ class PropertiesPageService
             'popular' => $query->withCount('leads')->orderByDesc('leads_count'),
             'recent' => $query->orderByDesc('published_at'),
             // Keep database sorting cheap. Default results are shuffled after the cached page is loaded.
-            default => $query->displayOrder()->orderByDesc('id'),
+            default => $refine['marketing'] ?? false ? $query->marketingOrder() : $query->displayOrder()->orderByDesc('id'),
         };
     }
 
@@ -144,6 +167,8 @@ class PropertiesPageService
             'floor_plans' => filter_var($refine['floor_plans'] ?? false, FILTER_VALIDATE_BOOLEAN),
             // Premium page: featured listings from Properties and Commercial (see getListingData).
             'premium' => filter_var($refine['premium'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            // /marketing-properties: Super Admin's Marketing Properties list, in its order.
+            'marketing' => filter_var($refine['marketing'] ?? false, FILTER_VALIDATE_BOOLEAN),
             'city' => is_string($refine['city'] ?? null) && $refine['city'] !== '' ? $refine['city'] : null,
             'community' => is_string($refine['community'] ?? null) && $refine['community'] !== '' ? $refine['community'] : null,
             // Only whitelisted column names ever reach where(); values are bound parameters.

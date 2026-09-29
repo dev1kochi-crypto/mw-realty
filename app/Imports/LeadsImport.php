@@ -2,9 +2,9 @@
 
 namespace App\Imports;
 
-use App\Models\Lead;
 use App\Models\LeadSource;
 use App\Models\LeadStage;
+use App\Services\Crm\LeadCreationService;
 use App\Services\Crm\LeadService;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +29,9 @@ class LeadsImport implements ToCollection, WithHeadingRow
     public ?string $structureError = null;
 
     public int $imported = 0;
+
+    /** Rows that matched an existing lead (same email or phone) and updated it instead. */
+    public int $updated = 0;
 
     /** @var array<int, array{row:int, errors:string[]}> */
     public array $rowErrors = [];
@@ -110,10 +113,6 @@ class LeadsImport implements ToCollection, WithHeadingRow
             $customErrors[] = "Owner \"{$ownerName}\" does not match your account (\"{$this->ownerDisplayName}\").";
         }
 
-        if ($data['email'] !== '' && Lead::where('portal_user_id', $this->ownerId)->where('email', $data['email'])->where('name', $data['name'])->exists()) {
-            $customErrors[] = 'A lead with this name and email already exists.';
-        }
-
         if ($validator->fails() || !empty($customErrors)) {
             $this->rowErrors[] = ['row' => $rowNumber, 'errors' => array_merge($validator->errors()->all(), $customErrors)];
 
@@ -123,7 +122,8 @@ class LeadsImport implements ToCollection, WithHeadingRow
         $tagNames = array_filter(array_map('trim', explode(',', (string) ($row['tags'] ?? ''))));
         $tagIds = $this->leadService->resolveTagIds($this->ownerId, $tagNames);
 
-        $this->leadService->createLead([
+        // A row matching an existing lead's email or phone updates that lead instead of duplicating it.
+        $lead = app(LeadCreationService::class)->create([
             'name' => $data['name'],
             'email' => $data['email'] ?: null,
             'phone' => $data['phone'] ?: null,
@@ -132,8 +132,15 @@ class LeadsImport implements ToCollection, WithHeadingRow
             'stage_id' => $stage?->id,
             'source_id' => $source?->id,
             'status' => 'active',
-        ], $this->ownerId, $tagIds);
+            'page_source' => 'import',
+        ],
+            ownerId: $this->ownerId,
+            autoAssign: false,
+            tagIds: $tagIds,
+            notify: false,
+            noteAuthor: 'Excel import',
+        );
 
-        $this->imported++;
+        $lead->wasMerged ? $this->updated++ : $this->imported++;
     }
 }

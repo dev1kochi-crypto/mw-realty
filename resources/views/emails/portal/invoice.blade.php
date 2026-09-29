@@ -1,6 +1,11 @@
 @extends('emails.layout')
 
 @section('subject', 'Payment received — Invoice ' . $number)
+@section('preheader', 'We received your payment of AED ' . number_format($total, 2) . '. Invoice ' . $number . ' is attached.')
+@section('eyebrow', 'Invoice ' . $number)
+@section('icon', '✓')
+@section('tone', 'green')
+@section('heading', 'Payment received')
 
 @section('content')
 <p style="margin:0 0 16px;">Hi {{ $displayName }},</p>

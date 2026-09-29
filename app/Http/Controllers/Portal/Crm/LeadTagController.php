@@ -33,11 +33,16 @@ class LeadTagController extends Controller
             'color' => 'required|string|max:7',
         ]);
 
-        LeadTag::create([
+        $tag = LeadTag::create([
             'portal_user_id' => $ownerId,
             'name' => $request->input('name'),
             'color' => $request->input('color'),
         ]);
+
+        // The Leads listing's Tags popup creates tags inline.
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Tag added.', 'tag' => ['id' => $tag->id, 'name' => $tag->name, 'color' => $tag->color]]);
+        }
 
         return back()->with('success', 'Tag added.');
     }

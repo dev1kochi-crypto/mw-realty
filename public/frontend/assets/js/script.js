@@ -1067,7 +1067,9 @@
 
     var $ = window.jQuery;
     var $slider = $('[data-testimonials-slider]');
-    if (!$slider.length) return;
+    // refresh() runs again after data loads / route changes. Re-initialising would re-clone the
+    // slick track (its only child) — showing every card twice — and bind every handler again.
+    if (!$slider.length || $slider.hasClass('slick-initialized')) return;
 
     var $section = $slider.closest('.mw-testimonials');
     var pageCount = 3;
@@ -1399,7 +1401,7 @@
 
     var $ = window.jQuery;
     var $slider = $('[data-builders-slider]');
-    if (!$slider.length) return;
+    if (!$slider.length || $slider.hasClass('slick-initialized')) return;
 
     $slider.slick({
       slidesToShow: 5,

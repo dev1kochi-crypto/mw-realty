@@ -102,7 +102,9 @@ class TestimonialController extends Controller
                 $rules["translations.{$lang->code}.section_sub_heading_2"] = 'required';
             }
             if (in_array('description', $requiredFields)) {
-                $rules["description.{$lang->code}"] = 'required';
+                $rules["description.{$lang->code}"] = 'required|string|max:500';
+            } elseif ($sectionConfig['description'] ?? false) {
+                $rules["description.{$lang->code}"] = 'nullable|string|max:500';
             }
         }
 
@@ -120,7 +122,6 @@ class TestimonialController extends Controller
         $request->validate($rules);
 
         $translations = [];
-        $description = [];
         foreach ($languages as $lang) {
             $transData = [];
             if ($sectionConfig['title'] ?? false) {
@@ -132,8 +133,10 @@ class TestimonialController extends Controller
             if ($sectionConfig['sub_heading_2'] ?? false) {
                 $transData['section_sub_heading_2'] = $request->input("translations.{$lang->code}.section_sub_heading_2");
             }
+            // Stored with the other translated labels (like every other section), which is
+            // where HomePageService reads it from.
             if ($sectionConfig['description'] ?? false) {
-                $description[$lang->code] = $request->input("description.{$lang->code}");
+                $transData['description'] = $request->input("description.{$lang->code}");
             }
 
             $translations[$lang->code] = $transData;
@@ -141,7 +144,6 @@ class TestimonialController extends Controller
 
         $data = [
             'translations' => $translations,
-            'description' => $description,
             'status' => $request->has('status'),
         ];
 
@@ -227,6 +229,12 @@ class TestimonialController extends Controller
         $rules['video_url'] = [
             $isVideo && $request->input('video_source') === 'url' ? 'required' : 'nullable',
             'nullable', 'url',
+            // The card plays it in a <video> tag, which can't play YouTube / Vimeo page links.
+            function ($attribute, $value, $fail) {
+                if ($value && preg_match('#(youtube\.com|youtu\.be|vimeo\.com)#i', $value)) {
+                    $fail('YouTube / Vimeo links can\'t play in the testimonial card — use a direct .mp4 link or upload the video file.');
+                }
+            },
         ];
         $requiresVideoFile = $isVideo && $request->input('video_source') === 'file'
             && !$request->hasFile('video_file')
@@ -419,9 +427,8 @@ class TestimonialController extends Controller
     {
         $testimonial = Testimonial::findOrFail($id);
         $order = $testimonial->order_index;
-        if ($testimonial->image) {
-            app(\App\Services\ManagedFiles::class)->delete($testimonial->image);
-        }
+        app(\App\Services\ManagedFiles::class)->delete($testimonial->image);
+        app(\App\Services\ManagedFiles::class)->delete($testimonial->video_file);
         $testimonial->delete();
         
         // Fill the gap
@@ -468,9 +475,8 @@ class TestimonialController extends Controller
                 $testimonial = Testimonial::find($id);
                 if ($testimonial) {
                     $order = $testimonial->order_index;
-                    if ($testimonial->image) {
-                        app(\App\Services\ManagedFiles::class)->delete($testimonial->image);
-                    }
+                    app(\App\Services\ManagedFiles::class)->delete($testimonial->image);
+                    app(\App\Services\ManagedFiles::class)->delete($testimonial->video_file);
                     $testimonial->delete();
                     Testimonial::where('order_index', '>', $order)->decrement('order_index');
                 }

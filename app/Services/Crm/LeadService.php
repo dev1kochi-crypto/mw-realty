@@ -3,12 +3,15 @@
 namespace App\Services\Crm;
 
 use App\Models\Lead;
+use App\Models\LeadContact;
 use App\Models\LeadSource;
 use App\Models\LeadStage;
 use App\Models\LeadTag;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Single source of truth for Lead querying, filtering, statistics, and
@@ -16,6 +19,7 @@ use Illuminate\Support\Collection;
  * and the Import/Export classes so none of them hand-roll their own version
  * of these queries — see the module's CLAUDE-facing summary in the PR notes
  * for why this exists as one service rather than duplicated per-caller.
+ * Creating a lead (incl. duplicate handling) is LeadCreationService::create().
  */
 class LeadService
 {
@@ -30,7 +34,8 @@ class LeadService
     public function filteredQuery(?int $ownerId, array $filters = []): Builder
     {
         $query = Lead::with(['owner', 'agent', 'stage', 'source', 'tags'])
-            ->withCount('notesHistory')
+            // Team notes only — system activity (stage changes, enquiries…) isn't a "note".
+            ->withCount(['notesHistory' => fn ($q) => $q->where('type', \App\Models\LeadNote::TYPE_NOTE)])
             ->forOwner($ownerId)
             ->latest();
 
@@ -39,7 +44,9 @@ class LeadService
             $query->where(function ($q) use ($term) {
                 $q->where('name', 'like', "%{$term}%")
                     ->orWhere('email', 'like', "%{$term}%")
-                    ->orWhere('phone', 'like', "%{$term}%");
+                    ->orWhere('phone', 'like', "%{$term}%")
+                    // Also every other email / phone the lead has enquired with.
+                    ->orWhereHas('contacts', fn ($c) => $c->where('value', 'like', "%{$term}%"));
             });
         }
 
@@ -101,6 +108,24 @@ class LeadService
         }
 
         return $query;
+    }
+
+    /**
+     * The leads a listing selection refers to — the one place bulk Delete / Export / Assign
+     * Stage / Assign Tag resolve "what's ticked":
+     *  - $selectAll: every lead matching the listing's filters (all pages), minus $excludeIds
+     *    (rows the user unticked afterwards) — resolved here, never shipped as an id list;
+     *  - otherwise: just $ids.
+     * Always scoped to what $ownerId can see (forOwner), so foreign ids are silently ignored.
+     */
+    public function selectedQuery(?int $ownerId, array $filters, bool $selectAll, array $ids = [], array $excludeIds = []): Builder
+    {
+        if ($selectAll) {
+            return $this->filteredQuery($ownerId, $filters)
+                ->when($excludeIds, fn ($q) => $q->whereNotIn('leads.id', $excludeIds));
+        }
+
+        return Lead::forOwner($ownerId)->whereIn('leads.id', $ids ?: [0])->latest();
     }
 
     public function getFilteredLeads(?int $ownerId, array $filters = [], int $perPage = 15): LengthAwarePaginator
@@ -255,32 +280,135 @@ class LeadService
         return $ids;
     }
 
-    /**
-     * @param  int[]  $tagIds  Existing LeadTag ids to attach — for free-text tag
-     *                         names (e.g. from an Excel import), resolve them to
-     *                         ids with resolveTagIds() first.
-     */
-    public function createLead(array $data, int $ownerId, array $tagIds = []): Lead
-    {
-        $lead = Lead::create(array_merge($data, ['portal_user_id' => $ownerId]));
-
-        if (!empty($tagIds)) {
-            $lead->tags()->sync($tagIds);
-        }
-
-        return $lead;
-    }
-
     /** @param int[]|null $tagIds Pass null to leave tags untouched. */
     public function updateLead(Lead $lead, array $data, ?array $tagIds = null): Lead
     {
         $lead->update($data);
 
         if ($tagIds !== null) {
-            $lead->tags()->sync($tagIds);
+            $this->syncTags($lead, $tagIds);
         }
 
         return $lead;
+    }
+
+    /**
+     * Add another email / phone to a lead (a lead can have several). Refused when another lead
+     * of the same owner already uses it — that would be the same person twice.
+     */
+    public function addContact(Lead $lead, string $type, string $value, ?string $countryCode = null): \App\Models\LeadContact
+    {
+        $value = trim($value);
+        $key = $type === \App\Models\LeadContact::TYPE_EMAIL ? \App\Models\LeadContact::emailKey($value) : \App\Models\LeadContact::phoneKey($value);
+        $label = $type === \App\Models\LeadContact::TYPE_EMAIL ? 'email' : 'phone number';
+
+        if (!$key) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['value' => "Enter a valid {$label}."]);
+        }
+        if ($lead->contacts()->where('type', $type)->where('match_key', $key)->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['value' => "This lead already has that {$label}."]);
+        }
+        $other = Lead::query()
+            ->where('id', '!=', $lead->id)
+            ->when($lead->portal_user_id, fn ($q) => $q->where('portal_user_id', $lead->portal_user_id), fn ($q) => $q->whereNull('portal_user_id'))
+            ->whereHas('contacts', fn ($q) => $q->where('type', $type)->where('match_key', $key))
+            ->first(['id', 'name']);
+        if ($other) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['value' => "That {$label} already belongs to lead #{$other->id} ({$other->name})."]);
+        }
+
+        return DB::transaction(function () use ($lead, $type, $value, $countryCode, $key, $label) {
+            $contact = $lead->contacts()->create([
+                'type' => $type,
+                'value' => $value,
+                'phone_country_code' => $type === \App\Models\LeadContact::TYPE_PHONE && !str_starts_with($value, '+') ? $countryCode : null,
+                'match_key' => $key,
+            ]);
+
+            // First one of its kind becomes the primary contact.
+            $primaryField = $type === \App\Models\LeadContact::TYPE_EMAIL ? 'email' : 'phone';
+            if (blank($lead->{$primaryField})) {
+                $this->setPrimaryContact($lead, $contact, log: false);
+            }
+
+            app(LeadNoteService::class)->log($lead, 'details', ucfirst($label) . ' added: ' . $this->contactLabel($contact));
+
+            return $contact;
+        });
+    }
+
+    /** Make this email / phone the lead's primary one (shown first, used for Call / Email / WhatsApp). */
+    public function setPrimaryContact(Lead $lead, \App\Models\LeadContact $contact, bool $log = true): void
+    {
+        $fields = $contact->type === \App\Models\LeadContact::TYPE_EMAIL
+            ? ['email' => $contact->value]
+            : ['phone' => $contact->value, 'phone_country_code' => $contact->phone_country_code];
+
+        Lead::withoutActivityLog(fn () => $lead->update($fields));
+
+        if ($log) {
+            app(LeadNoteService::class)->log($lead, 'details', 'Primary ' . ($contact->type === 'email' ? 'email' : 'phone') . ' set to ' . $this->contactLabel($contact));
+        }
+    }
+
+    /**
+     * Remove an email / phone. A lead must keep at least one way to reach it; removing the
+     * primary promotes the next one of that kind.
+     */
+    public function removeContact(Lead $lead, \App\Models\LeadContact $contact): void
+    {
+        if ($lead->contacts()->count() <= 1) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['value' => 'A lead needs at least one email or phone number.']);
+        }
+
+        DB::transaction(function () use ($lead, $contact) {
+            $isEmail = $contact->type === \App\Models\LeadContact::TYPE_EMAIL;
+            $primaryKey = $isEmail ? \App\Models\LeadContact::emailKey($lead->email) : \App\Models\LeadContact::phoneKey($lead->phone);
+            $contact->delete();
+
+            if ($primaryKey === $contact->match_key) {
+                $next = $lead->contacts()->where('type', $contact->type)->orderBy('id')->first();
+                if ($next) {
+                    $this->setPrimaryContact($lead, $next, log: false);
+                } else {
+                    Lead::withoutActivityLog(fn () => $lead->update($isEmail ? ['email' => null] : ['phone' => null, 'phone_country_code' => null]));
+                }
+            }
+
+            app(LeadNoteService::class)->log($lead, 'details', ($isEmail ? 'Email' : 'Phone number') . ' removed: ' . $this->contactLabel($contact));
+        });
+    }
+
+    private function contactLabel(\App\Models\LeadContact $contact): string
+    {
+        return trim(($contact->phone_country_code && !str_starts_with($contact->value, '+') ? $contact->phone_country_code . ' ' : '') . $contact->value);
+    }
+
+    /** Add tags to a lead, keeping the ones it has (bulk "Add tags"), logging what was new. */
+    public function attachTags(Lead $lead, array $tagIds): void
+    {
+        $attached = $lead->tags()->syncWithoutDetaching($tagIds)['attached'];
+
+        if ($attached) {
+            $names = LeadTag::whereIn('id', $attached)->orderBy('name')->pluck('name')->all();
+            app(LeadNoteService::class)->log($lead, 'tags', 'Tags added: ' . implode(', ', $names), ['added' => $names, 'removed' => []]);
+        }
+    }
+
+    /** Replace a lead's tags, logging what was added / removed in its activity history. */
+    public function syncTags(Lead $lead, array $tagIds): void
+    {
+        $result = $lead->tags()->sync($tagIds);
+        $names = fn (array $ids) => LeadTag::whereIn('id', $ids)->orderBy('name')->pluck('name')->all();
+        $added = $names($result['attached']);
+        $removed = $names($result['detached']);
+
+        if ($added || $removed) {
+            app(LeadNoteService::class)->log($lead, 'tags', implode("\n", array_filter([
+                $added ? 'Tags added: ' . implode(', ', $added) : null,
+                $removed ? 'Tags removed: ' . implode(', ', $removed) : null,
+            ])), ['added' => $added, 'removed' => $removed]);
+        }
     }
 
     public function deleteLead(Lead $lead): void

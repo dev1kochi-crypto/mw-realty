@@ -30,19 +30,25 @@ const { formatPrice, formatCompact, presetLabel } = useCurrency();
 // /premium-properties reuses this page for every premium (CRM-featured) listing — residential and
 // commercial together (API ?premium=1); the filter options follow that same set of listings.
 const premium = !!route.meta.premium;
+// /marketing-properties: the home "Realty Property" section's view-all — Super Admin's hand-picked
+// Marketing Properties list (API ?marketing=1), kept in the order it was arranged in.
+const marketing = !!route.meta.marketing;
+// Both lists mix residential and commercial, so each card says which it is.
+const mixedSegments = premium || marketing;
+const segment = premium ? 'premium' : (marketing ? 'marketing' : 'residential');
 // /properties/map (and /premium-properties/map): same page and filters, results on a map instead of cards.
 const mapView = computed(() => !!route.meta.mapView);
-const listPath = premium ? '/premium-properties' : '/properties';
+const listPath = premium ? '/premium-properties' : (marketing ? '/marketing-properties' : '/properties');
 const mapPath = listPath + '/map';
 const mapParams = ref({});
-const carryKey = premium ? 'premium' : 'properties';
+const carryKey = premium ? 'premium' : (marketing ? 'marketing' : 'properties');
 // List ⇄ map toggle: hand the current filters to the other view (they aren't in the URL).
 function carryToOtherView() {
     carryFilters(carryKey, currentQuery());
 }
 // Set while we clear an incoming ?query ourselves, so the route.query watcher ignores that change.
 let clearingUrl = false;
-const { filters: adminFilters, loaded: filtersLoaded, byKey: adminFilter, options: adminOptions } = usePropertyFilters('listing', premium ? 'premium' : 'residential');
+const { filters: adminFilters, loaded: filtersLoaded, byKey: adminFilter, options: adminOptions } = usePropertyFilters('listing', segment);
 // A top-bar field shows while the filters load, then only if the admin has that filter enabled.
 const showFilter = (key) => !filtersLoaded.value || !!adminFilter(key);
 
@@ -143,6 +149,7 @@ function load() {
     if (!mapView.value) {
         const params = { ...filterParams, lang: selectedLanguage.value?.code, page: currentPage.value, sort: applied.sort };
         if (premium) params.premium = 1;
+        if (marketing) params.marketing = 1;
         fetchPropertiesListing(params);
     }
 }
@@ -312,13 +319,25 @@ const activeFilters = computed(() => {
 const filterCount = computed(() => activeFilters.value.length);
 
 // Hero title + breadcrumb.
-const pageTitle = computed(() => (premium ? t('premium_listing.hero_title', 'Premium Properties') : t('properties_listing.hero.title')));
+// /marketing-properties text comes from the CMS section heading the home block (Common Titles ›
+// Realty Property): Title 1 → eyebrow, Title 2 → heading, Description → intro.
+const marketingSection = computed(() => propertiesListing.value?.section || null);
+const pageTitle = computed(() => (premium
+    ? t('premium_listing.hero_title', 'Premium Properties')
+    : (marketing
+        ? (marketingSection.value?.title || t('marketing_listing.hero_title', 'Realty Properties'))
+        : t('properties_listing.hero.title'))));
 
 // "Penthouse Properties for Rent in Dubai" — the heading says what is actually being shown.
 const listingTitle = computed(() => {
     const type = applied.property_type ? `${labelFor(propertyTypeOptions, applied.property_type)} ` : '';
     const purpose = { sale: ' for Sale', rent: ' for Rent' }[applied.listing_type] ?? '';
     const offPlan = applied.completion_status === 'off_plan' ? 'Off-Plan ' : '';
+    if (marketing) {
+        return (!type && !purpose && !offPlan)
+            ? (marketingSection.value?.title ? `All ${marketingSection.value.title}` : t('marketing_listing.all_title', 'All Realty Properties'))
+            : `Realty ${offPlan}${type}Properties${purpose}`;
+    }
     if (premium) {
         return (!type && !purpose && !offPlan)
             ? t('premium_listing.all_title', 'All Premium Properties')
@@ -532,6 +551,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
+                    <p v-if="marketing && marketingSection?.eyebrow" class="mw-eyebrow mw-marketing-eyebrow">{{ marketingSection.eyebrow }}</p>
                     <h1 class="mw-about-title" data-reveal>{{ pageTitle }}</h1>
                 </div>
             </div>
@@ -679,7 +699,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
 
         <!-- Map view: edge to edge, straight under the filter bar (no title / container). -->
         <section v-if="mapView" class="mw-map-section">
-            <PropertyMap edge :segment="premium ? 'premium' : 'residential'" :params="mapParams" />
+            <PropertyMap edge :segment="segment" :params="mapParams" />
         </section>
 
         <section v-else class="mw-dubai-listing">
@@ -688,6 +708,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                     <h2 class="mw-dubai-listing__title">{{ listingTitle }}</h2>
                     <p class="mw-dubai-listing__count">{{ pagination?.total ?? 0 }} {{ t('properties_listing.listing.count_suffix') }}</p>
                 </div>
+                <p v-if="marketing && marketingSection?.description" class="mw-marketing-intro">{{ marketingSection.description }}</p>
 
                 <div class="mw-dubai-listing__grid" data-properties-grid>
 
@@ -712,7 +733,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                             </span>
                             <span class="mw-dubai-card__type">{{ property.type }}</span>
                             <!-- Premium page mixes both menus, so each card says which it is. -->
-                            <span v-if="premium" class="mw-dubai-card__segment" :class="`mw-dubai-card__segment--${property.segment}`">{{ property.segment === 'commercial' ? t('premium_listing.tag_commercial', 'Commercial') : t('premium_listing.tag_residential', 'Residential') }}</span>
+                            <span v-if="mixedSegments" class="mw-dubai-card__segment" :class="`mw-dubai-card__segment--${property.segment}`">{{ property.segment === 'commercial' ? t('premium_listing.tag_commercial', 'Commercial') : t('premium_listing.tag_residential', 'Residential') }}</span>
                         </div>
                         <div class="mw-dubai-card__body">
                             <div class="mw-dubai-card__price-row">
@@ -766,3 +787,9 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
 
     </main>
 </template>
+
+<style scoped>
+/* /marketing-properties: CMS eyebrow + intro (Common Titles › Realty Property). */
+.mw-marketing-eyebrow { margin: 0 0 0.35rem; }
+.mw-marketing-intro { max-width: 860px; margin: -0.5rem 0 1.5rem; color: #5b6078; font-size: 0.98rem; line-height: 1.7; }
+</style>

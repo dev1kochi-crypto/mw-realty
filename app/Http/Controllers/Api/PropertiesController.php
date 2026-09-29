@@ -68,6 +68,8 @@ class PropertiesController extends Controller
                 'floor_plans' => $request->input('floor_plans'),
                 // ?premium=1 — the /premium-properties page (featured listings, residential + commercial).
                 'premium' => $request->input('premium'),
+                // ?marketing=1 — /marketing-properties (Super Admin's Marketing Properties list).
+                'marketing' => $request->input('marketing'),
                 'city' => $request->input('city'),
                 'community' => $request->input('community'),
                 'attributes' => $attributes,

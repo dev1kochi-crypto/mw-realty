@@ -9,37 +9,41 @@
 @section('crm-content')
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-4">
     <div>
-        <div class="portal-section-title mb-0">{{ $isAdmin ? 'All Leads' : 'My Leads' }}</div>
-        <p class="text-muted mb-0" style="font-size: 0.88rem;">Every enquiry a visitor sends about {{ $isAdmin ? 'any' : 'your' }} listing lands here.</p>
+        <div class="d-flex align-items-center gap-3">
+            <div class="portal-section-title mb-0">{{ $isAdmin ? 'All Leads' : 'My Leads' }}</div>
+            <span class="portal-selected-badge d-none" id="leadSelectedBadge">Selected Leads <span id="leadSelectedBadgeCount">0</span></span>
+        </div>
+        <p class="text-muted mb-0" style="font-size: 0.88rem;">Every enquiry a visitor sends about {{ $isAdmin ? 'any' : 'your' }} listing lands here. <a href="{{ route('portal.crm.leads.trashed') }}" class="portal-link-muted ms-1"><i class="fas fa-trash-can-arrow-up me-1"></i>View deleted leads</a></p>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-        <button type="button" id="openLeadTableFieldsModal" class="portal-btn-ghost btn btn-sm"><i class="fas fa-table-columns me-1"></i> Table Fields</button>
-        <a href="{{ route('portal.crm.leads.trashed') }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-trash-can me-1"></i> Deleted Leads</a>
-        <button type="button" id="openLeadImportModal" class="portal-btn-ghost btn btn-sm"><i class="fas fa-file-import me-1"></i> Import</button>
-        <button type="button" id="openLeadExportModal" class="portal-btn-ghost btn btn-sm"><i class="fas fa-file-export me-1"></i> Export</button>
+    {{-- Icon toolbar: each button shows its label on hover / keyboard focus (.portal-xbtn).
+         [data-needs-selection] buttons stay disabled until leads are selected (updateBulkActionsBar). --}}
+    <div class="portal-xbtn-bar">
+        <button type="button" data-open-master="stages" data-needs-selection class="portal-xbtn" aria-label="Assign stage" title="Select leads first" disabled><i class="fas fa-layer-group"></i><span>Assign Stage</span></button>
+        <button type="button" data-open-master="tags" data-needs-selection class="portal-xbtn" aria-label="Assign tag" title="Select leads first" disabled><i class="fas fa-tags"></i><span>Assign Tag</span></button>
+        <button type="button" id="openLeadExportModal" data-needs-selection class="portal-xbtn" aria-label="Export" title="Select leads first" disabled><i class="fas fa-file-export"></i><span>Export</span></button>
+        <button type="button" id="bulkDeleteLeadsBtn" data-needs-selection class="portal-xbtn portal-xbtn-danger" aria-label="Delete leads" title="Select leads first" disabled><i class="fas fa-trash-can"></i><span>Delete Leads</span></button>
+        <span class="portal-xbtn-sep" aria-hidden="true"></span>
+        <button type="button" id="openLeadTableFieldsModal" class="portal-xbtn" aria-label="Table fields"><i class="fas fa-table-columns"></i><span>Table Fields</span></button>
+        <button type="button" id="openLeadImportModal" class="portal-xbtn" aria-label="Import"><i class="fas fa-file-import"></i><span>Import</span></button>
         @if($isAgencyViewer && $unassignedCount > 0 && $agencyAgents->isNotEmpty())
         <form method="POST" action="{{ route('portal.crm.leads.distribute') }}" class="m-0" onsubmit="return confirm('Round-robin all {{ $unassignedCount }} unassigned lead(s) across your active agents?');">
             @csrf
-            <button type="submit" class="portal-btn-ghost btn btn-sm"><i class="fas fa-shuffle me-1"></i> Distribute {{ $unassignedCount }} unassigned</button>
+            <button type="submit" class="portal-xbtn" aria-label="Distribute {{ $unassignedCount }} unassigned leads"><i class="fas fa-shuffle"></i><span>Distribute {{ $unassignedCount }} unassigned</span></button>
         </form>
         @endif
-        <button type="button" id="openCreateLeadModal" class="btn btn-portal-primary btn-sm"><i class="fas fa-plus me-1"></i> Add Lead</button>
+        <button type="button" id="openCreateLeadModal" class="portal-xbtn portal-xbtn-primary" aria-label="Add lead"><i class="fas fa-plus"></i><span>Add Lead</span></button>
     </div>
 </div>
 
-<div id="crmFlashContainer">
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    @endif
-</div>
+@if(session('success'))
+{{-- Server-side flash (e.g. "Lead deleted." after leaving a lead page) → top-right toast. --}}
+<script>document.addEventListener('DOMContentLoaded', function () { window.portalToast('success', @json(session('success'))); });</script>
+@endif
 
 @if(session('importResult'))
 @php($result = session('importResult'))
 <div class="portal-card p-3 mb-3">
-    <div class="fw-semibold mb-1">Import finished — {{ $result['imported'] }} imported, {{ $result['skipped'] }} skipped.</div>
+    <div class="fw-semibold mb-1">Import finished — {{ $result['imported'] }} imported, {{ $result['updated'] ?? 0 }} existing leads updated, {{ $result['skipped'] }} skipped.</div>
     @if(!empty($result['rowErrors']))
     <ul class="mb-0 small text-muted" style="max-height: 180px; overflow-y: auto;">
         @foreach($result['rowErrors'] as $rowError)
@@ -55,15 +59,14 @@
 </div>
 
 @include('portal.crm.leads._lead_form_modal')
-@include('portal.crm.leads._lead_view_modal')
 @include('portal.crm.leads._lead_tags_modal')
 @include('portal.crm.leads._lead_tag_overflow_popover')
 @include('portal.crm.leads._lead_table_fields_modal')
-@include('portal.crm.leads._lead_note_modal')
 @include('portal.crm.leads._lead_delete_modal')
 @include('portal.crm.leads._lead_import_modal')
 @include('portal.crm.leads._lead_export_modal')
 @include('portal.crm.leads._stage_quick_add_modal')
+@include('portal.crm.leads._lead_master_picker_modal')
 
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -78,7 +81,8 @@
             tags: defaultMasterData.tags.slice(),
         };
         let selectedLeadIds = new Set();
-        let currentViewedLeadId = null;
+        let excludedLeadIds = new Set();
+        let selectAllMode = false;
         let leadsDataTable = null;
         let leadTableColumns = new Set(@json($leadTableColumns));
         let leadToReopenAfterEdit = null;
@@ -92,15 +96,8 @@
         const leadFormSubmitBtn = document.getElementById('leadFormSubmitBtn');
         const leadFormGeneralError = document.getElementById('leadFormGeneralError');
 
-        const viewModal = new bootstrap.Modal(document.getElementById('leadViewModal'));
         const leadTagsModal = new bootstrap.Modal(document.getElementById('leadTagsModal'));
         const deleteModal = new bootstrap.Modal(document.getElementById('leadDeleteModal'));
-        const noteModal = new bootstrap.Modal(document.getElementById('leadNoteModal'));
-        const leadNoteForm = document.getElementById('leadNoteForm');
-        const leadNoteBody = document.getElementById('leadNoteBody');
-        const leadNoteGeneralError = document.getElementById('leadNoteGeneralError');
-        const leadNoteSubmitBtn = document.getElementById('leadNoteSubmitBtn');
-        const leadNoteSpinner = document.getElementById('leadNoteSpinner');
         const leadTagsForm = document.getElementById('leadTagsForm');
         const leadTagsChoices = document.getElementById('leadTagsChoices');
         const leadTagsError = document.getElementById('leadTagsError');
@@ -183,34 +180,10 @@
                 },
             });
 
+            // Page changes, sorting and quick search redraw rows — re-tick the selected ones.
+            $(table).on('draw.dt', syncPageCheckboxes);
+
             applyLeadTableColumns();
-        }
-
-        function buildNoteElement(note) {
-            const item = document.createElement('div');
-            item.className = 'portal-card p-2';
-            const body = document.createElement('div');
-            body.style.whiteSpace = 'pre-wrap';
-            body.textContent = note.body;
-            const meta = document.createElement('div');
-            meta.className = 'text-muted small mt-1';
-            meta.textContent = (note.author_name || 'Someone') + ' · ' + note.created_at;
-            item.appendChild(body);
-            item.appendChild(meta);
-            return item;
-        }
-
-        // notes_history arrives newest-first from the server, so this preserves
-        // that order; a freshly-added note is prepended separately (see the
-        // note-form submit handler) since it wasn't part of that server list.
-        function renderNotesList(notes) {
-            const list = document.getElementById('leadViewNotesList');
-            list.innerHTML = '';
-            if (!notes || !notes.length) {
-                list.innerHTML = '<span class="text-muted small">No notes yet.</span>';
-                return;
-            }
-            notes.forEach(function (note) { list.appendChild(buildNoteElement(note)); });
         }
 
         // fallbackName covers a lead whose actual stage/source belongs to a
@@ -563,136 +536,17 @@
             closeTagOverflowPopover();
         });
 
+        // A lead opens on its own detail page (portal.crm.leads.show) — details, activity,
+        // notes, source history and editing all live there now.
         function openViewModal(id) {
-            fetchLead(id).then(function (data) {
-                currentViewedLeadId = id;
-                document.getElementById('leadViewName').textContent = data.name || 'Unknown';
-                document.getElementById('leadViewAvatar').textContent = (data.name || '?').trim().charAt(0).toUpperCase();
-                document.getElementById('leadViewEmail').textContent = data.email || '-';
-                document.getElementById('leadViewPhone').textContent = data.formatted_phone || '-';
-                document.getElementById('leadViewProperty').textContent = data.property_title || '-';
-
-                const ownerCard = document.getElementById('leadViewOwnerCard');
-                if (data.is_admin) {
-                    ownerCard.classList.remove('d-none');
-                    document.getElementById('leadViewOwner').textContent = data.owner_name || '-';
-                } else {
-                    ownerCard.classList.add('d-none');
-                }
-
-                const stage = document.getElementById('leadViewStage');
-                stage.style.background = data.stage_color ? data.stage_color + '22' : '';
-                stage.style.color = data.stage_color || '';
-                document.getElementById('leadViewStage').textContent = data.stage_name || '—';
-                document.getElementById('leadViewSource').textContent = data.source_name || '—';
-                document.getElementById('leadViewStatus').textContent = data.status ? (data.status.charAt(0).toUpperCase() + data.status.slice(1)) : '-';
-                document.getElementById('leadViewStatus').className = 'portal-badge-status portal-badge-' + (data.status || 'inactive');
-                document.getElementById('leadViewReceived').textContent = data.created_at || '-';
-                document.getElementById('leadViewMessage').textContent = data.message || '-';
-                renderNotesList(data.notes_history);
-                renderAssignment(data);
-
-                const tagsContainer = document.getElementById('leadViewTags');
-                tagsContainer.innerHTML = '';
-                if (data.tags && data.tags.length) {
-                    data.tags.forEach(function (tag) {
-                        const span = document.createElement('span');
-                        span.className = 'portal-tag-chip me-1';
-                        span.style.background = tag.color + '22';
-                        span.style.color = tag.color;
-                        span.textContent = tag.name;
-                        tagsContainer.appendChild(span);
-                    });
-                } else {
-                    tagsContainer.textContent = '—';
-                }
-
-                document.getElementById('leadViewEditBtn').dataset.id = id;
-                viewModal.show();
-            }).catch(function () {
-                alert('Could not load this lead. Please try again.');
-            });
+            window.location.href = "{{ url('portal/crm/leads') }}/" + id;
         }
 
+
+        // Top-right toast (portal layout) — same as the lead page.
         function showFlash(type, message) {
-            const container = document.getElementById('crmFlashContainer');
-            if (!container) return;
-            const alertEl = document.createElement('div');
-            alertEl.className = 'alert alert-' + type + ' alert-dismissible fade show';
-            alertEl.setAttribute('role', 'alert');
-            alertEl.textContent = message;
-
-            const closeBtn = document.createElement('button');
-            closeBtn.type = 'button';
-            closeBtn.className = 'btn-close';
-            closeBtn.setAttribute('data-bs-dismiss', 'alert');
-            alertEl.appendChild(closeBtn);
-            container.appendChild(alertEl);
-
-            setTimeout(function () {
-                bootstrap.Alert.getOrCreateInstance(alertEl).close();
-            }, 4000);
+            window.portalToast(type, message);
         }
-
-        function renderAssignment(data) {
-            document.getElementById('leadViewAgent').textContent = data.agent_name || (data.owner_is_agency ? 'Unassigned (agency level)' : '-');
-            document.getElementById('leadViewAssignmentType').textContent = data.assignment_label && data.agent_name
-                ? data.assignment_label + (data.assigned_at ? ' · ' + data.assigned_at : '') : '';
-
-            const controls = document.getElementById('leadViewAssignControls');
-            const select = document.getElementById('leadViewAssignSelect');
-            document.getElementById('leadViewAssignError').classList.add('d-none');
-            controls.classList.toggle('d-none', !data.can_assign);
-            select.innerHTML = '';
-            if (data.can_assign) {
-                const none = document.createElement('option');
-                none.value = '';
-                none.textContent = '— Unassigned (agency level) —';
-                select.appendChild(none);
-                (data.agent_options || []).forEach(function (agent) {
-                    const option = document.createElement('option');
-                    option.value = agent.id;
-                    option.textContent = agent.name;
-                    option.selected = agent.id === data.agent_id;
-                    select.appendChild(option);
-                });
-            }
-
-            const historyWrap = document.getElementById('leadViewAssignmentHistoryWrap');
-            const history = document.getElementById('leadViewAssignmentHistory');
-            history.innerHTML = '';
-            (data.assignment_history || []).forEach(function (row) {
-                const li = document.createElement('li');
-                li.className = 'mb-1';
-                li.textContent = row.assigned_at + ' — ' + (row.agent_name || 'Unassigned') + ' · ' + row.label
-                    + (row.by ? ' (by ' + row.by + ')' : '') + (row.note ? ' — ' + row.note : '');
-                history.appendChild(li);
-            });
-            historyWrap.classList.toggle('d-none', !(data.assignment_history || []).length);
-        }
-
-        document.getElementById('leadViewAssignBtn').addEventListener('click', function () {
-            const btn = this;
-            const error = document.getElementById('leadViewAssignError');
-            btn.disabled = true;
-            error.classList.add('d-none');
-            fetch("{{ url('portal/crm/leads') }}/" + currentViewedLeadId + '/assign', {
-                method: 'POST',
-                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                body: JSON.stringify({ agent_id: document.getElementById('leadViewAssignSelect').value || null }),
-            })
-                .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
-                .then(function (res) {
-                    if (!res.ok) {
-                        const errors = res.body.errors ? Object.values(res.body.errors).flat() : [];
-                        throw new Error(errors[0] || res.body.message || 'Could not assign this lead.');
-                    }
-                    openViewModal(currentViewedLeadId);
-                    window.reloadLeadsListing();
-                })
-                .catch(function (e) { error.textContent = e.message; error.classList.remove('d-none'); })
-                .finally(function () { btn.disabled = false; });
-        });
 
         window.reloadLeadsListing = function () {
             if (leadsDataTable) {
@@ -707,7 +561,7 @@
                 })
                 .then(function (html) {
                     document.getElementById('leadsListingWrapper').innerHTML = html;
-                    selectedLeadIds.clear();
+                    clearSelection();
                     initialiseLeadsDataTable();
                 });
         };
@@ -849,105 +703,110 @@
             }, 150);
         });
 
-        function updateBulkActionsBar() {
-            const bar = document.getElementById('leadBulkActionsBar');
-            const count = selectedLeadIds.size;
-            document.getElementById('leadSelectedCount').textContent = count;
-            bar.classList.toggle('d-none', count === 0);
+        /*
+         * Selection. Two modes:
+         *  - ticked: selectedLeadIds holds exactly the ticked leads (across pages);
+         *  - all:    "Select all N leads" — every lead matching the filters, on every page, minus
+         *            excludedLeadIds (rows unticked afterwards). The server resolves it from
+         *            select_all=1 + the filters (LeadService::selectedQuery), never an id list.
+         * Delete / Export / Assign Stage / Assign Tag all read it via window.getLeadSelection().
+         */
+        function totalMatchingLeads() {
+            return Number(document.getElementById('leadsDataTable')?.dataset.totalRows || 0);
+        }
 
+        function selectionCount() {
+            return selectAllMode ? Math.max(0, totalMatchingLeads() - excludedLeadIds.size) : selectedLeadIds.size;
+        }
+
+        function isRowSelected(id) {
+            return selectAllMode ? !excludedLeadIds.has(String(id)) : selectedLeadIds.has(String(id));
+        }
+
+        window.getLeadSelection = function () {
+            return { all: selectAllMode, ids: Array.from(selectedLeadIds), exclude: Array.from(excludedLeadIds), count: selectionCount() };
+        };
+
+        // Adds the selection to a request body: the ids, or select_all + the listing's filters.
+        window.appendLeadSelection = function (body) {
+            if (selectAllMode) {
+                body.append('select_all', '1');
+                new URLSearchParams(window.location.search).forEach(function (value, key) {
+                    if (value !== '' && key !== 'lead') body.append(key, value);
+                });
+                excludedLeadIds.forEach(function (id) { body.append('exclude_ids[]', id); });
+            } else {
+                selectedLeadIds.forEach(function (id) { body.append('ids[]', id); });
+            }
+            return body;
+        };
+
+        function clearSelection() {
+            selectAllMode = false;
+            selectedLeadIds.clear();
+            excludedLeadIds.clear();
+            document.querySelectorAll('.lead-select-checkbox').forEach(function (box) { box.checked = false; });
+            updateBulkActionsBar();
+        }
+
+        function updateBulkActionsBar() {
+            const count = selectionCount();
+            const total = totalMatchingLeads();
+
+            // Delete / Export / Assign Stage / Assign Tag only make sense with leads selected.
+            document.getElementById('leadSelectedBadge').classList.toggle('d-none', count === 0);
+            document.getElementById('leadSelectedBadgeCount').textContent = count;
+            document.querySelectorAll('[data-needs-selection]').forEach(function (btn) {
+                btn.disabled = count === 0;
+                btn.title = count === 0 ? 'Select leads first' : btn.getAttribute('aria-label') + ' — ' + count + (count === 1 ? ' lead' : ' leads');
+            });
+
+            // Header checkbox = every lead (all pages): ticked when all are selected, a dash when
+            // only some are (e.g. select-all, then a few unticked).
             const selectAll = document.getElementById('selectAllLeads');
             if (selectAll) {
-                const boxes = document.querySelectorAll('.lead-select-checkbox');
-                selectAll.checked = boxes.length > 0 && count === boxes.length;
-                selectAll.indeterminate = count > 0 && count < boxes.length;
+                selectAll.checked = total > 0 && count === total;
+                selectAll.indeterminate = count > 0 && count < total;
             }
+        }
+
+        // Re-tick rows as DataTables draws each page (so page changes keep the selection).
+        function syncPageCheckboxes() {
+            document.querySelectorAll('.lead-select-checkbox').forEach(function (box) { box.checked = isRowSelected(box.value); });
+            updateBulkActionsBar();
         }
 
         document.addEventListener('change', function (e) {
             if (e.target.matches('.lead-select-checkbox')) {
-                if (e.target.checked) { selectedLeadIds.add(e.target.value); } else { selectedLeadIds.delete(e.target.value); }
+                const id = String(e.target.value);
+                if (selectAllMode) {
+                    e.target.checked ? excludedLeadIds.delete(id) : excludedLeadIds.add(id);
+                } else {
+                    e.target.checked ? selectedLeadIds.add(id) : selectedLeadIds.delete(id);
+                }
                 updateBulkActionsBar();
                 return;
             }
 
+            // Header checkbox selects every matching lead on every page (the server resolves them
+            // from the filters); unticking it clears the selection.
             if (e.target.id === 'selectAllLeads') {
-                document.querySelectorAll('.lead-select-checkbox').forEach(function (box) {
-                    box.checked = e.target.checked;
-                    if (e.target.checked) { selectedLeadIds.add(box.value); } else { selectedLeadIds.delete(box.value); }
-                });
-                updateBulkActionsBar();
+                if (!e.target.checked) { clearSelection(); return; }
+                selectAllMode = true;
+                selectedLeadIds.clear();
+                excludedLeadIds.clear();
+                syncPageCheckboxes();
             }
         });
 
         document.addEventListener('click', function (e) {
             if (e.target.closest('#bulkDeleteLeadsBtn')) {
-                const count = selectedLeadIds.size;
+                const count = selectionCount();
+                if (!count) return;
                 document.getElementById('leadDeleteCount').textContent = count === 1 ? '1 lead' : count + ' leads';
                 document.getElementById('leadDeleteCountPlural').textContent = count === 1 ? 'it' : 'them';
                 deleteModal.show();
             }
-        });
-
-        document.getElementById('leadViewEditBtn').addEventListener('click', function () {
-            const id = this.dataset.id;
-            leadToReopenAfterEdit = id;
-            viewModal.hide();
-            openEditModal(id, true);
-        });
-
-        document.getElementById('openAddNoteModal').addEventListener('click', function () {
-            leadNoteBody.value = '';
-            leadNoteGeneralError.classList.add('d-none');
-            leadNoteBody.classList.remove('is-invalid');
-            noteModal.show();
-            setTimeout(function () { leadNoteBody.focus(); }, 300);
-        });
-
-        leadNoteForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            if (!currentViewedLeadId) return;
-
-            leadNoteGeneralError.classList.add('d-none');
-            leadNoteBody.classList.remove('is-invalid');
-            leadNoteSubmitBtn.disabled = true;
-            leadNoteSpinner.classList.remove('d-none');
-
-            fetch("{{ url('portal/crm/leads') }}/" + currentViewedLeadId + "/notes", {
-                method: 'POST',
-                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                body: new URLSearchParams({ body: leadNoteBody.value }),
-            })
-            .then(async function (response) {
-                const data = await response.json().catch(function () { return {}; });
-
-                if (response.status === 422) {
-                    const message = (data.errors && data.errors.body && data.errors.body[0]) || 'Please enter a note.';
-                    leadNoteBody.classList.add('is-invalid');
-                    leadNoteGeneralError.textContent = message;
-                    leadNoteGeneralError.classList.remove('d-none');
-                    return;
-                }
-                if (!response.ok) {
-                    leadNoteGeneralError.textContent = data.message || 'Could not save this note. Please try again.';
-                    leadNoteGeneralError.classList.remove('d-none');
-                    return;
-                }
-
-                const list = document.getElementById('leadViewNotesList');
-                if (list.querySelector('.text-muted')) list.innerHTML = '';
-                list.prepend(buildNoteElement(data.note));
-
-                noteModal.hide();
-                showFlash('success', data.message || 'Note added.');
-            })
-            .catch(function () {
-                leadNoteGeneralError.textContent = 'Something went wrong. Please try again.';
-                leadNoteGeneralError.classList.remove('d-none');
-            })
-            .finally(function () {
-                leadNoteSubmitBtn.disabled = false;
-                leadNoteSpinner.classList.add('d-none');
-            });
         });
 
         leadForm.addEventListener('submit', function (e) {
@@ -1046,14 +905,14 @@
         });
 
         document.getElementById('leadDeleteConfirmBtn').addEventListener('click', function () {
-            if (!selectedLeadIds.size) return;
+            if (!selectionCount()) return;
             const btn = this;
             const spinner = document.getElementById('leadDeleteSpinner');
             btn.disabled = true;
             spinner.classList.remove('d-none');
 
             const body = new URLSearchParams();
-            selectedLeadIds.forEach(function (id) { body.append('ids[]', id); });
+            window.appendLeadSelection(body);
 
             fetch("{{ route('portal.crm.leads.bulk-delete') }}", {
                 method: 'DELETE',
@@ -1081,6 +940,14 @@
             defaultMasterData.stages.push(e.detail);
             if (!currentMasterData.stages.some(function (s) { return String(s.id) === String(e.detail.id); })) {
                 currentMasterData.stages.push(e.detail);
+            }
+        });
+
+        // A tag added from the Tags popup is offered straight away in the Add / Edit lead form too.
+        document.addEventListener('tag:created', function (e) {
+            defaultMasterData.tags.push(e.detail);
+            if (!currentMasterData.tags.some(function (t) { return String(t.id) === String(e.detail.id); })) {
+                currentMasterData.tags.push(e.detail);
             }
         });
 

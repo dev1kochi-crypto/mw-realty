@@ -162,6 +162,19 @@ const routes = [
         meta: { title: 'Premium Properties | MW Realty', bodyClass: 'agents-page properties-dubai-page premium-properties-page', premium: true },
     },
     {
+        // Home "Realty Property" view-all: Super Admin's Marketing Properties list, in its order.
+        path: '/marketing-properties',
+        name: 'marketing-properties',
+        component: () => import('../pages/PropertiesDubai.vue'),
+        meta: { title: 'Realty Properties | MW Realty', bodyClass: 'agents-page properties-dubai-page premium-properties-page', marketing: true },
+    },
+    {
+        path: '/marketing-properties/map',
+        name: 'marketing-properties-map',
+        component: () => import('../pages/PropertiesDubai.vue'),
+        meta: { title: 'Realty Properties on Map | MW Realty', bodyClass: 'agents-page properties-dubai-page premium-properties-page map-view-page', marketing: true, mapView: true },
+    },
+    {
         path: '/premium-properties/map',
         name: 'premium-properties-map',
         component: () => import('../pages/PropertiesDubai.vue'),

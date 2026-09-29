@@ -43,6 +43,22 @@ class HomePageService
     /** Most listings in each Home slider (Premium Properties, Luxury Project, Realty Property). */
     private const HOME_SLIDER_LIMIT = 12;
 
+    /**
+     * Drop the cached home / contact / footer / about payloads for every language, so a CMS
+     * edit (Common Titles, section settings…) or a Marketing Properties change shows straight
+     * away instead of after CACHE_TTL. Called from SectionLabel's saved hook and the Marketing
+     * Properties screen. (Home Developments is cached per city and just expires.)
+     */
+    public static function flushCache(): void
+    {
+        $languages = \App\Models\CmsKit\Language::pluck('code')->push(config('app.locale'), config('app.fallback_locale'))->filter()->unique();
+        foreach ($languages as $lang) {
+            foreach (['home-page', 'contact-page', 'footer-data', 'about-page'] as $key) {
+                Cache::forget("{$key}:{$lang}");
+            }
+        }
+    }
+
     public function getHomeData(string $lang): array
     {
         return Cache::remember("home-page:{$lang}", self::CACHE_TTL, fn () => [
@@ -239,14 +255,19 @@ class HomePageService
     protected function realty(string $lang): array
     {
         $section = SectionLabel::where('section_key', 'home-realty-property')->where('status', true)->first();
-        // Skip the listings already shown in the Luxury slider so the two don't repeat.
-        $excludeIds = $this->luxuryQuery()->take(self::HOME_SLIDER_LIMIT)->pluck('id');
+        $marketing = app(MarketingPropertyService::class);
 
-        $properties = Property::where('status', true)
-            ->whereNotIn('id', $excludeIds)
-            ->displayOrder()
-            ->take(self::HOME_SLIDER_LIMIT)
-            ->get()
+        // Super Admin's Marketing Properties list (portal › Listings), first 12 in its order.
+        // Until anything is picked, fall back to the automatic selection — skipping the listings
+        // already shown in the Luxury slider so the two don't repeat.
+        $curated = $marketing->hasAny();
+        $properties = ($curated
+            ? $marketing->homeProperties()
+            : Property::where('status', true)
+                ->whereNotIn('id', $this->luxuryQuery()->take(self::HOME_SLIDER_LIMIT)->pluck('id'))
+                ->displayOrder()
+                ->take(self::HOME_SLIDER_LIMIT)
+                ->get())
             ->map(fn ($p) => $this->mapProperty($p, $lang, true))
             ->values();
 
@@ -255,7 +276,8 @@ class HomePageService
             'title' => $section?->getTranslation('title_2', $lang) ?: 'Realty Property',
             'description' => $section?->getTranslation('description', $lang) ?: null,
             'button_text' => $section?->getTranslation('button_name', $lang) ?: 'View More Details',
-            'button_url' => $section?->getTranslation('button_url', $lang) ?: null,
+            // The view-all page for the curated list, unless the admin set a link of their own.
+            'button_url' => $section?->getTranslation('button_url', $lang) ?: ($curated ? '/marketing-properties' : '/properties'),
             'properties' => $properties,
         ];
     }
@@ -354,8 +376,9 @@ class HomePageService
         $items = Testimonial::where('status', true)->orderBy('order_index')->take(20)->get();
 
         return [
-            'eyebrow' => $section?->getTranslation('sub_heading_1', $lang) ?: 'From our clients',
-            'title' => $section?->getTranslation('title', $lang) ?: 'Why Our Clients Trust Us',
+            // Keys as saved by the admin Testimonials > Section Settings form (TestimonialController::updateSection).
+            'eyebrow' => $section?->getTranslation('section_sub_heading_1', $lang) ?: 'From our clients',
+            'title' => $section?->getTranslation('section_title', $lang) ?: 'Why Our Clients Trust Us',
             'description' => $section?->getTranslation('description', $lang) ?: null,
             'items' => $items->map(fn ($item) => [
                 'type' => $item->type === 'video' ? 'video' : 'quote',
@@ -363,7 +386,8 @@ class HomePageService
                 'video_url' => $item->video_file ? media_url($item->video_file) : $item->video_url,
                 'name' => $item->getTranslation('name', $lang),
                 'role' => $item->getTranslation('designation', $lang),
-                'content' => $item->getTranslation('content', $lang),
+                // Shown as plain text; older entries were saved from a rich-text editor.
+                'content' => ($content = $item->getTranslation('content', $lang)) ? trim(html_entity_decode(strip_tags($content))) : null,
                 'rating' => $item->rating,
             ])->values(),
         ];

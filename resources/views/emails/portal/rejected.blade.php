@@ -1,22 +1,22 @@
 @extends('emails.layout')
 
 @section('subject', 'Update on Your Account Application')
+@section('preheader', 'An update on your ' . $portalUser->type . ' account application.')
+@section('eyebrow', 'Account')
+@section('icon', '✉')
+@section('tone', 'red')
+@section('heading', 'Update on your application')
 
 @section('content')
 <p style="margin:0 0 16px;">Hi {{ $portalUser->name }},</p>
 
-<p style="margin:0 0 16px;">
+<p style="margin:0;">
     Thank you for registering as a <strong>{{ $portalUser->type }}</strong> on {{ config('cms-kit.common.name', 'MW Realty') }}'s partner portal.
     After review, we're unable to approve your account at this time.
 </p>
 
 @if($reason)
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fdf2f2; border-left:3px solid #dc3545; border-radius:6px; margin:16px 0;">
-    <tr><td style="padding:14px 18px;">
-        <div style="font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:0.03em; color:#dc3545; margin-bottom:4px;">Reason</div>
-        <div style="font-size:13px; color:#1c2340;">{{ $reason }}</div>
-    </td></tr>
-</table>
+<x-email.callout tone="danger" title="Reason">{{ $reason }}</x-email.callout>
 @endif
 
 <p style="margin:16px 0 0;">

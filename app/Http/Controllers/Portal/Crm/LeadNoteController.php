@@ -42,6 +42,6 @@ class LeadNoteController extends Controller
             ]);
         }
 
-        return redirect()->route('portal.crm.leads.index', ['lead' => $lead->id])->with('success', 'Note added.');
+        return redirect()->route('portal.crm.leads.show', $lead->id)->with('success', 'Note added.');
     }
 }

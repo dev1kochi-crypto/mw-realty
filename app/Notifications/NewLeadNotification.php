@@ -21,9 +21,11 @@ class NewLeadNotification extends Notification
     {
         $propertyLabel = $this->lead->property?->getTranslation('title') ?? 'your listing';
 
+        $repeat = $this->lead->enquiry_count > 1;
+
         return [
-            'title' => 'New lead received',
-            'message' => $this->lead->name . ' enquired about ' . $propertyLabel . '.',
+            'title' => $repeat ? 'Existing lead enquired again' : 'New lead received',
+            'message' => $this->lead->name . ($repeat ? ' enquired again about ' : ' enquired about ') . $propertyLabel . '.',
             'url' => route('portal.crm.leads.show', $this->lead->id),
             'icon' => 'fa-address-book',
             'tone' => 'teal',

@@ -68,6 +68,7 @@ class PropertyMapService
         $query = match ($segment) {
             'commercial' => Property::where('status', true)->commercial(),
             'premium' => Property::where('status', true)->where('featured', true),
+            'marketing' => Property::where('status', true)->marketing(),
             default => Property::where('status', true)->residential(),
         };
         $query->whereNotNull('latitude')->whereNotNull('longitude')

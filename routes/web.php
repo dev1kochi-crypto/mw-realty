@@ -753,6 +753,16 @@ Route::prefix('portal')->name('portal.')->group(function () {
         });
 
         // Featured — every featured/scheduled listing (Properties + Commercial) and "Add Featured".
+        // Super Admin only (enforced in the controller): home "Realty Property" list.
+        Route::prefix('marketing-properties')->name('marketing.')->controller(\App\Http\Controllers\Portal\PortalMarketingPropertyController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/accounts', 'accounts')->name('accounts')->middleware('throttle:120,1');
+            Route::get('/properties', 'properties')->name('properties')->middleware('throttle:120,1');
+            Route::post('/', 'store')->name('store');
+            Route::post('/reorder', 'reorder')->name('reorder');
+            Route::delete('/{propertyId}', 'destroy')->name('destroy')->whereNumber('propertyId');
+        });
+
         Route::get('/featured', [\App\Http\Controllers\Portal\PortalFeaturedController::class, 'index'])->name('featured.index')->middleware('portal.approved');
         Route::post('/featured', [\App\Http\Controllers\Portal\PortalFeaturedController::class, 'store'])->name('featured.store')->middleware('portal.approved');
         Route::get('/featured/eligible', [\App\Http\Controllers\Portal\PortalFeaturedController::class, 'eligible'])->name('featured.eligible')->middleware(['portal.approved', 'throttle:120,1']);
@@ -797,7 +807,10 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
             Route::put('/leads/table-columns', [LeadController::class, 'updateTableColumns'])->name('leads.table-columns.update');
             Route::delete('/leads/bulk-delete', [LeadController::class, 'bulkDestroy'])->name('leads.bulk-delete');
-            Route::get('/leads/export', [LeadController::class, 'export'])->name('leads.export');
+            Route::post('/leads/bulk-stage', [LeadController::class, 'bulkStage'])->name('leads.bulk-stage');
+            Route::post('/leads/bulk-tags', [LeadController::class, 'bulkTags'])->name('leads.bulk-tags');
+            Route::get('/leads/options/{type}', [LeadController::class, 'masterOptions'])->name('leads.options')->whereIn('type', ['stages', 'tags']);
+            Route::match(['get', 'post'], '/leads/export', [LeadController::class, 'export'])->name('leads.export');
             Route::get('/leads/import', [LeadController::class, 'importForm'])->name('leads.import.form');
             Route::post('/leads/import', [LeadController::class, 'import'])->name('leads.import');
             Route::get('/leads/import/template', [LeadController::class, 'downloadImportTemplate'])->name('leads.import.template');
@@ -806,6 +819,10 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::delete('/leads/{id}/force', [LeadController::class, 'forceDestroy'])->name('leads.force-delete');
             Route::patch('/leads/{id}/stage', [LeadController::class, 'updateStage'])->name('leads.stage.update');
             Route::patch('/leads/{id}/tags', [LeadController::class, 'syncTags'])->name('leads.tags.update');
+            Route::patch('/leads/{id}/fields', [LeadController::class, 'updateFields'])->name('leads.fields.update');
+            Route::post('/leads/{id}/contacts', [LeadController::class, 'addContact'])->name('leads.contacts.store');
+            Route::patch('/leads/{id}/contacts/{contact}/primary', [LeadController::class, 'setPrimaryContact'])->name('leads.contacts.primary');
+            Route::delete('/leads/{id}/contacts/{contact}', [LeadController::class, 'removeContact'])->name('leads.contacts.destroy');
             Route::get('/leads/{id}', [LeadController::class, 'show'])->name('leads.show');
             Route::put('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
             Route::delete('/leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
@@ -877,6 +894,9 @@ Route::get('/properties', [SpaController::class, 'staticPage'])->defaults('pageK
 Route::get('/properties/map', [SpaController::class, 'staticPage'])->defaults('pageKey', 'properties');
 Route::get('/premium-properties', [SpaController::class, 'staticPage'])->defaults('pageKey', 'premium-properties');
 Route::get('/premium-properties/map', [SpaController::class, 'staticPage'])->defaults('pageKey', 'premium-properties');
+// Super Admin's Marketing Properties list — the home "Realty Property" section's view-all page.
+Route::get('/marketing-properties', [SpaController::class, 'staticPage'])->defaults('pageKey', 'marketing-properties');
+Route::get('/marketing-properties/map', [SpaController::class, 'staticPage'])->defaults('pageKey', 'marketing-properties');
 Route::get('/property-details/{slug}', [SpaController::class, 'propertyDetails']);
 Route::get('/terms-and-conditions', [SpaController::class, 'staticPage'])->defaults('pageKey', 'terms');
 Route::get('/privacy-policy', [SpaController::class, 'staticPage'])->defaults('pageKey', 'privacy');
@@ -895,7 +915,7 @@ Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryControll
 // must always get first chance to match. The (?!...) guard is a belt-and-braces exclusion of the
 // app's other top-level path segments, in case any of them is ever reached without a deeper segment.
 Route::get('/{slug}', [\App\Http\Controllers\LandingPageController::class, 'show'])
-    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|market-insights|careers|contact|login|signup|verify-email|forgot-password|reset-password|profile|properties|premium-properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
+    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|market-insights|careers|contact|login|signup|verify-email|forgot-password|reset-password|profile|properties|premium-properties|marketing-properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
     ->name('landing-pages.show');
 
 // Anything no route above claims (e.g. /some/unknown/page) — the site's own 404 page, served with a

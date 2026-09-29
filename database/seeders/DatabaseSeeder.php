@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             FilterSeeder::class,
             MarketInsightSeeder::class,
             CareerSeeder::class,
+            TestimonialSeeder::class,
         ]);
     }
 }

@@ -7,6 +7,7 @@ use App\Models\AgencyLeadAssignmentSetting;
 use App\Models\Lead;
 use App\Models\LeadAssignmentHistory;
 use App\Models\PortalUser;
+use App\Models\Property;
 use App\Notifications\NewLeadNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -45,15 +46,10 @@ class LeadAssignmentService
             $owner = $lead->portal_user_id ? PortalUser::find($lead->portal_user_id) : null;
 
             // House listing (no owning account) that Super Admin pointed at a specific agent.
-            if (!$owner && $property?->agent_id) {
-                $agent = PortalUser::find($property->agent_id);
-                if ($agent && $agent->isAgent() && $agent->isApproved() && $agent->is_active
-                    && (!$agent->company_id || $agent->company?->hasEligibleAgent($agent->id))) {
-                    $lead->portal_user_id = $agent->company_id ?: $agent->id;
-                    $owner = $agent->company_id ? $agent->company : $agent;
-                    $this->apply($lead, $agent->id, Lead::ASSIGN_PROPERTY_AGENT, AssignmentActor::system());
-                    return;
-                }
+            if (!$owner && ($agent = $this->houseListingAgent($property))) {
+                $lead->portal_user_id = $agent->company_id ?: $agent->id;
+                $this->apply($lead, $agent->id, Lead::ASSIGN_PROPERTY_AGENT, AssignmentActor::system());
+                return;
             }
 
             if (!$owner) {
@@ -79,6 +75,38 @@ class LeadAssignmentService
         });
 
         return $lead;
+    }
+
+    /**
+     * The account a new lead for this property will belong to — the listing's owner, or for a
+     * house listing pointed at an agent, that agent's agency (or the agent if independent).
+     * Null = Super Admin's unassigned pool. Mirrors assignNewLead(), so duplicate detection can
+     * look in the right account before the lead exists.
+     */
+    public function resolveOwnerId(?Property $property, ?int $ownerId): ?int
+    {
+        if ($ownerId) {
+            return $ownerId;
+        }
+
+        $agent = $this->houseListingAgent($property);
+
+        return $agent ? ($agent->company_id ?: $agent->id) : null;
+    }
+
+    /** The eligible agent a no-owner (house) listing points at, if any. */
+    private function houseListingAgent(?Property $property): ?PortalUser
+    {
+        if (!$property?->agent_id) {
+            return null;
+        }
+
+        $agent = PortalUser::find($property->agent_id);
+
+        return $agent && $agent->isAgent() && $agent->isApproved() && $agent->is_active
+            && (!$agent->company_id || $agent->company?->hasEligibleAgent($agent->id))
+            ? $agent
+            : null;
     }
 
     /**

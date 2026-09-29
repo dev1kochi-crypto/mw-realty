@@ -242,6 +242,25 @@ class Property extends Model
      * on the portal Properties and Commercial pages), then newest. Premium (featured) listings get no
      * priority here — they have their own Home section and /premium-properties page.
      */
+    /** Listings on Super Admin's Marketing Properties list (home "Realty Property" + /marketing-properties). */
+    public function scopeMarketing($query)
+    {
+        return $query->whereIn('properties.id', MarketingProperty::select('property_id'));
+    }
+
+    /** The order Super Admin arranged the Marketing Properties list in (1 = first). */
+    public function scopeMarketingOrder($query)
+    {
+        return $query->orderBy(
+            MarketingProperty::select('order_index')->whereColumn('marketing_properties.property_id', 'properties.id')
+        )->orderByDesc('properties.id');
+    }
+
+    public function marketingEntry()
+    {
+        return $this->hasOne(MarketingProperty::class);
+    }
+
     public function scopeDisplayOrder($query)
     {
         return $query->orderBy('order_index')

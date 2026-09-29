@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('landing-pages:cleanup-temp-images')->daily();
         $schedule->command('portal:notify-expiring-documents')->daily();
+        // Morning-before reminder for subscriptions that auto-renew tomorrow (UAE time).
+        $schedule->command('portal:remind-subscription-renewals')->dailyAt('09:00')->timezone(\App\Console\Commands\RemindSubscriptionRenewals::TIMEZONE)->withoutOverlapping();
         $schedule->command('properties:expire-featured')->everyFifteenMinutes();
         $schedule->call(fn () => app(\App\Services\NewsletterCampaignService::class)->sendDueContent())->everyFifteenMinutes();
     })

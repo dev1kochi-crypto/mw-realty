@@ -41,7 +41,7 @@ return [
             'section_image_alt' => false,
             'banner' => false,
             'banner_alt' => false,
-            'description' => false,
+            'description' => true,
             'display_home' => true,
             'extra_fields' => [],
             'required' => ['title'], // Section fields that are mandatory
