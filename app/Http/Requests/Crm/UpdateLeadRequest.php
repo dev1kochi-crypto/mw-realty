@@ -40,6 +40,7 @@ class UpdateLeadRequest extends FormRequest
                 if ($actorOwnerId && $actorOwnerId !== $leadOwnerId) {
                     $q->orWhere('portal_user_id', $actorOwnerId);
                 }
+                $q->orWhere('portal_user_id', \App\Models\LeadStage::globalOwnerId()); // Super Admin's global items
             });
         };
 
@@ -53,7 +54,8 @@ class UpdateLeadRequest extends FormRequest
             'status' => ['required', Rule::in(['active', 'inactive'])],
             'owner_id' => ['nullable', 'integer', 'exists:portal_users,id'],
             'stage_id' => ['nullable', 'integer', Rule::exists('lead_stages', 'id')->where($ownedByLeadOrActor)],
-            'source_id' => ['nullable', 'integer', Rule::exists('lead_sources', 'id')->where($ownedByLeadOrActor)],
+            // A lead always keeps a source — it can be changed, not cleared.
+            'source_id' => ['sometimes', 'required', 'integer', Rule::exists('lead_sources', 'id')->where($ownedByLeadOrActor)],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['integer', Rule::exists('lead_tags', 'id')->where($ownedByLeadOrActor)],
         ];

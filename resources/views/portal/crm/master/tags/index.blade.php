@@ -48,66 +48,8 @@
 </div>
 @include('portal.crm.master._linked_leads_modal')
 
-<div class="modal fade" id="addTagModal" tabindex="-1" aria-labelledby="addTagModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form action="{{ route('portal.crm.master.tags.store') }}" method="POST">
-                @csrf
-                <input type="hidden" name="tag_form" value="create">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addTagModalLabel">Add Tag</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label" for="tagName">Name</label>
-                        <input type="text" name="name" id="tagName" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required maxlength="100" autofocus>
-                        @error('name')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label" for="tagColor">Color</label>
-                        <input type="color" name="color" id="tagColor" class="form-control form-control-color" value="{{ old('color', '#14b8a6') }}">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-portal-primary">Add Tag</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="editTagModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="editTagForm" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Tag</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" name="name" id="editTagName" class="form-control" required maxlength="100">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Color</label>
-                        <input type="color" name="color" id="editTagColor" class="form-control form-control-color">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-portal-primary">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+@include('portal.crm.master._item_modal', ['kind' => 'tag', 'mode' => 'add'])
+@include('portal.crm.master._item_modal', ['kind' => 'tag', 'mode' => 'edit'])
 
 @push('scripts')
 <script>

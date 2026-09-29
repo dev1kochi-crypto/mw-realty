@@ -364,7 +364,7 @@ class LeadController extends Controller
             'country' => ['nullable', 'string', 'max:100'],
             'message' => ['nullable', 'string', 'max:5000'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
-            'source_id' => ['nullable', 'integer', Rule::exists('lead_sources', 'id')->where($leadOrViewer)],
+            'source_id' => ['required', 'integer', Rule::exists('lead_sources', 'id')->where($leadOrViewer)], // changed, never cleared
             'owner_id' => ['required', 'integer', 'exists:portal_users,id'],
         ];
         $sent = array_intersect_key($rules, $request->all());
@@ -405,8 +405,8 @@ class LeadController extends Controller
             'phone_country_code' => $request->filled('phone') ? $request->input('phone_country_code') : null,
             'message' => $request->input('message'),
             'status' => $request->input('status'),
-            'stage_id' => $request->input('stage_id') ?: null,
-            'source_id' => $request->input('source_id') ?: null,
+            'stage_id' => $request->input('stage_id') ?: $lead->stage_id, // a lead always has a stage
+            'source_id' => $request->input('source_id') ?: $lead->source_id, // never cleared
         ], $request->input('tags', []));
 
         if ($this->isAdmin() && $request->filled('owner_id') && (int) $request->input('owner_id') !== $lead->portal_user_id) {

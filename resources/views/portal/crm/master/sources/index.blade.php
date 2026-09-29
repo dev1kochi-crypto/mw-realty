@@ -47,58 +47,8 @@
 </div>
 @include('portal.crm.master._linked_leads_modal')
 
-<div class="modal fade" id="addSourceModal" tabindex="-1" aria-labelledby="addSourceModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form action="{{ route('portal.crm.master.sources.store') }}" method="POST">
-                @csrf
-                <input type="hidden" name="source_form" value="create">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addSourceModalLabel">Add Source</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label" for="sourceName">Name</label>
-                        <input type="text" name="name" id="sourceName" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required maxlength="100" autofocus>
-                        @error('name')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-portal-primary">Add Source</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="editSourceModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="editSourceForm" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Source</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" name="name" id="editSourceName" class="form-control" required maxlength="100">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-portal-primary">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+@include('portal.crm.master._item_modal', ['kind' => 'source', 'mode' => 'add'])
+@include('portal.crm.master._item_modal', ['kind' => 'source', 'mode' => 'edit'])
 
 @push('scripts')
 <script>

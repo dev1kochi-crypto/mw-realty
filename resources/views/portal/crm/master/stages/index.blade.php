@@ -68,74 +68,8 @@
 </div>
 @include('portal.crm.master._linked_leads_modal')
 
-<div class="modal fade" id="addStageModal" tabindex="-1" aria-labelledby="addStageModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form action="{{ route('portal.crm.master.stages.store') }}" method="POST">
-                @csrf
-                <input type="hidden" name="stage_form" value="create">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addStageModalLabel">Add Stage</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label" for="stageName">Name</label>
-                        <input type="text" name="name" id="stageName" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required maxlength="100" autofocus>
-                        @error('name')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label" for="stageColor">Color</label>
-                        <input type="color" name="color" id="stageColor" class="form-control form-control-color" value="{{ old('color', '#4f46e5') }}">
-                    </div>
-                    <div class="form-check">
-                        <input type="checkbox" name="is_closed" value="1" class="form-check-input" id="stageIsClosed" @checked(old('is_closed'))>
-                        <label class="form-check-label" for="stageIsClosed">Counts as closed</label>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-portal-primary">Add Stage</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="editStageModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="editStageForm" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Stage</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" name="name" id="editStageName" class="form-control" required maxlength="100">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Color</label>
-                        <input type="color" name="color" id="editStageColor" class="form-control form-control-color">
-                    </div>
-                    <div class="form-check">
-                        <input type="checkbox" name="is_closed" value="1" class="form-check-input" id="editStageClosed">
-                        <label class="form-check-label" for="editStageClosed">Counts as closed</label>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-portal-primary">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+@include('portal.crm.master._item_modal', ['kind' => 'stage', 'mode' => 'add'])
+@include('portal.crm.master._item_modal', ['kind' => 'stage', 'mode' => 'edit'])
 
 @push('scripts')
 <script>

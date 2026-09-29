@@ -60,6 +60,12 @@ class Lead extends Model
 
     protected static function booted(): void
     {
+        // Every lead starts with a stage (the owner's default, e.g. "New") and a source (where it
+        // came from — see sourceNameFor()), however it was created.
+        static::creating(function (Lead $lead) {
+            $lead->applyStageAndSourceDefaults();
+        });
+
         // Stamp when the lead entered a closed stage (cleared if it moves back to an open one) —
         // every stage change path (board drag, edit form, import) goes through here.
         static::saving(function (Lead $lead) {
@@ -124,6 +130,63 @@ class Lead extends Model
                 $log->log($lead, 'details', implode("\n", $lines), ['fields' => $changed]);
             }
         });
+    }
+
+    /** Channel (page_source) → the Source name leads from it get. Unknown channels are title-cased. */
+    public const SOURCE_NAMES = [
+        'property-detail' => 'Website',
+        'property details' => 'Website',
+        'ai-chatbot' => 'AI Chatbot',
+        'brochure-download' => 'Brochure Download',
+        'custom-request' => 'Custom Request',
+        'agent-profile-request' => 'Agent Profile',
+        'agency-profile-request' => 'Agency Profile',
+        'marked sold' => 'Direct Sale',
+        'manual' => 'Manual Entry',
+        'import' => 'Import',
+        'home page' => 'Website',
+        'contact page' => 'Website',
+    ];
+
+    public static function sourceNameFor(?string $pageSource): string
+    {
+        $key = mb_strtolower(trim((string) $pageSource));
+        if ($key === '') {
+            return 'Manual Entry';
+        }
+        if (str_starts_with($key, 'landing page')) {
+            return 'Landing Page';
+        }
+
+        return self::SOURCE_NAMES[$key] ?? \Illuminate\Support\Str::of($key)->replace(['-', '_'], ' ')->title()->limit(100, '')->toString();
+    }
+
+    /**
+     * Fills a missing stage (the owner's default stage — its own, else Super Admin's) and source
+     * (matched by name among the owner's own + global sources; a new channel is added to the
+     * global source list so every account can pick it too). Doesn't save.
+     */
+    public function applyStageAndSourceDefaults(): void
+    {
+        $ownerId = $this->portal_user_id ?: LeadStage::globalOwnerId();
+
+        if (!$this->stage_id) {
+            $this->stage_id = LeadStage::forOwner($ownerId)
+                ->orderByDesc('is_default')
+                ->orderByRaw('CASE WHEN lead_stages.portal_user_id = ? THEN 0 ELSE 1 END', [$ownerId])
+                ->orderBy('order_index')
+                ->value('lead_stages.id');
+        }
+
+        if (!$this->source_id) {
+            $name = self::sourceNameFor($this->page_source);
+            $this->source_id = LeadSource::forOwner($ownerId)->whereRaw('LOWER(lead_sources.name) = ?', [mb_strtolower($name)])->value('lead_sources.id')
+                ?? LeadSource::create([
+                    'portal_user_id' => LeadSource::globalOwnerId(),
+                    'name' => $name,
+                    'order_index' => (int) LeadSource::where('portal_user_id', LeadSource::globalOwnerId())->max('order_index') + 1,
+                ])->id;
+        }
     }
 
     /** Off while a system clean-up / merge writes to a lead, so it doesn't show up as team activity. */

@@ -53,6 +53,37 @@ class SharedMasterDataTest extends TestCase
         $this->signIn($other)->get('/portal/crm/master/stages')->assertOk()->assertSee('Global Viewing')->assertDontSee('My Stage 2');
     }
 
+    public function test_new_leads_get_the_default_stage_and_a_source(): void
+    {
+        LeadStage::seedDefaultsFor();
+        LeadSource::seedDefaultsFor();
+        $agency = $this->agency();
+
+        // Website enquiry → default stage "New" + the existing global "Website" source.
+        $lead = $this->enquire($this->property($agency), 'Web Buyer');
+        $this->assertSame('New', $lead->stage->name);
+        $this->assertSame('Website', $lead->source->name);
+
+        // A channel with no source yet (chatbot) → added to the global source list and assigned.
+        $this->postJson('/leads/capture', [
+            'property_id' => $this->property($agency)->id, 'name' => 'Bot Buyer', 'email' => 'bot@example.test', 'message' => 'Hi', 'page_source' => 'ai-chatbot',
+        ])->assertOk();
+        $bot = Lead::where('email', 'bot@example.test')->firstOrFail();
+        $this->assertSame('AI Chatbot', $bot->source->name);
+        $this->assertTrue($bot->source->isGlobal());
+        $this->assertSame(1, LeadSource::where('name', 'AI Chatbot')->count(), 'reused, not duplicated');
+        $this->postJson('/leads/capture', ['property_id' => $this->property($agency)->id, 'name' => 'Bot Two', 'email' => 'bot2@example.test', 'message' => 'Hi', 'page_source' => 'ai-chatbot'])->assertOk();
+        $this->assertSame(1, LeadSource::where('name', 'AI Chatbot')->count());
+
+        // The agency's own default stage wins over the global one.
+        LeadStage::create(['portal_user_id' => $agency->id, 'name' => 'Fresh', 'color' => '#111111', 'order_index' => 1, 'is_default' => true]);
+        $this->assertSame('Fresh', $this->enquire($this->property($agency), 'Own Default')->stage->name);
+
+        // Editing can change the source but never clear it.
+        $this->signIn($agency)->patchJson("/portal/crm/leads/{$lead->id}/fields", ['source_id' => null])->assertStatus(422);
+        $this->assertNotNull($lead->fresh()->source_id);
+    }
+
     public function test_in_use_item_is_cleared_from_leads_then_deleted(): void
     {
         $agency = $this->agency();

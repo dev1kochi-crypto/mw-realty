@@ -62,7 +62,7 @@
                         <div class="col-sm-6" id="leadFormSourceCol">
                             <label class="form-label fw-semibold">Source</label>
                             <select name="source_id" id="leadFormSource" class="form-select">
-                                <option value="">No source</option>
+                                <option value="">Auto — set from where the lead came in</option>
                             </select>
                         </div>
                     </div>
@@ -71,7 +71,7 @@
                             <label class="form-label fw-semibold">Stage</label>
                             <div class="d-flex gap-2">
                                 <select name="stage_id" id="leadFormStage" class="form-select">
-                                    <option value="">No stage</option>
+                                    <option value="">Default stage (e.g. New)</option>
                                 </select>
                                 <button type="button" id="openAddStageModal" class="btn btn-sm portal-btn-ghost text-nowrap">+ Add Stage</button>
                             </div>
