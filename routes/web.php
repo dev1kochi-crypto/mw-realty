@@ -723,6 +723,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
         // inline "approved only" checks — index/edit/update/destroy had none at all before this.
         Route::get('/properties', [PortalPropertyController::class, 'index'])->name('properties.index')->middleware('portal.approved');
         Route::get('/properties/create', [PortalPropertyController::class, 'create'])->name('properties.create');
+        Route::get('/properties/agent-options', [PortalPropertyController::class, 'agentOptions'])->name('properties.agent-options')->middleware('throttle:120,1');
         Route::post('/properties', [PortalPropertyController::class, 'store'])->name('properties.store');
         Route::post('/properties/bulk-action', [PortalPropertyController::class, 'bulkAction'])->name('properties.bulk-action')->middleware('portal.approved');
         Route::post('/properties/{id}/feature', [PortalPropertyController::class, 'feature'])->name('properties.feature')->middleware('portal.approved');
@@ -854,6 +855,18 @@ Route::prefix('portal')->name('portal.')->group(function () {
                 Route::put('/sources/{id}', [LeadSourceController::class, 'update'])->name('sources.update');
                 Route::delete('/sources/{id}', [LeadSourceController::class, 'destroy'])->name('sources.destroy');
                 Route::post('/sources/reorder', [LeadSourceController::class, 'reorder'])->name('sources.reorder');
+
+                // Property form dropdown options — Super Admin only (checked in the controller).
+                Route::controller(\App\Http\Controllers\Portal\Crm\PropertyOptionController::class)->prefix('property-options')->name('property-options.')
+                    ->group(function () {
+                        $lists = implode('|', array_keys(\App\Http\Controllers\Portal\Crm\PropertyOptionController::LISTS));
+                        Route::get('/', 'index')->name('index');
+                        Route::post('/{key}', 'store')->name('store')->where('key', $lists);
+                        Route::post('/{key}/reorder', 'reorder')->name('reorder')->where('key', $lists);
+                        Route::put('/{key}/{id}', 'update')->name('update')->where('key', $lists)->whereNumber('id');
+                        Route::post('/{key}/{id}/toggle', 'toggle')->name('toggle')->where('key', $lists)->whereNumber('id');
+                        Route::delete('/{key}/{id}', 'destroy')->name('destroy')->where('key', $lists)->whereNumber('id');
+                    });
             });
 
             Route::get('/reports/{report?}', [PortalReportController::class, 'index'])->name('reports.index')->whereIn('report', ['leads', 'properties', 'sales', 'revenue', 'agents']);

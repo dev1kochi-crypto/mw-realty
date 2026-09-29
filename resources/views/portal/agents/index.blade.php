@@ -110,6 +110,7 @@
                     <th>Agent</th>
                     <th>Contact</th>
                     <th>Status</th>
+                    @if($tab !== 'history')<th>Plan</th>@endif
                     @if($tab === 'active')
                     <th class="text-center">Listings</th>
                     <th class="text-center">Leads</th>
@@ -138,6 +139,24 @@
                         <span class="badge bg-{{ $membership->statusTone() }}-subtle text-{{ $membership->statusTone() }}-emphasis border">{{ $membership->statusLabel() }}</span>
                         @if($membership->rejection_reason)<div class="text-muted small">{{ $membership->rejection_reason }}</div>@endif
                     </td>
+                    @if($tab !== 'history')
+                    @php($ownPlan = $agent->plan)
+                    @php($ownPaid = $ownPlan && (float) $ownPlan->price > 0)
+                    <td class="small">
+                        @if(in_array($membership->status, \App\Models\AgencyAgent::MEMBER_STATUSES, true))
+                            @if($agent->isOnAgencyPlan())
+                                <span class="badge bg-success-subtle text-success-emphasis border"><i class="fas fa-building me-1"></i>Your plan</span>
+                                @if($membership->previousPlan)<div class="text-muted mt-1">switched from {{ $membership->previousPlan->getTranslation('name') }} · no refund</div>@endif
+                            @else
+                                <span class="badge bg-light text-dark border">Own plan · {{ $ownPlan?->getTranslation('name') ?? 'Free' }}</span>
+                                <div class="text-muted mt-1">your plan doesn't include team agents</div>
+                            @endif
+                        @else
+                            <span class="badge {{ $ownPaid ? 'bg-warning-subtle text-warning-emphasis' : 'bg-light text-dark' }} border">{{ $ownPlan?->getTranslation('name') ?? 'Free' }}{{ $ownPaid ? ' (paid)' : '' }}</span>
+                            <div class="text-muted mt-1">→ moves to your plan on approval{{ $ownPaid ? ', own plan dropped (no refund)' : '' }}</div>
+                        @endif
+                    </td>
+                    @endif
                     @if($tab === 'active')
                     <td class="text-center">{{ $propertyCounts[$agent->id] ?? 0 }}</td>
                     <td class="text-center">{{ $leadCounts[$agent->id] ?? 0 }}</td>
@@ -176,7 +195,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="portal-empty">
+                    <td colspan="8" class="portal-empty">
                         @if($tab === 'active' && $agentsLocked)
                             No agents yet — team agent accounts are available after you upgrade your plan.
                         @elseif($tab === 'active')

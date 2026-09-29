@@ -33,13 +33,23 @@ class FeaturedListingService
      */
     public function quota(PortalUser $owner): array
     {
-        $plan = $owner->plan?->status ? $owner->plan : null;
+        // An agency agent uses the agency's plan, and the agency + its agents share one quota —
+        // otherwise every agent would multiply the agency's premium allowance.
+        $plan = $owner->effectivePlan();
+        $plan = $plan?->status ? $plan : null;
         $limit = (int) ($plan?->featured_per_month ?? 0);
         $perMonth = (bool) $plan?->featuredPerMonth();
 
+        $account = $owner->isOnAgencyPlan() ? $owner->company : $owner;
+        $bookers = $account->isAgency()
+            ? PortalUser::where('company_id', $account->id)->with('currentMembership')->get()
+                ->filter(fn (PortalUser $agent) => $agent->isOnAgencyPlan())->pluck('id')->push($account->id)
+            : collect([$owner->id]);
+        $bookings = fn () => \App\Models\PropertyFeaturing::whereIn('portal_user_id', $bookers);
+
         $used = $perMonth
-            ? $owner->featurings()->thisMonth()->count()
-            : $owner->featurings()->whereNull('stopped_at')->where('ends_at', '>', now())->count();
+            ? $bookings()->thisMonth()->count()
+            : $bookings()->whereNull('stopped_at')->where('ends_at', '>', now())->count();
 
         return [
             'limit' => $limit,

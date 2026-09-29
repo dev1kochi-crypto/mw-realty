@@ -75,6 +75,10 @@
                             <a class="nav-link py-2 @if(request()->routeIs('portal.crm.master.stages.*')) active @endif" href="{{ route('portal.crm.master.stages.index') }}">Stage</a>
                             <a class="nav-link py-2 @if(request()->routeIs('portal.crm.master.tags.*')) active @endif" href="{{ route('portal.crm.master.tags.index') }}">Tag</a>
                             <a class="nav-link py-2 @if(request()->routeIs('portal.crm.master.sources.*')) active @endif" href="{{ route('portal.crm.master.sources.index') }}">Source</a>
+                            @if(!$owner && $cmsActor?->hasRole('superadmin'))
+                            {{-- Property form dropdowns (type / listing / completion / furnishing) — Super Admin only. --}}
+                            <a class="nav-link py-2 @if(request()->routeIs('portal.crm.master.property-options.*')) active @endif" href="{{ route('portal.crm.master.property-options.index') }}">Property Options</a>
+                            @endif
                         </nav>
                     </div>
                 </div>
@@ -104,14 +108,20 @@
                 </a>
                 @endif
                 @if($owner?->type === 'agent')
+                {{-- Agency invitations waiting for this agent's answer. --}}
+                @php $agencyInvites = \App\Models\AgencyAgent::where('agent_id', $owner->id)->where('status', \App\Models\AgencyAgent::INVITED)->count(); @endphp
                 <a href="{{ route('portal.agency.index') }}" class="nav-link @if(request()->routeIs('portal.agency.*')) active @endif">
                     <i class="fas fa-building-user"></i> My Agency
+                    @if($agencyInvites > 0)<span class="portal-nav-badge" title="Agency invitations waiting for you">{{ $agencyInvites }}</span>@endif
                 </a>
                 @endif
                 @if($cmsActor || $owner?->type === 'company')
+                {{-- Join requests waiting for this agency to accept / decline. --}}
+                @php $joinRequests = $owner ? \App\Models\AgencyAgent::where('agency_id', $owner->id)->where('status', \App\Models\AgencyAgent::REQUESTED)->count() : 0; @endphp
                 <a href="{{ route('portal.agents.index') }}" class="nav-link @if(request()->routeIs('portal.agents.*')) active @endif">
                     <i class="fas fa-user-tie"></i> Agents
-                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>
+                    @elseif($joinRequests > 0)<span class="portal-nav-badge" title="Join requests waiting for you">{{ $joinRequests }}</span>@endif
                 </a>
                 @endif
                 <a href="{{ route('portal.nearby-places.index') }}" class="nav-link @if(request()->routeIs('portal.nearby-places.*')) active @endif">
@@ -128,10 +138,10 @@
 
                 @if($owner)
                 <div class="nav-section-label">Support</div>
-                @php $ticketsAwaitingReply = \App\Models\SupportTicket::where('portal_user_id', $owner->id)->where('status', \App\Models\SupportTicket::AWAITING_CLIENT)->count(); @endphp
+                @php $ticketsAwaitingReply = \App\Models\SupportTicket::where('portal_user_id', $owner->id)->needsClientReply()->count(); @endphp
                 <a href="{{ route('portal.contact.index') }}" class="nav-link @if(request()->routeIs('portal.contact.*')) active @endif">
                     <i class="fas fa-headset"></i> Contact Us
-                    @if($ticketsAwaitingReply > 0)<span class="badge bg-warning text-dark ms-auto" title="Tickets awaiting your reply">{{ $ticketsAwaitingReply }}</span>@endif
+                    @if($ticketsAwaitingReply > 0)<span class="portal-nav-badge" title="Tickets with a reply from our team">{{ $ticketsAwaitingReply }}</span>@endif
                 </a>
                 @endif
                 {{-- My Profile and Plans live in the account (avatar) menu at the top right. --}}
@@ -155,7 +165,8 @@
                         <i class="fas fa-shield-alt"></i> Back to Admin
                     </a>
                     @endif
-                    @if($owner && !$owner->plan?->isTopTier())
+                    {{-- An agency agent is on the agency's plan — nothing to upgrade themselves. --}}
+                    @if($owner && !$owner->isOnAgencyPlan() && !$owner->plan?->isTopTier())
                         @if($owner->status !== 'approved')
                         <span class="btn-portal-upgrade-cta is-locked" title="Unlocks after KYC approval" aria-disabled="true">
                             <i class="fas fa-lock"></i> Upgrade Plan
@@ -250,25 +261,31 @@
             </header>
 
             <main class="portal-content">
-                @if($owner && $owner->status !== 'approved')
-                    <div class="alert @if($owner->status === 'rejected') alert-danger @else alert-warning @endif d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                        <div>
-                            @if($owner->status === 'pending')
-                                <i class="fas fa-clock me-2"></i>
-                                <strong>Your account is pending Super Admin approval.</strong>
-                                Leads, Reports and property listing unlock once your KYC documents are reviewed and your account is approved — complete your profile and upload documents now.
+                {{-- Not on the profile page itself — it shows the full KYC progress card instead. --}}
+                @if($owner && $owner->status !== 'approved' && !request()->routeIs('portal.profile.*'))
+                    @php
+                        $rejected = $owner->status === 'rejected';
+                        $awaitingReview = !$rejected && $owner->kyc_review_status === 'submitted' && $owner->kyc_user_submitted_at;
+                    @endphp
+                    <div class="portal-status-banner {{ $rejected ? 'is-rejected' : '' }}" role="status">
+                        <span class="portal-status-banner__icon"><i class="fas {{ $rejected ? 'fa-ban' : ($awaitingReview ? 'fa-hourglass-half' : 'fa-user-clock') }}"></i></span>
+                        <div class="portal-status-banner__body">
+                            @if($rejected)
+                                <div class="portal-status-banner__title">Your application needs changes</div>
+                                <div class="portal-status-banner__text">{{ $owner->rejection_reason ? 'Reason: ' . $owner->rejection_reason . '. ' : '' }}Update your profile and resubmit. CRM access unlocks once you're approved.</div>
+                            @elseif($awaitingReview)
+                                <div class="portal-status-banner__title">KYC submitted — waiting for review</div>
+                                <div class="portal-status-banner__text">Our team is reviewing your documents. Leads, Reports and listings unlock as soon as your account is approved.</div>
                             @else
-                                <i class="fas fa-ban me-2"></i>
-                                <strong>Your account application was rejected.</strong>
-                                @if($owner->rejection_reason)
-                                    Reason: {{ $owner->rejection_reason }}.
-                                @endif
-                                Update your profile and resubmit for review — CRM access unlocks once you're approved.
+                                <div class="portal-status-banner__title">Finish your KYC to unlock the CRM</div>
+                                <div class="portal-status-banner__text">Leads, Reports and property listing unlock once your KYC documents are reviewed and your account is approved.</div>
                             @endif
                         </div>
-                        <a href="{{ route('portal.profile.edit') }}" class="btn btn-sm btn-dark">
-                            <i class="fas fa-user-edit me-1"></i> {{ $owner->status === 'rejected' ? 'Fix & Resubmit' : 'Complete Profile' }}
+                        @unless($awaitingReview)
+                        <a href="{{ route('portal.profile.edit') }}" class="btn btn-portal-primary portal-status-banner__cta">
+                            <i class="fas fa-user-edit me-1"></i>{{ $rejected ? 'Fix & Resubmit' : 'Complete Profile' }}
                         </a>
+                        @endunless
                     </div>
                 @endif
 
@@ -388,12 +405,14 @@
 
     <script>
     (function () {
-        // Show a "Processing..." spinner on the submit button the moment a form is actually
-        // submitted (the browser only fires `submit` once native validation has passed),
-        // and disable every submit button in it to prevent double-submits.
-        document.addEventListener('submit', function (e) {
+        // Show a "Processing..." spinner on the submit button when a form really submits (the
+        // browser only fires `submit` once native validation has passed), and disable every submit
+        // button in it to prevent double-submits. Listens on window in the bubble phase, i.e. AFTER
+        // the page's own handlers: a form a script handles itself (preventDefault → fetch, e.g. the
+        // coupon box, lead / note / sold popups) never gets a spinner that nothing would undo.
+        window.addEventListener('submit', function (e) {
             const form = e.target;
-            if (!(form instanceof HTMLFormElement) || form.dataset.noSpinner) return;
+            if (!(form instanceof HTMLFormElement) || form.dataset.noSpinner || e.defaultPrevented) return;
 
             const submitBtns = form.querySelectorAll('button[type="submit"]');
             const clicked = (e.submitter && e.submitter.tagName === 'BUTTON') ? e.submitter : submitBtns[0];
@@ -406,7 +425,7 @@
                 }
                 clicked.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
             }
-        }, true);
+        });
 
         function restoreSubmitButtons(form) {
             // Every submit button in the form was disabled above, but only the one actually
@@ -487,6 +506,19 @@
             toast.querySelector('.portal-toast-close').addEventListener('click', function () { clearTimeout(timer); dismiss(); });
             return toast;
         };
+    })();
+    </script>
+    <script>
+    // Sticky top bar: publish its height as --portal-topbar-h (for sticky cards under it) and add a shadow once scrolled.
+    (function () {
+        const bar = document.querySelector('.portal-topbar');
+        if (!bar) return;
+        const setHeight = () => document.documentElement.style.setProperty('--portal-topbar-h', bar.offsetHeight + 'px');
+        setHeight();
+        if ('ResizeObserver' in window) new ResizeObserver(setHeight).observe(bar); else window.addEventListener('resize', setHeight);
+        const onScroll = () => bar.classList.toggle('is-scrolled', window.scrollY > 4);
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
     })();
     </script>
 

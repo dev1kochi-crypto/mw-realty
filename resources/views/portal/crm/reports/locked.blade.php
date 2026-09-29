@@ -14,8 +14,14 @@
     <p class="portal-muted mb-4">
         Leads, Properties{{ $owner?->type === 'company' ? ' and Agents' : '' }} reports — lead trends, sources and conversion,
         your best-performing listings{{ $owner?->type === 'company' ? ', and how each of your agents is doing' : '' }}.
+        @if(!empty($agencyPlan))
+        Reports aren't included in {{ $agencyPlan->displayName() }}'s {{ $plan?->getTranslation('name') ?? 'current' }} plan. Ask your agency to upgrade.
+        @else
         Reports aren't included in your {{ $plan?->getTranslation('name') ?? 'current' }} plan.
+        @endif
     </p>
+    @if(empty($agencyPlan))
     <a href="{{ route('portal.plans.index') }}" class="btn btn-portal-primary"><i class="fas fa-rocket me-2"></i>View Plans</a>
+    @endif
 </div>
 @endsection

@@ -188,7 +188,8 @@ class PropertiesPageService
     private function applyAmenity($query, string $amenity): void
     {
         match ($amenity) {
-            'furnished' => $query->whereHas('details', fn ($q) => $q->where('furnished', true)),
+            // Any furnishing option except "unfurnished" (furnished, semi-furnished, …) counts as furnished.
+            'furnished' => $query->whereHas('details', fn ($q) => $q->whereNotNull('furnished')->where('furnished', '!=', \App\Models\PropertyDetail::UNFURNISHED)),
             'parking' => $query->whereHas('details', fn ($q) => $q->where('parking', '>', 0)),
             default => $query->whereHas('details', fn ($q) => $q->where('amenities', 'like', '%' . self::AMENITY_LABELS[$amenity] . '%')),
         };

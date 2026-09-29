@@ -10,9 +10,6 @@
 @section('content')
 @php $canEdit = $cmsUser->can('support-tickets.edit'); @endphp
 
-@if(session('success'))
-<div class="alert alert-success">{{ session('success') }}</div>
-@endif
 @if($errors->any())
 <div class="alert alert-danger">{{ $errors->first() }}</div>
 @endif

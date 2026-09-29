@@ -243,7 +243,7 @@ class FilterController extends Controller
     }
     private function validateType(Request $request): void
     {
-        $select = in_array($request->input('key'), Filter::SELECT_KEYS, true);
+        $select = in_array($request->input('key'), [...Filter::SELECT_KEYS, Filter::FURNISHING_KEY], true);
         if (($select && $request->input('type') !== 'select') || (!$select && $request->input('type') === 'select')) {
             throw \Illuminate\Validation\ValidationException::withMessages(['type' => 'The filter type must match the selected property field.']);
         }
@@ -256,6 +256,7 @@ class FilterController extends Controller
         $used = in_array($key, Filter::SELECT_KEYS, true) && \App\Models\Property::where($key, $value->value)->exists();
         if ($key === 'location') $used = $used || \App\Models\CmsKit\CommunityHighlight::where('community', $value->value)->exists();
         if ($key === 'property_type') $used = $used || \App\Models\CmsKit\FindPropertyItem::where('property_type', $value->value)->exists();
+        if ($key === Filter::FURNISHING_KEY) $used = \App\Models\PropertyDetail::where('furnished', $value->value)->exists();
         if ($used) throw \Illuminate\Validation\ValidationException::withMessages(['value' => 'This value is in use. Reassign its listings/cards first.']);
     }
 }

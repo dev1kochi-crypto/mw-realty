@@ -33,7 +33,24 @@
         background: linear-gradient(120deg, var(--dash-navy) 0%, #16294f 55%, var(--dash-teal) 145%);
         border-radius: 16px; padding: 1.75rem 2rem; color: #fff; margin-bottom: 1.25rem;
         display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;
+        /* Stays in view while scrolling — just under the 70px sticky admin top bar. */
+        position: sticky; top: calc(70px + 0.75rem); z-index: 800;
+        transition: padding 0.2s ease, box-shadow 0.2s ease;
     }
+    /* The layout's `.main-content { overflow-x: hidden }` makes it its own (never-scrolling) scroll box, so a
+       sticky child can't stick to the window — it just gets pushed down over the cards below. `clip` still
+       stops sideways overflow without creating a scroll box. */
+    .main-content { overflow-x: clip; }
+    /* Page-coloured strip between the top bar and the card, so scrolled content doesn't peek through. */
+    .profile-hero::before {
+        content: ''; position: absolute; left: -2rem; right: -2rem; bottom: 100%;
+        height: calc(0.75rem + 1px); background: var(--bg-color, #f4f1f1); pointer-events: none;
+    }
+    /* Once stuck: a compact bar (name, badges, actions) so it doesn't cover the page. */
+    .profile-hero.is-stuck { padding: 0.7rem 1.5rem; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18); }
+    .profile-hero.is-stuck .profile-avatar { width: 40px; height: 40px; font-size: 0.95rem; }
+    .profile-hero.is-stuck .profile-meta { display: none !important; }
+    .profile-hero.is-stuck .profile-name { font-size: 1.1rem; margin-bottom: 0.2rem; }
     .profile-avatar {
         width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
         display: flex; align-items: center; justify-content: center;
@@ -167,7 +184,8 @@
 </div>
 @endif
 
-<div class="profile-hero">
+<div id="profileHeroSentinel" aria-hidden="true"></div>
+<div class="profile-hero" id="profileHero">
     <div class="d-flex align-items-center gap-3">
         <div class="profile-avatar {{ $avatarFill }}">{{ $initials }}</div>
         <div>
@@ -199,9 +217,6 @@
 
 @if($portalUser->kyc_review_status === 'changes_requested' && $portalUser->kyc_review_note)
 <div class="alert alert-warning">Requested KYC changes: {{ $portalUser->kyc_review_note }}</div>
-@endif
-@if(session('success'))
-<div class="alert alert-success">{{ session('success') }}</div>
 @endif
 @if(session('error'))
 <div class="alert alert-danger">{{ session('error') }}</div>
@@ -263,7 +278,7 @@
     <div class="col-6 col-md-3">
         <div class="stat-mini">
             <span class="stat-mini-icon fill-green"><i class="fas fa-layer-group"></i></span>
-            <div><div class="stat-mini-value">{{ $portalUser->plan?->getTranslation('name') ?? 'No Plan' }}</div><div class="stat-mini-label">Plan</div></div>
+            <div><div class="stat-mini-value">{{ $portalUser->effectivePlan()?->getTranslation('name') ?? 'No Plan' }}</div><div class="stat-mini-label">{{ $portalUser->isOnAgencyPlan() ? 'Plan · via agency' : 'Plan' }}</div></div>
         </div>
     </div>
     <div class="col-6 col-md-3">
@@ -354,14 +369,8 @@
                 <div class="row">
                     <div class="col-md-4 info-row"><div class="info-label">BRN (Broker Registration No.)</div><div class="info-value">{{ $portalUser->brn_number ?: '-' }}</div></div>
                     <div class="col-md-8 info-row">
-                        <div class="info-label">Affiliated Brokerage</div>
-                        <div class="info-value">
-                            @if($portalUser->company)
-                                <a href="{{ route('cms.portal-accounts.show', ['id' => $portalUser->company->id, 'type' => 'company']) }}">{{ $portalUser->company->company_name ?: $portalUser->company->name }}</a>
-                            @else
-                                -
-                            @endif
-                        </div>
+                        <div class="info-label">Affiliated Brokerage <span class="text-muted fw-normal text-lowercase">(as stated by the agent)</span></div>
+                        <div class="info-value">{{ $portalUser->affiliated_brokerage ?: '-' }}</div>
                     </div>
                     <div class="col-md-4 info-row"><div class="info-label">Trade License No.</div><div class="info-value">{{ $portalUser->trade_license_no ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">Trade License Expiry</div><div class="info-value">{{ $portalUser->trade_license_expiry?->format('d M Y') ?: '-' }}</div></div>
@@ -378,12 +387,8 @@
                     </div>
                     <div class="col-md-8">
                         <label class="form-label">Affiliated Brokerage</label>
-                        <select name="company_id" class="form-select form-select-sm">
-                            <option value="">Unaffiliated</option>
-                            @foreach($companies as $company)
-                            <option value="{{ $company->id }}" {{ $portalUser->company_id === $company->id ? 'selected' : '' }}>{{ $company->company_name ?: $company->name }}</option>
-                            @endforeach
-                        </select>
+                        <input type="text" name="affiliated_brokerage" class="form-control form-control-sm" maxlength="255" value="{{ $portalUser->affiliated_brokerage }}">
+                        <div class="form-text">KYC information only — agency membership and plan are managed under Clients › Agency Agents.</div>
                     </div>
                     <div class="col-md-4"><label class="form-label">Trade License No.</label><input type="text" name="trade_license_no" class="form-control form-control-sm" value="{{ $portalUser->trade_license_no }}"></div>
                     <div class="col-md-4"><label class="form-label">Trade License Expiry</label><input type="date" name="trade_license_expiry" class="form-control form-control-sm" value="{{ $portalUser->trade_license_expiry?->format('Y-m-d') }}"></div>
@@ -710,7 +715,7 @@
         </div>
         @else
         <div class="dash-card">
-            <h6><i class="fas fa-building"></i> Affiliated Company</h6>
+            <h6><i class="fas fa-building"></i> Agency Membership</h6>
             @if($portalUser->company)
                 @php
                     $companyLabel = $portalUser->company->company_name ?: $portalUser->company->name;
@@ -724,7 +729,7 @@
                     <span class="badge {{ $statusMap[$portalUser->company->status] ?? 'bg-secondary' }}">{{ ucfirst($portalUser->company->status) }}</span>
                 </a>
             @else
-                <div class="text-muted text-center py-3" style="font-size: 0.85rem;">Not yet affiliated with any company.</div>
+                <div class="text-muted text-center py-3" style="font-size: 0.85rem;">Independent agent — not a member of any agency on MW Realty (own plan).</div>
             @endif
         </div>
         @endif
@@ -736,6 +741,15 @@
 
 @push('scripts')
 <script>
+    // Header card: compact once it's stuck under the top bar (the marker above it has scrolled past).
+    (function () {
+        const hero = document.getElementById('profileHero');
+        const sentinel = document.getElementById('profileHeroSentinel');
+        if (!hero || !sentinel || !('IntersectionObserver' in window)) return;
+        new IntersectionObserver(([entry]) => hero.classList.toggle('is-stuck', !entry.isIntersecting && entry.boundingClientRect.top < 100),
+            { rootMargin: '-83px 0px 0px 0px', threshold: 0 }).observe(sentinel);
+    })();
+
     (function () {
         const base = "{{ url(config('cms-kit.common.auth.prefix', 'admin')) }}/portal-accounts/";
 

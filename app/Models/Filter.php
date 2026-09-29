@@ -8,6 +8,12 @@ class Filter extends Model
 {
     public const SELECT_KEYS = ['listing_type', 'completion_status', 'property_type', 'category', 'location'];
     public const NUMBER_KEYS = ['bedrooms', 'bathrooms', 'sqft', 'price'];
+
+    /** Furnishing: a managed option list stored on property_details (not a properties column / website filter). */
+    public const FURNISHING_KEY = 'furnishing';
+
+    /** The property-form dropdowns Super Admin manages in CRM › Master › Property Options. */
+    public const PROPERTY_OPTION_KEYS = ['property_type', 'listing_type', 'completion_status', self::FURNISHING_KEY];
     protected $fillable = [
         'key',
         'translations',

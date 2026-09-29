@@ -110,10 +110,7 @@ class DemoFilterCoveragePropertiesSeeder extends Seeder
             throw new \RuntimeException('DemoFilterCoveragePropertiesSeeder is restricted to the local environment.');
         }
 
-        $this->media = app(DemoPropertyMedia::class);
-        $this->nextReference = (int) Property::where('reference_no', 'like', 'PROP%')
-            ->pluck('reference_no')->map(fn ($ref) => (int) substr($ref, 4))->max() + 1;
-        $this->nextOrder = (int) Property::max('order_index') + 1;
+        $this->boot();
 
         $agencies = PortalUser::where('type', 'company')->where('status', 'approved')->orderBy('id')->get();
         $independentAgents = PortalUser::where('type', 'agent')->where('status', 'approved')
@@ -132,6 +129,42 @@ class DemoFilterCoveragePropertiesSeeder extends Seeder
         $this->seedHomeCommunities($agencies);
 
         $this->command?->info("Demo listings created: {$this->created} (for {$agencies->count()} agencies, {$independentAgents->count()} independent agents).");
+    }
+
+    private function boot(): void
+    {
+        $this->media = app(DemoPropertyMedia::class);
+        $this->nextReference = (int) Property::where('reference_no', 'like', 'PROP%')
+            ->pluck('reference_no')->map(fn ($ref) => (int) substr($ref, 4))->max() + 1;
+        $this->nextOrder = (int) Property::max('order_index') + 1;
+    }
+
+    /**
+     * One agency only (DemoAgencyListingsSeeder): $total residential listings — the first
+     * ($total - $unassigned) spread round-robin over its active agents, the last $unassigned kept
+     * on the agency with no agent. Same idempotent slugs as run(), so re-running adds nothing.
+     */
+    public function seedAgencyListings(PortalUser $agency, int $total, int $unassigned): int
+    {
+        if (!app()->environment('local')) {
+            throw new \RuntimeException('Demo listings are restricted to the local environment.');
+        }
+        $this->boot();
+        $before = $this->created;
+
+        $agentIds = AgencyAgent::where('agency_id', $agency->id)->where('status', AgencyAgent::APPROVED)
+            ->orderBy('agent_id')->pluck('agent_id')->all();
+        $withAgents = $agentIds ? $total - $unassigned : 0;
+        $set = PortalUser::where('type', 'company')->where('id', '<', $agency->id)->count(); // varies the mix per agency
+
+        DB::transaction(function () use ($agency, $agentIds, $withAgents, $total, $set) {
+            for ($i = 0; $i < $total; $i++) {
+                $agentId = $i < $withAgents ? $agentIds[$i % count($agentIds)] : null;
+                $this->createListing($agency, 'agency', $agentId, $set, $i, $this->residentialSpec($set, $i % self::PER_OWNER_RESIDENTIAL));
+            }
+        });
+
+        return $this->created - $before;
     }
 
     /** @param  array<int, int|null>  $agentPool  agent ids to assign round-robin (null = unassigned) */
@@ -280,7 +313,7 @@ class DemoFilterCoveragePropertiesSeeder extends Seeder
             PropertyDetail::where('property_id', $existing->id)->update([
                 'amenities' => json_encode(array_map(fn ($label) => ['icon' => null, 'label' => ['en' => $label]], $spec['amenities'])),
                 'parking' => $spec['parking'],
-                'furnished' => $spec['furnished'],
+                'furnished' => $spec['furnished'] ? 'furnished' : 'unfurnished',
             ]);
 
             return;
@@ -340,7 +373,7 @@ class DemoFilterCoveragePropertiesSeeder extends Seeder
             'floor' => in_array($spec['type'], ['villa', 'townhouse', 'warehouse'], true) ? 'G' : (string) (1 + ($n * 3) % 40),
             'parking' => $spec['parking'],
             'garage' => in_array($spec['type'], ['villa', 'townhouse'], true) ? 1 : 0,
-            'furnished' => $spec['furnished'],
+            'furnished' => $spec['furnished'] ? 'furnished' : 'unfurnished',
             'direct_from_owner' => $n % 5 === 0 ? 'Yes' : 'No',
             'view' => self::VIEWS[($set + $n) % count(self::VIEWS)],
         ]);

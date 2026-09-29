@@ -133,6 +133,8 @@ class AgencyAgentManagementTest extends TestCase
             }
             return false;
         });
+        // The agency is emailed too, not just told in-app.
+        Mail::assertQueued(AgencyMembershipMail::class, fn (AgencyMembershipMail $mail) => $mail->hasTo($agency->email) && $mail->subjectLine === 'Agent approved');
 
         $this->app['auth']->forgetGuards();
         $this->post($setupUrl, ['password' => 'NewPass123', 'password_confirmation' => 'NewPass123'])->assertRedirect(route('portal.dashboard'));
@@ -153,6 +155,7 @@ class AgencyAgentManagementTest extends TestCase
 
         $this->assertSame(AgencyAgent::REJECTED, $membership->fresh()->status);
         $this->assertNull($membership->agent->fresh()->company_id);
+        Mail::assertQueued(AgencyMembershipMail::class, fn (AgencyMembershipMail $mail) => $mail->hasTo($agency->email) && $mail->subjectLine === 'Agent not approved');
     }
 
     public function test_agency_cannot_exceed_its_plan_agent_limit(): void

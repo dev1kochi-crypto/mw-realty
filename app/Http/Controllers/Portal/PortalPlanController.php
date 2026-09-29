@@ -19,6 +19,19 @@ class PortalPlanController extends Controller
     public function index()
     {
         $owner = Auth::guard('portal')->user();
+
+        // An agency agent is covered by the agency's plan: show that instead of plans to buy.
+        if ($owner->isOnAgencyPlan()) {
+            $agency = $owner->company->loadMissing('plan');
+
+            return view('portal.plans.agency', [
+                'owner' => $owner,
+                'agency' => $agency,
+                'plan' => $agency->plan,
+                'hasPayments' => $owner->planPayments()->exists(),
+            ]);
+        }
+
         $stripeEnabled = StripeBillingService::enabled();
         if ($stripeEnabled) {
             app(StripeBillingService::class)->applyDueScheduledChange($owner);
@@ -57,6 +70,9 @@ class PortalPlanController extends Controller
         ]);
 
         $owner = Auth::guard('portal')->user();
+        if ($owner->isOnAgencyPlan()) {
+            throw ValidationException::withMessages(['plan_id' => "You're on {$owner->company->displayName()}'s plan while you're a member of the agency — there's nothing to buy."]);
+        }
         $plan = Plan::findOrFail($request->input('plan_id'));
         $interval = $request->input('interval') === 'yearly' && $plan->hasYearly() ? 'yearly' : 'monthly';
         $pricing = $request->filled('coupon_code') && (float) $plan->price > 0

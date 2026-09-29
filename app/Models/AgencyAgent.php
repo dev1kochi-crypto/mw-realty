@@ -31,11 +31,12 @@ class AgencyAgent extends Model
     protected $fillable = [
         'agency_id', 'agent_id', 'status', 'initiated_by', 'account_created_by_agency',
         'invited_at', 'responded_at', 'approved_at', 'approved_by', 'joined_at', 'left_at',
-        'ended_by', 'rejection_reason',
+        'ended_by', 'rejection_reason', 'previous_plan_id', 'plan_switched_at',
     ];
 
     protected $casts = [
         'account_created_by_agency' => 'boolean',
+        'plan_switched_at' => 'datetime',
         'invited_at' => 'datetime',
         'responded_at' => 'datetime',
         'approved_at' => 'datetime',
@@ -46,6 +47,12 @@ class AgencyAgent extends Model
     public function agency()
     {
         return $this->belongsTo(PortalUser::class, 'agency_id');
+    }
+
+    /** The agent's own plan dropped (no refund) when they moved onto the agency's plan. */
+    public function previousPlan()
+    {
+        return $this->belongsTo(Plan::class, 'previous_plan_id');
     }
 
     public function agent()

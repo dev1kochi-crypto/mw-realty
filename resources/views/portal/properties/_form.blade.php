@@ -151,9 +151,12 @@
                             @php
                                 $labelFor = function (string $langCode) use ($field, $option, $staticLabels, $staticSelectFields, $fallbackLang) {
                                     if (in_array($field, $staticSelectFields, true)) {
-                                        return $staticLabels[$langCode]["{$field}.{$option->value}"]
+                                        // Super Admin's label for this language (CRM › Master › Property Options) wins;
+                                        // the static-texts JSON is the fallback for values it hasn't labelled.
+                                        return ($option->translations[$langCode]['label'] ?? null)
+                                            ?: ($staticLabels[$langCode]["{$field}.{$option->value}"]
                                             ?? $staticLabels[$fallbackLang]["{$field}.{$option->value}"]
-                                            ?? $option->getTranslation('label', $langCode);
+                                            ?? $option->getTranslation('label', $langCode));
                                     }
                                     return $option->getTranslation('label', $langCode) ?: $option->getTranslation('label', $fallbackLang);
                                 };
@@ -174,21 +177,31 @@
 
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Furnishing</label>
+                    {{-- Managed list (CRM › Master › Property Options); `furnished` holds the option value. --}}
+                    @php $currentFurnishing = (string) $detailVal('furnished'); @endphp
                     <select name="furnished" class="form-select lang-aware-select" data-placeholder="Search furnishing">
                         <option value=""></option>
-                        <option value="0"
-                            {{ !$detailVal('furnished') ? 'selected' : '' }}
+                        @foreach($filterOptions[\App\Models\Filter::FURNISHING_KEY]?->activeValues ?? [] as $option)
+                        <option value="{{ $option->value }}" {{ $currentFurnishing === $option->value ? 'selected' : '' }}
                             @foreach($languages as $lang)
-                            data-label-{{ $lang->code }}="{{ $staticLabels[$lang->code]['furnished.no'] ?? $staticLabels[$fallbackLang]['furnished.no'] ?? 'Unfurnished' }}"
+                            data-label-{{ $lang->code }}="{{ ($option->translations[$lang->code]['label'] ?? null) ?: $option->getTranslation('label', $fallbackLang) }}"
                             @endforeach
-                        >{{ $staticLabels[$languages->first()->code ?? 'en']['furnished.no'] ?? 'Unfurnished' }}</option>
-                        <option value="1"
-                            {{ $detailVal('furnished') ? 'selected' : '' }}
-                            @foreach($languages as $lang)
-                            data-label-{{ $lang->code }}="{{ $staticLabels[$lang->code]['furnished.yes'] ?? $staticLabels[$fallbackLang]['furnished.yes'] ?? 'Furnished' }}"
-                            @endforeach
-                        >{{ $staticLabels[$languages->first()->code ?? 'en']['furnished.yes'] ?? 'Furnished' }}</option>
+                        >{{ $option->getTranslation('label', $languages->first()->code ?? $fallbackLang) }}</option>
+                        @endforeach
                     </select>
+                </div>
+
+                <div class="col-12">
+                    <div class="small text-muted d-flex align-items-center gap-2">
+                        <i class="fas fa-circle-info"></i>
+                        @if($isAdmin ?? false)
+                            Property Type, Listing Type, Completion Status and Furnishing options are managed in
+                            <a href="{{ route('portal.crm.master.property-options.index') }}">Master › Property Options</a>.
+                        @else
+                            Need a property type, listing type, completion status or furnishing option that isn't listed?
+                            <a href="{{ route('portal.contact.index') }}" target="_blank">Raise a ticket</a> and our team will add it.
+                        @endif
+                    </div>
                 </div>
             </div>
 

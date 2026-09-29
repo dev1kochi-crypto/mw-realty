@@ -6,7 +6,7 @@
 @php
     // Drag reorder only makes sense on the unfiltered list (a search result isn't a contiguous
     // slice of the display order); the per-card "Move to" actions work either way.
-    $canDrag = $search === '' && $properties->count() > 1;
+    $canDrag = $search === '' && !$filtered && $properties->count() > 1;
     $positionOffset = ($properties->currentPage() - 1) * $properties->perPage();
 @endphp
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
@@ -37,14 +37,14 @@
 
 {{-- One compact toolbar: search + plan usage chips (details in each chip's tooltip). --}}
 <div class="portal-list-toolbar mb-3">
-    <form method="GET" action="{{ route($routePrefix . '.index') }}" class="portal-list-search" role="search">
+    <form method="GET" action="{{ route($routePrefix . '.index') }}" class="portal-list-search" role="search" id="propertyFilterForm">
         <div class="portal-list-search__field">
             <i class="fas fa-search" aria-hidden="true"></i>
             <input type="search" name="q" value="{{ $search }}" class="form-control" maxlength="100"
                    placeholder="Search by title, ref no, RERA, address, community or city{{ $isAdmin ? ', agent / agency' : '' }}" aria-label="Search {{ strtolower($sectionTitle) }}">
         </div>
         @if($search !== '')
-        <a href="{{ route($routePrefix . '.index') }}" class="portal-list-search__clear" title="Clear search" aria-label="Clear search"><i class="fas fa-times"></i></a>
+        <a href="{{ route($routePrefix . '.index', array_filter($filters)) }}" class="portal-list-search__clear" title="Clear search" aria-label="Clear search"><i class="fas fa-times"></i></a>
         @endif
         <button type="submit" class="btn btn-portal-primary btn-sm px-3">Search</button>
     </form>
@@ -55,9 +55,44 @@
     @endif
 </div>
 
-@if($search !== '')
+{{-- Filters — submit with the search box (form="propertyFilterForm"), applied on change. --}}
+<div class="pf-bar mb-3">
+    <span class="pf-bar__label"><i class="fas fa-filter me-1"></i>Filter</span>
+    @if($canFilterAgent)
+    <div class="pf-combo">
+        <input type="hidden" name="agent" form="propertyFilterForm" id="pfAgentValue" value="{{ $filters['agent'] ?? '' }}">
+        <button type="button" class="pf-select pf-combo__toggle {{ $filters['agent'] ? 'is-set' : '' }}" id="pfAgentToggle" aria-haspopup="listbox" aria-expanded="false">
+            <i class="fas fa-user-tie me-1"></i>
+            <span id="pfAgentLabel">{{ $filters['agent'] === 'none' ? 'No agent (agency listings)' : ($filterAgent?->name ?? 'All agents') }}</span>
+            <i class="fas fa-chevron-down ms-1 small"></i>
+        </button>
+        <div class="pf-combo__menu d-none" id="pfAgentMenu">
+            <input type="search" class="form-control form-control-sm" id="pfAgentSearch" placeholder="Search agents…" autocomplete="off">
+            <div class="pf-combo__list" id="pfAgentList" data-url="{{ route('portal.properties.agent-options') }}"></div>
+        </div>
+    </div>
+    @endif
+    <select name="listing" form="propertyFilterForm" class="pf-select {{ $filters['listing'] ? 'is-set' : '' }}" aria-label="Buy or rent" data-autosubmit>
+        <option value="">Buy &amp; Rent</option>
+        <option value="sale" @selected($filters['listing'] === 'sale')>Buy</option>
+        <option value="rent" @selected($filters['listing'] === 'rent')>Rent</option>
+    </select>
+    <select name="status" form="propertyFilterForm" class="pf-select {{ $filters['status'] ? 'is-set' : '' }}" aria-label="Status" data-autosubmit>
+        <option value="">Active &amp; Inactive</option>
+        <option value="active" @selected($filters['status'] === 'active')>Active</option>
+        <option value="inactive" @selected($filters['status'] === 'inactive')>Inactive</option>
+    </select>
+    <label class="pf-select pf-check {{ $filters['premium'] ? 'is-set' : '' }}">
+        <input type="checkbox" name="premium" value="1" form="propertyFilterForm" @checked($filters['premium']) data-autosubmit> <i class="fas fa-star text-warning"></i> Premium only
+    </label>
+    @if($filtered)
+    <a href="{{ route($routePrefix . '.index', array_filter(['q' => $search ?: null])) }}" class="pf-clear"><i class="fas fa-times me-1"></i>Clear filters</a>
+    @endif
+</div>
+
+@if($search !== '' || $filtered)
 <p class="portal-muted small mb-3">
-    {{ $properties->total() }} result{{ $properties->total() === 1 ? '' : 's' }} for &ldquo;<strong>{{ $search }}</strong>&rdquo;. Drag to reorder is off while searching &mdash; use <i class="fas fa-sort"></i> <strong>Move to</strong> on a card instead.
+    {{ $properties->total() }} result{{ $properties->total() === 1 ? '' : 's' }}@if($search !== '') for &ldquo;<strong>{{ $search }}</strong>&rdquo;@endif. Drag to reorder is off while searching or filtering &mdash; use <i class="fas fa-sort"></i> <strong>Move to</strong> on a card instead.
 </p>
 @endif
 
@@ -83,7 +118,7 @@
             ->implode(', ')
             ?: ($property->location ? ($property->filterLabel('location') ?: $property->location) : null);
         $scheduled = $property->isFeatureScheduled();
-        $position = $search === '' ? $positionOffset + $loop->iteration : null;
+        $position = $search === '' && !$filtered ? $positionOffset + $loop->iteration : null;
     @endphp
     <div class="col-sm-6 col-lg-4 col-xl-3 portal-property-col" data-id="{{ $property->id }}">
         <div class="portal-property-card" data-property-row>
@@ -120,6 +155,25 @@
                         <input class="form-check-input property-status-toggle m-0" type="checkbox" role="switch" id="statusToggle{{ $property->id }}" data-id="{{ $property->id }}" @checked($property->status)>
                         <label class="form-check-label small fw-semibold status-toggle-label {{ $property->status ? 'text-success' : 'text-secondary' }}" for="statusToggle{{ $property->id }}">{{ $property->status ? 'Active' : 'Inactive' }}</label>
                     </div>
+                </div>
+
+                {{-- Who works this listing: the assigned agent, or the agency itself when none. --}}
+                @php
+                    $cardAgent = $property->agent ?? ($property->owner?->type === 'agent' ? $property->owner : null);
+                    $agentInitials = $cardAgent ? collect(preg_split('/\s+/', trim($cardAgent->name)))->filter()->take(2)->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))->implode('') : '';
+                @endphp
+                <div class="pf-agent">
+                    @if($cardAgent)
+                        @if($cardAgent->avatar)
+                        <img src="{{ media_url($cardAgent->avatar) }}" alt="" class="pf-agent__avatar">
+                        @else
+                        <span class="pf-agent__avatar pf-agent__avatar--initials">{{ $agentInitials }}</span>
+                        @endif
+                        <span class="text-truncate"><span class="portal-muted">Agent</span> <strong>{{ $cardAgent->name }}</strong></span>
+                    @else
+                        <span class="pf-agent__avatar pf-agent__avatar--agency"><i class="fas fa-building"></i></span>
+                        <span class="text-truncate"><strong>Agency listing</strong> <span class="portal-muted">· no agent</span></span>
+                    @endif
                 </div>
 
                 <div class="portal-property-card__meta">
@@ -181,8 +235,8 @@
     @endif
 @empty
     <div class="portal-card p-5 text-center portal-empty">
-        @if($search !== '')
-            Nothing matches &ldquo;{{ $search }}&rdquo;. <a href="{{ route($routePrefix . '.index') }}">Clear the search</a>.
+        @if($search !== '' || $filtered)
+            Nothing matches{{ $search !== '' ? ' “' . $search . '”' : '' }}{{ $filtered ? ' these filters' : '' }}. <a href="{{ route($routePrefix . '.index') }}">Clear search &amp; filters</a>.
         @else
             No {{ strtolower($sectionTitle) }} yet. <a href="{{ route($routePrefix . '.create') }}">Add your first listing</a>.
         @endif
@@ -228,6 +282,59 @@
     const JSON_HEADERS = { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'Content-Type': 'application/json' };
 
     const cardTitle = el => el.closest('.portal-property-card')?.querySelector('.portal-property-card__title')?.textContent.trim();
+
+    // Filters: selects / checkbox apply at once; the agent picker searches the server (20 a page, more on scroll).
+    (function () {
+        const form = document.getElementById('propertyFilterForm');
+        if (!form) return;
+        document.querySelectorAll('[data-autosubmit]').forEach(el => el.addEventListener('change', () => form.requestSubmit()));
+
+        const toggle = document.getElementById('pfAgentToggle');
+        if (!toggle) return;
+        const menu = document.getElementById('pfAgentMenu'), list = document.getElementById('pfAgentList');
+        const search = document.getElementById('pfAgentSearch'), value = document.getElementById('pfAgentValue');
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        let page = 1, more = false, loading = false, term = '', timer = null, requestNo = 0;
+
+        const item = (val, label) => `<button type="button" class="pf-combo__item ${String(value.value) === String(val) ? 'is-current' : ''}" data-value="${esc(val)}">${label}</button>`;
+        function load(reset) {
+            if (loading && !reset) return;
+            if (reset) {
+                page = 1;
+                list.innerHTML = term ? '' : item('', 'All agents') + item('none', '<i class="fas fa-building me-1"></i>No agent (agency listings)');
+            }
+            loading = true;
+            const mine = ++requestNo;
+            fetch(`${list.dataset.url}?q=${encodeURIComponent(term)}&page=${page}`, { headers: { Accept: 'application/json' } })
+                .then(r => r.json())
+                .then(data => {
+                    if (mine !== requestNo) return;
+                    data.results.forEach(a => list.insertAdjacentHTML('beforeend', item(a.id, esc(a.text))));
+                    if (page === 1 && !data.results.length) list.insertAdjacentHTML('beforeend', '<div class="pf-combo__status">No agents found.</div>');
+                    more = !!data.pagination?.more;
+                    page++;
+                })
+                .catch(() => list.insertAdjacentHTML('beforeend', '<div class="pf-combo__status">Could not load agents.</div>'))
+                .finally(() => { if (mine === requestNo) loading = false; });
+        }
+        const close = () => { menu.classList.add('d-none'); toggle.setAttribute('aria-expanded', 'false'); };
+        toggle.addEventListener('click', () => {
+            const opening = menu.classList.contains('d-none');
+            menu.classList.toggle('d-none', !opening);
+            toggle.setAttribute('aria-expanded', String(opening));
+            if (opening) { term = ''; search.value = ''; load(true); search.focus(); }
+        });
+        search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { term = search.value.trim(); load(true); }, 250); });
+        search.addEventListener('keydown', e => { if (e.key === 'Escape') close(); if (e.key === 'Enter') e.preventDefault(); });
+        list.addEventListener('scroll', () => { if (more && !loading && list.scrollTop + list.clientHeight >= list.scrollHeight - 30) load(false); });
+        list.addEventListener('click', e => {
+            const btn = e.target.closest('.pf-combo__item');
+            if (!btn) return;
+            value.value = btn.dataset.value;
+            form.requestSubmit();
+        });
+        document.addEventListener('pointerdown', e => { if (!e.target.closest('.pf-combo')) close(); });
+    })();
 
     document.addEventListener('click', async function (e) {
         const btn = e.target.closest('.delete-property');
@@ -287,7 +394,7 @@
     // pages), then opens the page the listing landed on and highlights it.
     (function () {
         const moveUrl = id => @json(route($routePrefix . '.move', '__ID__')).replace('__ID__', id);
-        const searching = @json($search !== '');
+        const searching = @json($search !== '' || $filtered);
         const baseUrl = @json(route($routePrefix . '.index'));
         const modalEl = document.getElementById('moveModal');
         const modal = new bootstrap.Modal(modalEl);

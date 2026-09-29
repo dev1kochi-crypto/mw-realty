@@ -199,9 +199,26 @@ class PortalPropertyController extends Controller
         ];
     }
 
+    /**
+     * `furnished` holds a furnishing option value (CRM › Master › Property Options). An unknown value
+     * is dropped; an older client still posting 1 / 0 maps to furnished / unfurnished.
+     */
+    protected function furnishingFields(Request $request): array
+    {
+        $value = (string) $request->input('furnished', '');
+        if (in_array($value, ['0', '1'], true)) {
+            $value = $value === '1' ? 'furnished' : \App\Models\PropertyDetail::UNFURNISHED;
+        }
+        if ($value !== '' && !\App\Models\FilterValue::whereHas('filter', fn ($q) => $q->where('key', Filter::FURNISHING_KEY))->where('value', $value)->exists()) {
+            $value = '';
+        }
+
+        return ['furnished' => $value !== '' ? $value : null];
+    }
+
     protected function selectFilterOptions(): \Illuminate\Support\Collection
     {
-        return Filter::whereIn('key', ['listing_type', 'completion_status', 'property_type', 'location'])
+        return Filter::whereIn('key', ['listing_type', 'completion_status', 'property_type', 'location', Filter::FURNISHING_KEY])
             ->where('type', 'select')
             ->with(['activeValues'])
             ->get()
@@ -357,6 +374,26 @@ class PortalPropertyController extends Controller
         return $result;
     }
 
+    /** Agent filter picker: the agency's agents (all agents for Super Admin) — searched on the server, 20 a page. */
+    public function agentOptions(Request $request)
+    {
+        abort_unless($this->isAdmin() || $this->viewer()?->isAgency(), 403);
+        $term = mb_substr(trim((string) $request->query('q', '')), 0, 100);
+
+        $page = ($this->isAdmin()
+                ? \App\Models\PortalUser::where('type', 'agent')
+                : \App\Models\PortalUser::where('type', 'agent')->whereIn('id', \App\Models\AgencyAgent::where('agency_id', $this->viewer()->id)
+                    ->whereIn('status', \App\Models\AgencyAgent::MEMBER_STATUSES)->select('agent_id')))
+            ->when($term !== '', fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$term}%")->orWhere('email', 'like', "%{$term}%")))
+            ->orderBy('name')
+            ->paginate(20, ['id', 'name']);
+
+        return response()->json([
+            'results' => collect($page->items())->map(fn ($agent) => ['id' => $agent->id, 'text' => $agent->name]),
+            'pagination' => ['more' => $page->hasMorePages()],
+        ]);
+    }
+
     public function index(Request $request, \App\Services\FeaturedListingService $featured)
     {
         // Also applied by the scheduled properties:expire-featured command; running it here keeps
@@ -366,10 +403,26 @@ class PortalPropertyController extends Controller
         $search = trim((string) $request->input('q', ''));
         $search = mb_substr($search, 0, 100);
 
-        $query = $this->orderedListings()->with('owner');
+        $query = $this->orderedListings()->with(['owner', 'agent:id,name,avatar']);
         if ($search !== '') {
             $this->applySearch($query, $search);
         }
+
+        // Filters: agent ("none" = agency's own, no agent), buy / rent, active / inactive, premium.
+        $filters = [
+            'agent' => $request->input('agent') === 'none' ? 'none' : ($request->integer('agent') ?: null),
+            'listing' => in_array($request->input('listing'), ['sale', 'rent'], true) ? $request->input('listing') : null,
+            'status' => in_array($request->input('status'), ['active', 'inactive'], true) ? $request->input('status') : null,
+            'premium' => $request->boolean('premium'),
+        ];
+        $query->when($filters['agent'] === 'none', fn ($q) => $q->whereNull('properties.agent_id'))
+            ->when(is_int($filters['agent']), fn ($q) => $q->where('properties.agent_id', $filters['agent']))
+            ->when($filters['listing'], fn ($q, $type) => $q->where('properties.listing_type', $type))
+            ->when($filters['status'], fn ($q, $status) => $q->where('properties.status', $status === 'active'))
+            ->when($filters['premium'], fn ($q) => $q->where('properties.featured', true));
+        $filtered = (bool) array_filter($filters);
+        $filterAgent = is_int($filters['agent']) ? \App\Models\PortalUser::find($filters['agent'], ['id', 'name']) : null;
+
         $properties = $query->paginate(self::PER_PAGE)->withQueryString();
 
         $planUsage = null;
@@ -385,6 +438,11 @@ class PortalPropertyController extends Controller
         return view('portal.properties.index', array_merge([
             'properties' => $properties,
             'search' => $search,
+            'filters' => $filters,
+            'filtered' => $filtered,
+            'filterAgent' => $filterAgent,
+            // Agent filter only makes sense for an agency (its agents) or Super Admin (everyone's).
+            'canFilterAgent' => $this->isAdmin() || $this->viewer()?->isAgency(),
             // Listings on this page whose feature dates the viewer may change.
             'featureEditable' => $featured->editableIds(
                 $this->isAdmin() ? null : Auth::guard('portal')->user(),
@@ -562,7 +620,7 @@ class PortalPropertyController extends Controller
             'floor' => $request->input('floor'),
             'parking' => $request->input('parking'),
             'garage' => $request->input('garage'),
-            'furnished' => $request->boolean('furnished'),
+            ...$this->furnishingFields($request),
             'direct_from_owner' => $request->input('direct_from_owner'),
             'security_deposit' => $request->input('security_deposit'),
             'virtual_tour_url' => $request->input('virtual_tour_url'),
@@ -688,7 +746,7 @@ class PortalPropertyController extends Controller
             'floor' => $request->input('floor'),
             'parking' => $request->input('parking'),
             'garage' => $request->input('garage'),
-            'furnished' => $request->boolean('furnished'),
+            ...$this->furnishingFields($request),
             'direct_from_owner' => $request->input('direct_from_owner'),
             'security_deposit' => $request->input('security_deposit'),
             'virtual_tour_url' => $request->input('virtual_tour_url'),

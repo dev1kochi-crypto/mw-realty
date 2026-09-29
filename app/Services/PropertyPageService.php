@@ -64,7 +64,8 @@ class PropertyPageService
                 'garage' => $details?->garage,
                 'parking' => $details?->parking,
                 'year_built' => $details?->year_built,
-                'furnished' => $details?->furnished,
+                'furnished' => (bool) $details?->isFurnished(),
+                'furnishing' => $details?->furnishingLabel(),
                 'view' => $details?->view,
                 'published_at' => $property->published_at?->format('F d, Y'),
                 'amenities' => collect($details?->amenities ?? [])

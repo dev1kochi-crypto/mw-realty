@@ -50,7 +50,41 @@
         background: linear-gradient(120deg, var(--dash-navy) 0%, #16294f 55%, var(--dash-teal) 145%);
         border-radius: 16px; padding: 1.75rem 2rem; color: #fff; margin-bottom: 1.25rem;
         display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;
+        /* Stays in view just under the sticky portal header; compacts once stuck (like the admin view). */
+        position: sticky; top: calc(var(--portal-topbar-h, 80px) + 0.75rem); z-index: 900;
+        transition: padding 0.2s ease, box-shadow 0.2s ease;
     }
+    .profile-hero::before {
+        content: ''; position: absolute; left: -2rem; right: -2rem; bottom: 100%;
+        height: calc(0.75rem + 1px); background: var(--portal-bg, #f4f5fb); pointer-events: none;
+    }
+    .profile-hero.is-stuck { padding: 0.7rem 1.5rem; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18); }
+    .profile-hero.is-stuck .profile-avatar { width: 40px; height: 40px; font-size: 0.95rem; }
+    .profile-hero.is-stuck .profile-meta { display: none !important; }
+    .profile-hero.is-stuck .profile-name { font-size: 1.1rem; margin-bottom: 0.2rem; }
+
+    /* KYC progress: one card for "where am I" instead of stacked warnings. */
+    .kyc-progress { border-radius: 16px; border: 1px solid var(--dash-border); background: #fff; box-shadow: 0 4px 14px rgba(28,35,64,0.05); padding: 1.1rem 1.4rem; margin-bottom: 1.25rem; }
+    .kyc-progress__head { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .kyc-progress__icon { width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    .kyc-progress__icon.tone-amber { background: rgba(245,158,11,0.13); color: #d97706; }
+    .kyc-progress__icon.tone-blue { background: rgba(4,161,204,0.12); color: #0487ab; }
+    .kyc-progress__icon.tone-red { background: rgba(220,38,38,0.1); color: #dc2626; }
+    .kyc-progress__title { font-weight: 800; font-size: 0.95rem; color: var(--dash-ink); }
+    .kyc-progress__text { font-size: 0.83rem; color: var(--dash-muted); }
+    .kyc-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; }
+    .kyc-step { position: relative; padding-top: 0.75rem; }
+    .kyc-step::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px; border-radius: 5px; background: #eceef4; }
+    .kyc-step.is-done::before { background: var(--dash-green, #16a34a); }
+    .kyc-step.is-current::before { background: linear-gradient(90deg, var(--dash-teal, #04a1cc), var(--dash-navy, #264373)); }
+    .kyc-step.is-problem::before { background: #dc2626; }
+    .kyc-step__label { font-size: 0.78rem; font-weight: 700; color: var(--dash-ink); display: flex; align-items: center; gap: 0.35rem; }
+    .kyc-step:not(.is-done):not(.is-current):not(.is-problem) .kyc-step__label { color: #9aa0b4; }
+    .kyc-step__sub { font-size: 0.7rem; color: var(--dash-muted); }
+    .kyc-note { margin-top: 1rem; padding: 0.75rem 0.9rem; border-radius: 12px; font-size: 0.84rem; white-space: pre-line; }
+    .kyc-note.tone-info { background: rgba(4,161,204,0.07); border: 1px solid rgba(4,161,204,0.2); color: #0b4f63; }
+    .kyc-note.tone-red { background: rgba(220,38,38,0.06); border: 1px solid rgba(220,38,38,0.2); color: #8f1d1d; }
+    @media (max-width: 575.98px) { .kyc-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 0.9rem; } }
     .profile-avatar {
         width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
         display: flex; align-items: center; justify-content: center;
@@ -127,6 +161,15 @@
     }
     .section-edit .form-control::placeholder { color: #adb4c4; }
 
+    /* Affiliated Brokerage: registered agencies as suggestions, free text allowed. */
+    .brokerage-combo { position: relative; }
+    .brokerage-combo__list { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30; max-height: 240px; overflow-y: auto; background: #fff; border: 1px solid var(--dash-border); border-radius: 10px; box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14); }
+    .brokerage-combo__item { display: flex; align-items: center; gap: 0.55rem; width: 100%; padding: 0.55rem 0.8rem; border: 0; border-bottom: 1px solid #f2f3f7; background: none; text-align: left; font-size: 0.85rem; color: var(--dash-ink); }
+    .brokerage-combo__item:hover, .brokerage-combo__item.is-active { background: var(--dash-bg-soft, #f7f8fc); }
+    .brokerage-combo__item i { color: var(--dash-teal); width: 16px; }
+    .brokerage-combo__item--typed { color: var(--dash-muted); }
+    .brokerage-combo__status { padding: 0.6rem 0.8rem; font-size: 0.78rem; color: var(--dash-muted); text-align: center; }
+
     .email-change-block { border-top: 1px dashed var(--dash-border); margin-top: 1.1rem; padding-top: 1rem; }
     .email-change-step .form-control { max-width: 280px; }
     .email-change-step .alert-error-box { font-weight: 600; }
@@ -141,7 +184,8 @@
     $statusMap = ['pending' => 'bg-warning text-dark', 'approved' => 'bg-success', 'rejected' => 'bg-danger'];
 @endphp
 
-<div class="profile-hero">
+<div id="profileHeroSentinel" aria-hidden="true"></div>
+<div class="profile-hero" id="profileHero">
     <div class="d-flex align-items-center gap-3">
         <div class="profile-avatar {{ $avatarFill }}">{{ $initials }}</div>
         <div>
@@ -164,23 +208,60 @@
     @endif
 </div>
 
-@if($portalUser->status === 'rejected' && $portalUser->rejection_reason)
-<div class="alert alert-danger d-flex align-items-center gap-2 shadow-sm mb-3" style="border-radius: 14px; font-size: 0.88rem;">
-    <i class="fas fa-exclamation-circle"></i> <strong>Rejection reason:</strong> {{ $portalUser->rejection_reason }}
-</div>
-@endif
-
-@if($portalUser->kyc_review_status === 'changes_requested' && $portalUser->kyc_review_note)
-<div class="alert alert-info d-flex align-items-center gap-2 shadow-sm mb-3" style="border-radius: 14px; font-size: 0.88rem;">
-    <i class="fas fa-comment-medical"></i> <strong>Admin requested updates:</strong> {{ $portalUser->kyc_review_note }}
-</div>
-@elseif($portalUser->kyc_review_status === 'draft' || ($portalUser->status !== 'approved' && !$portalUser->kyc_user_submitted_at))
-<div class="alert alert-warning d-flex align-items-center gap-2 shadow-sm mb-3" style="border-radius: 14px; font-size: 0.88rem;">
-    <i class="fas fa-clipboard-check"></i> Complete your profile and upload the requested KYC documents, then submit them for approval.
-</div>
-@elseif($portalUser->kyc_review_status === 'submitted')
-<div class="alert alert-warning d-flex align-items-center gap-2 shadow-sm mb-3" style="border-radius: 14px; font-size: 0.88rem;">
-    <i class="fas fa-clock"></i> Your KYC has been submitted and is waiting for Super Admin review.
+@if($portalUser->status !== 'approved')
+@php
+    $docsDone = $documents->filter(fn ($d) => $d['path'])->count();
+    $docsTotal = $documents->count();
+    $isRejected = $portalUser->status === 'rejected';
+    $changesRequested = !$isRejected && $portalUser->kyc_review_status === 'changes_requested';
+    $inReview = !$isRejected && !$changesRequested && $portalUser->kyc_review_status === 'submitted' && $portalUser->kyc_user_submitted_at;
+    // Which of the 4 steps we're on: 1 prepare, 2 submit, 3 review (4 = approved, never shown here).
+    $current = $inReview ? 3 : ($docsDone >= $docsTotal && $docsTotal > 0 ? 2 : 1);
+    $state = fn (int $step) => match (true) {
+        ($isRejected || $changesRequested) && $step === 1 => 'is-problem',
+        $step < $current => 'is-done',
+        $step === $current => 'is-current',
+        default => '',
+    };
+    [$tone, $icon, $title, $text] = match (true) {
+        $isRejected => ['tone-red', 'fa-ban', 'Your application needs changes', 'Update the details below, then resubmit for approval. CRM access unlocks once you are approved.'],
+        $changesRequested => ['tone-amber', 'fa-comment-medical', 'Our team asked for a few updates', 'Make the changes below, then resubmit for approval.'],
+        $inReview => ['tone-blue', 'fa-hourglass-half', 'KYC submitted — waiting for review', 'Our team is reviewing your documents. Leads, Reports and listings unlock as soon as you are approved.'],
+        default => ['tone-amber', 'fa-clipboard-check', 'Finish your KYC to unlock the CRM', 'Complete your details and upload your documents, then submit them for approval.'],
+    };
+@endphp
+<div class="kyc-progress">
+    <div class="kyc-progress__head">
+        <span class="kyc-progress__icon {{ $tone }}"><i class="fas {{ $icon }}"></i></span>
+        <div class="min-w-0 flex-grow-1">
+            <div class="kyc-progress__title">{{ $title }}</div>
+            <div class="kyc-progress__text">{{ $text }}</div>
+        </div>
+    </div>
+    <div class="kyc-steps">
+        <div class="kyc-step {{ $state(1) }}">
+            <div class="kyc-step__label"><i class="fas {{ $state(1) === 'is-done' ? 'fa-check' : 'fa-id-card' }}"></i>Details &amp; documents</div>
+            <div class="kyc-step__sub">{{ $docsDone }}/{{ $docsTotal }} documents uploaded</div>
+        </div>
+        <div class="kyc-step {{ $state(2) }}">
+            <div class="kyc-step__label"><i class="fas {{ $state(2) === 'is-done' ? 'fa-check' : 'fa-paper-plane' }}"></i>Submit for approval</div>
+            <div class="kyc-step__sub">{{ $portalUser->kyc_user_submitted_at ? 'Sent ' . $portalUser->kyc_user_submitted_at->format('d M Y') : 'Use the button above' }}</div>
+        </div>
+        <div class="kyc-step {{ $state(3) }}">
+            <div class="kyc-step__label"><i class="fas fa-user-shield"></i>Admin review</div>
+            <div class="kyc-step__sub">{{ $inReview ? 'In progress' : 'Usually within 1–2 working days' }}</div>
+        </div>
+        <div class="kyc-step">
+            <div class="kyc-step__label"><i class="fas fa-circle-check"></i>Approved</div>
+            <div class="kyc-step__sub">Leads, Reports &amp; listings unlock</div>
+        </div>
+    </div>
+    @if($isRejected && $portalUser->rejection_reason)
+    <div class="kyc-note tone-red"><strong><i class="fas fa-exclamation-circle me-1"></i>Reason:</strong> {{ $portalUser->rejection_reason }}</div>
+    @elseif($changesRequested && $portalUser->kyc_review_note)
+    <div class="kyc-note tone-info"><strong><i class="fas fa-comment-medical me-1"></i>Requested by our team:</strong>
+{{ $portalUser->kyc_review_note }}</div>
+    @endif
 </div>
 @endif
 
@@ -200,7 +281,7 @@
     <div class="col-6 col-md-3">
         <div class="stat-mini">
             <span class="stat-mini-icon fill-green"><i class="fas fa-layer-group"></i></span>
-            <div><div class="stat-mini-value">{{ $portalUser->plan?->getTranslation('name') ?? 'No Plan' }}</div><div class="stat-mini-label">Plan</div></div>
+            <div><div class="stat-mini-value">{{ $portalUser->effectivePlan()?->getTranslation('name') ?? 'No Plan' }}</div><div class="stat-mini-label">{{ $portalUser->isOnAgencyPlan() ? 'Plan · via agency' : 'Plan' }}</div></div>
         </div>
     </div>
     <div class="col-6 col-md-3">
@@ -307,7 +388,16 @@
             <div class="col-md-4 info-row"><div class="info-label">BRN (Broker Registration No.)</div><div class="info-value">{{ $portalUser->brn_number ?: '-' }}</div></div>
             <div class="col-md-8 info-row">
                 <div class="info-label">Affiliated Brokerage</div>
-                <div class="info-value">{{ $portalUser->company ? ($portalUser->company->company_name ?: $portalUser->company->name) : 'Unaffiliated' }}</div>
+                <div class="info-value">
+                    {{ $portalUser->affiliated_brokerage ?: '-' }}
+                    <div class="small portal-muted fw-normal mt-1">
+                        @if($portalUser->company)
+                            <i class="fas fa-building me-1"></i>Agency member: <strong>{{ $portalUser->company->displayName() }}</strong> (their plan applies)
+                        @else
+                            <i class="fas fa-user me-1"></i>Independent agent on your own plan
+                        @endif
+                    </div>
+                </div>
             </div>
             <div class="col-md-4 info-row"><div class="info-label">Trade License No.</div><div class="info-value">{{ $portalUser->trade_license_no ?: '-' }}</div></div>
             <div class="col-md-4 info-row"><div class="info-label">Trade License Expiry</div><div class="info-value">{{ $portalUser->trade_license_expiry?->format('d M Y') ?: '-' }}</div></div>
@@ -324,10 +414,13 @@
             </div>
             <div class="col-md-8">
                 <label class="form-label">Affiliated Brokerage</label>
-                {{-- Joining / leaving an agency needs the agency's acceptance and admin approval — see My Agency. --}}
-                <div class="input-group input-group-sm">
-                    <input type="text" class="form-control" value="{{ $portalUser->company?->displayName() ?? 'Independent agent' }}" disabled>
-                    <a href="{{ route('portal.agency.index') }}" class="btn btn-outline-secondary">Manage in My Agency</a>
+                {{-- Just the brokerage named for RERA/KYC. Joining an agency (and its plan) needs the
+                     agency's acceptance and admin approval — see My Agency. --}}
+                <div class="brokerage-combo">
+                    <input type="text" name="affiliated_brokerage" id="brokerageInput" class="form-control form-control-sm" maxlength="255" autocomplete="off"
+                           value="{{ $portalUser->affiliated_brokerage }}" placeholder="Search agencies on MW Realty, or type your brokerage name"
+                           role="combobox" aria-expanded="false" aria-controls="brokerageList" data-search-url="{{ route('portal.agency.search') }}">
+                    <div class="brokerage-combo__list d-none" id="brokerageList" role="listbox"></div>
                 </div>
             </div>
             <div class="col-md-4"><label class="form-label">Trade License No.</label><input type="text" name="trade_license_no" class="form-control form-control-sm" value="{{ $portalUser->trade_license_no }}"></div>
@@ -583,6 +676,83 @@
 
 @push('scripts')
 <script>
+// Affiliated Brokerage: suggests registered agencies (server search, 20 at a time, more on scroll);
+// any typed name is kept as-is. Picking one only fills the text — it never links the account.
+(function () {
+    const input = document.getElementById('brokerageInput');
+    const list = document.getElementById('brokerageList');
+    if (!input || !list) return;
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    let page = 1, more = false, loading = false, term = '', timer = null, requestNo = 0;
+
+    const open = () => { list.classList.remove('d-none'); input.setAttribute('aria-expanded', 'true'); };
+    const close = () => { list.classList.add('d-none'); input.setAttribute('aria-expanded', 'false'); };
+
+    function load(reset) {
+        if (loading && !reset) return;
+        if (reset) { page = 1; list.innerHTML = ''; }
+        loading = true;
+        const mine = ++requestNo;
+        const status = document.createElement('div');
+        status.className = 'brokerage-combo__status';
+        status.textContent = 'Searching…';
+        list.appendChild(status);
+
+        fetch(`${input.dataset.searchUrl}?q=${encodeURIComponent(term)}&page=${page}`, { headers: { Accept: 'application/json' } })
+            .then(r => r.ok ? r.json() : { results: [], pagination: { more: false } })
+            .then(data => {
+                if (mine !== requestNo) return;
+                status.remove();
+                if (page === 1 && term && !data.results.some(a => a.text.toLowerCase() === term.toLowerCase())) {
+                    list.insertAdjacentHTML('beforeend', `<button type="button" class="brokerage-combo__item brokerage-combo__item--typed" data-value="${esc(term)}"><i class="fas fa-pen"></i>Use “${esc(term)}”</button>`);
+                }
+                data.results.forEach(a => list.insertAdjacentHTML('beforeend',
+                    `<button type="button" class="brokerage-combo__item" data-value="${esc(a.text)}"><i class="fas fa-building"></i>${esc(a.text)}</button>`));
+                if (page === 1 && !data.results.length && !term) {
+                    list.insertAdjacentHTML('beforeend', '<div class="brokerage-combo__status">No agencies yet — type your brokerage name.</div>');
+                }
+                more = !!(data.pagination && data.pagination.more);
+                page++;
+            })
+            .catch(() => { status.textContent = 'Could not load agencies — you can still type the name.'; })
+            .finally(() => { if (mine === requestNo) loading = false; });
+    }
+
+    input.addEventListener('focus', () => { term = input.value.trim(); load(true); open(); });
+    input.addEventListener('input', () => {
+        open();
+        clearTimeout(timer);
+        timer = setTimeout(() => { term = input.value.trim(); load(true); }, 250);
+    });
+    // Close on a click outside / Esc / Tab — not on blur, so switching windows (e.g. a screenshot) keeps it open.
+    document.addEventListener('pointerdown', e => { if (!e.target.closest('.brokerage-combo')) close(); });
+    input.addEventListener('keydown', e => { if (e.key === 'Escape' || e.key === 'Tab') close(); });
+    list.addEventListener('mousedown', e => e.preventDefault()); // keep focus so the click lands
+    list.addEventListener('click', e => {
+        const item = e.target.closest('.brokerage-combo__item');
+        if (!item) return;
+        input.value = item.dataset.value;
+        close();
+    });
+    list.addEventListener('scroll', () => {
+        if (more && !loading && list.scrollTop + list.clientHeight >= list.scrollHeight - 30) load(false);
+    });
+})();
+
+// Profile card: compact once it's stuck under the sticky portal header (the marker above it has scrolled past).
+(function () {
+    const hero = document.getElementById('profileHero');
+    const sentinel = document.getElementById('profileHeroSentinel');
+    if (!hero || !sentinel) return;
+    const check = () => {
+        const topbar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--portal-topbar-h')) || 80;
+        hero.classList.toggle('is-stuck', sentinel.getBoundingClientRect().top < topbar + 12);
+    };
+    check();
+    window.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check);
+})();
+
 (function () {
     const base = "{{ url('/portal/profile') }}";
 

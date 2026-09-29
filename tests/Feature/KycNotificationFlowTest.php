@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Mail\PortalAccountApproved;
 use App\Mail\PortalAccountRegistered;
 use App\Mail\PortalInfoRequestedMail;
-use App\Mail\PortalKycSubmittedMail;
 use App\Models\CmsKit\SiteInformation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -24,10 +23,15 @@ class KycNotificationFlowTest extends TestCase
         $agent = $this->independentAgent(['status' => 'pending', 'kyc_review_status' => 'draft']);
         $admin = $this->superAdmin();
 
-        // 1. The agent submits → both admin recipients + the agent themselves.
+        // Profile shows one KYC progress card (the layout's generic banner is hidden there).
+        $this->signIn($agent)->get('/portal/profile')->assertOk()
+            ->assertSee('Finish your KYC to unlock the CRM')->assertDontSee('portal-status-banner', false);
+        $this->get('/portal/agency')->assertOk()->assertSee('portal-status-banner', false);
+
+        // 1. The agent submits → both admin recipients emailed; the agent gets an in-app notice.
         $this->signIn($agent)->postJson('/portal/profile/resubmit')->assertOk();
         Mail::assertQueued(PortalAccountRegistered::class, fn ($m) => $m->hasTo('sales@example.test') && $m->hasTo('ops@example.test'));
-        Mail::assertQueued(PortalKycSubmittedMail::class, fn ($m) => $m->hasTo($agent->email) && !$m->isResubmission);
+        Mail::assertQueuedCount(1); // only the admin email — the agent gets no "we received it" email
         $this->assertSame(1, $agent->notifications()->where('type', \App\Notifications\PortalKycSubmittedNotification::class)->count());
 
         // Admin sidebar shows it as waiting.
@@ -38,10 +42,9 @@ class KycNotificationFlowTest extends TestCase
         Mail::assertQueued(PortalInfoRequestedMail::class, fn ($m) => $m->hasTo($agent->email));
         $this->assertSame(1, $agent->notifications()->where('type', \App\Notifications\PortalInfoRequestedNotification::class)->count());
 
-        // 3. The agent resubmits → admin again, and the agent gets an "updated details received".
+        // 3. The agent resubmits → admin again, the agent gets an in-app notice.
         $this->signIn($agent->fresh())->postJson('/portal/profile/resubmit')->assertOk();
         Mail::assertQueued(PortalAccountRegistered::class, fn ($m) => $m->isResubmission);
-        Mail::assertQueued(PortalKycSubmittedMail::class, fn ($m) => $m->isResubmission);
 
         // 4. Approved → email + bell.
         $this->signIn($admin, 'cms')->postJson(route('cms.portal-accounts.update-status', $agent->id), ['status' => 'approved'])->assertOk();

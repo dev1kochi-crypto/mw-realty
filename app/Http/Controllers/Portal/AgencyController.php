@@ -64,7 +64,8 @@ class AgencyController extends Controller
         $page = PortalUser::companies()->approved()->where('is_active', true)
             ->when($term !== '', fn ($q) => $q->where(fn ($w) => $w->where('company_name', 'like', "%{$term}%")->orWhere('name', 'like', "%{$term}%")))
             ->orderBy('company_name')
-            ->paginate(20, ['id', 'name', 'company_name']);
+            // `type` is needed so displayName() shows the company name, not the account holder's.
+            ->paginate(20, ['id', 'type', 'name', 'company_name']);
 
         return response()->json([
             'results' => collect($page->items())->map(fn ($agency) => ['id' => $agency->id, 'text' => $agency->displayName()]),

@@ -35,13 +35,14 @@ class PortalUserController extends Controller
         $type = $request->query('type');
 
         if ($request->ajax()) {
-            $data = PortalUser::withCount(['properties', 'leads', 'agents'])->with(['plan', 'company'])
+            $data = PortalUser::withCount(['properties', 'leads', 'agents'])->with(['plan', 'company.plan', 'currentMembership'])
                 ->when(in_array($type, ['agent', 'company']), fn ($q) => $q->where('type', $type))
                 ->when($request->filled('company_id'), fn ($q) => $q->where('company_id', $request->query('company_id')))
                 ->when($request->filled('plan_id'), function ($q) use ($request) {
                     $request->query('plan_id') === 'none' ? $q->whereNull('plan_id') : $q->where('plan_id', $request->query('plan_id'));
                 })
-                ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))                ->when($request->filled('payment_status'), fn ($q) => $q->where('payment_status', $request->query('payment_status')))
+                ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))
+                ->when($request->filled('payment_status'), fn ($q) => $q->where('payment_status', $request->query('payment_status')))
                 ->when($request->filled('payment_month'), function ($q) use ($request) {
                     [$year, $month] = array_pad(explode('-', $request->query('payment_month')), 2, null);
                     $q->whereYear('last_payment_at', $year)->whereMonth('last_payment_at', $month);
@@ -102,6 +103,11 @@ class PortalUserController extends Controller
                 ->addColumn('joined', fn ($row) => $row->created_at->format('d M Y'))
                 ->orderColumn('joined', 'created_at $1')
                 ->addColumn('plan', function ($row) use ($plans) {
+                    // Agency agent: on the agency's plan — not the agent's own, so not editable here.
+                    if ($row->isOnAgencyPlan()) {
+                        return '<span class="fw-semibold text-success">' . e($row->company->plan?->getTranslation('name') ?? 'No Plan') . '</span>'
+                            . '<div class="text-muted" style="font-size: 0.68rem;"><i class="fas fa-building me-1"></i>Agency plan</div>';
+                    }
                     $label = $row->plan ? $row->plan->getTranslation('name') : 'No Plan';
                     $colorClass = !$row->plan ? 'text-muted fst-italic' : ((float) $row->plan->price === 0.0 ? 'text-secondary fw-semibold' : 'text-success fw-bold');
 
@@ -152,6 +158,9 @@ class PortalUserController extends Controller
                     return $html;
                 })
                 ->addColumn('payment_status', function ($row) {
+                    if ($row->isOnAgencyPlan()) {
+                        return '<span class="fw-bold text-success"><i class="fas fa-building me-1"></i>Covered by agency</span>';
+                    }
                     $colorClass = $row->payment_status === 'paid' ? 'text-success' : 'text-danger';
                     $icon = $row->payment_status === 'paid' ? 'fa-check-circle' : 'fa-times-circle';
                     $sub = $row->last_payment_at ? '<div class="text-muted" style="font-size: 0.68rem;">' . $row->last_payment_at->format('d M Y') . '</div>' : '';
@@ -366,7 +375,6 @@ class PortalUserController extends Controller
     public function show(Request $request, $id)
     {
         $portalUser = PortalUser::withCount(['properties', 'leads', 'agents'])->with(['plan', 'company'])->findOrFail($id);
-        $companies = PortalUser::companies()->where('id', '!=', $id)->where('status', '!=', 'rejected')->orderBy('company_name')->get(['id', 'company_name', 'name']);
 
         // Paginated — a long-lived account can build up years of payment history, and a large
         // brokerage can have thousands of affiliated agents, so neither list loads unbounded.
@@ -375,7 +383,7 @@ class PortalUserController extends Controller
         $totalPaid = (float) PlanPayment::paid()->where('portal_user_id', $portalUser->id)->sum('amount');
         $languages = \App\Models\CmsKit\Language::active()->orderByDesc('is_default')->get(['name', 'code', 'is_default']);
 
-        return view('portal-accounts.show', compact('portalUser', 'companies', 'payments', 'agents', 'totalPaid', 'languages'));
+        return view('portal-accounts.show', compact('portalUser', 'payments', 'agents', 'totalPaid', 'languages'));
     }
 
     /**
@@ -397,7 +405,7 @@ class PortalUserController extends Controller
             'passport_no' => 'sometimes|nullable|string|max:50',
             'passport_expiry' => 'sometimes|nullable|date',
             'brn_number' => 'sometimes|nullable|string|max:50',
-            'company_id' => ['sometimes', 'nullable', Rule::notIn([$portalUser->id]), Rule::exists('portal_users', 'id')->where('type', 'company')->where('status', 'approved')->where('is_active', true)],
+            'affiliated_brokerage' => 'sometimes|nullable|string|max:255',
             'trade_license_no' => 'sometimes|nullable|string|max:50',
             'trade_license_expiry' => 'sometimes|nullable|date',
             'orn_number' => 'sometimes|nullable|string|max:50',
@@ -421,7 +429,9 @@ class PortalUserController extends Controller
         }
         $fieldsBySection = [
             'identity' => ['name', 'company_name', 'email', 'phone', 'nationality', 'emirates_id_no', 'passport_no', 'passport_expiry'],
-            'agent' => ['brn_number', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
+            // The KYC "Affiliated Brokerage" is information only. Agency membership (and the agency's
+            // plan) is not edited here — only through an accepted invitation / join request (Agency Agents).
+            'agent' => ['brn_number', 'affiliated_brokerage', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
             'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'trn_number', 'trn_expiry', 'authorized_signatory_name', 'landline', 'office_address'],
             'about' => ['years_of_experience', 'website', 'founding_year'],
         ];
@@ -446,15 +456,6 @@ class PortalUserController extends Controller
             $portalUser->save();
         } else {
             $portalUser->update($request->only($fieldsBySection[$request->input('section')]));
-        }
-
-        // Agency changes still go through the membership service so the history is kept.
-        if ($request->input('section') === 'agent' && $request->has('company_id')) {
-            app(\App\Services\Agency\AgencyMembershipService::class)->adminAssignAgency(
-                $portalUser,
-                $request->filled('company_id') ? PortalUser::findOrFail($request->input('company_id')) : null,
-                \Illuminate\Support\Facades\Auth::guard('cms')->id(),
-            );
         }
 
         return response()->json(['success' => true]);

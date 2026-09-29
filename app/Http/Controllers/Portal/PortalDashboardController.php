@@ -111,16 +111,18 @@ class PortalDashboardController extends Controller
         // Plan usage (agents/companies only — Super Admin has no plan).
         $planUsage = null;
         if ($owner) {
-            $owner->loadMissing('plan');
-            $plan = $owner->plan;
-            $remaining = $owner->remainingPropertySlots();
+            // An agent the agency brought in works on the agency's plan, so show the agency's plan and usage.
+            $account = ($owner->isOnAgencyPlan() ? $owner->company : $owner)->loadMissing('plan');
+            $plan = $account->plan;
+            $remaining = $account->remainingPropertySlots();
             $limit = ($plan && !$plan->isUnlimited()) ? (int) $plan->property_limit : null;
+            $used = $owner->isOnAgencyPlan() ? $account->properties()->count() : $stats['total_properties'];
             $planUsage = [
-                'name' => $plan?->getTranslation('name') ?? 'No plan',
+                'name' => ($plan?->getTranslation('name') ?? 'No plan') . ($owner->isOnAgencyPlan() ? ' · ' . $account->displayName() . "'s plan" : ''),
                 'limit' => $limit,
-                'used' => $stats['total_properties'],
+                'used' => $used,
                 'remaining' => $remaining,
-                'pct' => $limit ? min(100, round($stats['total_properties'] / max($limit, 1) * 100)) : null,
+                'pct' => $limit ? min(100, round($used / max($limit, 1) * 100)) : null,
                 'agents' => $owner->type === 'company' ? $owner->agents()->count() : null,
                 'agents_remaining' => $owner->type === 'company' ? $owner->remainingAgentSlots() : null,
                 'reports' => $owner->hasReportsAccess(),

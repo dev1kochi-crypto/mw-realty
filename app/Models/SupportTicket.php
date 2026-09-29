@@ -89,6 +89,13 @@ class SupportTicket extends Model
         return $query->whereIn('status', [self::OPEN, self::IN_PROGRESS])->where('last_reply_by', 'client');
     }
 
+    /** Open tickets where MW Realty had the last word (or asked for info) — waiting on the client. */
+    public function scopeNeedsClientReply(Builder $query): Builder
+    {
+        return $query->active()->where(fn ($q) => $q->where('status', self::AWAITING_CLIENT)
+            ->orWhere('last_reply_by', SupportTicketMessage::ADMIN));
+    }
+
     public function reference(): string
     {
         return 'TKT-' . str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);

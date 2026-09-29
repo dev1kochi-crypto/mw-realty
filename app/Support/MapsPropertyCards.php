@@ -56,7 +56,7 @@ trait MapsPropertyCards
             'purpose_badge' => $purposeBadge ?: null,
             // 'commercial' | 'residential' — the Premium page tags each card with it.
             'segment' => $property->segment === Property::SEGMENT_COMMERCIAL ? 'commercial' : 'residential',
-            'furnished' => (bool) ($property->details?->furnished),
+            'furnished' => (bool) $property->details?->isFurnished(),
             'contact' => [
                 'phone' => $contact?->phone,
                 'whatsapp_number' => $contact?->whatsapp_number,

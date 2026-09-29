@@ -248,7 +248,12 @@ class AgencyMembershipService
 
         $membership->refresh();
         app(LeadAssignmentService::class)->ensureSettings($membership->agency);
-        $agent = $membership->agent;
+        // Only an agency-brought agent (invited or created by it) moves onto the agency's plan.
+        $agent = $membership->agent->fresh();
+        if ($agent->isOnAgencyPlan()) {
+            $this->moveOntoAgencyPlan($agent);
+            $agent = $agent->fresh();
+        }
         $agencyName = $membership->agency->displayName();
 
         if ($membership->account_created_by_agency) {
@@ -258,8 +263,8 @@ class AgencyMembershipService
             $this->tell($agent, 'You joined ' . $agencyName, "Your membership with {$agencyName} was approved. You'll now receive the agency's leads and listings assigned to you.",
                 route('portal.agency.index'), 'fa-circle-check', 'green', mail: true, actionLabel: 'Open Portal');
         }
-        $this->tell($membership->agency, 'Agent approved', $agent->name . ' is now an active agent in your agency.',
-            route('portal.agents.index'), 'fa-circle-check', 'green');
+        $this->tell($membership->agency, 'Agent approved', $agent->name . ' is now an active agent in your agency. You can assign them listings and leads.',
+            route('portal.agents.index'), 'fa-circle-check', 'green', mail: true, actionLabel: 'View My Agents');
 
         return $membership;
     }
@@ -279,9 +284,9 @@ class AgencyMembershipService
         ]);
 
         $message = $membership->agent->name . "'s membership was not approved" . ($reason ? ": {$reason}" : '.');
-        $this->tell($membership->agency, 'Agent not approved', $message, route('portal.agents.index'), 'fa-circle-xmark', 'red');
+        $this->tell($membership->agency, 'Agent not approved', $message, route('portal.agents.index'), 'fa-circle-xmark', 'red', mail: true, actionLabel: 'View My Agents');
         if (!$membership->account_created_by_agency) {
-            $this->tell($membership->agent, 'Agency membership not approved', $message, route('portal.agency.index'), 'fa-circle-xmark', 'red');
+            $this->tell($membership->agent, 'Agency membership not approved', $message, route('portal.agency.index'), 'fa-circle-xmark', 'red', mail: true, actionLabel: 'Open Portal');
         }
 
         return $membership;
@@ -349,6 +354,7 @@ class AgencyMembershipService
         });
 
         $membership->refresh();
+        $this->moveOffAgencyPlan($membership->agent_id);
         if ($actor->type === AssignmentActor::AGENT) {
             $this->tell($agency, 'Agent left your agency', $membership->agent->name . ' left your agency.', route('portal.agents.index'), 'fa-user-minus', 'amber');
         } else {
@@ -377,6 +383,7 @@ class AgencyMembershipService
         } elseif ($agent->company_id) {
             // Legacy pointer without a membership row.
             $agent->forceFill(['company_id' => null])->save();
+            $this->moveOffAgencyPlan($agent->id);
         }
 
         if ($agency) {
@@ -393,6 +400,7 @@ class AgencyMembershipService
                 $agent->forceFill(['company_id' => $agency->id])->save();
             });
             app(LeadAssignmentService::class)->ensureSettings($agency);
+            // Admin-linked, not agency-brought: the agent keeps their own plan (PortalUser::isOnAgencyPlan).
         }
     }
 
@@ -524,6 +532,50 @@ class AgencyMembershipService
             )));
         } catch (\Throwable $e) {
             Log::error('Failed to notify admins of pending agency agent: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Joined an agency → the agency's plan covers them (PortalUser::effectivePlan). Their own paid
+     * Stripe subscription is set not to renew (kept until the period already paid for ends, no
+     * refund); a manually assigned own plan drops to Free; open plan requests are closed.
+     */
+    public function moveOntoAgencyPlan(PortalUser $agent): void
+    {
+        $agent->refresh();
+        $free = \App\Models\Plan::defaultFree();
+
+        // Remember the paid plan they gave up (no refund), once — shown as "switched from …".
+        $membership = $agent->currentMembership;
+        if ($membership && !$membership->plan_switched_at) {
+            $membership->forceFill([
+                'previous_plan_id' => $agent->plan_id && $agent->plan_id !== $free?->id ? $agent->plan_id : null,
+                'plan_switched_at' => now(),
+            ])->save();
+        }
+
+        if ($agent->hasStripeSubscription()) {
+            if (!$agent->subscription_cancel_at_period_end) {
+                try {
+                    app(\App\Services\StripeBillingService::class)->cancelAtPeriodEnd($agent, \App\Models\Plan::defaultFree());
+                } catch (\Throwable $e) {
+                    Log::error("Could not stop agent #{$agent->id}'s own subscription after joining an agency: " . $e->getMessage());
+                }
+            }
+        } elseif ($free && $agent->plan_id !== $free->id) {
+            $agent->forceFill(['plan_id' => $free->id, 'scheduled_plan_id' => null, 'scheduled_interval' => null])->save();
+        }
+
+        $agent->planUpgradeRequests()->whereIn('status', ['pending', 'checkout'])->update(['status' => 'rejected']);
+    }
+
+    /** Left / removed from the agency → an independent agent on the Free plan (a still-running paid period is kept until it ends). */
+    private function moveOffAgencyPlan(int $agentId): void
+    {
+        $agent = PortalUser::find($agentId);
+        $free = \App\Models\Plan::defaultFree();
+        if ($agent && $free && !$agent->company_id && !$agent->hasStripeSubscription() && $agent->plan_id !== $free->id) {
+            $agent->forceFill(['plan_id' => $free->id, 'scheduled_plan_id' => null, 'scheduled_interval' => null])->save();
         }
     }
 

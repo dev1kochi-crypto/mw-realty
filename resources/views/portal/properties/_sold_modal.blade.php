@@ -200,8 +200,12 @@
         openList();
     });
     search.addEventListener('click', openList);
-    search.addEventListener('blur', () => setTimeout(closeList, 150));
-    search.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); closeList(); } });
+    // Close on a click outside / Esc / Tab — not on blur, so switching windows keeps it open.
+    document.addEventListener('pointerdown', e => { if (!e.target.closest('.sm-combo')) closeList(); });
+    search.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { e.stopPropagation(); closeList(); }
+        if (e.key === 'Tab') closeList();
+    });
     search.addEventListener('input', () => {
         if (leadId.value) clearPick();
         openList();

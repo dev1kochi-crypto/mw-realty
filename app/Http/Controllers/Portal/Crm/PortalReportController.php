@@ -30,7 +30,7 @@ class PortalReportController extends Controller
 
         $viewer = $this->owner();
         if ($viewer && !$viewer->hasReportsAccess()) {
-            return view('portal.crm.reports.locked', ['plan' => $viewer->plan]);
+            return view('portal.crm.reports.locked', ['plan' => $viewer->effectivePlan(), 'agencyPlan' => $viewer->isOnAgencyPlan() ? $viewer->company : null]);
         }
 
         // Only an agency has agents to report on.

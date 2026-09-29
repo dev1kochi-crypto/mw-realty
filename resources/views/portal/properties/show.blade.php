@@ -35,7 +35,7 @@
         ['fa-drafting-compass', 'Completion', $property->filterLabel('completion_status')],
         ['fa-layer-group', 'Category', $property->category ? ($property->filterLabel('category') ?: $property->category) : null],
         ['fa-map-signs', 'Location', $property->location ? ($property->filterLabel('location') ?: $property->location) : null],
-        ['fa-couch', 'Furnishing', $detail ? ($detail->furnished ? 'Furnished' : 'Unfurnished') : null],
+        ['fa-couch', 'Furnishing', $detail?->furnishingLabel()],
         ['fa-mountain', 'View', $detail?->view],
         ['fa-stairs', 'Floor', $detail?->floor],
         ['fa-user-check', 'Direct From Owner', $detail?->direct_from_owner],

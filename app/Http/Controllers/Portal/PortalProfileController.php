@@ -30,11 +30,6 @@ class PortalProfileController extends Controller
     public function edit()
     {
         $portalUser = Auth::guard('portal')->user();
-        $companies = PortalUser::companies()
-            ->where('id', '!=', $portalUser->id)
-            ->where('status', '!=', 'rejected')
-            ->orderBy('company_name')
-            ->get(['id', 'company_name', 'name']);
 
         $documents = collect([
             ['field' => 'emirates_id_document', 'label' => 'Emirates ID', 'icon' => 'fa-id-card'],
@@ -60,7 +55,7 @@ class PortalProfileController extends Controller
         $defaultLocale = Language::active()->where('is_default', true)->value('code') ?? config('app.fallback_locale');
         $bio = $portalUser->getTranslation('bio', $defaultLocale);
 
-        return view('portal.profile', compact('portalUser', 'companies', 'documents', 'bio'));
+        return view('portal.profile', compact('portalUser', 'documents', 'bio'));
     }
 
     public function update(Request $request)
@@ -77,6 +72,7 @@ class PortalProfileController extends Controller
             'passport_no' => 'sometimes|nullable|string|max:50',
             'passport_expiry' => 'sometimes|nullable|date',
             'brn_number' => 'sometimes|nullable|string|max:50',
+            'affiliated_brokerage' => 'sometimes|nullable|string|max:255',
             'trade_license_no' => 'sometimes|nullable|string|max:50',
             'trade_license_expiry' => 'sometimes|nullable|date',
             'orn_number' => 'sometimes|nullable|string|max:50',
@@ -109,7 +105,8 @@ class PortalProfileController extends Controller
             'identity' => ['name', 'company_name', 'phone', 'nationality', 'emirates_id_no', 'passport_no', 'passport_expiry'],
             // company_id is deliberately absent: joining/leaving an agency goes through My Agency
             // (invitation / join request + admin approval), never a free profile field.
-            'agent' => ['brn_number', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
+            // affiliated_brokerage is only the brokerage named for RERA/KYC — not membership, not a plan change.
+            'agent' => ['brn_number', 'affiliated_brokerage', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
             'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'trn_number', 'trn_expiry', 'authorized_signatory_name', 'landline', 'office_address'],
             'about' => ['years_of_experience', 'website', 'founding_year'],
         ];
@@ -330,16 +327,11 @@ class PortalProfileController extends Controller
             }
         }
 
-        // And a "we got it" to the agent / agency themselves.
+        // And an in-app "we got it" to the agent / agency themselves (no email — only admin is emailed).
         try {
             $portalUser->notify(new \App\Notifications\PortalKycSubmittedNotification($isResubmission));
         } catch (\Throwable $e) {
             Log::error('Failed to create KYC submitted bell notification: ' . $e->getMessage());
-        }
-        try {
-            Mail::to($portalUser->email)->queue((new \App\Mail\PortalKycSubmittedMail($portalUser, $isResubmission))->afterCommit());
-        } catch (\Throwable $e) {
-            Log::error('Failed to send KYC submitted confirmation email: ' . $e->getMessage());
         }
 
         return response()->json(['success' => true]);

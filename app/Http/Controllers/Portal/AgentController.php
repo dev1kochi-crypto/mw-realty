@@ -84,7 +84,8 @@ class AgentController extends Controller
 
         $memberships = $agency->agencyMemberships()
             ->whereIn('status', self::TABS[$tab])
-            ->with('agent')
+            // Plan column: the agent's own plan, whether the agency's covers them, the plan they dropped.
+            ->with(['agent.plan', 'agent.currentMembership', 'agent.company.plan', 'previousPlan'])
             ->latest('id')
             ->paginate(15)
             ->withQueryString();

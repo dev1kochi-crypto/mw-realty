@@ -27,12 +27,42 @@ class PropertyDetail extends Model
 
     protected $casts = [
         'amenities' => 'array',
-        'furnished' => 'boolean',
         'security_deposit' => 'decimal:2',
         'easy_access' => 'array',
         'property_attributes' => 'array',
         'extra_attributes' => 'array',
     ];
+
+    /** Value that means "not furnished" in the furnishing option list; every other set value counts as furnished. */
+    public const UNFURNISHED = 'unfurnished';
+
+    /** `furnished` holds a furnishing option value (CRM › Master › Property Options), e.g. "semi_furnished". */
+    public function isFurnished(): bool
+    {
+        return filled($this->furnished) && $this->furnished !== self::UNFURNISHED;
+    }
+
+    /** Older callers (seeders, imports) still pass true / false / "1" / "0" — stored as the matching option. */
+    public function setFurnishedAttribute($value): void
+    {
+        $this->attributes['furnished'] = match (true) {
+            $value === null || $value === '' => null,
+            $value === true || $value === 1 || $value === '1' => 'furnished',
+            $value === false || $value === 0 || $value === '0' => self::UNFURNISHED,
+            default => (string) $value,
+        };
+    }
+
+    /** The option's label in the current language ("Semi-furnished"), or null when not set. */
+    public function furnishingLabel(?string $lang = null): ?string
+    {
+        if (blank($this->furnished)) {
+            return null;
+        }
+        $option = FilterValue::whereHas('filter', fn ($q) => $q->where('key', Filter::FURNISHING_KEY))->where('value', $this->furnished)->first();
+
+        return $option?->getTranslation('label', $lang) ?? ucwords(str_replace(['_', '-'], ' ', $this->furnished));
+    }
 
     public function property()
     {
