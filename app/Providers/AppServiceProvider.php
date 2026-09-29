@@ -89,6 +89,11 @@ class AppServiceProvider extends ServiceProvider
             $view->with('pendingUpgradeCount', Auth::guard('cms')->check()
                 ? \App\Models\PlanUpgradeRequest::pending()->count()
                 : 0);
+            // KYC submitted and waiting for review, per client type (Clients > Companies / Agents badges).
+            $view->with('pendingKycCounts', Auth::guard('cms')->check()
+                ? \App\Models\PortalUser::where('kyc_review_status', 'submitted')->whereNot('status', 'approved')
+                    ->selectRaw('type, count(*) as total')->groupBy('type')->pluck('total', 'type')->all()
+                : []);
             $view->with('pendingAgencyAgentCount', Auth::guard('cms')->check()
                 ? \App\Models\AgencyAgent::where('status', \App\Models\AgencyAgent::PENDING)->count()
                 : 0);

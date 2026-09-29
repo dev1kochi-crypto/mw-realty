@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('portal:remind-subscription-renewals')->dailyAt('09:00')->timezone(\App\Console\Commands\RemindSubscriptionRenewals::TIMEZONE)->withoutOverlapping();
         $schedule->command('properties:expire-featured')->everyFifteenMinutes();
         $schedule->call(fn () => app(\App\Services\NewsletterCampaignService::class)->sendDueContent())->everyFifteenMinutes();
+        // Every email (KYC, leads, enquiries…) is queued. On hosting without a supervisor-managed
+        // `queue:work`, this drains the queue once a minute off the existing schedule:run cron.
+        $schedule->command('queue:work --stop-when-empty --tries=3 --max-time=50')->everyMinute()->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         // Only the portal routes use Laravel's built-in auth/guest middleware

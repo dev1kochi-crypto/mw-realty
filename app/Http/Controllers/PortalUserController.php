@@ -41,8 +41,7 @@ class PortalUserController extends Controller
                 ->when($request->filled('plan_id'), function ($q) use ($request) {
                     $request->query('plan_id') === 'none' ? $q->whereNull('plan_id') : $q->where('plan_id', $request->query('plan_id'));
                 })
-                ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))
-                ->when($request->filled('payment_status'), fn ($q) => $q->where('payment_status', $request->query('payment_status')))
+                ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))                ->when($request->filled('payment_status'), fn ($q) => $q->where('payment_status', $request->query('payment_status')))
                 ->when($request->filled('payment_month'), function ($q) use ($request) {
                     [$year, $month] = array_pad(explode('-', $request->query('payment_month')), 2, null);
                     $q->whereYear('last_payment_at', $year)->whereMonth('last_payment_at', $month);

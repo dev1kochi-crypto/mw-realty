@@ -330,6 +330,18 @@ class PortalProfileController extends Controller
             }
         }
 
+        // And a "we got it" to the agent / agency themselves.
+        try {
+            $portalUser->notify(new \App\Notifications\PortalKycSubmittedNotification($isResubmission));
+        } catch (\Throwable $e) {
+            Log::error('Failed to create KYC submitted bell notification: ' . $e->getMessage());
+        }
+        try {
+            Mail::to($portalUser->email)->queue((new \App\Mail\PortalKycSubmittedMail($portalUser, $isResubmission))->afterCommit());
+        } catch (\Throwable $e) {
+            Log::error('Failed to send KYC submitted confirmation email: ' . $e->getMessage());
+        }
+
         return response()->json(['success' => true]);
     }
 }

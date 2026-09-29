@@ -121,16 +121,23 @@
                            aria-expanded="@if(request()->routeIs('cms.portal-accounts.*', 'cms.agency-agents.*')) true @else false @endif">
                             <i class="fas fa-address-card"></i>
                             <span>Clients</span>
-                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                            @php $clientsPending = array_sum($pendingKycCounts ?? []) + ($pendingAgencyAgentCount ?? 0) + ($pendingUpgradeCount ?? 0); @endphp
+                            @if($clientsPending > 0)
+                            <span class="badge bg-danger ms-auto" title="Waiting for review: KYC, agency agents and plan requests">{{ $clientsPending }}</span>
+                            @endif
+                            <i class="fas fa-chevron-down {{ $clientsPending > 0 ? 'ms-2' : 'ms-auto' }} sidebar-chevron"></i>
                         </a>
                         <div class="collapse sidebar-submenu @if(request()->routeIs('cms.portal-accounts.*', 'cms.agency-agents.*')) show @endif" id="clientsMenu">
                             <nav class="nav flex-column">
-                               <a class="nav-link py-2 @if(request()->routeIs('cms.portal-accounts.*') && request()->query('type') === 'company') active @endif" href="{{ route('cms.portal-accounts.index', ['type' => 'company']) }}">
-                                    Companies
+                                @foreach(['company' => 'Companies', 'agent' => 'Agents'] as $clientType => $clientLabel)
+                                <a class="nav-link py-2 d-flex align-items-center @if(request()->routeIs('cms.portal-accounts.*') && request()->query('type') === $clientType) active @endif"
+                                   href="{{ route('cms.portal-accounts.index', ['type' => $clientType]) }}">
+                                    {{ $clientLabel }}
+                                    @if(($pendingKycCounts[$clientType] ?? 0) > 0)
+                                    <span class="badge bg-danger ms-auto" title="KYC waiting for review">{{ $pendingKycCounts[$clientType] }}</span>
+                                    @endif
                                 </a>
-                                <a class="nav-link py-2 @if(request()->routeIs('cms.portal-accounts.*') && request()->query('type') === 'agent') active @endif" href="{{ route('cms.portal-accounts.index', ['type' => 'agent']) }}">
-                                    Agents
-                                </a>
+                                @endforeach
                                 <a class="nav-link py-2 d-flex align-items-center @if(request()->routeIs('cms.agency-agents.*')) active @endif" href="{{ route('cms.agency-agents.index') }}">
                                     Agency Agents
                                     @if(($pendingAgencyAgentCount ?? 0) > 0)

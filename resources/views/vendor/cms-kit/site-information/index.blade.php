@@ -268,7 +268,8 @@
                             @if($siteInfoConfig['receipt_email'] ?? true)
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Recipient Email {!! in_array('receipt_email', $siteInfoRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                                <input type="email" name="receipt_email" class="form-control @error('receipt_email') is-invalid @enderror" value="{{ old('receipt_email', $siteInfo->receipt_email) }}" placeholder="e.g. billing@company.com" {{ in_array('receipt_email', $siteInfoRequired) ? 'required' : '' }}>
+                                <input type="text" name="receipt_email" class="form-control @error('receipt_email') is-invalid @enderror" value="{{ old('receipt_email', $siteInfo->receipt_email) }}" placeholder="e.g. sales@company.com, admin@company.com" maxlength="1000" autocomplete="off" {{ in_array('receipt_email', $siteInfoRequired) ? 'required' : '' }}>
+                                <div class="form-text">Separate several addresses with commas. Every address gets the system notifications (new leads, enquiries, registrations, KYC submissions).</div>
                                 @error('receipt_email')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

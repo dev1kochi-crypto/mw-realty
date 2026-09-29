@@ -82,6 +82,7 @@ const agencyName = ref(oldInput.company_name || '');
 const agencyContactName = ref(oldInput.name || '');
 const agencyEmail = ref(oldInput.email || '');
 const agencyPhone = ref(oldInput.phone || '');
+const agencyOfficeAddress = ref(oldInput.office_address || '');
 
 // Whether a field has been blurred at least once — so a format error only appears once the
 // visitor has actually finished typing it, not the instant the page loads.
@@ -262,7 +263,7 @@ onMounted(() => playAuthEntrance(cardEl.value));
 
                                 <div class="mw-login-form__field">
                                     <label for="signup-agency-address">{{ t('signup.agency_address_label') }}</label>
-                                    <input type="text" id="signup-agency-address" name="office_address" :value="oldInput.office_address || ''" :placeholder="t('signup.agency_address_placeholder')" autocomplete="street-address">
+                                    <input type="text" id="signup-agency-address" name="office_address" v-model="agencyOfficeAddress" :placeholder="t('signup.agency_address_placeholder')" autocomplete="street-address">
                                 </div>
 
                                 <PasswordCreationField id-prefix="signup-agency" v-model:password="password" v-model:confirmPassword="confirmPassword" />
