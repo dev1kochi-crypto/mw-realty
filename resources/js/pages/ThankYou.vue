@@ -142,7 +142,7 @@ const confetti = Array.from({ length: 22 }, (_, i) => {
                         </span>
                     </router-link>
                     <div v-if="handler" class="ty__summary-handler">
-                        <img :src="handler.avatar_url || (handlerIsAgency ? '/frontend/assets/images/icons/building.svg' : '/frontend/assets/images/agents/ahmed.png')" :alt="handler.name" class="ty__summary-avatar" :class="{ 'ty__summary-avatar--icon': !handler.avatar_url && handlerIsAgency }">
+                        <img :src="handler.avatar_url || (handlerIsAgency ? '/frontend/assets/images/icons/building.svg' : '/frontend/assets/images/placeholders/avatar.svg')" :alt="handler.name" class="ty__summary-avatar" :class="{ 'ty__summary-avatar--icon': !handler.avatar_url && handlerIsAgency }">
                         <span class="ty__summary-body">
                             <span class="ty__summary-label">{{ t('thank_you.property.sent_to', 'Sent to') }} &middot; {{ handlerRole }}</span>
                             <router-link v-if="handler.detail_url" :to="handler.detail_url" class="ty__summary-name">{{ handler.name }}</router-link>

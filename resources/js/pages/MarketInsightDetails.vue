@@ -1,4 +1,5 @@
 <script setup>
+import AdBlock from '../components/AdBlock.vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import InsightCard from '../components/InsightCard.vue';
@@ -155,6 +156,8 @@ function copyLink() {
                             <p class="mw-insight-panel__text">{{ t('market_insight_details.advice_text', 'Want to know what this means for your next purchase or investment? Our consultants can walk you through it.') }}</p>
                             <router-link to="/contact" class="mw-btn mw-btn--gradient mw-insight-panel__cta">{{ t('market_insight_details.advice_cta', 'Contact our team') }}</router-link>
                         </div>
+                        <!-- Admin › Ads, placement "Market Insights" -->
+                        <AdBlock placement="market-insights" variant="card" />
                     </aside>
                 </div>
             </div>

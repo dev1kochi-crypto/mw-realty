@@ -1,4 +1,5 @@
 <script setup>
+import AdBlock from '../components/AdBlock.vue';
 import { computed, nextTick, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogPost } from '../composables/useBlogPost';
@@ -143,6 +144,8 @@ const nextPost = computed(() => blogPost.value?.next || null);
                                 <router-link v-for="category in categories" :key="category.key" to="/blogs" class="mw-blog-details__category">{{ category.label }}</router-link>
                             </div>
                         </div>
+                        <!-- Admin › Ads, placement "Blog Details" -->
+                        <AdBlock placement="blog-details" variant="card" />
                     </aside>
 
                 </div>

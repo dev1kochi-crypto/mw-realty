@@ -17,7 +17,6 @@ class AdController extends Controller
     /** Which page on the public site an ad can be placed on — matches the SPA's own routes. */
     const PAGE_OPTIONS = [
         'home' => 'Home',
-        'about' => 'About Us',
         'commercial' => 'Commercial Properties',
         'agents' => 'Agents',
         'agent-details' => 'Agent Details',
@@ -25,9 +24,11 @@ class AdController extends Controller
         'agency-details' => 'Agency Details',
         'blogs' => 'Blogs',
         'blog-details' => 'Blog Details',
-        'contact' => 'Contact Us',
         'properties-dubai' => 'Properties Listing',
-        'property-details' => 'Property Details',
+        'premium-properties' => 'Premium Properties',
+        'marketing-properties' => 'Realty (Marketing) Properties',
+        'property-details' => 'Property Details (sidebar card)',
+        'market-insights' => 'Market Insights',
         'terms-and-conditions' => 'Terms and Conditions',
     ];
 
@@ -87,7 +88,8 @@ class AdController extends Controller
         $mobileImageConfig = config('cms-kit.images.ads.mobile_image', []);
         $pageOptions = self::PAGE_OPTIONS;
         $nextOrder = Ad::count() + 1;
-        return view('cms-kit::ads.create', compact('imageConfig', 'mobileImageConfig', 'pageOptions', 'nextOrder'));
+        $languages = \App\Models\CmsKit\Language::active()->orderByDesc('is_default')->get();
+        return view('cms-kit::ads.create', compact('imageConfig', 'mobileImageConfig', 'pageOptions', 'nextOrder', 'languages'));
     }
 
     protected function rules(bool $isUpdate = false, ?Ad $ad = null): array
@@ -97,7 +99,8 @@ class AdController extends Controller
         return [
             'name' => 'required|string|max:255',
             'placement' => ['required', Rule::in(array_keys(self::PAGE_OPTIONS))],
-            'link_url' => 'nullable|url|max:500',
+            // A full URL, or a path on this site (e.g. /properties).
+            'link_url' => ['nullable', 'string', 'max:500', 'regex:#^(https?://|/)#i'],
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
             'order_index' => 'nullable|integer|min:1',
@@ -105,6 +108,10 @@ class AdController extends Controller
             'image_alt' => 'nullable|string|max:255',
             'remove_image' => 'nullable|boolean',
             'mobile_image' => 'nullable|image|max:' . (config('cms-kit.images.ads.mobile_image.max_size') ?? 4096),
+            'translations' => 'nullable|array',
+            'translations.*.eyebrow' => 'nullable|string|max:60',
+            'translations.*.title' => 'nullable|string|max:120',
+            'translations.*.text' => 'nullable|string|max:300',
         ];
     }
 
@@ -115,6 +122,7 @@ class AdController extends Controller
         $this->validateImageWithinLimits($request, 'mobile_image', config('cms-kit.images.ads.mobile_image', []), 'Mobile Image');
 
         $data = $request->only(['name', 'placement', 'link_url', 'starts_at', 'ends_at', 'order_index', 'image_alt']);
+        $data['translations'] = $this->adText($request);
         $data['status'] = $request->boolean('status', true);
         $data['image'] = app(\App\Services\ManagedFiles::class)->store($request->file('image'), 'ads');
         if ($request->hasFile('mobile_image')) {
@@ -136,7 +144,8 @@ class AdController extends Controller
         $imageConfig = config('cms-kit.images.ads.image', []);
         $mobileImageConfig = config('cms-kit.images.ads.mobile_image', []);
         $pageOptions = self::PAGE_OPTIONS;
-        return view('cms-kit::ads.edit', compact('ad', 'imageConfig', 'mobileImageConfig', 'pageOptions'));
+        $languages = \App\Models\CmsKit\Language::active()->orderByDesc('is_default')->get();
+        return view('cms-kit::ads.edit', compact('ad', 'imageConfig', 'mobileImageConfig', 'pageOptions', 'languages'));
     }
 
     public function update(Request $request, $id)
@@ -147,6 +156,7 @@ class AdController extends Controller
         $this->validateImageWithinLimits($request, 'mobile_image', config('cms-kit.images.ads.mobile_image', []), 'Mobile Image');
 
         $data = $request->only(['name', 'placement', 'link_url', 'starts_at', 'ends_at', 'order_index', 'image_alt']);
+        $data['translations'] = $this->adText($request);
         $data['status'] = $request->boolean('status');
 
         if ($request->hasFile('image')) {
@@ -252,5 +262,15 @@ class AdController extends Controller
         }
 
         return response()->json(['success' => true]);
+    }
+
+    /** Overlay text per language, empty values dropped (null = image-only ad). */
+    private function adText(Request $request): ?array
+    {
+        $text = collect($request->input('translations', []))
+            ->map(fn ($fields) => array_filter(array_map(fn ($v) => is_string($v) ? trim($v) : null, (array) $fields), fn ($v) => $v !== null && $v !== ''))
+            ->filter()->all();
+
+        return $text ?: null;
     }
 }

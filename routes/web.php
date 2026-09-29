@@ -657,6 +657,8 @@ Route::prefix('portal')->name('portal.')->group(function () {
         // completing or fixing it is exactly what unblocks approval.
         Route::get('/profile', [PortalProfileController::class, 'edit'])->name('profile.edit');
         Route::post('/profile', [PortalProfileController::class, 'update'])->name('profile.update');
+        Route::post('/profile/avatar', [PortalProfileController::class, 'uploadAvatar'])->name('profile.avatar.upload');
+        Route::delete('/profile/avatar', [PortalProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
         Route::post('/profile/documents/{field}', [PortalProfileController::class, 'uploadDocument'])->name('profile.upload-document');
         Route::delete('/profile/documents/{field}', [PortalProfileController::class, 'removeDocument'])->name('profile.remove-document');
         Route::post('/profile/resubmit', [PortalProfileController::class, 'submitForApproval'])->name('profile.resubmit');

@@ -161,12 +161,15 @@
                         <div class="d-flex align-items-center gap-2">
                             <span class="portal-lead-avatar">{{ strtoupper(mb_substr($lead->name ?: '?', 0, 1)) }}</span>
                             <div class="min-w-0">
-                                <a href="{{ route('portal.crm.leads.show', $lead->id) }}" class="portal-lead-name-button text-decoration-none" aria-label="View details for {{ $lead->name ?: 'lead' }}">
-                                    {{ $lead->name ?: 'Unknown' }}
-                                </a>
-                                @if($lead->enquiry_count > 1)
-                                <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis ms-1" style="font-size: 0.68rem;" title="Enquired {{ $lead->enquiry_count }} times{{ $lead->last_enquired_at ? ' — latest ' . $lead->last_enquired_at->format('d M Y') : '' }}">&times;{{ $lead->enquiry_count }}</span>
-                                @endif
+                                {{-- Name + repeat-enquiry count on one line, so the row keeps its height. --}}
+                                <div class="d-flex align-items-center gap-1 flex-nowrap" style="max-width: 200px;">
+                                    <a href="{{ route('portal.crm.leads.show', $lead->id) }}" class="portal-lead-name-button text-decoration-none text-truncate" style="min-width: 0;" aria-label="View details for {{ $lead->name ?: 'lead' }}" title="{{ $lead->name }}">
+                                        {{ $lead->name ?: 'Unknown' }}
+                                    </a>
+                                    @if($lead->enquiry_count > 1)
+                                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis flex-shrink-0" style="font-size: 0.66rem; padding: 0.2em 0.5em;" title="Enquired {{ $lead->enquiry_count }} times{{ $lead->last_enquired_at ? ' — latest ' . $lead->last_enquired_at->format('d M Y') : '' }}">&times;{{ $lead->enquiry_count }}</span>
+                                    @endif
+                                </div>
                                 <div class="text-muted text-truncate" style="font-size: 0.78rem; max-width: 180px;">{{ $lead->email ?: $lead->formatted_phone ?: '-' }}</div>
                             </div>
                         </div>

@@ -1,4 +1,5 @@
 <script setup>
+import WithAdSidebar from '../components/WithAdSidebar.vue';
 import { nextTick, onMounted, watch } from 'vue';
 import { useAgents } from '../composables/useAgents';
 import { useLanguages } from '../composables/useLanguages';
@@ -42,11 +43,12 @@ watch(agentsListing, () => {
 
         <section class="mw-agents">
             <div class="container-ctn">
+                <WithAdSidebar placement="agents">
                 <div class="mw-agents__grid">
                     <article v-for="(agent, index) in (agentsListing?.agents || [])" :key="agent.slug" class="mw-agent-card" data-reveal :style="{ '--reveal-delay': index % 4 }">
                         <div class="mw-agent-card__head">
                             <div class="mw-agent-card__avatar">
-                                <img :src="agent.avatar_url || '/frontend/assets/images/agents/ahmed.png'" :alt="agent.name" width="80" height="80" loading="lazy">
+                                <img :src="agent.avatar_url || '/frontend/assets/images/placeholders/avatar.svg'" :alt="agent.name" width="80" height="80" loading="lazy">
                             </div>
                             <div class="mw-agent-card__intro">
                                 <h2 class="mw-agent-card__name">{{ agent.name }}</h2>
@@ -71,6 +73,7 @@ watch(agentsListing, () => {
                         </div>
                     </article>
                 </div>
+                </WithAdSidebar>
             </div>
         </section>
     </main>

@@ -6,6 +6,7 @@ import { useLanguages } from '../composables/useLanguages';
 import { useRecaptcha } from '../composables/useRecaptcha';
 import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
+import AdBlock from '../components/AdBlock.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -266,7 +267,7 @@ function agentAria(template, name) {
                             <div class="mw-agent-card__head">
                                 <div class="mw-agent-card__avatar">
                                     <!-- The listing's agent, or its agency when no agent is available (PropertyPageService::mapContact). -->
-                                    <img :src="property.contact.avatar_url || (property.contact.type === 'company' ? '/frontend/assets/images/icons/building.svg' : '/frontend/assets/images/agents/ahmed.png')" :alt="property.contact.name" width="80" height="80" :class="{ 'mw-agent-card__avatar-img--agency': property.contact.type === 'company' && !property.contact.avatar_url }">
+                                    <img :src="property.contact.avatar_url || (property.contact.type === 'company' ? '/frontend/assets/images/icons/building.svg' : '/frontend/assets/images/placeholders/avatar.svg')" :alt="property.contact.name" width="80" height="80" :class="{ 'mw-agent-card__avatar-img--agency': property.contact.type === 'company' && !property.contact.avatar_url }">
                                 </div>
                                 <div class="mw-agent-card__intro">
                                     <h4 class="mw-agent-card__name">{{ property.contact.name }}</h4>
@@ -331,19 +332,8 @@ function agentAria(template, name) {
                             </form>
                         </div>
 
-                        <router-link to="/#post-property" class="mw-property-ad">
-                            <span class="mw-property-ad__label">{{ t('property_details.ad.label') }}</span>
-                            <img src="/frontend/assets/images/home/post-property.jpg" alt="" class="mw-property-ad__bg" loading="lazy">
-                            <span class="mw-property-ad__content">
-                                <span class="mw-property-ad__eyebrow">{{ t('property_details.ad.eyebrow') }}</span>
-                                <span class="mw-property-ad__title">{{ t('property_details.ad.title') }}</span>
-                                <span class="mw-property-ad__text">{{ t('property_details.ad.text') }}</span>
-                                <span class="mw-property-ad__cta">
-                                    {{ t('property_details.ad.cta') }}
-                                    <img src="/frontend/assets/images/icons/find-cta-arrow.svg" alt="" width="16" height="16">
-                                </span>
-                            </span>
-                        </router-link>
+                        <!-- Admin › Ads, placement "Property Details" (image + optional text; hidden when none runs). -->
+                        <AdBlock placement="property-details" variant="card" />
                     </aside>
                 </div>
 

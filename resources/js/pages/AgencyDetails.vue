@@ -1,4 +1,5 @@
 <script setup>
+import AdBlock from '../components/AdBlock.vue';
 import { computed, nextTick, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAgencyDetail } from '../composables/useAgencyDetail';
@@ -59,12 +60,15 @@ function agencyAria(template, name) {
             </nav>
         </section>
 
+        <!-- Admin › Ads — under the page header. -->
+        <AdBlock placement="agency-details" />
+
         <section class="mw-agency-detail">
             <div class="container-ctn">
 
                 <article class="mw-agency-profile" data-reveal>
                     <div class="mw-agency-profile__logo">
-                        <img :src="agency.logo_url || '/frontend/assets/images/agencies/logo-dxb-dubai.png'" :alt="agency.name" width="176" height="166">
+                        <img :src="agency.logo_url || '/frontend/assets/images/placeholders/agency.svg'" :alt="agency.name" width="176" height="166">
                     </div>
 
                     <div class="mw-agency-profile__info">
@@ -196,7 +200,7 @@ function agencyAria(template, name) {
                         <div v-for="agent in agency.agents" :key="agent.slug" class="mw-agent-more__slide"><article class="mw-agent-card">
                             <div class="mw-agent-card__head">
                                 <div class="mw-agent-card__avatar">
-                                    <img :src="agent.avatar_url || '/frontend/assets/images/agents/ahmed.png'" :alt="agent.name" width="80" height="80" loading="lazy">
+                                    <img :src="agent.avatar_url || '/frontend/assets/images/placeholders/avatar.svg'" :alt="agent.name" width="80" height="80" loading="lazy">
                                 </div>
                                 <div class="mw-agent-card__intro">
                                     <h3 class="mw-agent-card__name">{{ agent.name }}</h3>
@@ -230,7 +234,7 @@ function agencyAria(template, name) {
 
                     <div class="mw-agency-contact">
                         <div class="mw-agency-contact__media">
-                            <img :src="agency.logo_url || '/frontend/assets/images/agencies/logo-dxb-dubai.png'" :alt="agency.name" width="176" height="166">
+                            <img :src="agency.logo_url || '/frontend/assets/images/placeholders/agency.svg'" :alt="agency.name" width="176" height="166">
                         </div>
 
                         <div class="mw-agency-contact__panel">

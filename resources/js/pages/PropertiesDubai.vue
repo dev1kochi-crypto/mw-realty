@@ -1,4 +1,5 @@
 <script setup>
+import AdBlock from '../components/AdBlock.vue';
 import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, toRef, watch } from 'vue';
 import { usePageWindow } from '../composables/usePageWindow';
 import { useRoute, useRouter } from 'vue-router';
@@ -785,6 +786,9 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
             </div>
         </section>
 
+
+        <!-- Admin › Ads — wide banner below the listings, before the footer (not on map view). -->
+        <AdBlock v-if="!mapView" :placement="premium ? 'premium-properties' : (marketing ? 'marketing-properties' : 'properties-dubai')" />
     </main>
 </template>
 

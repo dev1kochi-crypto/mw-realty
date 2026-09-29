@@ -115,20 +115,10 @@ class HomePageService
             ])->values()->all();
     }
 
+    /** Kept for API compatibility; the Home page itself loads its ad live (AdBlock) so ads rotate. */
     protected function ad(string $placement): ?array
     {
-        $ad = Ad::forPlacement($placement)->currentlyRunning()->orderBy('order_index')->first();
-        if (!$ad) {
-            return null;
-        }
-
-        return [
-            'name' => $ad->name,
-            'image_url' => media_url($ad->image),
-            'mobile_image_url' => $ad->mobile_image ? media_url($ad->mobile_image) : null,
-            'image_alt' => $ad->image_alt,
-            'link_url' => $ad->link_url,
-        ];
+        return Ad::payloadFor($placement, app()->getLocale());
     }
 
     protected function developments(string $lang): array

@@ -1,4 +1,5 @@
 <script setup>
+import WithAdSidebar from '../components/WithAdSidebar.vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useAgencies } from '../composables/useAgencies';
 import { useLanguages } from '../composables/useLanguages';
@@ -100,10 +101,11 @@ watch(filteredAgencies, () => {
 
                 <p v-if="agenciesListing && !filteredAgencies.length" class="mw-agencies__text">{{ t('agencies.no_results') }}</p>
 
+                <WithAdSidebar placement="agencies">
                 <div class="mw-agencies__grid" data-agencies-grid>
                     <article v-for="(agency, index) in filteredAgencies" :key="agency.slug" class="mw-agency-card" data-reveal :style="{ '--reveal-delay': index % 4 }">
                         <div class="mw-agency-card__logo">
-                            <img :src="agency.logo_url || '/frontend/assets/images/agencies/logo-kaal.png'" :alt="agency.name" width="200" height="120" loading="lazy">
+                            <img :src="agency.logo_url || '/frontend/assets/images/placeholders/agency.svg'" :alt="agency.name" width="200" height="120" loading="lazy">
                         </div>
                         <div class="mw-agency-card__body">
                             <h3 class="mw-agency-card__name">{{ agency.name }}</h3>
@@ -128,6 +130,7 @@ watch(filteredAgencies, () => {
                         </div>
                     </article>
                 </div>
+                </WithAdSidebar>
             </div>
         </section>
     </main>

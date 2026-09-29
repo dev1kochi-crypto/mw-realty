@@ -223,6 +223,41 @@ class PortalProfileController extends Controller
         return response()->json(['success' => true, 'redirect' => route('portal.login'), 'message' => 'Email updated — please log in again with your new email address.']);
     }
 
+    /**
+     * Profile photo (agent) / logo (agency) — shown on the public agent / agency pages and the
+     * property page's contact card. Public media (Cloudinary when configured), not a KYC document.
+     */
+    public function uploadAvatar(Request $request)
+    {
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpg,jpeg,png,webp|max:4096|dimensions:min_width=120,min_height=120',
+        ], [
+            'avatar.dimensions' => 'Use an image at least 120 × 120 pixels.',
+        ]);
+
+        $portalUser = Auth::guard('portal')->user();
+        $files = app(\App\Services\ManagedFiles::class);
+        if ($portalUser->avatar) {
+            $files->delete($portalUser->avatar);
+        }
+        $portalUser->avatar = $files->store($request->file('avatar'), 'avatars');
+        $portalUser->save();
+
+        return response()->json(['success' => true, 'avatar_url' => media_url($portalUser->avatar), 'message' => $portalUser->type === 'company' ? 'Logo updated.' : 'Profile photo updated.']);
+    }
+
+    public function removeAvatar()
+    {
+        $portalUser = Auth::guard('portal')->user();
+        if ($portalUser->avatar) {
+            app(\App\Services\ManagedFiles::class)->delete($portalUser->avatar);
+            $portalUser->avatar = null;
+            $portalUser->save();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
     public function uploadDocument(Request $request, $field)
     {
         abort_unless(in_array($field, PortalUser::DOCUMENT_FIELDS, true), 404);

@@ -1,4 +1,5 @@
 <script setup>
+import WithAdSidebar from '../components/WithAdSidebar.vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { usePageWindow } from '../composables/usePageWindow';
 import { useBlogListing } from '../composables/useBlogListing';
@@ -94,6 +95,7 @@ const pageNumbers = usePageWindow(currentPage, computed(() => pagination.value?.
                     <p v-if="description" class="mw-blog__text">{{ description }}</p>
                 </div>
 
+                <WithAdSidebar placement="blogs">
                 <div class="mw-blog__grid" id="blog-grid">
                     <article v-for="(post, index) in posts" :key="post.slug" class="mw-blog-card" data-reveal :style="{ '--reveal-delay': index % 3 }">
                         <router-link :to="`/blog-details/${post.slug}`" class="mw-blog-card__media">
@@ -114,6 +116,7 @@ const pageNumbers = usePageWindow(currentPage, computed(() => pagination.value?.
                     <button v-for="page in pageNumbers" :key="page" type="button" class="mw-blog__page" :class="{ 'is-active': page === currentPage }" @click="goToPage(page)">{{ page }}</button>
                     <button type="button" class="mw-blog__page mw-blog__page--next" :disabled="currentPage === pagination.last_page" @click="goToPage(currentPage + 1)">{{ t('blogs.next') }}</button>
                 </nav>
+                </WithAdSidebar>
             </div>
         </section>
     </main>

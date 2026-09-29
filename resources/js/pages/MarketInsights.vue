@@ -1,4 +1,5 @@
 <script setup>
+import WithAdSidebar from '../components/WithAdSidebar.vue';
 import { computed, nextTick, onMounted, watch } from 'vue';
 import { usePageWindow } from '../composables/usePageWindow';
 import { useRoute, useRouter } from 'vue-router';
@@ -131,6 +132,7 @@ const hasFilters = computed(() => Boolean(activeTopic.value || activeRegion.valu
                     <button v-for="topic in topics" :key="topic.key" type="button" class="mw-insights-topics__item" :class="{ 'is-active': activeTopic === topic.key }" :aria-pressed="activeTopic === topic.key" @click="selectTopic(topic.key)">{{ topic.label }}</button>
                 </div>
 
+                <WithAdSidebar placement="market-insights">
                 <div class="mw-insights-grid" :class="{ 'is-loading': listingLoading }">
                     <InsightCard v-for="(post, index) in posts" :key="post.slug" :insight="post" data-reveal :style="{ '--reveal-delay': index % 3 }" />
                 </div>
@@ -146,6 +148,7 @@ const hasFilters = computed(() => Boolean(activeTopic.value || activeRegion.valu
                     <button v-for="page in pageNumbers" :key="page" type="button" class="mw-blog__page" :class="{ 'is-active': page === currentPage }" @click="goToPage(page)">{{ page }}</button>
                     <button type="button" class="mw-blog__page mw-blog__page--next" :disabled="currentPage === pagination.last_page" @click="goToPage(currentPage + 1)">{{ t('blogs.next') }}</button>
                 </nav>
+                </WithAdSidebar>
             </div>
         </section>
     </main>

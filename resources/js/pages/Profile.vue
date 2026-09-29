@@ -154,7 +154,7 @@ watch(dashboard, () => {
                     <aside class="mw-dashboard__sidebar" data-sticky-sidebar>
                         <div class="mw-dashboard__profile">
                             <span class="mw-dashboard__avatar">
-                                <img :src="avatarPreview || dashboard.profile.avatar_url || '/frontend/assets/images/home/testimonial-anna.jpg'" alt="">
+                                <img :src="avatarPreview || dashboard.profile.avatar_url || '/frontend/assets/images/placeholders/avatar.svg'" alt="">
                             </span>
                             <p class="mw-dashboard__name">{{ dashboard.profile.name }}</p>
                             <p class="mw-dashboard__email">{{ dashboard.profile.email }}</p>
@@ -322,7 +322,7 @@ watch(dashboard, () => {
                             <form class="mw-dashboard__settings-form" @submit.prevent="saveSettings">
                                 <div class="mw-dashboard__avatar-upload">
                                     <span class="mw-dashboard__avatar-upload-preview">
-                                        <img :src="avatarPreview || dashboard.profile.avatar_url || '/frontend/assets/images/home/testimonial-anna.jpg'" alt="">
+                                        <img :src="avatarPreview || dashboard.profile.avatar_url || '/frontend/assets/images/placeholders/avatar.svg'" alt="">
                                     </span>
                                     <div>
                                         <button type="button" class="mw-dashboard__link-btn" @click="avatarInput?.click()">{{ t('profile.settings.change_photo') }}</button>

@@ -1,4 +1,5 @@
 <script setup>
+import AdBlock from '../components/AdBlock.vue';
 import { computed, nextTick, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAgentDetail } from '../composables/useAgentDetail';
@@ -67,7 +68,7 @@ const bioFallback = computed(() => t('agent_details.bio_fallback').replace('{nam
                 <article class="mw-agent-profile" data-reveal>
                     <div class="mw-agent-profile__top">
                         <div class="mw-agent-profile__avatar">
-                            <img :src="agent.avatar_url || '/frontend/assets/images/agents/ahmed.png'" :alt="agent.name" width="80" height="80">
+                            <img :src="agent.avatar_url || '/frontend/assets/images/placeholders/avatar.svg'" :alt="agent.name" width="80" height="80">
                         </div>
                         <div class="mw-agent-profile__meta">
                             <div class="mw-agent-profile__row">
@@ -120,6 +121,9 @@ const bioFallback = computed(() => t('agent_details.bio_fallback').replace('{nam
                 </div>
             </div>
         </section>
+
+        <!-- Admin › Ads — between the profile and the agent's listings. -->
+        <AdBlock placement="agent-details" />
 
         <section v-if="agent.properties.length" class="mw-agent-more">
             <div class="container-ctn">

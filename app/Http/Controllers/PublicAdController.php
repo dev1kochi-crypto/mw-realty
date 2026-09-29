@@ -15,22 +15,11 @@ class PublicAdController extends Controller
 {
     public function index(Request $request)
     {
-        $placement = $request->input('placement', 'home');
+        $placement = (string) $request->input('placement', 'home');
+        $lang = (string) $request->input('lang', app()->getLocale());
 
-        $ad = Ad::forPlacement($placement)->currentlyRunning()->orderBy('order_index')->first();
-
-        if (!$ad) {
-            // Explicit `false`, not `null` — Symfony's JsonResponse turns a `null` body into
-            // `{}` (an empty object), which is truthy in JS and would defeat a `v-if` check.
-            return response()->json(false);
-        }
-
-        return response()->json([
-            'name' => $ad->name,
-            'image_url' => media_url($ad->image),
-            'mobile_image_url' => $ad->mobile_image ? media_url($ad->mobile_image) : null,
-            'image_alt' => $ad->image_alt,
-            'link_url' => $ad->link_url,
-        ]);
+        // Explicit `false`, not `null` — Symfony's JsonResponse turns a `null` body into
+        // `{}` (an empty object), which is truthy in JS and would defeat a `v-if` check.
+        return response()->json(Ad::payloadFor($placement, $lang) ?? false);
     }
 }

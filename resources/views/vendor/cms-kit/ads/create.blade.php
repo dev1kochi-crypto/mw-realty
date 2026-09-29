@@ -56,7 +56,7 @@
                 <div class="col-md-4">
                     <label class="form-label fw-bold">Link URL</label>
                     <small class="text-muted d-block mb-1">Where clicking the ad takes visitors (optional).</small>
-                    <input type="url" name="link_url" class="form-control @error('link_url') is-invalid @enderror" value="{{ old('link_url') }}" placeholder="https://...">
+                    <input type="text" name="link_url" class="form-control @error('link_url') is-invalid @enderror" value="{{ old('link_url') }}" placeholder="https://... or /properties">
                     @error('link_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
@@ -71,6 +71,8 @@
                     @error('mobile_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
+
+            @include('cms-kit::ads._text_fields')
 
             <hr class="my-4">
 

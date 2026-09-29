@@ -20,8 +20,10 @@ class TestimonialSeeder extends Seeder
     public function run(): void
     {
         $this->seedSection();
+        $this->moveSeededMediaToCloudinary();
 
-        $video = $this->copyToStorage('frontend/video/testimonial.webm', 'testimonials/videos/demo-testimonial.webm');
+        // Only stored when a new video testimonial is actually created.
+        $video = fn () => $this->copyToStorage('frontend/video/testimonial.webm', 'testimonials/videos/demo-testimonial.webm');
 
         $items = [
             [
@@ -71,7 +73,7 @@ class TestimonialSeeder extends Seeder
                 'image' => $this->copyToStorage(self::ASSETS . $item['image'], 'testimonials/' . $item['image']),
                 'image_alt' => $item['en']['name'],
                 'video_source' => $isVideo ? 'file' : null,
-                'video_file' => $isVideo ? $video : null,
+                'video_file' => $isVideo ? $video() : null,
                 'video_url' => null,
                 'rating' => $item['rating'],
                 'order_index' => ++$order,
@@ -130,13 +132,62 @@ class TestimonialSeeder extends Seeder
     }
 
     /** Copies a bundled demo file onto the public disk (served at /storage/...), once. */
+    /** @var array<string, string> local seed path => stored value (Cloudinary URL or local path) */
+    private array $stored = [];
+
+    /**
+     * The demo photo / video as the site stores media: uploaded to Cloudinary when it's configured
+     * (once per file per run), otherwise copied to the public disk as before.
+     */
     private function copyToStorage(string $publicSource, string $target): string
     {
+        if (isset($this->stored[$target])) {
+            return $this->stored[$target];
+        }
+
+        if (\App\Services\CloudinaryMedia::enabled()) {
+            // ManagedFiles moves the file it is given, so hand it a temporary copy.
+            $tmp = tempnam(sys_get_temp_dir(), 'tst') . '.' . pathinfo($target, PATHINFO_EXTENSION);
+            copy(public_path($publicSource), $tmp);
+            $directory = trim(dirname($target), '/.');
+
+            return $this->stored[$target] = app(\App\Services\ManagedFiles::class)
+                ->store(new \Illuminate\Http\UploadedFile($tmp, basename($target), null, null, true), $directory);
+        }
+
         $disk = Storage::disk('public');
         if (!$disk->exists($target)) {
             $disk->put($target, file_get_contents(public_path($publicSource)));
         }
 
-        return $target;
+        return $this->stored[$target] = $target;
+    }
+
+    /**
+     * Testimonials seeded before media moved to Cloudinary still point at local files that don't
+     * exist on a server — re-upload those (only the untouched seed paths, never an admin's own upload).
+     */
+    private function moveSeededMediaToCloudinary(): void
+    {
+        if (!\App\Services\CloudinaryMedia::enabled()) {
+            return;
+        }
+
+        foreach (Testimonial::all() as $testimonial) {
+            $changes = [];
+            if ($testimonial->image && str_starts_with($testimonial->image, 'testimonials/')) {
+                $file = basename($testimonial->image);
+                if (is_file(public_path(self::ASSETS . $file))) {
+                    $changes['image'] = $this->copyToStorage(self::ASSETS . $file, 'testimonials/' . $file);
+                }
+            }
+            if ($testimonial->video_file === 'testimonials/videos/demo-testimonial.webm') {
+                $changes['video_file'] = $this->copyToStorage('frontend/video/testimonial.webm', 'testimonials/videos/demo-testimonial.webm');
+            }
+            if ($changes) {
+                $testimonial->update($changes);
+                $this->command?->info("Testimonial #{$testimonial->id}: media moved to Cloudinary.");
+            }
+        }
     }
 }

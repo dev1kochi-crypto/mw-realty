@@ -9,6 +9,7 @@ import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
 import { useLanguages } from '../composables/useLanguages';
 import { useRecaptcha } from '../composables/useRecaptcha';
+import AdBlock from '../components/AdBlock.vue';
 
 // One fetch for the whole page (see routes/api.php -> Api\HomeController) instead of a
 // request per section — every section below just reads its own slice of `homePage.value`.
@@ -44,7 +45,6 @@ async function submitContactForm() {
 
 const banner = computed(() => homePage.value?.banner || null);
 const brands = computed(() => homePage.value?.brands || []);
-const homeAd = computed(() => homePage.value?.ad || null);
 const developments = computed(() => homePage.value?.developments || null);
 const premiumProperties = computed(() => homePage.value?.premiumProperties || null);
 const luxuryProject = computed(() => homePage.value?.luxury || null);
@@ -702,17 +702,8 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             </div>
         </section>
 
-        <section class="mw-home-banner" v-if="homeAd && homeAd.image_url">
-            <div class="container-ctn">
-                <a :href="homeAd.link_url || '#'" class="mw-home-banner__card" :target="homeAd.link_url ? '_blank' : null" rel="noopener">
-                    <span class="mw-home-banner__label">{{ t('home.badges.advertisement') }}</span>
-                    <picture>
-                        <source v-if="homeAd.mobile_image_url" media="(max-width: 767px)" :srcset="homeAd.mobile_image_url">
-                        <img :src="homeAd.image_url" :alt="homeAd.image_alt || homeAd.name" class="mw-home-banner__image" loading="lazy">
-                    </picture>
-                </a>
-            </div>
-        </section>
+        <!-- Admin › Ads, placement "Home" — loaded live so several ads take turns. -->
+        <AdBlock placement="home" />
 
         <section class="mw-post-property mw-section mw-section--alt" id="post-property" v-if="showPostProperty">
             <div class="container-ctn">

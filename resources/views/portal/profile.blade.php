@@ -85,6 +85,15 @@
     .kyc-note.tone-info { background: rgba(4,161,204,0.07); border: 1px solid rgba(4,161,204,0.2); color: #0b4f63; }
     .kyc-note.tone-red { background: rgba(220,38,38,0.06); border: 1px solid rgba(220,38,38,0.2); color: #8f1d1d; }
     @media (max-width: 575.98px) { .kyc-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 0.9rem; } }
+    .profile-avatar-wrap { position: relative; flex-shrink: 0; }
+    .profile-avatar--upload { position: relative; cursor: pointer; overflow: visible; margin: 0; }
+    .profile-avatar--upload img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .profile-avatar--upload img.is-logo { object-fit: contain; background: #fff; padding: 6px; }
+    .profile-avatar__cam { position: absolute; right: -2px; bottom: -2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; color: var(--dash-navy); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; box-shadow: 0 3px 8px rgba(0,0,0,0.25); }
+    .profile-avatar__spin { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; color: #fff; }
+    .profile-avatar__remove { position: absolute; top: -4px; right: -4px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: #dc2626; color: #fff; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s; }
+    .profile-avatar-wrap:hover .profile-avatar__remove, .profile-avatar__remove:focus { opacity: 1; }
+    .profile-hero.is-stuck .profile-avatar__cam, .profile-hero.is-stuck .profile-avatar__remove { display: none !important; }
     .profile-avatar {
         width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
         display: flex; align-items: center; justify-content: center;
@@ -187,7 +196,18 @@
 <div id="profileHeroSentinel" aria-hidden="true"></div>
 <div class="profile-hero" id="profileHero">
     <div class="d-flex align-items-center gap-3">
-        <div class="profile-avatar {{ $avatarFill }}">{{ $initials }}</div>
+        {{-- Profile photo / agency logo — shown on the public agent / agency pages. Click to change. --}}
+        @php $avatarLabel = $portalUser->type === 'company' ? 'logo' : 'profile photo'; @endphp
+        <div class="profile-avatar-wrap">
+            <label class="profile-avatar {{ $avatarFill }} profile-avatar--upload" for="avatarInput" title="Change {{ $avatarLabel }}">
+                <img id="avatarImg" src="{{ $portalUser->avatar ? media_url($portalUser->avatar) : '' }}" alt="" class="{{ $portalUser->avatar ? '' : 'd-none' }} {{ $portalUser->type === 'company' ? 'is-logo' : '' }}">
+                <span id="avatarInitials" class="{{ $portalUser->avatar ? 'd-none' : '' }}">{{ $initials }}</span>
+                <span class="profile-avatar__cam" aria-hidden="true"><i class="fas fa-camera"></i></span>
+                <span class="profile-avatar__spin d-none" id="avatarSpin"><span class="spinner-border spinner-border-sm"></span></span>
+            </label>
+            <input type="file" id="avatarInput" accept="image/png,image/jpeg,image/webp" class="d-none" aria-label="Upload {{ $avatarLabel }}">
+            <button type="button" id="avatarRemove" class="profile-avatar__remove {{ $portalUser->avatar ? '' : 'd-none' }}" title="Remove {{ $avatarLabel }}" aria-label="Remove {{ $avatarLabel }}"><i class="fas fa-xmark"></i></button>
+        </div>
         <div>
             <div class="profile-name">{{ $displayName }}</div>
             <div class="profile-badges d-flex gap-2 align-items-center">
@@ -676,6 +696,46 @@
 
 @push('scripts')
 <script>
+// Profile photo / agency logo: pick a file → upload right away → show it (or back to initials on remove).
+(function () {
+    const input = document.getElementById('avatarInput');
+    if (!input) return;
+    const img = document.getElementById('avatarImg'), initials = document.getElementById('avatarInitials');
+    const spin = document.getElementById('avatarSpin'), removeBtn = document.getElementById('avatarRemove');
+    const headers = { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' };
+    const toast = (type, msg) => window.portalToast ? window.portalToast(type, msg) : alert(msg);
+    const show = url => {
+        img.src = url || '';
+        img.classList.toggle('d-none', !url);
+        initials.classList.toggle('d-none', !!url);
+        removeBtn.classList.toggle('d-none', !url);
+    };
+
+    input.addEventListener('change', function () {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 4 * 1024 * 1024) { toast('danger', 'Please choose an image under 4 MB.'); input.value = ''; return; }
+        const body = new FormData();
+        body.append('avatar', file);
+        spin.classList.remove('d-none');
+        fetch(@json(route('portal.profile.avatar.upload')), { method: 'POST', headers, body })
+            .then(async r => { const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.errors?.avatar?.[0] || d.message || 'Could not upload the image.'); return d; })
+            .then(d => { show(d.avatar_url); toast('success', d.message); })
+            .catch(err => toast('danger', err.message))
+            .finally(() => { spin.classList.add('d-none'); input.value = ''; });
+    });
+
+    removeBtn.addEventListener('click', async function () {
+        const ok = window.portalConfirm
+            ? await window.portalConfirm({ title: 'Remove this image?', message: 'Your public profile will show a placeholder instead.', confirmText: 'Remove', tone: 'danger' })
+            : confirm('Remove this image?');
+        if (!ok) return;
+        fetch(@json(route('portal.profile.avatar.remove')), { method: 'DELETE', headers })
+            .then(r => { if (!r.ok) throw new Error(); show(null); toast('success', 'Image removed.'); })
+            .catch(() => toast('danger', 'Could not remove the image.'));
+    });
+})();
+
 // Affiliated Brokerage: suggests registered agencies (server search, 20 at a time, more on scroll);
 // any typed name is kept as-is. Picking one only fills the text — it never links the account.
 (function () {

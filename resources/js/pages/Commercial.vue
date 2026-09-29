@@ -1,4 +1,5 @@
 <script setup>
+import AdBlock from '../components/AdBlock.vue';
 import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue';
 import { usePageWindow } from '../composables/usePageWindow';
 import { useRoute, useRouter } from 'vue-router';
@@ -602,5 +603,8 @@ function amenityOverflow(amenities) {
                 </nav>
             </div>
         </section>
+
+        <!-- Admin › Ads — wide banner below the listings, before the footer (not on map view). -->
+        <AdBlock v-if="!mapView" placement="commercial" />
     </main>
 </template>

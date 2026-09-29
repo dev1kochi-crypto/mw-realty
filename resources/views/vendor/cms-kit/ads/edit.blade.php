@@ -60,7 +60,7 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-bold">Link URL</label>
-                    <input type="url" name="link_url" class="form-control @error('link_url') is-invalid @enderror" value="{{ old('link_url', $ad->link_url) }}" placeholder="https://...">
+                    <input type="text" name="link_url" class="form-control @error('link_url') is-invalid @enderror" value="{{ old('link_url', $ad->link_url) }}" placeholder="https://... or /properties">
                     @error('link_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
@@ -80,6 +80,8 @@
                     @endif
                 </div>
             </div>
+
+            @include('cms-kit::ads._text_fields')
 
             <hr class="my-4">
 
