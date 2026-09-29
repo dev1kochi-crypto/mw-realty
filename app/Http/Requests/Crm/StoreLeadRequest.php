@@ -24,6 +24,7 @@ class StoreLeadRequest extends FormRequest
     public function rules(): array
     {
         $ownerId = app(OwnerContext::class)->effectiveOwnerId();
+        $usable = \App\Models\LeadStage::usableOwnerIds($ownerId);
 
         return [
             'name' => ['required', 'string', 'max:255'],
@@ -34,10 +35,11 @@ class StoreLeadRequest extends FormRequest
             'notes' => ['nullable', 'string'],
             'status' => ['nullable', Rule::in(['active', 'inactive'])],
             'owner_id' => ['nullable', 'integer', 'exists:portal_users,id'],
-            'stage_id' => ['nullable', 'integer', Rule::exists('lead_stages', 'id')->where('portal_user_id', $ownerId)],
-            'source_id' => ['nullable', 'integer', Rule::exists('lead_sources', 'id')->where('portal_user_id', $ownerId)],
+            // Own items plus Super Admin's global ones.
+            'stage_id' => ['nullable', 'integer', Rule::exists('lead_stages', 'id')->whereIn('portal_user_id', $usable)],
+            'source_id' => ['nullable', 'integer', Rule::exists('lead_sources', 'id')->whereIn('portal_user_id', $usable)],
             'tags' => ['nullable', 'array'],
-            'tags.*' => ['integer', Rule::exists('lead_tags', 'id')->where('portal_user_id', $ownerId)],
+            'tags.*' => ['integer', Rule::exists('lead_tags', 'id')->whereIn('portal_user_id', $usable)],
         ];
     }
 

@@ -856,6 +856,12 @@ Route::prefix('portal')->name('portal.')->group(function () {
                 Route::delete('/sources/{id}', [LeadSourceController::class, 'destroy'])->name('sources.destroy');
                 Route::post('/sources/reorder', [LeadSourceController::class, 'reorder'])->name('sources.reorder');
 
+                // Leads using a Stage / Tag / Source — list them and take the item off them before deleting.
+                Route::get('/{type}/{id}/leads', [\App\Http\Controllers\Portal\Crm\MasterLinkedLeadsController::class, 'index'])
+                    ->name('linked-leads.index')->whereIn('type', ['stages', 'tags', 'sources'])->whereNumber('id');
+                Route::post('/{type}/{id}/leads/remove', [\App\Http\Controllers\Portal\Crm\MasterLinkedLeadsController::class, 'remove'])
+                    ->name('linked-leads.remove')->whereIn('type', ['stages', 'tags', 'sources'])->whereNumber('id');
+
                 // Property form dropdown options — Super Admin only (checked in the controller).
                 Route::controller(\App\Http\Controllers\Portal\Crm\PropertyOptionController::class)->prefix('property-options')->name('property-options.')
                     ->group(function () {

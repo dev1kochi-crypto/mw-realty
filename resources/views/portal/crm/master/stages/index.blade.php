@@ -14,52 +14,59 @@
     </button>
 </div>
 
+@include('portal.crm.master._shared_note', ['what' => 'stages'])
+
 <div class="portal-card p-4">
-    <div class="text-muted small mb-2"><i class="fas fa-arrows-alt me-1"></i> Drag rows to reorder your pipeline.</div>
+    <div class="text-muted small mb-2"><i class="fas fa-arrows-alt me-1"></i> Drag your own rows to reorder your pipeline.</div>
     <div class="table-responsive">
         <table class="table portal-table mb-0" id="stagesTable">
             <thead>
-                <tr><th></th><th>Name</th><th>Closed?</th><th>Default</th>@if($isAdmin)<th>Owner</th>@endif<th class="text-end">Actions</th></tr>
+                <tr><th></th><th>Name</th><th>Closed?</th><th>Default</th><th class="text-center">Leads</th><th class="text-end">Actions</th></tr>
             </thead>
             <tbody>
                 @forelse($stages as $stage)
-                <tr draggable="true" data-id="{{ $stage->id }}">
-                    <td class="text-muted" style="cursor:grab;"><i class="fas fa-grip-lines"></i></td>
+                @php $editable = $isAdmin || !$stage->isGlobal(); @endphp
+                <tr @if($editable) draggable="true" @endif data-id="{{ $stage->id }}">
+                    <td class="text-muted" @if($editable) style="cursor:grab;" @endif>@if($editable)<i class="fas fa-grip-lines"></i>@else<i class="fas fa-lock" title="Set by MW Realty"></i>@endif</td>
                     <td>
                         <span class="portal-color-dot" style="background: {{ $stage->color }};"></span>
                         <span class="fw-semibold">{{ $stage->name }}</span>
+                        @include('portal.crm.master._global_badge', ['item' => $stage])
                     </td>
                     <td>{{ $stage->is_closed ? 'Yes' : 'No' }}</td>
                     <td>
                         @if($stage->is_default)
                         <span class="portal-badge-status portal-badge-active">Default</span>
-                        @else
+                        @elseif($editable)
                         <form action="{{ route('portal.crm.master.stages.set-default', $stage->id) }}" method="POST" class="d-inline">
                             @csrf
                             <button type="submit" class="btn btn-link btn-sm p-0">Set default</button>
                         </form>
                         @endif
                     </td>
-                    @if($isAdmin)
-                    <td>{{ $stage->owner?->displayName() ?? '-' }}</td>
-                    @endif
+                    <td class="text-center">@include('portal.crm.master._lead_count', ['type' => 'stages', 'label' => 'stage', 'item' => $stage, 'editable' => $editable])</td>
                     <td class="text-end">
+                        @if($editable)
                         <button type="button" class="btn btn-sm portal-btn-ghost edit-stage-btn"
                             data-id="{{ $stage->id }}" data-name="{{ $stage->name }}" data-color="{{ $stage->color }}" data-closed="{{ $stage->is_closed ? 1 : 0 }}">
                             Edit
                         </button>
                         @if(!$stage->is_default)
-                        <button type="button" class="btn btn-sm btn-outline-danger delete-stage-btn" data-id="{{ $stage->id }}">Delete</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-stage-btn" data-id="{{ $stage->id }}" data-type="stages" data-label="stage" data-name="{{ $stage->name }}" data-count="{{ $stage->leads_count }}">Delete</button>
+                        @endif
+                        @else
+                        <span class="portal-muted small">View only</span>
                         @endif
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="{{ $isAdmin ? 6 : 5 }}" class="portal-empty">No stages yet — add one above.</td></tr>
+                <tr><td colspan="6" class="portal-empty">No stages yet — add one above.</td></tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 </div>
+@include('portal.crm.master._linked_leads_modal')
 
 <div class="modal fade" id="addStageModal" tabindex="-1" aria-labelledby="addStageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -166,6 +173,8 @@
 
         document.querySelectorAll('.delete-stage-btn').forEach(function (btn) {
             btn.addEventListener('click', async function () {
+                // Still used by leads → show those leads so the stage can be taken off them first.
+                if (Number(btn.dataset.count) > 0) { window.openLinkedLeads(btn, true); return; }
                 if (!(await window.portalConfirm({ title: 'Delete this stage?', message: 'It will be removed from your lead pipeline.', confirmText: 'Delete', tone: 'danger' }))) return;
                 fetch("{{ url('portal/crm/master/stages') }}/" + btn.dataset.id, {
                     method: 'DELETE',

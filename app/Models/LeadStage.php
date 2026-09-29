@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class LeadStage extends Model
 {
+    use Concerns\SharedMasterData;
+
     protected $fillable = ['portal_user_id', 'name', 'color', 'order_index', 'is_closed', 'is_default'];
 
     protected $casts = [
@@ -45,14 +47,10 @@ class LeadStage extends Model
         return $this->hasMany(Lead::class, 'stage_id');
     }
 
-    public function scopeForOwner($query, ?int $ownerId)
+    /** The defaults are Super Admin's global stages, seeded once (idempotent) — no per-account copies. */
+    public static function seedDefaultsFor(?PortalUser $owner = null): void
     {
-        return $query->when($ownerId, fn ($q) => $q->where('portal_user_id', $ownerId));
-    }
-
-    /** Idempotent — only seeds if this owner has no stages yet. */
-    public static function seedDefaultsFor(PortalUser $owner): void
-    {
+        $owner = PortalUser::findOrFail(static::globalOwnerId());
         if (static::where('portal_user_id', $owner->id)->exists()) {
             return;
         }

@@ -15,7 +15,9 @@ class LeadTagController extends Controller
     public function index()
     {
         $ownerId = $this->effectiveOwnerId();
-        $tags = LeadTag::forOwner($ownerId)->orderBy('name')->get();
+        $tags = LeadTag::forOwner($ownerId)->with('owner:id,name,company_name,type')
+            ->withCount(app(\App\Services\Crm\MasterDataLinks::class)->countConstraint($this->ownerId()))
+            ->orderBy('name')->get();
 
         return view('portal.crm.master.tags.index', [
             'tags' => $tags,
@@ -29,7 +31,7 @@ class LeadTagController extends Controller
         abort_if(!$ownerId, 403);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:100', Rule::unique('lead_tags', 'name')->where('portal_user_id', $ownerId)],
+            'name' => ['required', 'string', 'max:100', Rule::unique('lead_tags', 'name')->whereIn('portal_user_id', LeadTag::usableOwnerIds($ownerId))],
             'color' => 'required|string|max:7',
         ]);
 
@@ -49,7 +51,8 @@ class LeadTagController extends Controller
 
     protected function findOwned($id): LeadTag
     {
-        return LeadTag::forOwner($this->effectiveOwnerId())->findOrFail($id);
+        // Own items only — Super Admin's global tags are read-only for agencies / agents.
+        return LeadTag::ownedBy($this->effectiveOwnerId())->findOrFail($id);
     }
 
     public function update(Request $request, $id)
@@ -57,7 +60,7 @@ class LeadTagController extends Controller
         $tag = $this->findOwned($id);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:100', Rule::unique('lead_tags', 'name')->where('portal_user_id', $tag->portal_user_id)->ignore($tag->id)],
+            'name' => ['required', 'string', 'max:100', Rule::unique('lead_tags', 'name')->whereIn('portal_user_id', LeadTag::usableOwnerIds($tag->portal_user_id))->ignore($tag->id)],
             'color' => 'required|string|max:7',
         ]);
 
@@ -72,6 +75,9 @@ class LeadTagController extends Controller
     public function destroy($id)
     {
         $tag = $this->findOwned($id);
+        if ($tag->leads()->exists()) {
+            return response()->json(['success' => false, 'in_use' => true, 'message' => 'This tag is still used by leads. Remove it from them first.'], 422);
+        }
         $tag->delete();
 
         return response()->json(['success' => true]);

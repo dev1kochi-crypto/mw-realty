@@ -15,7 +15,9 @@ class LeadSourceController extends Controller
     public function index()
     {
         $ownerId = $this->effectiveOwnerId();
-        $sources = LeadSource::forOwner($ownerId)->orderBy('order_index')->get();
+        $sources = LeadSource::forOwner($ownerId)->with('owner:id,name,company_name,type')
+            ->withCount(app(\App\Services\Crm\MasterDataLinks::class)->countConstraint($this->ownerId()))
+            ->orderBy('order_index')->get();
 
         return view('portal.crm.master.sources.index', [
             'sources' => $sources,
@@ -29,7 +31,7 @@ class LeadSourceController extends Controller
         abort_if(!$ownerId, 403);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:100', Rule::unique('lead_sources', 'name')->where('portal_user_id', $ownerId)],
+            'name' => ['required', 'string', 'max:100', Rule::unique('lead_sources', 'name')->whereIn('portal_user_id', LeadSource::usableOwnerIds($ownerId))],
         ]);
 
         $nextOrder = (int) LeadSource::forOwner($ownerId)->max('order_index') + 1;
@@ -45,7 +47,8 @@ class LeadSourceController extends Controller
 
     protected function findOwned($id): LeadSource
     {
-        return LeadSource::forOwner($this->effectiveOwnerId())->findOrFail($id);
+        // Own items only — Super Admin's global sources are read-only for agencies / agents.
+        return LeadSource::ownedBy($this->effectiveOwnerId())->findOrFail($id);
     }
 
     public function update(Request $request, $id)
@@ -53,7 +56,7 @@ class LeadSourceController extends Controller
         $source = $this->findOwned($id);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:100', Rule::unique('lead_sources', 'name')->where('portal_user_id', $source->portal_user_id)->ignore($source->id)],
+            'name' => ['required', 'string', 'max:100', Rule::unique('lead_sources', 'name')->whereIn('portal_user_id', LeadSource::usableOwnerIds($source->portal_user_id))->ignore($source->id)],
         ]);
 
         $source->update(['name' => $request->input('name')]);
@@ -66,7 +69,7 @@ class LeadSourceController extends Controller
         $source = $this->findOwned($id);
 
         if ($source->leads()->exists()) {
-            return response()->json(['success' => false, 'message' => 'Reassign leads off this source before deleting it.'], 422);
+            return response()->json(['success' => false, 'message' => 'This source is still used by leads. Remove it from them first.', 'in_use' => true], 422);
         }
 
         $source->delete();

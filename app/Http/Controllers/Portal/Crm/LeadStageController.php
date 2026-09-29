@@ -21,7 +21,9 @@ class LeadStageController extends Controller
     public function index()
     {
         $ownerId = $this->effectiveOwnerId();
-        $stages = LeadStage::forOwner($ownerId)->orderBy('order_index')->get();
+        $stages = LeadStage::forOwner($ownerId)->with('owner:id,name,company_name,type')
+            ->withCount(app(\App\Services\Crm\MasterDataLinks::class)->countConstraint($this->ownerId()))
+            ->orderBy('order_index')->get();
 
         return view('portal.crm.master.stages.index', [
             'stages' => $stages,
@@ -69,7 +71,8 @@ class LeadStageController extends Controller
 
     protected function findOwned($id): LeadStage
     {
-        return LeadStage::forOwner($this->effectiveOwnerId())->findOrFail($id);
+        // Own items only — Super Admin's global stages are read-only for agencies / agents.
+        return LeadStage::ownedBy($this->effectiveOwnerId())->findOrFail($id);
     }
 
     public function update(Request $request, $id)
@@ -77,7 +80,7 @@ class LeadStageController extends Controller
         $stage = $this->findOwned($id);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:100', Rule::unique('lead_stages', 'name')->where('portal_user_id', $stage->portal_user_id)->ignore($stage->id)],
+            'name' => ['required', 'string', 'max:100', Rule::unique('lead_stages', 'name')->whereIn('portal_user_id', LeadStage::usableOwnerIds($stage->portal_user_id))->ignore($stage->id)],
             'color' => 'required|string|max:7',
             'is_closed' => 'nullable|boolean',
         ]);
@@ -99,7 +102,7 @@ class LeadStageController extends Controller
             return response()->json(['success' => false, 'message' => 'The default stage can\'t be deleted.'], 422);
         }
         if ($stage->leads()->exists()) {
-            return response()->json(['success' => false, 'message' => 'Reassign leads off this stage before deleting it.'], 422);
+            return response()->json(['success' => false, 'in_use' => true, 'message' => 'This stage is still used by leads. Remove it from them first.'], 422);
         }
 
         $stage->delete();
@@ -128,7 +131,7 @@ class LeadStageController extends Controller
     {
         $stage = $this->findOwned($id);
 
-        LeadStage::forOwner($stage->portal_user_id)->update(['is_default' => false]);
+        LeadStage::ownedBy($stage->portal_user_id)->update(['is_default' => false]);
         $stage->update(['is_default' => true]);
 
         return response()->json(['success' => true]);

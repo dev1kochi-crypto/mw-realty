@@ -354,6 +354,7 @@ class LeadController extends Controller
                 if ($viewerOwnerId && $viewerOwnerId !== $lead->portal_user_id) {
                     $q->orWhere('portal_user_id', $viewerOwnerId);
                 }
+                $q->orWhere('portal_user_id', \App\Models\LeadStage::globalOwnerId()); // Super Admin's global items
             });
         };
 
@@ -435,6 +436,7 @@ class LeadController extends Controller
                     if ($viewerOwnerId && $viewerOwnerId !== $lead->portal_user_id) {
                         $query->orWhere('portal_user_id', $viewerOwnerId);
                     }
+                    $query->orWhere('portal_user_id', \App\Models\LeadStage::globalOwnerId());
                 }),
             ],
         ]);
@@ -461,6 +463,7 @@ class LeadController extends Controller
             if ($viewerOwnerId && $viewerOwnerId !== $lead->portal_user_id) {
                 $query->orWhere('portal_user_id', $viewerOwnerId);
             }
+            $query->orWhere('portal_user_id', \App\Models\LeadStage::globalOwnerId());
         };
 
         $request->validate([
@@ -522,7 +525,7 @@ class LeadController extends Controller
     public function bulkStage(Request $request)
     {
         $data = $request->validate([
-            'stage_id' => ['nullable', 'integer', Rule::exists('lead_stages', 'id')->where('portal_user_id', $this->effectiveOwnerId())],
+            'stage_id' => ['nullable', 'integer', Rule::exists('lead_stages', 'id')->whereIn('portal_user_id', \App\Models\LeadStage::usableOwnerIds($this->effectiveOwnerId()))],
         ], ['stage_id.exists' => 'That stage does not belong to your account.']);
         $ids = $this->selectedLeadsQuery($request)->pluck('leads.id');
 
@@ -553,7 +556,7 @@ class LeadController extends Controller
     {
         $data = $request->validate([
             'tags' => ['required', 'array', 'min:1'],
-            'tags.*' => ['integer', Rule::exists('lead_tags', 'id')->where('portal_user_id', $this->effectiveOwnerId())],
+            'tags.*' => ['integer', Rule::exists('lead_tags', 'id')->whereIn('portal_user_id', \App\Models\LeadStage::usableOwnerIds($this->effectiveOwnerId()))],
         ], ['tags.required' => 'Choose at least one tag.', 'tags.*.exists' => 'One of the tags does not belong to your account.']);
         $ids = $this->selectedLeadsQuery($request)->pluck('leads.id');
 

@@ -84,7 +84,7 @@ class GroqChatbotProvider implements ChatbotProvider
     private function chatCompletion(array $messages, array $tools): ?array
     {
         try {
-            $response = Http::timeout(15)
+            $send = fn () => Http::timeout(15)
                 ->withToken($this->apiKey)
                 ->post(self::ENDPOINT, [
                     'model' => $this->model,
@@ -94,6 +94,17 @@ class GroqChatbotProvider implements ChatbotProvider
                     'temperature' => 0.3,
                     'max_tokens' => 512,
                 ]);
+            $response = $send();
+
+            // Free-tier per-minute token limit: Groq says how long to wait (usually ~1s) — wait
+            // once and retry, instead of failing the chat turn.
+            if ($response->status() === 429) {
+                $wait = (float) ($response->header('retry-after') ?: 2);
+                if ($wait > 0 && $wait <= 5) {
+                    usleep((int) ($wait * 1_000_000));
+                    $response = $send();
+                }
+            }
 
             if (!$response->successful()) {
                 Log::error('Groq API error: ' . $response->status() . ' ' . $response->body());
@@ -121,13 +132,22 @@ class GroqChatbotProvider implements ChatbotProvider
         ];
     }
 
-    private function lowercaseTypes(array $schema): array
+    private function lowercaseTypes(array $schema, bool $nullable = false): array
     {
         if (isset($schema['type']) && is_string($schema['type'])) {
             $schema['type'] = strtolower($schema['type']);
         }
+        // Groq validates tool arguments strictly, and for a broad request ("show me properties")
+        // the model sends every filter as null — so each filter must also accept null
+        // (ChatbotService::sanitizeArgs() drops nulls, i.e. "no filter").
+        if ($nullable && isset($schema['type']) && $schema['type'] !== 'object') {
+            $schema['type'] = [$schema['type'], 'null'];
+            if (isset($schema['enum'])) {
+                $schema['enum'] = [...$schema['enum'], null];
+            }
+        }
         if (isset($schema['properties']) && is_array($schema['properties'])) {
-            $schema['properties'] = array_map(fn ($prop) => is_array($prop) ? $this->lowercaseTypes($prop) : $prop, $schema['properties']);
+            $schema['properties'] = array_map(fn ($prop) => is_array($prop) ? $this->lowercaseTypes($prop, true) : $prop, $schema['properties']);
         }
         return $schema;
     }

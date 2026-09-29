@@ -14,32 +14,39 @@
     </button>
 </div>
 
+@include('portal.crm.master._shared_note', ['what' => 'tags'])
+
 <div class="portal-card p-4">
     <div class="table-responsive">
         <table class="table portal-table mb-0">
-            <thead><tr><th>Name</th>@if($isAdmin)<th>Owner</th>@endif<th class="text-end">Actions</th></tr></thead>
+            <thead><tr><th>Name</th><th class="text-center">Leads</th><th class="text-end">Actions</th></tr></thead>
             <tbody>
                 @forelse($tags as $tag)
+                @php $editable = $isAdmin || !$tag->isGlobal(); @endphp
                 <tr>
                     <td>
                         <span class="portal-tag-chip" style="background: {{ $tag->color }}22; color: {{ $tag->color }};">{{ $tag->name }}</span>
+                        @include('portal.crm.master._global_badge', ['item' => $tag])
                     </td>
-                    @if($isAdmin)
-                    <td>{{ $tag->owner?->displayName() ?? '-' }}</td>
-                    @endif
+                    <td class="text-center">@include('portal.crm.master._lead_count', ['type' => 'tags', 'label' => 'tag', 'item' => $tag, 'editable' => $editable])</td>
                     <td class="text-end">
+                        @if($editable)
                         <button type="button" class="btn btn-sm portal-btn-ghost edit-tag-btn"
                             data-id="{{ $tag->id }}" data-name="{{ $tag->name }}" data-color="{{ $tag->color }}">Edit</button>
-                        <button type="button" class="btn btn-sm btn-outline-danger delete-tag-btn" data-id="{{ $tag->id }}">Delete</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-tag-btn" data-id="{{ $tag->id }}" data-type="tags" data-label="tag" data-name="{{ $tag->name }}" data-count="{{ $tag->leads_count }}">Delete</button>
+                        @else
+                        <span class="portal-muted small">View only</span>
+                        @endif
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="{{ $isAdmin ? 3 : 2 }}" class="portal-empty">No tags yet — add one above.</td></tr>
+                <tr><td colspan="3" class="portal-empty">No tags yet — add one above.</td></tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 </div>
+@include('portal.crm.master._linked_leads_modal')
 
 <div class="modal fade" id="addTagModal" tabindex="-1" aria-labelledby="addTagModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -136,6 +143,7 @@
 
         document.querySelectorAll('.delete-tag-btn').forEach(function (btn) {
             btn.addEventListener('click', async function () {
+                if (Number(btn.dataset.count) > 0) { window.openLinkedLeads(btn, true); return; }
                 if (!(await window.portalConfirm({ title: 'Delete this tag?', message: 'It will be removed from your lead tags.', confirmText: 'Delete', tone: 'danger' }))) return;
                 fetch("{{ url('portal/crm/master/tags') }}/" + btn.dataset.id, {
                     method: 'DELETE',

@@ -133,11 +133,10 @@ class PropertySaleService
         ]);
     }
 
-    /** The lead owner's first won stage (closed, not "lost") — created if that owner has none. */
+    /** The lead owner's first won stage (closed, not "lost"; own or Super Admin's global) — created if there is none. */
     private function wonStage(?int $ownerId): ?LeadStage
     {
-        $stage = LeadStage::query()
-            ->when($ownerId, fn ($q, $id) => $q->where('portal_user_id', $id), fn ($q) => $q->whereNull('portal_user_id'))
+        $stage = LeadStage::forOwner($ownerId ?? LeadStage::globalOwnerId())
             ->where('is_closed', true)->orderBy('order_index')->get()
             ->first(fn (LeadStage $s) => $s->isWon());
 

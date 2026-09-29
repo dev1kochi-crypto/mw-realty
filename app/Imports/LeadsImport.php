@@ -61,8 +61,8 @@ class LeadsImport implements ToCollection, WithHeadingRow
             return;
         }
 
-        $stagesByName = LeadStage::where('portal_user_id', $this->ownerId)->get()->keyBy(fn ($s) => strtolower($s->name));
-        $sourcesByName = LeadSource::where('portal_user_id', $this->ownerId)->get()->keyBy(fn ($s) => strtolower($s->name));
+        $stagesByName = LeadStage::forOwner($this->ownerId)->get()->keyBy(fn ($s) => strtolower($s->name));
+        $sourcesByName = LeadSource::forOwner($this->ownerId)->get()->keyBy(fn ($s) => strtolower($s->name));
 
         DB::transaction(function () use ($rows, $stagesByName, $sourcesByName) {
             foreach ($rows as $index => $row) {

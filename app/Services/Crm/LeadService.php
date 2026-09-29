@@ -271,10 +271,9 @@ class LeadService
                 continue;
             }
 
-            $ids[] = LeadTag::firstOrCreate(
-                ['portal_user_id' => $ownerId, 'name' => $name],
-                ['color' => '#14b8a6']
-            )->id;
+            // An existing own or global (Super Admin) tag of that name is reused.
+            $ids[] = LeadTag::forOwner($ownerId)->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->value('id')
+                ?? LeadTag::create(['portal_user_id' => $ownerId, 'name' => $name, 'color' => '#14b8a6'])->id;
         }
 
         return $ids;

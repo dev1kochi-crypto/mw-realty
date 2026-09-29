@@ -14,32 +14,38 @@
     </button>
 </div>
 
+@include('portal.crm.master._shared_note', ['what' => 'sources'])
+
 <div class="portal-card p-4">
-    <div class="text-muted small mb-2"><i class="fas fa-arrows-alt me-1"></i> Drag rows to reorder.</div>
+    <div class="text-muted small mb-2"><i class="fas fa-arrows-alt me-1"></i> Drag your own rows to reorder.</div>
     <div class="table-responsive">
         <table class="table portal-table mb-0" id="sourcesTable">
-            <thead><tr><th></th><th>Name</th>@if($isAdmin)<th>Owner</th>@endif<th class="text-end">Actions</th></tr></thead>
+            <thead><tr><th></th><th>Name</th><th class="text-center">Leads</th><th class="text-end">Actions</th></tr></thead>
             <tbody>
                 @forelse($sources as $source)
-                <tr draggable="true" data-id="{{ $source->id }}">
-                    <td class="text-muted" style="cursor:grab;"><i class="fas fa-grip-lines"></i></td>
-                    <td class="fw-semibold">{{ $source->name }}</td>
-                    @if($isAdmin)
-                    <td>{{ $source->owner?->displayName() ?? '-' }}</td>
-                    @endif
+                @php $editable = $isAdmin || !$source->isGlobal(); @endphp
+                <tr @if($editable) draggable="true" @endif data-id="{{ $source->id }}">
+                    <td class="text-muted" @if($editable) style="cursor:grab;" @endif>@if($editable)<i class="fas fa-grip-lines"></i>@else<i class="fas fa-lock" title="Set by MW Realty"></i>@endif</td>
+                    <td class="fw-semibold">{{ $source->name }} @include('portal.crm.master._global_badge', ['item' => $source])</td>
+                    <td class="text-center">@include('portal.crm.master._lead_count', ['type' => 'sources', 'label' => 'source', 'item' => $source, 'editable' => $editable])</td>
                     <td class="text-end">
+                        @if($editable)
                         <button type="button" class="btn btn-sm portal-btn-ghost edit-source-btn"
                             data-id="{{ $source->id }}" data-name="{{ $source->name }}">Edit</button>
-                        <button type="button" class="btn btn-sm btn-outline-danger delete-source-btn" data-id="{{ $source->id }}">Delete</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-source-btn" data-id="{{ $source->id }}" data-type="sources" data-label="source" data-name="{{ $source->name }}" data-count="{{ $source->leads_count }}">Delete</button>
+                        @else
+                        <span class="portal-muted small">View only</span>
+                        @endif
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="{{ $isAdmin ? 4 : 3 }}" class="portal-empty">No sources yet — add one above.</td></tr>
+                <tr><td colspan="4" class="portal-empty">No sources yet — add one above.</td></tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 </div>
+@include('portal.crm.master._linked_leads_modal')
 
 <div class="modal fade" id="addSourceModal" tabindex="-1" aria-labelledby="addSourceModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -127,6 +133,7 @@
 
         document.querySelectorAll('.delete-source-btn').forEach(function (btn) {
             btn.addEventListener('click', async function () {
+                if (Number(btn.dataset.count) > 0) { window.openLinkedLeads(btn, true); return; }
                 if (!(await window.portalConfirm({ title: 'Delete this source?', message: 'It will be removed from your lead sources.', confirmText: 'Delete', tone: 'danger' }))) return;
                 fetch("{{ url('portal/crm/master/sources') }}/" + btn.dataset.id, {
                     method: 'DELETE',
