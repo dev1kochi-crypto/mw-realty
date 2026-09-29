@@ -55,21 +55,22 @@ class DemoPropertyMedia
         return CloudinaryMedia::enabled();
     }
 
-    /** Gives $property a PHOTOS_PER_LISTING-photo gallery, picking demo images by $seed. */
-    public function attachGallery(Property $property, int $seed): void
+    /** Gives $property a gallery of $count demo photos (default PHOTOS_PER_LISTING), picked by $seed. */
+    public function attachGallery(Property $property, int $seed, ?int $count = null): void
     {
         $ref = $property->reference_no;
-        $numbers = range(1, self::PHOTOS_PER_LISTING);
+        $count = max(1, min($count ?? self::PHOTOS_PER_LISTING, count(self::IMAGES)));
+        $numbers = range(1, $count);
 
         if ($this->usesCloudinary()) {
             $folder = $this->cloudinary->folderUrl('properties/demo/' . $ref);
             foreach ($numbers as $n) {
-                $this->gallery->put($folder, "{$ref}-{$n}.jpeg", $this->imageBytes($this->pick($seed, $n)));
+                $this->gallery->put($folder, "{$ref}-{$n}.jpeg", $this->imageBytes($this->pick($seed, $n, $count)));
             }
         } else {
             $folder = 'properties/' . $ref;
             foreach ($numbers as $n) {
-                $this->linkLocal($this->localMaster($this->pick($seed, $n)), "{$folder}/{$ref}-{$n}.jpeg");
+                $this->linkLocal($this->localMaster($this->pick($seed, $n, $count)), "{$folder}/{$ref}-{$n}.jpeg");
             }
         }
 
@@ -109,9 +110,9 @@ class DemoPropertyMedia
         }
     }
 
-    private function pick(int $seed, int $n): int
+    private function pick(int $seed, int $n, int $count = self::PHOTOS_PER_LISTING): int
     {
-        return ($seed * self::PHOTOS_PER_LISTING + $n - 1) % count(self::IMAGES);
+        return ($seed * $count + $n - 1) % count(self::IMAGES);
     }
 
     /** The demo image, scaled down to MAX_EDGE and re-encoded (cached per image). */

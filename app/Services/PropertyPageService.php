@@ -44,7 +44,8 @@ class PropertyPageService
                 'id' => $property->id,
                 'slug' => $property->slug,
                 'name' => $property->getTranslation('title', $lang),
-                'description' => $property->getTranslation('description', $lang),
+                // Rich text from the listing editor — cleaned (no scripts / styles) so it can render as HTML.
+                'description' => \App\Support\SafeHtml::clean($property->getTranslation('description', $lang)),
                 'images' => $allImages,
                 'location' => $location,
                 'address' => $property->getTranslation('address', $lang),

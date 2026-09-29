@@ -50,6 +50,22 @@ const exploreEl = ref(null);
 const mobileExploreOpen = ref(false);
 
 watch(() => route.fullPath, () => { exploreOpen.value = false; });
+
+// After a link in the menu is clicked the pointer is still over it and the link still has focus,
+// so the CSS :hover / :focus-within rules would keep it open. Close it, drop focus, and keep it
+// shut until the pointer leaves the Explore item.
+const exploreSuppressed = ref(false);
+function onExploreLinkClick(e) {
+    if (!e.target.closest('a')) return;
+    exploreOpen.value = false;
+    exploreSuppressed.value = true;
+    document.activeElement?.blur?.();
+}
+// Cleared on a real pointer move outside the item — not on mouseleave, which also fires when the
+// page swap re-lays out the screen under a pointer that has not moved.
+function onPointerMove(e) {
+    if (exploreSuppressed.value && exploreEl.value && !exploreEl.value.contains(e.target)) exploreSuppressed.value = false;
+}
 watch(exploreActive, (active) => { if (active) mobileExploreOpen.value = true; }, { immediate: true });
 
 function onDocumentClick(e) {
@@ -66,11 +82,13 @@ function onKeydown(e) {
 onMounted(() => {
     document.addEventListener('click', onDocumentClick);
     document.addEventListener('keydown', onKeydown);
+    document.addEventListener('pointermove', onPointerMove, { passive: true });
 });
 
 onBeforeUnmount(() => {
     document.removeEventListener('click', onDocumentClick);
     document.removeEventListener('keydown', onKeydown);
+    document.removeEventListener('pointermove', onPointerMove);
 });
 
 const { authenticated, user } = useWishlist();
@@ -113,7 +131,8 @@ function logout(e) {
                         <li v-for="link in primaryLinks" :key="link.key">
                             <router-link :to="link.to" :class="{ 'is-active': activeNav === link.key }">{{ link.label }}</router-link>
                         </li>
-                        <li ref="exploreEl" class="mw-nav__item--has-sub" :class="{ 'is-open': exploreOpen }">
+                        <li ref="exploreEl" class="mw-nav__item--has-sub" :class="{ 'is-open': exploreOpen, 'is-suppressed': exploreSuppressed }"
+                            @click="onExploreLinkClick">
                             <button
                                 type="button"
                                 class="mw-nav__trigger"
@@ -258,3 +277,14 @@ function logout(e) {
         </div>
     </div>
 </template>
+
+<style>
+/* Explore: after a link is clicked, stay closed (despite :hover / :focus-within) until the pointer leaves. */
+header .mw-nav__item--has-sub.is-suppressed:not(.is-open) .mw-nav__submenu,
+header .mw-nav__item--has-sub.is-suppressed:not(.is-open) .mw-nav__submenu .mw-nav__submenu {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, -6px) scale(0.97);
+}
+</style>

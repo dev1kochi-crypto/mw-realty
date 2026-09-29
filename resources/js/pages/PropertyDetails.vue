@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { usePropertyDetail } from '../composables/usePropertyDetail';
 import { useLanguages } from '../composables/useLanguages';
@@ -22,6 +22,27 @@ function load() {
 }
 
 onMounted(load);
+
+// Sidebar (agent card, enquiry form, ad) floats while the page scrolls. If it fits on screen it
+// pins under the header; if it is taller, it scrolls until its bottom reaches the bottom of the
+// screen and pins there — so every part of it is reachable. Re-measured when its height changes.
+const sidebarEl = ref(null);
+const sidebarTop = ref(null);
+const HEADER_OFFSET = 150;
+function measureSidebar() {
+    const el = sidebarEl.value;
+    if (!el) return;
+    const fits = el.offsetHeight + HEADER_OFFSET + 16 <= window.innerHeight;
+    sidebarTop.value = fits ? `${HEADER_OFFSET}px` : `${window.innerHeight - el.offsetHeight - 16}px`;
+}
+let sidebarObserver = null;
+watch(sidebarEl, (el) => {
+    sidebarObserver?.disconnect();
+    if (el && 'ResizeObserver' in window) { sidebarObserver = new ResizeObserver(measureSidebar); sidebarObserver.observe(el); }
+    measureSidebar();
+});
+onMounted(() => window.addEventListener('resize', measureSidebar, { passive: true }));
+onBeforeUnmount(() => { window.removeEventListener('resize', measureSidebar); sidebarObserver?.disconnect(); });
 watch(() => route.params.slug, load);
 watch(selectedLanguage, load);
 watch(
@@ -228,7 +249,9 @@ function agentAria(template, name) {
                         <section id="overview" class="mw-property__section" data-reveal data-property-panel="overview">
                             <h3 class="mw-property__section-title">{{ t('property_details.overview_title') }}</h3>
                             <div class="mw-property__about-text">
-                                <p>{{ property.description || descriptionFallback }}</p>
+                                <!-- description arrives already sanitised (SafeHtml::clean) — render its formatting, not its tags. -->
+                                <div v-if="property.description" class="mw-property__rich" v-html="property.description"></div>
+                                <p v-else>{{ descriptionFallback }}</p>
                             </div>
 
                             <div class="mw-property__pills">
@@ -254,15 +277,20 @@ function agentAria(template, name) {
                                         <img :src="property.images[0]" :alt="`${property.name} photo gallery — main view`">
                                     </a>
                                 </div>
-                                <div class="mw-property__photo-gallery-grid">
-                                    <a v-for="(src, index) in property.images.slice(1)" :key="index" :href="src" data-fancybox="property-gallery" :data-caption="`${property.name} — photo ${index + 2}`"><img :src="src" :alt="`${property.name} photo`" loading="lazy"></a>
+                                <!-- Up to 4 thumbnails; the last one shows "+N" for the rest. Every photo stays in the
+                                     Fancybox group (the extra ones hidden), so the viewer slides through all of them. -->
+                                <div v-if="property.images.length > 1" class="mw-property__photo-gallery-grid mw-gallery-grid--compact" :class="`mw-gallery-grid--n${Math.min(property.images.length - 1, 4)}`">
+                                    <a v-for="(src, index) in property.images.slice(1)" :key="index" v-show="index < 4" :href="src" data-fancybox="property-gallery" :data-caption="`${property.name} — photo ${index + 2}`" class="mw-gallery-thumb">
+                                        <img :src="src" :alt="`${property.name} photo`" loading="lazy">
+                                        <span v-if="index === 3 && property.images.length > 5" class="mw-gallery-thumb__more">+{{ property.images.length - 5 }} {{ property.images.length - 5 === 1 ? t('property_details.gallery_more_photo', 'photo') : t('property_details.gallery_more_photos', 'photos') }}</span>
+                                    </a>
                                 </div>
                             </div>
                         </section>
 
                     </div>
 
-                    <aside class="mw-property__agent-wrap" data-reveal>
+                    <aside ref="sidebarEl" class="mw-property__agent-wrap" data-reveal :style="{ top: sidebarTop }">
                         <article v-if="property.contact" class="mw-agent-card mw-property-agent">
                             <div class="mw-agent-card__head">
                                 <div class="mw-agent-card__avatar">
@@ -446,4 +474,34 @@ function agentAria(template, name) {
 .mw-brochure-feedback{margin:0;font-size:13px}.is-error{color:#b4233f}.mw-brochure-success p{color:#18794e}.mw-brochure-success a{width:100%}
 @keyframes brochureFade{from{opacity:0}to{opacity:1}}@keyframes brochurePop{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:500px){.mw-brochure-dialog{padding:28px 22px;border-radius:18px}}
+</style>
+
+<style>
+/* The site sets overflow-x: hidden on body / main, which stops a sticky sidebar from sticking
+   (it becomes relative to a box that never scrolls). clip hides sideways overflow without that. */
+body:has(.mw-property__agent-wrap),
+main:has(.mw-property__agent-wrap) { overflow-x: clip; }
+
+/* Photo Gallery: main photo + up to 4 thumbnails (2 × 2) filling the same height; "+N" on the last. */
+.mw-gallery-grid--compact { grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
+.mw-gallery-grid--n1 { grid-template-columns: minmax(0, 1fr); }
+.mw-gallery-grid--n3 .mw-gallery-thumb:first-child { grid-column: span 2; }
+.mw-gallery-grid--compact .mw-gallery-thumb { position: relative; }
+.mw-gallery-grid--compact .mw-gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mw-gallery-thumb__more {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(10, 15, 26, 0.55); color: #fff; font-weight: 700; font-size: clamp(15px, 1.4vw, 19px);
+    letter-spacing: 0.01em; transition: background 0.2s ease;
+}
+.mw-gallery-thumb:hover .mw-gallery-thumb__more { background: rgba(10, 15, 26, 0.68); }
+
+/* Listing description (rich text from the listing editor). */
+.mw-property__rich > :first-child { margin-top: 0; }
+.mw-property__rich > :last-child { margin-bottom: 0; }
+.mw-property__rich p { margin: 0 0 0.9em; }
+.mw-property__rich ul, .mw-property__rich ol { margin: 0 0 0.9em; padding-inline-start: 1.3em; }
+.mw-property__rich li { margin-bottom: 0.3em; }
+.mw-property__rich h2, .mw-property__rich h3, .mw-property__rich h4 { margin: 1em 0 0.5em; font-size: 1.05em; font-weight: 700; }
+.mw-property__rich a { color: inherit; text-decoration: underline; }
+.mw-property__rich img { max-width: 100%; height: auto; border-radius: 10px; }
 </style>
