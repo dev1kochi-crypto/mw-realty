@@ -277,4 +277,31 @@ class LeadAssignmentTest extends TestCase
         $this->assertNull($lead->agent_id, "Agency A's agent must not keep working Agency B's lead.");
         $this->assertSame(2, LeadAssignmentHistory::where('lead_id', $lead->id)->count());
     }
+
+    public function test_repeat_enquiry_on_an_agents_listing_reaches_that_agent(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $agency = $this->agency();
+
+        // First enquiry while the agency has no agents → an unassigned agency lead.
+        $first = $this->enquire($this->property($agency), 'Repeat Buyer', 'repeat@example.test');
+        $this->assertNull($first->agent_id);
+
+        // The same buyer later enquires about a listing assigned to an agent.
+        $agent = $this->memberAgent($agency);
+        $again = $this->enquire($this->property($agency, $agent), 'Repeat Buyer', 'repeat@example.test');
+
+        $this->assertSame($first->id, $again->id, 'merged into the existing lead');
+        $this->assertSame($agent->id, $again->agent_id);
+        $this->assertSame(Lead::ASSIGN_PROPERTY_AGENT, $again->assignment_type);
+        \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\NewLeadReceived::class, fn ($m) => $m->hasTo($agent->email));
+        $this->assertSame(1, $agent->notifications()->count(), 'agent notified once, not twice');
+
+        $this->signIn($agent)->get('/portal/crm/leads')->assertOk()->assertSee('Repeat Buyer');
+
+        // A lead already worked by an agent keeps that agent on the next repeat enquiry.
+        $other = $this->memberAgent($agency);
+        $this->enquire($this->property($agency, $other), 'Repeat Buyer', 'repeat@example.test');
+        $this->assertSame($agent->id, $first->fresh()->agent_id);
+    }
 }

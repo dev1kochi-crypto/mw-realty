@@ -38,11 +38,15 @@ class LeadAssignmentService
      */
     public const TRANSACTION_ATTEMPTS = 5;
 
-    /** Assign a freshly captured lead. Call once, right after the lead is created. */
-    public function assignNewLead(Lead $lead): Lead
+    /**
+     * Assign a freshly captured lead (or an unassigned one that just enquired again — then
+     * $property is the listing of that new enquiry).
+     */
+    public function assignNewLead(Lead $lead, ?\App\Models\Property $property = null): Lead
     {
-        DB::transaction(function () use ($lead) {
-            $property = $lead->property;
+        DB::transaction(function () use ($lead, $property) {
+            // A repeat enquiry routes by the listing just asked about, not the lead's first one.
+            $property ??= $lead->property;
             $owner = $lead->portal_user_id ? PortalUser::find($lead->portal_user_id) : null;
 
             // House listing (no owning account) that Super Admin pointed at a specific agent.

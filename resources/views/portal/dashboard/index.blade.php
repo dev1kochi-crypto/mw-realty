@@ -6,8 +6,10 @@
     $plural = fn ($w, $n) => \Illuminate\Support\Str::plural($w, $n);
     $leadsTotal = $stats['total_leads'];
     $name = $owner ? $owner->displayName() : ($cmsActor->name ?? 'Super Admin');
-    $hour = (int) now()->format('G');
-    $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
+    // The server clock is UTC — greet in UAE time here; the page then switches to the visitor's own clock.
+    $localNow = now()->timezone('Asia/Dubai');
+    $hour = (int) $localNow->format('G');
+    $greeting = $hour < 5 ? 'Good evening' : ($hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening'));
     $flow = $stagePipeline->where('is_closed', 0)->values();
     $winRate = $pipeline['win_rate'];
     $gaugeLen = round(($winRate ?? 0) / 100 * 125.66, 1); // r=40 half circle ≈ 125.66
@@ -38,12 +40,6 @@
     @media (prefers-reduced-motion: reduce) { .dl-anim { animation: none; } }
 
     /* Account status notice */
-    .dl-notice { display: flex; gap: 0.8rem; align-items: flex-start; border-radius: 14px; padding: 0.85rem 1rem; margin-bottom: 0.85rem; border: 1px solid; font-size: 0.84rem; }
-    .dl-notice.pending { background: #fffaf2; border-color: #f0dfc1; }
-    .dl-notice.rejected { background: #fff7f8; border-color: #f1c9d0; }
-    .dl-notice .ic { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-    .dl-notice.pending .ic { background: rgba(183,121,31,0.12); color: #b7791f; }
-    .dl-notice.rejected .ic { background: rgba(184,50,50,0.1); color: #b83232; }
 
     /* ---------- Photo hero ---------- */
     .dl-hero { position: relative; border-radius: 20px; margin-bottom: 3rem; color: #fff; }
@@ -213,29 +209,15 @@
 @section('content')
 <div class="dl">
 
-@if($owner && $owner->status !== 'approved')
-    <div class="dl-notice {{ $owner->status === 'rejected' ? 'rejected' : 'pending' }}">
-        <span class="ic"><i class="fas {{ $owner->status === 'rejected' ? 'fa-ban' : 'fa-lock' }}"></i></span>
-        <div class="flex-grow-1">
-            @if($owner->status === 'pending')
-                <div class="fw-bold mb-1">Your CRM access is locked for now</div>
-                <p class="text-muted mb-2">Leads, Reports and property listing unlock once your KYC documents are reviewed and Super Admin approves your account. Complete your profile and upload your documents now so approval isn't held up.</p>
-            @else
-                <div class="fw-bold mb-1">Your account application was rejected</div>
-                <p class="text-muted mb-2">@if($owner->rejection_reason) Reason: {{ $owner->rejection_reason }}. @endif Fix your profile/documents and resubmit. CRM access unlocks once Super Admin approves you.</p>
-            @endif
-            <a href="{{ route('portal.profile.edit') }}" class="btn btn-portal-primary btn-sm">{{ $owner->status === 'rejected' ? 'Fix & Resubmit' : 'Complete Profile' }}</a>
-        </div>
-    </div>
-@endif
+{{-- Pending / rejected accounts: the layout's single status banner (portal-status-banner) covers it. --}}
 
 {{-- ============ Hero · membership card · shortcut dock ============ --}}
 <div class="dl-hero dl-anim">
     <div class="dl-hero-bg" style="background-image: url('{{ $heroImage }}');"></div>
     <div class="dl-hero-inner">
         <div>
-            <span class="dl-eyebrow">{{ now()->format('l, d F Y') }}{{ $isAdmin ? ' · Global view' : '' }}</span>
-            <h1 class="dl-hello serif">{{ $greeting }}, <em>{{ $name }}</em></h1>
+            <span class="dl-eyebrow">{{ $localNow->format('l, d F Y') }}{{ $isAdmin ? ' · Global view' : '' }}</span>
+            <h1 class="dl-hello serif"><span id="dlGreeting">{{ $greeting }}</span>, <em>{{ $name }}</em></h1>
             <p class="dl-lede">
                 <strong>{{ $trends['leads']['current'] }} new {{ $plural('enquiry', $trends['leads']['current']) }}</strong>
                 and <strong>{{ $trends['properties']['current'] }} {{ $plural('listing', $trends['properties']['current']) }}</strong> in the last 30 days,
@@ -498,3 +480,15 @@
 @endsection
 
 @include('portal.dashboard._charts')
+
+@push('scripts')
+<script>
+    // Greet by the visitor's own clock (the server rendered UAE time as a fallback).
+    (function () {
+        const el = document.getElementById('dlGreeting');
+        if (!el) return;
+        const h = new Date().getHours();
+        el.textContent = h < 5 ? 'Good evening' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    })();
+</script>
+@endpush

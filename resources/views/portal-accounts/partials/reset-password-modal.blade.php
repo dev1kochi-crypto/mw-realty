@@ -166,6 +166,12 @@
         const formData = new FormData(resetForm);
         formData.append('_token', '{{ csrf_token() }}');
 
+        // Own spinner while saving; always put the button back afterwards (success or error),
+        // so reopening the popup never shows a stale "Processing…".
+        const originalHtml = submitBtn.dataset.idleHtml || (submitBtn.dataset.idleHtml = submitBtn.innerHTML);
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+
         fetch(base + targetId + '/reset-password', { method: 'POST', body: formData })
             .then(async res => {
                 if (!res.ok) {
@@ -178,13 +184,15 @@
             .then(() => {
                 bootstrap.Modal.getOrCreateInstance(modalEl).hide();
                 resetForm.reset();
-                submitBtn.disabled = true;
                 showToast('Password reset successfully.', false);
             })
             .catch(err => {
                 errorBox.textContent = err.message;
                 errorBox.classList.remove('d-none');
-                if (window.restoreSubmitButtons) window.restoreSubmitButtons(resetForm);
+            })
+            .finally(() => {
+                submitBtn.innerHTML = originalHtml;
+                updateRequirements(); // re-enables the button only when the fields are valid
             });
     });
 })();

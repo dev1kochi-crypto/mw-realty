@@ -89,7 +89,8 @@ class PortalDashboardController extends Controller
         $unsourcedLeads = $leadQuery()->whereNull('source_id')->count();
 
         // Listings that attract the most enquiries.
-        $topListings = $propertyQuery()->withCount('leads')->having('leads_count', '>', 0)
+        // whereHas() rather than HAVING on a non-aggregate query (MySQL-only; SQLite rejects it).
+        $topListings = $propertyQuery()->whereHas('leads')->withCount('leads')
             ->orderByDesc('leads_count')->take(5)->get();
 
         $propertyTypeBreakdown = $propertyQuery()->whereNotNull('property_type')

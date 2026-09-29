@@ -87,14 +87,18 @@ trait BuildsAgencies
         return $this->actingAs($user, $guard)->withSession(['password_hash_' . $guard => $user->getAuthPassword()]);
     }
 
-    /** Public enquiry exactly as the property page submits it. */
-    protected function enquire(Property $property, string $name = 'Buyer'): Lead
+    /**
+     * Public enquiry exactly as the property page submits it. Each call is a different buyer unless
+     * $email is given — the same email then merges into that buyer's existing lead (duplicate detection).
+     */
+    protected function enquire(Property $property, string $name = 'Buyer', ?string $email = null): Lead
     {
+        $email ??= \Illuminate\Support\Str::slug($name) . '-' . uniqid() . '@example.test';
         $this->postJson('/leads/capture', [
-            'property_id' => $property->id, 'name' => $name, 'email' => \Illuminate\Support\Str::slug($name) . '@example.test', 'message' => 'Interested',
+            'property_id' => $property->id, 'name' => $name, 'email' => $email, 'message' => 'Interested',
         ])->assertOk();
 
-        return Lead::latest('id')->firstOrFail();
+        return Lead::where('email', $email)->latest('id')->firstOrFail();
     }
 
     /** A valid create/update payload for the portal property form. */

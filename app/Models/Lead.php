@@ -42,6 +42,9 @@ class Lead extends Model
     /** Set (not persisted) when a new enquiry was merged into this existing lead instead of creating one. */
     public bool $wasMerged = false;
 
+    /** Set (not persisted) when a merged, unassigned lead was routed to an agent — who was notified by the assignment. */
+    public bool $assignedOnMerge = false;
+
     public const ASSIGN_PROPERTY_AGENT = 'property_agent';
     public const ASSIGN_ROUND_ROBIN = 'round_robin';
     public const ASSIGN_AGENCY_UNASSIGNED = 'agency_unassigned';

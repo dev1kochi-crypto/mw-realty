@@ -793,12 +793,14 @@
 
     <script>
     (function () {
-        // Show a "Processing..." spinner on the submit button the moment a form is actually
-        // submitted (the browser only fires `submit` once native validation has passed),
-        // and disable every submit button in it to prevent double-submits.
-        document.addEventListener('submit', function (e) {
+        // Show a "Processing..." spinner on the submit button when a form really submits (the
+        // browser only fires `submit` once native validation has passed), and disable every submit
+        // button in it to prevent double-submits. Listens on window in the bubble phase, i.e. AFTER
+        // the page's own handlers: a form a script handles itself (preventDefault → fetch, e.g. the
+        // Reset Password popup) manages its own button, so it never gets a spinner nothing undoes.
+        window.addEventListener('submit', function (e) {
             const form = e.target;
-            if (!(form instanceof HTMLFormElement) || form.dataset.noSpinner) return;
+            if (!(form instanceof HTMLFormElement) || form.dataset.noSpinner || e.defaultPrevented) return;
 
             const submitBtns = form.querySelectorAll('button[type="submit"]');
             const clicked = (e.submitter && e.submitter.tagName === 'BUTTON') ? e.submitter : submitBtns[0];
@@ -811,7 +813,7 @@
                 }
                 clicked.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
             }
-        }, true);
+        });
 
         function restoreSubmitButtons(form) {
             form.querySelectorAll('button[type="submit"][data-original-html]').forEach(function (btn) {

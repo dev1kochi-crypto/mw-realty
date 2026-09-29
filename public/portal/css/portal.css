@@ -280,42 +280,51 @@ body.portal-body {
     box-shadow: 0 8px 22px rgba(28, 35, 64, 0.08);
 }
 
-/* ---------- Account status banner (pending / rejected) ---------- */
+/* ---------- Account status banner (pending / rejected) — meant to be noticed ---------- */
 .portal-status-banner {
     display: flex;
     align-items: center;
     gap: 1rem;
     flex-wrap: wrap;
-    padding: 1rem 1.25rem;
+    padding: 1.1rem 1.35rem;
     margin-bottom: 1.25rem;
     border-radius: 16px;
-    background: #fff;
-    border: 1px solid var(--portal-border);
-    border-left: 4px solid #f59e0b;
-    box-shadow: 0 6px 18px rgba(28, 35, 64, 0.05);
+    background: linear-gradient(100deg, #fff7e6 0%, #fffbf2 55%, #ffffff 100%);
+    border: 1.5px solid #f7c56b;
+    border-left: 6px solid #f59e0b;
+    box-shadow: 0 10px 26px rgba(245, 158, 11, 0.18);
 }
 
 .portal-status-banner.is-rejected {
+    background: linear-gradient(100deg, #fdecec 0%, #fff6f6 55%, #ffffff 100%);
+    border-color: #f3a5a5;
     border-left-color: #dc2626;
+    box-shadow: 0 10px 26px rgba(220, 38, 38, 0.16);
+}
+
+.portal-status-banner.is-waiting {
+    background: linear-gradient(100deg, #e8f6fb 0%, #f4fbfd 55%, #ffffff 100%);
+    border-color: #9fd7ea;
+    border-left-color: #0487ab;
+    box-shadow: 0 10px 26px rgba(4, 135, 171, 0.14);
 }
 
 .portal-status-banner__icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.05rem;
-    background: rgba(245, 158, 11, 0.12);
-    color: #d97706;
+    font-size: 1.15rem;
+    background: #f59e0b;
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(245, 158, 11, 0.35);
 }
 
-.portal-status-banner.is-rejected .portal-status-banner__icon {
-    background: rgba(220, 38, 38, 0.1);
-    color: #dc2626;
-}
+.portal-status-banner.is-rejected .portal-status-banner__icon { background: #dc2626; box-shadow: 0 6px 14px rgba(220, 38, 38, 0.3); }
+.portal-status-banner.is-waiting .portal-status-banner__icon { background: #0487ab; box-shadow: 0 6px 14px rgba(4, 135, 171, 0.3); }
 
 .portal-status-banner__body {
     flex: 1 1 320px;
@@ -324,22 +333,46 @@ body.portal-body {
 
 .portal-status-banner__title {
     font-weight: 800;
-    font-size: 0.95rem;
-    color: var(--portal-text, #1c2340);
+    font-size: 1rem;
+    color: #92400e;
 }
 
+.portal-status-banner.is-rejected .portal-status-banner__title { color: #991b1b; }
+.portal-status-banner.is-waiting .portal-status-banner__title { color: #075e78; }
+
 .portal-status-banner__text {
-    font-size: 0.84rem;
-    color: var(--portal-muted);
+    font-size: 0.85rem;
+    color: #5b4a2e;
     line-height: 1.5;
 }
+
+.portal-status-banner.is-rejected .portal-status-banner__text { color: #6b2a2a; }
+.portal-status-banner.is-waiting .portal-status-banner__text { color: #33566a; }
 
 .portal-status-banner__cta {
     flex-shrink: 0;
     border-radius: 10px;
-    font-weight: 700;
-    font-size: 0.84rem;
-    padding: 0.55rem 1.1rem;
+    font-weight: 800;
+    font-size: 0.86rem;
+    padding: 0.6rem 1.2rem;
+    border: 0;
+    color: #fff;
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+    box-shadow: 0 8px 18px rgba(234, 88, 12, 0.3);
+    animation: portalCtaPulse 2.4s ease-in-out infinite;
+}
+
+.portal-status-banner__cta:hover,
+.portal-status-banner__cta:focus { color: #fff; filter: brightness(1.06); }
+.portal-status-banner.is-rejected .portal-status-banner__cta { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 8px 18px rgba(185, 28, 28, 0.3); }
+
+@keyframes portalCtaPulse {
+    0%, 100% { box-shadow: 0 8px 18px rgba(234, 88, 12, 0.3), 0 0 0 0 rgba(245, 158, 11, 0.45); }
+    50% { box-shadow: 0 8px 18px rgba(234, 88, 12, 0.3), 0 0 0 8px rgba(245, 158, 11, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .portal-status-banner__cta { animation: none; }
 }
 
 .portal-topbar .portal-account-type {

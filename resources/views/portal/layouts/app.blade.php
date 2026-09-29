@@ -267,7 +267,7 @@
                         $rejected = $owner->status === 'rejected';
                         $awaitingReview = !$rejected && $owner->kyc_review_status === 'submitted' && $owner->kyc_user_submitted_at;
                     @endphp
-                    <div class="portal-status-banner {{ $rejected ? 'is-rejected' : '' }}" role="status">
+                    <div class="portal-status-banner {{ $rejected ? 'is-rejected' : ($awaitingReview ? 'is-waiting' : '') }}" role="status">
                         <span class="portal-status-banner__icon"><i class="fas {{ $rejected ? 'fa-ban' : ($awaitingReview ? 'fa-hourglass-half' : 'fa-user-clock') }}"></i></span>
                         <div class="portal-status-banner__body">
                             @if($rejected)
@@ -282,7 +282,7 @@
                             @endif
                         </div>
                         @unless($awaitingReview)
-                        <a href="{{ route('portal.profile.edit') }}" class="btn btn-portal-primary portal-status-banner__cta">
+                        <a href="{{ route('portal.profile.edit') }}" class="btn portal-status-banner__cta">
                             <i class="fas fa-user-edit me-1"></i>{{ $rejected ? 'Fix & Resubmit' : 'Complete Profile' }}
                         </a>
                         @endunless

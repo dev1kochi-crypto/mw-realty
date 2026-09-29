@@ -64,15 +64,23 @@ class LeadCreationService
         $property = !empty($attributes['property_id']) ? Property::find($attributes['property_id']) : null;
         $ownerId ??= $property ? $this->assignment->resolveOwnerId($property, $property->portal_user_id) : null;
 
-        $lead = DB::transaction(function () use ($attributes, $ownerId, $preferredAgentId, $autoAssign, $tagIds, $noteAuthor) {
+        $lead = DB::transaction(function () use ($attributes, $ownerId, $preferredAgentId, $autoAssign, $tagIds, $noteAuthor, $property) {
             if ($existing = $this->findDuplicate($ownerId, $attributes['email'] ?? null, $attributes['phone'] ?? null)) {
                 $this->mergeInto($existing, $attributes, $noteAuthor);
                 if ($tagIds) {
                     $existing->tags()->syncWithoutDetaching($tagIds);
                 }
-                // It keeps the agent already working it; only an unworked lead takes the chosen agent.
-                if ($preferredAgentId && !$existing->agent_id) {
-                    $this->assignment->assignManually($existing, $preferredAgentId, AssignmentActor::system(), 'Repeat request from agent profile');
+                // It keeps the agent already working it; an unworked lead is routed like a new one
+                // (chosen agent, else the listing just enquired about / round robin) so it reaches an agent.
+                if (!$existing->agent_id) {
+                    if ($preferredAgentId) {
+                        $this->assignment->assignManually($existing, $preferredAgentId, AssignmentActor::system(), 'Repeat request from agent profile');
+                    } elseif ($autoAssign) {
+                        $this->assignment->assignNewLead($existing, $property);
+                    }
+                    if ($existing->agent_id) {
+                        $existing->assignedOnMerge = true;
+                    }
                 }
 
                 return $existing;
@@ -237,7 +245,7 @@ class LeadCreationService
             $this->notifyAdmins($lead);
         }
 
-        if ($lead->wasMerged && $lead->agent_id && $lead->agent_id !== $lead->portal_user_id
+        if ($lead->wasMerged && !$lead->assignedOnMerge && $lead->agent_id && $lead->agent_id !== $lead->portal_user_id
             && ($agent = PortalUser::find($lead->agent_id))) {
             $this->notifyAccount($agent, $lead);
         }
