@@ -583,7 +583,8 @@
             "call_aria": "Call {name}",
             "whatsapp_aria": "WhatsApp {name}",
             "email_aria": "Email {name}",
-            "view_details": "View Details"
+            "view_details": "View Details",
+            "agency_tag": "Agency"
         },
         "enquiry": {
             "title": "Enquire About This Property",
@@ -1075,7 +1076,27 @@
             "request_2_title": "Shortlisting",
             "request_2_text": "Matching listings are hand-picked for you.",
             "request_3_title": "Options in your inbox",
-            "request_3_text": "Review, shortlist and book your viewings."
+            "request_3_text": "Review, shortlist and book your viewings.",
+            "property_1_title": "Enquiry delivered",
+            "property_1_text": "Sent straight to the listing agent.",
+            "property_1_text_agency": "Sent straight to the agency handling this listing.",
+            "property_2_title": "They'll reach out",
+            "property_2_text": "Expect a call, email or WhatsApp to answer your questions.",
+            "property_3_title": "Book a viewing",
+            "property_3_text": "See the property in person at a time that suits you."
+        },
+        "property": {
+            "line1": "Your enquiry about “{property}” has been sent.",
+            "line2": "{handler} will get in touch with you shortly.",
+            "our_team": "Our team",
+            "this_property": "this property",
+            "enquired_about": "You enquired about",
+            "sent_to": "Sent to",
+            "role_agent": "Listing Agent",
+            "role_agency": "Agency",
+            "call": "Call",
+            "whatsapp": "WhatsApp",
+            "back": "Back to Property"
         }
     },
     "not_found": {
@@ -1349,6 +1370,7 @@
         "all_at_address": "All properties here",
         "bed": "Bed",
         "premium": "Premium",
-        "view_details": "View Details"
+        "view_details": "View Details",
+        "credits": "Map credits"
     }
 }

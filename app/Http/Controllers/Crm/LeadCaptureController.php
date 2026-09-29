@@ -133,11 +133,13 @@ class LeadCaptureController extends Controller
         $property = Property::where('status', true)->findOrFail($data['property_id']);
         abort_unless($property->brochure_path, 404);
 
+        // Captured directly rather than via store(): reCAPTCHA tokens are single-use, so
+        // re-validating the same token there would always fail as a duplicate.
         $request->merge([
             'message' => 'Requested the property brochure for ' . ($property->getTranslation('title') ?: $property->reference_no),
             'page_source' => 'brochure-download',
         ]);
-        $this->store($request, $leadAssignment);
+        $this->capturePropertyLead($request, $property, $leadAssignment);
 
         return response()->json([
             'message' => 'Your brochure is ready to download.',
@@ -160,7 +162,20 @@ class LeadCaptureController extends Controller
         ]);
 
         $property = Property::findOrFail($request->input('property_id'));
+        $this->capturePropertyLead($request, $property, $leadAssignment);
 
+        $message = 'Thanks — your enquiry has been received and we\'ll be in touch soon.';
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    /** Create, assign and notify a lead for a property. Expects an already-validated request. */
+    private function capturePropertyLead(Request $request, Property $property, LeadAssignmentService $leadAssignment): Lead
+    {
         // Created and assigned (property agent / agency round-robin / agency-unassigned) together.
         $lead = DB::transaction(fn () => $leadAssignment->assignNewLead(Lead::create([
             'property_id' => $property->id,
@@ -193,13 +208,7 @@ class LeadCaptureController extends Controller
             $this->notifyAdminOfUnassignedLead($lead);
         }
 
-        $message = 'Thanks — your enquiry has been received and we\'ll be in touch soon.';
-
-        if ($request->wantsJson()) {
-            return response()->json(['message' => $message]);
-        }
-
-        return back()->with('success', $message);
+        return $lead;
     }
 
     /**

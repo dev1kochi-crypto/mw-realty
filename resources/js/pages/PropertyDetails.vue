@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { usePropertyDetail } from '../composables/usePropertyDetail';
 import { useLanguages } from '../composables/useLanguages';
 import { useRecaptcha } from '../composables/useRecaptcha';
@@ -8,6 +8,7 @@ import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
 
 const route = useRoute();
+const router = useRouter();
 const { property, notFound, fetchProperty } = usePropertyDetail();
 const { selectedLanguage } = useLanguages();
 const { getRecaptchaToken } = useRecaptcha();
@@ -57,7 +58,7 @@ async function handleEnquirySubmit() {
 
     try {
         const recaptcha_token = await getRecaptchaToken('property_enquiry');
-        const { data } = await window.axios.post('/leads/capture', {
+        await window.axios.post('/leads/capture', {
             property_id: property.value.id,
             name: enquiryForm.name,
             email: enquiryForm.email,
@@ -66,13 +67,26 @@ async function handleEnquirySubmit() {
             page_source: 'property-detail',
             recaptcha_token,
         });
-        enquiryFeedback.value = { type: 'success', text: data.message };
-        enquiryForm.name = '';
-        enquiryForm.email = '';
-        enquiryForm.phone = '';
+        // The lead is now in the listing agent's / agency's CRM. Show who has it — passed as history
+        // state, not in the URL (see ThankYou.vue).
+        const p = property.value;
+        const c = p.contact;
+        router.push({
+            path: '/thank-you',
+            state: {
+                thankYou: {
+                    type: 'property',
+                    name: enquiryForm.name.trim().split(/\s+/)[0] || '',
+                    property: { slug: route.params.slug, name: p.name, image: (p.images || [])[0] || null, location: p.location || null },
+                    contact: c ? {
+                        name: c.name, type: c.type, avatar_url: c.avatar_url || null, detail_url: c.detail_url || null,
+                        phone: c.phone || null, whatsapp_number: c.whatsapp_number || null,
+                    } : null,
+                },
+            },
+        });
     } catch (error) {
         enquiryFeedback.value = { type: 'error', text: error.response?.data?.message || t('property_details.generic_error') };
-    } finally {
         enquirySubmitting.value = false;
     }
 }
@@ -251,11 +265,13 @@ function agentAria(template, name) {
                         <article v-if="property.contact" class="mw-agent-card mw-property-agent">
                             <div class="mw-agent-card__head">
                                 <div class="mw-agent-card__avatar">
-                                    <img :src="property.contact.avatar_url || '/frontend/assets/images/agents/ahmed.png'" :alt="property.contact.name" width="80" height="80">
+                                    <!-- The listing's agent, or its agency when no agent is available (PropertyPageService::mapContact). -->
+                                    <img :src="property.contact.avatar_url || (property.contact.type === 'company' ? '/frontend/assets/images/icons/building.svg' : '/frontend/assets/images/agents/ahmed.png')" :alt="property.contact.name" width="80" height="80" :class="{ 'mw-agent-card__avatar-img--agency': property.contact.type === 'company' && !property.contact.avatar_url }">
                                 </div>
                                 <div class="mw-agent-card__intro">
                                     <h4 class="mw-agent-card__name">{{ property.contact.name }}</h4>
                                     <div class="mw-agent-card__tags">
+                                        <span v-if="property.contact.type === 'company'" class="mw-agent-card__tag mw-agent-card__tag--fill">{{ t('property_details.agent_card.agency_tag', 'Agency') }}</span>
                                         <span class="mw-agent-card__tag mw-agent-card__tag--fill">{{ t('property_details.agent_card.serves_in_dubai') }}</span>
                                         <span v-for="badge in property.contact.badges" :key="badge" class="mw-agent-card__tag">{{ badge }}</span>
                                     </div>

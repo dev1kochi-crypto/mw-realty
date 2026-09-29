@@ -76,6 +76,24 @@ class Property extends Model
         return $this->belongsTo(PortalUser::class, 'agent_id');
     }
 
+    /**
+     * Who the public sees (and contacts) for this listing: the assigned agent while they're
+     * available — active, approved, and still in the agency that owns the listing — otherwise the
+     * owning agency / agent, if that account is available. Null when nobody is.
+     */
+    public function displayContact(): ?PortalUser
+    {
+        $available = fn (?PortalUser $u) => $u && $u->is_active && $u->isApproved();
+        $agent = $this->agent;
+        $owner = $this->owner;
+
+        $agentAvailable = $available($agent) && (
+            !$owner || $owner->type !== 'company' || $agent->id === $owner->id || $agent->company_id === $owner->id
+        );
+
+        return $agentAvailable ? $agent : ($available($owner) ? $owner : null);
+    }
+
     public function assignmentHistory()
     {
         return $this->hasMany(PropertyAssignmentHistory::class)->latest('id');

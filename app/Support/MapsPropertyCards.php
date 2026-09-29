@@ -36,7 +36,7 @@ trait MapsPropertyCards
         // Same assigned-agent-else-owning-agency fallback as the real property detail page
         // (PropertyPageService::mapContact) — kept here as raw fields (not tel:/wa.me/mailto:
         // links) so each card template decides for itself which of the three to hide when unset.
-        $contact = $property->agent ?: $property->owner;
+        $contact = $property->displayContact();
 
         return [
             'id' => $property->id,

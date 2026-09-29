@@ -77,10 +77,10 @@ class PropertyPageService
         });
     }
 
-    /** The sidebar "listing agent" card — the assigned agent if there is one, else the owning agency, else null (card is hidden). */
+    /** The sidebar "listing agent" card — Property::displayContact(): the assigned agent while available, else the owning agency, else null (card is hidden). */
     private function mapContact(Property $property): ?array
     {
-        $contact = $property->agent ?: $property->owner;
+        $contact = $property->displayContact();
         if (!$contact) {
             return null;
         }

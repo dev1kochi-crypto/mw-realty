@@ -222,7 +222,7 @@
                 "interest_select_placeholder": "اختر",
                 "interest_buy": "شراء عقار",
                 "interest_rent": "استئجار عقار",
-                "interest_sell": "بيع \/ إدراج عقار",
+                "interest_sell": "بيع / إدراج عقار",
                 "interest_management": "إدارة الأملاك",
                 "message_label": "الرسالة",
                 "message_placeholder": "كيف يمكننا مساعدتك؟",
@@ -236,7 +236,7 @@
             "title": "الفلاتر",
             "close_aria": "إغلاق الفلاتر",
             "purpose_label": "الغرض",
-            "location_label": "الموقع \/ اسم العقار",
+            "location_label": "الموقع / اسم العقار",
             "location_placeholder": "ابحث بالموقع أو اسم العقار",
             "property_type_label": "نوع العقار",
             "all_type": "جميع الأنواع",
@@ -311,7 +311,7 @@
             "buy": "شراء",
             "rent": "إيجار",
             "off_plan": "على الخارطة",
-            "location_label": "الموقع \/ اسم العقار",
+            "location_label": "الموقع / اسم العقار",
             "location_placeholder": "ابحث بالموقع أو اسم العقار",
             "property_type_label": "نوع العقار",
             "all_type": "جميع الأنواع",
@@ -426,7 +426,7 @@
         "filter_panel": {
             "title": "الفلاتر",
             "close_aria": "إغلاق الفلاتر",
-            "location_label": "الموقع \/ اسم العقار",
+            "location_label": "الموقع / اسم العقار",
             "location_placeholder": "ابحث بالموقع أو اسم العقار",
             "properties_label": "العقارات",
             "properties_placeholder": "ابحث بالعنوان أو الموقع",
@@ -510,7 +510,7 @@
             "breadcrumb_current": "تجاري"
         },
         "filter_bar": {
-            "location_label": "الموقع \/ اسم العقار",
+            "location_label": "الموقع / اسم العقار",
             "location_placeholder": "ابحث بالموقع أو اسم العقار",
             "properties_label": "العقارات",
             "properties_placeholder": "ابحث بالعنوان أو الموقع",
@@ -583,7 +583,8 @@
             "call_aria": "اتصل بـ {name}",
             "whatsapp_aria": "واتساب {name}",
             "email_aria": "راسل {name}",
-            "view_details": "عرض التفاصيل"
+            "view_details": "عرض التفاصيل",
+            "agency_tag": "وكالة"
         },
         "enquiry": {
             "title": "استفسر عن هذا العقار",
@@ -833,7 +834,7 @@
     "login": {
         "photo_alt": "شقة دافئة في دبي",
         "tab_user": "مستخدم",
-        "tab_agent_agency": "وكيل \/ وكالة",
+        "tab_agent_agency": "وكيل / وكالة",
         "title": "مرحباً بعودتك",
         "subtitle": "يرجى إدخال بياناتك لتسجيل الدخول.",
         "email_label": "البريد الإلكتروني",
@@ -848,7 +849,7 @@
         "divider_or": "أو",
         "google_cta": "المتابعة باستخدام Google",
         "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى.",
-        "agent_tab_hint": "مسجّل كوكيل أو وكالة؟ انتقل إلى تبويب الوكيل \/ الوكالة."
+        "agent_tab_hint": "مسجّل كوكيل أو وكالة؟ انتقل إلى تبويب الوكيل / الوكالة."
     },
     "signup": {
         "photo_alt": "شقة دافئة في دبي",
@@ -888,7 +889,7 @@
         "password_strength_label": "قوة كلمة المرور",
         "passwords_match": "كلمتا المرور متطابقتان",
         "passwords_no_match": "كلمتا المرور غير متطابقتين",
-        "agent_license_label": "رقم رخصة ريرا \/ الوسيط",
+        "agent_license_label": "رقم رخصة ريرا / الوسيط",
         "agent_license_placeholder": "أدخل رقم رخصتك",
         "agency_name_label": "اسم الوكالة",
         "agency_name_placeholder": "أدخل اسم وكالتك",
@@ -1075,7 +1076,27 @@
             "request_2_title": "إعداد القائمة",
             "request_2_text": "نختار لك العقارات المطابقة بعناية.",
             "request_3_title": "خيارات في بريدك",
-            "request_3_text": "راجع الخيارات واحجز مواعيد المعاينة."
+            "request_3_text": "راجع الخيارات واحجز مواعيد المعاينة.",
+            "property_1_title": "تم تسليم الاستفسار",
+            "property_1_text": "أُرسل مباشرة إلى وكيل العقار.",
+            "property_1_text_agency": "أُرسل مباشرة إلى الوكالة المسؤولة عن هذا العقار.",
+            "property_2_title": "سيتواصلون معك",
+            "property_2_text": "توقّع اتصالاً أو بريداً إلكترونياً أو رسالة واتساب للإجابة عن أسئلتك.",
+            "property_3_title": "احجز معاينة",
+            "property_3_text": "شاهد العقار بنفسك في الوقت المناسب لك."
+        },
+        "property": {
+            "line1": "تم إرسال استفسارك عن «{property}».",
+            "line2": "سيتواصل معك {handler} قريباً.",
+            "our_team": "فريقنا",
+            "this_property": "هذا العقار",
+            "enquired_about": "استفسرت عن",
+            "sent_to": "أُرسل إلى",
+            "role_agent": "الوكيل المسؤول",
+            "role_agency": "الوكالة",
+            "call": "اتصال",
+            "whatsapp": "واتساب",
+            "back": "العودة إلى العقار"
         }
     },
     "not_found": {
@@ -1349,6 +1370,7 @@
         "all_at_address": "كل العقارات هنا",
         "bed": "غرفة",
         "premium": "مميز",
-        "view_details": "عرض التفاصيل"
+        "view_details": "عرض التفاصيل",
+        "credits": "حقوق الخريطة"
     }
 }

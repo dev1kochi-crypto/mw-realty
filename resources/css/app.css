@@ -26,3 +26,6 @@
 /* A broader theme rule greys every svg in the toolbar; the map icon must follow its button's colour
    (navy normally, white when active). */
 .mw-map-toggle > svg { color: inherit !important; stroke: currentColor; }
+
+/* Property page contact card: an agency with no photo shows a building icon, padded so it isn't cropped. */
+.mw-agent-card__avatar-img--agency { object-fit: contain !important; padding: 16px; background: #eff3f6; }
