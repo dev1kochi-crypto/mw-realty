@@ -59,6 +59,9 @@ Route::get('/storage/{url}', function (string $url) {
 // routed to the property's owning company/agent (see LeadCaptureController).
 Route::post('/leads/capture', [LeadCaptureController::class, 'store'])->name('leads.capture')->middleware('throttle:lead-capture');
 Route::post('/leads/brochure-download', [LeadCaptureController::class, 'downloadBrochure'])->name('leads.brochure-download')->middleware('throttle:lead-capture');
+Route::post('/leads/floor-plan-download', [LeadCaptureController::class, 'downloadFloorPlan'])->name('leads.floor-plan-download')->middleware('throttle:lead-capture');
+// Signed, short-lived link handed out by the two routes above once the lead is saved.
+Route::get('/downloads/property/{property}/{kind}', \App\Http\Controllers\PropertyFileDownloadController::class)->whereIn('kind', \App\Http\Controllers\PropertyFileDownloadController::KINDS)->name('property-files.download')->middleware(['signed', 'throttle:30,1']);
 
 // Properties listing "Custom Request" — no property to attach to, always an unassigned lead
 // (see LeadCaptureController::storeCustomRequest).

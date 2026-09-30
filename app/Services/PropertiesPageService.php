@@ -46,6 +46,8 @@ class PropertiesPageService
             $query = match (true) {
                 $refine['marketing'] => Property::where('status', true)->marketing(),
                 $refine['premium'] => Property::where('status', true)->where('featured', true),
+                // View all from an agent / agency profile: all their listings, as on that profile.
+                $refine['agent'] || $refine['agency'] => Property::where('status', true),
                 default => Property::where('status', true)->residential(),
             };
             $this->applyFilters($query, $location, $propertyType, $category, $bedrooms, $bathrooms, $refine);
@@ -62,6 +64,8 @@ class PropertiesPageService
                 // The view-all page's heading / intro come from the same CMS section as the home
                 // "Realty Property" block (Common Titles › Realty Property).
                 'section' => $refine['marketing'] ? $this->marketingSection($lang) : null,
+                // Heading / chip for ?agent= / ?agency= ("Properties by …").
+                'owner' => $this->ownerFilterLabel($refine),
             ];
         });
 
@@ -108,6 +112,14 @@ class PropertiesPageService
             ->when($refine['max_area'] !== null, fn ($q) => $q->where('sqft', '<=', $refine['max_area']))
             ->when($refine['floor_plans'], fn ($q) => $q->has('floorPlans'));
 
+        // ?agent= → that agent's listings; ?agency= → the agency's (same sets as their profile pages).
+        if ($refine['agent']) {
+            $query->where('agent_id', $this->profileId('agent', $refine['agent']) ?? 0);
+        }
+        if ($refine['agency']) {
+            $query->where('portal_user_id', $this->profileId('company', $refine['agency']) ?? 0);
+        }
+
         // Other admin select filters (Filter::SELECT_KEYS are property columns), e.g. category=commercial.
         foreach ($refine['attributes'] as $column => $value) {
             $query->where($column, $value);
@@ -146,6 +158,23 @@ class PropertiesPageService
     ];
 
     /** Whitelists and casts the optional refine filters so they're safe to query and to cache on. */
+    /** An approved, active agent's / agency's id by profile slug (type: agent | company). */
+    private function profileId(string $type, string $slug): ?int
+    {
+        return \App\Models\PortalUser::where('type', $type)->where('slug', $slug)->approved()->where('is_active', true)->value('id');
+    }
+
+    private function ownerFilterLabel(array $refine): ?array
+    {
+        foreach (['agent' => 'agent', 'agency' => 'company'] as $key => $type) {
+            if ($refine[$key] && ($owner = \App\Models\PortalUser::where('type', $type)->where('slug', $refine[$key])->first())) {
+                return ['type' => $key, 'slug' => $owner->slug, 'name' => $owner->displayName()];
+            }
+        }
+
+        return null;
+    }
+
     public function normaliseRefine(array $refine): array
     {
         $number = fn ($v) => is_numeric($v) && $v >= 0 ? (float) $v : null;
@@ -171,6 +200,9 @@ class PropertiesPageService
             'marketing' => filter_var($refine['marketing'] ?? false, FILTER_VALIDATE_BOOLEAN),
             'city' => is_string($refine['city'] ?? null) && $refine['city'] !== '' ? $refine['city'] : null,
             'community' => is_string($refine['community'] ?? null) && $refine['community'] !== '' ? $refine['community'] : null,
+            // Profile slugs (View all on /agent-details, /agency-details).
+            'agent' => is_string($refine['agent'] ?? null) && $refine['agent'] !== '' ? mb_substr($refine['agent'], 0, 255) : null,
+            'agency' => is_string($refine['agency'] ?? null) && $refine['agency'] !== '' ? mb_substr($refine['agency'], 0, 255) : null,
             // Only whitelisted column names ever reach where(); values are bound parameters.
             'attributes' => collect((array) ($refine['attributes'] ?? []))
                 ->only(\App\Models\Filter::SELECT_KEYS)

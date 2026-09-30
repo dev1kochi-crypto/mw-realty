@@ -25,19 +25,9 @@
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label fw-semibold">Phone</label>
-                            <div class="input-group">
-                                <select name="phone_country_code" id="leadFormPhoneCountryCode" class="form-select flex-grow-0" style="max-width: 125px;" aria-label="Phone country code">
-                                    <option value="+91">+91 (India)</option>
-                                    <option value="+971">+971 (UAE)</option>
-                                    <option value="+1">+1 (US/Canada)</option>
-                                    <option value="+44">+44 (UK)</option>
-                                    <option value="+61">+61 (Australia)</option>
-                                    <option value="+65">+65 (Singapore)</option>
-                                    <option value="+966">+966 (Saudi Arabia)</option>
-                                    <option value="+974">+974 (Qatar)</option>
-                                </select>
-                                <input type="text" name="phone" id="leadFormPhone" class="form-control" maxlength="50" inputmode="tel" placeholder="Phone number">
-                            </div>
+                            {{-- Country-code picker + number only (7–13 digits) — portal/js/phone-input.js. --}}
+                            <input type="hidden" name="phone_country_code" id="leadFormPhoneCountryCode" value="+971">
+                            <input type="tel" name="phone" id="leadFormPhone" class="form-control" maxlength="20" placeholder="50 123 4567" data-phone-input data-code-input="#leadFormPhoneCountryCode">
                             <div class="invalid-feedback" data-error-for="phone"></div>
                         </div>
                     </div>

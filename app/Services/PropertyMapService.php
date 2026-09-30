@@ -69,7 +69,7 @@ class PropertyMapService
             'commercial' => Property::where('status', true)->commercial(),
             'premium' => Property::where('status', true)->where('featured', true),
             'marketing' => Property::where('status', true)->marketing(),
-            default => Property::where('status', true)->residential(),
+            default => $refine['agent'] || $refine['agency'] ? Property::where('status', true) : Property::where('status', true)->residential(),
         };
         $query->whereNotNull('latitude')->whereNotNull('longitude')
             ->where('latitude', '!=', 0)->where('longitude', '!=', 0);

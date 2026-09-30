@@ -61,6 +61,8 @@ class PropertyMapController extends Controller
                 'premium' => $segment === 'premium',
                 'city' => $request->input('city'),
                 'community' => $request->input('community'),
+                'agent' => $request->input('agent'),
+                'agency' => $request->input('agency'),
                 'attributes' => $attributes,
             ],
         ];

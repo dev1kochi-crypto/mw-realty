@@ -17,11 +17,13 @@ class LeadStage extends Model
 
     public const DEFAULTS = [
         ['name' => 'New', 'color' => '#4f46e5', 'is_default' => true],
-        ['name' => 'Contacted', 'color' => '#f59e0b'],
-        ['name' => 'Site Visit Scheduled', 'color' => '#0ea5e9'],
+        ['name' => 'Hot Buyer', 'color' => '#ef4444'],
+        ['name' => 'Active Buyer', 'color' => '#0ea5e9'],
+        ['name' => 'Active Seller', 'color' => '#14b8a6'],
+        ['name' => 'Closed', 'color' => '#22c55e', 'is_closed' => true],
         ['name' => 'Negotiation', 'color' => '#8b5cf6'],
-        ['name' => 'Closed Won', 'color' => '#14b8a6', 'is_closed' => true],
-        ['name' => 'Closed Lost', 'color' => '#ef4444', 'is_closed' => true],
+        ['name' => 'Dropped', 'color' => '#64748b', 'is_closed' => true],
+        ['name' => 'Connected', 'color' => '#f59e0b'],
     ];
 
     /** Closed stages whose name reads as a lost deal; every other closed stage counts as won. */

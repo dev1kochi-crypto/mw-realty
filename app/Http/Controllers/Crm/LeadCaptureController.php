@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Crm;
 use App\Models\Lead;
 use App\Models\PortalUser;
 use App\Models\Property;
+use App\Rules\PhoneNumber;
 use App\Rules\RecaptchaRule;
 use App\Services\Crm\LeadCreationService;
 use Illuminate\Http\Request;
@@ -32,8 +33,9 @@ class LeadCaptureController extends Controller
             'profile_slug' => 'required|string|max:255',
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:50',
+            'email' => PhoneNumber::emailRules(),
+            'phone' => PhoneNumber::rules(),
+            'phone_country_code' => PhoneNumber::countryCodeRules(),
             'property_category' => 'nullable|string|max:100',
             'specification' => 'nullable|string|max:255',
             'price_range' => 'nullable|string|max:255',
@@ -42,7 +44,6 @@ class LeadCaptureController extends Controller
             'additional_details' => 'nullable|string|max:2000',
             'move_in_timeline' => 'nullable|string|max:100',
             'furnishing_status' => 'nullable|string|max:100',
-            'whatsapp_consent' => 'nullable|boolean',
             'recaptcha_token' => ['nullable', new RecaptchaRule()],
         ]);
 
@@ -62,6 +63,7 @@ class LeadCaptureController extends Controller
                 'name' => trim($data['first_name'] . ' ' . ($data['last_name'] ?? '')),
                 'email' => $data['email'],
                 'phone' => $data['phone'] ?? null,
+                'phone_country_code' => !empty($data['phone']) ? ($data['phone_country_code'] ?? null) : null,
                 'message' => $this->requestSummary($data),
                 'page_url' => $request->header('referer'),
                 'page_source' => $data['profile_type'] . '-profile-request',
@@ -79,28 +81,62 @@ class LeadCaptureController extends Controller
     /** Record a lead before revealing the listing brochure URL. */
     public function downloadBrochure(Request $request)
     {
-        $data = $request->validate([
-            'property_id' => 'required|integer|exists:properties,id',
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:50',
-            'recaptcha_token' => ['nullable', new RecaptchaRule()],
-        ]);
-        $property = Property::where('status', true)->findOrFail($data['property_id']);
+        $property = $this->validatedDownloadProperty($request);
         abort_unless($property->brochure_path, 404);
-
-        // Captured directly rather than via store(): reCAPTCHA tokens are single-use, so
-        // re-validating the same token there would always fail as a duplicate.
-        $request->merge([
-            'message' => 'Requested the property brochure for ' . ($property->getTranslation('title') ?: $property->reference_no),
-            'page_source' => 'brochure-download',
-        ]);
-        $this->capturePropertyLead($request, $property);
+        $this->captureDownloadLead($request, $property, 'property brochure', 'brochure-download');
 
         return response()->json([
             'message' => 'Your brochure is ready to download.',
-            'brochure_url' => media_url($property->brochure_path),
+            'download_url' => $this->signedDownloadUrl($property, 'brochure'),
         ]);
+    }
+
+    /** Record a lead before revealing the listing's downloadable floor plan file. */
+    public function downloadFloorPlan(Request $request)
+    {
+        $property = $this->validatedDownloadProperty($request);
+        $file = $property->details?->floor_plan_file;
+        abort_unless($file, 404);
+        $this->captureDownloadLead($request, $property, 'floor plan', 'floor-plan-download');
+
+        return response()->json([
+            'message' => 'Your floor plan is ready to download.',
+            'download_url' => $this->signedDownloadUrl($property, 'floor-plan'),
+        ]);
+    }
+
+    /** Same-origin, 15-minute link to PropertyFileDownloadController — the file itself is never exposed. */
+    private function signedDownloadUrl(Property $property, string $kind): string
+    {
+        return \Illuminate\Support\Facades\URL::temporarySignedRoute('property-files.download', now()->addMinutes(15), [
+            'property' => $property->id,
+            'kind' => $kind,
+        ]);
+    }
+
+    private function validatedDownloadProperty(Request $request): Property
+    {
+        $data = $request->validate([
+            'property_id' => 'required|integer|exists:properties,id',
+            'name' => 'required|string|max:255',
+            'email' => PhoneNumber::emailRules(),
+            'phone' => PhoneNumber::rules(true),
+            'phone_country_code' => PhoneNumber::countryCodeRules(),
+            'recaptcha_token' => ['nullable', new RecaptchaRule()],
+        ]);
+
+        return Property::where('status', true)->findOrFail($data['property_id']);
+    }
+
+    private function captureDownloadLead(Request $request, Property $property, string $what, string $pageSource): void
+    {
+        // Captured directly rather than via store(): reCAPTCHA tokens are single-use, so
+        // re-validating the same token there would always fail as a duplicate.
+        $request->merge([
+            'message' => "Requested the {$what} for " . ($property->getTranslation('title') ?: $property->reference_no),
+            'page_source' => $pageSource,
+        ]);
+        $this->capturePropertyLead($request, $property);
     }
 
     public function store(Request $request)
@@ -108,8 +144,9 @@ class LeadCaptureController extends Controller
         $request->validate([
             'property_id' => 'required|integer|exists:properties,id',
             'name' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:50',
+            'email' => PhoneNumber::emailRules(false),
+            'phone' => PhoneNumber::rules(),
+            'phone_country_code' => PhoneNumber::countryCodeRules(),
             'company' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:100',
             'message' => 'required|string|max:2000',
@@ -138,6 +175,7 @@ class LeadCaptureController extends Controller
             'name' => $request->input('name'),
             'email' => $request->input('email'),
             'phone' => $request->input('phone'),
+            'phone_country_code' => $request->filled('phone') ? $request->input('phone_country_code') : null,
             'company' => $request->input('company'),
             'country' => $request->input('country'),
             'message' => $request->input('message'),
@@ -158,8 +196,9 @@ class LeadCaptureController extends Controller
         $data = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:50',
+            'email' => PhoneNumber::emailRules(),
+            'phone' => PhoneNumber::rules(),
+            'phone_country_code' => PhoneNumber::countryCodeRules(),
             'property_category' => 'nullable|string|max:100',
             'specification' => 'nullable|string|max:255',
             'price_range' => 'nullable|string|max:255',
@@ -168,7 +207,6 @@ class LeadCaptureController extends Controller
             'additional_details' => 'nullable|string|max:2000',
             'move_in_timeline' => 'nullable|string|max:100',
             'furnishing_status' => 'nullable|string|max:100',
-            'whatsapp_consent' => 'nullable|boolean',
             'recaptcha_token' => ['nullable', new RecaptchaRule()],
         ]);
 
@@ -177,6 +215,7 @@ class LeadCaptureController extends Controller
             'name' => trim($data['first_name'] . ' ' . ($data['last_name'] ?? '')),
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
+            'phone_country_code' => !empty($data['phone']) ? ($data['phone_country_code'] ?? null) : null,
             'message' => $this->requestSummary($data),
             'page_url' => $request->header('referer'),
             'page_source' => 'custom-request',
@@ -221,7 +260,6 @@ class LeadCaptureController extends Controller
             'move_in_timeline' => $request->input('move_in_timeline'),
             'furnishing_status' => $request->input('furnishing_status'),
             'additional_details' => $request->input('additional_details'),
-            'whatsapp_consent' => $request->boolean('whatsapp_consent'),
         ];
     }
 }

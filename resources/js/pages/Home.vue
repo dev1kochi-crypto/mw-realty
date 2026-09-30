@@ -10,6 +10,8 @@ import { useCurrency } from '../composables/useCurrency';
 import { useLanguages } from '../composables/useLanguages';
 import { useRecaptcha } from '../composables/useRecaptcha';
 import AdBlock from '../components/AdBlock.vue';
+import PhoneInput from '../components/PhoneInput.vue';
+import { contactError as findContactProblem } from '../composables/useContactValidation';
 
 // One fetch for the whole page (see routes/api.php -> Api\HomeController) instead of a
 // request per section — every section below just reads its own slice of `homePage.value`.
@@ -24,7 +26,7 @@ const { getRecaptchaToken } = useRecaptcha();
 
 // "Get in touch" section form — saved as an Enquiry (same endpoint as the /contact page), then
 // the visitor lands on the thank-you page.
-const contactForm = reactive({ name: '', email: '', phone: '', interest: '', message: '' });
+const contactForm = reactive({ name: '', email: '', phone: '', phone_country_code: '+971', interest: '', message: '' });
 const contactSubmitting = ref(false);
 const contactError = ref(null);
 
@@ -32,6 +34,12 @@ async function submitContactForm() {
     if (contactSubmitting.value) return;
     contactSubmitting.value = true;
     contactError.value = null;
+    const problem = findContactProblem({ email: contactForm.email, phone: contactForm.phone, phoneRequired: true });
+    if (problem) {
+        contactError.value = problem;
+        contactSubmitting.value = false;
+        return;
+    }
     try {
         const recaptcha_token = await getRecaptchaToken('home_contact');
         await window.axios.post('/api/contact', { ...contactForm, source: 'home', recaptcha_token });
@@ -1087,7 +1095,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
 
                             <div class="mw-contact__field">
                                 <label for="contact-phone">{{ t('home.contact.form.phone_label') }}</label>
-                                <input type="tel" id="contact-phone" name="phone" v-model="contactForm.phone" maxlength="50" :placeholder="t('home.contact.form.phone_placeholder')" required>
+                                <PhoneInput id="contact-phone" v-model="contactForm.phone" v-model:country-code="contactForm.phone_country_code" required />
                             </div>
 
                             <div class="mw-contact__field mw-contact__field--select">

@@ -12,6 +12,51 @@ use App\Services\Crm\AdminOwnerResolver;
  */
 trait SharedMasterData
 {
+    /**
+     * No duplicate names: once a global item exists (created, renamed, or added by the system for
+     * a website form), any account's own item of the same name is folded into it.
+     */
+    public static function bootSharedMasterData(): void
+    {
+        static::saved(function ($item) {
+            if ($item->isGlobal() && ($item->wasRecentlyCreated || $item->wasChanged('name'))) {
+                $item->absorbOwnCopies();
+            }
+        });
+    }
+
+    /**
+     * Moves the leads of every account's own same-named item onto this global one, then deletes
+     * those copies. A quiet data clean-up — not logged as a stage / source change on the lead.
+     */
+    public function absorbOwnCopies(): int
+    {
+        $table = $this->getTable();
+        $copyIds = static::query()
+            ->where("{$table}.portal_user_id", '!=', $this->portal_user_id)
+            ->whereRaw("LOWER(TRIM({$table}.name)) = ?", [mb_strtolower(trim($this->name))])
+            ->pluck('id')->all();
+
+        if (!$copyIds) {
+            return 0;
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($copyIds) {
+            $this->moveLeadsFrom($copyIds);
+            static::whereKey($copyIds)->delete();
+        });
+
+        return count($copyIds);
+    }
+
+    /** Points the leads using $fromIds at this item instead (leads.stage_id / leads.source_id). */
+    protected function moveLeadsFrom(array $fromIds): void
+    {
+        \Illuminate\Support\Facades\DB::table('leads')
+            ->whereIn($this->leads()->getForeignKeyName(), $fromIds)
+            ->update([$this->leads()->getForeignKeyName() => $this->id]);
+    }
+
     /** Portal user id that owns the global (Super Admin) items — resolved once per request. */
     public static function globalOwnerId(): int
     {

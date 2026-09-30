@@ -38,6 +38,12 @@ watch(agency, () => {
 
 const bioFallback = computed(() => t('agency_details.bio_fallback').replace('{name}', agency.value?.name || ''));
 
+// Agencies may enter their website without http(s):// — link it absolutely, not as a site path.
+const websiteUrl = computed(() => {
+    const site = (agency.value?.website || '').trim();
+    return /^https?:\/\//i.test(site) ? site : `https://${site}`;
+});
+
 function agencyAria(template, name) {
     return t(template).replace('{name}', name);
 }
@@ -59,9 +65,6 @@ function agencyAria(template, name) {
                 </div>
             </nav>
         </section>
-
-        <!-- Admin › Ads — under the page header. -->
-        <AdBlock placement="agency-details" />
 
         <section class="mw-agency-detail">
             <div class="container-ctn">
@@ -114,6 +117,7 @@ function agencyAria(template, name) {
                     <div class="mw-agency-panel__head">
                         <h2 class="mw-agency-panel__title">{{ t('agency_details.properties_panel_title') }}</h2>
                         <div class="mw-agency-panel__actions">
+                            <router-link :to="{ path: '/properties', query: { agency: agency.slug } }" class="mw-btn mw-btn--outline mw-agency-panel__view-all">{{ t('agency_details.view_all') }}</router-link>
                             <div class="mw-agent-more__nav">
                                 <button type="button" class="mw-arrow-btn mw-arrow-btn--prev mw-agent-more__nav-btn" data-agency-properties-prev :aria-label="t('agency_details.previous_properties_aria')">
                                     <img src="/frontend/assets/images/icons/luxury-nav-arrow.svg" alt="" width="24" height="24">
@@ -184,7 +188,7 @@ function agencyAria(template, name) {
                     <div class="mw-agency-panel__head">
                         <h2 class="mw-agency-panel__title">{{ t('agency_details.agents_panel_title') }}</h2>
                         <div class="mw-agency-panel__actions">
-                            <router-link to="/agents" class="mw-btn mw-btn--outline mw-agency-panel__view-all">{{ t('agency_details.view_all') }}</router-link>
+                            <router-link :to="{ path: '/agents', query: { agency: agency.slug } }" class="mw-btn mw-btn--outline mw-agency-panel__view-all">{{ t('agency_details.view_all') }}</router-link>
                             <div class="mw-agent-more__nav">
                                 <button type="button" class="mw-arrow-btn mw-arrow-btn--prev mw-agent-more__nav-btn" data-agency-agents-prev :aria-label="t('agency_details.previous_agents_aria')">
                                     <img src="/frontend/assets/images/icons/luxury-nav-arrow.svg" alt="" width="24" height="24">
@@ -241,15 +245,15 @@ function agencyAria(template, name) {
                             <div class="mw-agency-contact__col">
                                 <p v-if="agency.phone" class="mw-agency-contact__row">
                                     <img src="/frontend/assets/images/icons/phone.svg" alt="" width="24" height="24">
-                                    {{ agency.phone }}
+                                    <a :href="`tel:${agency.phone.replace(/[^\d+]/g, '')}`" class="mw-agency-contact__link">{{ agency.phone }}</a>
                                 </p>
                                 <p v-if="agency.email" class="mw-agency-contact__row">
                                     <img src="/frontend/assets/images/icons/email.svg" alt="" width="24" height="24">
-                                    {{ agency.email }}
+                                    <a :href="`mailto:${agency.email}`" class="mw-agency-contact__link">{{ agency.email }}</a>
                                 </p>
                                 <p v-if="agency.whatsapp_number" class="mw-agency-contact__row">
                                     <img src="/frontend/assets/images/icons/whatsapp.svg" alt="" width="24" height="24">
-                                    {{ agency.whatsapp_number }}
+                                    <a :href="`https://wa.me/${agency.whatsapp_number.replace(/\D/g, '')}`" target="_blank" rel="noopener" class="mw-agency-contact__link">{{ agency.whatsapp_number }}</a>
                                 </p>
                             </div>
 
@@ -261,7 +265,7 @@ function agencyAria(template, name) {
                                 </p>
                                 <p v-if="agency.website" class="mw-agency-contact__row">
                                     <img src="/frontend/assets/images/agency-details/icon-globe.svg" alt="" width="24" height="24">
-                                    {{ agency.website }}
+                                    <a :href="websiteUrl" target="_blank" rel="noopener" class="mw-agency-contact__link">{{ agency.website }}</a>
                                 </p>
                             </div>
                         </div>
@@ -270,6 +274,9 @@ function agencyAria(template, name) {
 
             </div>
         </section>
+
+        <!-- Admin › Ads — at the foot of the page, above the footer. -->
+        <AdBlock placement="agency-details" />
     </main>
 
     <main v-else-if="notFound">

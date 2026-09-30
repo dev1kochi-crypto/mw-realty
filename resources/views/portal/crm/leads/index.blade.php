@@ -380,7 +380,7 @@
             const ownerSelect = document.getElementById('leadFormOwner');
             if (ownerSelect) ownerSelect.value = defaultMasterData.currentOwnerId || '';
             document.getElementById('leadFormStatus').value = 'active';
-            document.getElementById('leadFormPhoneCountryCode').value = defaultMasterData.defaultPhoneCountryCode;
+            window.portalPhone.setCode(document.getElementById('leadFormPhone'), defaultMasterData.defaultPhoneCountryCode);
 
             leadForm.dataset.mode = 'create';
             leadForm.dataset.leadId = '';
@@ -415,7 +415,7 @@
                 document.getElementById('leadFormName').value = data.name || '';
                 document.getElementById('leadFormEmail').value = data.email || '';
                 document.getElementById('leadFormPhone').value = data.phone || '';
-                document.getElementById('leadFormPhoneCountryCode').value = data.phone_country_code || defaultMasterData.defaultPhoneCountryCode;
+                window.portalPhone.setCode(document.getElementById('leadFormPhone'), data.phone_country_code || defaultMasterData.defaultPhoneCountryCode);
                 document.getElementById('leadFormMessage').value = data.message || '';
                 document.getElementById('leadFormStatus').value = data.status || 'active';
 

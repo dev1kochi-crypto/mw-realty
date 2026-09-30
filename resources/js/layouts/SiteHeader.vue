@@ -45,9 +45,6 @@ const exploreActive = computed(() => exploreLinks.value.some((link) => link.key 
 // (touch screens and keyboard users have no hover). Closes on navigation, outside click and Esc.
 const exploreOpen = ref(false);
 const exploreEl = ref(null);
-// Mobile drawer: Explore is an accordion. Its links are always rendered (v-show, not v-if) —
-// script.js binds "close the drawer on link click" once, to whatever links exist at page load.
-const mobileExploreOpen = ref(false);
 
 watch(() => route.fullPath, () => { exploreOpen.value = false; });
 
@@ -66,7 +63,6 @@ function onExploreLinkClick(e) {
 function onPointerMove(e) {
     if (exploreSuppressed.value && exploreEl.value && !exploreEl.value.contains(e.target)) exploreSuppressed.value = false;
 }
-watch(exploreActive, (active) => { if (active) mobileExploreOpen.value = true; }, { immediate: true });
 
 function onDocumentClick(e) {
     if (exploreOpen.value && exploreEl.value && !exploreEl.value.contains(e.target)) exploreOpen.value = false;
@@ -217,23 +213,8 @@ function logout(e) {
                     <li v-for="link in primaryLinks" :key="link.key">
                         <router-link :to="link.to" :class="{ 'is-active': activeNav === link.key }">{{ link.label }}</router-link>
                     </li>
-                    <li class="mw-mobile-nav__group" :class="{ 'is-open': mobileExploreOpen }">
-                        <button
-                            type="button"
-                            class="mw-mobile-nav__group-toggle"
-                            :class="{ 'is-active': exploreActive }"
-                            :aria-expanded="mobileExploreOpen ? 'true' : 'false'"
-                            aria-controls="mobile-nav-explore"
-                            @click="mobileExploreOpen = !mobileExploreOpen"
-                        >
-                            <span>{{ t('nav.explore', 'Explore') }}</span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-                        </button>
-                        <ul v-show="mobileExploreOpen" id="mobile-nav-explore" class="mw-mobile-nav__sub">
-                            <li v-for="link in exploreLinks" :key="link.key">
-                                <router-link :to="link.to" :class="{ 'is-active': activeNav === link.key }">{{ link.label }}</router-link>
-                            </li>
-                        </ul>
+                    <li v-for="link in exploreLinks" :key="link.key">
+                        <router-link :to="link.to" :class="{ 'is-active': activeNav === link.key }">{{ link.label }}</router-link>
                     </li>
                 </ul>
             </nav>

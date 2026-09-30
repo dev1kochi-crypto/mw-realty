@@ -17,7 +17,6 @@
     $leadUrl = route('portal.crm.leads.show', $lead->id);
     $telHref = fn ($label) => 'tel:' . preg_replace('/[^\d+]/', '', $label);
     $waHref = fn ($label) => 'https://wa.me/' . preg_replace('/\D+/', '', $label);
-    $phoneCodes = ['+971' => 'UAE', '+91' => 'India', '+966' => 'Saudi Arabia', '+974' => 'Qatar', '+965' => 'Kuwait', '+968' => 'Oman', '+973' => 'Bahrain', '+1' => 'US/Canada', '+44' => 'UK', '+61' => 'Australia', '+65' => 'Singapore'];
 @endphp
 
 @section('crm-content')
@@ -102,14 +101,9 @@
                             <form class="d-none portal-lp-add-form" data-card-form data-lead-form data-url="{{ $leadUrl }}/contacts" data-method="POST">
                                 <input type="hidden" name="type" value="{{ $group['type'] }}">
                                 @if($group['type'] === 'phone')
-                                <div class="input-group">
-                                    <select name="phone_country_code" class="form-select flex-grow-0" style="max-width: 140px;" aria-label="Country code">
-                                        @foreach($phoneCodes as $code => $country)
-                                        <option value="{{ $code }}">{{ $code }} ({{ $country }})</option>
-                                        @endforeach
-                                    </select>
-                                    <input type="tel" name="value" class="form-control" placeholder="Phone number" maxlength="50" required>
-                                </div>
+                                <input type="hidden" name="phone_country_code" value="+971">
+                                <input type="tel" name="value" class="form-control" placeholder="50 123 4567" maxlength="20" required data-phone-input>
+
                                 @else
                                 <input type="email" name="value" class="form-control" placeholder="name@example.com" maxlength="255" required>
                                 @endif

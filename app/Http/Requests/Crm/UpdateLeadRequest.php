@@ -29,6 +29,15 @@ class UpdateLeadRequest extends FormRequest
         return true;
     }
 
+    /** A number typed/stored with its "+code" is split into code + number before the digit-count rule runs. */
+    protected function prepareForValidation(): void
+    {
+        [$code, $number] = \App\Rules\PhoneNumber::split($this->input('phone'));
+        if ($code) {
+            $this->merge(['phone' => $number, 'phone_country_code' => $code]);
+        }
+    }
+
     public function rules(): array
     {
         $leadOwnerId = Lead::withTrashed()->find($this->route('id'))?->portal_user_id;
@@ -46,8 +55,8 @@ class UpdateLeadRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'email' => \App\Rules\PhoneNumber::emailRules(false),
+            'phone' => \App\Rules\PhoneNumber::rules(),
             'phone_country_code' => ['nullable', 'regex:/^\+\d{1,4}$/'],
             'message' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],

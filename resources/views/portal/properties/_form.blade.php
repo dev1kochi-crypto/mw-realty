@@ -493,43 +493,37 @@
                         ? old('floor_plans', $property->floorPlans->toArray())
                         : old('floor_plans', array_fill(0, 3, []));
                 @endphp
-                @foreach($existingFloorPlans as $i => $fp)
-                <div class="row g-2 mb-2 align-items-end floor-plan-row">
-                    <div class="col-md-4">
-                        <label class="form-label small mb-1">Title</label>
-                        <input type="text" name="floor_plans[{{ $i }}][label]" class="form-control form-control-sm" value="{{ $fp['label'] ?? '' }}" placeholder="1 Bedroom Apartments">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-1">Sqft From</label>
-                        <input type="number" name="floor_plans[{{ $i }}][size_from]" class="form-control form-control-sm" value="{{ $fp['size_from'] ?? '' }}">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small mb-1">Sqft To</label>
-                        <input type="number" name="floor_plans[{{ $i }}][size_to]" class="form-control form-control-sm" value="{{ $fp['size_to'] ?? '' }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small mb-1">Image</label>
-                        <input type="hidden" name="floor_plans[{{ $i }}][existing_image]" value="{{ $fp['image'] ?? '' }}">
-                        <input type="file" name="floor_plans[{{ $i }}][image]" class="form-control form-control-sm" accept="image/*">
-                        @if(!empty($fp['image']))
-                        <img src="{{ media_url($fp['image']) }}" class="mt-1 rounded" style="height:40px;">
-                        @endif
-                    </div>
-                    <div class="col-md-1">
-                        <button type="button" class="btn btn-sm btn-outline-danger w-100 floor-plan-remove-btn"><i class="fas fa-times"></i></button>
-                    </div>
-                </div>
+                @foreach(array_values($existingFloorPlans) as $i => $fp)
+                    @include('portal.properties._floor_plan_row', ['i' => $i, 'fp' => $fp])
                 @endforeach
             </div>
-            <hr class="my-4">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Downloadable Floor Plan File</label>
-                    <input type="file" name="floor_plan_file" class="form-control">
-                    @if($isEdit && $details?->floor_plan_file)
-                    <div class="mt-2"><a href="{{ media_url($details->floor_plan_file) }}" target="_blank" class="small">Current file</a></div>
-                    @endif
+            <div class="floor-plan-empty text-muted small" id="floorPlanEmpty" @if(count($existingFloorPlans)) hidden @endif>
+                <i class="fas fa-border-all me-1"></i>No floor plans yet — use <strong>Add Row</strong> to add a unit type.
+            </div>
+            <template id="floorPlanRowTemplate">
+                @include('portal.properties._floor_plan_row', ['i' => '__INDEX__', 'fp' => []])
+            </template>
+
+            {{-- Given to website visitors only after they fill the lead form (property page › Download Floor Plan). --}}
+            @php $floorPlanFile = $isEdit ? $details?->floor_plan_file : null; @endphp
+            <div class="floor-plan-file mt-4">
+                <div class="floor-plan-file-icon"><i class="fas fa-file-arrow-down"></i></div>
+                <div class="floor-plan-file-body">
+                    <div class="fw-semibold">Downloadable Floor Plan File</div>
+                    <div class="small text-muted">PDF or image. Visitors download it from the property page after sharing their contact details.</div>
+                    <div class="floor-plan-file-meta">
+                        @if($floorPlanFile)
+                        <a href="{{ media_url($floorPlanFile) }}" target="_blank" rel="noopener" class="floor-plan-file-chip" id="floorPlanFileCurrent">
+                            <i class="fas fa-paperclip"></i>Current file ({{ strtoupper(pathinfo(parse_url($floorPlanFile, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION) ?: 'file') }})
+                        </a>
+                        @endif
+                        <span class="floor-plan-file-chip is-new" id="floorPlanFileChosen" hidden><i class="fas fa-circle-check"></i><span></span></span>
+                    </div>
                 </div>
+                <label class="btn btn-sm portal-btn-ghost mb-0 text-nowrap">
+                    <i class="fas fa-upload me-1"></i>{{ $floorPlanFile ? 'Replace' : 'Upload' }}
+                    <input type="file" name="floor_plan_file" id="floorPlanFileInput" hidden>
+                </label>
             </div>
         </div>
 
@@ -809,6 +803,39 @@
 
     .repeater-icon-preview { width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; border: 1px solid var(--portal-border); background: var(--portal-bg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
     .repeater-icon-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Floor plan rows: image tile · Title / Sqft From / Sqft To · remove, all on one aligned line. */
+    .floor-plan-card { display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem; margin-bottom: 0.75rem; background: var(--portal-surface); border: 1px solid var(--portal-border); border-radius: 14px; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+    .floor-plan-card:hover, .floor-plan-card:focus-within { border-color: #c9d3e6; box-shadow: var(--portal-shadow); }
+    .floor-plan-thumb { position: relative; flex: 0 0 76px; width: 76px; height: 76px; margin: 0; border: 2px dashed var(--portal-border); border-radius: 12px; background: var(--portal-bg); overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s ease; }
+    .floor-plan-thumb:hover { border-color: var(--portal-primary); }
+    .floor-plan-thumb.has-image { border-style: solid; background: #fff; }
+    .floor-plan-thumb input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .floor-plan-thumb img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
+    .floor-plan-thumb-empty { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; color: var(--portal-muted); font-size: 0.68rem; font-weight: 600; }
+    .floor-plan-thumb-empty i { font-size: 1.1rem; }
+    .floor-plan-thumb.has-image .floor-plan-thumb-empty { display: none; }
+    .floor-plan-thumb-edit { position: absolute; inset: auto 4px 4px auto; width: 22px; height: 22px; border-radius: 50%; background: var(--portal-primary); color: #fff; font-size: 0.62rem; display: none; align-items: center; justify-content: center; }
+    .floor-plan-thumb.has-image .floor-plan-thumb-edit { display: flex; }
+    .floor-plan-fields { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; }
+    .floor-plan-fields .form-label { color: var(--portal-muted); font-weight: 600; }
+    .floor-plan-remove { flex: 0 0 38px; width: 38px; height: 38px; align-self: center; border: 1px solid #f3c9d1; border-radius: 10px; background: #fff5f7; color: var(--portal-accent); display: inline-flex; align-items: center; justify-content: center; transition: background 0.15s ease, color 0.15s ease; }
+    .floor-plan-remove:hover { background: var(--portal-accent); border-color: var(--portal-accent); color: #fff; }
+    .floor-plan-empty { padding: 1.25rem; border: 2px dashed var(--portal-border); border-radius: 14px; text-align: center; }
+    .floor-plan-file { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.1rem; border: 1px solid var(--portal-border); border-radius: 14px; background: var(--portal-bg); }
+    .floor-plan-file-icon { flex: 0 0 46px; width: 46px; height: 46px; border-radius: 12px; background: #fff; color: var(--portal-primary); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; box-shadow: 0 2px 8px rgba(36, 67, 115, 0.08); }
+    .floor-plan-file-body { flex: 1 1 auto; min-width: 0; }
+    .floor-plan-file-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.45rem; }
+    .floor-plan-file-meta:empty { display: none; }
+    .floor-plan-file-chip { display: inline-flex; align-items: center; gap: 0.4rem; max-width: 100%; padding: 0.25rem 0.65rem; border-radius: 999px; background: #fff; border: 1px solid var(--portal-border); color: var(--portal-primary); font-size: 0.78rem; font-weight: 600; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .floor-plan-file-chip.is-new { color: #18794e; border-color: #bfe5cf; background: #effaf3; }
+    @media (max-width: 767.98px) {
+        .floor-plan-card { flex-wrap: wrap; }
+        .floor-plan-fields { order: 3; flex-basis: 100%; grid-template-columns: 1fr 1fr; }
+        .floor-plan-field--title { grid-column: 1 / -1; }
+        .floor-plan-remove { margin-left: auto; }
+        .floor-plan-file { flex-wrap: wrap; }
+    }
 
     .property-dropzone { border: 2px dashed var(--portal-border); border-radius: 12px; background: var(--portal-bg); min-height: 120px; cursor: pointer; }
     .property-dropzone .dz-message { font-size: 0.85rem; color: var(--portal-muted); font-weight: 600; padding: 1.5rem; text-align: center; }
@@ -1237,23 +1264,41 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // --- Floor plan rows ---
-    document.querySelectorAll('.floor-plan-remove-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () { btn.closest('.floor-plan-row').remove(); });
-    });
+    const floorPlanRows = document.getElementById('floorPlanRows');
+    const floorPlanEmpty = document.getElementById('floorPlanEmpty');
+    // Next free index — never reuse one after a removal, or two rows would share floor_plans[n].
+    let floorPlanIndex = floorPlanRows ? floorPlanRows.querySelectorAll('.floor-plan-row').length : 0;
+    function wireFloorPlanRow(row) {
+        row.querySelector('.floor-plan-remove-btn').addEventListener('click', function () {
+            row.remove();
+            if (floorPlanEmpty) floorPlanEmpty.hidden = floorPlanRows.querySelector('.floor-plan-row') !== null;
+        });
+        // Show the picked image in the tile straight away.
+        row.querySelector('.floor-plan-image-input').addEventListener('change', function () {
+            const file = this.files && this.files[0];
+            if (!file) return;
+            const img = row.querySelector('.floor-plan-thumb img');
+            img.src = URL.createObjectURL(file);
+            img.hidden = false;
+            row.querySelector('.floor-plan-thumb').classList.add('has-image');
+        });
+    }
+    floorPlanRows?.querySelectorAll('.floor-plan-row').forEach(wireFloorPlanRow);
     document.getElementById('addFloorPlanBtn')?.addEventListener('click', function () {
-        const container = document.getElementById('floorPlanRows');
-        const index = container.querySelectorAll('.floor-plan-row').length;
-        const row = document.createElement('div');
-        row.className = 'row g-2 mb-2 align-items-end floor-plan-row';
-        row.innerHTML = `
-            <div class="col-md-4"><label class="form-label small mb-1">Title</label><input type="text" name="floor_plans[${index}][label]" class="form-control form-control-sm" placeholder="1 Bedroom Apartments"></div>
-            <div class="col-md-2"><label class="form-label small mb-1">Sqft From</label><input type="number" name="floor_plans[${index}][size_from]" class="form-control form-control-sm"></div>
-            <div class="col-md-2"><label class="form-label small mb-1">Sqft To</label><input type="number" name="floor_plans[${index}][size_to]" class="form-control form-control-sm"></div>
-            <div class="col-md-3"><label class="form-label small mb-1">Image</label><input type="file" name="floor_plans[${index}][image]" class="form-control form-control-sm" accept="image/*"></div>
-            <div class="col-md-1"><button type="button" class="btn btn-sm btn-outline-danger w-100 floor-plan-remove-btn"><i class="fas fa-times"></i></button></div>
-        `;
-        container.appendChild(row);
-        row.querySelector('.floor-plan-remove-btn').addEventListener('click', function () { row.remove(); });
+        const html = document.getElementById('floorPlanRowTemplate').innerHTML.trim().replaceAll('__INDEX__', floorPlanIndex++);
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = html;
+        const row = wrapper.firstElementChild;
+        floorPlanRows.appendChild(row);
+        wireFloorPlanRow(row);
+        if (floorPlanEmpty) floorPlanEmpty.hidden = true;
+        row.querySelector('input[type="text"]').focus();
+    });
+    document.getElementById('floorPlanFileInput')?.addEventListener('change', function () {
+        const chosen = document.getElementById('floorPlanFileChosen');
+        const file = this.files && this.files[0];
+        chosen.hidden = !file;
+        chosen.querySelector('span').textContent = file ? file.name : '';
     });
 
     // --- Nearby Places: Type -> Place cascading picker ---

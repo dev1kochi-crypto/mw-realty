@@ -142,6 +142,23 @@ class CloudinaryMedia
         }
     }
 
+    /**
+     * A signed API download URL for a Cloudinary asset. Unlike the public delivery URL it also works
+     * for PDFs/ZIPs while the account blocks their public delivery (which answers 401). Null if not ours.
+     */
+    public function authenticatedDownloadUrl(string $url): ?string
+    {
+        if (!self::isCloudinaryUrl($url) || !($parsed = $this->parseUrl($url))) {
+            return null;
+        }
+        $format = $parsed['resource_type'] === 'raw' ? '' : strtolower(pathinfo(strtok($url, '?'), PATHINFO_EXTENSION));
+
+        return $this->client()->uploadApi()->privateDownloadUrl($parsed['public_id'], $format, [
+            'resource_type' => $parsed['resource_type'],
+            'type' => 'upload',
+        ]);
+    }
+
     /** Deletes the asset behind a Cloudinary URL. Returns false (and logs) on failure. */
     public function delete(?string $url): bool
     {

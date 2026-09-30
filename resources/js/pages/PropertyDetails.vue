@@ -7,6 +7,8 @@ import { useRecaptcha } from '../composables/useRecaptcha';
 import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
 import AdBlock from '../components/AdBlock.vue';
+import PhoneInput from '../components/PhoneInput.vue';
+import { contactError, responseError } from '../composables/useContactValidation';
 
 const route = useRoute();
 const router = useRouter();
@@ -57,13 +59,37 @@ watch(property, () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
 
-const enquiryForm = reactive({ name: '', email: '', phone: '', message: '' });
+const enquiryForm = reactive({ name: '', email: '', phone: '', phone_country_code: '+971', message: '' });
 const enquirySubmitting = ref(false);
 const enquiryFeedback = ref(null);
-const brochureOpen = ref(false);
-const brochureSubmitting = ref(false);
-const brochureFeedback = ref(null);
-const brochureForm = reactive({ name: '', email: '', phone: '' });
+// Brochure / floor plan downloads: both are gated by the same lead form (one modal, `kind` picks the copy
+// and endpoint). Once the lead is saved the server hands back a short-lived same-origin link
+// (PropertyFileDownloadController); the file is fetched with a live progress bar, saved automatically
+// and the modal closes itself — there is no separate "download" step.
+const DOWNLOADS = {
+    brochure: {
+        endpoint: '/leads/brochure-download', recaptcha: 'brochure_download', fileSuffix: 'brochure',
+        title: 'Get the property brochure', text: 'Share your contact details to access the brochure.',
+    },
+    floor_plan: {
+        endpoint: '/leads/floor-plan-download', recaptcha: 'floor_plan_download', fileSuffix: 'floor-plan',
+        title: 'Get the floor plan', text: 'Share your contact details to download the floor plan.',
+    },
+};
+const download = reactive({ open: false, kind: 'brochure', stage: 'form', progress: null, error: null });
+const downloadForm = reactive({ name: '', email: '', phone: '', phone_country_code: '+971' });
+const downloadConfig = computed(() => DOWNLOADS[download.kind]);
+let downloadCloseTimer = null;
+
+function openDownload(kind) {
+    clearTimeout(downloadCloseTimer);
+    Object.assign(download, { open: true, kind, stage: 'form', progress: null, error: null });
+}
+function closeDownload() {
+    if (download.stage === 'sending' || download.stage === 'downloading') return;
+    clearTimeout(downloadCloseTimer);
+    download.open = false;
+}
 
 watch(
     () => property.value?.name,
@@ -75,6 +101,11 @@ watch(
 
 async function handleEnquirySubmit() {
     if (enquirySubmitting.value) return;
+    const problem = (!enquiryForm.name.trim() && 'Please enter your name.') || contactError(enquiryForm);
+    if (problem) {
+        enquiryFeedback.value = { type: 'error', text: problem };
+        return;
+    }
     enquirySubmitting.value = true;
     enquiryFeedback.value = null;
 
@@ -85,6 +116,7 @@ async function handleEnquirySubmit() {
             name: enquiryForm.name,
             email: enquiryForm.email,
             phone: enquiryForm.phone,
+            phone_country_code: enquiryForm.phone_country_code,
             message: enquiryForm.message,
             page_source: 'property-detail',
             recaptcha_token,
@@ -108,32 +140,76 @@ async function handleEnquirySubmit() {
             },
         });
     } catch (error) {
-        enquiryFeedback.value = { type: 'error', text: error.response?.data?.message || t('property_details.generic_error') };
+        enquiryFeedback.value = { type: 'error', text: responseError(error, t('property_details.generic_error')) };
         enquirySubmitting.value = false;
     }
 }
 
-async function handleBrochureSubmit() {
-    if (brochureSubmitting.value || !property.value?.brochure_available) return;
-    brochureSubmitting.value = true;
-    brochureFeedback.value = null;
-    try {
-        const recaptcha_token = await getRecaptchaToken('brochure_download');
-        const { data } = await window.axios.post('/leads/brochure-download', {
-            property_id: property.value.id,
-            ...brochureForm,
-            recaptcha_token,
-        });
-        brochureFeedback.value = { type: 'success', text: data.message, url: data.brochure_url };
-    } catch (error) {
-        const errors = error.response?.data?.errors;
-        brochureFeedback.value = {
-            type: 'error',
-            text: errors ? Object.values(errors).flat()[0] : (error.response?.data?.message || t('property_details.generic_error')),
-        };
-    } finally {
-        brochureSubmitting.value = false;
+async function handleDownloadSubmit() {
+    if (download.stage !== 'form') return;
+    const problem = (!downloadForm.name.trim() && 'Please enter your name.') || contactError({ ...downloadForm, phoneRequired: true });
+    if (problem) {
+        download.error = problem;
+        return;
     }
+    const config = downloadConfig.value;
+    download.stage = 'sending';
+    download.error = null;
+    let data;
+    try {
+        const recaptcha_token = await getRecaptchaToken(config.recaptcha);
+        ({ data } = await window.axios.post(config.endpoint, { property_id: property.value.id, ...downloadForm, recaptcha_token }));
+    } catch (error) {
+        download.error = responseError(error, t('property_details.generic_error'));
+        download.stage = 'form';
+        return;
+    }
+
+    download.stage = 'downloading';
+    download.progress = 0;
+    try {
+        await saveFile(data.download_url, `${property.value.slug}-${config.fileSuffix}`, (p) => { download.progress = p; });
+    } catch {
+        // Streaming failed — let the browser fetch the (attachment) link itself; the page stays put.
+        window.location.href = data.download_url;
+    }
+    download.progress = 1;
+    download.stage = 'done';
+    // Fresh form for the next download (brochure ↔ floor plan share this modal).
+    Object.assign(downloadForm, { name: '', email: '', phone: '', phone_country_code: '+971' });
+    downloadCloseTimer = setTimeout(() => { download.open = false; }, 1800);
+}
+
+/** Fetch `url` and save it as a file, reporting progress 0–1 (null while the size is unknown). */
+async function saveFile(url, fallbackName, onProgress) {
+    const response = await fetch(url, { credentials: 'same-origin' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const total = Number(response.headers.get('content-length')) || 0;
+    const chunks = [];
+    let received = 0;
+    if (response.body?.getReader) {
+        const reader = response.body.getReader();
+        for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            received += value.length;
+            onProgress(total ? Math.min(received / total, 1) : null);
+        }
+    } else {
+        chunks.push(await response.arrayBuffer());
+    }
+    const blob = new Blob(chunks, { type: response.headers.get('content-type') || 'application/octet-stream' });
+    // The server names the file (Content-Disposition); fall back to "<slug>-<kind>".
+    const disposition = response.headers.get('content-disposition') || '';
+    const named = disposition.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = named ? decodeURIComponent(named[1]) : fallbackName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 10000);
 }
 
 const pills = computed(() => {
@@ -152,6 +228,11 @@ const pills = computed(() => {
     if (p.year_built) list.push({ icon: '/frontend/assets/images/property-details/calendar.svg', label: t('property_details.pills.year_built'), value: p.year_built });
     return list;
 });
+
+// Floor Plans: the selected row drives the drawing, its zoom link, the download and the caption.
+const activePlanIndex = ref(0);
+watch(() => property.value?.slug, () => { activePlanIndex.value = 0; });
+const activePlan = computed(() => property.value?.floor_plans?.[activePlanIndex.value] || {});
 
 const descriptionFallback = computed(() => {
     if (!property.value) return '';
@@ -223,8 +304,8 @@ function agentAria(template, name) {
                             <span class="mw-property__price-amount">{{ property.price_value ? formatAmount(property.price_value) : property.price }}</span>
                         </strong>
                         <strong v-else class="mw-property__price-value">{{ t('property_details.price_on_request') }}</strong>
-                        <button v-if="property.brochure_available" type="button" class="mw-brochure-button" @click="brochureOpen = true; brochureFeedback = null">
-                            <span aria-hidden="true">↓</span> Download Brochure
+                        <button v-if="property.brochure_available" type="button" class="mw-brochure-button" @click="openDownload('brochure')">
+                            <span class="mw-download-arrow" aria-hidden="true">↓</span> Download Brochure
                         </button>
                     </div>
                 </div>
@@ -233,12 +314,14 @@ function agentAria(template, name) {
                     <nav class="mw-property__tabs" role="tablist" :aria-label="t('property_details.tabs_aria')">
                         <a href="#overview" class="mw-property__tab is-active" role="tab" aria-selected="true" data-property-tab="overview">{{ t('property_details.tab_overview') }}</a>
                         <a v-if="property.amenities.length" href="#features" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="features">{{ t('property_details.tab_features') }}</a>
+                        <a v-if="property.floor_plans?.length" href="#floor-plans" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="floor-plans">{{ t('property_details.tab_floor_plans', 'Floor Plans') }}</a>
                         <a href="#gallery" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="gallery">{{ t('property_details.tab_gallery') }}</a>
                     </nav>
 
                     <select class="mw-property__tabs-select" :aria-label="t('property_details.tabs_aria')" data-property-tabs-select>
                         <option value="overview">{{ t('property_details.tab_overview') }}</option>
                         <option v-if="property.amenities.length" value="features">{{ t('property_details.tab_features') }}</option>
+                        <option v-if="property.floor_plans?.length" value="floor-plans">{{ t('property_details.tab_floor_plans', 'Floor Plans') }}</option>
                         <option value="gallery">{{ t('property_details.tab_gallery') }}</option>
                     </select>
                 </div>
@@ -265,7 +348,39 @@ function agentAria(template, name) {
                         <section v-if="property.amenities.length" id="features" class="mw-property__section" data-reveal data-property-panel="features">
                             <h3 class="mw-property__section-title">{{ t('property_details.tab_features') }}</h3>
                             <div class="mw-property__chips">
-                                <span v-for="amenity in property.amenities" :key="amenity" class="mw-property__chip">{{ amenity }}</span>
+                                <span v-for="amenity in property.amenities" :key="amenity.label" class="mw-property__chip">
+                                    <img :src="amenity.icon" alt="" width="22" height="22" loading="lazy">{{ amenity.label }}
+                                </span>
+                            </div>
+                        </section>
+
+                        <section v-if="property.floor_plans?.length" id="floor-plans" class="mw-property__section" data-reveal data-property-panel="floor-plans">
+                            <h3 class="mw-property__section-title">{{ t('property_details.floor_plans_title', 'Floor Plans') }}</h3>
+                            <div class="mw-property__floorplan">
+                                <div class="mw-property__floorplan-list" role="tablist" :aria-label="t('property_details.floor_plans_title', 'Floor Plans')">
+                                    <div v-for="(plan, index) in property.floor_plans" :key="index" class="mw-property__floorplan-row" :class="{ 'is-active': index === activePlanIndex }" role="tab" tabindex="0" :aria-selected="index === activePlanIndex ? 'true' : 'false'" @click="activePlanIndex = index" @keydown.enter.space.prevent="activePlanIndex = index">
+                                        <div class="mw-property__floorplan-row-head">
+                                            <div>
+                                                <p class="mw-property__floorplan-name">{{ plan.label }}</p>
+                                                <p v-if="plan.size" class="mw-property__floorplan-range">{{ plan.size }}</p>
+                                            </div>
+                                            <span class="mw-property__floorplan-arrow" aria-hidden="true"><img src="/frontend/assets/images/icons/chevron.svg" alt="" width="16" height="16"></span>
+                                        </div>
+                                    </div>
+                                    <!-- Only when the listing has a "Downloadable Floor Plan File"; the lead form comes first. -->
+                                    <button v-if="property.floor_plan_download" type="button" class="mw-property__floorplan-download mw-floorplan-download-btn" @click="openDownload('floor_plan')">
+                                        <span class="mw-download-arrow" aria-hidden="true">↓</span>{{ t('property_details.floor_plan_download', 'Download Floor Plan') }}
+                                    </button>
+                                </div>
+                                <div class="mw-property__floorplan-media">
+                                    <a v-if="activePlan.image" :href="activePlan.image" class="mw-property__floorplan-zoom" data-fancybox="property-floor-plans" :data-caption="activePlan.label">
+                                        <img :src="activePlan.image" :alt="`${activePlan.label} floor plan`" loading="lazy">
+                                    </a>
+                                    <div class="mw-property__floorplan-caption">
+                                        <span class="mw-property__floorplan-caption-name">{{ activePlan.label }}</span>
+                                        <span v-if="activePlan.size" class="mw-property__floorplan-caption-range">{{ activePlan.size }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </section>
 
@@ -344,7 +459,7 @@ function agentAria(template, name) {
                                 </div>
                                 <div class="mw-property-enquiry__field">
                                     <label for="enquiry-phone">{{ t('property_details.enquiry.phone_label') }}</label>
-                                    <input type="tel" id="enquiry-phone" name="phone" :placeholder="t('property_details.enquiry.phone_placeholder')" v-model="enquiryForm.phone">
+                                    <PhoneInput id="enquiry-phone" v-model="enquiryForm.phone" v-model:country-code="enquiryForm.phone_country_code" />
                                 </div>
                                 <div class="mw-property-enquiry__field">
                                     <label for="enquiry-property">{{ t('property_details.enquiry.property_label') }}</label>
@@ -436,24 +551,40 @@ function agentAria(template, name) {
     </main>
 
     <Teleport to="body">
-        <div v-if="brochureOpen" class="mw-brochure-overlay" @click.self="brochureOpen = false" @keydown.esc="brochureOpen = false">
-            <section class="mw-brochure-dialog" role="dialog" aria-modal="true" aria-labelledby="brochure-title">
-                <button type="button" class="mw-brochure-close" aria-label="Close" @click="brochureOpen = false">×</button>
-                <div class="mw-brochure-icon" aria-hidden="true">↓</div>
-                <h2 id="brochure-title">Get the property brochure</h2>
-                <p>Share your contact details to access the brochure.</p>
-                <form v-if="!brochureFeedback || brochureFeedback.type !== 'success'" class="mw-brochure-form" @submit.prevent="handleBrochureSubmit">
-                    <label>Name<input v-model="brochureForm.name" required autocomplete="name" maxlength="255"></label>
-                    <label>Email<input v-model="brochureForm.email" required type="email" autocomplete="email" maxlength="255"></label>
-                    <label>Phone<input v-model="brochureForm.phone" required type="tel" autocomplete="tel" maxlength="50"></label>
-                    <p v-if="brochureFeedback" class="mw-brochure-feedback is-error" role="alert">{{ brochureFeedback.text }}</p>
-                    <button type="submit" class="mw-brochure-submit" :disabled="brochureSubmitting">
-                        {{ brochureSubmitting ? 'Preparing…' : 'Continue to download' }}
+        <div v-if="download.open" class="mw-brochure-overlay" @click.self="closeDownload" @keydown.esc="closeDownload">
+            <section class="mw-brochure-dialog" role="dialog" aria-modal="true" aria-labelledby="download-title">
+                <button type="button" class="mw-brochure-close" aria-label="Close" :disabled="download.stage === 'sending' || download.stage === 'downloading'" @click="closeDownload">×</button>
+                <div class="mw-brochure-icon" :class="`is-${download.stage}`" aria-hidden="true">
+                    <span v-if="download.stage === 'done'" class="mw-download-check">✓</span>
+                    <span v-else class="mw-download-arrow">↓</span>
+                </div>
+                <h2 id="download-title">{{ downloadConfig.title }}</h2>
+                <p>{{ downloadConfig.text }}</p>
+
+                <form v-if="download.stage === 'form' || download.stage === 'sending'" class="mw-brochure-form" novalidate @submit.prevent="handleDownloadSubmit">
+                    <label>Name<input v-model="downloadForm.name" required autocomplete="name" maxlength="255" :disabled="download.stage === 'sending'"></label>
+                    <label>Email<input v-model="downloadForm.email" required type="email" autocomplete="email" maxlength="255" :disabled="download.stage === 'sending'"></label>
+                    <div class="mw-brochure-form__field"><label for="download-phone">Phone</label>
+                        <PhoneInput id="download-phone" v-model="downloadForm.phone" v-model:country-code="downloadForm.phone_country_code" required :disabled="download.stage === 'sending'" /></div>
+                    <p v-if="download.error" class="mw-brochure-feedback is-error" role="alert">{{ download.error }}</p>
+                    <button type="submit" class="mw-brochure-submit" :class="{ 'is-busy': download.stage === 'sending' }" :disabled="download.stage === 'sending'">
+                        <span v-if="download.stage === 'sending'" class="mw-download-spinner" aria-hidden="true"></span>
+                        {{ download.stage === 'sending' ? 'Preparing…' : 'Continue to download' }}
                     </button>
                 </form>
-                <div v-else class="mw-brochure-success" role="status">
-                    <p>{{ brochureFeedback.text }}</p>
-                    <a :href="brochureFeedback.url" target="_blank" rel="noopener" @click="brochureOpen = false">Download PDF</a>
+
+                <div v-else class="mw-brochure-success" role="status" aria-live="polite">
+                    <template v-if="download.stage === 'downloading'">
+                        <p class="mw-download-status">Downloading<span class="mw-download-dots"><i>.</i><i>.</i><i>.</i></span>
+                            <strong v-if="download.progress !== null">{{ Math.round(download.progress * 100) }}%</strong></p>
+                        <div class="mw-download-bar" :class="{ 'is-indeterminate': download.progress === null }">
+                            <span :style="download.progress !== null ? { width: `${download.progress * 100}%` } : null"></span>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <p class="mw-download-done">Download complete — check your downloads folder.</p>
+                        <div class="mw-download-bar is-complete"><span style="width: 100%"></span></div>
+                    </template>
                 </div>
             </section>
         </div>
@@ -472,6 +603,37 @@ function agentAria(template, name) {
 .mw-brochure-form{display:grid;gap:14px}.mw-brochure-form label{display:grid;gap:6px;color:#263951;font-size:13px;font-weight:600}.mw-brochure-form input{width:100%;height:46px;padding:0 12px;border:1px solid #d7dfeb;border-radius:9px;font-family:inherit;font-size:15px;font-weight:400}.mw-brochure-form input:focus{outline:2px solid #203f6833;border-color:#203f68}
 .mw-brochure-submit,.mw-brochure-success a{display:inline-flex;justify-content:center;align-items:center;min-height:48px;padding:0 18px;border:0;border-radius:10px;background:#203f68;color:#fff;text-decoration:none;font-weight:700;cursor:pointer;transition:transform .2s,background .2s}.mw-brochure-submit:hover,.mw-brochure-success a:hover{transform:translateY(-2px);background:#c3264b}.mw-brochure-submit:disabled{opacity:.65;cursor:wait}
 .mw-brochure-feedback{margin:0;font-size:13px}.is-error{color:#b4233f}.mw-brochure-success p{color:#18794e}.mw-brochure-success a{width:100%}
+/* Download animations: arrow nudges on hover, drops while working; spinner, progress bar, check pop. */
+.mw-floorplan-download-btn{gap:10px;border:0;cursor:pointer;transition:transform .2s,box-shadow .2s,opacity .2s}
+.mw-floorplan-download-btn:hover{transform:translateY(-2px);box-shadow:0 12px 24px #24437340}
+.mw-download-arrow{display:inline-block;font-size:18px;line-height:1}
+.mw-brochure-button:hover .mw-download-arrow,.mw-floorplan-download-btn:hover .mw-download-arrow{animation:downloadNudge .8s ease-in-out infinite}
+.mw-brochure-icon{overflow:hidden;transition:background .3s,color .3s}
+.mw-brochure-icon.is-sending .mw-download-arrow,.mw-brochure-icon.is-downloading .mw-download-arrow{animation:downloadDrop 1s cubic-bezier(.5,0,.5,1) infinite}
+.mw-brochure-icon.is-done{background:#e5f6ed;color:#18794e}
+.mw-download-check{display:inline-block;font-size:26px;animation:downloadPop .45s cubic-bezier(.2,1.6,.4,1)}
+.mw-brochure-submit{gap:10px}
+.mw-download-spinner{width:16px;height:16px;border:2px solid #ffffff55;border-top-color:#fff;border-radius:50%;animation:downloadSpin .7s linear infinite}
+.mw-download-status{display:flex;align-items:baseline;gap:6px;margin:0 0 12px;color:#263951!important;font-weight:600}
+.mw-download-status strong{margin-left:auto;color:#203f68;font-variant-numeric:tabular-nums}
+.mw-download-dots i{font-style:normal;animation:downloadDot 1.2s infinite}.mw-download-dots i:nth-child(2){animation-delay:.2s}.mw-download-dots i:nth-child(3){animation-delay:.4s}
+.mw-download-bar{position:relative;height:10px;overflow:hidden;border-radius:999px;background:#edf3fa}
+.mw-download-bar span{position:absolute;inset:0 auto 0 0;width:0;border-radius:inherit;background:linear-gradient(90deg,#ca2844,#244373);background-size:200% 100%;transition:width .2s ease-out;animation:downloadShimmer 1.2s linear infinite}
+.mw-download-bar.is-indeterminate span{width:40%;animation:downloadSlide 1.1s ease-in-out infinite,downloadShimmer 1.2s linear infinite}
+.mw-brochure-success{animation:brochureFade .25s ease-out}
+.mw-brochure-form__field{display:grid;gap:6px;color:#263951;font-size:13px;font-weight:600}
+.mw-brochure-form__field :deep(input){height:46px;border:1px solid #d7dfeb;border-radius:9px;font-family:inherit;font-size:15px;font-weight:400}
+.mw-download-done{margin:0 0 12px;color:#18794e!important;font-weight:600;animation:brochureFade .3s ease-out}
+.mw-download-bar.is-complete span{background:#18794e;animation:none}
+.mw-brochure-close:disabled{opacity:.3;cursor:not-allowed}
+@keyframes downloadNudge{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+@keyframes downloadDrop{0%{transform:translateY(-140%);opacity:0}25%{opacity:1}70%{transform:translateY(0);opacity:1}100%{transform:translateY(140%);opacity:0}}
+@keyframes downloadPop{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes downloadSpin{to{transform:rotate(360deg)}}
+@keyframes downloadDot{0%,100%{opacity:.2}50%{opacity:1}}
+@keyframes downloadShimmer{from{background-position:200% 0}to{background-position:0 0}}
+@keyframes downloadSlide{from{left:-40%}to{left:100%}}
+@media (prefers-reduced-motion:reduce){.mw-download-arrow,.mw-download-check,.mw-download-spinner,.mw-download-dots i,.mw-download-bar span{animation:none!important}}
 @keyframes brochureFade{from{opacity:0}to{opacity:1}}@keyframes brochurePop{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:500px){.mw-brochure-dialog{padding:28px 22px;border-radius:18px}}
 </style>

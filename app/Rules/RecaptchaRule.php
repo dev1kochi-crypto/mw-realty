@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Log;
  */
 class RecaptchaRule implements ValidationRule
 {
+    /** Runs even when the token is missing/null — otherwise `nullable` would let a form skip the check. */
+    public bool $implicit = true;
+
     public function validate(string $attribute, mixed $value, \Closure $fail): void
     {
         $secret = config('services.recaptcha.secret_key');

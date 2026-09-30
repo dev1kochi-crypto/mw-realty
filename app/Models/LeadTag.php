@@ -11,11 +11,11 @@ class LeadTag extends Model
     protected $fillable = ['portal_user_id', 'name', 'color'];
 
     public const DEFAULTS = [
+        ['name' => 'Buyer Lead', 'color' => '#0ea5e9'],
+        ['name' => 'Seller Lead', 'color' => '#14b8a6'],
         ['name' => 'Hot Lead', 'color' => '#ef4444'],
         ['name' => 'Follow Up', 'color' => '#f59e0b'],
         ['name' => 'VIP', 'color' => '#8b5cf6'],
-        ['name' => 'Cold', 'color' => '#3b82f6'],
-        ['name' => 'High Budget', 'color' => '#14b8a6'],
     ];
 
     public function owner()
@@ -26,6 +26,23 @@ class LeadTag extends Model
     public function leads()
     {
         return $this->belongsToMany(Lead::class, 'lead_tag_pivot');
+    }
+
+    /** Tags sit on a pivot — a lead that already has this tag just drops the copy. */
+    protected function moveLeadsFrom(array $fromIds): void
+    {
+        $pivot = \Illuminate\Support\Facades\DB::table('lead_tag_pivot');
+        $alreadyTagged = (clone $pivot)->where('lead_tag_id', $this->id)->pluck('lead_id')->all();
+
+        (clone $pivot)->whereIn('lead_tag_id', $fromIds)->whereIn('lead_id', $alreadyTagged)->delete();
+        // Two copies on one lead would collide once both point here — keep one row per lead.
+        $rows = (clone $pivot)->whereIn('lead_tag_id', $fromIds)->orderBy('lead_id')->get(['lead_id', 'lead_tag_id']);
+        foreach ($rows->groupBy('lead_id') as $leadId => $leadRows) {
+            foreach ($leadRows->skip(1) as $extra) {
+                (clone $pivot)->where('lead_id', $leadId)->where('lead_tag_id', $extra->lead_tag_id)->delete();
+            }
+        }
+        (clone $pivot)->whereIn('lead_tag_id', $fromIds)->update(['lead_tag_id' => $this->id]);
     }
 
     /** The defaults are Super Admin's global tags, seeded once (idempotent) — no per-account copies. */

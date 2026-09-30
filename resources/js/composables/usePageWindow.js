@@ -1,11 +1,12 @@
 import { computed, unref } from 'vue';
 
 /**
- * Page numbers for a "Previous 1 2 3 4 5 Next" bar: at most `size` consecutive pages, kept
- * around the current page (so page 8 of 22 shows 6 7 8 9 10), instead of one button per page.
+ * Page numbers for a "Previous 1 2 3 Next" bar: at most `size` consecutive pages, kept
+ * around the current page (so page 8 of 22 shows 7 8 9), instead of one button per page —
+ * three keeps the bar on one line on phones as well as desktop.
  * `current` and `last` may be refs, computeds or plain numbers.
  */
-export function usePageWindow(current, last, size = 5) {
+export function usePageWindow(current, last, size = 3) {
     return computed(() => {
         const total = Math.max(0, Number(unref(last)) || 0);
         if (!total) return [];

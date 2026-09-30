@@ -72,6 +72,8 @@ class PropertiesController extends Controller
                 'marketing' => $request->input('marketing'),
                 'city' => $request->input('city'),
                 'community' => $request->input('community'),
+                'agent' => $request->input('agent'),
+                'agency' => $request->input('agency'),
                 'attributes' => $attributes,
             ],
         ));

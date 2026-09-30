@@ -314,9 +314,9 @@ class LeadController extends Controller
         $lead = $this->findOwned($id);
         $data = $request->validate([
             'type' => ['required', Rule::in([\App\Models\LeadContact::TYPE_EMAIL, \App\Models\LeadContact::TYPE_PHONE])],
-            'value' => $request->input('type') === 'email' ? ['required', 'email', 'max:255'] : ['required', 'string', 'max:50', 'regex:/^[\d\s()+\-.]{6,}$/'],
-            'phone_country_code' => ['nullable', 'regex:/^\+\d{1,4}$/'],
-        ], ['value.regex' => 'Enter a valid phone number.']);
+            'value' => $request->input('type') === 'email' ? \App\Rules\PhoneNumber::emailRules() : \App\Rules\PhoneNumber::rules(true),
+            'phone_country_code' => \App\Rules\PhoneNumber::countryCodeRules(),
+        ]);
 
         $this->leadService->addContact($lead, $data['type'], $data['value'], $data['phone_country_code'] ?? null);
 

@@ -9333,6 +9333,12 @@ html:has(.about-page) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+.mw-agents__grid.is-list-view {
+  grid-template-columns: minmax(0, 1fr);
+}
+.mw-agents__grid.is-list-view .mw-agent-card__body p {
+  max-width: none;
+}
 
 .mw-agent-card {
   display: flex;
@@ -9513,6 +9519,12 @@ html:has(.about-page) {
   min-width: 0;
   padding-right: 24px;
   border-right: 1px solid #e1e8ed;
+}
+/* Agents page: three fields (location, name, agency) instead of two. */
+@media (min-width: 768px) {
+  .mw-agencies-filter__bar--three .mw-agencies-filter__field {
+    flex-basis: 20%;
+  }
 }
 .mw-agencies-filter__field label {
   color: #35373c;
@@ -10210,6 +10222,15 @@ html:has(.about-page) {
   width: 24px;
   height: 24px;
 }
+.mw-agency-contact__link {
+  color: inherit;
+  text-decoration: none;
+  word-break: break-word;
+}
+.mw-agency-contact__link:hover {
+  color: #1b3459;
+  text-decoration: underline;
+}
 
 @media (max-width: 991px) {
   .mw-agency-profile {
@@ -10390,6 +10411,11 @@ html:has(.about-page) {
   display: block;
   width: 18px;
   height: 18px;
+}
+.mw-agent-profile__share-copied {
+  color: #244373;
+  font-size: 13px;
+  font-weight: 500;
 }
 .mw-agent-profile__bar {
   display: flex;
@@ -12883,6 +12909,38 @@ body.property-details-page main {
   font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 15px;
   font-weight: 500;
+}
+
+.mw-dubai-listing__owner {
+  margin: -8px 0 24px;
+}
+.mw-dubai-listing__owner-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 6px 14px;
+  border: 1px solid #bed8ff;
+  border-radius: 100px;
+  background: #eef4ff;
+  color: #244373;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+}
+.mw-dubai-listing__owner-chip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #244373;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .mw-empty-state {
@@ -15876,8 +15934,9 @@ body.property-details-page main {
 
 /* Newsletter subscribe feedback: focus glow, sending motion and a settled subscribed state. */
 @keyframes mw-newsletter-send {
-  from { transform: translateX(0) scale(1); }
-  to { transform: translateX(5px) scale(1.08); }
+  /* translate/scale, not transform — the footer arrow's rotate(90deg) must survive this. */
+  from { translate: 0 0; scale: 1; }
+  to { translate: 5px 0; scale: 1.08; }
 }
 @keyframes mw-newsletter-feedback-in {
   from { opacity: 0; transform: translateY(6px); }
@@ -18151,4 +18210,224 @@ a.mw-insight-chip--light:hover {
 }
 .mw-insight-panel--expert .mw-insight-panel__text {
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* ==========================================================================
+   Mobile fixes — chat bubble / reCAPTCHA badge vs bottom nav, drawer
+   language/currency menus, About director (CEO) message
+   ========================================================================== */
+@media (max-width: 767px) {
+  /* Sit above the fixed bottom nav (its bar + the raised search FAB) instead of covering Properties / Login. */
+  .mw-chatbot {
+    right: 12px;
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  }
+  .mw-chatbot__panel {
+    height: calc(100vh - 170px);
+    height: calc(100dvh - 170px);
+  }
+  /* Drawer: the (hidden) menus hung below the last row and still counted toward the drawer's
+     scroll height, leaving a big empty scroll area. Open them upward, over the drawer content. */
+  .mw-mobile-nav__prefs .mw-dropdown__menu {
+    top: auto;
+    bottom: calc(100% + 10px);
+    max-height: 260px;
+    overflow-y: auto;
+    transform-origin: bottom;
+    transform: translateY(6px) scale(0.97);
+  }
+  .mw-mobile-nav__prefs .mw-dropdown.is-open .mw-dropdown__menu {
+    transform: translateY(0) scale(1);
+  }
+
+  /* About — director message: the card was position:relative inside the fixed-aspect, overflow:hidden
+     photo box, so it was pushed below the photo and clipped away. Let the box grow to hold both. */
+  .mw-about-director__media {
+    aspect-ratio: auto;
+    overflow: visible;
+    background: transparent;
+  }
+  .mw-about-director__media > img {
+    height: auto;
+    aspect-ratio: 4/3;
+    background: #070b0b;
+    transform: none !important;
+  }
+  .mw-about-director__card {
+    width: 100%;
+    padding: 24px 0 0;
+    background: transparent;
+  }
+  .mw-about-director__byline {
+    margin: 18px 0 20px;
+  }
+}
+
+/* Fancybox lightbox (property photo gallery / floor plans): sit above the fixed header, the mobile
+   bottom nav and the chat bubble, and hide those while it's open. */
+.fancybox__dialog {
+  z-index: 5000;
+}
+html.with-fancybox .mw-chatbot {
+  visibility: hidden;
+}
+
+/* reCAPTCHA v3 badge: hidden site-wide (it sat under the chat bubble). visibility, not display:none —
+   Google's documented way; the widget still loads and issues tokens. */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
+
+/* Pagination: Previous + 3 page numbers + Next on one row — slightly tighter on phones so the bar
+   fits a ~320px screen without wrapping "Next" onto its own line. */
+.mw-blog__pagination,
+.mw-dubai-listing__pagination {
+  flex-wrap: nowrap;
+}
+@media (max-width: 575px) {
+  .mw-blog__pagination,
+  .mw-dubai-listing__pagination {
+    gap: 6px;
+  }
+  .mw-blog__page,
+  .mw-dubai-listing__page {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+  .mw-blog__page--prev, .mw-blog__page--next,
+  .mw-dubai-listing__page--prev, .mw-dubai-listing__page--next {
+    padding: 0 12px;
+  }
+}
+
+/* About newsletter: on phones the "Subscribe Now" label overlapped the email field — arrow only. */
+@media (max-width: 767px) {
+  .mw-about-news__submit-text {
+    display: none;
+  }
+  .mw-about-news__form button {
+    flex-shrink: 0;
+    padding: 8px 0 8px 12px;
+  }
+}
+
+/* ==========================================================================
+   Newsletter (footer + About) — visible checkbox tick and submit animations
+   ========================================================================== */
+/* Checked terms box: brand fill + white tick (it was only a slightly lighter grey before). */
+.mw-footer__newsletter-terms input {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.mw-footer__newsletter-terms input::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3.5 8.4l2.9 2.9 6.1-6.4' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
+  opacity: 0;
+  transform: scale(.4);
+  transition: opacity .18s ease, transform .22s cubic-bezier(.34, 1.56, .64, 1);
+}
+.mw-footer__newsletter-terms input:checked {
+  background: linear-gradient(135deg, #c82845 0%, #254272 100%);
+  border-color: transparent;
+}
+.mw-footer__newsletter-terms input:checked::after {
+  opacity: 1;
+  transform: scale(1);
+}
+.mw-footer__newsletter-terms input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(33, 182, 168, .35);
+}
+.mw-footer__newsletter-terms:hover input:not(:checked) {
+  border-color: #a7a7a7;
+}
+
+/* Submitting: a light sweeps along the bottom edge of the field while the request is in flight. */
+.mw-footer__newsletter-form,
+.mw-about-news__form {
+  position: relative;
+  overflow: hidden;
+}
+.mw-footer__newsletter-form::after,
+.mw-about-news__form::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #21b6a8, transparent);
+  opacity: 0;
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+.mw-footer__newsletter-form.is-submitting::after,
+.mw-about-news__form.is-submitting::after {
+  opacity: 1;
+  animation: mw-newsletter-sweep 1.1s ease-in-out infinite;
+}
+.mw-footer__newsletter-form.is-submitting input,
+.mw-about-news__form.is-submitting input {
+  opacity: .6;
+  transition: opacity .2s ease;
+}
+
+/* Subscribed: one soft glow pulse; error (incl. "please agree to the terms"): a short shake. */
+.mw-footer__newsletter-form.is-subscribed,
+.mw-about-news__form.is-subscribed {
+  animation: mw-newsletter-success .7s ease-out both;
+}
+.mw-footer__newsletter-form.is-subscribed button img,
+.mw-about-news__form.is-subscribed button img {
+  animation: mw-newsletter-fly .6s ease-in both;
+}
+.mw-footer__newsletter-form.has-error,
+.mw-about-news__form.has-error {
+  border-color: #e04f5f;
+  animation: mw-newsletter-shake .42s ease both;
+}
+
+@keyframes mw-newsletter-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
+}
+@keyframes mw-newsletter-success {
+  0% { box-shadow: 0 0 0 0 rgba(33, 182, 168, .45); }
+  60% { box-shadow: 0 0 0 10px rgba(33, 182, 168, 0); }
+  100% { box-shadow: 0 0 0 3px rgba(33, 182, 168, .12); }
+}
+@keyframes mw-newsletter-fly {
+  0% { translate: 0 0; opacity: 1; }
+  45% { translate: 28px 0; opacity: 0; }
+  46% { translate: -18px 0; opacity: 0; }
+  100% { translate: 0 0; opacity: 1; }
+}
+@keyframes mw-newsletter-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mw-footer__newsletter-form.is-submitting::after,
+  .mw-about-news__form.is-submitting::after,
+  .mw-footer__newsletter-form.is-subscribed,
+  .mw-about-news__form.is-subscribed,
+  .mw-footer__newsletter-form.is-subscribed button img,
+  .mw-about-news__form.is-subscribed button img,
+  .mw-footer__newsletter-form.has-error,
+  .mw-about-news__form.has-error {
+    animation: none;
+  }
+  .mw-footer__newsletter-terms input::after {
+    transition: none;
+  }
 }

@@ -66,7 +66,8 @@ class PortalProfileController extends Controller
             'section' => ['required', Rule::in(['identity', 'agent', 'company', 'about', 'seo'])],
             'name' => 'sometimes|required|string|max:255',
             'company_name' => 'sometimes|nullable|string|max:255',
-            'phone' => 'sometimes|nullable|string|max:50',
+            'phone' => ['sometimes', ...\App\Rules\PhoneNumber::rules()],
+            'phone_country_code' => \App\Rules\PhoneNumber::countryCodeRules(),
             'nationality' => 'sometimes|nullable|string|max:100',
             'emirates_id_no' => 'sometimes|nullable|string|max:50',
             'passport_no' => 'sometimes|nullable|string|max:50',
@@ -144,7 +145,12 @@ class PortalProfileController extends Controller
 
             $portalUser->update(['metadata' => $metadata]);
         } else {
-            $portalUser->update($request->only($fieldsBySection[$request->input('section')]));
+            $data = $request->only($fieldsBySection[$request->input('section')]);
+            if (array_key_exists('phone', $data) && filled($data['phone'])) {
+                // Stored as one value with its code ("+971501234567"), as tel: / WhatsApp links expect.
+                $data['phone'] = $request->input('phone_country_code', '+971') . preg_replace('/\D/', '', $data['phone']);
+            }
+            $portalUser->update($data);
         }
 
         if (in_array($request->input('section'), ['identity', 'agent', 'company'], true)

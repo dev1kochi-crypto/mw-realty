@@ -19,18 +19,8 @@ class DatabaseSeeder extends Seeder
 
        $this->call([
             CmsRolesPermissionsSeeder::class,
-            SeoPageMetadataSeeder::class,
-            PlanSeeder::class,
             CrmAdminMasterDataSeeder::class,
-            PortalUserSeeder::class,
-            PropertySeeder::class,
-            NearbyPlaceSeeder::class, // after PropertySeeder — tags properties by community
-            CommercialPropertySeeder::class,
-            MoreCommercialPropertySeeder::class,
             FilterSeeder::class,
-            MarketInsightSeeder::class,
-            CareerSeeder::class,
-            TestimonialSeeder::class,
         ]);
     }
 }

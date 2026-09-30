@@ -293,10 +293,10 @@ const showBuilders = computed(() => (builders.value?.items || []).length > 0);
                             <p class="mw-about-news__text">{{ t('about.newsletter.text') }}</p>
                         </div>
                         <div class="mw-about-news__signup" data-reveal style="--reveal-delay: 1">
-                        <form class="mw-about-news__form" :class="{ 'is-submitting': newsletterSubmitting, 'is-subscribed': newsletterFeedback?.type === 'success' }" @submit.prevent="submitNewsletter">
+                        <form class="mw-about-news__form" :class="{ 'is-submitting': newsletterSubmitting, 'is-subscribed': newsletterFeedback?.type === 'success', 'has-error': newsletterFeedback?.type === 'error' }" @submit.prevent="submitNewsletter">
                             <input v-model="newsletterEmail" type="email" name="email" :placeholder="t('about.newsletter.placeholder')" :disabled="newsletterSubmitting" required>
-                            <button type="submit" :disabled="newsletterSubmitting">
-                                {{ newsletterSubmitting ? 'Sending…' : t('about.newsletter.submit') }}
+                            <button type="submit" :disabled="newsletterSubmitting" :aria-label="t('about.newsletter.submit')">
+                                <span class="mw-about-news__submit-text">{{ newsletterSubmitting ? 'Sending…' : t('about.newsletter.submit') }}</span>
                                 <img src="/frontend/assets/images/icons/about-newsletter-arrow.svg" alt="">
                             </button>
                         </form>

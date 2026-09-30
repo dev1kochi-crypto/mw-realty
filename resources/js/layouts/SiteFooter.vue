@@ -5,11 +5,27 @@ import { useSiteInformation } from '../composables/useSiteInformation';
 import { useLanguages } from '../composables/useLanguages';
 import { useRecaptcha } from '../composables/useRecaptcha';
 import { useStaticText } from '../composables/useStaticText';
+import { useWishlist } from '../composables/useWishlist';
 
 const route = useRoute();
-const activeBottom = computed(() => route.meta.activeBottom ?? '');
 const isHome = computed(() => route.meta.isHome === true);
-const homeAnchor = computed(() => (isHome.value ? '' : '/'));
+const { authenticated } = useWishlist();
+
+// Mobile bottom nav — each item is a real route, and the highlighted one follows the page you're on.
+// Buy / Rent are the /properties listing filtered by ?listing_type= (same as the header's Buy / Rent).
+const activeBottom = computed(() => {
+    const name = route.name;
+    if (name === 'home') return 'home';
+    if (name === 'properties-dubai' || name === 'properties-map') {
+        return { sale: 'buy', rent: 'rent' }[route.query.listing_type] ?? '';
+    }
+    if (['profile', 'login', 'signup', 'verify-otp', 'forgot-password', 'reset-password'].includes(name)) return 'account';
+    return '';
+});
+// Search jumps to the hero search on the home page; everywhere else it opens the filterable listing.
+const searchTo = computed(() => (isHome.value ? { hash: '#search' } : '/properties'));
+const accountTo = computed(() => (authenticated.value ? '/profile' : '/login'));
+const accountLabel = computed(() => (authenticated.value ? t('nav.profile', 'Profile') : t('footer.bottom_nav.login')));
 
 // The footer sits outside <router-view> and mounts once for the whole app lifetime, so this
 // only ever fires on first load and on a language switch — not on every navigation.
@@ -65,6 +81,9 @@ async function handleNewsletterSubmit() {
     if (newsletterSubmitting.value) return;
 
     if (!newsletterAgreed.value) {
+        // Drop the error for a frame first so a repeat click replays the shake animation.
+        newsletterFeedback.value = null;
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         newsletterFeedback.value = { type: 'error', text: t('footer.newsletter.error_agree') };
         return;
     }
@@ -147,7 +166,7 @@ async function handleNewsletterSubmit() {
 
                 <div class="mw-footer__newsletter">
                     <h3 class="mw-footer__newsletter-title">{{ t('footer.newsletter.title') }}</h3>
-                    <form class="mw-footer__newsletter-form" :class="{ 'is-submitting': newsletterSubmitting, 'is-subscribed': newsletterFeedback?.type === 'success' }" @submit.prevent="handleNewsletterSubmit">
+                    <form class="mw-footer__newsletter-form" :class="{ 'is-submitting': newsletterSubmitting, 'is-subscribed': newsletterFeedback?.type === 'success', 'has-error': newsletterFeedback?.type === 'error' }" @submit.prevent="handleNewsletterSubmit">
                         <input type="email" :placeholder="t('footer.newsletter.placeholder')" v-model="newsletterEmail" :disabled="newsletterSubmitting" required>
                         <button type="submit" :aria-label="t('footer.newsletter.subscribe_aria')" :disabled="newsletterSubmitting">
                             <img src="/frontend/assets/images/icons/footer-arrow.svg" alt="" width="24" height="24">
@@ -178,11 +197,11 @@ async function handleNewsletterSubmit() {
             <img src="/frontend/assets/images/icons/icon-home.svg" alt="">
             <span>{{ t('footer.bottom_nav.home') }}</span>
         </router-link>
-        <router-link :to="`${homeAnchor}#premium-properties`" class="mw-bottom-nav__item" :class="{ 'is-active': activeBottom === 'buy' }" data-bottom-nav="buy">
+        <router-link :to="{ path: '/properties', query: { listing_type: 'sale' } }" class="mw-bottom-nav__item" :class="{ 'is-active': activeBottom === 'buy' }" data-bottom-nav="buy">
             <img src="/frontend/assets/images/icons/building.svg" alt="">
             <span>{{ t('footer.bottom_nav.buy') }}</span>
         </router-link>
-        <router-link :to="`${homeAnchor}#search`" class="mw-bottom-nav__item mw-bottom-nav__item--search" :class="{ 'is-active': activeBottom === 'search' }" data-bottom-nav="search">
+        <router-link :to="searchTo" class="mw-bottom-nav__item mw-bottom-nav__item--search" :aria-label="t('nav.search', 'Search')" data-bottom-nav="search">
             <span class="mw-bottom-nav__fab" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <circle cx="11" cy="11" r="6.25" stroke="#fff" stroke-width="1.8"/>
@@ -191,13 +210,13 @@ async function handleNewsletterSubmit() {
             </span>
             <span></span>
         </router-link>
-        <router-link :to="`${homeAnchor}#find-properties`" class="mw-bottom-nav__item" :class="{ 'is-active': activeBottom === 'properties' }" data-bottom-nav="properties">
+        <router-link :to="{ path: '/properties', query: { listing_type: 'rent' } }" class="mw-bottom-nav__item" :class="{ 'is-active': activeBottom === 'rent' }" data-bottom-nav="rent">
             <img src="/frontend/assets/images/icons/icon-building-a.svg" alt="">
-            <span>{{ t('footer.bottom_nav.properties') }}</span>
+            <span>{{ t('nav.rent', 'Rent') }}</span>
         </router-link>
-        <router-link to="/login" class="mw-bottom-nav__item" :class="{ 'is-active': activeBottom === 'login' }" data-bottom-nav="login">
+        <router-link :to="accountTo" class="mw-bottom-nav__item" :class="{ 'is-active': activeBottom === 'account' }" data-bottom-nav="account">
             <img src="/frontend/assets/images/icons/user.svg" alt="">
-            <span>{{ t('footer.bottom_nav.login') }}</span>
+            <span>{{ accountLabel }}</span>
         </router-link>
     </nav>
 </template>

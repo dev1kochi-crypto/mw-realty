@@ -3,6 +3,8 @@ import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useRecaptcha } from '../composables/useRecaptcha';
 import { useStaticText } from '../composables/useStaticText';
+import PhoneInput from './PhoneInput.vue';
+import { contactError, responseError } from '../composables/useContactValidation';
 
 const props = defineProps({
     profileType: { type: String, required: true },
@@ -17,13 +19,18 @@ const drawerTitleId = drawerId + '-title';
 const submitting = ref(false);
 const feedback = ref(null);
 const form = reactive({
-    first_name: '', last_name: '', email: '', phone: '', property_category: '', specification: '',
+    first_name: '', last_name: '', email: '', phone: '', phone_country_code: '+971', property_category: '', specification: '',
     price_range: '', area: '', preferred_location: '', additional_details: '', move_in_timeline: '',
-    furnishing_status: '', whatsapp_consent: false,
+    furnishing_status: '',
 });
 
 async function submit() {
     if (submitting.value) return;
+    const problem = (!form.first_name.trim() && t('custom_request.first_name_label') + ' is required.') || contactError(form);
+    if (problem) {
+        feedback.value = { type: 'error', text: problem };
+        return;
+    }
     submitting.value = true;
     feedback.value = null;
     try {
@@ -37,7 +44,7 @@ async function submit() {
         closeDrawer();
         router.push({ path: '/thank-you', state: { thankYou: { type: 'request', to: props.profileType, name: form.first_name.trim() } } });
     } catch (error) {
-        feedback.value = { type: 'error', text: error.response?.data?.message || t('custom_request.generic_error') };
+        feedback.value = { type: 'error', text: responseError(error, t('custom_request.generic_error')) };
         submitting.value = false;
     }
 }
@@ -76,7 +83,7 @@ function closeDrawer() {
                 </div>
                 <div class="crm-modal__row">
                     <label class="crm-modal__field"><span class="crm-modal__label">{{ t('custom_request.email_label') }}</span><input v-model="form.email" type="email" :placeholder="t('custom_request.email_placeholder')" required></label>
-                    <label class="crm-modal__field"><span class="crm-modal__label">{{ t('custom_request.phone_label') }}</span><input v-model="form.phone" type="tel" :placeholder="t('custom_request.phone_placeholder')"></label>
+                    <div class="crm-modal__field"><label class="crm-modal__label" :for="drawerId + '-phone'">{{ t('custom_request.phone_label') }}</label><PhoneInput :id="drawerId + '-phone'" v-model="form.phone" v-model:country-code="form.phone_country_code" /></div>
                 </div>
 
                 <h3 class="crm-modal__section-title">{{ t('custom_request.section_property_requirements') }}</h3>
@@ -96,7 +103,6 @@ function closeDrawer() {
                     <label class="crm-modal__field"><span class="crm-modal__label">{{ t('custom_request.move_in_timeline_label') }}</span><select v-model="form.move_in_timeline"><option value="">{{ t('custom_request.select_timeline') }}</option><option value="immediate">{{ t('custom_request.timeline_immediate') }}</option><option value="1-3-months">{{ t('custom_request.timeline_1_3_months') }}</option><option value="3-6-months">{{ t('custom_request.timeline_3_6_months') }}</option><option value="6-12-months">{{ t('custom_request.timeline_6_12_months') }}</option><option value="flexible">{{ t('custom_request.timeline_flexible') }}</option></select></label>
                     <label class="crm-modal__field"><span class="crm-modal__label">{{ t('custom_request.furnishing_status_label') }}</span><select v-model="form.furnishing_status"><option value="">{{ t('custom_request.select_status') }}</option><option value="furnished">{{ t('custom_request.furnishing_furnished') }}</option><option value="unfurnished">{{ t('custom_request.furnishing_unfurnished') }}</option><option value="semi-furnished">{{ t('custom_request.furnishing_semi_furnished') }}</option><option value="no-preference">{{ t('custom_request.furnishing_no_preference') }}</option></select></label>
                 </div>
-                <label class="crm-modal__checkbox"><input v-model="form.whatsapp_consent" type="checkbox"><span class="crm-modal__checkbox-box"></span><span class="crm-modal__checkbox-text"><strong>{{ t('custom_request.whatsapp_consent_label') }}</strong><small>{{ t('custom_request.whatsapp_consent_text') }}</small></span></label>
             </div>
             <div class="crm-modal__footer">
                 <button type="submit" class="quote-modal__btn crm-modal__submit" :disabled="submitting">{{ submitting ? t('custom_request.submitting') : t('custom_request.submit') }}</button>

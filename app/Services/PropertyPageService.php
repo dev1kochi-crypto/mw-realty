@@ -19,7 +19,7 @@ class PropertyPageService
         $version = Property::where('slug', $slug)->value('updated_at') ?? 'missing';
 
         return Cache::remember("property-detail:{$lang}:{$slug}:{$version}", self::CACHE_TTL, function () use ($lang, $slug) {
-            $property = Property::where('status', true)->where('slug', $slug)->with(['details', 'agent', 'owner'])->first();
+            $property = Property::where('status', true)->where('slug', $slug)->with(['details', 'agent', 'owner', 'floorPlans'])->first();
             if (!$property) {
                 return null;
             }
@@ -62,6 +62,7 @@ class PropertyPageService
                 'rera_id' => $property->rera_id,
                 'reference_no' => $property->reference_no,
                 'brochure_available' => (bool) $property->brochure_path,
+                'floor_plan_download' => (bool) $details?->floor_plan_file, // the file itself is only given out after the lead form
                 'garage' => $details?->garage,
                 'parking' => $details?->parking,
                 'year_built' => $details?->year_built,
@@ -70,13 +71,63 @@ class PropertyPageService
                 'view' => $details?->view,
                 'published_at' => $property->published_at?->format('F d, Y'),
                 'amenities' => collect($details?->amenities ?? [])
-                    ->map(fn ($a) => $a['label'][$lang] ?? $a['label']['en'] ?? '')
+                    ->map(function ($a) use ($lang) {
+                        $label = $a['label'][$lang] ?? $a['label']['en'] ?? '';
+
+                        return $label === '' ? null : [
+                            'label' => $label,
+                            'icon' => media_url($a['icon'] ?? null) ?: $this->amenityIcon($a['label']['en'] ?? $label),
+                        ];
+                    })
                     ->filter()->values(),
+                'floor_plans' => $property->floorPlans->map(fn ($plan) => [
+                    'label' => $plan->label,
+                    'image' => media_url($plan->image),
+                    'size' => $this->sizeRange($plan->size_from, $plan->size_to),
+                ])->values(),
                 'contact' => $this->mapContact($property),
                 'similar' => $similar->map(fn ($p) => $this->mapProperty($p, $lang, true))->values(),
                 'seo' => SeoMeta::resolve($property->metadata, $property->seoFallback($lang)),
             ];
         });
+    }
+
+    /** Keyword → design icon, used when an amenity row has no uploaded icon. Order matters ("parking" before "park"). */
+    private const AMENITY_ICONS = [
+        'pool|swim' => 'amenity-pool',
+        'gym|fitness' => 'amenity-gym',
+        'parking|garage' => 'amenity-parking',
+        'balcony|terrace' => 'amenity-balcony',
+        'cctv|camera' => 'amenity-cctv',
+        'fire' => 'amenity-fire-alarm',
+        'play|kids' => 'amenity-playground',
+        'garden|park|landscap' => 'amenity-garden',
+        'wifi|wi-fi|internet' => 'amenity-wifi',
+        'security|guard|concierge' => 'amenity-security',
+    ];
+
+    private function amenityIcon(string $label): string
+    {
+        foreach (self::AMENITY_ICONS as $pattern => $file) {
+            if (preg_match("/{$pattern}/i", $label)) {
+                return asset("frontend/assets/images/property-details/{$file}.svg");
+            }
+        }
+
+        return asset('frontend/assets/images/icons/verified.svg');
+    }
+
+    /** "672 to 869 sq. ft." / "672 sq. ft." / null. */
+    private function sizeRange(?int $from, ?int $to): ?string
+    {
+        if (!$from && !$to) {
+            return null;
+        }
+        if ($from && $to && $from !== $to) {
+            return number_format($from) . ' to ' . number_format($to) . ' sq. ft.';
+        }
+
+        return number_format($from ?: $to) . ' sq. ft.';
     }
 
     /** The sidebar "listing agent" card — Property::displayContact(): the assigned agent while available, else the owning agency, else null (card is hidden). */

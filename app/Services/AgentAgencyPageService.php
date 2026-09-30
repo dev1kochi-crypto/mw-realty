@@ -21,6 +21,7 @@ class AgentAgencyPageService
         return Cache::remember("agents-listing:{$lang}", self::CACHE_TTL, function () use ($lang) {
             $section = SectionLabel::where('section_key', 'agents')->where('status', true)->first();
             $agents = PortalUser::where('type', 'agent')->approved()->where('is_active', true)
+                ->with('company:id,slug,name,company_name,type')
                 ->orderBy('name')
                 ->get();
 
@@ -60,7 +61,7 @@ class AgentAgencyPageService
                 ] : null,
                 'rent_count' => (clone $activeProperties)->where('listing_type', 'rent')->count(),
                 'sell_count' => (clone $activeProperties)->where('listing_type', 'sale')->count(),
-                'properties' => (clone $activeProperties)->orderByDesc('published_at')->take(6)->get()
+                'properties' => (clone $activeProperties)->orderByDesc('published_at')->take(10)->get()
                     ->map(fn ($p) => $this->mapProperty($p, $lang, true))->values(),
                 'seo' => SeoMeta::resolve($agent->metadata, $agent->seoFallback($lang)),
             ];
@@ -116,7 +117,7 @@ class AgentAgencyPageService
                 'for_rent_count' => (clone $activeProperties)->where('listing_type', 'rent')->count(),
                 'agents' => (clone $activeAgents)->orderBy('name')->take(6)->get()
                     ->map(fn ($a) => $this->mapAgentCard($a))->values(),
-                'properties' => (clone $activeProperties)->orderByDesc('published_at')->take(6)->get()
+                'properties' => (clone $activeProperties)->orderByDesc('published_at')->take(10)->get()
                     ->map(fn ($p) => $this->mapProperty($p, $lang, true))->values(),
                 'seo' => SeoMeta::resolve($agency->metadata, $agency->seoFallback($lang)),
             ];
@@ -136,6 +137,8 @@ class AgentAgencyPageService
             'preferred_areas' => $agent->preferred_areas ?? [],
             'rent_count' => $rentCount,
             'sell_count' => $sellCount,
+            // The agents page's Agency filter (/agents?agency={slug} from an agency's View all).
+            'company' => $agent->company ? ['slug' => $agent->company->slug, 'name' => $agent->company->displayName()] : null,
         ];
     }
 

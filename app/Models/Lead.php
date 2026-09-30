@@ -138,6 +138,7 @@ class Lead extends Model
         'property details' => 'Website',
         'ai-chatbot' => 'AI Chatbot',
         'brochure-download' => 'Brochure Download',
+        'floor-plan-download' => 'Floor Plan Download',
         'custom-request' => 'Custom Request',
         'agent-profile-request' => 'Agent Profile',
         'agency-profile-request' => 'Agency Profile',
@@ -163,8 +164,9 @@ class Lead extends Model
 
     /**
      * Fills a missing stage (the owner's default stage — its own, else Super Admin's) and source
-     * (matched by name among the owner's own + global sources; a new channel is added to the
-     * global source list so every account can pick it too). Doesn't save.
+     * (matched by name among the owner's own + global sources). A missing website / system source
+     * (LeadSource::systemNames()) is re-added to Super Admin's global list; any other new source
+     * belongs to the lead's account, which can edit / delete it (no account → Super Admin). Doesn't save.
      */
     public function applyStageAndSourceDefaults(): void
     {
@@ -180,11 +182,12 @@ class Lead extends Model
 
         if (!$this->source_id) {
             $name = self::sourceNameFor($this->page_source);
+            $sourceOwnerId = LeadSource::isSystemName($name) ? LeadSource::globalOwnerId() : $ownerId;
             $this->source_id = LeadSource::forOwner($ownerId)->whereRaw('LOWER(lead_sources.name) = ?', [mb_strtolower($name)])->value('lead_sources.id')
                 ?? LeadSource::create([
-                    'portal_user_id' => LeadSource::globalOwnerId(),
+                    'portal_user_id' => $sourceOwnerId,
                     'name' => $name,
-                    'order_index' => (int) LeadSource::where('portal_user_id', LeadSource::globalOwnerId())->max('order_index') + 1,
+                    'order_index' => (int) LeadSource::where('portal_user_id', $sourceOwnerId)->max('order_index') + 1,
                 ])->id;
         }
     }

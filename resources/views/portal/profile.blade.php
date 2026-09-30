@@ -372,7 +372,9 @@
             @endif
             <div class="col-md-4">
                 <label class="form-label">Phone</label>
-                <input type="text" name="phone" class="form-control form-control-sm" value="{{ $portalUser->phone }}">
+                @php([$profilePhoneCode, $profilePhoneNumber] = \App\Rules\PhoneNumber::split($portalUser->phone))
+                <input type="hidden" name="phone_country_code" value="{{ $profilePhoneCode ?? '+971' }}">
+                <input type="tel" name="phone" class="form-control form-control-sm" value="{{ $profilePhoneNumber }}" maxlength="20" placeholder="50 123 4567" data-phone-input>
             </div>
             <div class="col-md-4">
                 <label class="form-label">Nationality</label>

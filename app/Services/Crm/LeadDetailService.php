@@ -19,6 +19,7 @@ class LeadDetailService
     public const SOURCE_LABELS = [
         'property-detail' => 'Property enquiry form',
         'brochure-download' => 'Brochure download',
+        'floor-plan-download' => 'Floor plan download',
         'agent-profile-request' => 'Agent profile request',
         'agency-profile-request' => 'Agency profile request',
         'custom-request' => 'Custom property request',

@@ -637,7 +637,7 @@ class PortalPropertyController extends Controller
 
         $property->nearbyPlaces()->sync($this->allowedNearbyPlaceIds($request));
 
-        return redirect()->route($this->routePrefix() . '.index')->with('success', $this->sectionData()['itemLabel'] . ' created successfully.');
+        return redirect()->route($this->routePrefix() . '.index')->with('toast', $this->sectionData()['itemLabel'] . ' created successfully.');
     }
 
     /** Owner-only (delete, feature, reorder, status) — never an agency agent on the agency's listing. */
@@ -768,7 +768,7 @@ class PortalPropertyController extends Controller
 
         $property->nearbyPlaces()->sync($this->allowedNearbyPlaceIds($request));
 
-        return redirect()->route($this->routePrefix() . '.edit', $property->id)->with('success', $this->sectionData()['itemLabel'] . ' updated successfully.');
+        return redirect()->route($this->routePrefix() . '.index')->with('toast', $this->sectionData()['itemLabel'] . ' updated successfully.');
     }
 
     public function destroy($id)

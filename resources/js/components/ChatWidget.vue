@@ -5,6 +5,8 @@ import { useRecaptcha } from '../composables/useRecaptcha';
 import { useSpeech } from '../composables/useSpeech';
 import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
+import PhoneInput from './PhoneInput.vue';
+import { contactError, responseError } from '../composables/useContactValidation';
 
 const { messages, loading, isOpen, open, sendMessage, clearMessages } = useChatbot();
 const { getRecaptchaToken } = useRecaptcha();
@@ -17,7 +19,7 @@ const botName = window.MW_CHATBOT_NAME || 'Remi';
 const draft = ref('');
 const messageList = ref(null);
 const enquiryFor = ref(null);
-const enquiryForm = reactive({ name: '', email: '', phone: '' });
+const enquiryForm = reactive({ name: '', email: '', phone: '', phone_country_code: '+971' });
 const enquirySubmitting = ref(false);
 const enquiryFeedback = ref(null);
 
@@ -124,6 +126,13 @@ function startEnquiry(property) {
 
 async function submitEnquiry() {
     if (enquirySubmitting.value || !enquiryFor.value) return;
+    const problem = (!enquiryForm.name.trim() && 'Please enter your name.')
+        || (!enquiryForm.email.trim() && !enquiryForm.phone.trim() && 'Please enter your email or phone number.')
+        || contactError({ ...enquiryForm, emailRequired: false });
+    if (problem) {
+        enquiryFeedback.value = { type: 'error', text: problem };
+        return;
+    }
     enquirySubmitting.value = true;
     enquiryFeedback.value = null;
 
@@ -134,13 +143,14 @@ async function submitEnquiry() {
             name: enquiryForm.name,
             email: enquiryForm.email,
             phone: enquiryForm.phone,
+            phone_country_code: enquiryForm.phone_country_code,
             message: `I'm interested in "${enquiryFor.value.name}" — please share more details.`,
             page_source: 'ai-chatbot',
             recaptcha_token,
         });
         enquiryFeedback.value = { type: 'success', text: data.message };
     } catch (error) {
-        enquiryFeedback.value = { type: 'error', text: error.response?.data?.message || t('chat_widget.enquiry_form.generic_error') };
+        enquiryFeedback.value = { type: 'error', text: responseError(error, t('chat_widget.enquiry_form.generic_error')) };
     } finally {
         enquirySubmitting.value = false;
     }
@@ -215,9 +225,9 @@ async function submitEnquiry() {
 
                                 <form v-if="enquiryFor && enquiryFor.id === p.id" class="mw-chatbot__enquiry" novalidate @submit.prevent="submitEnquiry">
                                     <p v-if="enquiryFeedback" class="mw-chatbot__enquiry-feedback" :class="`mw-chatbot__enquiry-feedback--${enquiryFeedback.type}`">{{ enquiryFeedback.text }}</p>
-                                    <template v-else>
+                                    <template v-if="enquiryFeedback?.type !== 'success'">
                                         <input v-model="enquiryForm.name" type="text" :placeholder="t('chat_widget.enquiry_form.name_placeholder')" required>
-                                        <input v-model="enquiryForm.phone" type="tel" :placeholder="t('chat_widget.enquiry_form.phone_placeholder')">
+                                        <PhoneInput v-model="enquiryForm.phone" v-model:country-code="enquiryForm.phone_country_code" :placeholder="t('chat_widget.enquiry_form.phone_placeholder')" />
                                         <input v-model="enquiryForm.email" type="email" :placeholder="t('chat_widget.enquiry_form.email_placeholder')">
                                         <button type="submit" class="mw-chatbot__card-btn mw-chatbot__card-btn--solid" :disabled="enquirySubmitting">
                                             {{ enquirySubmitting ? t('chat_widget.enquiry_form.sending') : t('chat_widget.enquiry_form.submit') }}

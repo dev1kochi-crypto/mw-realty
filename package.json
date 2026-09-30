@@ -18,6 +18,7 @@
         "@maplibre/maplibre-gl-leaflet": "^0.1.4",
         "@vitejs/plugin-vue": "^6.0.8",
         "gsap": "^3.15.0",
+        "intl-tel-input": "^25.15.1",
         "leaflet": "^1.9.4",
         "leaflet.markercluster": "^1.5.3",
         "maplibre-gl": "^5.24.0",

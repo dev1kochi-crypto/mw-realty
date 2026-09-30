@@ -11,6 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.1/build/css/intlTelInput.css">
+    <style>.iti { width: 100%; } .iti__dropdown-content { z-index: 1060; }</style>
     <link rel="stylesheet" href="{{ asset('portal/css/portal.css') }}?v={{ filemtime(public_path('portal/css/portal.css')) }}">
     <style>
         .notif-bell-btn { position: relative; border: none; background: #f4f6fb; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #4b5065; font-size: 1.05rem; }
@@ -314,6 +316,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {{-- Phone fields with a country-code picker: [data-phone-input] (see portal/js/phone-input.js). --}}
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.1/build/js/intlTelInput.min.js"></script>
+    <script src="{{ asset('portal/js/phone-input.js') }}?v={{ filemtime(public_path('portal/js/phone-input.js')) }}"></script>
 
     {{-- Shared confirm dialog — use window.portalConfirm({...}) instead of the browser's confirm(). --}}
     <div class="modal fade portal-dialog" id="portalConfirmModal" tabindex="-1" aria-labelledby="portalConfirmTitle" aria-describedby="portalConfirmText" aria-hidden="true">
@@ -508,6 +513,10 @@
         };
     })();
     </script>
+    @if(session('toast'))
+    {{-- Flash shown as a toast instead of the in-page banner: redirect()->with('toast', 'Saved.'). --}}
+    <script>window.portalToast('success', @json(session('toast')));</script>
+    @endif
     <script>
     // Sticky top bar: publish its height as --portal-topbar-h (for sticky cards under it) and add a shadow once scrolled.
     (function () {

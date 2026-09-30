@@ -42,8 +42,9 @@ class ContactController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:50',
+            'email' => \App\Rules\PhoneNumber::emailRules(),
+            'phone' => \App\Rules\PhoneNumber::rules(),
+            'phone_country_code' => \App\Rules\PhoneNumber::countryCodeRules(),
             'interest' => 'nullable|in:' . implode(',', array_keys(self::INTERESTS)),
             'message' => 'required_without:interest|nullable|string|max:2000',
             'source' => 'nullable|in:contact,home',
@@ -56,7 +57,8 @@ class ContactController extends Controller
         $enquiry = Enquiry::create([
             'name' => $request->input('name'),
             'email' => $request->input('email'),
-            'phone' => $request->input('phone'),
+            // Enquiries keep one phone column — stored with its dial code ("+971 50 123 4567").
+            'phone' => $request->filled('phone') ? trim($request->input('phone_country_code') . ' ' . $request->input('phone')) : null,
             // Interest leads the message too, so it's visible in the admin list and the notification email.
             'message' => $interest ? trim("Interested in: {$interest}\n\n{$message}") : $message,
             'extra_fields' => $interest ? ['interest' => $interest] : null,

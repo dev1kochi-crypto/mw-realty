@@ -34,8 +34,9 @@ const premium = !!route.meta.premium;
 // /marketing-properties: the home "Realty Property" section's view-all — Super Admin's hand-picked
 // Marketing Properties list (API ?marketing=1), kept in the order it was arranged in.
 const marketing = !!route.meta.marketing;
-// Both lists mix residential and commercial, so each card says which it is.
-const mixedSegments = premium || marketing;
+// Both lists mix residential and commercial, so each card says which it is — as does an agent's /
+// agency's View all (?agent= / ?agency=), which shows every listing on their profile.
+const mixedSegments = computed(() => premium || marketing || !!(applied.agent || applied.agency));
 const segment = premium ? 'premium' : (marketing ? 'marketing' : 'residential');
 // /properties/map (and /premium-properties/map): same page and filters, results on a map instead of cards.
 const mapView = computed(() => !!route.meta.mapView);
@@ -95,6 +96,10 @@ function submitSearch() {
     applyFilters();
 }
 
+// ?agent= / ?agency= (profile slugs) — set by the View all links on /agent-details and /agency-details.
+const agentFilter = ref('');
+const agencyFilter = ref('');
+
 const minPrice = ref('');
 const maxPrice = ref('');
 const minSqft = ref('');
@@ -110,6 +115,7 @@ function fields() {
     return [
         ...Object.entries(SELECT_BINDINGS),
         ['city', cityFilter], ['community', communityFilter],
+        ['agent', agentFilter], ['agency', agencyFilter],
         ['min_price', minPrice], ['max_price', maxPrice], ['min_sqft', minSqft], ['max_sqft', maxSqft],
         ...Object.keys(extraSelect).map((k) => [k, toRef(extraSelect, k)]),
     ];
@@ -315,9 +321,19 @@ const activeFilters = computed(() => {
     }
     (applied.amenities || []).forEach((a) => add(`amenity:${a}`, t('properties_listing.filter_panel.amenities_title', 'Amenity'), amenityLabel(a)));
     if (applied.floor_plans) add('floor_plans', t('properties_listing.filter_panel.features_title', 'Feature'), t('properties_listing.filter_panel.feature_floor_plans', 'Floor plans'));
+    if (applied.agent) add('agent', t('properties_listing.listing.agent_label', 'Agent'), ownerName.value || humanize(applied.agent));
+    if (applied.agency) add('agency', t('properties_listing.listing.agency_label', 'Agency'), ownerName.value || humanize(applied.agency));
     return chips;
 });
 const filterCount = computed(() => activeFilters.value.length);
+
+// Whose listings ?agent= / ?agency= is showing (name from the API).
+const ownerName = computed(() => propertiesListing.value?.owner?.name || '');
+function clearOwnerFilter() {
+    agentFilter.value = '';
+    agencyFilter.value = '';
+    applyFilters();
+}
 
 // Hero title + breadcrumb.
 // /marketing-properties text comes from the CMS section heading the home block (Common Titles ›
@@ -343,6 +359,9 @@ const listingTitle = computed(() => {
         return (!type && !purpose && !offPlan)
             ? t('premium_listing.all_title', 'All Premium Properties')
             : `Premium ${offPlan}${type}Properties${purpose}`;
+    }
+    if ((applied.agent || applied.agency) && ownerName.value) {
+        return t('properties_listing.listing.by_owner_title', 'Properties by {name}').replace('{name}', ownerName.value);
     }
     if (!type && !purpose && !offPlan) return t('properties_listing.listing.all_title', 'All Properties in Dubai');
     if (!type && !offPlan && applied.listing_type === 'sale') return t('properties_listing.listing.title');
@@ -709,6 +728,12 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                     <h2 class="mw-dubai-listing__title">{{ listingTitle }}</h2>
                     <p class="mw-dubai-listing__count">{{ pagination?.total ?? 0 }} {{ t('properties_listing.listing.count_suffix') }}</p>
                 </div>
+                <p v-if="(applied.agent || applied.agency) && ownerName" class="mw-dubai-listing__owner">
+                    <span class="mw-dubai-listing__owner-chip">
+                        {{ applied.agent ? t('properties_listing.listing.agent_label', 'Agent') : t('properties_listing.listing.agency_label', 'Agency') }}: {{ ownerName }}
+                        <button type="button" :aria-label="t('properties_listing.listing.clear_owner_aria', 'Show all properties')" @click="clearOwnerFilter">&times;</button>
+                    </span>
+                </p>
                 <p v-if="marketing && marketingSection?.description" class="mw-marketing-intro">{{ marketingSection.description }}</p>
 
                 <div class="mw-dubai-listing__grid" data-properties-grid>

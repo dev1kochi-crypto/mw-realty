@@ -622,13 +622,13 @@
       var prev = root.querySelector('[data-gallery-prev]');
       var next = root.querySelector('[data-gallery-next]');
       var dotsWrap = root.querySelector('[data-gallery-dots]');
-      var countEl = root.querySelector('[data-gallery-count]');
       var index = 0;
       var startX = 0;
       var timer = null;
       var delay = 3500 + (galleryIndex % 4) * 400;
 
-      if (countEl) countEl.textContent = String(slides.length);
+      // [data-gallery-count] is left as rendered: it holds the property's full photo count
+      // (images_count), while a card only carries its first few photos as slides.
 
       function go(i) {
         index = (i + slides.length) % slides.length;
@@ -1513,24 +1513,9 @@
     });
   }
 
-  function initBottomNav() {
-    if (initBottomNav.bound) return;
-    initBottomNav.bound = true;
-
-    var nav = document.querySelector('.mw-bottom-nav');
-    if (!nav) return;
-
-    var items = nav.querySelectorAll('.mw-bottom-nav__item');
-
-    nav.addEventListener('click', function (e) {
-      var item = e.target.closest('.mw-bottom-nav__item');
-      if (!item) return;
-      items.forEach(function (el) {
-        el.classList.remove('is-active');
-      });
-      item.classList.add('is-active');
-    });
-  }
+  // The bottom nav's active item is derived from the current route in SiteFooter.vue; toggling
+  // `.is-active` on click here left stale highlights behind, so there is nothing to bind.
+  function initBottomNav() {}
 
   // Generic Fancybox binding — any element with [data-fancybox] anywhere on
   // the site gets lightbox behavior for free; grouping is via the
@@ -1783,15 +1768,19 @@
     });
   }
 
+  // Fancybox v6 (loaded in welcome.blade.php). bind() is a delegated document listener, so one bind
+  // covers links Vue renders later (e.g. a property's gallery after its API call resolves).
   function initFancybox() {
-    if (typeof window.Fancybox === 'undefined') return;
+    if (initFancybox.bound || typeof window.Fancybox === 'undefined') return;
+    initFancybox.bound = true;
     window.Fancybox.bind('[data-fancybox]', {
       Carousel: {
+        infinite: true,
         Toolbar: {
           display: {
-            left: ['infobar'],
+            left: ['counter'],
             middle: [],
-            right: ['slideshow', 'thumbs', 'close'],
+            right: ['autoplay', 'thumbs', 'close'],
           },
         },
       },

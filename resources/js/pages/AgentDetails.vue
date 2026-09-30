@@ -1,6 +1,6 @@
 <script setup>
 import AdBlock from '../components/AdBlock.vue';
-import { computed, nextTick, onMounted, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAgentDetail } from '../composables/useAgentDetail';
 import { useLanguages } from '../composables/useLanguages';
@@ -44,6 +44,35 @@ const badgeClass = (badge) => ({
 
 const preferredAreasText = computed(() => (agent.value?.preferred_areas || []).join(', ') || '—');
 const bioFallback = computed(() => t('agent_details.bio_fallback').replace('{name}', agent.value?.name || ''));
+
+// Share bar — X / Facebook / LinkedIn open their share dialogs for this profile's URL.
+// Instagram has no web share URL, so it uses the device share sheet (mobile) or copies the link.
+const pageUrl = computed(() => (agent.value ? `${window.location.origin}/agent-details/${agent.value.slug}` : ''));
+const shareLinks = computed(() => {
+    const url = encodeURIComponent(pageUrl.value);
+    const text = encodeURIComponent(agent.value ? `${agent.value.name} | MW Realty` : '');
+    return {
+        x: `https://twitter.com/intent/tweet?url=${url}&text=${text}`,
+        facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`,
+    };
+});
+
+const linkCopied = ref(false);
+async function shareToInstagram() {
+    if (navigator.share) {
+        try {
+            await navigator.share({ title: `${agent.value.name} | MW Realty`, url: pageUrl.value });
+            return;
+        } catch (error) {
+            if (error?.name === 'AbortError') return;
+        }
+    }
+    navigator.clipboard?.writeText(pageUrl.value).then(() => {
+        linkCopied.value = true;
+        setTimeout(() => { linkCopied.value = false; }, 2000);
+    });
+}
 </script>
 
 <template>
@@ -80,10 +109,11 @@ const bioFallback = computed(() => t('agent_details.bio_fallback').replace('{nam
                                 <router-link v-if="agent.company" :to="`/agency-details/${agent.company.slug}`" class="mw-agent-profile__badge mw-agent-profile__badge--area">{{ agent.company.name }}</router-link>
                                 <div class="mw-agent-profile__share">
                                     {{ t('agent_details.share_label') }}
-                                    <a href="#" :aria-label="t('agent_details.share_x_aria')"><img src="/frontend/assets/images/icons/contact-twitter.svg" alt="" width="18" height="18"></a>
-                                    <a href="#" :aria-label="t('agent_details.share_facebook_aria')"><img src="/frontend/assets/images/icons/contact-facebook.svg" alt="" width="18" height="18"></a>
-                                    <a href="#" :aria-label="t('agent_details.share_instagram_aria')"><img src="/frontend/assets/images/icons/contact-instagram.svg" alt="" width="18" height="18"></a>
-                                    <a href="#" :aria-label="t('agent_details.share_linkedin_aria')"><img src="/frontend/assets/images/icons/contact-linkedin.svg" alt="" width="18" height="18"></a>
+                                    <a :href="shareLinks.x" target="_blank" rel="noopener" :aria-label="t('agent_details.share_x_aria')"><img src="/frontend/assets/images/icons/contact-twitter.svg" alt="" width="18" height="18"></a>
+                                    <a :href="shareLinks.facebook" target="_blank" rel="noopener" :aria-label="t('agent_details.share_facebook_aria')"><img src="/frontend/assets/images/icons/contact-facebook.svg" alt="" width="18" height="18"></a>
+                                    <a href="#" role="button" :aria-label="t('agent_details.share_instagram_aria')" @click.prevent="shareToInstagram"><img src="/frontend/assets/images/icons/contact-instagram.svg" alt="" width="18" height="18"></a>
+                                    <a :href="shareLinks.linkedin" target="_blank" rel="noopener" :aria-label="t('agent_details.share_linkedin_aria')"><img src="/frontend/assets/images/icons/contact-linkedin.svg" alt="" width="18" height="18"></a>
+                                    <span v-if="linkCopied" class="mw-agent-profile__share-copied" role="status">{{ t('agent_details.link_copied', 'Link copied') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -122,13 +152,12 @@ const bioFallback = computed(() => t('agent_details.bio_fallback').replace('{nam
             </div>
         </section>
 
-        <!-- Admin › Ads — between the profile and the agent's listings. -->
-        <AdBlock placement="agent-details" />
-
         <section v-if="agent.properties.length" class="mw-agent-more">
             <div class="container-ctn">
                 <div class="mw-agent-more__head">
                     <h2 class="mw-agent-more__title">{{ t('agent_details.other_properties_title') }}</h2>
+                    <div class="mw-agency-panel__actions">
+                    <router-link :to="{ path: '/properties', query: { agent: agent.slug } }" class="mw-btn mw-btn--outline mw-agency-panel__view-all">{{ t('agent_details.view_all') }}</router-link>
                     <div class="mw-agent-more__nav">
                         <button type="button" class="mw-arrow-btn mw-arrow-btn--prev mw-agent-more__nav-btn" data-agent-listings-prev :aria-label="t('agent_details.previous_properties_aria')">
                             <img src="/frontend/assets/images/icons/luxury-nav-arrow.svg" alt="" width="24" height="24">
@@ -136,6 +165,7 @@ const bioFallback = computed(() => t('agent_details.bio_fallback').replace('{nam
                         <button type="button" class="mw-arrow-btn mw-arrow-btn--next mw-agent-more__nav-btn" data-agent-listings-next :aria-label="t('agent_details.next_properties_aria')">
                             <img src="/frontend/assets/images/icons/luxury-nav-arrow.svg" alt="" width="24" height="24">
                         </button>
+                    </div>
                     </div>
                 </div>
 
@@ -194,6 +224,9 @@ const bioFallback = computed(() => t('agent_details.bio_fallback').replace('{nam
                 </div>
             </div>
         </section>
+
+        <!-- Admin › Ads — at the foot of the page, above the footer. -->
+        <AdBlock placement="agent-details" />
     </main>
 
     <main v-else-if="notFound">

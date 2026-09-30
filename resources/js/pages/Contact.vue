@@ -32,7 +32,7 @@
                             </div>
                             <div class="mw-page-contact__field">
                                 <label for="page-contact-phone">{{ t('contact_page.form.phone_label') }}</label>
-                                <input type="tel" id="page-contact-phone" name="phone" :placeholder="t('contact_page.form.phone_placeholder')" v-model="form.phone">
+                                <PhoneInput id="page-contact-phone" v-model="form.phone" v-model:country-code="form.phone_country_code" />
                             </div>
                             <div class="mw-page-contact__field">
                                 <label for="page-contact-message">{{ t('contact_page.form.message_label') }}</label>
@@ -104,18 +104,25 @@ import { useRouter } from 'vue-router';
 import { useContactPage } from '../composables/useContactPage';
 import { useRecaptcha } from '../composables/useRecaptcha';
 import { useStaticText } from '../composables/useStaticText';
+import PhoneInput from '../components/PhoneInput.vue';
+import { contactError, responseError } from '../composables/useContactValidation';
 
 const { contactPage } = useContactPage();
 const { getRecaptchaToken } = useRecaptcha();
 const { t } = useStaticText();
 const router = useRouter();
 
-const form = reactive({ name: '', email: '', phone: '', message: '' });
+const form = reactive({ name: '', email: '', phone: '', phone_country_code: '+971', message: '' });
 const submitting = ref(false);
 const feedback = ref(null);
 
 async function handleSubmit() {
     if (submitting.value) return;
+    const problem = (!form.name.trim() && 'Please enter your name.') || contactError(form) || (!form.message.trim() && 'Please enter a message.');
+    if (problem) {
+        feedback.value = { type: 'error', text: problem };
+        return;
+    }
     submitting.value = true;
     feedback.value = null;
 
@@ -124,7 +131,7 @@ async function handleSubmit() {
         await window.axios.post('/api/contact', { ...form, source: 'contact', recaptcha_token });
         router.push({ path: '/thank-you', state: { thankYou: { type: 'contact', name: form.name.trim().split(/\s+/)[0] || '' } } });
     } catch (error) {
-        feedback.value = { type: 'error', text: error.response?.data?.message || t('contact_page.generic_error') };
+        feedback.value = { type: 'error', text: responseError(error, t('contact_page.generic_error')) };
         submitting.value = false;
     }
 }
