@@ -764,6 +764,18 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::get('/{id}', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'show'])->name('show');
         });
 
+        // Form A / title deed of a listing (owner, assigned agent or Super Admin — scoped in the controller).
+        Route::get('/properties/{id}/compliance/{field}', [PortalPropertyController::class, 'complianceDocument'])->name('properties.compliance-document');
+
+        // Listing Approvals — DLD permit / Form A review before a listing goes live.
+        // Super Admin only (enforced in the controller). See ListingComplianceService.
+        Route::prefix('listing-approvals')->name('listing-approvals.')->controller(\App\Http\Controllers\Portal\PortalListingApprovalController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/{id}', 'show')->name('show')->whereNumber('id');
+            Route::post('/{id}/approve', 'approve')->name('approve')->whereNumber('id');
+            Route::post('/{id}/request-changes', 'requestChanges')->name('request-changes')->whereNumber('id');
+        });
+
         // Featured — every featured/scheduled listing (Properties + Commercial) and "Add Featured".
         // Super Admin only (enforced in the controller): home "Realty Property" list.
         Route::prefix('marketing-properties')->name('marketing.')->controller(\App\Http\Controllers\Portal\PortalMarketingPropertyController::class)->group(function () {

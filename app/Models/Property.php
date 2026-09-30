@@ -19,6 +19,21 @@ class Property extends Model
         'slug',
         'reference_no',
         'rera_id',
+        'permit_number',
+        'permit_expires_at',
+        'permit_qr',
+        'permit_verification_url',
+        'permit_expiry_notified_at',
+        'authorization_type',
+        'authorization_expires_at',
+        'authorization_document',
+        'title_deed_no',
+        'title_deed_document',
+        'compliance_status',
+        'compliance_note',
+        'compliance_submitted_at',
+        'compliance_reviewed_at',
+        'compliance_reviewed_by',
         'listing_type',
         'completion_status',
         'property_type',
@@ -60,6 +75,31 @@ class Property extends Model
     public const SOLD = 'sold';
     public const RENTED = 'rented';
 
+    /**
+     * `compliance_status` — the platform's review of the listing's DLD advertising permit and the
+     * owner's marketing authorisation (Form A). Only APPROVED listings with an unexpired permit may be
+     * live (`status` = true). Transitions: ListingComplianceService.
+     */
+    public const COMPLIANCE_DRAFT = 'draft';                         // permit / Form A details incomplete
+    public const COMPLIANCE_PENDING = 'pending';                     // submitted, waiting for Super Admin
+    public const COMPLIANCE_CHANGES_REQUESTED = 'changes_requested'; // sent back (or taken down) by Super Admin
+    public const COMPLIANCE_APPROVED = 'approved';
+    public const COMPLIANCE_EXPIRED = 'expired';                     // permit expiry date passed
+
+    public const COMPLIANCE_LABELS = [
+        self::COMPLIANCE_DRAFT => 'Permit details needed',
+        self::COMPLIANCE_PENDING => 'Pending approval',
+        self::COMPLIANCE_CHANGES_REQUESTED => 'Changes requested',
+        self::COMPLIANCE_APPROVED => 'Approved',
+        self::COMPLIANCE_EXPIRED => 'Permit expired',
+    ];
+
+    /** Owner -> brokerage marketing agreement (RERA Form A) types. */
+    public const AUTHORIZATION_TYPES = [
+        'exclusive' => 'Exclusive',
+        'non_exclusive' => 'Non-exclusive',
+    ];
+
     protected $casts = [
         'translations' => 'array',
         'price' => 'decimal:2',
@@ -76,7 +116,51 @@ class Property extends Model
         'sold_commission' => 'decimal:2',
         'rented_until' => 'date',
         'status_before_sold' => 'boolean',
+        'permit_expires_at' => 'date',
+        'permit_expiry_notified_at' => 'datetime',
+        'authorization_expires_at' => 'date',
+        'compliance_submitted_at' => 'datetime',
+        'compliance_reviewed_at' => 'datetime',
     ];
+
+    /**
+     * May this listing be switched on for the website? Approved by Super Admin, not sold, and the
+     * DLD permit (when a date is recorded) hasn't expired. Every write of `status` = true checks this.
+     */
+    public function canGoLive(): bool
+    {
+        return $this->compliance_status === self::COMPLIANCE_APPROVED
+            && !$this->isSold()
+            && (!$this->permit_expires_at || $this->permit_expires_at->gte(today()));
+    }
+
+    public function complianceLabel(): string
+    {
+        return self::COMPLIANCE_LABELS[$this->compliance_status] ?? ucfirst((string) $this->compliance_status);
+    }
+
+    /** Bootstrap badge classes for the compliance state (listing cards, approvals table). */
+    public function complianceBadgeClass(): string
+    {
+        return match ($this->compliance_status) {
+            self::COMPLIANCE_APPROVED => 'bg-success-subtle text-success-emphasis',
+            self::COMPLIANCE_PENDING => 'bg-info-subtle text-info-emphasis',
+            self::COMPLIANCE_CHANGES_REQUESTED, self::COMPLIANCE_EXPIRED => 'bg-danger-subtle text-danger-emphasis',
+            default => 'bg-warning-subtle text-warning-emphasis',
+        };
+    }
+
+    /** Listings that may be switched on (see canGoLive()) — used by bulk "Activate". */
+    public function scopeCompliant($query)
+    {
+        return $query->where('properties.compliance_status', self::COMPLIANCE_APPROVED)
+            ->where(fn ($q) => $q->whereNull('properties.permit_expires_at')->orWhereDate('properties.permit_expires_at', '>=', today()));
+    }
+
+    public function complianceLogs()
+    {
+        return $this->hasMany(PropertyComplianceLog::class)->latest('id');
+    }
 
     /** The lead who bought / rented this listing (see PropertySaleService). */
     public function soldLead()

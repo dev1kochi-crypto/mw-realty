@@ -41,6 +41,8 @@
         ['fa-user-check', 'Direct From Owner', $detail?->direct_from_owner],
         ['fa-shield-alt', 'Security Deposit', $detail?->security_deposit ? number_format($detail->security_deposit) . ' ' . $property->currency : null],
         ['fa-id-card', 'RERA ID', $property->rera_id],
+        ['fa-file-shield', 'DLD Permit', $property->permit_number ? $property->permit_number . ($property->permit_expires_at ? ' (expires ' . $property->permit_expires_at->format('d M Y') . ')' : '') : null],
+        ['fa-list-check', 'Permit Review', $property->complianceLabel()],
         ['fa-hashtag', 'Reference', $property->reference_no],
         ['fa-envelope-open-text', 'Postal Code', $property->postal_code],
         ['fa-clock', 'Published', $property->published_at?->format('d M Y, h:i A')],

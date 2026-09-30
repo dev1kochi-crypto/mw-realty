@@ -44,6 +44,12 @@ class PortalPropertyController extends Controller
     /** Listings per page on the card grid — a multiple of the 4-column row so pages end on a full row. */
     protected const PER_PAGE = 16;
 
+    /** Compliance tab text / date inputs (files are saved by ListingComplianceService::storeUploads()). */
+    protected const COMPLIANCE_INPUTS = [
+        'permit_number', 'permit_expires_at', 'permit_verification_url',
+        'authorization_type', 'authorization_expires_at', 'title_deed_no',
+    ];
+
     /**
      * Which CRM menu this controller serves. Commercial is the same table, form and screens,
      * split only by `segment` (see PortalCommercialController). Plan property limits count both.
@@ -414,12 +420,15 @@ class PortalPropertyController extends Controller
             'listing' => in_array($request->input('listing'), ['sale', 'rent'], true) ? $request->input('listing') : null,
             'status' => in_array($request->input('status'), ['active', 'inactive'], true) ? $request->input('status') : null,
             'premium' => $request->boolean('premium'),
+            // DLD permit review state (see ListingComplianceService).
+            'review' => array_key_exists((string) $request->input('review'), Property::COMPLIANCE_LABELS) ? $request->input('review') : null,
         ];
         $query->when($filters['agent'] === 'none', fn ($q) => $q->whereNull('properties.agent_id'))
             ->when(is_int($filters['agent']), fn ($q) => $q->where('properties.agent_id', $filters['agent']))
             ->when($filters['listing'], fn ($q, $type) => $q->where('properties.listing_type', $type))
             ->when($filters['status'], fn ($q, $status) => $q->where('properties.status', $status === 'active'))
-            ->when($filters['premium'], fn ($q) => $q->where('properties.featured', true));
+            ->when($filters['premium'], fn ($q) => $q->where('properties.featured', true))
+            ->when($filters['review'], fn ($q, $review) => $q->where('properties.compliance_status', $review));
         $filtered = (bool) array_filter($filters);
         $filterAgent = is_int($filters['agent']) ? \App\Models\PortalUser::find($filters['agent'], ['id', 'name']) : null;
 
@@ -441,6 +450,11 @@ class PortalPropertyController extends Controller
             'filters' => $filters,
             'filtered' => $filtered,
             'filterAgent' => $filterAgent,
+            // DLD permit review counts over this menu's listings, for the strip above the grid.
+            'reviewCounts' => $this->orderedListings()->reorder()
+                ->selectRaw('properties.compliance_status, COUNT(*) as total')
+                ->groupBy('properties.compliance_status')
+                ->pluck('total', 'compliance_status'),
             // Agent filter only makes sense for an agency (its agents) or Super Admin (everyone's).
             'canFilterAgent' => $this->isAdmin() || $this->viewer()?->isAgency(),
             // Listings on this page whose feature dates the viewer may change.
@@ -559,6 +573,7 @@ class PortalPropertyController extends Controller
         $data = $request->only([
             'rera_id', 'listing_type', 'completion_status', 'property_type', 'category',
             'location', 'postal_code', 'latitude', 'longitude', 'bedrooms', 'bathrooms', 'sqft', 'price', 'currency',
+            ...self::COMPLIANCE_INPUTS,
         ]);
         // Always auto-generated (PROP001, ...) — never taken from user input, since it also becomes
         // the gallery folder/filename key (see storeGalleryImage()) and has to be final and unique.
@@ -637,7 +652,33 @@ class PortalPropertyController extends Controller
 
         $property->nearbyPlaces()->sync($this->allowedNearbyPlaceIds($request));
 
-        return redirect()->route($this->routePrefix() . '.index')->with('toast', $this->sectionData()['itemLabel'] . ' created successfully.');
+        $compliance = app(\App\Services\ListingComplianceService::class);
+        $compliance->storeUploads($request, $property);
+        $compliance->afterSave($property, null);
+
+        return redirect()->route($this->routePrefix() . '.index')->with('toast', $this->sectionData()['itemLabel'] . ' created successfully.' . $this->complianceToast($property));
+    }
+
+    /** Appended to the save toast: why the listing isn't on the website yet. */
+    protected function complianceToast(Property $property): string
+    {
+        return match ($property->compliance_status) {
+            Property::COMPLIANCE_PENDING => ' It was sent to Super Admin for permit approval and goes live once approved.',
+            Property::COMPLIANCE_DRAFT => ' It stays off the website until the DLD permit and Form A are added (Compliance tab).',
+            default => '',
+        };
+    }
+
+    /** Form A / title deed download — for the listing's owner, its assigned agent, or Super Admin. */
+    public function complianceDocument($id, string $field)
+    {
+        abort_unless(array_key_exists($field, \App\Services\ListingComplianceService::DOCUMENT_FIELDS), 404);
+        $path = $this->findAccessible($id)->{$field};
+        abort_unless($path && Storage::disk('kyc')->exists($path), 404);
+
+        return Storage::disk('kyc')->download($path, $field . '.' . pathinfo($path, PATHINFO_EXTENSION), [
+            'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     /** Owner-only (delete, feature, reorder, status) — never an agency agent on the agency's listing. */
@@ -677,12 +718,15 @@ class PortalPropertyController extends Controller
     {
         $property = $this->findAccessible($id);
         $previousAgentId = $property->agent_id;
+        $compliance = app(\App\Services\ListingComplianceService::class);
+        $complianceBefore = $compliance->snapshot($property);
 
         // reference_no is deliberately excluded — it's fixed at creation (read-only in the form)
         // since it's also the gallery folder/filename key; changing it would orphan existing photos.
         $data = $request->only([
             'rera_id', 'listing_type', 'completion_status', 'property_type', 'category',
             'location', 'postal_code', 'latitude', 'longitude', 'bedrooms', 'bathrooms', 'sqft', 'price', 'currency',
+            ...self::COMPLIANCE_INPUTS,
         ]);
         $data['translations'] = $request->input('translations', []);
         $data['status'] = $request->has('status');
@@ -768,7 +812,10 @@ class PortalPropertyController extends Controller
 
         $property->nearbyPlaces()->sync($this->allowedNearbyPlaceIds($request));
 
-        return redirect()->route($this->routePrefix() . '.index')->with('toast', $this->sectionData()['itemLabel'] . ' updated successfully.');
+        $compliance->storeUploads($request, $property);
+        $compliance->afterSave($property, $complianceBefore);
+
+        return redirect()->route($this->routePrefix() . '.index')->with('toast', $this->sectionData()['itemLabel'] . ' updated successfully.' . $this->complianceToast($property));
     }
 
     public function destroy($id)
@@ -800,8 +847,10 @@ class PortalPropertyController extends Controller
             return response()->json(['success' => true, 'affected' => $properties->count()]);
         }
 
-        // A sold / rented listing stays off the website until it's reverted.
-        $affected = $query->available()->update(['status' => $request->input('action') === 'active']);
+        // A sold / rented listing stays off the website until it's reverted, and only listings that
+        // passed the DLD permit review (and whose permit is still valid) can be switched on.
+        $activate = $request->input('action') === 'active';
+        $affected = $query->available()->when($activate, fn ($q) => $q->compliant())->update(['status' => $activate]);
 
         return response()->json(['success' => true, 'affected' => $affected]);
     }
@@ -992,6 +1041,9 @@ class PortalPropertyController extends Controller
         abort_unless($this->isAdmin() || Auth::guard('portal')->user()->isApproved(), 403);
         if ($property->isSold()) {
             return response()->json(['message' => 'This listing is marked ' . $property->sold_type . '. Revert it to available first (Sold Listings).'], 422);
+        }
+        if (!$property->status && !$property->canGoLive()) {
+            return response()->json(['message' => "This listing can't go live yet (" . strtolower($property->complianceLabel()) . '). It needs a valid DLD permit and Form A in the Compliance tab, and Super Admin approval.'], 422);
         }
         $property->status = !$property->status;
         $property->save();

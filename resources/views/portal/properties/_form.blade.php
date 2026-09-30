@@ -31,6 +31,10 @@
         <button type="button" role="tab" class="property-tab-link active" data-bs-toggle="pill" data-bs-target="#tab-basic">
             <span class="property-tab-icon"><i class="fas fa-file-lines"></i></span> <span>Basic</span>
         </button>
+        <button type="button" role="tab" class="property-tab-link" data-bs-toggle="pill" data-bs-target="#tab-compliance">
+            <span class="property-tab-icon"><i class="fas fa-file-shield"></i></span> <span>DLD Permit</span>
+            @if(!$isEdit || $property->compliance_status !== \App\Models\Property::COMPLIANCE_APPROVED)<span class="badge rounded-pill bg-warning-subtle text-warning-emphasis ms-auto">Required</span>@endif
+        </button>
         <button type="button" role="tab" class="property-tab-link" data-bs-toggle="pill" data-bs-target="#tab-agent">
             <span class="property-tab-icon"><i class="fas fa-user-tie"></i></span> <span>Agent &amp; Agency</span>
         </button>
@@ -266,6 +270,9 @@
                         <input class="form-check-input" type="checkbox" name="status" id="propertyStatus" {{ $val('status', true) ? 'checked' : '' }}>
                         <label class="form-check-label fw-semibold" for="propertyStatus">Active (visible on site)</label>
                     </div>
+                    @if(!$isEdit || !$property->canGoLive())
+                    <div class="form-text">Goes live only after the DLD permit is approved (DLD Permit tab).</div>
+                    @endif
                 </div>
                 {{-- Featured — deferred for later, per request; re-enable when ready.
                 @if($isAdmin ?? false)
@@ -277,6 +284,99 @@
                 </div>
                 @endif
                 --}}
+            </div>
+        </div>
+
+        {{-- DLD Permit & owner authorisation (see ListingComplianceService) --}}
+        @php
+            $dateVal = fn ($field) => old($field, $isEdit && $property->{$field} ? $property->{$field}->format('Y-m-d') : '');
+            $complianceState = $isEdit ? $property->compliance_status : \App\Models\Property::COMPLIANCE_DRAFT;
+        @endphp
+        <div class="tab-pane fade" id="tab-compliance" role="tabpanel">
+            <div class="property-tab-pane-head">
+                <div class="property-tab-pane-title">DLD Advertising Permit</div>
+                <div class="property-tab-pane-hint">Dubai law requires every property advertisement to carry a DLD (Trakheesi) permit and its Madmoun QR code. Get the permit from DLD first, then enter it here — Super Admin checks it before the listing goes live.</div>
+            </div>
+
+            @if($isEdit)
+            <div class="alert {{ $complianceState === \App\Models\Property::COMPLIANCE_APPROVED ? 'alert-success' : (in_array($complianceState, [\App\Models\Property::COMPLIANCE_CHANGES_REQUESTED, \App\Models\Property::COMPLIANCE_EXPIRED], true) ? 'alert-danger' : 'alert-info') }} small">
+                <div class="fw-semibold"><i class="fas fa-file-shield me-1"></i>Review status: {{ $property->complianceLabel() }}</div>
+                @if($property->compliance_note)<div class="mt-1">{{ $property->compliance_note }}</div>@endif
+                @if($complianceState === \App\Models\Property::COMPLIANCE_APPROVED)
+                <div class="mt-1 portal-muted">Changing the permit, Form A, price, purpose, type, bedrooms or size sends the listing back for review (it goes offline until approved), because the DLD permit is issued for those exact details.</div>
+                @endif
+            </div>
+            @endif
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">DLD Permit Number (Trakheesi) <span class="text-danger">*</span></label>
+                    <input type="text" name="permit_number" class="form-control @error('permit_number') is-invalid @enderror" value="{{ $val('permit_number') }}" maxlength="64" placeholder="e.g. 7112345678">
+                    @error('permit_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Permit Expiry Date <span class="text-danger">*</span></label>
+                    <input type="date" name="permit_expires_at" class="form-control @error('permit_expires_at') is-invalid @enderror" value="{{ $dateVal('permit_expires_at') }}">
+                    @error('permit_expires_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="form-text">The listing is taken off the website automatically when the permit expires.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Permit QR Code (Madmoun) <span class="text-danger">*</span></label>
+                    <input type="file" name="permit_qr" class="form-control @error('permit_qr') is-invalid @enderror" accept="image/*">
+                    @error('permit_qr')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="form-text">The QR image issued with the permit. It is shown on the listing page so buyers can verify the ad.</div>
+                    @if($isEdit && $property->permit_qr)
+                    <img src="{{ media_url($property->permit_qr) }}" alt="Permit QR" class="mt-2 border rounded" style="height: 80px;">
+                    @endif
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Permit Verification Link</label>
+                    <input type="url" name="permit_verification_url" class="form-control @error('permit_verification_url') is-invalid @enderror" value="{{ $val('permit_verification_url') }}" placeholder="The link the QR code opens (optional)">
+                    @error('permit_verification_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <div class="property-tab-pane-title mb-1" style="font-size: 0.95rem;">Owner Authorisation (Form A)</div>
+            <p class="text-muted small mb-3">The owner's marketing agreement with your brokerage, registered with RERA. Needed for the DLD permit, and kept private — only you and Super Admin can open these files.</p>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Agreement Type <span class="text-danger">*</span></label>
+                    <select name="authorization_type" class="form-select @error('authorization_type') is-invalid @enderror">
+                        <option value="">Select</option>
+                        @foreach(\App\Models\Property::AUTHORIZATION_TYPES as $value => $label)
+                        <option value="{{ $value }}" @selected($val('authorization_type') === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    @error('authorization_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Form A Expiry Date</label>
+                    <input type="date" name="authorization_expires_at" class="form-control @error('authorization_expires_at') is-invalid @enderror" value="{{ $dateVal('authorization_expires_at') }}">
+                    @error('authorization_expires_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Form A Document <span class="text-danger">*</span></label>
+                    <input type="file" name="authorization_document" class="form-control @error('authorization_document') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png">
+                    @error('authorization_document')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    @if($isEdit && $property->authorization_document)
+                    <a class="small d-inline-block mt-2" href="{{ route('portal.properties.compliance-document', [$property->id, 'authorization_document']) }}">View current Form A</a>
+                    @endif
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Title Deed / Oqood Number</label>
+                    <input type="text" name="title_deed_no" class="form-control @error('title_deed_no') is-invalid @enderror" value="{{ $val('title_deed_no') }}" maxlength="64" placeholder="Title deed, or Oqood for off-plan">
+                    @error('title_deed_no')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Title Deed / Oqood Document</label>
+                    <input type="file" name="title_deed_document" class="form-control @error('title_deed_document') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png">
+                    @error('title_deed_document')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    @if($isEdit && $property->title_deed_document)
+                    <a class="small d-inline-block mt-2" href="{{ route('portal.properties.compliance-document', [$property->id, 'title_deed_document']) }}">View current document</a>
+                    @endif
+                </div>
+                <div class="col-12 form-text">PDF, JPG or PNG, up to 10 MB each.</div>
             </div>
         </div>
 
@@ -1502,3 +1602,24 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
+
+@push('scripts')
+<script>
+    // Open a form tab from the URL (#tab-compliance, e.g. the "Fix now" link on a listing card) or a [data-open-tab] button.
+    (function () {
+        const open = target => {
+            const link = document.querySelector('.property-tab-link[data-bs-target="' + target + '"]');
+            if (!link || !window.bootstrap) return;
+            bootstrap.Tab.getOrCreateInstance(link).show();
+            link.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('[data-open-tab]');
+            if (btn) open(btn.dataset.openTab);
+        });
+        if (/^#tab-[\w-]+$/.test(location.hash)) {
+            window.addEventListener('load', () => open(location.hash));
+        }
+    })();
+</script>
+@endpush

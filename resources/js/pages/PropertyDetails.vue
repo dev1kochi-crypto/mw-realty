@@ -446,6 +446,16 @@ function agentAria(template, name) {
                             </div>
                         </article>
 
+                        <!-- DLD advertising permit (Madmoun): lets buyers verify the ad with DLD. -->
+                        <div v-if="property.permit" class="mw-property-permit">
+                            <div class="mw-property-permit__text">
+                                <h4 class="mw-property-permit__title">{{ t('property_details.permit.title', 'Advertisement Verification') }}</h4>
+                                <p class="mw-property-permit__number">{{ t('property_details.permit.number_label', 'DLD Permit Number') }}: <strong>{{ property.permit.number }}</strong></p>
+                                <a v-if="property.permit.verify_url" :href="property.permit.verify_url" target="_blank" rel="noopener noreferrer" class="mw-property-permit__link">{{ t('property_details.permit.verify', 'Verify with DLD') }}</a>
+                            </div>
+                            <img v-if="property.permit.qr_url" :src="property.permit.qr_url" :alt="t('property_details.permit.qr_alt', 'DLD permit QR code')" width="96" height="96" class="mw-property-permit__qr" loading="lazy">
+                        </div>
+
                         <div class="mw-property-enquiry">
                             <h4 class="mw-property-enquiry__title">{{ t('property_details.enquiry.title') }}</h4>
                             <form class="mw-property-enquiry__form" novalidate @submit.prevent="handleEnquirySubmit">
@@ -636,6 +646,12 @@ function agentAria(template, name) {
 @media (prefers-reduced-motion:reduce){.mw-download-arrow,.mw-download-check,.mw-download-spinner,.mw-download-dots i,.mw-download-bar span{animation:none!important}}
 @keyframes brochureFade{from{opacity:0}to{opacity:1}}@keyframes brochurePop{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:500px){.mw-brochure-dialog{padding:28px 22px;border-radius:18px}}
+/* DLD permit card — same frame as the enquiry card below it. */
+.mw-property-permit{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:clamp(16px,1.8vw,20px);padding:clamp(16px,1.6vw,22px);border:1px solid #e1e8ed;border-radius:14px;background:#fff;box-shadow:0 6px 16px rgba(20,20,21,.04)}
+.mw-property-permit__title{margin:0 0 6px;color:#141415;font-family:"Plus Jakarta Sans",sans-serif;font-size:16px;font-weight:700}
+.mw-property-permit__number{margin:0;color:#475569;font-size:14px;overflow-wrap:anywhere}.mw-property-permit__number strong{color:#141415}
+.mw-property-permit__link{display:inline-block;margin-top:6px;color:#203f68;font-size:13px;font-weight:600}
+.mw-property-permit__qr{flex-shrink:0;width:96px;height:96px;object-fit:contain;border-radius:8px;background:#fff}
 </style>
 
 <style>

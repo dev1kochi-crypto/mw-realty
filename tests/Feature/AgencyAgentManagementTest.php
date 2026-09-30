@@ -298,7 +298,9 @@ class AgencyAgentManagementTest extends TestCase
         $property = Property::latest('id')->firstOrFail();
         $this->assertSame($agency->id, $property->portal_user_id);
         $this->assertNull($property->agent_id);
-        $this->assertTrue($property->status, 'Published normally without an agent.');
+        // Saved normally without an agent; it goes live after the DLD permit review (ListingComplianceTest).
+        $this->assertSame(Property::COMPLIANCE_DRAFT, $property->compliance_status);
+        $this->assertFalse($property->status);
     }
 
     public function test_agency_with_zero_agents_can_create_and_publish_property(): void
@@ -306,8 +308,12 @@ class AgencyAgentManagementTest extends TestCase
         $agency = $this->agency();
 
         $this->signIn($agency)->post('/portal/properties', $this->propertyPayload())->assertRedirect()->assertSessionHasNoErrors();
+        $property = Property::where('portal_user_id', $agency->id)->whereNull('agent_id')->firstOrFail();
 
-        $this->assertDatabaseHas('properties', ['portal_user_id' => $agency->id, 'agent_id' => null, 'status' => true]);
+        // Publishing needs no agent — only the DLD permit review.
+        $property->update(['compliance_status' => Property::COMPLIANCE_APPROVED]);
+        $this->postJson("/portal/properties/{$property->id}/toggle-status")->assertOk();
+        $this->assertTrue($property->fresh()->status);
     }
 
     public function test_agency_cannot_assign_an_agent_from_another_agency_or_an_inactive_one(): void

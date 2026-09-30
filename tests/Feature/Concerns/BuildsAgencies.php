@@ -65,6 +65,8 @@ trait BuildsAgencies
         return Property::create(array_merge([
             'portal_user_id' => $owner?->id, 'agent_id' => $agent?->id, 'slug' => uniqid('listing-'),
             'reference_no' => uniqid('P'), 'translations' => ['en' => ['title' => 'Listing']], 'status' => true,
+            // A live listing has passed the DLD permit review (see ListingComplianceService).
+            'compliance_status' => Property::COMPLIANCE_APPROVED,
         ], $attributes));
     }
 

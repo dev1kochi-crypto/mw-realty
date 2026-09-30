@@ -88,7 +88,13 @@
                 <div class="nav-section-label">Listings</div>
                 <a href="{{ route('portal.properties.index') }}" class="nav-link @if(request()->routeIs('portal.properties.*')) active @endif">
                     <i class="fas fa-building"></i> Properties
-                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
+                    @php
+                        // Listings sent back or with an expired DLD permit — the agency / agent must act.
+                        $listingsNeedingAction = $owner ? \App\Models\Property::accessibleBy($owner)->whereNull('sold_at')
+                            ->whereIn('compliance_status', [\App\Models\Property::COMPLIANCE_CHANGES_REQUESTED, \App\Models\Property::COMPLIANCE_EXPIRED])->count() : 0;
+                    @endphp
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>
+                    @elseif($listingsNeedingAction > 0)<span class="portal-nav-badge" title="Listings that need changes or a renewed DLD permit">{{ $listingsNeedingAction }}</span>@endif
                 </a>
                 <a href="{{ route('portal.commercial.index') }}" class="nav-link @if(request()->routeIs('portal.commercial.*')) active @endif">
                     <i class="fas fa-store"></i> Commercial
@@ -107,6 +113,12 @@
                 {{-- Home "Realty Property" list — Super Admin only. --}}
                 <a href="{{ route('portal.marketing.index') }}" class="nav-link @if(request()->routeIs('portal.marketing.*')) active @endif">
                     <i class="fas fa-bullhorn"></i> Marketing Properties
+                </a>
+                {{-- DLD permit / Form A review before a listing goes live. --}}
+                @php $pendingApprovals = \App\Models\Property::where('compliance_status', \App\Models\Property::COMPLIANCE_PENDING)->whereNull('sold_at')->count(); @endphp
+                <a href="{{ route('portal.listing-approvals.index') }}" class="nav-link @if(request()->routeIs('portal.listing-approvals.*')) active @endif">
+                    <i class="fas fa-file-shield"></i> Listing Approvals
+                    @if($pendingApprovals > 0)<span class="portal-nav-badge" title="Listings waiting for approval">{{ $pendingApprovals }}</span>@endif
                 </a>
                 @endif
                 @if($owner?->type === 'agent')

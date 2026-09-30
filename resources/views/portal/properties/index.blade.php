@@ -9,98 +9,138 @@
     $canDrag = $search === '' && !$filtered && $properties->count() > 1;
     $positionOffset = ($properties->currentPage() - 1) * $properties->perPage();
 @endphp
-<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <div class="d-flex align-items-center gap-3">
-        <div class="form-check mb-0">
-            <input class="form-check-input" type="checkbox" id="selectAllProperties" @if($properties->isEmpty()) disabled @endif>
-            <label class="form-check-label" for="selectAllProperties">Select All</label>
-        </div>
-        <div class="portal-section-title mb-0">{{ $isAdmin ? 'All ' . $sectionTitle : 'My ' . $sectionTitle }}</div>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-        <div id="bulkActionsBar" class="dropdown d-none">
-            <button class="btn btn-portal-danger btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Bulk Actions (<span id="bulkSelectedCount">0</span>)
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><button class="dropdown-item bulk-action-btn" type="button" data-action="active"><i class="fas fa-check-circle text-success me-2"></i>Mark Active</button></li>
-                <li><button class="dropdown-item bulk-action-btn" type="button" data-action="inactive"><i class="fas fa-times-circle text-secondary me-2"></i>Mark Inactive</button></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><button class="dropdown-item bulk-action-btn" type="button" data-action="delete"><i class="fas fa-trash text-danger me-2"></i>Delete Selected</button></li>
-            </ul>
-        </div>
-        <a href="{{ route($routePrefix . '.create') }}" class="btn btn-portal-primary btn-sm">
-            <i class="fas fa-plus me-1"></i> Add {{ $itemLabel }}
-        </a>
-    </div>
-</div>
+@php
+    $P = \App\Models\Property::class;
+    // DLD permit review pills: [icon, hint, needs the account's action?]
+    $reviewOrder = [
+        $P::COMPLIANCE_CHANGES_REQUESTED => ['fa-rotate-left', 'Fix and save to resubmit', true],
+        $P::COMPLIANCE_EXPIRED => ['fa-ban', 'Add the renewed permit', true],
+        $P::COMPLIANCE_DRAFT => ['fa-file-circle-exclamation', 'Add permit + Form A', true],
+        $P::COMPLIANCE_PENDING => ['fa-hourglass-half', 'Waiting for MW Realty', false],
+        $P::COMPLIANCE_APPROVED => ['fa-circle-check', 'Live on the website', false],
+    ];
+    $needsAction = collect($reviewOrder)->filter(fn ($meta) => $meta[2])->keys()->sum(fn ($key) => (int) ($reviewCounts[$key] ?? 0));
+@endphp
 
-{{-- One compact toolbar: search + plan usage chips (details in each chip's tooltip). --}}
-<div class="portal-list-toolbar mb-3">
-    <form method="GET" action="{{ route($routePrefix . '.index') }}" class="portal-list-search" role="search" id="propertyFilterForm">
-        <div class="portal-list-search__field">
-            <i class="fas fa-search" aria-hidden="true"></i>
-            <input type="search" name="q" value="{{ $search }}" class="form-control" maxlength="100"
-                   placeholder="Search by title, ref no, RERA, address, community or city{{ $isAdmin ? ', agent / agency' : '' }}" aria-label="Search {{ strtolower($sectionTitle) }}">
+{{-- One panel: title + search + plan chips + actions, then filters and the DLD permit pills. --}}
+<div class="pl-panel mb-3">
+    <div class="pl-panel__row">
+        <div class="pl-panel__title">
+            <div class="form-check mb-0" title="Select all on this page">
+                <input class="form-check-input" type="checkbox" id="selectAllProperties" @if($properties->isEmpty()) disabled @endif>
+                <label class="form-check-label small text-nowrap portal-muted" for="selectAllProperties">Select all</label>
+            </div>
+            <div class="portal-section-title mb-0 text-nowrap">{{ $isAdmin ? 'All ' . $sectionTitle : 'My ' . $sectionTitle }}</div>
         </div>
-        @if($search !== '')
-        <a href="{{ route($routePrefix . '.index', array_filter($filters)) }}" class="portal-list-search__clear" title="Clear search" aria-label="Clear search"><i class="fas fa-times"></i></a>
+
+        <form method="GET" action="{{ route($routePrefix . '.index') }}" class="portal-list-search" role="search" id="propertyFilterForm">
+            <div class="portal-list-search__field">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="search" name="q" value="{{ $search }}" class="form-control" maxlength="100"
+                       placeholder="Search by title, ref no, RERA, address, community or city{{ $isAdmin ? ', agent / agency' : '' }}" aria-label="Search {{ strtolower($sectionTitle) }}">
+            </div>
+            @if($filters['review'])<input type="hidden" name="review" value="{{ $filters['review'] }}">@endif
+            @if($search !== '')
+            <a href="{{ route($routePrefix . '.index', array_filter($filters)) }}" class="portal-list-search__clear" title="Clear search" aria-label="Clear search"><i class="fas fa-times"></i></a>
+            @endif
+            <button type="submit" class="btn btn-portal-primary btn-sm px-3">Search</button>
+        </form>
+
+        @if($planUsage || $featuredQuota)
+        <div class="portal-list-toolbar__chips">
+            @include('portal.properties._usage_chips')
+        </div>
         @endif
-        <button type="submit" class="btn btn-portal-primary btn-sm px-3">Search</button>
-    </form>
-    @if($planUsage || $featuredQuota)
-    <div class="portal-list-toolbar__chips">
-        @include('portal.properties._usage_chips')
-    </div>
-    @endif
-</div>
 
-{{-- Filters — submit with the search box (form="propertyFilterForm"), applied on change. --}}
-<div class="pf-bar mb-3">
-    <span class="pf-bar__label"><i class="fas fa-filter me-1"></i>Filter</span>
-    @if($canFilterAgent)
-    <div class="pf-combo">
-        <input type="hidden" name="agent" form="propertyFilterForm" id="pfAgentValue" value="{{ $filters['agent'] ?? '' }}">
-        <button type="button" class="pf-select pf-combo__toggle {{ $filters['agent'] ? 'is-set' : '' }}" id="pfAgentToggle" aria-haspopup="listbox" aria-expanded="false">
-            <i class="fas fa-user-tie me-1"></i>
-            <span id="pfAgentLabel">{{ $filters['agent'] === 'none' ? 'No agent (agency listings)' : ($filterAgent?->name ?? 'All agents') }}</span>
-            <i class="fas fa-chevron-down ms-1 small"></i>
-        </button>
-        <div class="pf-combo__menu d-none" id="pfAgentMenu">
-            <input type="search" class="form-control form-control-sm" id="pfAgentSearch" placeholder="Search agents…" autocomplete="off">
-            <div class="pf-combo__list" id="pfAgentList" data-url="{{ route('portal.properties.agent-options') }}"></div>
+        <div class="pl-panel__actions">
+            <div id="bulkActionsBar" class="dropdown d-none">
+                <button class="btn btn-portal-danger btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Bulk Actions (<span id="bulkSelectedCount">0</span>)
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><button class="dropdown-item bulk-action-btn" type="button" data-action="active"><i class="fas fa-check-circle text-success me-2"></i>Mark Active</button></li>
+                    <li><button class="dropdown-item bulk-action-btn" type="button" data-action="inactive"><i class="fas fa-times-circle text-secondary me-2"></i>Mark Inactive</button></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><button class="dropdown-item bulk-action-btn" type="button" data-action="delete"><i class="fas fa-trash text-danger me-2"></i>Delete Selected</button></li>
+                </ul>
+            </div>
+            <a href="{{ route($routePrefix . '.create') }}" class="btn btn-portal-primary btn-sm text-nowrap">
+                <i class="fas fa-plus me-1"></i> Add {{ $itemLabel }}
+            </a>
         </div>
     </div>
-    @endif
-    <select name="listing" form="propertyFilterForm" class="pf-select {{ $filters['listing'] ? 'is-set' : '' }}" aria-label="Buy or rent" data-autosubmit>
-        <option value="">Buy &amp; Rent</option>
-        <option value="sale" @selected($filters['listing'] === 'sale')>Buy</option>
-        <option value="rent" @selected($filters['listing'] === 'rent')>Rent</option>
-    </select>
-    <select name="status" form="propertyFilterForm" class="pf-select {{ $filters['status'] ? 'is-set' : '' }}" aria-label="Status" data-autosubmit>
-        <option value="">Active &amp; Inactive</option>
-        <option value="active" @selected($filters['status'] === 'active')>Active</option>
-        <option value="inactive" @selected($filters['status'] === 'inactive')>Inactive</option>
-    </select>
-    <label class="pf-select pf-check {{ $filters['premium'] ? 'is-set' : '' }}">
-        <input type="checkbox" name="premium" value="1" form="propertyFilterForm" @checked($filters['premium']) data-autosubmit> <i class="fas fa-star text-warning"></i> Premium only
-    </label>
-    @if($filtered)
-    <a href="{{ route($routePrefix . '.index', array_filter(['q' => $search ?: null])) }}" class="pf-clear"><i class="fas fa-times me-1"></i>Clear filters</a>
+
+    <div class="pl-panel__row pl-panel__row--filters">
+        {{-- Filters — submit with the search box (form="propertyFilterForm"), applied on change. --}}
+        <div class="pf-bar">
+            <span class="pf-bar__label"><i class="fas fa-filter me-1"></i>Filter</span>
+            @if($canFilterAgent)
+            <div class="pf-combo">
+                <input type="hidden" name="agent" form="propertyFilterForm" id="pfAgentValue" value="{{ $filters['agent'] ?? '' }}">
+                <button type="button" class="pf-select pf-combo__toggle {{ $filters['agent'] ? 'is-set' : '' }}" id="pfAgentToggle" aria-haspopup="listbox" aria-expanded="false">
+                    <i class="fas fa-user-tie me-1"></i>
+                    <span id="pfAgentLabel">{{ $filters['agent'] === 'none' ? 'No agent (agency listings)' : ($filterAgent?->name ?? 'All agents') }}</span>
+                    <i class="fas fa-chevron-down ms-1 small"></i>
+                </button>
+                <div class="pf-combo__menu d-none" id="pfAgentMenu">
+                    <input type="search" class="form-control form-control-sm" id="pfAgentSearch" placeholder="Search agents…" autocomplete="off">
+                    <div class="pf-combo__list" id="pfAgentList" data-url="{{ route('portal.properties.agent-options') }}"></div>
+                </div>
+            </div>
+            @endif
+            <select name="listing" form="propertyFilterForm" class="pf-select {{ $filters['listing'] ? 'is-set' : '' }}" aria-label="Buy or rent" data-autosubmit>
+                <option value="">Buy &amp; Rent</option>
+                <option value="sale" @selected($filters['listing'] === 'sale')>Buy</option>
+                <option value="rent" @selected($filters['listing'] === 'rent')>Rent</option>
+            </select>
+            <select name="status" form="propertyFilterForm" class="pf-select {{ $filters['status'] ? 'is-set' : '' }}" aria-label="Status" data-autosubmit>
+                <option value="">Active &amp; Inactive</option>
+                <option value="active" @selected($filters['status'] === 'active')>Active</option>
+                <option value="inactive" @selected($filters['status'] === 'inactive')>Inactive</option>
+            </select>
+            <label class="pf-select pf-check {{ $filters['premium'] ? 'is-set' : '' }}">
+                <input type="checkbox" name="premium" value="1" form="propertyFilterForm" @checked($filters['premium']) data-autosubmit> <i class="fas fa-star text-warning"></i> Premium only
+            </label>
+            @if($filtered)
+            <a href="{{ route($routePrefix . '.index', array_filter(['q' => $search ?: null])) }}" class="pf-clear"><i class="fas fa-times me-1"></i>Clear filters</a>
+            @endif
+        </div>
+
+        {{-- DLD permit review: each pill filters the grid (click again to clear). --}}
+        @if($reviewCounts->sum() > 0)
+        <div class="pr-review" aria-label="DLD permit review">
+            <span class="pr-review__title" title="Listings go live only after MW Realty approves their DLD permit.">
+                <i class="fas fa-file-shield"></i> DLD permit
+                @if(!$isAdmin && $needsAction > 0)<span class="pr-review__alert" title="Listings that need your action">{{ $needsAction }}</span>@endif
+            </span>
+            <div class="pr-review__pills">
+                @foreach($reviewOrder as $key => [$icon, $hint, $actionable])
+                @php $count = (int) ($reviewCounts[$key] ?? 0); $active = $filters['review'] === $key; @endphp
+                <a href="{{ route($routePrefix . '.index', array_filter(array_merge($filters, ['review' => $active ? null : $key, 'q' => $search ?: null]))) }}"
+                   class="pr-review__pill pr-tone-{{ $key }} {{ $active ? 'is-active' : '' }} {{ $count === 0 ? 'is-empty' : '' }} {{ $actionable && $count > 0 ? 'is-urgent' : '' }}"
+                   @if($active) aria-current="true" @endif title="{{ $P::COMPLIANCE_LABELS[$key] }}: {{ $hint }} — {{ $active ? 'click to show all' : 'click to show only these' }}">
+                    <i class="fas {{ $icon }}"></i>
+                    <strong>{{ number_format($count) }}</strong>
+                    <span>{{ $P::COMPLIANCE_LABELS[$key] }}</span>
+                    @if($active)<i class="fas fa-times pr-review__x" aria-hidden="true"></i>@endif
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @endif
+    </div>
+
+    @if($search !== '' || $filtered)
+    <div class="pl-panel__foot">
+        <strong>{{ $properties->total() }}</strong> result{{ $properties->total() === 1 ? '' : 's' }}@if($search !== '') for &ldquo;<strong>{{ $search }}</strong>&rdquo;@endif · drag to reorder is off while searching or filtering &mdash; use <i class="fas fa-sort"></i> <strong>Move to</strong> on a card instead.
+    </div>
+    @elseif($canDrag)
+    <div class="pl-panel__foot"><i class="fas fa-grip-vertical me-1"></i> Drag a card by its handle to reorder this page, or use <i class="fas fa-sort"></i> <strong>Move to</strong> to send it to any position.</div>
     @endif
 </div>
-
-@if($search !== '' || $filtered)
-<p class="portal-muted small mb-3">
-    {{ $properties->total() }} result{{ $properties->total() === 1 ? '' : 's' }}@if($search !== '') for &ldquo;<strong>{{ $search }}</strong>&rdquo;@endif. Drag to reorder is off while searching or filtering &mdash; use <i class="fas fa-sort"></i> <strong>Move to</strong> on a card instead.
-</p>
-@endif
 
 @forelse($properties as $property)
     @if($loop->first)
-    @if($canDrag)
-    <p class="portal-muted small mb-2"><i class="fas fa-grip-vertical me-1"></i> Drag a card by its handle to reorder this page, or use <i class="fas fa-sort"></i> <strong>Move to</strong> on a card to send it to any position &mdash; e.g. from the last page to the top.</p>
-    @endif
     <div class="row g-4" id="propertyGrid">
     @endif
     @php
@@ -137,6 +177,20 @@
                 <span class="portal-property-card__badge portal-property-card__badge--featured"><i class="fas fa-star"></i> Premium</span>
                 @elseif($scheduled)
                 <span class="portal-property-card__badge portal-property-card__badge--scheduled"><i class="far fa-clock"></i> Scheduled</span>
+                @endif
+                @php
+                    // DLD permit review (ListingComplianceService): not live until approved. Shown as a
+                    // chip on the photo + a one-line bar in the Premium slot, so every card keeps its layout.
+                    $notLive = !$property->canGoLive() && !$property->isSold();
+                    [$reviewIcon, $reviewText, $reviewCta] = match ($property->compliance_status) {
+                        $P::COMPLIANCE_CHANGES_REQUESTED => ['fa-rotate-left', $property->compliance_note ?: 'MW Realty requested changes', 'Fix now'],
+                        $P::COMPLIANCE_EXPIRED => ['fa-ban', 'Permit expired — add the renewed permit', 'Renew'],
+                        $P::COMPLIANCE_PENDING => ['fa-hourglass-half', 'Waiting for MW Realty approval', null],
+                        default => ['fa-file-circle-exclamation', 'Add the DLD permit + Form A to go live', 'Add'],
+                    };
+                @endphp
+                @if($notLive)
+                <span class="portal-property-card__review pr-tone-{{ $property->compliance_status }}"><i class="fas {{ $reviewIcon }}"></i>{{ $property->complianceLabel() }}</span>
                 @endif
             </div>
             <div class="portal-property-card__body">
@@ -182,6 +236,12 @@
                     @if($isAdmin)<span>{{ $ownerLabel }}</span>@endif
                 </div>
 
+                @if($notLive && !$property->featured && !$scheduled)
+                <a href="{{ route($routePrefix . '.edit', $property->id) }}#tab-compliance" class="portal-property-card__feature pr-card-review pr-tone-{{ $property->compliance_status }}" title="{{ $reviewText }}">
+                    <span class="text-truncate"><i class="fas {{ $reviewIcon }} me-1"></i>{{ $reviewText }}</span>
+                    @if($reviewCta)<span class="pr-card-review__cta">{{ $reviewCta }} <i class="fas fa-arrow-right"></i></span>@endif
+                </a>
+                @else
                 <div class="portal-property-card__feature {{ $property->featured ? 'is-featured' : ($scheduled ? 'is-scheduled' : '') }}">
                     @if($property->featured)
                         <span><i class="fas fa-star me-1"></i>{{ $property->featured_until ? 'Premium · ends ' . $property->featured_until->format('d M Y') : 'Premium · no end date' }}</span>
@@ -203,6 +263,7 @@
                         <a href="{{ route('portal.plans.index') }}" class="portal-muted text-decoration-none"><i class="fas fa-lock me-1"></i>Premium needs a paid plan</a>
                     @endif
                 </div>
+                @endif
 
                 <div class="portal-property-card__actions">
                     <a href="{{ route($routePrefix . '.show', $property->id) }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-eye me-1"></i>View</a>
@@ -475,11 +536,11 @@
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
         })
-            .then(r => { if (!r.ok) throw new Error(); })
-            .catch(() => {
+            .then(r => { if (!r.ok) return r.json().catch(() => ({})).then(body => { throw new Error(body.message || ''); }); })
+            .catch(err => {
                 toggle.checked = !toggle.checked;
                 setLabel(toggle.checked);
-                alert('Could not update the status. Please try again.');
+                alert(err.message || 'Could not update the status. Please try again.');
             })
             .finally(() => { toggle.disabled = false; });
     });
@@ -588,4 +649,65 @@
         });
     })();
 </script>
+@endpush
+
+@push('styles')
+<style>
+    /* DLD permit review strip + the admin's note on a sent-back card. */
+    .min-w-0 { min-width: 0; }
+
+    /* Listing header panel: title · search · plan chips · actions, then filters + DLD permit pills. */
+    .pl-panel { padding: 12px 14px; border-radius: var(--portal-radius); border: 1px solid var(--portal-border); background: var(--portal-surface); box-shadow: var(--portal-shadow); }
+    .pl-panel__row { display: flex; align-items: center; gap: 10px 12px; flex-wrap: wrap; }
+    .pl-panel__row--filters { justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--portal-border); }
+    .pl-panel__title { display: flex; align-items: center; gap: 12px; }
+    .pl-panel .portal-list-search { flex: 1 1 300px; min-width: 0; padding: 3px 3px 3px 2px; background: var(--portal-bg); border-color: transparent; box-shadow: none; }
+    .pl-panel .portal-list-search__field .form-control { padding-top: 5px; padding-bottom: 5px; }
+    .pl-panel .portal-list-toolbar__chips { margin-left: 0; }
+    .pl-panel__actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .pl-panel__foot { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--portal-border); font-size: .78rem; color: var(--portal-muted); }
+    .pl-panel .pf-select { height: 34px; }
+    @media (max-width: 767.98px) {
+        .pl-panel__actions { margin-left: 0; }
+        .pl-panel .portal-list-search { flex-basis: 100%; order: 3; flex-wrap: nowrap; }
+        .pl-panel .portal-list-search__field { flex-basis: auto; }
+    }
+
+    /* DLD permit pills (click to filter, click again to clear) — sit at the end of the filter row. */
+    .pr-review { display: flex; align-items: center; gap: 8px 10px; min-width: 0; }
+    .pr-review__title { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--portal-muted); white-space: nowrap; cursor: help; }
+    .pr-review__title .fa-file-shield { color: var(--portal-primary); font-size: .9rem; }
+    .pr-review__alert { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--portal-accent); color: #fff; font-size: .7rem; letter-spacing: 0; }
+    .pr-review__pills { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .pr-tone-changes_requested { --tone: #c2410c; --tone-soft: #fdeee4; }
+    .pr-tone-expired { --tone: #be123c; --tone-soft: #fde8ed; }
+    .pr-tone-draft { --tone: #b7791f; --tone-soft: #fdf3e1; }
+    .pr-tone-pending { --tone: #244373; --tone-soft: #e9eef6; }
+    .pr-tone-approved { --tone: #0f8a4f; --tone-soft: #e5f5ec; }
+
+    .pr-review__pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; border: 1px solid transparent; background: var(--tone-soft); color: var(--tone); font-size: .8rem; font-weight: 600; line-height: 1.2; text-decoration: none; white-space: nowrap; transition: transform .15s ease, box-shadow .15s ease; }
+    .pr-review__pill:hover { color: var(--tone); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(31, 35, 64, .08); }
+    .pr-review__pill strong { font-weight: 800; }
+    .pr-review__pill span { color: var(--portal-text); font-weight: 600; }
+    .pr-review__pill.is-urgent { border-color: var(--tone); }
+    .pr-review__pill.is-empty:not(.is-active) { background: #f3f4f8; color: #a3a8c3; }
+    .pr-review__pill.is-empty:not(.is-active) span { color: #8a8fab; }
+    .pr-review__pill.is-active { background: var(--tone); border-color: var(--tone); color: #fff; box-shadow: 0 4px 12px color-mix(in srgb, var(--tone) 35%, transparent); }
+    .pr-review__pill.is-active span { color: #fff; }
+    .pr-review__x { font-size: .7rem; opacity: .85; }
+    @media (max-width: 767.98px) {
+        .pr-review__pills { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 2px; scrollbar-width: none; }
+        .pr-review__pills::-webkit-scrollbar { display: none; }
+    }
+    /* Card: permit status chip on the photo (bottom centre, between the checkbox and drag handle). */
+    .portal-property-card__review { position: absolute; left: 50%; bottom: .75rem; transform: translateX(-50%); z-index: 2; display: inline-flex; align-items: center; gap: 5px; max-width: calc(100% - 7rem); padding: .3rem .7rem; border-radius: 50px; background: var(--tone); color: #fff; font-size: .7rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 12px rgba(0, 0, 0, .22); }
+    /* Card: the one-line permit bar that takes the Premium row's place while the listing isn't live. */
+    .pr-card-review { background: var(--tone-soft); color: var(--tone); text-decoration: none; min-width: 0; }
+    .pr-card-review:hover { color: var(--tone); filter: brightness(.97); }
+    .pr-card-review > .text-truncate { min-width: 0; color: var(--portal-text); font-weight: 600; }
+    .pr-card-review > .text-truncate i { color: var(--tone); }
+    .pr-card-review__cta { flex-shrink: 0; font-weight: 700; white-space: nowrap; }
+    .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+</style>
 @endpush

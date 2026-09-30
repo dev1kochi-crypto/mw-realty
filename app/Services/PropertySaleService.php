@@ -78,7 +78,10 @@ class PropertySaleService
                 'status' => $property->status_before_sold ?? true,
                 'sold_at' => null, 'sold_type' => null, 'sold_price' => null, 'sold_commission' => null, 'rented_until' => null,
                 'sold_lead_id' => null, 'sold_agent_id' => null, 'sold_notes' => null, 'status_before_sold' => null,
-            ])->save();
+            ]);
+            // Back on the website only if the DLD permit review still allows it (e.g. not expired meanwhile).
+            $property->status = $property->status && $property->canGoLive();
+            $property->save();
 
             if ($lead) {
                 $this->notes->log($lead, 'sale', ucfirst((string) $type) . ' reverted: ' . $this->propertyLabel($property) . ' is available again.', [

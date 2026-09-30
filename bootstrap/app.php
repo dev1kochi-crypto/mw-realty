@@ -18,6 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Morning-before reminder for subscriptions that auto-renew tomorrow (UAE time).
         $schedule->command('portal:remind-subscription-renewals')->dailyAt('09:00')->timezone(\App\Console\Commands\RemindSubscriptionRenewals::TIMEZONE)->withoutOverlapping();
         $schedule->command('properties:expire-featured')->everyFifteenMinutes();
+        // DLD permits: unpublish listings whose permit expired, remind 7 days before (UAE midnight).
+        $schedule->command('properties:expire-permits')->dailyAt('00:05')->timezone(\App\Console\Commands\RemindSubscriptionRenewals::TIMEZONE)->withoutOverlapping();
         $schedule->call(fn () => app(\App\Services\NewsletterCampaignService::class)->sendDueContent())->everyFifteenMinutes();
         // Every email (KYC, leads, enquiries…) is queued. On hosting without a supervisor-managed
         // `queue:work`, this drains the queue once a minute off the existing schedule:run cron.

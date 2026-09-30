@@ -60,6 +60,12 @@ class PropertyPageService
                 'listing_type_label' => $property->listing_type === 'rent' ? 'For Rent' : 'For Sale',
                 'completion_status_label' => $property->filterLabel('completion_status', $lang),
                 'rera_id' => $property->rera_id,
+                // DLD advertising permit + Madmoun QR, which Dubai rules require on every property ad.
+                'permit' => $property->permit_number ? [
+                    'number' => $property->permit_number,
+                    'qr_url' => media_url($property->permit_qr),
+                    'verify_url' => $property->permit_verification_url,
+                ] : null,
                 'reference_no' => $property->reference_no,
                 'brochure_available' => (bool) $property->brochure_path,
                 'floor_plan_download' => (bool) $details?->floor_plan_file, // the file itself is only given out after the lead form

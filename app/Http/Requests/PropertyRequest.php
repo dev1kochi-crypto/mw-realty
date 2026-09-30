@@ -31,6 +31,17 @@ class PropertyRequest extends FormRequest
             // the field is read-only in the form, so nothing enforces its presence here.
             'reference_no' => 'nullable|string|max:255',
             'rera_id' => 'nullable|string|max:255',
+            // DLD compliance (Compliance tab). Optional to save a draft; ListingComplianceService decides
+            // whether the listing is complete enough to be reviewed. One DLD permit = one listing.
+            'permit_number' => ['nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9\-\/]+$/', Rule::unique('properties', 'permit_number')->ignore($this->route('id'))],
+            'permit_expires_at' => 'nullable|date_format:Y-m-d',
+            'permit_qr' => 'nullable|image|max:2048',
+            'permit_verification_url' => 'nullable|url:https,http|max:2048',
+            'authorization_type' => ['nullable', Rule::in(array_keys(\App\Models\Property::AUTHORIZATION_TYPES))],
+            'authorization_expires_at' => 'nullable|date_format:Y-m-d',
+            'authorization_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'title_deed_no' => 'nullable|string|max:64',
+            'title_deed_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'postal_code' => 'nullable|string|max:50',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
@@ -96,5 +107,13 @@ class PropertyRequest extends FormRequest
             $rules[$key] = [$presence, 'string', 'max:255', Rule::exists('filter_values', 'value')->where('filter_id', $filterId ?? 0)->where('status', true)];
         }
         return $rules;
+    }
+
+    public function messages(): array
+    {
+        return [
+            'permit_number.unique' => 'This DLD permit number is already used by another listing. Each advertising permit covers one listing.',
+            'permit_number.regex' => 'The permit number may only contain letters, numbers, dashes and slashes.',
+        ];
     }
 }
