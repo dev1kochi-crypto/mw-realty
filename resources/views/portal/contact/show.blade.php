@@ -13,15 +13,19 @@
         </div>
         <h1 class="st-head__title mt-1">{{ $ticket->subject }}</h1>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
+    <div class="st-head__actions">
         <a href="{{ route('portal.contact.index') }}" class="btn btn-portal-light btn-sm"><i class="fas fa-arrow-left me-1"></i>My Tickets</a>
         @if(!$ticket->isSolved())
-        <form action="{{ route('portal.contact.resolve', $ticket) }}" method="POST" onsubmit="return confirm('Mark this ticket as solved?');">
+        <form action="{{ route('portal.contact.resolve', $ticket) }}" method="POST" class="m-0"
+              data-confirm="Mark this ticket as solved? You can reply later to reopen it."
+              data-confirm-title="Resolve support ticket?"
+              data-confirm-ok="Mark as Solved"
+              data-confirm-tone="primary">
             @csrf
             <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check me-1"></i>Mark as Solved</button>
         </form>
         @elseif($ticket->status === \App\Models\SupportTicket::RESOLVED)
-        <form action="{{ route('portal.contact.reopen', $ticket) }}" method="POST">
+        <form action="{{ route('portal.contact.reopen', $ticket) }}" method="POST" class="m-0">
             @csrf
             <button type="submit" class="btn btn-portal-light btn-sm"><i class="fas fa-redo me-1"></i>Reopen</button>
         </form>

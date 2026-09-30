@@ -37,10 +37,12 @@ async function handleSubmit(e) {
     if (submitting.value) return;
     submitting.value = true;
     errorMessage.value = null;
+    const loginType = accountType.value;
+    const loginAction = loginType === 'user' ? '/customer/login' : '/portal/login';
 
     try {
-        const { data } = await window.axios.post(formAction.value, new FormData(e.target));
-        window.location.href = data.redirect || '/profile';
+        const { data } = await window.axios.post(loginAction, new FormData(e.target));
+        window.location.href = data.redirect || (loginType === 'user' ? '/profile' : '/portal/dashboard');
     } catch (error) {
         errorMessage.value = error.response?.data?.message || t('login.generic_error');
         submitting.value = false;

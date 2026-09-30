@@ -2,6 +2,8 @@
 @push('styles')
 <style>
     .st-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }
+    .st-head__actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0.6rem; }
+    .st-head__actions .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 2.35rem; white-space: nowrap; }
     .st-head__title { font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--portal-text); }
     .st-head__sub { color: var(--portal-muted); margin: 0.2rem 0 0; font-size: 0.9rem; }
 
@@ -57,6 +59,9 @@
     .st-detail dt { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--portal-muted); }
     .st-detail dd { margin-bottom: 0.85rem; font-weight: 600; }
 
-    @media (max-width: 575.98px) { .st-msg { max-width: 100%; } }
+    @media (max-width: 575.98px) {
+        .st-msg { max-width: 100%; }
+        .st-head__actions { width: 100%; justify-content: flex-start; }
+    }
 </style>
 @endpush

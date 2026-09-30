@@ -100,6 +100,14 @@
                     <i class="fas fa-store"></i> Commercial
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
+                @if(!$owner && $cmsActor?->hasRole('superadmin'))
+                {{-- DLD permit / Form A review before a listing goes live. --}}
+                @php $pendingApprovals = \App\Models\Property::where('compliance_status', \App\Models\Property::COMPLIANCE_PENDING)->whereNull('sold_at')->count(); @endphp
+                <a href="{{ route('portal.listing-approvals.index') }}" class="nav-link @if(request()->routeIs('portal.listing-approvals.*')) active @endif">
+                    <i class="fas fa-file-shield"></i> Listing Approvals
+                    @if($pendingApprovals > 0)<span class="portal-nav-badge" title="Listings waiting for approval">{{ $pendingApprovals }}</span>@endif
+                </a>
+                @endif
                 <a href="{{ route('portal.featured.index') }}" class="nav-link @if(request()->routeIs('portal.featured.*')) active @endif">
                     <i class="fas fa-star"></i> Premium
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
@@ -113,12 +121,6 @@
                 {{-- Home "Realty Property" list — Super Admin only. --}}
                 <a href="{{ route('portal.marketing.index') }}" class="nav-link @if(request()->routeIs('portal.marketing.*')) active @endif">
                     <i class="fas fa-bullhorn"></i> Marketing Properties
-                </a>
-                {{-- DLD permit / Form A review before a listing goes live. --}}
-                @php $pendingApprovals = \App\Models\Property::where('compliance_status', \App\Models\Property::COMPLIANCE_PENDING)->whereNull('sold_at')->count(); @endphp
-                <a href="{{ route('portal.listing-approvals.index') }}" class="nav-link @if(request()->routeIs('portal.listing-approvals.*')) active @endif">
-                    <i class="fas fa-file-shield"></i> Listing Approvals
-                    @if($pendingApprovals > 0)<span class="portal-nav-badge" title="Listings waiting for approval">{{ $pendingApprovals }}</span>@endif
                 </a>
                 @endif
                 @if($owner?->type === 'agent')
