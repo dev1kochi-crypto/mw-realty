@@ -1662,6 +1662,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 numbered: ['rera', 'dtcm', 'adrec'].includes(type),
                 qr: type === 'rera' || type === 'adrec',
                 validates: !!info.validates,
+                approval: !!info.needs_approval,
                 'no-permit': type === 'none' || type === 'not_required',
             };
             block.querySelectorAll('[data-permit-show]').forEach(el => el.classList.toggle('d-none', !show[el.dataset.permitShow]));

@@ -5,18 +5,24 @@ namespace Tests\Feature;
 use App\Mail\ListingComplianceMail;
 use App\Mail\ListingReviewRequestedMail;
 use App\Models\CmsKit\SiteInformation;
+use App\Models\PortalUser;
 use App\Models\Property;
 use App\Notifications\ListingComplianceNotification;
 use App\Notifications\ListingReviewRequestedNotification;
+use App\Services\ListingComplianceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Tests\Feature\Concerns\BuildsAgencies;
 use Tests\TestCase;
 
-/** Dubai listing compliance: DLD permit + Form A, Super Admin approval, re-review, expiry. */
+/**
+ * Listing compliance: permit verification (Validate), Super Admin approval where it applies
+ * (LISTING_SUPERADMIN_APPROVAL, or a DTCM / None permit), take-down and expiry.
+ */
 class ListingComplianceTest extends TestCase
 {
     use RefreshDatabase, BuildsAgencies;
@@ -26,117 +32,167 @@ class ListingComplianceTest extends TestCase
         parent::setUp();
         Storage::fake('public');
         Storage::fake('kyc');
-        config(['services.cloudinary.url' => null, 'cloudinary.cloud_url' => null]);
+        config(['services.cloudinary.url' => null, 'cloudinary.cloud_url' => null, 'permits.superadmin_approval' => false]);
     }
 
-    private function permitPayload(array $overrides = []): array
+    /** A Dubai listing with complete permit details, as the form saves it — then afterSave() as on create. */
+    private function savedListing(?PortalUser $owner, array $attributes = []): Property
     {
-        return $this->propertyPayload(array_merge([
-            'permit_number' => '7112345678',
+        $permit = ($attributes['permit_type'] ?? 'rera') === 'none' ? [] : [
+            'permit_number' => (string) random_int(1000000000, 9999999999),
             'permit_expires_at' => now()->addMonths(3)->toDateString(),
-            'permit_qr' => UploadedFile::fake()->image('qr.png', 200, 200),
-            'authorization_type' => 'exclusive',
-            'authorization_document' => UploadedFile::fake()->create('form-a.pdf', 20, 'application/pdf'),
-        ], $overrides));
+            'permit_qr' => 'properties/permits/qr.png',
+        ];
+        $property = $this->property($owner, null, array_merge([
+            'emirate' => 'dubai', 'permit_type' => 'rera', 'listing_type' => 'sale',
+            'compliance_status' => Property::COMPLIANCE_DRAFT, 'status' => false,
+        ], $permit, $attributes));
+        app(ListingComplianceService::class)->afterSave($property, null);
+
+        return $property->fresh();
     }
 
-    public function test_a_listing_goes_live_only_after_permit_and_admin_approval(): void
+    private function verifiedRera(): array
+    {
+        return ['permit_type' => 'rera', 'permit_verified_at' => now(), 'permit_verified_via' => 'dld'];
+    }
+
+    public function test_with_approval_off_a_verified_permit_goes_live_without_super_admin(): void
+    {
+        Notification::fake();
+        $agency = $this->agency();
+        $this->actingAs($agency, 'portal');
+
+        $verified = $this->savedListing($agency, $this->verifiedRera());
+        $this->assertSame(Property::COMPLIANCE_APPROVED, $verified->compliance_status);
+        $this->assertTrue($verified->canGoLive());
+
+        // Not validated yet: waits for Validate, not for Super Admin.
+        $unverified = $this->savedListing($agency, ['permit_type' => 'rera']);
+        $this->assertSame(Property::COMPLIANCE_PENDING, $unverified->compliance_status);
+        $this->assertFalse($unverified->awaitingApproval());
+        $this->assertSame('Not verified', $unverified->complianceLabel());
+        Notification::assertNotSentTo($this->superAdmin(), ListingReviewRequestedNotification::class);
+    }
+
+    public function test_dtcm_and_none_always_wait_for_super_admin_approval(): void
     {
         Notification::fake();
         Mail::fake();
         SiteInformation::create(['receipt_email' => 'ops@example.test']);
-        $agency = $this->agency();
         $admin = $this->superAdmin();
+        $agency = $this->agency();
+        $this->actingAs($agency, 'portal');
 
-        // No permit: saved as a draft and kept off the website even with "Active" ticked.
-        $this->signIn($agency)->post('/portal/properties', $this->propertyPayload())->assertRedirect()->assertSessionHasNoErrors();
-        $property = Property::latest('id')->firstOrFail();
-        $this->assertSame(Property::COMPLIANCE_DRAFT, $property->compliance_status);
-        $this->assertFalse($property->status);
-        $this->postJson("/portal/properties/{$property->id}/toggle-status")->assertStatus(422);
+        $dtcm = $this->savedListing($agency, ['permit_type' => 'dtcm', 'listing_type' => 'rent']);
+        $none = $this->savedListing($agency, ['permit_type' => 'none']);
 
-        // Permit + QR + Form A: submitted to Super Admin, still offline.
-        $this->put("/portal/properties/{$property->id}", $this->permitPayload(['slug' => $property->slug]))->assertRedirect()->assertSessionHasNoErrors();
-        $property->refresh();
-        $this->assertSame(Property::COMPLIANCE_PENDING, $property->compliance_status);
-        $this->assertFalse($property->status);
-        Storage::disk('kyc')->assertExists($property->authorization_document);
+        foreach ([$dtcm, $none] as $property) {
+            $this->assertSame(Property::COMPLIANCE_PENDING, $property->compliance_status);
+            $this->assertTrue($property->awaitingApproval());
+            $this->assertSame('Awaiting approval', $property->complianceLabel());
+            $this->assertFalse($property->canGoLive());
+        }
         Notification::assertSentTo($admin, ListingReviewRequestedNotification::class);
         Mail::assertQueued(ListingReviewRequestedMail::class, fn ($m) => $m->hasTo('ops@example.test'));
         Notification::assertSentTo($agency, ListingComplianceNotification::class, fn ($n) => $n->event === 'submitted');
-        Mail::assertQueued(ListingComplianceMail::class, fn ($m) => $m->event === 'submitted' && $m->hasTo($agency->email));
 
-        // Agencies can't reach the approval queue.
-        $this->get('/portal/listing-approvals')->assertForbidden();
-
-        // Super Admin approves: live, and the public page carries the permit.
-        \Illuminate\Support\Facades\Auth::guard('portal')->logout();
+        // Super Admin approves: live, and the DTCM permit is recorded as checked by hand.
+        Auth::guard('portal')->logout();
         $this->signIn($admin, 'cms');
-        $this->get('/portal/listing-approvals')->assertOk()->assertSee('7112345678');
-        $this->get("/portal/listing-approvals/{$property->id}")->assertOk();
-        $this->post("/portal/listing-approvals/{$property->id}/approve")->assertRedirect();
+        $this->get('/portal/listing-approvals?tab=pending')->assertOk()->assertSee('Awaiting approval');
+        $this->get("/portal/listing-approvals/{$dtcm->id}")->assertOk()->assertSee('Approve &amp; publish', false);
+        $this->post("/portal/listing-approvals/{$dtcm->id}/approve")->assertRedirect();
+
+        $dtcm->refresh();
+        $this->assertSame(Property::COMPLIANCE_APPROVED, $dtcm->compliance_status);
+        $this->assertTrue($dtcm->status);
+        $this->assertSame('manual', $dtcm->permit_verified_via);
+        Notification::assertSentTo($agency, ListingComplianceNotification::class, fn ($n) => $n->event === 'approved');
+        Mail::assertQueued(ListingComplianceMail::class, fn ($m) => $m->event === 'approved');
+    }
+
+    public function test_with_approval_on_even_a_verified_permit_waits_for_super_admin(): void
+    {
+        config(['permits.superadmin_approval' => true]);
+        Notification::fake();
+        $agency = $this->agency();
+        $this->actingAs($agency, 'portal');
+
+        $property = $this->savedListing($agency, $this->verifiedRera());
+        $this->assertSame(Property::COMPLIANCE_PENDING, $property->compliance_status);
+        $this->assertTrue($property->awaitingApproval());
+
+        Auth::guard('portal')->logout();
+        $this->signIn($this->superAdmin(), 'cms')->post("/portal/listing-approvals/{$property->id}/approve")->assertRedirect();
         $property->refresh();
         $this->assertSame(Property::COMPLIANCE_APPROVED, $property->compliance_status);
         $this->assertTrue($property->status);
-        Notification::assertSentTo($agency, ListingComplianceNotification::class, fn ($n) => $n->event === 'approved');
-        Mail::assertQueued(ListingComplianceMail::class, fn ($m) => $m->event === 'approved');
-        $this->getJson("/api/properties/{$property->slug}")->assertOk()->assertJsonPath('permit.number', '7112345678');
-        $this->assertSame(3, $property->complianceLogs()->count());
+        $this->assertSame('dld', $property->permit_verified_via, 'an online verification is kept');
     }
 
-    public function test_changing_the_advertised_price_sends_an_approved_listing_back_for_review(): void
+    public function test_with_approval_on_only_permit_changes_need_a_new_approval(): void
     {
+        config(['permits.superadmin_approval' => true]);
+        Notification::fake();
         $agency = $this->agency();
-        $this->signIn($agency)->post('/portal/properties', $this->permitPayload())->assertSessionHasNoErrors();
-        $property = Property::latest('id')->firstOrFail();
+        $this->actingAs($agency, 'portal');
+        $compliance = app(ListingComplianceService::class);
+        $property = $this->savedListing($agency, $this->verifiedRera());
         $property->update(['compliance_status' => Property::COMPLIANCE_APPROVED, 'status' => true]);
 
-        // A description-only edit keeps it live.
-        $payload = $this->propertyPayload(['slug' => $property->slug, 'permit_number' => '7112345678', 'permit_expires_at' => $property->permit_expires_at->toDateString(), 'authorization_type' => 'exclusive']);
-        $payload['translations']['en']['description'] = 'Now with a new kitchen';
-        $this->put("/portal/properties/{$property->id}", $payload)->assertSessionHasNoErrors();
+        // Description-only edit keeps the approval.
+        $before = $compliance->snapshot($property);
+        $property->update(['translations' => ['en' => ['title' => 'Listing', 'description' => 'New kitchen']]]);
+        $compliance->afterSave($property, $before);
+        $this->assertSame(Property::COMPLIANCE_APPROVED, $property->fresh()->compliance_status);
         $this->assertTrue($property->fresh()->status);
 
-        $this->put("/portal/properties/{$property->id}", array_merge($payload, ['price' => 1250000]))->assertSessionHasNoErrors();
+        // A new price goes back to Super Admin and comes off the website.
+        $before = $compliance->snapshot($property->fresh());
+        $property->update(['price' => 1250000]);
+        $compliance->afterSave($property, $before);
         $property->refresh();
         $this->assertSame(Property::COMPLIANCE_PENDING, $property->compliance_status);
         $this->assertFalse($property->status);
     }
 
-    public function test_request_changes_takes_the_listing_down_with_a_note(): void
+    public function test_super_admin_saving_a_house_listing_approves_it(): void
     {
+        config(['permits.superadmin_approval' => true]);
+        $this->signIn($this->superAdmin(), 'cms');
+
+        $property = $this->savedListing(null, ['permit_type' => 'dtcm', 'listing_type' => 'rent']);
+        $this->assertSame(Property::COMPLIANCE_APPROVED, $property->compliance_status);
+        $this->assertSame('manual', $property->permit_verified_via);
+    }
+
+    public function test_only_super_admin_approves_and_only_waiting_listings(): void
+    {
+        $agency = $this->agency();
+        $this->actingAs($agency, 'portal');
+        $waiting = $this->savedListing($agency, ['permit_type' => 'none']);
+        $live = $this->savedListing($agency, $this->verifiedRera());
+
+        $this->signIn($agency)->post("/portal/listing-approvals/{$waiting->id}/approve")->assertForbidden();
+        $this->assertSame(Property::COMPLIANCE_PENDING, $waiting->fresh()->compliance_status);
+
+        Auth::guard('portal')->logout();
+        $this->signIn($this->superAdmin(), 'cms')->post("/portal/listing-approvals/{$live->id}/approve")->assertSessionHas('error');
+    }
+
+    public function test_take_down_keeps_the_listing_offline_until_its_permit_changes(): void
+    {
+        Mail::fake();
         $agency = $this->agency();
         $property = $this->property($agency);
 
-        $this->signIn($this->superAdmin(), 'cms');
-        $this->post("/portal/listing-approvals/{$property->id}/request-changes", [])->assertSessionHasErrors('note');
-        $this->post("/portal/listing-approvals/{$property->id}/request-changes", ['note' => 'Permit is for unit 1204, ad says 1402'])->assertRedirect();
+        $this->signIn($this->superAdmin(), 'cms')->post("/portal/listing-approvals/{$property->id}/take-down")->assertRedirect();
 
         $property->refresh();
         $this->assertSame(Property::COMPLIANCE_CHANGES_REQUESTED, $property->compliance_status);
         $this->assertFalse($property->status);
-        $this->assertSame('Permit is for unit 1204, ad says 1402', $property->compliance_note);
-    }
-
-    public function test_the_agency_sees_requested_changes_on_its_listings_and_by_email(): void
-    {
-        Mail::fake();
-        $agency = $this->agency();
-        $sentBack = $this->property($agency, null, ['translations' => ['en' => ['title' => 'Marina Loft']]]);
-        $live = $this->property($agency, null, ['translations' => ['en' => ['title' => 'Palm Villa']]]);
-
-        $this->signIn($this->superAdmin(), 'cms')
-            ->post("/portal/listing-approvals/{$sentBack->id}/request-changes", ['note' => 'Upload the signed Form A'])->assertRedirect();
-        Mail::assertQueued(ListingComplianceMail::class, fn ($m) => $m->event === 'changes_requested' && $m->note === 'Upload the signed Form A' && $m->hasTo($agency->email));
-        $this->get('/portal/listing-approvals?tab=changes_requested')->assertOk()->assertSee('Marina Loft')->assertDontSee('Palm Villa');
-
-        \Illuminate\Support\Facades\Auth::guard('cms')->logout();
-        $this->signIn($agency);
-        // Status strip, the note on the card, the sidebar badge, and the filter.
-        $this->get('/portal/properties')->assertOk()
-            ->assertSee('DLD permit review')->assertSee('Upload the signed Form A')->assertSee('title="Listings that need changes or a renewed DLD permit"', false);
-        $this->get('/portal/properties?review=changes_requested')->assertOk()->assertSee('Marina Loft')->assertDontSee('Palm Villa');
-        $this->get("/portal/properties/{$sentBack->id}/edit")->assertOk()->assertSee('Note from MW Realty');
+        Mail::assertQueued(ListingComplianceMail::class, fn ($m) => $m->event === 'changes_requested' && $m->hasTo($agency->email));
     }
 
     public function test_expired_permits_are_unpublished_by_the_daily_command(): void
@@ -163,6 +219,9 @@ class ListingComplianceTest extends TestCase
         $agency = $this->agency();
         $this->property($agency, null, ['permit_number' => '7112345678']);
 
-        $this->signIn($agency)->post('/portal/properties', $this->permitPayload())->assertSessionHasErrors('permit_number');
+        $this->signIn($agency)->post('/portal/properties', $this->propertyPayload([
+            'permit_number' => '7112345678',
+            'permit_qr' => UploadedFile::fake()->image('qr.png', 200, 200),
+        ]))->assertSessionHasErrors('permit_number');
     }
 }

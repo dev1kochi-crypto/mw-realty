@@ -20,7 +20,7 @@ class ListingComplianceMail extends Mailable
 
     public const SUBJECTS = [
         'submitted' => 'Listing submitted for approval',
-        'approved' => 'Permit verified for your listing',
+        'approved' => 'Your listing was approved',
         'changes_requested' => 'Your listing was taken down',
         'expiring' => 'DLD permit expiring soon',
         'expired' => 'DLD permit expired — listing taken offline',

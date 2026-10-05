@@ -16,10 +16,11 @@
         $P::COMPLIANCE_CHANGES_REQUESTED => ['fa-rotate-left', 'Taken down by MW Realty — fix and save', true],
         $P::COMPLIANCE_EXPIRED => ['fa-ban', 'Add the renewed permit', true],
         $P::COMPLIANCE_DRAFT => ['fa-file-circle-exclamation', 'Add permit details', true],
-        $P::COMPLIANCE_PENDING => ['fa-shield-halved', 'Validate the permit to go live', true],
+        $P::COMPLIANCE_PENDING => ['fa-shield-halved', 'Validate the permit / waiting for MW Realty approval', true],
         $P::COMPLIANCE_APPROVED => ['fa-circle-check', 'Permit verified — can be live', false],
     ];
     $needsAction = collect($reviewOrder)->filter(fn ($meta) => $meta[2])->keys()->sum(fn ($key) => (int) ($reviewCounts[$key] ?? 0));
+    $pillLabels = [$P::COMPLIANCE_PENDING => config('permits.superadmin_approval') ? 'Awaiting approval' : 'Not verified / approval'] + $P::COMPLIANCE_LABELS;
 @endphp
 
 {{-- One panel: title + search + plan chips + actions, then filters and the DLD permit pills. --}}
@@ -118,10 +119,10 @@
                 @php $count = (int) ($reviewCounts[$key] ?? 0); $active = $filters['review'] === $key; @endphp
                 <a href="{{ route($routePrefix . '.index', array_filter(array_merge($filters, ['review' => $active ? null : $key, 'q' => $search ?: null]))) }}"
                    class="pr-review__pill pr-tone-{{ $key }} {{ $active ? 'is-active' : '' }} {{ $count === 0 ? 'is-empty' : '' }} {{ $actionable && $count > 0 ? 'is-urgent' : '' }}"
-                   @if($active) aria-current="true" @endif title="{{ $P::COMPLIANCE_LABELS[$key] }}: {{ $hint }} — {{ $active ? 'click to show all' : 'click to show only these' }}">
+                   @if($active) aria-current="true" @endif title="{{ $pillLabels[$key] }}: {{ $hint }} — {{ $active ? 'click to show all' : 'click to show only these' }}">
                     <i class="fas {{ $icon }}"></i>
                     <strong>{{ number_format($count) }}</strong>
-                    <span>{{ $P::COMPLIANCE_LABELS[$key] }}</span>
+                    <span>{{ $pillLabels[$key] }}</span>
                     @if($active)<i class="fas fa-times pr-review__x" aria-hidden="true"></i>@endif
                 </a>
                 @endforeach
@@ -182,7 +183,7 @@
                     // DLD permit review (ListingComplianceService): not live until approved. Shown as a
                     // chip on the photo + a one-line bar in the Premium slot, so every card keeps its layout.
                     $notLive = !$property->canGoLive() && !$property->isSold();
-                    [$reviewIcon, $reviewText, $reviewCta] = match ($property->compliance_status) {
+                    [$reviewIcon, $reviewText, $reviewCta] = $property->awaitingApproval() ? ['fa-user-shield', 'Waiting for MW Realty to approve it', 'View'] : match ($property->compliance_status) {
                         $P::COMPLIANCE_CHANGES_REQUESTED => ['fa-rotate-left', 'Taken down by MW Realty — update and validate the permit', 'Fix now'],
                         $P::COMPLIANCE_EXPIRED => ['fa-ban', 'Permit expired — add the renewed permit', 'Renew'],
                         $P::COMPLIANCE_PENDING => ['fa-shield-halved', 'Permit not verified — validate it to go live', 'Validate'],

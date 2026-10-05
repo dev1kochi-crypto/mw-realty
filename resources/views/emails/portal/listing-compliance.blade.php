@@ -1,7 +1,7 @@
 @php
     [$heading, $tone, $icon, $eyebrow] = match ($event) {
         'submitted' => ['Listing submitted for approval', 'teal', '📄', 'Listing Approval'],
-        'approved' => ['Permit verified for your listing', 'green', '✅', 'Permit Verified'],
+        'approved' => ['Your listing was approved', 'green', '✅', 'Listing Approved'],
         'changes_requested' => ['Your listing was taken down', 'amber', '📋', 'Listing Taken Down'],
         'expiring' => ['DLD permit expiring soon', 'amber', '⏳', 'Permit Reminder'],
         default => ['DLD permit expired', 'red', '⛔', 'Permit Expired'],
@@ -21,10 +21,10 @@
 
 @switch($event)
     @case('submitted')
-        <p style="margin:0;"><strong>{{ $title }}</strong> was sent to MW Realty for DLD permit approval. It will go live on the website as soon as it is approved — we'll email you either way.</p>
+        <p style="margin:0;"><strong>{{ $title }}</strong> was sent to MW Realty for approval. It will go live on the website as soon as it is approved — we'll email you either way.</p>
         @break
     @case('approved')
-        <p style="margin:0;"><strong>{{ $title }}</strong> — MW Realty checked its advertising permit, so it can now be live on the website.</p>
+        <p style="margin:0;"><strong>{{ $title }}</strong> — MW Realty approved it, so it is now live on the website.</p>
         @break
     @case('changes_requested')
         <p style="margin:0;"><strong>{{ $title }}</strong> was taken off the website by MW Realty. Fix the points below, validate the permit in Core details and save the listing — it goes live again once the permit is verified.</p>

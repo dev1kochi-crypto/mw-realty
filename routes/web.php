@@ -793,12 +793,13 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::get('/{id}', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'show'])->name('show');
         });
 
-        // Listing Permits — overview of which listings' permits are verified (no approval step; a
-        // verified listing goes live by itself) + take a listing down. Super Admin only (enforced in the
-        // controller). See ListingComplianceService.
+        // Listing Permits — which listings' permits are verified, approve the ones waiting for Super Admin
+        // (LISTING_SUPERADMIN_APPROVAL, DTCM / None permits) + take a listing down. Super Admin only
+        // (enforced in the controller). See ListingComplianceService.
         Route::prefix('listing-approvals')->name('listing-approvals.')->controller(\App\Http\Controllers\Portal\PortalListingApprovalController::class)->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/{id}', 'show')->name('show')->whereNumber('id');
+            Route::post('/{id}/approve', 'approve')->name('approve')->whereNumber('id');
             Route::post('/{id}/take-down', 'takeDown')->name('take-down')->whereNumber('id');
         });
 

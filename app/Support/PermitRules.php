@@ -19,8 +19,8 @@ class PermitRules
 
     public const TYPES = [
         'rera' => ['label' => 'RERA', 'authority' => 'dld', 'license' => 'orn', 'number_label' => 'RERA permit number', 'license_label' => 'Real estate company license', 'validates' => true],
-        'dtcm' => ['label' => 'DTCM', 'authority' => null, 'license' => null, 'number_label' => 'DTCM permit number', 'license_label' => null, 'validates' => false, 'rent_only' => true],
-        'none' => ['label' => 'None (DIFC/JAFZA only)', 'authority' => null, 'license' => null, 'number_label' => null, 'license_label' => null, 'validates' => false],
+        'dtcm' => ['label' => 'DTCM', 'authority' => null, 'license' => null, 'number_label' => 'DTCM permit number', 'license_label' => null, 'validates' => false, 'rent_only' => true, 'needs_approval' => true],
+        'none' => ['label' => 'None (DIFC/JAFZA only)', 'authority' => null, 'license' => null, 'number_label' => null, 'license_label' => null, 'validates' => false, 'needs_approval' => true],
         'adrec' => ['label' => 'ADREC', 'authority' => 'adrec', 'license' => 'adrec', 'number_label' => 'ADREC permit number', 'license_label' => 'Broker license', 'validates' => true],
         'not_required' => ['label' => 'Not required', 'authority' => null, 'license' => null, 'number_label' => null, 'license_label' => null, 'validates' => false],
     ];
@@ -60,6 +60,15 @@ class PermitRules
     public static function validates(?string $type): bool
     {
         return (bool) (self::TYPES[$type]['validates'] ?? false);
+    }
+
+    /**
+     * Does a listing with this permit type wait for Super Admin's approval before going live? Always
+     * when LISTING_SUPERADMIN_APPROVAL is on; otherwise only DTCM and None, which can't be validated online.
+     */
+    public static function needsApproval(?string $type): bool
+    {
+        return (bool) config('permits.superadmin_approval') || (bool) (self::TYPES[$type]['needs_approval'] ?? false);
     }
 
     public static function authority(?string $type): ?string

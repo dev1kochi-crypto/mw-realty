@@ -16,14 +16,16 @@
     $permitStatus = match (true) {
         in_array($verifiedVia, ['dld', 'adrec'], true) => ['verified', 'Verification successful', 'Verified with ' . strtoupper($verifiedVia) . ' on ' . $property->permit_verified_at->format('d M Y') . '.'],
         $verifiedVia === 'manual' => ['verified', 'Verified', 'Verified on ' . $property->permit_verified_at->format('d M Y') . '.'],
-        $isEdit && filled($property->permit_number) => ['pending', 'Not verified yet', 'Validate the permit, or save — Super Admin checks it before the listing goes live.'],
+        $isEdit && filled($property->permit_number) => ['pending', 'Not verified yet', config('permits.superadmin_approval')
+            ? 'Validate the permit, then save — MW Realty approves it before the listing goes live.'
+            : 'Validate the permit, then save — the listing goes live once the permit is verified.'],
         default => ['idle', 'Ready to validate', 'Enter the permit number above.'],
     };
 @endphp
 <div id="permitBlock" class="permit-block"
      data-validate-url="{{ route('portal.properties.permit.validate') }}"
      data-property-id="{{ $isEdit ? $property->id : '' }}"
-     data-types='@json(collect(\App\Support\PermitRules::TYPES)->map(fn ($t) => ['number_label' => $t['number_label'], 'license_label' => $t['license_label'], 'validates' => $t['validates']]))'
+     data-types='@json(collect(\App\Support\PermitRules::TYPES)->map(fn ($t, $key) => ['number_label' => $t['number_label'], 'license_label' => $t['license_label'], 'validates' => $t['validates'], 'needs_approval' => \App\Support\PermitRules::needsApproval($key)]))'
      data-licenses='@json($permitLicenses ?? [])'
      data-verified="{{ in_array($verifiedVia, ['dld', 'adrec'], true) ? '1' : '' }}">
     <div class="row g-3">
@@ -113,6 +115,11 @@
 
         <div class="col-12" data-permit-show="no-permit">
             <div class="alert alert-light border small mb-0"><i class="fas fa-circle-check text-success me-1"></i>No advertising permit is needed for this listing.</div>
+        </div>
+
+        {{-- PermitRules::needsApproval: LISTING_SUPERADMIN_APPROVAL on, or a DTCM / None permit. --}}
+        <div class="col-12" data-permit-show="approval">
+            <div class="alert alert-info small mb-0"><i class="fas fa-user-shield me-1"></i>After you save, MW Realty checks and approves this listing before it shows on the website.</div>
         </div>
     </div>
 </div>

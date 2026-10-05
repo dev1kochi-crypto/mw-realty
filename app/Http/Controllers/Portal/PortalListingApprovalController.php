@@ -9,10 +9,11 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Portal › Listings › Listing Permits (Super Admin only): an overview of which listings' advertising
- * permits are verified. Super Admin doesn't verify anything — the agency / agent validates the permit
- * in the property form (DLD / ADREC) and a verified listing goes live by itself; not-verified or expired
- * ones stay off the website. Super Admin can still take a listing down. Rules: ListingComplianceService.
+ * Portal › Listings › Listing Permits (Super Admin only): which listings' advertising permits are
+ * verified. The agency / agent validates the permit in the property form (DLD / ADREC). Where Super
+ * Admin approval applies (LISTING_SUPERADMIN_APPROVAL on, or a DTCM / None permit) the listing waits
+ * here to be approved; otherwise a verified listing goes live by itself. Super Admin can take any
+ * listing down. Rules: ListingComplianceService.
  */
 class PortalListingApprovalController extends Controller
 {
@@ -31,7 +32,9 @@ class PortalListingApprovalController extends Controller
     {
         $this->authorizeAdmin();
 
-        $tab = array_key_exists($request->input('tab'), Property::COMPLIANCE_LABELS) ? $request->input('tab') : Property::COMPLIANCE_APPROVED;
+        // With approval on, open on the listings waiting for it.
+        $defaultTab = config('permits.superadmin_approval') ? Property::COMPLIANCE_PENDING : Property::COMPLIANCE_APPROVED;
+        $tab = array_key_exists($request->input('tab'), Property::COMPLIANCE_LABELS) ? $request->input('tab') : $defaultTab;
         $search = trim((string) $request->input('q', ''));
 
         $listings = Property::query()
@@ -66,6 +69,27 @@ class PortalListingApprovalController extends Controller
             'missing' => $this->compliance->missingItems($property),
             'routePrefix' => $property->segment === Property::SEGMENT_COMMERCIAL ? 'portal.commercial' : 'portal.properties',
         ]);
+    }
+
+    /** Approve a listing waiting for Super Admin (PermitRules::needsApproval) — it goes live. */
+    public function approve($id)
+    {
+        $this->authorizeAdmin();
+        $property = Property::findOrFail($id);
+
+        if ($property->isSold()) {
+            return back()->with('error', 'This listing is marked ' . $property->sold_type . ' — nothing to approve.');
+        }
+        if ($property->compliance_status !== Property::COMPLIANCE_PENDING) {
+            return back()->with('error', 'Only listings waiting for approval can be approved.');
+        }
+        if ($missing = $this->compliance->missingItems($property)) {
+            return back()->with('error', 'Cannot approve yet. Missing: ' . implode(', ', $missing) . '.');
+        }
+
+        $this->compliance->approve($property);
+
+        return redirect()->route('portal.listing-approvals.index', ['tab' => Property::COMPLIANCE_PENDING])->with('toast', 'Listing approved — it is live on the website.');
     }
 
     /** Take a listing off the website (wrong details, a DLD complaint …). */

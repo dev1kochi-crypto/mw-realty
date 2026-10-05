@@ -65,9 +65,11 @@
                     @if($verifiedOnline)
                     <strong>Verified with {{ $issuer }}</strong> on {{ $property->permit_verified_at->format('d M Y, H:i') }} — the details below come from {{ $issuer }}'s record.
                     @elseif($property->permit_verified_at)
-                    <strong>Verified</strong> on {{ $property->permit_verified_at->format('d M Y') }} (approved before online validation).
+                    <strong>Checked by MW Realty</strong> on {{ $property->permit_verified_at->format('d M Y') }} (approved without online validation).
+                    @elseif($property->awaitingApproval())
+                    <strong>Not verified with {{ $issuer }}.</strong> The agency / agent hasn't validated this permit online — check it yourself before approving.
                     @else
-                    <strong>Not verified.</strong> The agency / agent hasn't validated this permit with {{ $issuer }} yet, so the listing is not on the website. It goes live by itself once they click Validate in the property form.
+                    <strong>Not verified.</strong> The agency / agent hasn't validated this permit with {{ $issuer }} yet, so the listing is not on the website. It goes live by itself once they click Validate in the property form — or check it yourself and approve it.
                     @endif
                 </div>
             </div>
@@ -198,10 +200,25 @@
                 <p class="small la-sub mb-0">
                     @if(!$needsPermit) This listing doesn't need an advertising permit, so it can be live.
                     @elseif($verifiedOnline) {{ $issuer }} verified the permit on {{ $property->permit_verified_at->format('d M Y') }} — the listing can be live.
-                    @else Verified on {{ $property->permit_verified_at?->format('d M Y') }} (approved before online validation) — the listing can be live.
+                    @else Approved by MW Realty on {{ ($property->compliance_reviewed_at ?? $property->permit_verified_at)?->format('d M Y') }} — the listing can be live.
                     @endif
                 </p>
             </div>
+            @elseif($property->compliance_status === $P::COMPLIANCE_PENDING && !$missing)
+            {{-- Waiting for Super Admin (LISTING_SUPERADMIN_APPROVAL, a DTCM / None permit), or a permit nobody could validate online. --}}
+            <form method="POST" action="{{ route('portal.listing-approvals.approve', $property->id) }}" class="portal-card p-4 mb-3" id="approveForm" style="border-color: #0f8a4f;">
+                @csrf
+                <div class="fw-bold mb-1 text-success"><i class="fas fa-circle-check me-1"></i>{{ $property->awaitingApproval() ? 'Awaiting your approval' : 'Approve' }}</div>
+                <p class="small la-sub">
+                    @if(!$needsPermit) No advertising permit is issued for this listing — check the listing details, then approve it.
+                    @elseif($verifiedOnline) {{ $issuer }} verified the permit — check the ad matches it, then approve.
+                    @elseif($R::validates($permitType)) The permit isn't verified with {{ $issuer }}. Check it on the {{ $issuer }} website (or the QR) before approving.
+                    @else {{ $issuer }} permits can't be validated online — check the permit number and expiry against the permit before approving.
+                    @endif
+                    Approving publishes the listing on the website.
+                </p>
+                <button type="submit" class="btn btn-success btn-sm w-100"><i class="fas fa-check me-1"></i>Approve &amp; publish</button>
+            </form>
             @else
             {{-- Nothing for Super Admin to do: the agency / agent validates the permit in the property form. --}}
             <div class="portal-card p-4 mb-3">
@@ -232,6 +249,15 @@
 
 @push('scripts')
 <script>
+    document.getElementById('approveForm')?.addEventListener('submit', async function (e) {
+        if (this.dataset.confirmed) return;
+        e.preventDefault();
+        if (await window.portalConfirm({ title: 'Approve this listing?', message: 'It goes live on the website now. The agency / agent is told by email and in the portal.', confirmText: 'Approve & publish' })) {
+            this.dataset.confirmed = '1';
+            this.requestSubmit();
+        }
+    });
+
     // Confirm before taking a listing off the website.
     document.getElementById('takeDownForm')?.addEventListener('submit', async function (e) {
         if (this.dataset.confirmed) return;

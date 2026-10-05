@@ -80,13 +80,14 @@ class Property extends Model
 
     /**
      * `compliance_status` — the state of the listing's advertising permit, worked out automatically on
-     * every save (ListingComplianceService::afterSave). There is no approval step: a listing whose
-     * permit is verified (Validate with DLD / ADREC in the property form) — or that
-     * needs no permit — is VERIFIED ("approved") and may be live (`status` = true) until the permit
-     * expires. The stored values are unchanged from the old review flow.
+     * every save (ListingComplianceService::afterSave). A listing whose permit is verified (Validate with
+     * DLD / ADREC in the property form) — or that needs no permit — is VERIFIED ("approved") and may be
+     * live (`status` = true) until the permit expires. When Super Admin approval applies
+     * (PermitRules::needsApproval: LISTING_SUPERADMIN_APPROVAL on, or a DTCM / None permit) it stays
+     * PENDING ("Awaiting approval") until Super Admin approves it on Listing Permits.
      */
     public const COMPLIANCE_DRAFT = 'draft';                         // permit details incomplete
-    public const COMPLIANCE_PENDING = 'pending';                     // permit entered, not verified yet
+    public const COMPLIANCE_PENDING = 'pending';                     // permit entered, not verified / not approved yet
     public const COMPLIANCE_CHANGES_REQUESTED = 'changes_requested'; // taken down by Super Admin
     public const COMPLIANCE_APPROVED = 'approved';                   // permit verified (or none needed) — may be live
     public const COMPLIANCE_EXPIRED = 'expired';                     // permit expiry date passed
@@ -149,7 +150,18 @@ class Property extends Model
 
     public function complianceLabel(): string
     {
+        if ($this->awaitingApproval()) {
+            return 'Awaiting approval';
+        }
+
         return self::COMPLIANCE_LABELS[$this->compliance_status] ?? ucfirst((string) $this->compliance_status);
+    }
+
+    /** Pending, and it's Super Admin's approval (not a permit validation) that it waits for. */
+    public function awaitingApproval(): bool
+    {
+        return $this->compliance_status === self::COMPLIANCE_PENDING
+            && \App\Support\PermitRules::needsApproval($this->permit_type);
     }
 
     /** Bootstrap badge classes for the compliance state (listing cards, approvals table). */

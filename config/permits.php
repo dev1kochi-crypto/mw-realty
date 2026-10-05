@@ -34,6 +34,12 @@ return [
         'timeout' => (int) env('ADREC_PERMIT_API_TIMEOUT', 15),
     ],
 
+    // true: every listing waits for Super Admin to approve it on Listing Permits before it goes live
+    // (Validate still checks the permit). false: a permit verified with DLD / ADREC goes live by itself.
+    // DTCM and "None" (DIFC / JAFZA) can't be validated online, so they always need approval
+    // (PermitRules::needsApproval).
+    'superadmin_approval' => (bool) env('LISTING_SUPERADMIN_APPROVAL', false),
+
     // How long a successful Validate stays usable for saving the listing (minutes).
     'verification_ttl' => 120,
 ];

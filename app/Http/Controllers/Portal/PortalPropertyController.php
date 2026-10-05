@@ -860,6 +860,10 @@ class PortalPropertyController extends Controller
     /** Appended to the save toast: why the listing isn't on the website yet. */
     protected function complianceToast(Property $property): string
     {
+        if ($property->awaitingApproval()) {
+            return ' It was sent to MW Realty for approval and goes live once approved.';
+        }
+
         return match ($property->compliance_status) {
             Property::COMPLIANCE_PENDING => ' It stays off the website until its permit is verified — click Validate next to the permit number in Core details.',
             Property::COMPLIANCE_DRAFT => ' It stays off the website until the permit details are added and validated in Core details.',
@@ -1248,7 +1252,9 @@ class PortalPropertyController extends Controller
             return response()->json(['message' => 'This listing is marked ' . $property->sold_type . '. Revert it to available first (Sold Listings).'], 422);
         }
         if (!$property->status && !$property->canGoLive()) {
-            return response()->json(['message' => "This listing can't go live yet (" . strtolower($property->complianceLabel()) . '). Its advertising permit has to be verified first — open the listing and use Validate in Core details.'], 422);
+            return response()->json(['message' => "This listing can't go live yet (" . strtolower($property->complianceLabel()) . ').' . ($property->awaitingApproval()
+                ? ' MW Realty has to approve it first.'
+                : ' Its advertising permit has to be verified first — open the listing and use Validate in Core details.')], 422);
         }
         $property->status = !$property->status;
         $property->save();

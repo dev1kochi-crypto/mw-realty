@@ -7,9 +7,13 @@
 @section('content')
 @php
     $P = \App\Models\Property::class;
+    $approvalOn = (bool) config('permits.superadmin_approval');
+    $labels = [$P::COMPLIANCE_PENDING => $approvalOn ? 'Awaiting approval' : 'Not verified / approval'] + $P::COMPLIANCE_LABELS;
     $tabs = [
         $P::COMPLIANCE_APPROVED => ['fa-circle-check', 'Permit verified (or none needed) — these can be live. Take one down any time if something is wrong.'],
-        $P::COMPLIANCE_PENDING => ['fa-shield-halved', 'Permit entered but not validated with DLD / ADREC yet, so these are not on the website. They go live by themselves once the agency / agent clicks Validate in the property form.'],
+        $P::COMPLIANCE_PENDING => ['fa-shield-halved', $approvalOn
+            ? 'Waiting for your approval — not on the website until you approve them. Open one, check the permit, then Approve & publish.'
+            : 'Not on the website yet. DTCM and None (DIFC / JAFZA) listings wait for your approval; RERA / ADREC ones go live by themselves once the agency / agent validates the permit (or you can check and approve them).'],
         $P::COMPLIANCE_DRAFT => ['fa-file-circle-exclamation', 'Saved without complete permit details — not on the website until the agent adds and validates the permit.'],
         $P::COMPLIANCE_EXPIRED => ['fa-ban', 'Taken offline automatically when the permit expired. They come back once a renewed permit is validated.'],
         $P::COMPLIANCE_CHANGES_REQUESTED => ['fa-rotate-left', 'Taken down by you. They stay offline until the agent changes the permit details and validates it again.'],
@@ -20,7 +24,14 @@
 <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
     <div>
         <div class="portal-section-title mb-1">Listing Permits</div>
-        <div class="text-muted small" style="max-width: 720px;">An overview of every listing's advertising permit. Agencies and agents validate the permit with DLD / ADREC in the property form; a verified listing goes live by itself — nothing to approve here. Not-verified and expired listings never show on the website.</div>
+        <div class="text-muted small" style="max-width: 720px;">
+            @if($approvalOn)
+            Every listing's advertising permit. Agencies and agents validate the permit with DLD / ADREC in the property form, then the listing waits here for your approval before it shows on the website.
+            @else
+            Every listing's advertising permit. Agencies and agents validate the permit with DLD / ADREC in the property form; a verified listing goes live by itself. DTCM and None (DIFC / JAFZA) listings can't be validated online, so they wait for your approval.
+            @endif
+            Expired listings never show on the website.
+        </div>
     </div>
     <a href="https://dubailand.gov.ae/en/eservices/validate-real-estate-licenses-and-permits/" target="_blank" rel="noopener" class="btn btn-sm btn-portal-primary"><i class="fas fa-shield-halved me-1"></i>Verify a permit on DLD</a>
 </div>
@@ -32,7 +43,7 @@
         <span class="la-status__icon"><i class="fas {{ $icon }}"></i></span>
         <span class="min-w-0">
             <span class="la-status__count d-block">{{ number_format($count) }}</span>
-            <span class="la-status__label d-block">{{ $P::COMPLIANCE_LABELS[$key] }}</span>
+            <span class="la-status__label d-block">{{ $labels[$key] }}</span>
         </span>
     </a>
     @endforeach
@@ -51,7 +62,7 @@
     @if($listings->isEmpty())
     <div class="la-empty">
         <i class="fas {{ $tabs[$tab][0] }}"></i>
-        {{ $search !== '' ? 'No listings match your search.' : 'Nothing in ' . strtolower($P::COMPLIANCE_LABELS[$tab]) . ' right now.' }}
+        {{ $search !== '' ? 'No listings match your search.' : 'Nothing in ' . strtolower($labels[$tab]) . ' right now.' }}
     </div>
     @else
     <div class="la-row la-row--head">
@@ -100,6 +111,9 @@
             <span class="la-chip"><i class="fas fa-circle-info"></i>No permit needed</span>
             @else
             <span class="la-chip la-chip--warn"><i class="fas fa-triangle-exclamation"></i>No permit</span>
+            @endif
+            @if($property->awaitingApproval())
+            <span class="la-chip la-chip--warn mt-1"><i class="fas fa-user-shield"></i>Awaiting approval</span>
             @endif
 
         </div>

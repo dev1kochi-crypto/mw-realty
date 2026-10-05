@@ -1,7 +1,7 @@
 @extends('emails.layout')
 
 @section('subject', ($isResubmission ? 'Listing resubmitted for approval — ' : 'Listing waiting for approval — ') . $title)
-@section('preheader', $accountName . ' submitted a listing\'s DLD permit for review.')
+@section('preheader', $accountName . ' submitted a listing for approval.')
 @section('eyebrow', 'Listing Approval')
 @section('icon', '📄')
 @section('tone', $isResubmission ? 'amber' : 'teal')
@@ -10,7 +10,7 @@
 @section('content')
 <p style="margin:0 0 16px;">Hi Admin,</p>
 
-<p style="margin:0;"><strong>{{ $accountName }}</strong> {{ $isResubmission ? 'updated and resubmitted' : 'submitted' }} a listing for approval. Please check its DLD permit before it goes live.</p>
+<p style="margin:0;"><strong>{{ $accountName }}</strong> {{ $isResubmission ? 'updated and resubmitted' : 'submitted' }} a listing for approval. Please check its permit and details before it goes live.</p>
 
 <x-email.details title="Listing">
     <x-email.row label="Property" strong>{{ $title }}</x-email.row>

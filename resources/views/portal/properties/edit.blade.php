@@ -17,7 +17,9 @@
 {{-- Why this listing isn't live (permit not verified / expired / taken down) — the permit is in Core details. --}}
 @if(!$property->canGoLive() && !$property->isSold())
 @php
-    [$reviewTone, $reviewIcon, $reviewText] = match ($property->compliance_status) {
+    [$reviewTone, $reviewIcon, $reviewText] = $property->awaitingApproval()
+        ? ['info', 'fa-user-shield', 'Not on the website yet: waiting for MW Realty to approve this listing. It goes live as soon as it is approved — you\'ll be told by email.']
+        : match ($property->compliance_status) {
         \App\Models\Property::COMPLIANCE_CHANGES_REQUESTED => ['danger', 'fa-rotate-left', 'MW Realty took this listing down. Check the permit details, validate the permit again in Core details, then click Update.'],
         \App\Models\Property::COMPLIANCE_EXPIRED => ['danger', 'fa-ban', 'The permit expired, so the listing is offline. Enter the renewed permit in Core details, validate it and click Update.'],
         \App\Models\Property::COMPLIANCE_PENDING => ['info', 'fa-shield-halved', 'Not on the website yet: the permit isn\'t verified. Click Validate next to the permit number in Core details, then Update — it goes live as soon as the permit is verified.'],
