@@ -101,11 +101,9 @@
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
                 @if(!$owner && $cmsActor?->hasRole('superadmin'))
-                {{-- DLD permit / Form A review before a listing goes live. --}}
-                @php $pendingApprovals = \App\Models\Property::where('compliance_status', \App\Models\Property::COMPLIANCE_PENDING)->whereNull('sold_at')->count(); @endphp
+                {{-- Listing permits: which are verified (verified ones go live by themselves). --}}
                 <a href="{{ route('portal.listing-approvals.index') }}" class="nav-link @if(request()->routeIs('portal.listing-approvals.*')) active @endif">
-                    <i class="fas fa-file-shield"></i> Listing Approvals
-                    @if($pendingApprovals > 0)<span class="portal-nav-badge" title="Listings waiting for approval">{{ $pendingApprovals }}</span>@endif
+                    <i class="fas fa-file-shield"></i> Listing Permits
                 </a>
                 @endif
                 <a href="{{ route('portal.featured.index') }}" class="nav-link @if(request()->routeIs('portal.featured.*')) active @endif">
@@ -144,6 +142,12 @@
                     <i class="fas fa-map-marker-alt"></i> Nearby Places
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
+                @if($owner)
+                <a href="{{ route('portal.watermark.edit') }}" class="nav-link @if(request()->routeIs('portal.watermark.*')) active @endif">
+                    <i class="fas fa-stamp"></i> Listing Settings
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
+                </a>
+                @endif
 
                 <div class="nav-section-label">Insights</div>
                 <a href="{{ route('portal.crm.reports.index') }}" class="nav-link @if(request()->routeIs('portal.crm.reports.*')) active @endif">
@@ -255,6 +259,7 @@
                             <li><hr class="dropdown-divider"></li>
                             @if($owner)
                             <li><a class="dropdown-item" href="{{ route('portal.profile.edit') }}"><i class="fas fa-user-edit me-2"></i>My Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ route('portal.security') }}"><i class="fas fa-shield-halved me-2"></i>Security</a></li>
                             <li><a class="dropdown-item" href="{{ route('portal.plans.index') }}"><i class="fas fa-layer-group me-2"></i>Plans @if($owner->status !== 'approved')<i class="fas fa-lock ms-1 text-warning small" title="Unlocks after KYC approval"></i>@endif</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>

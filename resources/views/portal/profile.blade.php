@@ -179,53 +179,301 @@
     .brokerage-combo__item--typed { color: var(--dash-muted); }
     .brokerage-combo__status { padding: 0.6rem 0.8rem; font-size: 0.78rem; color: var(--dash-muted); text-align: center; }
 
-    .email-change-block { border-top: 1px dashed var(--dash-border); margin-top: 1.1rem; padding-top: 1rem; }
     .email-change-step .form-control { max-width: 280px; }
     .email-change-step .alert-error-box { font-weight: 600; }
+    .profile-email-change { margin-left: 0.35rem; padding: 0.1rem 0.55rem; border: 1px solid rgba(255, 255, 255, 0.45); border-radius: 50px; background: rgba(255, 255, 255, 0.12); color: #fff; font-size: 0.72rem; font-weight: 700; line-height: 1.5; cursor: pointer; transition: background 0.15s ease; }
+    .profile-email-change:hover { background: rgba(255, 255, 255, 0.25); }
+    .profile-email-change i { font-size: 0.65rem; margin-right: 0.15rem; }
+
+    /* Sections: menu on the left, one section at a time on the right */
+    .profile-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+    .profile-nav { position: sticky; top: calc(var(--portal-topbar-h, 80px) + 1rem); display: flex; flex-direction: column; gap: 0.2rem; padding: 0.6rem; background: var(--dash-card, #fff); border: 1px solid var(--dash-border); border-radius: 16px; }
+    .profile-nav-link { display: flex; align-items: center; gap: 0.65rem; width: 100%; padding: 0.65rem 0.75rem; border: 0; border-radius: 11px; background: transparent; color: var(--dash-ink); font-weight: 600; font-size: 0.88rem; text-align: left; transition: background 0.15s ease, color 0.15s ease; }
+    .profile-nav-link i { width: 18px; text-align: center; color: var(--dash-muted); }
+    .profile-nav-link:hover { background: var(--portal-bg, #f4f6fb); }
+    .profile-nav-link.active { background: var(--portal-primary); color: #fff; }
+    .profile-nav-link.active i { color: #fff; }
+    .pf-nav-state { margin-left: auto; padding: 0.05rem 0.5rem; border-radius: 50px; font-size: 0.7rem; font-weight: 700; color: var(--dash-muted); white-space: nowrap; }
+    .pf-nav-state.is-todo { background: #fef3c7; color: #92400e; }
+    .pf-nav-state.is-done { width: 20px; height: 20px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #dcfce7; color: #15803d; font-size: 0.62rem; }
+    .profile-nav-link.active .pf-nav-state { background: rgba(255, 255, 255, 0.2); color: #fff; }
+
+    /* ── Cover ── */
+    .pf-cover { position: relative; margin-bottom: 1.25rem; border-radius: 20px; overflow: hidden; background: #fff; border: 1px solid var(--dash-border); box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06); }
+    .pf-cover-banner { position: relative; height: 64px; background:
+        radial-gradient(circle at 15% 120%, rgba(201, 40, 68, 0.55), transparent 55%),
+        radial-gradient(circle at 85% -20%, rgba(14, 116, 144, 0.7), transparent 55%),
+        linear-gradient(120deg, #1d2f57 0%, #203f68 55%, #0f5f86 100%); }
+    .pf-cover-banner::after { content: ""; position: absolute; inset: 0; opacity: 0.12; background-image: radial-gradient(rgba(255, 255, 255, 0.9) 1px, transparent 1px); background-size: 18px 18px; }
+    .pf-cover-cta { position: absolute; z-index: 1; top: 1rem; right: 1rem; border: 0; border-radius: 50px; padding: 0.5rem 1rem; background: #fff; color: #1d2f57; font-weight: 700; font-size: 0.85rem; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); }
+    .pf-cover-body { display: flex; align-items: flex-start; gap: 1rem; padding: 0 1.5rem 0.85rem; margin-top: -34px; position: relative; }
+    .pf-cover-body > .pf-cover-main { margin-top: 42px; }
+    .pf-cover-body > .pf-ring { margin-top: 12px; }
+    .pf-cover-avatar .profile-avatar { width: 76px; height: 76px; font-size: 1.4rem; border: 4px solid #fff; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18); }
+    .pf-cover-main { flex: 1; min-width: 0; }
+    .pf-cover-name { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; margin-bottom: 0.25rem; }
+    .pf-cover-name h1 { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--dash-ink); }
+    .pf-tag { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.65rem; border-radius: 50px; background: var(--portal-bg, #f1f4f9); color: var(--dash-ink); font-size: 0.72rem; font-weight: 700; }
+    .pf-status i { font-size: 0.45rem; }
+    .pf-status.is-approved { background: #dcfce7; color: #166534; }
+    .pf-status.is-pending { background: #fef3c7; color: #92400e; }
+    .pf-status.is-rejected { background: #fee2e2; color: #991b1b; }
+    .pf-cover-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; color: var(--dash-muted); font-size: 0.85rem; }
+    .pf-cover-meta i { margin-right: 0.4rem; color: var(--portal-primary); opacity: 0.75; }
+    .pf-login-email { display: inline-flex; align-items: center; color: var(--dash-ink); font-weight: 600; }
+    .pf-link-btn { margin-left: 0.5rem; padding: 0; border: 0; background: none; color: var(--portal-primary); font-weight: 700; font-size: 0.8rem; text-decoration: underline; text-underline-offset: 3px; }
+    .pf-ring { position: relative; flex: 0 0 auto; width: 66px; height: 66px; padding: 3px; border-radius: 50%; background: #fff; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12); }
+    .pf-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .pf-ring circle { fill: none; stroke-width: 3.2; }
+    .pf-ring-bg { stroke: var(--portal-bg, #eef1f6); }
+    .pf-ring-val { stroke: var(--portal-primary); stroke-linecap: round; transition: stroke-dasharray 0.6s ease; }
+    .pf-ring-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
+    .pf-ring-text strong { font-size: 0.92rem; font-weight: 800; color: var(--dash-ink); }
+    .pf-ring-text span { font-size: 0.5rem; font-weight: 700; color: var(--dash-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .pf-cover-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--dash-border); }
+    .pf-cover-stats > div { padding: 0.6rem 1.5rem; display: flex; align-items: baseline; gap: 0.5rem; }
+    .pf-cover-stats > div + div { border-left: 1px solid var(--dash-border); }
+    .pf-cover-stats strong { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 800; color: var(--dash-ink); }
+    .pf-cover-stats strong.is-todo { color: #b45309; }
+    .pf-cover-stats strong.is-done { color: #15803d; }
+    .pf-cover-stats span { font-size: 0.72rem; font-weight: 700; color: var(--dash-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+
+    /* ── Section card: label → value list ── */
+    .pf-card { padding: 1.5rem 1.75rem !important; border-radius: 18px !important; }
+    .pf-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.5rem; }
+    .pf-card-title { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--dash-ink); }
+    .pf-card-hint { margin: 0.25rem 0 0; font-size: 0.82rem; color: var(--dash-muted); max-width: 640px; }
+    .pf-card-tools { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+    .pf-progress { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: 700; color: var(--dash-muted); }
+    .pf-progress-bar { width: 64px; height: 6px; border-radius: 50px; background: var(--portal-bg, #eef1f6); overflow: hidden; }
+    .pf-progress-bar i { display: block; height: 100%; border-radius: inherit; background: var(--portal-primary); }
+    .pf-edit-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem; border-radius: 50px; border: 1.5px solid var(--portal-primary); background: #fff; color: var(--portal-primary); font-weight: 700; font-size: 0.82rem; transition: background 0.15s ease, color 0.15s ease; }
+    .pf-edit-btn:hover { background: var(--portal-primary); color: #fff; }
+    .pf-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; margin: 0; }
+    .pf-item { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 1rem; align-items: baseline; padding: 0.95rem 0; border-bottom: 1px solid var(--dash-border); }
+    .pf-item.is-wide { grid-column: 1 / -1; }
+    .pf-item dt { margin: 0; font-size: 0.82rem; font-weight: 600; color: var(--dash-muted); }
+    .pf-item dd { margin: 0; font-size: 0.92rem; font-weight: 600; color: var(--dash-ink); overflow-wrap: anywhere; }
+    .pf-item dd.is-text { font-weight: 500; white-space: pre-line; line-height: 1.55; }
+    .pf-item dd a { color: var(--portal-primary); text-decoration: none; }
+    .pf-chip { display: inline-block; margin: 0 0.3rem 0.3rem 0; padding: 0.15rem 0.6rem; border-radius: 50px; background: rgba(79, 70, 229, 0.08); color: var(--portal-primary); font-size: 0.78rem; font-weight: 700; }
+    .pf-badge { display: inline-block; margin-left: 0.5rem; padding: 0.1rem 0.5rem; border-radius: 50px; font-size: 0.7rem; font-weight: 700; vertical-align: 1px; }
+    .pf-badge.is-ok { background: #dcfce7; color: #166534; }
+    .pf-badge.is-warn { background: #fef3c7; color: #92400e; }
+    .pf-badge.is-bad { background: #fee2e2; color: #991b1b; }
+    .pf-add { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0; border: 0; background: none; color: #a0a8b8; font-size: 0.85rem; font-weight: 500; font-style: italic; }
+    .pf-add span { font-style: normal; font-weight: 700; color: var(--portal-primary); opacity: 0; transition: opacity 0.15s ease; }
+    .pf-item:hover .pf-add span, .pf-add:focus-visible span { opacity: 1; }
+    .pf-empty { color: #a0a8b8; }
+    .pf-note { margin-top: 0.35rem; font-size: 0.78rem; font-weight: 500; color: var(--dash-muted); }
+    .pf-card .section-edit { margin-top: 1rem; }
+
+    /* Below the section: to-do + public page preview */
+    .pf-extras { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1.25rem; margin-top: 1.25rem; }
+    .pf-todo-pct { flex-shrink: 0; padding: 0.3rem 0.75rem; border-radius: 50px; background: rgba(79, 70, 229, 0.1); color: var(--portal-primary); font-weight: 800; font-size: 0.85rem; }
+    .pf-todo-list { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+    .pf-todo-list li { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--dash-border); }
+    .pf-todo-list li:last-child { border-bottom: 0; }
+    .pf-todo-icon { flex: 0 0 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: #fef3c7; color: #b45309; font-size: 0.8rem; }
+    .pf-todo-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .pf-todo-text strong { font-size: 0.86rem; color: var(--dash-ink); }
+    .pf-todo-text small { font-size: 0.74rem; color: var(--dash-muted); }
+    .pf-todo-go { flex-shrink: 0; padding: 0.3rem 0.85rem; border-radius: 50px; border: 1.5px solid var(--portal-primary); background: #fff; color: var(--portal-primary); font-size: 0.76rem; font-weight: 700; transition: background 0.15s ease, color 0.15s ease; }
+    .pf-todo-go:hover { background: var(--portal-primary); color: #fff; }
+    .pf-todo-more { margin-top: 0.6rem; font-size: 0.78rem; color: var(--dash-muted); }
+    .pf-todo-done { display: flex; align-items: center; gap: 0.5rem; padding: 0.9rem 1rem; border-radius: 12px; background: #dcfce7; color: #166534; font-weight: 600; font-size: 0.88rem; }
+    .pf-public-card { margin-top: 0.75rem; padding: 1.1rem; border: 1px solid var(--dash-border); border-radius: 14px; background: linear-gradient(180deg, var(--portal-bg, #f6f8fc), #fff); }
+    .pf-public-top { display: flex; align-items: center; gap: 0.8rem; }
+    .pf-public-avatar { flex: 0 0 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; overflow: hidden; }
+    .pf-public-avatar img { width: 100%; height: 100%; object-fit: cover; background: #fff; }
+    .pf-public-name { font-weight: 800; color: var(--dash-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pf-public-sub { font-size: 0.8rem; color: var(--dash-muted); }
+    .pf-public-bio { margin: 0.8rem 0 0.6rem; font-size: 0.84rem; line-height: 1.55; color: var(--dash-ink); }
+    .pf-public-chips { display: flex; flex-wrap: wrap; }
+    .pf-public-link { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.9rem; font-weight: 700; font-size: 0.85rem; color: var(--portal-primary); text-decoration: none; }
+    @media (max-width: 1199.98px) { .pf-extras { grid-template-columns: minmax(0, 1fr); } }
+    .pf-card .section-edit .btn-success { padding: 0.5rem 1.4rem; border-radius: 50px; border: 0; background: var(--portal-primary); font-weight: 700; }
+    .pf-card .section-edit .btn-success { display: inline-flex; align-items: center; gap: 0.45rem; min-width: 108px; justify-content: center; transition: background 0.2s ease, transform 0.15s ease; }
+    .pf-card .section-edit .btn-success.is-saving { opacity: 0.85; cursor: progress; }
+    .pf-card .section-edit .btn-success.is-saved { background: #16a34a; animation: pf-pop 0.35s ease; }
+    .pf-spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.35); border-top-color: #fff; animation: pf-spin 0.7s linear infinite; }
+    @keyframes pf-spin { to { transform: rotate(360deg); } }
+    @keyframes pf-pop { 0% { transform: scale(1); } 45% { transform: scale(1.07); } 100% { transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) { .pf-spinner { animation-duration: 2s; } .pf-card .section-edit .btn-success.is-saved { animation: none; } }
+    .pf-card .section-edit .btn-outline-secondary { padding: 0.5rem 1.2rem; border-radius: 50px; border-color: var(--dash-border); color: var(--dash-muted); font-weight: 700; }
+    .pf-card .section-edit .btn-outline-secondary:hover { background: var(--portal-bg, #f1f4f9); color: var(--dash-ink); }
+    .profile-nav-link span:not(.pf-nav-state) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .profile-panes .dash-card > h6 { display: flex; align-items: center; gap: 0.6rem; font-size: 1.1rem; text-transform: none; letter-spacing: 0; color: var(--dash-ink); padding-bottom: 0.9rem; margin-bottom: 1rem; border-bottom: 1px solid var(--dash-border); }
+    .profile-panes .dash-card { padding: 1.5rem 1.75rem; border-radius: 18px; }
+
+    @media (max-width: 991.98px) {
+        .profile-layout { grid-template-columns: minmax(0, 1fr); }
+        .profile-nav { position: static; flex-direction: row; overflow-x: auto; scrollbar-width: none; }
+        .profile-nav::-webkit-scrollbar { display: none; }
+        .profile-nav-link { flex: 0 0 auto; width: auto; white-space: nowrap; }
+        .pf-list { grid-template-columns: minmax(0, 1fr); }
+        .pf-item, .pf-item.is-wide { grid-template-columns: 150px minmax(0, 1fr); }
+    }
+    @media (max-width: 767.98px) {
+        .pf-cover-body { flex-wrap: wrap; padding: 0 1.1rem 1.1rem; }
+        .pf-cover-avatar .profile-avatar { width: 64px; height: 64px; }
+        .pf-ring { width: 58px; height: 58px; }
+        .pf-cover-stats { grid-template-columns: repeat(2, 1fr); }
+        .pf-cover-stats > div:nth-child(3) { border-left: 0; }
+        .pf-cover-stats > div:nth-child(n + 3) { border-top: 1px solid var(--dash-border); }
+        .pf-card-head { flex-direction: column; }
+        .pf-item, .pf-item.is-wide { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
+    }
 </style>
 @endpush
 
 @section('content')
 @php
-    $displayName = $portalUser->type === 'company' ? ($portalUser->company_name ?: $portalUser->name) : $portalUser->name;
+    $u = $portalUser;
+    $isAgent = $u->type === 'agent';
+    $displayName = $isAgent ? $u->name : ($u->company_name ?: $u->name);
     $initials = strtoupper(collect(preg_split('/\s+/', trim($displayName)))->filter()->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('')) ?: '?';
-    $avatarFill = $portalUser->type === 'company' ? 'fill-navy' : 'fill-teal';
-    $statusMap = ['pending' => 'bg-warning text-dark', 'approved' => 'bg-success', 'rejected' => 'bg-danger'];
+    $avatarFill = $isAgent ? 'fill-teal' : 'fill-navy';
+    $statusMap = ['pending' => 'is-pending', 'approved' => 'is-approved', 'rejected' => 'is-rejected'];
+    $bioAr = $u->translations['bio']['ar'] ?? '';
+    $spoken = \App\Http\Controllers\Portal\PortalProfileController::SPOKEN_LANGUAGES;
+
+    // ── Profile sections (menu + panes): title, icon, hint, fields — fields as in profile/_section ──
+    $profileSections = $isAgent ? [
+        'public' => ['Public details', 'fa-id-card', 'How buyers see and reach you on your listings and agent page.', [
+            ['name' => 'name', 'label' => 'Displayed name', 'value' => $u->name, 'col' => 12],
+            ['name' => 'public_email', 'label' => 'Public email', 'type' => 'email', 'value' => $u->public_email, 'col' => 6, 'help' => 'Leave empty to show your login email.'],
+            ['name' => 'phone', 'label' => 'Public number', 'type' => 'phone', 'value' => $u->phone, 'col' => 6],
+            ['name' => 'secondary_phone', 'label' => 'Secondary phone number', 'type' => 'tel', 'value' => $u->secondary_phone, 'col' => 6, 'placeholder' => '+971 50 123 4567'],
+            ['name' => 'whatsapp_number', 'label' => 'WhatsApp', 'type' => 'tel', 'value' => $u->whatsapp_number, 'col' => 6, 'placeholder' => '+971 50 123 4567'],
+        ]],
+        'compliance' => ['Compliance', 'fa-shield-halved', 'Your broker licenses — shown on your listings and checked with your permits.', [
+            ['name' => 'brn_number', 'label' => 'Dubai Broker License (BRN)', 'value' => $u->brn_number, 'col' => 6],
+            ['name' => 'adrec_license_no', 'label' => 'Abu Dhabi Broker License (BLN)', 'value' => $u->adrec_license_no, 'col' => 6],
+            ['name' => 'other_license', 'label' => 'Other license', 'value' => $u->other_license, 'col' => 6],
+            ['name' => 'other_license_expiry', 'label' => 'Other license expiry date', 'type' => 'date', 'expiry' => true, 'value' => $u->other_license_expiry, 'col' => 6],
+            ['name' => 'affiliated_brokerage', 'label' => 'Affiliated brokerage', 'type' => 'brokerage', 'value' => $u->affiliated_brokerage, 'col' => 12,
+                'note' => $u->company
+                    ? '<i class="fas fa-building me-1"></i>Agency member: <strong>' . e($u->company->displayName()) . '</strong> (their plan applies)'
+                    : '<i class="fas fa-user me-1"></i>Independent agent on your own plan'],
+            ['name' => 'trade_license_no', 'label' => 'Trade License No.', 'value' => $u->trade_license_no, 'col' => 6, 'label_hint' => 'independent agents'],
+            ['name' => 'trade_license_expiry', 'label' => 'Trade License Expiry', 'type' => 'date', 'expiry' => true, 'value' => $u->trade_license_expiry, 'col' => 6],
+            ['name' => 'trn_number', 'label' => 'TRN (VAT)', 'value' => $u->trn_number, 'col' => 6],
+            ['name' => 'trn_expiry', 'label' => 'TRN Expiry', 'type' => 'date', 'expiry' => true, 'value' => $u->trn_expiry, 'col' => 6],
+        ]],
+        'about' => ['About me', 'fa-user', 'Shown on your public agent page. Write the description in your own language — it\'s translated automatically for other site languages unless you write the Arabic one yourself.', [
+            ['name' => 'experience_since', 'label' => 'Experience since', 'type' => 'year', 'value' => $u->experience_since, 'col' => 4,
+                'display' => $u->experience_since ? $u->experience_since . ' · ' . max(0, now()->year - $u->experience_since) . ' years' : null],
+            ['name' => 'spoken_languages', 'label' => 'Spoken languages', 'type' => 'multiselect', 'options' => $spoken, 'value' => $u->spoken_languages ?? [], 'col' => 8],
+            ['name' => 'nationality', 'label' => 'Nationality', 'value' => $u->nationality, 'col' => 4],
+            ['name' => 'position', 'label' => 'Position', 'value' => $u->position, 'col' => 4, 'placeholder' => 'e.g. Senior Property Consultant'],
+            ['name' => 'linkedin_url', 'label' => 'LinkedIn', 'type' => 'url', 'value' => $u->linkedin_url, 'col' => 4, 'placeholder' => 'https://linkedin.com/in/…'],
+            ['name' => 'website', 'label' => 'Website', 'type' => 'url', 'value' => $u->website, 'col' => 4, 'placeholder' => 'https://'],
+            ['name' => 'preferred_areas', 'label' => 'Preferred areas', 'value' => $u->preferred_areas ? implode(', ', $u->preferred_areas) : '', 'col' => 8, 'label_hint' => 'comma separated', 'placeholder' => 'Downtown Dubai, Business Bay'],
+            ['name' => 'bio', 'label' => 'Description', 'type' => 'textarea', 'value' => $bio, 'col' => 12],
+            ['name' => 'bio_ar', 'label' => 'Arabic description', 'type' => 'textarea', 'value' => $bioAr, 'col' => 12, 'rtl' => true, 'placeholder' => 'التفاصيل باللغة العربية'],
+        ]],
+    ] : [
+        'contact' => ['Contact information', 'fa-address-book', 'How buyers and partners reach your agency.', [
+            ['name' => 'phone', 'label' => 'Phone number', 'type' => 'phone', 'value' => $u->phone, 'col' => 4],
+            ['name' => 'landline', 'label' => 'Landline', 'value' => $u->landline, 'col' => 4],
+            ['name' => 'whatsapp_number', 'label' => 'WhatsApp', 'type' => 'tel', 'value' => $u->whatsapp_number, 'col' => 4, 'placeholder' => '+971 50 123 4567'],
+            ['name' => 'public_email', 'label' => 'Public email', 'type' => 'email', 'value' => $u->public_email, 'col' => 4, 'help' => 'Leave empty to show the login email.'],
+            ['name' => 'city', 'label' => 'City', 'value' => $u->city, 'col' => 4, 'placeholder' => 'Dubai'],
+            ['name' => 'website', 'label' => 'Website URL', 'type' => 'url', 'value' => $u->website, 'col' => 4, 'placeholder' => 'https://'],
+            ['name' => 'office_address', 'label' => 'Address', 'value' => $u->office_address, 'col' => 12, 'placeholder' => 'Office, building, area, city, PO Box'],
+        ]],
+        'other' => ['Other information', 'fa-circle-info', 'Your account and billing details.', [
+            ['name' => 'account_no', 'label' => 'Account number', 'type' => 'static', 'value' => str_pad((string) $u->id, 6, '0', STR_PAD_LEFT), 'locked_help' => 'Your MW Realty account number — fixed.'],
+            ['name' => 'client_type', 'label' => 'Client type', 'type' => 'static', 'value' => 'Broker', 'locked_help' => 'Set from your account type.'],
+            ['name' => 'login_email', 'label' => 'Default email address', 'type' => 'static', 'value' => $u->email, 'locked_help' => 'Your login email — changed with a code sent to the new address.', 'locked_action' => '#emailChangeModal'],
+            ['name' => 'company_name', 'label' => 'Display client name', 'value' => $u->company_name, 'col' => 6],
+            ['name' => 'name', 'label' => 'Contact person', 'value' => $u->name, 'col' => 6],
+            ['name' => 'trn_number', 'label' => 'VAT number (TRN)', 'value' => $u->trn_number],
+            ['name' => 'trn_expiry', 'label' => 'TRN expiry', 'type' => 'date', 'expiry' => true, 'value' => $u->trn_expiry],
+            ['name' => 'authorized_signatory_name', 'label' => 'Authorized signatory', 'value' => $u->authorized_signatory_name],
+        ]],
+        'licenses' => ['Corporate licenses', 'fa-file-contract', 'The ORN validates Dubai (RERA) permits, the ADREC number Abu Dhabi / Al Ain permits.', [
+            ['name' => 'trade_license_no', 'label' => 'Trade license number', 'value' => $u->trade_license_no, 'col' => 6],
+            ['name' => 'trade_license_expiry', 'label' => 'Trade license expiry', 'type' => 'date', 'expiry' => true, 'value' => $u->trade_license_expiry, 'col' => 6],
+            ['name' => 'orn_number', 'label' => 'ORN number', 'value' => $u->orn_number, 'col' => 6, 'label_hint' => 'RERA, Dubai'],
+            ['name' => 'orn_expiry', 'label' => 'ORN expiry', 'type' => 'date', 'expiry' => true, 'value' => $u->orn_expiry, 'col' => 6],
+            ['name' => 'adrec_license_no', 'label' => 'ADREC brokerage registration no.', 'value' => $u->adrec_license_no, 'col' => 6, 'label_hint' => 'Abu Dhabi'],
+            ['name' => 'adrec_license_expiry', 'label' => 'ADREC expiry', 'type' => 'date', 'expiry' => true, 'value' => $u->adrec_license_expiry, 'col' => 6],
+        ]],
+        'about' => ['About', 'fa-globe', 'Shown on your public agency page. Write the description in your own language — it\'s translated automatically for other site languages unless you write the Arabic one yourself.', [
+            ['name' => 'founding_year', 'label' => 'Established', 'type' => 'year', 'value' => $u->founding_year, 'col' => 4],
+            ['name' => 'linkedin_url', 'label' => 'LinkedIn', 'type' => 'url', 'value' => $u->linkedin_url, 'col' => 4, 'placeholder' => 'https://linkedin.com/company/…'],
+            ['name' => 'preferred_areas', 'label' => 'Service areas', 'value' => $u->preferred_areas ? implode(', ', $u->preferred_areas) : '', 'col' => 4, 'label_hint' => 'comma separated', 'placeholder' => 'Downtown Dubai, Business Bay'],
+            ['name' => 'bio', 'label' => 'Description', 'type' => 'textarea', 'value' => $bio, 'col' => 12],
+            ['name' => 'bio_ar', 'label' => 'Arabic description', 'type' => 'textarea', 'value' => $bioAr, 'col' => 12, 'rtl' => true, 'placeholder' => 'التفاصيل باللغة العربية'],
+        ]],
+    ];
+    $profileSections['identity'] = [$isAgent ? 'Identity' : 'Signatory identity', 'fa-id-badge', 'Private — only used by MW Realty to verify your account, never shown publicly.', [
+        ['name' => 'emirates_id_no', 'label' => 'Emirates ID No.', 'value' => $u->emirates_id_no],
+        ['name' => 'passport_no', 'label' => 'Passport No.', 'value' => $u->passport_no],
+        ['name' => 'passport_expiry', 'label' => 'Passport expiry', 'type' => 'date', 'expiry' => true, 'value' => $u->passport_expiry],
+    ]];
+
+    // How complete each section is (static fields don't count) and the profile as a whole (incl. documents).
+    $isFilled = fn (array $f) => filled(is_array($f['value'] ?? null) ? array_filter($f['value']) : ($f['value'] ?? null));
+    $sectionStats = collect($profileSections)->map(function ($s) use ($isFilled) {
+        $editable = array_filter($s[3], fn ($f) => ($f['type'] ?? 'text') !== 'static');
+        return ['done' => count(array_filter($editable, $isFilled)), 'total' => count($editable)];
+    });
+    $docsDoneCount = $documents->filter(fn ($d) => $d['path'])->count();
+    $docsTotal = $documents->count();
+    $allDone = $sectionStats->sum('done') + $docsDoneCount;
+    $allTotal = max(1, $sectionStats->sum('total') + $docsTotal);
+    $completeness = (int) round($allDone / $allTotal * 100);
+    $avatarLabel = $isAgent ? 'profile photo' : 'logo';
 @endphp
 
-<div id="profileHeroSentinel" aria-hidden="true"></div>
-<div class="profile-hero" id="profileHero">
-    <div class="d-flex align-items-center gap-3">
+{{-- Cover: banner, avatar / logo, name, login email (+ change), completeness ring, key numbers --}}
+<div class="pf-cover" id="profileHero">
+    <div class="pf-cover-banner">
+        @if($u->status !== 'approved' && (in_array($u->kyc_review_status, ['draft', 'changes_requested'], true) || !$u->kyc_user_submitted_at))
+        <button type="button" id="resubmitBtn" class="pf-cover-cta"><i class="fas fa-paper-plane me-1"></i> {{ $u->kyc_review_status === 'changes_requested' || $u->kyc_user_submitted_at ? 'Resubmit for Approval' : 'Submit for Approval' }}</button>
+        @endif
+    </div>
+    <div class="pf-cover-body">
         {{-- Profile photo / agency logo — shown on the public agent / agency pages. Click to change. --}}
-        @php $avatarLabel = $portalUser->type === 'company' ? 'logo' : 'profile photo'; @endphp
-        <div class="profile-avatar-wrap">
+        <div class="profile-avatar-wrap pf-cover-avatar">
             <label class="profile-avatar {{ $avatarFill }} profile-avatar--upload" for="avatarInput" title="Change {{ $avatarLabel }}">
-                <img id="avatarImg" src="{{ $portalUser->avatar ? media_url($portalUser->avatar) : '' }}" alt="" class="{{ $portalUser->avatar ? '' : 'd-none' }} {{ $portalUser->type === 'company' ? 'is-logo' : '' }}">
-                <span id="avatarInitials" class="{{ $portalUser->avatar ? 'd-none' : '' }}">{{ $initials }}</span>
+                <img id="avatarImg" src="{{ $u->avatar ? media_url($u->avatar) : '' }}" alt="" class="{{ $u->avatar ? '' : 'd-none' }} {{ $isAgent ? '' : 'is-logo' }}">
+                <span id="avatarInitials" class="{{ $u->avatar ? 'd-none' : '' }}">{{ $initials }}</span>
                 <span class="profile-avatar__cam" aria-hidden="true"><i class="fas fa-camera"></i></span>
                 <span class="profile-avatar__spin d-none" id="avatarSpin"><span class="spinner-border spinner-border-sm"></span></span>
             </label>
             <input type="file" id="avatarInput" accept="image/png,image/jpeg,image/webp" class="d-none" aria-label="Upload {{ $avatarLabel }}">
-            <button type="button" id="avatarRemove" class="profile-avatar__remove {{ $portalUser->avatar ? '' : 'd-none' }}" title="Remove {{ $avatarLabel }}" aria-label="Remove {{ $avatarLabel }}"><i class="fas fa-xmark"></i></button>
+            <button type="button" id="avatarRemove" class="profile-avatar__remove {{ $u->avatar ? '' : 'd-none' }}" title="Remove {{ $avatarLabel }}" aria-label="Remove {{ $avatarLabel }}"><i class="fas fa-xmark"></i></button>
         </div>
-        <div>
-            <div class="profile-name">{{ $displayName }}</div>
-            <div class="profile-badges d-flex gap-2 align-items-center">
-                <span class="badge bg-light text-dark">{{ ucfirst($portalUser->type) }}</span>
-                <span class="badge {{ $statusMap[$portalUser->status] ?? 'bg-secondary' }}">{{ ucfirst($portalUser->status) }}</span>
+
+        <div class="pf-cover-main">
+            <div class="pf-cover-name">
+                <h1>{{ $displayName }}</h1>
+                <span class="pf-tag">{{ $isAgent ? 'Agent' : 'Agency' }}</span>
+                <span class="pf-tag pf-status {{ $statusMap[$u->status] ?? '' }}"><i class="fas fa-circle"></i>{{ ucfirst($u->status) }}</span>
             </div>
-            <div class="profile-meta">
-                <span><i class="fas fa-envelope"></i> {{ $portalUser->email }}</span>
-                <span><i class="fas fa-phone"></i> {{ $portalUser->phone ?: '-' }}</span>
-                <span><i class="fas fa-calendar"></i> Joined {{ $portalUser->created_at->format('d M Y') }}</span>
+            <div class="pf-cover-meta">
+                <span class="pf-login-email"><i class="fas fa-envelope"></i>{{ $u->email }}
+                    <button type="button" class="pf-link-btn" id="emailChangeToggle" data-bs-toggle="modal" data-bs-target="#emailChangeModal">Change</button></span>
+                @if($u->phone)<span><i class="fas fa-phone"></i>{{ $u->phone }}</span>@endif
+                <span><i class="fas fa-calendar"></i>Joined {{ $u->created_at->format('d M Y') }}</span>
             </div>
+        </div>
+
+        <div class="pf-ring" style="--pct: {{ $completeness }}" role="img" aria-label="Profile {{ $completeness }}% complete">
+            <svg viewBox="0 0 36 36" aria-hidden="true"><circle class="pf-ring-bg" cx="18" cy="18" r="15.9"/><circle class="pf-ring-val" cx="18" cy="18" r="15.9" pathLength="100" style="stroke-dasharray: {{ $completeness }} 100"/></svg>
+            <div class="pf-ring-text"><strong>{{ $completeness }}%</strong><span>complete</span></div>
         </div>
     </div>
-    @if($portalUser->status !== 'approved' && (in_array($portalUser->kyc_review_status, ['draft', 'changes_requested'], true) || !$portalUser->kyc_user_submitted_at))
-    <div class="profile-actions">
-        <button type="button" id="resubmitBtn" class="btn"><i class="fas fa-paper-plane me-1"></i> {{ $portalUser->kyc_review_status === 'changes_requested' || $portalUser->kyc_user_submitted_at ? 'Resubmit for Approval' : 'Submit for Approval' }}</button>
+    <div class="pf-cover-stats">
+        <div><strong>{{ $u->properties()->count() }}</strong><span>Properties</span></div>
+        <div><strong>{{ $u->leads()->count() }}</strong><span>Leads</span></div>
+        <div><strong>{{ $u->effectivePlan()?->getTranslation('name') ?? 'No plan' }}</strong><span>{{ $u->isOnAgencyPlan() ? 'Plan · via agency' : 'Plan' }}</span></div>
+        <div><strong class="{{ $docsDoneCount < $docsTotal ? 'is-todo' : 'is-done' }}">{{ $docsDoneCount }}/{{ $docsTotal }}</strong><span>Documents</span></div>
     </div>
-    @endif
 </div>
 
 @if($portalUser->status !== 'approved')
@@ -285,291 +533,42 @@
 </div>
 @endif
 
-<div class="row g-2 mb-3">
-    <div class="col-6 col-md-3">
-        <div class="stat-mini">
-            <span class="stat-mini-icon fill-teal"><i class="fas fa-building"></i></span>
-            <div><div class="stat-mini-value">{{ $portalUser->properties()->count() }}</div><div class="stat-mini-label">Properties</div></div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="stat-mini">
-            <span class="stat-mini-icon fill-amber"><i class="fas fa-address-book"></i></span>
-            <div><div class="stat-mini-value">{{ $portalUser->leads()->count() }}</div><div class="stat-mini-label">Leads</div></div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="stat-mini">
-            <span class="stat-mini-icon fill-green"><i class="fas fa-layer-group"></i></span>
-            <div><div class="stat-mini-value">{{ $portalUser->effectivePlan()?->getTranslation('name') ?? 'No Plan' }}</div><div class="stat-mini-label">{{ $portalUser->isOnAgencyPlan() ? 'Plan · via agency' : 'Plan' }}</div></div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="stat-mini">
-            <span class="stat-mini-icon fill-slate"><i class="fas fa-file-alt"></i></span>
-            <div><div class="stat-mini-value">{{ $documents->filter(fn($d) => $d['path'])->count() }}/{{ $documents->count() }}</div><div class="stat-mini-label">Docs Submitted</div></div>
-        </div>
-    </div>
+<div class="profile-layout">
+    <nav class="profile-nav" role="tablist" aria-label="Profile sections">
+        @foreach($profileSections as $navKey => [$navLabel, $navIcon])
+        @php $st = $sectionStats[$navKey]; $missing = $st['total'] - $st['done']; @endphp
+        <button type="button" class="profile-nav-link" id="pf-nav-{{ $navKey }}" data-bs-toggle="pill" data-bs-target="#pf-tab-{{ $navKey }}" role="tab" aria-controls="pf-tab-{{ $navKey }}">
+            <i class="fas {{ $navIcon }}"></i><span>{{ $navLabel }}</span>
+            @if($missing)<span class="pf-nav-state is-todo" title="{{ $missing }} not filled in">{{ $missing }} missing</span>
+            @else<span class="pf-nav-state is-done" title="Complete"><i class="fas fa-check"></i></span>@endif
+        </button>
+        @endforeach
+        <button type="button" class="profile-nav-link" id="pf-nav-documents" data-bs-toggle="pill" data-bs-target="#pf-tab-documents" role="tab" aria-controls="pf-tab-documents">
+            <i class="fas fa-folder-open"></i><span>Documents</span>
+            @if($docsDoneCount < $docsTotal)<span class="pf-nav-state is-todo">{{ $docsDoneCount }}/{{ $docsTotal }}</span>
+            @else<span class="pf-nav-state is-done"><i class="fas fa-check"></i></span>@endif
+        </button>
+        <button type="button" class="profile-nav-link" id="pf-nav-seo" data-bs-toggle="pill" data-bs-target="#pf-tab-seo" role="tab" aria-controls="pf-tab-seo">
+            <i class="fas fa-search"></i><span>SEO</span><span class="pf-nav-state">Optional</span>
+        </button>
+    </nav>
+    <div class="profile-panes tab-content">
+@foreach($profileSections as $secKey => [$secTitle, $secIcon, $secHint, $secFields])
+<div class="tab-pane fade" id="pf-tab-{{ $secKey }}" role="tabpanel" aria-labelledby="pf-nav-{{ $secKey }}">
+@include('portal.profile._section', ['key' => $secKey, 'title' => $secTitle, 'icon' => $secIcon, 'hint' => $secHint, 'fields' => $secFields] + $sectionStats[$secKey])
 </div>
+@endforeach
 
-<div class="dash-card mb-3">
-    <h6><i class="fas fa-id-badge"></i> Identity
-        <button type="button" class="section-edit-btn section-edit-toggle" data-section="identity" title="Edit"><i class="fas fa-pen"></i></button>
-    </h6>
-    <div class="section-view" data-section="identity">
-        <div class="row">
-            <div class="col-md-4 info-row"><div class="info-label">Full Name</div><div class="info-value">{{ $portalUser->name }}</div></div>
-            @if($portalUser->type === 'company')
-            <div class="col-md-4 info-row"><div class="info-label">Company Name</div><div class="info-value">{{ $portalUser->company_name ?: '-' }}</div></div>
-            @endif
-            <div class="col-md-4 info-row">
-                <div class="info-label">Login Email</div>
-                <div class="info-value">{{ $portalUser->email }}</div>
-            </div>
-            <div class="col-md-4 info-row"><div class="info-label">Phone</div><div class="info-value">{{ $portalUser->phone ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">Nationality</div><div class="info-value">{{ $portalUser->nationality ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">Emirates ID No.</div><div class="info-value">{{ $portalUser->emirates_id_no ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">Passport No.</div><div class="info-value">{{ $portalUser->passport_no ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">Passport Expiry</div><div class="info-value">{{ $portalUser->passport_expiry?->format('d M Y') ?: '-' }}</div></div>
-        </div>
+<style>
+    .profile-chip-picks { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .profile-chip-pick { position: relative; cursor: pointer; margin: 0; }
+    .profile-chip-pick input { position: absolute; opacity: 0; pointer-events: none; }
+    .profile-chip-pick span { display: inline-block; padding: 0.3rem 0.75rem; border-radius: 50px; border: 1.5px solid var(--portal-border); font-size: 0.8rem; font-weight: 600; color: var(--portal-muted); transition: all 0.15s ease; }
+    .profile-chip-pick input:checked + span { border-color: var(--portal-primary); background: var(--portal-primary); color: #fff; }
+    .profile-chip-pick input:focus-visible + span { outline: 2px solid var(--portal-primary); outline-offset: 2px; }
+</style>
 
-        <div class="email-change-block mt-2" id="emailChangeBlock">
-            <div id="emailChangeView">
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="emailChangeToggle"><i class="fas fa-envelope me-1"></i> Change Login Email</button>
-            </div>
-            <div class="email-change-step d-none" id="emailChangeStep1">
-                <div class="alert-error-box text-danger small d-none mb-2" id="emailStep1Error"></div>
-                <label class="form-label">New Email Address</label>
-                <div class="d-flex gap-2 flex-wrap">
-                    <input type="email" class="form-control form-control-sm" id="newEmailInput" placeholder="new.email@example.com" style="max-width:280px;">
-                    <button type="button" class="btn btn-sm btn-primary" id="sendEmailCodeBtn">Send Code</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="emailChangeCancel1">Cancel</button>
-                </div>
-            </div>
-            <div class="email-change-step d-none" id="emailChangeStep2">
-                <div class="alert-error-box text-danger small d-none mb-2" id="emailStep2Error"></div>
-                <p class="small text-muted mb-2">Enter the 4-digit code sent to <strong id="pendingEmailLabel"></strong>. You'll be logged out and need to sign back in with your new email once verified.</p>
-                <div class="d-flex gap-2 flex-wrap align-items-center">
-                    <input type="text" class="form-control form-control-sm" id="emailOtpInput" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="1234" style="max-width:110px; letter-spacing:0.3em; text-align:center;">
-                    <button type="button" class="btn btn-sm btn-success" id="verifyEmailCodeBtn">Verify &amp; Update</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="emailChangeCancel2">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <form class="section-edit d-none section-form" data-section="identity">
-        <div class="section-form-error text-danger small d-none mb-2"></div>
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">Full Name</label>
-                <input type="text" name="name" class="form-control form-control-sm" value="{{ $portalUser->name }}">
-            </div>
-            @if($portalUser->type === 'company')
-            <div class="col-md-4">
-                <label class="form-label">Company Name</label>
-                <input type="text" name="company_name" class="form-control form-control-sm" value="{{ $portalUser->company_name }}">
-            </div>
-            @endif
-            <div class="col-md-4">
-                <label class="form-label">Phone</label>
-                @php([$profilePhoneCode, $profilePhoneNumber] = \App\Rules\PhoneNumber::split($portalUser->phone))
-                <input type="hidden" name="phone_country_code" value="{{ $profilePhoneCode ?? '+971' }}">
-                <input type="tel" name="phone" class="form-control form-control-sm" value="{{ $profilePhoneNumber }}" maxlength="20" placeholder="50 123 4567" data-phone-input>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Nationality</label>
-                <input type="text" name="nationality" class="form-control form-control-sm" value="{{ $portalUser->nationality }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Emirates ID No.</label>
-                <input type="text" name="emirates_id_no" class="form-control form-control-sm" value="{{ $portalUser->emirates_id_no }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Passport No.</label>
-                <input type="text" name="passport_no" class="form-control form-control-sm" value="{{ $portalUser->passport_no }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Passport Expiry</label>
-                <input type="date" name="passport_expiry" class="form-control form-control-sm" value="{{ $portalUser->passport_expiry?->format('Y-m-d') }}">
-            </div>
-        </div>
-        <div class="d-flex gap-2 mt-3">
-            <button type="submit" class="btn btn-sm btn-success">Save</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary section-edit-cancel">Cancel</button>
-        </div>
-    </form>
-</div>
-
-@if($portalUser->type === 'agent')
-<div class="dash-card mb-3">
-    <h6><i class="fas fa-user-tie"></i> RERA Broker Details
-        <button type="button" class="section-edit-btn section-edit-toggle" data-section="agent" title="Edit"><i class="fas fa-pen"></i></button>
-    </h6>
-    <div class="section-view" data-section="agent">
-        <div class="row">
-            <div class="col-md-4 info-row"><div class="info-label">BRN (Broker Registration No.)</div><div class="info-value">{{ $portalUser->brn_number ?: '-' }}</div></div>
-            <div class="col-md-8 info-row">
-                <div class="info-label">Affiliated Brokerage</div>
-                <div class="info-value">
-                    {{ $portalUser->affiliated_brokerage ?: '-' }}
-                    <div class="small portal-muted fw-normal mt-1">
-                        @if($portalUser->company)
-                            <i class="fas fa-building me-1"></i>Agency member: <strong>{{ $portalUser->company->displayName() }}</strong> (their plan applies)
-                        @else
-                            <i class="fas fa-user me-1"></i>Independent agent on your own plan
-                        @endif
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 info-row"><div class="info-label">Trade License No.</div><div class="info-value">{{ $portalUser->trade_license_no ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">Trade License Expiry</div><div class="info-value">{{ $portalUser->trade_license_expiry?->format('d M Y') ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">TRN (VAT)</div><div class="info-value">{{ $portalUser->trn_number ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">TRN Expiry</div><div class="info-value">{{ $portalUser->trn_expiry?->format('d M Y') ?: '-' }}</div></div>
-        </div>
-    </div>
-    <form class="section-edit d-none section-form" data-section="agent">
-        <div class="section-form-error text-danger small d-none mb-2"></div>
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">BRN (Broker Registration No.)</label>
-                <input type="text" name="brn_number" class="form-control form-control-sm" value="{{ $portalUser->brn_number }}">
-            </div>
-            <div class="col-md-8">
-                <label class="form-label">Affiliated Brokerage</label>
-                {{-- Just the brokerage named for RERA/KYC. Joining an agency (and its plan) needs the
-                     agency's acceptance and admin approval — see My Agency. --}}
-                <div class="brokerage-combo">
-                    <input type="text" name="affiliated_brokerage" id="brokerageInput" class="form-control form-control-sm" maxlength="255" autocomplete="off"
-                           value="{{ $portalUser->affiliated_brokerage }}" placeholder="Search agencies on MW Realty, or type your brokerage name"
-                           role="combobox" aria-expanded="false" aria-controls="brokerageList" data-search-url="{{ route('portal.agency.search') }}">
-                    <div class="brokerage-combo__list d-none" id="brokerageList" role="listbox"></div>
-                </div>
-            </div>
-            <div class="col-md-4"><label class="form-label">Trade License No.</label><input type="text" name="trade_license_no" class="form-control form-control-sm" value="{{ $portalUser->trade_license_no }}"></div>
-            <div class="col-md-4"><label class="form-label">Trade License Expiry</label><input type="date" name="trade_license_expiry" class="form-control form-control-sm" value="{{ $portalUser->trade_license_expiry?->format('Y-m-d') }}"></div>
-            <div class="col-md-4"><label class="form-label">TRN (VAT)</label><input type="text" name="trn_number" class="form-control form-control-sm" value="{{ $portalUser->trn_number }}"></div>
-            <div class="col-md-4"><label class="form-label">TRN Expiry</label><input type="date" name="trn_expiry" class="form-control form-control-sm" value="{{ $portalUser->trn_expiry?->format('Y-m-d') }}"></div>
-        </div>
-        <div class="d-flex gap-2 mt-3">
-            <button type="submit" class="btn btn-sm btn-success">Save</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary section-edit-cancel">Cancel</button>
-        </div>
-    </form>
-</div>
-@else
-<div class="dash-card mb-3">
-    <h6><i class="fas fa-building"></i> Company / RERA Office Details
-        <button type="button" class="section-edit-btn section-edit-toggle" data-section="company" title="Edit"><i class="fas fa-pen"></i></button>
-    </h6>
-    <div class="section-view" data-section="company">
-        <div class="row">
-            <div class="col-md-4 info-row"><div class="info-label">Trade License No.</div><div class="info-value">{{ $portalUser->trade_license_no ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">Trade License Expiry</div><div class="info-value">{{ $portalUser->trade_license_expiry?->format('d M Y') ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">ORN</div><div class="info-value">{{ $portalUser->orn_number ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">TRN (VAT)</div><div class="info-value">{{ $portalUser->trn_number ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">TRN Expiry</div><div class="info-value">{{ $portalUser->trn_expiry?->format('d M Y') ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">Authorized Signatory</div><div class="info-value">{{ $portalUser->authorized_signatory_name ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">Landline</div><div class="info-value">{{ $portalUser->landline ?: '-' }}</div></div>
-            <div class="col-md-12 info-row"><div class="info-label">Registered Office Address</div><div class="info-value">{{ $portalUser->office_address ?: '-' }}</div></div>
-        </div>
-    </div>
-    <form class="section-edit d-none section-form" data-section="company">
-        <div class="section-form-error text-danger small d-none mb-2"></div>
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">Trade License No.</label>
-                <input type="text" name="trade_license_no" class="form-control form-control-sm" value="{{ $portalUser->trade_license_no }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Trade License Expiry</label>
-                <input type="date" name="trade_license_expiry" class="form-control form-control-sm" value="{{ $portalUser->trade_license_expiry?->format('Y-m-d') }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">ORN</label>
-                <input type="text" name="orn_number" class="form-control form-control-sm" value="{{ $portalUser->orn_number }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">TRN (VAT)</label>
-                <input type="text" name="trn_number" class="form-control form-control-sm" value="{{ $portalUser->trn_number }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">TRN Expiry</label>
-                <input type="date" name="trn_expiry" class="form-control form-control-sm" value="{{ $portalUser->trn_expiry?->format('Y-m-d') }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Authorized Signatory</label>
-                <input type="text" name="authorized_signatory_name" class="form-control form-control-sm" value="{{ $portalUser->authorized_signatory_name }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Landline</label>
-                <input type="text" name="landline" class="form-control form-control-sm" value="{{ $portalUser->landline }}">
-            </div>
-            <div class="col-md-12">
-                <label class="form-label">Registered Office Address</label>
-                <input type="text" name="office_address" class="form-control form-control-sm" value="{{ $portalUser->office_address }}">
-            </div>
-        </div>
-        <div class="d-flex gap-2 mt-3">
-            <button type="submit" class="btn btn-sm btn-success">Save</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary section-edit-cancel">Cancel</button>
-        </div>
-    </form>
-</div>
-@endif
-
-<div class="dash-card mb-3">
-    <h6><i class="fas fa-globe"></i> Public Profile
-        <button type="button" class="section-edit-btn section-edit-toggle" data-section="about" title="Edit"><i class="fas fa-pen"></i></button>
-    </h6>
-    <p class="text-muted mb-3" style="font-size: 0.8rem;">
-        Shown on your public listing page once it's live. Write your bio in your own language —
-        it's automatically translated for other site languages; you (or admin) can always correct
-        the wording later if the translation isn't quite right.
-    </p>
-    <div class="section-view" data-section="about">
-        <div class="row">
-            <div class="col-md-12 info-row"><div class="info-label">About / Bio</div><div class="info-value" style="font-weight: 500; white-space: pre-line;">{{ $bio ?: '-' }}</div></div>
-            <div class="col-md-4 info-row"><div class="info-label">Years of Experience</div><div class="info-value">{{ $portalUser->years_of_experience ?? '-' }}</div></div>
-            @if($portalUser->type === 'company')
-            <div class="col-md-4 info-row"><div class="info-label">Established</div><div class="info-value">{{ $portalUser->founding_year ?: '-' }}</div></div>
-            @endif
-            <div class="col-md-4 info-row"><div class="info-label">Website</div><div class="info-value">{{ $portalUser->website ?: '-' }}</div></div>
-            <div class="col-md-12 info-row"><div class="info-label">Preferred / Service Areas</div><div class="info-value">{{ $portalUser->preferred_areas ? implode(', ', $portalUser->preferred_areas) : '-' }}</div></div>
-        </div>
-    </div>
-    <form class="section-edit d-none section-form" data-section="about">
-        <div class="section-form-error text-danger small d-none mb-2"></div>
-        <div class="row g-3">
-            <div class="col-md-12">
-                <label class="form-label">About / Bio</label>
-                <textarea name="bio" class="form-control form-control-sm" rows="4" maxlength="2000">{{ $bio }}</textarea>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Years of Experience</label>
-                <input type="number" name="years_of_experience" class="form-control form-control-sm" min="0" max="80" value="{{ $portalUser->years_of_experience }}">
-            </div>
-            @if($portalUser->type === 'company')
-            <div class="col-md-4">
-                <label class="form-label">Established (Year)</label>
-                <input type="number" name="founding_year" class="form-control form-control-sm" min="1900" max="{{ now()->year }}" value="{{ $portalUser->founding_year }}">
-            </div>
-            @endif
-            <div class="col-md-4">
-                <label class="form-label">Website</label>
-                <input type="url" name="website" class="form-control form-control-sm" placeholder="https://" value="{{ $portalUser->website }}">
-            </div>
-            <div class="col-md-12">
-                <label class="form-label">Preferred / Service Areas <span class="text-muted fw-normal">(comma separated)</span></label>
-                <input type="text" name="preferred_areas" class="form-control form-control-sm" placeholder="Downtown Dubai, Business Bay" value="{{ $portalUser->preferred_areas ? implode(', ', $portalUser->preferred_areas) : '' }}">
-            </div>
-        </div>
-        <div class="d-flex gap-2 mt-3">
-            <button type="submit" class="btn btn-sm btn-success">Save</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary section-edit-cancel">Cancel</button>
-        </div>
-    </form>
-</div>
-
+<div class="tab-pane fade" id="pf-tab-seo" role="tabpanel" aria-labelledby="pf-nav-seo">
 @php $meta = $portalUser->metadata ?? []; @endphp
 <div class="dash-card mb-3">
     <h6><i class="fas fa-search"></i> SEO Metadata
@@ -631,6 +630,9 @@
     </form>
 </div>
 
+</div>
+
+<div class="tab-pane fade" id="pf-tab-documents" role="tabpanel" aria-labelledby="pf-nav-documents">
 <div class="dash-card">
     <h6><i class="fas fa-folder-open"></i> My Documents</h6>
     <div class="row g-2">
@@ -671,6 +673,119 @@
             </div>
         </div>
         @endforeach
+    </div>
+</div>
+</div>
+{{-- Below every section: what's still missing (one click to fill it in) + how the public page looks. --}}
+@php
+    $missingFields = collect($profileSections)->flatMap(fn ($s, $key) => collect($s[3])
+        ->filter(fn ($f) => ($f['type'] ?? 'text') !== 'static' && !$isFilled($f))
+        ->map(fn ($f) => ['section' => $key, 'sectionTitle' => $s[0], 'icon' => $s[1], 'name' => $f['name'], 'label' => $f['label']]))->values();
+    $missingDocs = $documents->filter(fn ($d) => !$d['path'])->values();
+    $todoCount = $missingFields->count() + $missingDocs->count();
+    $publicUrl = $u->slug ? url(($isAgent ? '/agent-details/' : '/agency-details/') . $u->slug) : null;
+    $publicLive = $u->status === 'approved' && $u->is_active;
+    $bioText = trim(strip_tags((string) $bio));
+    $chips = $isAgent ? ($u->spoken_languages ?? []) : ($u->preferred_areas ?? []);
+@endphp
+<div class="pf-extras">
+    <div class="dash-card pf-card pf-todo">
+        <div class="pf-card-head">
+            <div>
+                <h2 class="pf-card-title">{{ $todoCount ? 'Complete your profile' : 'Profile complete' }}</h2>
+                <p class="pf-card-hint">{{ $todoCount ? "{$todoCount} thing" . ($todoCount === 1 ? '' : 's') . ' left — complete profiles get more enquiries.' : 'Everything is filled in. Nice work!' }}</p>
+            </div>
+            <span class="pf-todo-pct">{{ $completeness }}%</span>
+        </div>
+        @if($todoCount)
+        <ul class="pf-todo-list">
+            @foreach($missingFields->take(6) as $m)
+            <li>
+                <span class="pf-todo-icon"><i class="fas {{ $m['icon'] }}"></i></span>
+                <span class="pf-todo-text"><strong>{{ $m['label'] }}</strong><small>{{ $m['sectionTitle'] }}</small></span>
+                <button type="button" class="pf-todo-go" data-goto-section="{{ $m['section'] }}" data-goto-field="{{ $m['name'] }}">Add</button>
+            </li>
+            @endforeach
+            @foreach($missingDocs->take(max(0, 6 - $missingFields->count())) as $d)
+            <li>
+                <span class="pf-todo-icon"><i class="fas fa-folder-open"></i></span>
+                <span class="pf-todo-text"><strong>{{ $d['label'] }}</strong><small>Documents</small></span>
+                <button type="button" class="pf-todo-go" data-goto-section="documents">Upload</button>
+            </li>
+            @endforeach
+        </ul>
+        @if($todoCount > 6)<div class="pf-todo-more">+ {{ $todoCount - 6 }} more — see the sections marked “missing” on the left.</div>@endif
+        @else
+        <div class="pf-todo-done"><i class="fas fa-circle-check"></i> All sections and documents are complete.</div>
+        @endif
+    </div>
+
+    <div class="dash-card pf-card pf-public">
+        <div class="pf-card-head">
+            <div>
+                <h2 class="pf-card-title">Your public page</h2>
+                <p class="pf-card-hint">{{ $publicLive ? 'How buyers see you on the website.' : 'Goes live on the website once your account is approved.' }}</p>
+            </div>
+        </div>
+        <div class="pf-public-card">
+            <div class="pf-public-top">
+                <span class="pf-public-avatar {{ $avatarFill }}">
+                    @if($u->avatar)<img src="{{ media_url($u->avatar) }}" alt="">@else{{ $initials }}@endif
+                </span>
+                <div class="min-w-0">
+                    <div class="pf-public-name">{{ $displayName }}</div>
+                    <div class="pf-public-sub">{{ $isAgent ? ($u->position ?: 'Real estate agent') : 'Real estate agency' }}@if($u->city) · {{ $u->city }}@endif</div>
+                </div>
+            </div>
+            <p class="pf-public-bio">{{ $bioText !== '' ? \Illuminate\Support\Str::limit($bioText, 150) : 'Add a description in About to introduce yourself to buyers.' }}</p>
+            @if($chips)
+            <div class="pf-public-chips">@foreach(array_slice($chips, 0, 4) as $chip)<span class="pf-chip">{{ $chip }}</span>@endforeach</div>
+            @endif
+        </div>
+        @if($publicUrl && $publicLive)
+        <a href="{{ $publicUrl }}" target="_blank" rel="noopener" class="pf-public-link">View public page <i class="fas fa-arrow-up-right-from-square"></i></a>
+        @endif
+    </div>
+</div>
+</div>{{-- /.profile-panes --}}
+</div>{{-- /.profile-layout --}}
+
+{{-- Change login email: a code goes to the new address first (PortalProfileController::requestEmailChange). --}}
+<div class="modal fade" id="emailChangeModal" tabindex="-1" aria-labelledby="emailChangeModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emailChangeModalTitle"><i class="fas fa-envelope me-2"></i>Change login email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted">Current: <strong>{{ $portalUser->email }}</strong></p>
+                <div class="email-change-block" id="emailChangeBlock">
+        <div id="emailChangeView">
+            
+        </div>
+        <div class="email-change-step d-none" id="emailChangeStep1">
+            <div class="alert-error-box text-danger small d-none mb-2" id="emailStep1Error"></div>
+            <label class="form-label">New Email Address</label>
+            <div class="d-flex gap-2 flex-wrap">
+                <input type="email" class="form-control form-control-sm" id="newEmailInput" placeholder="new.email@example.com" style="max-width:280px;">
+                <button type="button" class="btn btn-sm btn-primary" id="sendEmailCodeBtn">Send Code</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="emailChangeCancel1">Cancel</button>
+            </div>
+        </div>
+        <div class="email-change-step d-none" id="emailChangeStep2">
+            <div class="alert-error-box text-danger small d-none mb-2" id="emailStep2Error"></div>
+            <p class="small text-muted mb-2">Enter the 4-digit code sent to <strong id="pendingEmailLabel"></strong>. You'll be logged out and need to sign back in with your new email once verified.</p>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <input type="text" class="form-control form-control-sm" id="emailOtpInput" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="1234" style="max-width:110px; letter-spacing:0.3em; text-align:center;">
+                <button type="button" class="btn btn-sm btn-success" id="verifyEmailCodeBtn">Verify &amp; Update</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="emailChangeCancel2">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+            </div>
+        </div>
     </div>
 </div>
 <div class="modal fade kyc-submit-modal" id="kycSubmitModal" tabindex="-1" aria-labelledby="kycSubmitModalTitle" aria-hidden="true">
@@ -815,6 +930,33 @@
     window.addEventListener('resize', check);
 })();
 
+// Profile sections menu: open the section from the URL (#documents) or the one open before the
+// last save (saving reloads the page), else the first one.
+(function () {
+    const KEY = 'portal-profile-tab';
+    const links = [...document.querySelectorAll('.profile-nav-link')];
+    if (!links.length) return;
+    const byKey = key => links.find(l => l.dataset.bsTarget === '#pf-tab-' + key);
+    let stored = null;
+    try { stored = sessionStorage.getItem(KEY); } catch (e) {}
+    const start = byKey(location.hash.replace('#', '')) || byKey(stored) || links[0];
+    bootstrap.Tab.getOrCreateInstance(start).show();
+    // "Complete your profile" → open that section and its edit form at the missing field.
+    document.querySelectorAll('[data-goto-section]').forEach(btn => btn.addEventListener('click', () => {
+        const link = byKey(btn.dataset.gotoSection);
+        if (!link) return;
+        bootstrap.Tab.getOrCreateInstance(link).show();
+        const pane = document.getElementById('pf-tab-' + btn.dataset.gotoSection);
+        const add = btn.dataset.gotoField && pane.querySelector('.pf-add[data-focus="' + btn.dataset.gotoField + '"]');
+        if (add) add.click();
+        pane.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+    links.forEach(link => link.addEventListener('shown.bs.tab', () => {
+        try { sessionStorage.setItem(KEY, link.dataset.bsTarget.replace('#pf-tab-', '')); } catch (e) {}
+        if (window.matchMedia('(max-width: 991.98px)').matches) link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }));
+})();
+
 (function () {
     const base = "{{ url('/portal/profile') }}";
 
@@ -822,7 +964,11 @@
         const section = this.dataset.section;
         const card = this.closest('.dash-card');
         card.querySelector('.section-view[data-section="' + section + '"]').classList.add('d-none');
-        card.querySelector('.section-edit[data-section="' + section + '"]').classList.remove('d-none');
+        const editForm = card.querySelector('.section-edit[data-section="' + section + '"]');
+        editForm.classList.remove('d-none');
+        // "Not added · Add" on a field opens the form at that field.
+        const target = this.dataset.focus && editForm.querySelector('[name="' + this.dataset.focus + '"], [name="' + this.dataset.focus + '[]"]');
+        (target || editForm.querySelector('input:not([type=hidden]), select, textarea'))?.focus();
     }));
 
     document.querySelectorAll('.section-edit-cancel').forEach(btn => btn.addEventListener('click', function () {
@@ -839,6 +985,22 @@
         const formData = new FormData(form);
         formData.append('_token', '{{ csrf_token() }}');
         formData.append('section', form.dataset.section);
+
+        // Save button: Saving… (spinner) → Saved ✓ → page refresh; back to Save on an error.
+        const saveBtn = form.querySelector('button[type="submit"]');
+        const cancelBtn = form.querySelector('.section-edit-cancel');
+        const saveLabel = saveBtn ? saveBtn.innerHTML : '';
+        const setSave = (state) => {
+            if (!saveBtn) return;
+            saveBtn.classList.remove('is-saving', 'is-saved');
+            if (state) saveBtn.classList.add('is-' + state);
+            saveBtn.disabled = !!state;
+            if (cancelBtn) cancelBtn.disabled = !!state;
+            saveBtn.innerHTML = state === 'saving' ? '<span class="pf-spinner" aria-hidden="true"></span>Saving…'
+                : state === 'saved' ? '<i class="fas fa-check"></i>Saved' : saveLabel;
+        };
+        setSave('saving');
+
         fetch(base, {
             method: 'POST',
             body: formData,
@@ -852,8 +1014,13 @@
                 }
                 return data;
             })
-            .then(data => { if (data.success) window.location.reload(); })
+            .then(data => {
+                if (!data.success) return setSave(null);
+                setSave('saved');
+                setTimeout(() => window.location.reload(), 650);
+            })
             .catch(err => {
+                setSave(null);
                 if (errorBox) { errorBox.textContent = err.message; errorBox.classList.remove('d-none'); }
                 else alert(err.message);
                 if (window.restoreSubmitButtons) window.restoreSubmitButtons(form);
@@ -978,8 +1145,13 @@
         emailOtpInput.value = '';
         emailView.classList.remove('d-none');
     }
-    document.getElementById('emailChangeCancel1')?.addEventListener('click', resetEmailChangeWidget);
-    document.getElementById('emailChangeCancel2')?.addEventListener('click', resetEmailChangeWidget);
+    // The steps live in a modal (opened from the header): Cancel closes it, closing it resets it.
+    const emailModalEl = document.getElementById('emailChangeModal');
+    const closeEmailModal = () => bootstrap.Modal.getInstance(emailModalEl)?.hide();
+    document.getElementById('emailChangeCancel1')?.addEventListener('click', closeEmailModal);
+    document.getElementById('emailChangeCancel2')?.addEventListener('click', closeEmailModal);
+    emailModalEl?.addEventListener('hidden.bs.modal', resetEmailChangeWidget);
+    emailModalEl?.addEventListener('shown.bs.modal', () => newEmailInput.focus());
 
     document.getElementById('sendEmailCodeBtn')?.addEventListener('click', function () {
         emailStep1Error.classList.add('d-none');

@@ -5,6 +5,27 @@
 
 <div class="nearby-place-form">
     <div class="portal-card p-4 mb-3">
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <label class="form-label fw-semibold" for="placeType">Type <span class="text-danger">*</span></label>
+                    @if($isAdmin)
+                    <a href="{{ route('portal.crm.master.property-options.index', ['list' => \App\Models\NearbyPlace::FILTER_KEY]) }}" class="small" target="_blank"><i class="fas fa-cog me-1"></i>Manage types</a>
+                    @endif
+                </div>
+                <select name="category" id="placeType" class="form-select @error('category') is-invalid @enderror" required>
+                    <option value="">Select type</option>
+                    @foreach($typeFilter?->activeValues ?? [] as $option)
+                    <option value="{{ $option->value }}" @selected(old('category', $place->category ?? '') == $option->value)>{{ $option->getTranslation('label') }}</option>
+                    @endforeach
+                </select>
+                @error('category')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @unless($isAdmin)
+                <div class="form-text">Missing a type? Ask MW Realty to add it via a support ticket.</div>
+                @endunless
+            </div>
+        </div>
+
         @if($languages->count() > 1)
         <ul class="nav portal-lang-tabs mb-4" id="languageTabs" role="tablist">
             @foreach($languages as $lang)
@@ -38,25 +59,15 @@
 
         <hr class="my-4">
         <div class="row g-3">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <label class="form-label fw-semibold">Latitude <span class="text-danger">*</span></label>
                 <input type="text" name="latitude" class="form-control @error('latitude') is-invalid @enderror" value="{{ $val('latitude') }}" required>
                 @error('latitude')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <label class="form-label fw-semibold">Longitude <span class="text-danger">*</span></label>
                 <input type="text" name="longitude" class="form-control @error('longitude') is-invalid @enderror" value="{{ $val('longitude') }}" required>
                 @error('longitude')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
-            <div class="col-md-4">
-                <label class="form-label fw-semibold">Type <span class="text-danger">*</span></label>
-                <select name="category" class="form-select nearby-type-select @error('category') is-invalid @enderror" required>
-                    <option value="">Search type</option>
-                    @foreach($typeFilter?->activeValues ?? [] as $option)
-                    <option value="{{ $option->value }}" {{ old('category', $place->category ?? '') == $option->value ? 'selected' : '' }}>{{ $option->getTranslation('label') }}</option>
-                    @endforeach
-                </select>
-                @error('category')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
         </div>
 
@@ -91,19 +102,4 @@
     }
     .nearby-place-form .form-check-input { width: 2.4em; height: 1.3em; cursor: pointer; }
     .nearby-place-form .form-check-input:checked { background-color: var(--portal-primary); border-color: var(--portal-primary); }
-
-    .nearby-place-form .select2-container--default .select2-selection--single {
-        height: auto;
-        border: 1.5px solid var(--portal-border);
-        border-radius: 10px;
-        padding: 0.6rem 0.85rem;
-        background: var(--portal-surface);
-    }
-    .nearby-place-form .select2-container--default.select2-container--open .select2-selection--single,
-    .nearby-place-form .select2-container--default.select2-container--focus .select2-selection--single {
-        border-color: var(--portal-primary);
-        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
-    }
-    .nearby-place-form .select2-selection__rendered { line-height: 1.3 !important; font-size: 0.9rem; color: var(--portal-text) !important; padding: 0 !important; }
-    .nearby-place-form .select2-selection__arrow { height: 100% !important; top: 0 !important; right: 10px !important; }
 </style>

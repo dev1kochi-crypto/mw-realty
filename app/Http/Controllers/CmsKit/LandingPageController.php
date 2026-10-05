@@ -26,6 +26,10 @@ class LandingPageController extends Controller
             'page_type' => ['required', \Illuminate\Validation\Rule::in([LandingPage::TYPE_TEMPLATE, LandingPage::TYPE_CUSTOM])],
             'slug' => ['nullable', 'string', 'max:255', \Illuminate\Validation\Rule::unique('landing_pages', 'slug')->ignore($page?->id)],
             'published_at' => 'nullable|date',
+            // "Blog design" pages: cover image, like a blog post's.
+            'feature_image' => 'nullable|image|max:' . ($imagesConfig['content_image']['max_size'] ?? 4096),
+            'feature_image_alt' => 'nullable|string|max:255',
+            'remove_feature_image' => 'nullable|boolean',
             'order_index' => 'nullable|integer|min:1',
             'use_site_header_footer' => 'nullable|boolean',
             // Accepts a full URL or a site-relative path (e.g. /thank-you or another landing page's slug) —
@@ -92,7 +96,7 @@ class LandingPageController extends Controller
                 ->addColumn('page_type', function ($row) {
                     return $row->isCustom()
                         ? '<span class="badge bg-info-subtle text-info-emphasis">Custom HTML</span>'
-                        : '<span class="badge bg-primary-subtle text-primary-emphasis">Template</span>';
+                        : '<span class="badge bg-primary-subtle text-primary-emphasis">Blog design</span>';
                 })
                 ->addColumn('status', function ($row) {
                     $checked = $row->status ? 'checked' : '';
@@ -199,6 +203,10 @@ class LandingPageController extends Controller
             : Str::slug($request->input('translations.' . config('app.fallback_locale') . '.title'));
 
         $data = $this->cleanForType($data);
+        $data['feature_image_alt'] = $request->input('feature_image_alt');
+        if ($data['page_type'] === LandingPage::TYPE_TEMPLATE && $request->hasFile('feature_image')) {
+            $data['feature_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('feature_image'), 'landing-pages/covers');
+        }
 
         $order = $this->resolveOrderForCreate(LandingPage::class, $request->order_index ? (int) $request->order_index : null);
         LandingPage::where('order_index', '>=', $order)->increment('order_index');
@@ -257,6 +265,18 @@ class LandingPageController extends Controller
             $data['custom_html'] = $this->promoteContentImages($data['custom_html'], $page->id);
         }
 
+        // Cover image ("Blog design" pages): replace, remove, or keep.
+        $data['feature_image_alt'] = $request->input('feature_image_alt');
+        if ($request->hasFile('feature_image')) {
+            if ($page->feature_image) {
+                app(\App\Services\ManagedFiles::class)->delete($page->feature_image);
+            }
+            $data['feature_image'] = app(\App\Services\ManagedFiles::class)->store($request->file('feature_image'), 'landing-pages/covers');
+        } elseif ($request->boolean('remove_feature_image') && $page->feature_image) {
+            app(\App\Services\ManagedFiles::class)->delete($page->feature_image);
+            $data['feature_image'] = null;
+        }
+
         $metadata = $request->input('metadata', []);
         $existingMetadata = $page->metadata ?? [];
         if ($request->hasFile('metadata.og_image')) {
@@ -284,6 +304,9 @@ class LandingPageController extends Controller
 
         if (!empty($page->metadata['og_image'])) {
             app(\App\Services\ManagedFiles::class)->delete($page->metadata['og_image']);
+        }
+        if ($page->feature_image) {
+            app(\App\Services\ManagedFiles::class)->delete($page->feature_image);
         }
         Storage::disk('public')->deleteDirectory('landing-pages/content/' . $page->id);
         if (\App\Services\CloudinaryMedia::enabled()) {
@@ -492,6 +515,9 @@ class LandingPageController extends Controller
             foreach ($pages as $page) {
                 if (!empty($page->metadata['og_image'])) {
                     app(\App\Services\ManagedFiles::class)->delete($page->metadata['og_image']);
+                }
+                if ($page->feature_image) {
+                    app(\App\Services\ManagedFiles::class)->delete($page->feature_image);
                 }
                 $disk->deleteDirectory('landing-pages/content/' . $page->id);
                 $page->delete();

@@ -28,8 +28,8 @@ class ListingComplianceNotification extends Notification
 
         [$heading, $message, $icon, $tone] = match ($this->event) {
             'submitted' => ['Listing sent for approval', "{$title} was sent to MW Realty for DLD permit approval. It goes live once approved.", 'fa-paper-plane', 'teal'],
-            'approved' => ['Listing approved', "{$title} passed the permit review and is live on the website.", 'fa-circle-check', 'teal'],
-            'changes_requested' => ['Listing needs changes', "{$title}: " . Str::limit((string) $this->note, 160), 'fa-triangle-exclamation', 'amber'],
+            'approved' => ['Permit verified', "{$title}: MW Realty checked the permit — it can be live on the website.", 'fa-circle-check', 'teal'],
+            'changes_requested' => ['Listing taken down', "{$title}: " . Str::limit((string) $this->note, 160), 'fa-triangle-exclamation', 'amber'],
             'expiring' => ['DLD permit expiring soon', "The permit for {$title} expires on " . $this->property->permit_expires_at?->format('d M Y') . '. Renew it with DLD and update the listing.', 'fa-hourglass-half', 'amber'],
             default => ['DLD permit expired', "{$title} was taken off the website because its permit expired. Add the renewed permit to re-list it.", 'fa-ban', 'red'],
         };

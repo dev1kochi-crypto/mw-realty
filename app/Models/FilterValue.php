@@ -10,6 +10,7 @@ class FilterValue extends Model
         'filter_id',
         'value',
         'translations',
+        'icon',
         'order_index',
         'status',
     ];

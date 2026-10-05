@@ -23,6 +23,12 @@ class PropertyDetail extends Model
         'floor_plan_image',
         'floor_plan_file',
         'extra_attributes',
+        'developer',
+        'unit_number',
+        'owner_name',
+        'upgraded',
+        'video_tour_url',
+        'cheques',
     ];
 
     protected $casts = [
@@ -31,6 +37,8 @@ class PropertyDetail extends Model
         'easy_access' => 'array',
         'property_attributes' => 'array',
         'extra_attributes' => 'array',
+        'upgraded' => 'boolean',
+        'cheques' => 'integer',
     ];
 
     /** Value that means "not furnished" in the furnishing option list; every other set value counts as furnished. */
@@ -70,7 +78,7 @@ class PropertyDetail extends Model
     }
 
     /**
-     * Icon-repeater rows normalized to {icon, label: {lang => text}} — label is per-language since
+     * Icon-list rows normalized to {key?, icon, label: {lang => text}} — label is per-language since
      * these are Amenities/Easy Access/Attributes chips shown on the (future) public detail page.
      * Legacy data from before per-language labels existed (a plain string label, or a row that's
      * just a bare string from even before this became an icon repeater) is wrapped into the
@@ -87,7 +95,8 @@ class PropertyDetail extends Model
                 }
                 $label = $row['label'] ?? '';
                 $label = is_array($label) ? array_filter($label, fn ($v) => trim((string) $v) !== '') : [$fallbackLang => $label];
-                return ['icon' => $row['icon'] ?? null, 'label' => $label];
+                // `key` = the Master › Property Options value the row was picked from (absent on old free-text rows).
+                return array_filter(['key' => $row['key'] ?? null], fn ($v) => $v !== null) + ['icon' => $row['icon'] ?? null, 'label' => $label];
             })
             ->filter(fn ($row) => !empty($row['label']))
             ->values()

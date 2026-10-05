@@ -166,6 +166,55 @@ class LeadCaptureController extends Controller
         return back()->with('success', $message);
     }
 
+    /** Time slots a visitor can pick when booking a viewing (key => label). */
+    public const VIEWING_SLOTS = [
+        'morning' => 'Morning (9 AM – 12 PM)',
+        'afternoon' => 'Afternoon (12 PM – 4 PM)',
+        'evening' => 'Evening (4 PM – 7 PM)',
+    ];
+
+    /**
+     * "Book a viewing" on the property page — a property lead (same routing as an enquiry) with the
+     * requested day + time slot. A listing with open house days only offers those days; otherwise
+     * any day in the next 60 days.
+     */
+    public function storeViewing(Request $request)
+    {
+        $data = $request->validate([
+            'property_id' => 'required|integer|exists:properties,id',
+            'name' => 'required|string|max:255',
+            'email' => PhoneNumber::emailRules(false),
+            'phone' => PhoneNumber::rules(),
+            'phone_country_code' => PhoneNumber::countryCodeRules(),
+            'viewing_date' => 'required|date_format:Y-m-d|after_or_equal:today|before_or_equal:' . today()->addDays(60)->toDateString(),
+            'viewing_time' => ['required', \Illuminate\Validation\Rule::in(array_keys(self::VIEWING_SLOTS))],
+            'note' => 'nullable|string|max:1000',
+            'recaptcha_token' => ['nullable', new RecaptchaRule()],
+        ]);
+
+        $property = Property::findOrFail($data['property_id']);
+        $openHouseDays = collect($property->available_dates ?? [])->filter(fn ($d) => is_string($d) && $d >= today()->toDateString());
+        if ($openHouseDays->isNotEmpty() && !$openHouseDays->contains($data['viewing_date'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['viewing_date' => 'Please pick one of the open house days for this property.']);
+        }
+
+        $when = \Illuminate\Support\Carbon::parse($data['viewing_date'])->format('l, j M Y') . ', ' . self::VIEWING_SLOTS[$data['viewing_time']];
+        $title = $property->getTranslation('title') ?: $property->reference_no;
+        $request->merge([
+            'message' => "Viewing request for \"{$title}\" — {$when}." . (!empty($data['note']) ? "\n\n" . $data['note'] : ''),
+            'page_source' => 'book-viewing',
+        ]);
+        $lead = $this->capturePropertyLead($request, $property);
+        $lead->forceFill(['extra_fields' => array_merge((array) $lead->extra_fields, [
+            'viewing_date' => $data['viewing_date'],
+            'viewing_time' => $data['viewing_time'],
+        ])])->save();
+
+        $message = "Thanks — your viewing request for {$when} has been sent. The agent will confirm with you shortly.";
+
+        return $request->wantsJson() ? response()->json(['message' => $message, 'when' => $when]) : back()->with('success', $message);
+    }
+
     /** A property enquiry — routed to the listing's owner. Expects an already-validated request. */
     private function capturePropertyLead(Request $request, Property $property): Lead
     {

@@ -39,6 +39,14 @@ return [
         'key' => env('GOOGLE_TRANSLATE_API_KEY'),
     ],
 
+    // Which auto-translate service App\Services\AutoTranslator uses:
+    //   google   — Google Cloud Translation (needs GOOGLE_TRANSLATE_API_KEY; production)
+    //   mymemory — MyMemory free API, no key (testing; ~5,000 chars/day, 50,000 with an email)
+    'translate' => [
+        'driver' => env('TRANSLATE_DRIVER', 'google'),
+        'mymemory_email' => env('MYMEMORY_EMAIL'),
+    ],
+
     'recaptcha' => [
         'site_key' => env('RECAPTCHA_SITE_KEY'),
         'secret_key' => env('RECAPTCHA_SECRET_KEY'),

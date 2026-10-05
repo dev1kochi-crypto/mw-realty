@@ -58,6 +58,7 @@ Route::get('/storage/{url}', function (string $url) {
 // Public, unauthenticated — any property-detail page can POST a lead here; it's
 // routed to the property's owning company/agent (see LeadCaptureController).
 Route::post('/leads/capture', [LeadCaptureController::class, 'store'])->name('leads.capture')->middleware('throttle:lead-capture');
+Route::post('/leads/viewing', [LeadCaptureController::class, 'storeViewing'])->name('leads.viewing')->middleware('throttle:lead-capture');
 Route::post('/leads/brochure-download', [LeadCaptureController::class, 'downloadBrochure'])->name('leads.brochure-download')->middleware('throttle:lead-capture');
 Route::post('/leads/floor-plan-download', [LeadCaptureController::class, 'downloadFloorPlan'])->name('leads.floor-plan-download')->middleware('throttle:lead-capture');
 // Signed, short-lived link handed out by the two routes above once the lead is saved.
@@ -467,6 +468,7 @@ Route::middleware(['web'])->group(function () {
                     Route::post('/portal-accounts/{id}/retranslate-bio', [PortalUserController::class, 'retranslateBio'])->name('cms.portal-accounts.retranslate-bio');
                     Route::post('/portal-accounts/{id}/reset-password', [PortalUserController::class, 'resetPassword'])->name('cms.portal-accounts.reset-password');
                     Route::post('/portal-accounts/{id}/toggle-active', [PortalUserController::class, 'toggleActive'])->name('cms.portal-accounts.toggle-active');
+                    Route::post('/portal-accounts/{id}/reset-two-factor', [PortalUserController::class, 'resetTwoFactor'])->name('cms.portal-accounts.reset-two-factor');
                     Route::post('/portal-accounts/{id}/documents/{field}', [PortalUserController::class, 'uploadDocument'])->name('cms.portal-accounts.upload-document');
                     Route::delete('/portal-accounts/{id}/documents/{field}', [PortalUserController::class, 'removeDocument'])->name('cms.portal-accounts.remove-document');
                     Route::post('/portal-accounts/{id}/documents/{field}/status', [PortalUserController::class, 'updateDocumentStatus'])->name('cms.portal-accounts.update-document-status');
@@ -645,14 +647,38 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('/resend-otp', [PortalAuthController::class, 'resendOtp'])->name('resend-otp')->middleware('throttle:otp-verify');
         Route::get('/login', [PortalAuthController::class, 'showLogin'])->name('login');
         Route::post('/login', [PortalAuthController::class, 'login'])->name('login.store')->middleware('throttle:admin-login');
+        // Login steps after the password: emailed code for a new device, then the authenticator-app code.
+        Route::post('/login/verify-email', [PortalAuthController::class, 'verifyLoginEmail'])->name('login.verify-email')->middleware('throttle:otp-verify');
+        Route::post('/login/resend-email', [PortalAuthController::class, 'resendLoginEmail'])->name('login.resend-email')->middleware('throttle:otp-verify');
+        Route::post('/login/two-factor', [PortalAuthController::class, 'verifyLoginTwoFactor'])->name('login.two-factor')->middleware('throttle:otp-verify');
 
         // Set-password link for an agent account an agency created (emailed on admin approval).
         Route::get('/agent-setup/{agent}', [\App\Http\Controllers\Portal\AgentAccountSetupController::class, 'show'])->name('agent-setup.show')->middleware('signed');
         Route::post('/agent-setup/{agent}', [\App\Http\Controllers\Portal\AgentAccountSetupController::class, 'store'])->name('agent-setup.store')->middleware(['signed', 'throttle:otp-verify']);
     });
 
-    Route::middleware(['auth:portal'])->group(function () {
+    Route::middleware(['auth:portal', 'portal.2fa'])->group(function () {
         Route::post('/logout', [PortalAuthController::class, 'logout'])->name('logout');
+
+        // Two-factor authentication (authenticator app) — set-up page is also the step after sign-up.
+        // Listings Settings → Watermark stamped on uploaded listing photos — unlocks with KYC approval, like listings.
+        Route::middleware('portal.approved')->group(function () {
+            Route::get('/listing-settings/watermark', [\App\Http\Controllers\Portal\PortalWatermarkController::class, 'edit'])->name('watermark.edit');
+            Route::post('/listing-settings/watermark', [\App\Http\Controllers\Portal\PortalWatermarkController::class, 'update'])->name('watermark.update');
+            Route::get('/listing-settings/watermark/image', [\App\Http\Controllers\Portal\PortalWatermarkController::class, 'image'])->name('watermark.image');
+        });
+
+        Route::get('/security', [\App\Http\Controllers\Portal\PortalTwoFactorController::class, 'index'])->name('security');
+        Route::prefix('two-factor')->name('two-factor.')->controller(\App\Http\Controllers\Portal\PortalTwoFactorController::class)->group(function () {
+            Route::get('/setup', 'setup')->name('setup');
+            Route::post('/confirm', 'confirm')->name('confirm')->middleware('throttle:otp-verify');
+            Route::post('/skip', 'skip')->name('skip');
+            Route::post('/recovery-codes', 'regenerateRecoveryCodes')->name('recovery-codes')->middleware('throttle:otp-verify');
+            Route::post('/reconfigure', 'reconfigure')->name('reconfigure')->middleware('throttle:otp-verify');
+            Route::post('/disable', 'disable')->name('disable')->middleware('throttle:otp-verify');
+            Route::post('/enforce', 'enforce')->name('enforce');
+            Route::post('/forget-devices', 'forgetDevices')->name('forget-devices');
+        });
 
         Route::get('/profile/documents/{field}', [\App\Http\Controllers\DocumentController::class, 'own'])->name('profile.document');
 
@@ -721,7 +747,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
 
     // Shared by Super Admin (global view) and Agent/Company (own-data view) —
     // either session is accepted; controllers scope data per guard.
-    Route::middleware(['portal.or.cms'])->group(function () {
+    Route::middleware(['portal.or.cms', 'portal.2fa'])->group(function () {
         Route::get('/dashboard', [PortalDashboardController::class, 'index'])->name('dashboard');
 
         // Real (server-side) gating on top of the create()/store()/toggleStatus() controller's own
@@ -730,6 +756,8 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::get('/properties/create', [PortalPropertyController::class, 'create'])->name('properties.create');
         Route::get('/properties/agent-options', [PortalPropertyController::class, 'agentOptions'])->name('properties.agent-options')->middleware('throttle:120,1');
         Route::post('/properties', [PortalPropertyController::class, 'store'])->name('properties.store');
+        // Property form auto-fill: English text → the other site languages (Google Translate).
+        Route::post('/properties/translate', \App\Http\Controllers\Portal\PropertyTranslateController::class)->name('properties.translate')->middleware('throttle:60,1');
         Route::post('/properties/bulk-action', [PortalPropertyController::class, 'bulkAction'])->name('properties.bulk-action')->middleware('portal.approved');
         Route::post('/properties/{id}/feature', [PortalPropertyController::class, 'feature'])->name('properties.feature')->middleware('portal.approved');
         Route::put('/properties/{id}/feature', [PortalPropertyController::class, 'updateFeature'])->name('properties.feature.update')->middleware('portal.approved');
@@ -738,7 +766,8 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::get('/properties/{id}/edit', [PortalPropertyController::class, 'edit'])->name('properties.edit')->middleware('portal.approved');
         Route::put('/properties/{id}', [PortalPropertyController::class, 'update'])->name('properties.update')->middleware('portal.approved');
         Route::delete('/properties/{id}', [PortalPropertyController::class, 'destroy'])->name('properties.destroy')->middleware('portal.approved');
-        Route::get('/properties/{id}', [PortalPropertyController::class, 'show'])->name('properties.show');
+        // Numeric only — otherwise it swallows later fixed paths like /properties/nearby-places-by-type.
+        Route::get('/properties/{id}', [PortalPropertyController::class, 'show'])->name('properties.show')->whereNumber('id');
         Route::delete('/properties/{propertyId}/images/{imageId}', [PortalPropertyController::class, 'destroyImage'])->name('properties.images.destroy');
         Route::delete('/properties/{propertyId}/images', [PortalPropertyController::class, 'destroyAllImages'])->name('properties.images.destroy-all');
         Route::post('/properties/{propertyId}/images/reorder', [PortalPropertyController::class, 'reorderImages'])->name('properties.images.reorder');
@@ -764,16 +793,13 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::get('/{id}', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'show'])->name('show');
         });
 
-        // Form A / title deed of a listing (owner, assigned agent or Super Admin — scoped in the controller).
-        Route::get('/properties/{id}/compliance/{field}', [PortalPropertyController::class, 'complianceDocument'])->name('properties.compliance-document');
-
-        // Listing Approvals — DLD permit / Form A review before a listing goes live.
-        // Super Admin only (enforced in the controller). See ListingComplianceService.
+        // Listing Permits — overview of which listings' permits are verified (no approval step; a
+        // verified listing goes live by itself) + take a listing down. Super Admin only (enforced in the
+        // controller). See ListingComplianceService.
         Route::prefix('listing-approvals')->name('listing-approvals.')->controller(\App\Http\Controllers\Portal\PortalListingApprovalController::class)->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/{id}', 'show')->name('show')->whereNumber('id');
-            Route::post('/{id}/approve', 'approve')->name('approve')->whereNumber('id');
-            Route::post('/{id}/request-changes', 'requestChanges')->name('request-changes')->whereNumber('id');
+            Route::post('/{id}/take-down', 'takeDown')->name('take-down')->whereNumber('id');
         });
 
         // Featured — every featured/scheduled listing (Properties + Commercial) and "Add Featured".
@@ -793,6 +819,8 @@ Route::prefix('portal')->name('portal.')->group(function () {
         // Feeds the property form's Type -> Place cascading Nearby Places picker — reachable by
         // both a portal agent/company and an admin browsing the portal.
         Route::get('/properties/nearby-places-by-type', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'byType'])->name('properties.nearby-places-by-type');
+        // The property form's permit Validate / Refresh button (DLD / ADREC, see PermitVerifier).
+        Route::post('/properties/permit/validate', [PortalPropertyController::class, 'validatePermit'])->name('properties.permit.validate')->middleware('throttle:30,1');
 
         // Agent roster — a Company manages its own agents; Super Admin sees every
         // agent across every agency (see AgentController::isAdmin()/company()). Approved accounts only.
@@ -900,6 +928,9 @@ Route::prefix('portal')->name('portal.')->group(function () {
 Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->middleware(['web', 'cms.auth'])->group(function () {
     Route::post('/sitemap/generate', [\App\Http\Controllers\CmsKit\SitemapController::class, 'generate'])->name('cms.sitemap.generate')->middleware('cms.permission:sitemap.edit');
     Route::post('/seo/llms-txt/generate', [\App\Http\Controllers\CmsKit\LlmsTxtController::class, 'generate'])->name('cms.llms-txt.generate')->middleware('cms.permission:llms-txt.edit');
+    // Editing a redirect goes through the app controller's loop check (adding already does, via
+    // the SafeUrlRedirectService binding) — the package version writes the row unchecked.
+    Route::put('/seo/url-redirects/{url_redirect}', [\App\Http\Controllers\CmsKit\UrlRedirectController::class, 'update'])->name('cms.url-redirects.update')->middleware(['cms.permission:url-redirects.view', 'cms.permission:url-redirects.edit']);
 });
 
 // Public — static marketing/front-end pages, served by the Vue SPA (resources/js/router).

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useFormErrors } from '../composables/useFormErrors';
 import { playAuthEntrance } from '../composables/useAuthEntrance';
 import { useAuthPageTransition } from '../composables/useAuthPageTransition';
@@ -42,10 +42,82 @@ async function handleSubmit(e) {
 
     try {
         const { data } = await window.axios.post(loginAction, new FormData(e.target));
+        if (data.challenge) {
+            showChallenge(data.challenge, data.email);
+            submitting.value = false;
+            return;
+        }
         window.location.href = data.redirect || (loginType === 'user' ? '/profile' : '/portal/dashboard');
     } catch (error) {
         errorMessage.value = error.response?.data?.message || t('login.generic_error');
         submitting.value = false;
+    }
+}
+
+// Agent/Agency logins can need extra steps after the password (PortalAuthController::login()):
+// 'email' — a code mailed because this browser is new for the account; 'totp' — the 6-digit
+// authenticator-app (Authy etc.) code, or a recovery code, when 2FA is on.
+const step = ref('credentials');
+const maskedEmail = ref('');
+const code = ref('');
+const codeInput = ref(null);
+const infoMessage = ref(null);
+const resending = ref(false);
+
+function showChallenge(challenge, emailHint) {
+    step.value = challenge;
+    if (emailHint) maskedEmail.value = emailHint;
+    code.value = '';
+    errorMessage.value = null;
+    infoMessage.value = null;
+    nextTick(() => codeInput.value?.focus());
+}
+
+function backToCredentials() {
+    step.value = 'credentials';
+    code.value = '';
+    password.value = '';
+    infoMessage.value = null;
+}
+
+async function submitChallenge() {
+    if (submitting.value || !code.value.trim()) return;
+    submitting.value = true;
+    errorMessage.value = null;
+    infoMessage.value = null;
+    const url = step.value === 'email' ? '/portal/login/verify-email' : '/portal/login/two-factor';
+
+    try {
+        const { data } = await window.axios.post(url, { code: code.value });
+        if (data.challenge) {
+            showChallenge(data.challenge);
+            submitting.value = false;
+            return;
+        }
+        window.location.href = data.redirect || '/portal/dashboard';
+    } catch (error) {
+        const response = error.response?.data || {};
+        if (response.restart) backToCredentials();
+        errorMessage.value = response.message || t('login.generic_error');
+        code.value = '';
+        submitting.value = false;
+        nextTick(() => codeInput.value?.focus());
+    }
+}
+
+async function resendEmailCode() {
+    if (resending.value) return;
+    resending.value = true;
+    errorMessage.value = null;
+    try {
+        const { data } = await window.axios.post('/portal/login/resend-email');
+        infoMessage.value = data.message || t('login.code_resent', 'A new code has been sent.');
+    } catch (error) {
+        const response = error.response?.data || {};
+        if (response.restart) backToCredentials();
+        errorMessage.value = response.message || t('login.generic_error');
+    } finally {
+        resending.value = false;
     }
 }
 
@@ -62,12 +134,54 @@ onMounted(() => playAuthEntrance(panelFormEl.value));
                     </div>
                     <div class="mw-login-panel__form" ref="panelFormEl">
                         <AuthGlassAmbient />
-                        <div class="mw-role-switch mw-login-role-switch" role="tablist">
+                        <form v-if="step !== 'credentials'" class="mw-login-form" @submit.prevent="submitChallenge">
+                            <template v-if="step === 'email'">
+                                <h1 class="mw-login-form__title">{{ t('login.new_device_title', 'Verify it\'s you') }}</h1>
+                                <p class="mw-login-form__subtitle">{{ t('login.new_device_subtitle', 'You\'re signing in from a new device. We\'ve sent a verification code to') }} <strong>{{ maskedEmail }}</strong></p>
+                            </template>
+                            <template v-else>
+                                <h1 class="mw-login-form__title">{{ t('login.two_factor_title', 'Two-factor authentication') }}</h1>
+                                <p class="mw-login-form__subtitle">{{ t('login.two_factor_subtitle', 'Open your authenticator app (Authy, Google Authenticator…) and enter the 6-digit code for MW Realty.') }}</p>
+                            </template>
+
+                            <p v-if="errorMessage" class="mw-form-feedback mw-form-feedback--error" role="alert">{{ errorMessage }}</p>
+                            <p v-if="infoMessage" class="mw-form-feedback" role="status">{{ infoMessage }}</p>
+
+                            <div class="mw-login-form__field">
+                                <label for="login-code">{{ step === 'email' ? t('login.email_code_label', 'Verification code') : t('login.two_factor_code_label', 'Authentication code') }}</label>
+                                <input
+                                    id="login-code"
+                                    ref="codeInput"
+                                    v-model="code"
+                                    type="text"
+                                    :inputmode="step === 'email' ? 'numeric' : 'text'"
+                                    autocomplete="one-time-code"
+                                    maxlength="20"
+                                    :placeholder="step === 'email' ? '••••••' : '000000'"
+                                    style="letter-spacing: 0.3em; text-align: center; font-weight: 700;"
+                                    required
+                                >
+                            </div>
+
+                            <p v-if="step === 'totp'" class="mw-login-form__subtitle" style="font-size: 0.85em;">{{ t('login.recovery_hint', 'Lost your phone? Enter one of your recovery codes instead.') }}</p>
+
+                            <button type="submit" class="mw-login-form__submit" :disabled="submitting">{{ submitting ? t('login.verifying', 'Verifying…') : t('login.verify', 'Verify') }}</button>
+
+                            <p class="mw-login-form__signup">
+                                <template v-if="step === 'email'">
+                                    <a href="#" @click.prevent="resendEmailCode">{{ resending ? t('login.resending', 'Sending…') : t('login.resend_code', 'Resend code') }}</a>
+                                    &nbsp;·&nbsp;
+                                </template>
+                                <a href="#" @click.prevent="backToCredentials">{{ t('login.back_to_login', 'Back to sign in') }}</a>
+                            </p>
+                        </form>
+
+                        <div v-if="step === 'credentials'" class="mw-role-switch mw-login-role-switch" role="tablist">
                             <button type="button" :class="{ 'is-active': accountType === 'user' }" @click="accountType = 'user'">{{ t('login.tab_user') }}</button>
                             <button type="button" :class="{ 'is-active': accountType === 'agent' }" @click="accountType = 'agent'">{{ t('login.tab_agent_agency') }}</button>
                         </div>
 
-                        <form class="mw-login-form" :action="formAction" method="post" @submit.prevent="handleSubmit">
+                        <form v-if="step === 'credentials'" class="mw-login-form" :action="formAction" method="post" @submit.prevent="handleSubmit">
                             <input type="hidden" name="_token" :value="csrfToken">
                             <input type="hidden" name="login_type" :value="accountType">
                             <h1 class="mw-login-form__title">{{ t('login.title') }}</h1>

@@ -105,7 +105,6 @@
         const leadTagsSpinner = document.getElementById('leadTagsSpinner');
         const tagOverflowPopover = document.getElementById('leadTagOverflowPopover');
         const tagOverflowList = document.getElementById('leadTagOverflowList');
-        const tagOverflowAddBtn = document.getElementById('leadTagOverflowAddBtn');
         let currentOverflowLeadId = null;
         let currentOverflowAnchor = null;
         const leadTableFieldsModal = new bootstrap.Modal(document.getElementById('leadTableFieldsModal'));
@@ -354,6 +353,9 @@
             const statusColumn = document.getElementById('leadFormStatusCol');
 
             statusColumn?.classList.toggle('d-none', !editing);
+            // Source is picked when creating a lead; afterwards it's fixed (disabled = not submitted).
+            const sourceSelect = document.getElementById('leadFormSource');
+            if (sourceSelect) sourceSelect.disabled = editing;
             sourceColumn?.classList.toggle('col-sm-6', editing || !!ownerColumn);
             sourceColumn?.classList.toggle('col-sm-12', !editing && !ownerColumn);
             ['leadFormStageCol', 'leadFormTagsGroup'].forEach(function (id) {
@@ -522,12 +524,6 @@
             const removeBtn = e.target.closest('.portal-tag-popover-remove');
             if (!removeBtn || !currentOverflowLeadId) return;
             removeLeadTag(currentOverflowLeadId, removeBtn.dataset.tagId);
-        });
-
-        tagOverflowAddBtn.addEventListener('click', function () {
-            const leadId = currentOverflowLeadId;
-            closeTagOverflowPopover();
-            if (leadId) openTagsModal(leadId);
         });
 
         document.addEventListener('click', function (e) {

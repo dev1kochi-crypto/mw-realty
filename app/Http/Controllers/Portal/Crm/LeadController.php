@@ -364,7 +364,6 @@ class LeadController extends Controller
             'country' => ['nullable', 'string', 'max:100'],
             'message' => ['nullable', 'string', 'max:5000'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
-            'source_id' => ['required', 'integer', Rule::exists('lead_sources', 'id')->where($leadOrViewer)], // changed, never cleared
             'owner_id' => ['required', 'integer', 'exists:portal_users,id'],
         ];
         $sent = array_intersect_key($rules, $request->all());
@@ -376,7 +375,6 @@ class LeadController extends Controller
         $message = match (true) {
             isset($data['status']) => 'Lead marked as ' . ucfirst($data['status']) . '.',
             array_key_exists('owner_id', $data) => 'Lead transferred.',
-            array_key_exists('source_id', $data) => 'Source updated.',
             isset($data['name']) => 'Name updated.',
             default => 'Lead details updated.',
         };
@@ -406,7 +404,7 @@ class LeadController extends Controller
             'message' => $request->input('message'),
             'status' => $request->input('status'),
             'stage_id' => $request->input('stage_id') ?: $lead->stage_id, // a lead always has a stage
-            'source_id' => $request->input('source_id') ?: $lead->source_id, // never cleared
+            'source_id' => $lead->source_id, // fixed once the lead exists — not editable
         ], $request->input('tags', []));
 
         if ($this->isAdmin() && $request->filled('owner_id') && (int) $request->input('owner_id') !== $lead->portal_user_id) {

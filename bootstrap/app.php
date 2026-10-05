@@ -43,6 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'portal.or.cms' => \App\Http\Middleware\PortalOrCmsAuth::class,
             'customer.auth' => \App\Http\Middleware\EnsureCustomerAuthenticated::class,
             'portal.approved' => \App\Http\Middleware\EnsurePortalAccountApproved::class,
+            'portal.2fa' => \App\Http\Middleware\EnsurePortalTwoFactor::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

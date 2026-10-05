@@ -219,7 +219,8 @@ const routes = [
     {
         path: '/:pathMatch(.*)*',
         name: 'not-found',
-        component: () => import('../pages/NotFound.vue'),
+        // Also serves "Blog design" landing pages (/{slug}) — see LandingOrNotFound.vue.
+        component: () => import('../pages/LandingOrNotFound.vue'),
         meta: { title: 'Page Not Found | MW Realty', bodyClass: 'agents-page not-found-page' },
     },
 ];

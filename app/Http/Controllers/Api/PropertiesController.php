@@ -66,6 +66,7 @@ class PropertiesController extends Controller
                 'max_area' => $request->input('max_sqft', $request->input('max_area')),
                 'amenities' => $request->input('amenities'),
                 'floor_plans' => $request->input('floor_plans'),
+                'open_house' => $request->input('open_house'),
                 // ?premium=1 — the /premium-properties page (featured listings, residential + commercial).
                 'premium' => $request->input('premium'),
                 // ?marketing=1 — /marketing-properties (Super Admin's Marketing Properties list).

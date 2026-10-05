@@ -110,7 +110,9 @@ class PropertiesPageService
             ->when($refine['max_price'] !== null, fn ($q) => $q->where('price', '<=', $refine['max_price']))
             ->when($refine['min_area'] !== null, fn ($q) => $q->where('sqft', '>=', $refine['min_area']))
             ->when($refine['max_area'] !== null, fn ($q) => $q->where('sqft', '<=', $refine['max_area']))
-            ->when($refine['floor_plans'], fn ($q) => $q->has('floorPlans'));
+            ->when($refine['floor_plans'], fn ($q) => $q->has('floorPlans'))
+            // Open house: the listing's last open house / viewing day is today or later.
+            ->when($refine['open_house'], fn ($q) => $q->whereDate('last_open_house_date', '>=', today()));
 
         // ?agent= → that agent's listings; ?agency= → the agency's (same sets as their profile pages).
         if ($refine['agent']) {
@@ -140,21 +142,22 @@ class PropertiesPageService
     }
 
     /**
-     * Amenity keys the listing filter panels offer → the label text each one matches. The last
+     * Amenity keys the listing filter panels offer → [property_details column, option codes from
+     * Master › Property Options] — a listing matches when it has any of those options. The last
      * group is for commercial listings (/commercial's panel).
      */
-    private const AMENITY_LABELS = [
-        'community-pool' => 'Pool',
-        'gym' => 'Gym',
-        'security' => 'Security',
-        'balcony' => 'Balcony',
-        'concierge' => 'Concierge',
-        'private-pool' => 'Private Pool',
-        'pantry' => 'Pantry',
-        'meeting-rooms' => 'Meeting Room',
-        'metro' => 'Metro',
-        'loading-bay' => 'Loading',
-        'central-ac' => 'Central',
+    private const AMENITY_OPTIONS = [
+        'community-pool' => ['amenities', ['shared_pool', 'childrens_pool']],
+        'gym' => ['amenities', ['shared_gym', 'private_gym']],
+        'security' => ['amenities', ['security']],
+        'balcony' => ['amenities', ['balcony']],
+        'concierge' => ['amenities', ['concierge']],
+        'private-pool' => ['amenities', ['private_pool']],
+        'pantry' => ['amenities', ['pantry']],
+        'meeting-rooms' => ['amenities', ['meeting_rooms']],
+        'metro' => ['easy_access', ['metro_station']],
+        'loading-bay' => ['amenities', ['loading_bay']],
+        'central-ac' => ['amenities', ['central_ac']],
     ];
 
     /** Whitelists and casts the optional refine filters so they're safe to query and to cache on. */
@@ -180,7 +183,7 @@ class PropertiesPageService
         $number = fn ($v) => is_numeric($v) && $v >= 0 ? (float) $v : null;
         $amenities = array_values(array_intersect(
             (array) ($refine['amenities'] ?? []),
-            array_merge(array_keys(self::AMENITY_LABELS), ['furnished', 'parking'])
+            array_merge(array_keys(self::AMENITY_OPTIONS), ['furnished', 'parking'])
         ));
         sort($amenities);
 
@@ -194,6 +197,7 @@ class PropertiesPageService
             'max_area' => $number($refine['max_area'] ?? null),
             'amenities' => $amenities,
             'floor_plans' => filter_var($refine['floor_plans'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            'open_house' => filter_var($refine['open_house'] ?? false, FILTER_VALIDATE_BOOLEAN),
             // Premium page: featured listings from Properties and Commercial (see getListingData).
             'premium' => filter_var($refine['premium'] ?? false, FILTER_VALIDATE_BOOLEAN),
             // /marketing-properties: Super Admin's Marketing Properties list, in its order.
@@ -214,8 +218,8 @@ class PropertiesPageService
     }
 
     /**
-     * Furnished/parking are real columns on property_details; the rest match the free-text amenity
-     * labels agents enter (stored as JSON), so e.g. "gym" finds "Gym" or "Fully Equipped Gym".
+     * Furnished/parking are real columns on property_details; the rest match the option codes the
+     * listing's amenity / easy access rows carry (AMENITY_OPTIONS), whatever the option is named now.
      */
     private function applyAmenity($query, string $amenity): void
     {
@@ -223,7 +227,10 @@ class PropertiesPageService
             // Any furnishing option except "unfurnished" (furnished, semi-furnished, …) counts as furnished.
             'furnished' => $query->whereHas('details', fn ($q) => $q->whereNotNull('furnished')->where('furnished', '!=', \App\Models\PropertyDetail::UNFURNISHED)),
             'parking' => $query->whereHas('details', fn ($q) => $q->where('parking', '>', 0)),
-            default => $query->whereHas('details', fn ($q) => $q->where('amenities', 'like', '%' . self::AMENITY_LABELS[$amenity] . '%')),
+            default => $query->whereHas('details', function ($q) use ($amenity) {
+                [$column, $keys] = self::AMENITY_OPTIONS[$amenity];
+                $q->where(fn ($q) => collect($keys)->each(fn ($key) => $q->orWhereJsonContains($column, ['key' => $key])));
+            }),
         };
     }
 

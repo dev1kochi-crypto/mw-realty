@@ -255,22 +255,11 @@
                         </div>
                     </section>
 
-                    {{-- Source --}}
-                    <section class="portal-lp-card" data-card>
+                    {{-- Source — where the lead came from; fixed once captured, so read-only. --}}
+                    <section class="portal-lp-card">
                         <header class="portal-lp-card-head"><h2>Source</h2></header>
                         <div class="portal-lp-card-body">
-                            <button type="button" class="portal-lp-pill-btn" data-card-view data-card-edit title="Change source">
-                                {{ $lead->source?->name ?: 'No source' }} <i class="fas fa-pen-to-square ms-1"></i>
-                            </button>
-                            <form class="d-none" data-card-form data-lead-form data-url="{{ $leadUrl }}/fields" data-method="PATCH">
-                                <select name="source_id" class="form-select" aria-label="Source">
-                                    <option value="">No source</option>
-                                    @foreach($sources as $source)
-                                    <option value="{{ $source->id }}" @selected($lead->source_id === $source->id)>{{ $source->name }}</option>
-                                    @endforeach
-                                </select>
-                                @include('portal.crm.leads._show_form_actions')
-                            </form>
+                            <span class="portal-lp-pill-btn" style="cursor: default;">{{ $lead->source?->name ?: 'No source' }}</span>
                             <div class="text-muted small mt-2">Came in via {{ $channel }}</div>
                         </div>
                     </section>

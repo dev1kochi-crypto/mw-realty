@@ -6,13 +6,19 @@ import { useBlogPost } from '../composables/useBlogPost';
 import { useLanguages } from '../composables/useLanguages';
 import { useStaticText } from '../composables/useStaticText';
 
+// landingSlug: render a "Blog design" landing page (/{slug}) with this same layout — set by
+// LandingOrNotFound.vue on the catch-all route. Breadcrumb is Home / title, no prev/next pager.
+const props = defineProps({ landingSlug: { type: String, default: null } });
+const isLanding = computed(() => !!props.landingSlug);
+
 const route = useRoute();
 const { blogPost, notFound, fetchBlogPost } = useBlogPost();
 const { selectedLanguage } = useLanguages();
 const { t } = useStaticText();
 
 function load() {
-    fetchBlogPost(route.params.slug, selectedLanguage.value?.code);
+    if (isLanding.value) fetchBlogPost(props.landingSlug, selectedLanguage.value?.code, 'landing');
+    else fetchBlogPost(route.params.slug, selectedLanguage.value?.code);
 }
 
 onMounted(load);
@@ -50,7 +56,7 @@ const nextPost = computed(() => blogPost.value?.next || null);
             </div>
             <nav class="mw-about-crumb" :aria-label="t('blog_details.breadcrumb_aria')">
                 <div class="container-ctn">
-                    <p><router-link to="/">{{ t('blog_details.breadcrumb_home') }}</router-link><span class="mw-about-crumb__sep"> / </span><router-link to="/blogs">{{ t('blog_details.breadcrumb_blog') }}</router-link><span v-if="post.category_label"><span class="mw-about-crumb__sep"> / </span><span>{{ post.category_label }}</span></span></p>
+                    <p><router-link to="/">{{ t('blog_details.breadcrumb_home') }}</router-link><span v-if="isLanding"><span class="mw-about-crumb__sep"> / </span><span>{{ post.title }}</span></span><template v-else><span class="mw-about-crumb__sep"> / </span><router-link to="/blogs">{{ t('blog_details.breadcrumb_blog') }}</router-link></template><span v-if="post.category_label"><span class="mw-about-crumb__sep"> / </span><span>{{ post.category_label }}</span></span></p>
                 </div>
             </nav>
         </section>
@@ -60,7 +66,7 @@ const nextPost = computed(() => blogPost.value?.next || null);
                 <div class="mw-blog-details__layout">
 
                     <article class="mw-blog-details__main">
-                        <div class="mw-blog-details__cover">
+                        <div v-if="post.cover_image_url" class="mw-blog-details__cover">
                             <img :src="post.cover_image_url" :alt="post.cover_image_alt || post.title">
                         </div>
 
@@ -90,7 +96,7 @@ const nextPost = computed(() => blogPost.value?.next || null);
                             <a href="#" :aria-label="t('blog_details.share_instagram_aria')"><img src="/frontend/assets/images/icons/social-instagram.svg" alt=""></a>
                         </div>
 
-                        <nav class="mw-blog-details__pager" :aria-label="t('blog_details.pager_aria')">
+                        <nav v-if="!isLanding" class="mw-blog-details__pager" :aria-label="t('blog_details.pager_aria')">
                             <router-link v-if="previousPost" :to="`/blog-details/${previousPost.slug}`" class="mw-blog-details__pager-item">
                                 <span class="mw-blog-details__pager-dir">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>

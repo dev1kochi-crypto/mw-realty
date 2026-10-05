@@ -36,12 +36,9 @@ class LandingPageController extends Controller
             return response($document)->header('Content-Type', 'text/html; charset=UTF-8');
         }
 
-        $title = $page->getTranslation('title', $lang);
-        $content = $page->getTranslation('content', $lang);
-        $isRtl = in_array($lang, LandingPage::RTL_LANGUAGE_CODES, true);
-        $metaTags = $page->metaTagsHtml(includeTitle: false);
-
-        return response()->view('landing-pages.show-template', compact('page', 'lang', 'title', 'content', 'metaTags', 'isRtl'));
+        // "Blog design" page: served by the Vue app with the blog detail layout — the catch-all route
+        // (LandingOrNotFound.vue) loads it from /api/landing-pages/{slug}.
+        return app(\App\Http\Controllers\SpaController::class)->landingPage($request, $page);
     }
 
     /**

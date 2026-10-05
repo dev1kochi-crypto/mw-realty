@@ -13,11 +13,11 @@
     $P = \App\Models\Property::class;
     // DLD permit review pills: [icon, hint, needs the account's action?]
     $reviewOrder = [
-        $P::COMPLIANCE_CHANGES_REQUESTED => ['fa-rotate-left', 'Fix and save to resubmit', true],
+        $P::COMPLIANCE_CHANGES_REQUESTED => ['fa-rotate-left', 'Taken down by MW Realty — fix and save', true],
         $P::COMPLIANCE_EXPIRED => ['fa-ban', 'Add the renewed permit', true],
-        $P::COMPLIANCE_DRAFT => ['fa-file-circle-exclamation', 'Add permit + Form A', true],
-        $P::COMPLIANCE_PENDING => ['fa-hourglass-half', 'Waiting for MW Realty', false],
-        $P::COMPLIANCE_APPROVED => ['fa-circle-check', 'Live on the website', false],
+        $P::COMPLIANCE_DRAFT => ['fa-file-circle-exclamation', 'Add permit details', true],
+        $P::COMPLIANCE_PENDING => ['fa-shield-halved', 'Validate the permit to go live', true],
+        $P::COMPLIANCE_APPROVED => ['fa-circle-check', 'Permit verified — can be live', false],
     ];
     $needsAction = collect($reviewOrder)->filter(fn ($meta) => $meta[2])->keys()->sum(fn ($key) => (int) ($reviewCounts[$key] ?? 0));
 @endphp
@@ -109,8 +109,8 @@
         {{-- DLD permit review: each pill filters the grid (click again to clear). --}}
         @if($reviewCounts->sum() > 0)
         <div class="pr-review" aria-label="DLD permit review">
-            <span class="pr-review__title" title="Listings go live only after MW Realty approves their DLD permit.">
-                <i class="fas fa-file-shield"></i> DLD permit
+            <span class="pr-review__title" title="A listing goes live once its advertising permit is verified (Validate in Core details).">
+                <i class="fas fa-file-shield"></i> Permit
                 @if(!$isAdmin && $needsAction > 0)<span class="pr-review__alert" title="Listings that need your action">{{ $needsAction }}</span>@endif
             </span>
             <div class="pr-review__pills">
@@ -183,10 +183,10 @@
                     // chip on the photo + a one-line bar in the Premium slot, so every card keeps its layout.
                     $notLive = !$property->canGoLive() && !$property->isSold();
                     [$reviewIcon, $reviewText, $reviewCta] = match ($property->compliance_status) {
-                        $P::COMPLIANCE_CHANGES_REQUESTED => ['fa-rotate-left', $property->compliance_note ?: 'MW Realty requested changes', 'Fix now'],
+                        $P::COMPLIANCE_CHANGES_REQUESTED => ['fa-rotate-left', 'Taken down by MW Realty — update and validate the permit', 'Fix now'],
                         $P::COMPLIANCE_EXPIRED => ['fa-ban', 'Permit expired — add the renewed permit', 'Renew'],
-                        $P::COMPLIANCE_PENDING => ['fa-hourglass-half', 'Waiting for MW Realty approval', null],
-                        default => ['fa-file-circle-exclamation', 'Add the DLD permit + Form A to go live', 'Add'],
+                        $P::COMPLIANCE_PENDING => ['fa-shield-halved', 'Permit not verified — validate it to go live', 'Validate'],
+                        default => ['fa-file-circle-exclamation', 'Add the permit details to go live', 'Add'],
                     };
                 @endphp
                 @if($notLive)
@@ -237,7 +237,7 @@
                 </div>
 
                 @if($notLive && !$property->featured && !$scheduled)
-                <a href="{{ route($routePrefix . '.edit', $property->id) }}#tab-compliance" class="portal-property-card__feature pr-card-review pr-tone-{{ $property->compliance_status }}" title="{{ $reviewText }}">
+                <a href="{{ route($routePrefix . '.edit', $property->id) }}#tab-basic" class="portal-property-card__feature pr-card-review pr-tone-{{ $property->compliance_status }}" title="{{ $reviewText }}">
                     <span class="text-truncate"><i class="fas {{ $reviewIcon }} me-1"></i>{{ $reviewText }}</span>
                     @if($reviewCta)<span class="pr-card-review__cta">{{ $reviewCta }} <i class="fas fa-arrow-right"></i></span>@endif
                 </a>

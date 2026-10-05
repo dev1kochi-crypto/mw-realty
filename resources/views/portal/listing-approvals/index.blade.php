@@ -1,6 +1,6 @@
 @extends('portal.layouts.app')
 
-@section('title', 'Listing Approvals')
+@section('title', 'Listing Permits')
 
 @include('portal.listing-approvals._styles')
 
@@ -8,28 +8,27 @@
 @php
     $P = \App\Models\Property::class;
     $tabs = [
-        $P::COMPLIANCE_PENDING => ['fa-hourglass-half', 'Waiting for your review. Check the permit on DLD, then approve or send back.'],
-        $P::COMPLIANCE_CHANGES_REQUESTED => ['fa-rotate-left', 'Sent back to the agency / agent with a note. They reappear under Pending once fixed and saved.'],
-        $P::COMPLIANCE_DRAFT => ['fa-file-circle-exclamation', 'Saved without a complete DLD permit or Form A. Nothing to review until the agent adds them.'],
-        $P::COMPLIANCE_APPROVED => ['fa-circle-check', 'Live on the website. Take one down any time with "Request changes".'],
-        $P::COMPLIANCE_EXPIRED => ['fa-ban', 'Taken offline automatically when the DLD permit expired. They return to Pending once a renewed permit is saved.'],
+        $P::COMPLIANCE_APPROVED => ['fa-circle-check', 'Permit verified (or none needed) — these can be live. Take one down any time if something is wrong.'],
+        $P::COMPLIANCE_PENDING => ['fa-shield-halved', 'Permit entered but not validated with DLD / ADREC yet, so these are not on the website. They go live by themselves once the agency / agent clicks Validate in the property form.'],
+        $P::COMPLIANCE_DRAFT => ['fa-file-circle-exclamation', 'Saved without complete permit details — not on the website until the agent adds and validates the permit.'],
+        $P::COMPLIANCE_EXPIRED => ['fa-ban', 'Taken offline automatically when the permit expired. They come back once a renewed permit is validated.'],
+        $P::COMPLIANCE_CHANGES_REQUESTED => ['fa-rotate-left', 'Taken down by you. They stay offline until the agent changes the permit details and validates it again.'],
     ];
     $daysLeft = fn ($date) => $date ? (int) today()->diffInDays($date, false) : null;
 @endphp
 
 <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
     <div>
-        <div class="portal-section-title mb-1">Listing Approvals</div>
-        <div class="text-muted small" style="max-width: 720px;">Every agency / agent listing needs a DLD advertising permit (Trakheesi), its Madmoun QR code and the owner's Form A before it can go live. Verify each permit with DLD before approving.</div>
+        <div class="portal-section-title mb-1">Listing Permits</div>
+        <div class="text-muted small" style="max-width: 720px;">An overview of every listing's advertising permit. Agencies and agents validate the permit with DLD / ADREC in the property form; a verified listing goes live by itself — nothing to approve here. Not-verified and expired listings never show on the website.</div>
     </div>
     <a href="https://dubailand.gov.ae/en/eservices/validate-real-estate-licenses-and-permits/" target="_blank" rel="noopener" class="btn btn-sm btn-portal-primary"><i class="fas fa-shield-halved me-1"></i>Verify a permit on DLD</a>
 </div>
 
-<nav class="la-status-grid mb-4" aria-label="Review status">
+<nav class="la-status-grid mb-4" aria-label="Permit status">
     @foreach($tabs as $key => [$icon])
     @php $count = (int) ($counts[$key] ?? 0); @endphp
     <a href="{{ route('portal.listing-approvals.index', ['tab' => $key]) }}" class="la-status la-tone-{{ $key }} {{ $tab === $key ? 'is-active' : '' }}" @if($tab === $key) aria-current="page" @endif>
-        @if($key === $P::COMPLIANCE_PENDING && $count > 0)<span class="la-status__alert" title="Waiting for review"></span>@endif
         <span class="la-status__icon"><i class="fas {{ $icon }}"></i></span>
         <span class="min-w-0">
             <span class="la-status__count d-block">{{ number_format($count) }}</span>
@@ -56,7 +55,7 @@
     </div>
     @else
     <div class="la-row la-row--head">
-        <div>Property</div><div>Agency / Agent</div><div>DLD permit</div><div>{{ $tab === $P::COMPLIANCE_APPROVED ? 'Approved' : 'Submitted' }}</div><div></div>
+        <div>Property</div><div>Agency / Agent</div><div>Permit</div><div>{{ $tab === $P::COMPLIANCE_APPROVED ? 'Verified' : 'Saved' }}</div><div></div>
     </div>
     @foreach($listings as $property)
     @php
@@ -88,10 +87,21 @@
             @else
             <span class="la-chip la-chip--ok"><i class="far fa-calendar"></i>Until {{ $property->permit_expires_at->format('d M Y') }}</span>
             @endif
+            @if(\App\Support\PermitRules::validates($property->permit_type))
+                @if($property->permit_verified_at && in_array($property->permit_verified_via, ['dld', 'adrec'], true))
+                <span class="la-chip la-chip--ok mt-1"><i class="fas fa-circle-check"></i>Verified with {{ \App\Support\PermitRules::issuer($property->permit_type) }}</span>
+                @elseif($property->permit_verified_at)
+                <span class="la-chip la-chip--ok mt-1" title="Approved before online validation"><i class="fas fa-circle-check"></i>Verified</span>
+                @else
+                <span class="la-chip la-chip--warn mt-1" title="Waiting for the agency / agent to validate it"><i class="fas fa-shield-halved"></i>Not verified</span>
+                @endif
+            @endif
+            @elseif(!\App\Support\PermitRules::requiresPermit($property->permit_type) && $property->permit_type)
+            <span class="la-chip"><i class="fas fa-circle-info"></i>No permit needed</span>
             @else
             <span class="la-chip la-chip--warn"><i class="fas fa-triangle-exclamation"></i>No permit</span>
             @endif
-            @if(!$property->authorization_document)<span class="la-chip la-chip--warn mt-1"><i class="fas fa-file-circle-xmark"></i>No Form A</span>@endif
+
         </div>
         <div class="small">
             @if($when)
@@ -103,7 +113,7 @@
         </div>
         <div class="la-row__action text-end">
             <a href="{{ route('portal.listing-approvals.show', $property->id) }}" class="btn btn-sm {{ $tab === $P::COMPLIANCE_PENDING ? 'btn-portal-primary' : 'portal-btn-ghost' }}">
-                {{ $tab === $P::COMPLIANCE_PENDING ? 'Review' : 'Open' }} <i class="fas fa-arrow-right ms-1"></i>
+                Open <i class="fas fa-arrow-right ms-1"></i>
             </a>
         </div>
     </div>

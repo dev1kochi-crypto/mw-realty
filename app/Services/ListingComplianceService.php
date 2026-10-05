@@ -2,15 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\CmsKit\Admin;
 use App\Models\PortalUser;
 use App\Models\Property;
 use App\Models\PropertyComplianceLog;
 use App\Notifications\ListingComplianceNotification;
-use App\Notifications\ListingReviewRequestedNotification;
 use App\Mail\ListingComplianceMail;
-use App\Mail\ListingReviewRequestedMail;
-use App\Models\CmsKit\SiteInformation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,35 +14,24 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 /**
- * Dubai listing compliance: a listing is only allowed on the website once it has
- *   1. a DLD advertising permit (Trakheesi permit number + expiry + Madmoun QR), which the
- *      brokerage obtains from DLD — the platform never issues permits, it records and checks them;
- *   2. the owner's marketing authorisation (RERA Form A) uploaded;
- *   3. Super Admin's review on the Listing Approvals page.
+ * Listing compliance: a listing may be on the website only while the advertising permit its emirate
+ * needs (App\Support\PermitRules — DLD / RERA, DTCM, ADREC, or none for DIFC / JAFZA and the Northern
+ * Emirates outside Al Ain) is verified — by the agency / agent with Validate in the property form
+ * (App\Services\Permits\PermitVerifier) — and not expired. There is no approval step: the state is
+ * worked out on every save (stateFor()), and Super Admin's Listing Permits page only shows it (plus
+ * "take down" for a wrong or reported listing).
  *
- * The listing's `status` (website on/off) can only be true while compliance_status is APPROVED and
- * the permit hasn't expired (Property::canGoLive()). Changing permit / Form A details or the
- * advertised price, purpose, type, bedrooms or size sends an approved listing back for review, since
- * the DLD permit is issued for those exact details. Expired permits are taken off the site daily by
- * `properties:expire-permits`.
- *
- * When DLD grants Trakheesi API access, permit validation belongs here (before approve()) — the
- * rest of the application only reads compliance_status.
+ * The listing's `status` (website on/off) can only be true while compliance_status is APPROVED
+ * ("Verified") and the permit hasn't expired (Property::canGoLive()). Expired permits are taken off
+ * the site daily by `properties:expire-permits`.
  */
 class ListingComplianceService
 {
-    /** Fields the DLD permit / Form A cover — any change on an approved listing means a new review. */
+    /** Fields the permit covers — a change re-works out the permit state on save. */
     public const MATERIAL_FIELDS = [
+        'emirate', 'permit_type', 'permit_city',
         'permit_number', 'permit_expires_at', 'permit_qr', 'permit_verification_url',
-        'authorization_type', 'authorization_expires_at', 'authorization_document',
-        'title_deed_no', 'title_deed_document',
         'price', 'listing_type', 'property_type', 'bedrooms', 'sqft',
-    ];
-
-    /** Private compliance documents (served only through the portal, never public URLs). */
-    public const DOCUMENT_FIELDS = [
-        'authorization_document' => 'Form A (marketing agreement)',
-        'title_deed_document' => 'Title deed / Oqood',
     ];
 
     public const EXPIRY_REMINDER_DAYS = 7;
@@ -61,7 +46,7 @@ class ListingComplianceService
         return collect(self::MATERIAL_FIELDS)->mapWithKeys(fn ($field) => [$field => $this->normalise($property->{$field})])->all();
     }
 
-    /** Saves the permit QR (public — shown on the website) and the private Form A / title deed files. */
+    /** Saves the permit QR (public — shown on the website). */
     public function storeUploads(Request $request, Property $property): void
     {
         $updates = [];
@@ -69,89 +54,81 @@ class ListingComplianceService
             $this->files->delete($property->permit_qr);
             $updates['permit_qr'] = $this->files->store($request->file('permit_qr'), 'properties/permits');
         }
-        foreach (array_keys(self::DOCUMENT_FIELDS) as $field) {
-            if ($request->hasFile($field)) {
-                $this->files->delete($property->{$field}, 'kyc');
-                $updates[$field] = $this->files->store($request->file($field), 'property-compliance/' . $property->id, 'kyc');
-            }
-        }
         if ($updates) {
             $property->update($updates);
         }
     }
 
-    /** What still has to be provided before the listing can be reviewed (empty = ready). */
+    /** Permit details still missing (empty = complete, ready to be validated). */
     public function missingItems(Property $property): array
     {
         $missing = [];
-        if (!$property->permit_number) {
-            $missing[] = 'DLD advertising permit number (Trakheesi)';
+        $type = $property->permit_type;
+        if (!$property->emirate) {
+            $missing[] = 'Emirate';
+        } elseif (!$type) {
+            $missing[] = 'Permit details (choose the city)';
         }
-        if (!$property->permit_expires_at) {
-            $missing[] = 'Permit expiry date';
-        } elseif ($property->permit_expires_at->lt(today())) {
-            $missing[] = 'A valid permit — the recorded one has expired';
+        // DIFC / JAFZA and Northern Emirates outside Al Ain need no advertising permit.
+        if (\App\Support\PermitRules::requiresPermit($type)) {
+            $issuer = \App\Support\PermitRules::issuer($type);
+            if (!$property->permit_number) {
+                $missing[] = "{$issuer} advertising permit number";
+            }
+            if (!$property->permit_expires_at) {
+                $missing[] = 'Permit expiry date';
+            } elseif ($property->permit_expires_at->lt(today())) {
+                $missing[] = 'A valid permit — the recorded one has expired';
+            }
+            if (\App\Support\PermitRules::requiresQr($type) && !$property->permit_qr) {
+                $missing[] = $type === 'adrec' ? 'Permit QR code (ADREC)' : 'Permit QR code (Madmoun)';
+            }
         }
-        if (!$property->permit_qr) {
-            $missing[] = 'Permit QR code (Madmoun)';
-        }
-        if (!$property->authorization_type) {
-            $missing[] = 'Marketing agreement type (exclusive / non-exclusive)';
-        }
-        if (!$property->authorization_document) {
-            $missing[] = 'Form A (owner\'s marketing agreement)';
-        } elseif ($property->authorization_expires_at && $property->authorization_expires_at->lt(today())) {
-            $missing[] = 'A valid Form A — the recorded one has expired';
-        }
-
         return $missing;
     }
 
     /**
-     * Called after every create / update from the listing form. Moves the review state on and keeps
-     * `status` off while the listing isn't approved. $before is null for a new listing.
+     * The permit state a listing is in right now — no approval step:
+     *   expired permit → EXPIRED · details incomplete → DRAFT · no permit needed or permit verified
+     *   (Validate) → VERIFIED (may be live) · otherwise → NOT VERIFIED (never on the website).
+     *   Listings Super Admin approved before validation existed keep their verification ("legacy").
+     */
+    public function stateFor(Property $property): string
+    {
+        $needsPermit = \App\Support\PermitRules::requiresPermit($property->permit_type);
+
+        return match (true) {
+            $needsPermit && $property->permit_expires_at && $property->permit_expires_at->lt(today()) => Property::COMPLIANCE_EXPIRED,
+            $this->missingItems($property) !== [] => Property::COMPLIANCE_DRAFT,
+            !$needsPermit, (bool) $property->permit_verified_at => Property::COMPLIANCE_APPROVED,
+            default => Property::COMPLIANCE_PENDING,
+        };
+    }
+
+    /**
+     * Called after every create / update from the listing form: works out the permit state and keeps
+     * `status` (website) off unless it's verified. $before is null for a new listing.
      */
     public function afterSave(Property $property, ?array $before): void
     {
         $property->refresh();
-        $complete = $this->missingItems($property) === [];
         $changed = $before === null || $before !== $this->snapshot($property);
         $current = $property->compliance_status;
-        $houseListing = $property->portal_user_id === null;
 
-        if ($this->actingAsAdmin()) {
-            // Super Admin is the reviewer: an MW Realty (house) listing is approved as soon as its
-            // permit details are complete. Agency / agent listings are approved explicitly from
-            // Listing Approvals, so an admin edit only moves a finished draft into the queue.
-            $next = match (true) {
-                $houseListing && $complete => Property::COMPLIANCE_APPROVED,
-                $houseListing => Property::COMPLIANCE_DRAFT,
-                $current === Property::COMPLIANCE_DRAFT && $complete => Property::COMPLIANCE_PENDING,
-                default => $current,
-            };
-        } else {
-            $next = match (true) {
-                // Edits outside the permit's details (description, photos…) keep an approval.
-                $current === Property::COMPLIANCE_APPROVED && !$changed => $current,
-                !$complete => in_array($current, [Property::COMPLIANCE_CHANGES_REQUESTED, Property::COMPLIANCE_EXPIRED], true) && !$changed
-                    ? $current : Property::COMPLIANCE_DRAFT,
-                $current === Property::COMPLIANCE_PENDING => $current,
-                default => Property::COMPLIANCE_PENDING,
-            };
-        }
+        // Taken down by Super Admin: stays down until the permit details change.
+        $next = $current === Property::COMPLIANCE_CHANGES_REQUESTED && !$changed ? $current : $this->stateFor($property);
 
         if ($next !== $current || $before === null) {
-            $this->transition($property, $next, $next === Property::COMPLIANCE_APPROVED && $this->actingAsAdmin() ? 'Approved on save (MW Realty listing).' : null, [
+            $note = match ($next) {
+                Property::COMPLIANCE_APPROVED => \App\Support\PermitRules::requiresPermit($property->permit_type)
+                    ? (in_array($property->permit_verified_via, ['dld', 'adrec'], true) ? 'Permit verified with ' . \App\Support\PermitRules::issuer($property->permit_type) . '.' : 'Permit verified.')
+                    : 'No advertising permit needed.',
+                Property::COMPLIANCE_PENDING => 'Permit not verified yet — validate it in Core details.',
+                default => null,
+            };
+            $this->transition($property, $next, $note, [
                 'compliance_submitted_at' => $next === Property::COMPLIANCE_PENDING ? now() : $property->compliance_submitted_at,
-            ] + ($next === Property::COMPLIANCE_APPROVED ? ['compliance_reviewed_at' => now(), 'compliance_reviewed_by' => Auth::guard('cms')->id()] : []));
-
-            if ($next === Property::COMPLIANCE_PENDING) {
-                $this->notifyAdmins($property, $current !== Property::COMPLIANCE_DRAFT);
-                // A Super Admin moving a finished draft into the queue isn't the account submitting it.
-                if (!$this->actingAsAdmin()) {
-                    $this->notifyAccount($property, 'submitted');
-                }
-            }
+            ] + ($next === Property::COMPLIANCE_APPROVED ? ['compliance_reviewed_at' => now(), 'permit_expiry_notified_at' => null] : []));
         }
 
         if ($property->status && !$property->canGoLive()) {
@@ -159,33 +136,18 @@ class ListingComplianceService
         }
     }
 
-    public function approve(Property $property, ?string $note = null): void
+    /** Super Admin takes a listing off the website (wrong details, a DLD complaint …) with a reason for the agent / agency. */
+    public function takeDown(Property $property): void
     {
-        DB::transaction(function () use ($property, $note) {
-            $this->transition($property, Property::COMPLIANCE_APPROVED, $note, [
-                'compliance_reviewed_at' => now(),
-                'compliance_reviewed_by' => Auth::guard('cms')->id(),
-                'permit_expiry_notified_at' => null,
-            ]);
-            // Approval publishes the listing; the owner can still switch it off afterwards.
-            $property->update(['status' => $property->canGoLive()]);
-        });
-
-        $this->notifyAccount($property, 'approved', $note);
-    }
-
-    /** Sends the listing back to the agent / agency with a reason. Also used to take a live listing down. */
-    public function requestChanges(Property $property, string $note): void
-    {
-        DB::transaction(function () use ($property, $note) {
-            $this->transition($property, Property::COMPLIANCE_CHANGES_REQUESTED, $note, [
+        DB::transaction(function () use ($property) {
+            $this->transition($property, Property::COMPLIANCE_CHANGES_REQUESTED, 'Taken down by MW Realty.', [
                 'compliance_reviewed_at' => now(),
                 'compliance_reviewed_by' => Auth::guard('cms')->id(),
                 'status' => false,
             ]);
         });
 
-        $this->notifyAccount($property, 'changes_requested', $note);
+        $this->notifyAccount($property, 'changes_requested');
     }
 
     /** Scheduled: takes listings whose DLD permit has expired off the website. Returns how many. */
@@ -229,7 +191,8 @@ class ListingComplianceService
     private function transition(Property $property, string $to, ?string $note, array $extra = [], ?string $actorType = null): void
     {
         $from = $property->getOriginal('compliance_status');
-        $property->update(['compliance_status' => $to, 'compliance_note' => $note] + $extra);
+        // The note only goes to the listing's history (there is no per-listing review note any more).
+        $property->update(['compliance_status' => $to] + $extra);
 
         [$type, $id] = $actorType === 'system' ? ['system', null] : $this->actor();
         PropertyComplianceLog::create([
@@ -257,18 +220,6 @@ class ListingComplianceService
             });
     }
 
-    /** Super Admin: bell for each superadmin, email to the site's notification address. */
-    private function notifyAdmins(Property $property, bool $isResubmission): void
-    {
-        // whereHas, not Admin::role(): that throws when the role doesn't exist.
-        $this->attempt('listing review bell', fn () => Admin::whereHas('roles', fn ($q) => $q->where('name', 'superadmin'))->get()
-            ->each(fn (Admin $admin) => $admin->notify(new ListingReviewRequestedNotification($property, $isResubmission))));
-
-        if ($adminEmail = SiteInformation::notificationEmail()) {
-            $this->attempt('listing review email', fn () => Mail::to($adminEmail)->queue((new ListingReviewRequestedMail($property, $isResubmission))->afterCommit()));
-        }
-    }
-
     private function attempt(string $what, callable $send): void
     {
         try {
@@ -276,11 +227,6 @@ class ListingComplianceService
         } catch (\Throwable $e) {
             Log::error("Failed to send {$what}: " . $e->getMessage());
         }
-    }
-
-    private function actingAsAdmin(): bool
-    {
-        return !Auth::guard('portal')->check() && (bool) Auth::guard('cms')->user()?->hasRole('superadmin');
     }
 
     private function actor(): array

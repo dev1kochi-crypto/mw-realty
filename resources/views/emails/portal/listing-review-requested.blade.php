@@ -20,10 +20,14 @@
     @if($agentName)<x-email.row label="Agent">{{ $agentName }}</x-email.row>@endif
 </x-email.details>
 
-<x-email.details title="DLD permit">
+<x-email.details title="{{ (\App\Support\PermitRules::issuer($property->permit_type) ?? 'Advertising') . ' permit' }}">
+    @if(\App\Support\PermitRules::requiresPermit($property->permit_type))
     <x-email.row label="Permit number" strong>{{ $property->permit_number }}</x-email.row>
     <x-email.row label="Expires">{{ $property->permit_expires_at?->format('d M Y') ?? '-' }}</x-email.row>
-    <x-email.row label="Form A">{{ \App\Models\Property::AUTHORIZATION_TYPES[$property->authorization_type] ?? '-' }}</x-email.row>
+    <x-email.row label="Verified online">{{ $property->permit_verified_at && in_array($property->permit_verified_via, ['dld', 'adrec'], true) ? 'Yes' : 'No — check before approving' }}</x-email.row>
+    @else
+    <x-email.row label="Permit">Not required ({{ \App\Support\PermitRules::TYPES[$property->permit_type]['label'] ?? '-' }})</x-email.row>
+    @endif
 </x-email.details>
 
 <x-email.callout tone="info" title="Before approving">Check the permit number on the DLD website (or scan the QR code) and make sure its details match the ad.</x-email.callout>

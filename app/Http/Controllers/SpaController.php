@@ -55,6 +55,14 @@ class SpaController extends Controller
         return $this->renderWithSeo(SeoMeta::resolve($blog->metadata, $fallback));
     }
 
+    /** A "Blog design" landing page — the Vue app (BlogDetails layout) with the page's SEO tags. */
+    public function landingPage(Request $request, \App\Models\CmsKit\LandingPage $page): Response
+    {
+        $fallback = array_merge($page->seoFallback(), ['canonical_url' => $request->url()]);
+
+        return $this->renderWithSeo(SeoMeta::resolve($page->metadata, $fallback));
+    }
+
     public function marketInsightDetails(Request $request, string $slug): Response
     {
         $insight = MarketInsight::where('slug', $slug)->where('status', true)->first();

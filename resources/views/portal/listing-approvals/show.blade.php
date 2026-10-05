@@ -1,6 +1,6 @@
 @extends('portal.layouts.app')
 
-@section('title', 'Review Listing')
+@section('title', 'Listing Permit')
 
 @include('portal.listing-approvals._styles')
 
@@ -9,14 +9,23 @@
     $P = \App\Models\Property::class;
     $expired = fn ($date) => $date && $date->lt(today());
     $thumb = $property->galleryImages()[0]['url'] ?? null;
-    $checks = [
-        'DLD permit number' => (bool) $property->permit_number,
+    $R = \App\Support\PermitRules::class;
+    $permitType = $property->permit_type;
+    $needsPermit = $R::requiresPermit($permitType);
+    $issuer = $R::issuer($permitType) ?? 'Permit';
+    $emirateLabel = \App\Models\FilterValue::whereHas('filter', fn ($q) => $q->where('key', \App\Models\Filter::EMIRATE_KEY))
+        ->where('value', $property->emirate)->first()?->getTranslation('label') ?? ($property->emirate ? \Illuminate\Support\Str::headline($property->emirate) : '—');
+    $verifiedOnline = $property->permit_verified_at && in_array($property->permit_verified_via, ['dld', 'adrec'], true);
+    $checks = $needsPermit ? array_filter([
+        "{$issuer} permit number" => (bool) $property->permit_number,
         'Permit valid (not expired)' => $property->permit_expires_at && !$expired($property->permit_expires_at),
-        'Madmoun QR code' => (bool) $property->permit_qr,
-        'Form A uploaded' => (bool) $property->authorization_document,
-        'Form A valid' => (bool) $property->authorization_document && !$expired($property->authorization_expires_at),
-        'Agency ORN on file' => (bool) $property->owner?->orn_number || !$property->owner || $property->owner->type !== 'company',
-    ];
+        'Permit QR code' => $R::requiresQr($permitType) ? (bool) $property->permit_qr : null,
+        'Permit verified' => $R::validates($permitType) ? (bool) $property->permit_verified_at : null,
+    ], fn ($v) => $v !== null) : ['No permit needed (' . ($R::TYPES[$permitType]['label'] ?? 'not set') . ')' => (bool) $permitType];
+    // What the authority's record says vs what the ad says (only when the permit was verified online).
+    $permitData = $property->permit_data ?? [];
+    $optionLabel = fn (string $key, ?string $value) => $value === null ? null
+        : (\App\Models\FilterValue::whereHas('filter', fn ($q) => $q->where('key', $key))->where('value', $value)->first()?->getTranslation('label') ?? $value);
 @endphp
 
 <a href="{{ route('portal.listing-approvals.index', ['tab' => $property->compliance_status]) }}" class="small text-decoration-none d-inline-block mb-2"><i class="fas fa-arrow-left me-1"></i>Back to {{ strtolower($property->complianceLabel()) }}</a>
@@ -36,12 +45,38 @@
 <div class="row g-3">
     <div class="col-xl-8">
         <div class="portal-card p-4 mb-3">
-            <div class="la-section-title"><i class="fas fa-file-shield"></i>DLD Advertising Permit</div>
+            <div class="la-section-title"><i class="fas fa-file-shield"></i>{{ $needsPermit ? "{$issuer} Advertising Permit" : 'Advertising Permit' }}</div>
+            <div class="row g-3 mb-3">
+                <div class="col-sm-4"><div class="la-field-label">Emirate</div><div class="la-field-value">{{ $emirateLabel }}</div></div>
+                <div class="col-sm-4"><div class="la-field-label">Permit type</div><div class="la-field-value">{{ $R::TYPES[$permitType]['label'] ?? '—' }}@if($property->permit_city) · {{ $R::NORTHERN_CITIES[$property->permit_city] ?? $property->permit_city }}@endif</div></div>
+                @if($needsPermit && ($R::TYPES[$permitType]['license'] ?? null))
+                <div class="col-sm-4"><div class="la-field-label">{{ $R::TYPES[$permitType]['license_label'] }}</div><div class="la-field-value">{{ $property->permit_license_no ?: ($R::license($permitType, $property->owner)['number'] ?? '—') }}</div></div>
+                @endif
+            </div>
+            @if(!$needsPermit)
+            <div class="alert alert-light border small mb-0"><i class="fas fa-circle-info me-1"></i>
+                {{ $permitType === 'none' ? 'DIFC / JAFZA free-zone listing — no advertising permit is issued.' : 'No advertising permit is needed for this location.' }}
+                The listing can be live without a permit.</div>
+            @else
+            @if($R::validates($permitType))
+            <div class="alert {{ $property->permit_verified_at ? 'alert-success' : 'alert-warning' }} small d-flex gap-2 align-items-start">
+                <i class="fas {{ $property->permit_verified_at ? 'fa-circle-check' : 'fa-triangle-exclamation' }} mt-1"></i>
+                <div>
+                    @if($verifiedOnline)
+                    <strong>Verified with {{ $issuer }}</strong> on {{ $property->permit_verified_at->format('d M Y, H:i') }} — the details below come from {{ $issuer }}'s record.
+                    @elseif($property->permit_verified_at)
+                    <strong>Verified</strong> on {{ $property->permit_verified_at->format('d M Y') }} (approved before online validation).
+                    @else
+                    <strong>Not verified.</strong> The agency / agent hasn't validated this permit with {{ $issuer }} yet, so the listing is not on the website. It goes live by itself once they click Validate in the property form.
+                    @endif
+                </div>
+            </div>
+            @endif
             <div class="row g-4 align-items-start">
                 <div class="col-sm-auto text-center">
                     @if($property->permit_qr)
                     <a href="{{ media_url($property->permit_qr) }}" target="_blank" rel="noopener"><img src="{{ media_url($property->permit_qr) }}" alt="Permit QR" class="la-qr"></a>
-                    <div class="la-sub mt-1">Scan to open DLD's record</div>
+                    <div class="la-sub mt-1">Scan to open {{ $issuer }}'s record</div>
                     @else
                     <div class="la-qr d-grid place-items-center text-center la-sub" style="place-items: center;">No QR uploaded</div>
                     @endif
@@ -62,45 +97,51 @@
                             @if($property->permit_verification_url)
                             <a href="{{ $property->permit_verification_url }}" target="_blank" rel="noopener noreferrer" class="text-break small">{{ $property->permit_verification_url }}</a>
                             @else
-                            <span class="la-sub">Not provided — use the QR or the DLD website.</span>
+                            <span class="la-sub">Not provided — use the QR or the {{ $issuer }} website.</span>
                             @endif
                         </div>
+                        @if($permitType === 'rera')
                         <div class="col-12">
                             <a href="https://dubailand.gov.ae/en/eservices/validate-real-estate-licenses-and-permits/" target="_blank" rel="noopener" class="btn btn-sm portal-btn-ghost"><i class="fas fa-shield-halved me-1"></i>Check permit number on DLD</a>
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
+            @endif
         </div>
 
-        <div class="portal-card p-4 mb-3">
-            <div class="la-section-title"><i class="fas fa-file-signature"></i>Owner Authorisation (Form A)</div>
-            <div class="row g-3">
-                <div class="col-sm-4">
-                    <div class="la-field-label">Agreement</div>
-                    <div class="la-field-value">{{ $P::AUTHORIZATION_TYPES[$property->authorization_type] ?? '—' }}</div>
-                </div>
-                <div class="col-sm-4">
-                    <div class="la-field-label">Form A expires</div>
-                    <div class="la-field-value {{ $expired($property->authorization_expires_at) ? 'text-danger' : '' }}">{{ $property->authorization_expires_at?->format('d M Y') ?? '—' }}</div>
-                </div>
-                <div class="col-sm-4">
-                    <div class="la-field-label">Title deed / Oqood</div>
-                    <div class="la-field-value">{{ $property->title_deed_no ?: '—' }}</div>
-                </div>
-                <div class="col-12 d-flex gap-2 flex-wrap">
-                    @forelse(collect(\App\Services\ListingComplianceService::DOCUMENT_FIELDS)->filter(fn ($label, $field) => $property->{$field}) as $field => $label)
-                    <a href="{{ route('portal.properties.compliance-document', [$property->id, $field]) }}" class="btn btn-sm portal-btn-ghost"><i class="fas fa-file-arrow-down me-1"></i>{{ $label }}</a>
-                    @empty
-                    <span class="la-sub">No documents uploaded.</span>
-                    @endforelse
-                </div>
-            </div>
-        </div>
 
         <div class="portal-card p-4 mb-3">
             <div class="la-section-title"><i class="fas fa-code-compare"></i>Does the ad match the permit?</div>
-            <p class="la-sub mb-3">The DLD permit is issued for these exact details. Compare them with DLD's record.</p>
+            @if($permitData)
+            {{-- Verified online: the authority's record next to the ad, mismatches highlighted. --}}
+            <p class="la-sub mb-3">{{ $issuer }}'s record for this permit, next to what the ad says.</p>
+            <div class="table-responsive">
+                <table class="table table-sm small align-middle mb-0">
+                    <thead><tr><th></th><th>{{ $issuer }} permit</th><th>This ad</th></tr></thead>
+                    <tbody>
+                        @foreach([
+                            'Category' => [$optionLabel('category', $permitData['category'] ?? null), $optionLabel('category', $property->category)],
+                            'Purpose' => [$optionLabel('listing_type', $permitData['listing_type'] ?? null), $optionLabel('listing_type', $property->listing_type)],
+                            'Type' => [$optionLabel('property_type', $permitData['property_type'] ?? null), $optionLabel('property_type', $property->property_type)],
+                            'Location' => [$permitData['zone_name'] ?? $optionLabel('location', $permitData['location'] ?? null), $optionLabel('location', $property->location) ?? $property->getTranslation('community')],
+                            'Bedrooms' => [$permitData['bedrooms'] ?? null, $property->bedrooms],
+                            'Size (sq.ft)' => [isset($permitData['sqft']) ? number_format($permitData['sqft']) : null, $property->sqft ? number_format($property->sqft) : null],
+                            'Price' => [isset($permitData['price']) ? number_format((float) $permitData['price']) : null, number_format((float) $property->price)],
+                        ] as $label => [$onPermit, $onAd])
+                        @php $mismatch = $onPermit !== null && (string) $onPermit !== (string) $onAd; @endphp
+                        <tr class="{{ $mismatch ? 'table-warning' : '' }}">
+                            <th class="fw-semibold">{{ $label }}</th>
+                            <td>{{ $onPermit ?? '—' }}</td>
+                            <td>{{ $onAd ?? '—' }} @if($mismatch)<i class="fas fa-triangle-exclamation text-warning ms-1" title="Differs from the permit"></i>@endif</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @else
+            <p class="la-sub mb-3">The permit is issued for these exact details. Compare them with {{ $needsPermit ? $issuer . "'s record" : 'the listing documents' }}.</p>
             <div class="la-compare small">
                 @foreach([
                     'Purpose' => $property->listing_type === 'rent' ? 'For Rent' : 'For Sale',
@@ -115,6 +156,7 @@
                 <div><div class="la-field-label">{{ $label }}</div><div class="la-field-value text-truncate" title="{{ $value }}">{{ $value }}</div></div>
                 @endforeach
             </div>
+            @endif
         </div>
 
         <div class="portal-card p-4">
@@ -142,37 +184,62 @@
                     @endforeach
                 </ul>
                 @if($missing)
-                <div class="alert alert-warning small mt-3 mb-0"><strong>Can't approve yet:</strong> {{ implode(', ', $missing) }}.</div>
+                <div class="alert alert-warning small mt-3 mb-0"><strong>Missing:</strong> {{ implode(', ', $missing) }}.</div>
                 @endif
             </div>
 
-            @if($property->compliance_note && $property->compliance_status !== $P::COMPLIANCE_APPROVED)
-            <div class="alert alert-secondary small"><div class="fw-semibold mb-1">Last note</div><div style="white-space: pre-line;">{{ $property->compliance_note }}</div></div>
-            @endif
-
             @if($property->isSold())
-            <div class="alert alert-info small">This listing is marked {{ $property->sold_type }} — nothing to review.</div>
+            <div class="alert alert-info small">This listing is marked {{ $property->sold_type }} — nothing to check.</div>
             @else
-            @if($property->compliance_status !== $P::COMPLIANCE_APPROVED)
-            <form method="POST" action="{{ route('portal.listing-approvals.approve', $property->id) }}" class="portal-card p-4 mb-3" style="border-color: #0f8a4f;">
-                @csrf
-                <div class="fw-bold mb-1 text-success"><i class="fas fa-circle-check me-1"></i>Approve &amp; publish</div>
-                <p class="small la-sub">You've confirmed the permit on DLD and its details match this ad. The listing goes live straight away, and the agency / agent gets an email.</p>
-                <textarea name="note" class="form-control form-control-sm mb-2" rows="2" maxlength="2000" placeholder="Note to the agency (optional)"></textarea>
-                <button type="submit" class="btn btn-success btn-sm w-100" @disabled($missing)><i class="fas fa-check me-1"></i>Approve</button>
-            </form>
+            {{-- No approval step: a verified permit makes the listing live by itself. --}}
+            @if($property->compliance_status === $P::COMPLIANCE_APPROVED)
+            <div class="portal-card p-4 mb-3" style="border-color: #0f8a4f;">
+                <div class="fw-bold mb-1 text-success"><i class="fas fa-circle-check me-1"></i>{{ $needsPermit ? 'Permit verified' : 'No permit needed' }}</div>
+                <p class="small la-sub mb-0">
+                    @if(!$needsPermit) This listing doesn't need an advertising permit, so it can be live.
+                    @elseif($verifiedOnline) {{ $issuer }} verified the permit on {{ $property->permit_verified_at->format('d M Y') }} — the listing can be live.
+                    @else Verified on {{ $property->permit_verified_at?->format('d M Y') }} (approved before online validation) — the listing can be live.
+                    @endif
+                </p>
+            </div>
+            @else
+            {{-- Nothing for Super Admin to do: the agency / agent validates the permit in the property form. --}}
+            <div class="portal-card p-4 mb-3">
+                <div class="fw-bold mb-1"><i class="fas fa-eye-slash me-1"></i>Not on the website</div>
+                <p class="small la-sub mb-0">
+                    @if($property->compliance_status === $P::COMPLIANCE_EXPIRED) The permit expired. It comes back once the agency / agent enters and validates the renewed permit.
+                    @elseif($property->compliance_status === $P::COMPLIANCE_CHANGES_REQUESTED) You took this listing down. It stays offline until the agency / agent changes the permit details.
+                    @elseif($missing) Permit details are incomplete — waiting for the agency / agent to add and validate them.
+                    @else The permit isn't verified yet. It goes live by itself once the agency / agent clicks Validate in the property form.
+                    @endif
+                </p>
+            </div>
             @endif
 
-            <form method="POST" action="{{ route('portal.listing-approvals.request-changes', $property->id) }}" class="portal-card p-4">
+            @if($property->compliance_status !== $P::COMPLIANCE_CHANGES_REQUESTED)
+            <form method="POST" action="{{ route('portal.listing-approvals.take-down', $property->id) }}" class="portal-card p-4" id="takeDownForm">
                 @csrf
-                <div class="fw-bold mb-1 text-danger"><i class="fas fa-rotate-left me-1"></i>{{ $property->compliance_status === $P::COMPLIANCE_APPROVED ? 'Take down & request changes' : 'Request changes' }}</div>
-                <p class="small la-sub">The agency / agent gets this note by email and in the portal. The listing stays offline until they fix it and save again.</p>
-                <textarea name="note" class="form-control form-control-sm mb-2 @error('note') is-invalid @enderror" rows="3" maxlength="2000" required placeholder="What needs fixing, e.g. the permit is for unit 1204 but the ad says 1402">{{ old('note') }}</textarea>
-                @error('note')<div class="invalid-feedback d-block mb-2">{{ $message }}</div>@enderror
-                <button type="submit" class="btn btn-outline-danger btn-sm w-100">Send back</button>
+                <div class="fw-bold mb-1 text-danger"><i class="fas fa-ban me-1"></i>Take down</div>
+                <p class="small la-sub">Takes the listing off the website (e.g. wrong details or a DLD complaint). The agency / agent is told by email and in the portal; it stays offline until they change the permit details and validate it again.</p>
+                <button type="submit" class="btn btn-outline-danger btn-sm w-100">Take down</button>
             </form>
+            @endif
             @endif
         </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    // Confirm before taking a listing off the website.
+    document.getElementById('takeDownForm')?.addEventListener('submit', async function (e) {
+        if (this.dataset.confirmed) return;
+        e.preventDefault();
+        if (await window.portalConfirm({ title: 'Take this listing down?', message: 'It goes off the website now and stays offline until the agency / agent changes the permit details and validates it again.', confirmText: 'Take down', tone: 'danger' })) {
+            this.dataset.confirmed = '1';
+            this.requestSubmit();
+        }
+    });
+</script>
+@endpush

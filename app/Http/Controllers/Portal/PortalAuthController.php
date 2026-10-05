@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Portal;
 
 use App\Models\PortalUser;
 use App\Models\Plan;
+use App\Mail\NewDeviceLoginCodeMail;
 use App\Mail\OtpCodeMail;
+use App\Services\TwoFactor\PortalDeviceTrust;
+use App\Services\TwoFactor\Totp;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +19,13 @@ use Illuminate\Validation\Rules\Password;
 
 class PortalAuthController extends Controller
 {
+    private const CHALLENGE_KEY = 'portal_login_challenge';
+    private const MAX_CHALLENGE_ATTEMPTS = 5;
+
+    public function __construct(private PortalDeviceTrust $devices, private Totp $totp)
+    {
+    }
+
     public function showRegister()
     {
         $companies = PortalUser::companies()->approved()->orderBy('company_name')->get(['id', 'company_name', 'name']);
@@ -154,13 +164,18 @@ class PortalAuthController extends Controller
         $portalUser->forceFill([
             'otp_code' => null,
             'otp_expires_at' => null,
+            // Next sign-up step: set up 2FA or explicitly skip it (EnsurePortalTwoFactor holds them there).
+            'two_factor_prompt_pending' => !$portalUser->hasTwoFactorEnabled(),
         ])->save();
 
         Auth::guard('portal')->login($portalUser);
         $request->session()->regenerate();
         $request->session()->put('password_hash_portal', $portalUser->getAuthPassword());
+        // The email was just verified from this browser, so later logins here skip the new-device code.
+        $this->devices->trust($request, $portalUser);
 
-        return response()->json(['redirect' => route('portal.dashboard')]);
+        // Next step of sign-up: offer authenticator-app 2FA (skippable unless an agency enforces it).
+        return response()->json(['redirect' => route('portal.two-factor.setup', ['onboarding' => 1])]);
     }
 
     public function resendOtp(Request $request)
@@ -238,15 +253,224 @@ class PortalAuthController extends Controller
             return back()->withErrors(['email' => 'Your account has been disabled. Contact the site administrator.'])->onlyInput('email', 'login_type');
         }
 
-        Auth::guard('portal')->login($portalUser, $request->boolean('remember'));
+        // Password is right — now the extra checks: an emailed code when this browser hasn't been
+        // verified for this account before, then the authenticator-app code if 2FA is on.
+        // Both only apply once the account has 2FA on — without it, the password alone signs in.
+        $needsTotp = $portalUser->hasTwoFactorEnabled();
+        $needsEmail = $needsTotp && !$this->devices->isTrusted($request, $portalUser);
+
+        if (!$needsEmail && !$needsTotp) {
+            return $this->completeLogin($request, $portalUser, $request->boolean('remember'));
+        }
+
+        $request->session()->put(self::CHALLENGE_KEY, [
+            'user_id' => $portalUser->id,
+            'remember' => $request->boolean('remember'),
+            'email_verified' => !$needsEmail,
+            'attempts' => 0,
+            'expires_at' => now()->addMinutes(15)->timestamp,
+        ]);
+
+        if ($needsEmail) {
+            if (!$this->sendLoginEmailCode($request, $portalUser)) {
+                $request->session()->forget(self::CHALLENGE_KEY);
+                return response()->json(['message' => 'Could not send the verification email right now — please try again in a moment.'], 503);
+            }
+
+            return response()->json(['challenge' => 'email', 'email' => $this->maskEmail($portalUser->email)]);
+        }
+
+        return response()->json(['challenge' => 'totp']);
+    }
+
+    /** Step 2 for a new device: the code emailed by login(). */
+    public function verifyLoginEmail(Request $request)
+    {
+        $request->validate(['code' => 'required|string|max:20']);
+        [$challenge, $portalUser] = $this->pendingChallenge($request);
+        if (!$portalUser) {
+            return $this->challengeExpired();
+        }
+
+        $sent = $request->session()->get(self::CHALLENGE_KEY . '.email_code');
+        $valid = is_array($sent)
+            && $sent['expires_at'] >= now()->timestamp
+            && Hash::check(trim($request->input('code')), $sent['hash']);
+
+        if (!$valid) {
+            return $this->failedAttempt($request, 'Invalid or expired code.');
+        }
+
+        $challenge['email_verified'] = true;
+        unset($challenge['email_code']);
+        $request->session()->put(self::CHALLENGE_KEY, $challenge);
+
+        if ($portalUser->hasTwoFactorEnabled()) {
+            return response()->json(['challenge' => 'totp']);
+        }
+
+        return $this->completeLogin($request, $portalUser, $challenge['remember']);
+    }
+
+    public function resendLoginEmail(Request $request)
+    {
+        [, $portalUser] = $this->pendingChallenge($request);
+        if (!$portalUser) {
+            return $this->challengeExpired();
+        }
+
+        if (!$this->sendLoginEmailCode($request, $portalUser)) {
+            return response()->json(['message' => 'Could not send the code right now — please try again in a moment.'], 503);
+        }
+
+        return response()->json(['message' => 'A new code has been sent.']);
+    }
+
+    /** Final step when 2FA is on: a 6-digit authenticator-app code, or one of the recovery codes. */
+    public function verifyLoginTwoFactor(Request $request)
+    {
+        $request->validate(['code' => 'required|string|max:30']);
+        [$challenge, $portalUser] = $this->pendingChallenge($request);
+        if (!$portalUser || !$challenge['email_verified']) {
+            return $this->challengeExpired();
+        }
+
+        $code = trim($request->input('code'));
+        $step = $this->totp->verify((string) $portalUser->two_factor_secret, $code, $portalUser->two_factor_last_step);
+
+        if ($step !== null) {
+            $portalUser->forceFill(['two_factor_last_step' => $step])->save();
+        } elseif (!$this->useRecoveryCode($portalUser, $code)) {
+            return $this->failedAttempt($request, 'That code is not valid. Check your authenticator app and try again.');
+        }
+
+        return $this->completeLogin($request, $portalUser, $challenge['remember']);
+    }
+
+    private function completeLogin(Request $request, PortalUser $portalUser, bool $remember)
+    {
+        $request->session()->forget(self::CHALLENGE_KEY);
+        Auth::guard('portal')->login($portalUser, $remember);
         $request->session()->regenerate();
         $request->session()->put('password_hash_portal', $portalUser->getAuthPassword());
+        $this->devices->trust($request, $portalUser);
 
         if ($request->wantsJson()) {
             return response()->json(['redirect' => route('portal.dashboard')]);
         }
 
         return redirect()->route('portal.dashboard');
+    }
+
+    /** @return array{0: ?array, 1: ?PortalUser} */
+    private function pendingChallenge(Request $request): array
+    {
+        $challenge = $request->session()->get(self::CHALLENGE_KEY);
+        if (!is_array($challenge) || $challenge['expires_at'] < now()->timestamp) {
+            $request->session()->forget(self::CHALLENGE_KEY);
+            return [null, null];
+        }
+
+        $portalUser = PortalUser::find($challenge['user_id']);
+        if (!$portalUser || !$portalUser->is_active) {
+            $request->session()->forget(self::CHALLENGE_KEY);
+            return [null, null];
+        }
+
+        return [$challenge, $portalUser];
+    }
+
+    private function challengeExpired()
+    {
+        return response()->json(['message' => 'Your sign-in session has expired. Please enter your email and password again.', 'restart' => true], 422);
+    }
+
+    /** Too many wrong codes ends the attempt — the user has to start over with their password. */
+    private function failedAttempt(Request $request, string $message)
+    {
+        $attempts = $request->session()->get(self::CHALLENGE_KEY . '.attempts', 0) + 1;
+        if ($attempts >= self::MAX_CHALLENGE_ATTEMPTS) {
+            $request->session()->forget(self::CHALLENGE_KEY);
+            return response()->json(['message' => 'Too many incorrect codes. Please sign in again.', 'restart' => true], 422);
+        }
+
+        $request->session()->put(self::CHALLENGE_KEY . '.attempts', $attempts);
+
+        return response()->json(['message' => $message], 422);
+    }
+
+    private function sendLoginEmailCode(Request $request, PortalUser $portalUser): bool
+    {
+        // OTP_ENABLED=false (testing): skip the email and accept the static OTP_STATIC_CODE.
+        if (!config('auth.otp.enabled')) {
+            $code = (string) config('auth.otp.static_code');
+        } else {
+            $code = (string) random_int(100000, 999999);
+
+            try {
+                Mail::to($portalUser->email)->send(new NewDeviceLoginCodeMail(
+                    $portalUser->displayName(),
+                    $code,
+                    $this->describeDevice((string) $request->userAgent()),
+                    $request->ip(),
+                ));
+            } catch (\Throwable $e) {
+                Log::error('Failed to send portal new-device login code: ' . $e->getMessage());
+                return false;
+            }
+        }
+
+        $request->session()->put(self::CHALLENGE_KEY . '.email_code', [
+            'hash' => Hash::make($code),
+            'expires_at' => now()->addMinutes(10)->timestamp,
+        ]);
+
+        return true;
+    }
+
+    private function useRecoveryCode(PortalUser $portalUser, string $code): bool
+    {
+        $normalized = strtoupper(str_replace([' ', '-'], '', $code));
+        $codes = $portalUser->two_factor_recovery_codes ?? [];
+
+        foreach ($codes as $i => $stored) {
+            if (hash_equals(str_replace('-', '', $stored), $normalized)) {
+                unset($codes[$i]);
+                $portalUser->forceFill(['two_factor_recovery_codes' => array_values($codes)])->save();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function describeDevice(string $userAgent): string
+    {
+        $browser = match (true) {
+            str_contains($userAgent, 'Edg/') => 'Edge',
+            str_contains($userAgent, 'OPR/') || str_contains($userAgent, 'Opera') => 'Opera',
+            str_contains($userAgent, 'Chrome/') => 'Chrome',
+            str_contains($userAgent, 'Firefox/') => 'Firefox',
+            str_contains($userAgent, 'Safari/') => 'Safari',
+            default => 'Unknown browser',
+        };
+        $os = match (true) {
+            str_contains($userAgent, 'Windows') => 'Windows',
+            str_contains($userAgent, 'Android') => 'Android',
+            str_contains($userAgent, 'iPhone') || str_contains($userAgent, 'iPad') => 'iOS',
+            str_contains($userAgent, 'Mac OS') => 'macOS',
+            str_contains($userAgent, 'Linux') => 'Linux',
+            default => 'unknown OS',
+        };
+
+        return "{$browser} on {$os}";
+    }
+
+    private function maskEmail(string $email): string
+    {
+        [$local, $domain] = array_pad(explode('@', $email, 2), 2, '');
+
+        return mb_substr($local, 0, 2) . str_repeat('•', max(1, mb_strlen($local) - 2)) . '@' . $domain;
     }
 
     public function logout(Request $request)

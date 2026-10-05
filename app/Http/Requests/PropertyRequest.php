@@ -27,8 +27,7 @@ class PropertyRequest extends FormRequest
             'translations.*.city' => 'required|string|max:255',
             'translations.*.country' => 'required|string|max:255',
             'slug' => ['required', 'alpha_dash', 'max:255', Rule::unique('properties', 'slug')->ignore($this->route('id'))],
-            // Not user-supplied — the controller always auto-generates/preserves this (PROP001, ...);
-            // the field is read-only in the form, so nothing enforces its presence here.
+            // Displayed read-only as a preview; the controller accepts only an unused RERA-prefixed value.
             'reference_no' => 'nullable|string|max:255',
             'rera_id' => 'nullable|string|max:255',
             // DLD compliance (Compliance tab). Optional to save a draft; ListingComplianceService decides
@@ -37,11 +36,6 @@ class PropertyRequest extends FormRequest
             'permit_expires_at' => 'nullable|date_format:Y-m-d',
             'permit_qr' => 'nullable|image|max:2048',
             'permit_verification_url' => 'nullable|url:https,http|max:2048',
-            'authorization_type' => ['nullable', Rule::in(array_keys(\App\Models\Property::AUTHORIZATION_TYPES))],
-            'authorization_expires_at' => 'nullable|date_format:Y-m-d',
-            'authorization_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'title_deed_no' => 'nullable|string|max:64',
-            'title_deed_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'postal_code' => 'nullable|string|max:50',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
@@ -55,21 +49,24 @@ class PropertyRequest extends FormRequest
             'brochure' => 'nullable|file|extensions:' . self::BROCHURE_EXTENSIONS . '|max:20480',
             'images' => 'nullable|array|max:30',
             'images.*' => 'required|image|max:4096',
-            'amenities' => 'nullable|array|max:100',
-            'amenities.*.label' => 'nullable|array',
-            'amenities.*.label.*' => 'nullable|string|max:255',
-            'amenities.*.icon' => 'nullable|image|max:1024',
-            'amenities.*.existing_icon' => 'nullable|string',
-            'easy_access' => 'nullable|array|max:100',
-            'easy_access.*.label' => 'nullable|array',
-            'easy_access.*.label.*' => 'nullable|string|max:255',
-            'easy_access.*.icon' => 'nullable|image|max:1024',
-            'easy_access.*.existing_icon' => 'nullable|string',
-            'property_attributes' => 'nullable|array|max:100',
-            'property_attributes.*.label' => 'nullable|array',
-            'property_attributes.*.label.*' => 'nullable|string|max:255',
-            'property_attributes.*.icon' => 'nullable|image|max:1024',
-            'property_attributes.*.existing_icon' => 'nullable|string',
+            // Amenities / Easy Access / Attributes: option codes from Master › Property Options (see the loop below).
+            'amenities' => 'nullable|array|max:200',
+            'easy_access' => 'nullable|array|max:200',
+            'property_attributes' => 'nullable|array|max:200',
+            'rental_period' => 'nullable|string|max:50',
+            // Permit flow (App\Support\PermitRules / App\Services\Permits\PermitVerifier).
+            'permit_type' => ['nullable', Rule::in(\App\Support\PermitRules::DUBAI_TYPES)],
+            'permit_city' => ['nullable', Rule::in(array_keys(\App\Support\PermitRules::NORTHERN_CITIES))],
+            'permit_token' => 'nullable|string|max:64',
+            'availability' => 'nullable|in:immediately,from_date',
+            'available_dates' => 'nullable|array|max:60|required_if:availability,from_date',
+            'available_dates.*' => 'date_format:Y-m-d',
+            'developer' => 'nullable|string|max:255',
+            'unit_number' => 'nullable|string|max:100',
+            'owner_name' => 'nullable|string|max:255',
+            'upgraded' => 'nullable|boolean',
+            'video_tour_url' => 'nullable|url|max:2048',
+            'cheques' => 'nullable|integer|min:1|max:12',
             'year_built' => 'nullable|integer|min:1800|max:2200',
             'floor' => 'nullable|string|max:255',
             'parking' => 'nullable|integer|min:0|max:10000',
@@ -100,11 +97,20 @@ class PropertyRequest extends FormRequest
             'metadata_og_image' => 'nullable|image|max:4096',
         ];
         foreach (Language::active()->pluck('code') as $locale) $rules["translations.{$locale}.title"] = 'required|string|max:255';
-        $requiredSelectKeys = ['property_type', 'listing_type'];
+        $requiredSelectKeys = ['property_type', 'listing_type', 'category', 'location'];
         foreach (Filter::SELECT_KEYS as $key) {
             $filterId = Filter::where('key', $key)->where('status', true)->value('id');
             $presence = in_array($key, $requiredSelectKeys, true) ? 'required' : 'nullable';
             $rules[$key] = [$presence, 'string', 'max:255', Rule::exists('filter_values', 'value')->where('filter_id', $filterId ?? 0)->where('status', true)];
+        }
+        // Form-only dropdowns and checkbox lists: any option of the list (an option switched off later
+        // stays valid on listings that already have it).
+        foreach ([Filter::EMIRATE_KEY => 'emirate', Filter::RENTAL_PERIOD_KEY => 'rental_period'] + Filter::ICON_LISTS as $key => $field) {
+            $filterId = Filter::where('key', $key)->value('id');
+            $exists = Rule::exists('filter_values', 'value')->where('filter_id', $filterId ?? 0);
+            // Emirate decides which permit the listing needs (PermitRules), so it can't be left empty.
+            $presence = $key === Filter::EMIRATE_KEY ? 'required' : 'nullable';
+            $rules[isset(Filter::ICON_LISTS[$key]) ? "{$field}.*" : $field] = [$presence, 'string', 'max:100', $exists];
         }
         return $rules;
     }
@@ -114,6 +120,8 @@ class PropertyRequest extends FormRequest
         return [
             'permit_number.unique' => 'This DLD permit number is already used by another listing. Each advertising permit covers one listing.',
             'permit_number.regex' => 'The permit number may only contain letters, numbers, dashes and slashes.',
+            'available_dates.required_if' => 'Pick at least one available date, or choose "Immediately".',
+            'emirate.required' => 'Choose the emirate — it decides which advertising permit the listing needs.',
         ];
     }
 }

@@ -71,6 +71,8 @@ Route::get('/about', [AboutController::class, 'index']);
 // Public, read-only — the /blogs listing page (paginated) and /blog-details/{slug} page.
 Route::get('/blogs', [BlogController::class, 'index']);
 Route::get('/blogs/{slug}', [BlogController::class, 'show']);
+// Public — a "Blog design" landing page (served at /{slug}, rendered by BlogDetails.vue).
+Route::get('/landing-pages/{slug}', [BlogController::class, 'landingPage']);
 
 // Public, read-only — the /market-insights listing page (paginated) and /market-insights/{slug} page.
 Route::get('/market-insights', [MarketInsightController::class, 'index']);

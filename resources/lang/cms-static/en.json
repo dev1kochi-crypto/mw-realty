@@ -267,7 +267,9 @@
             "amenity_concierge": "Concierge",
             "amenity_private_pool": "Private Pool",
             "reset": "Reset",
-            "apply": "Apply Filters"
+            "apply": "Apply Filters",
+            "feature_open_house": "Open house",
+            "feature_open_house_properties": "Open house properties"
         },
         "property_types": {
             "apartment": "Apartment",
@@ -621,7 +623,28 @@
             "message": "This property listing doesn't exist or is no longer available.",
             "back_link": "Back to Properties"
         },
-        "generic_error": "Something went wrong — please try again."
+        "generic_error": "Something went wrong — please try again.",
+        "book_a_viewing": "Book a Viewing",
+        "available_now_text_book": "Ready to move in or view any time — pick a day and time that suits you.",
+        "viewing": {
+            "morning": "Morning",
+            "afternoon": "Afternoon",
+            "evening": "Evening",
+            "open_house_days": "Open house days",
+            "choose_day": "Choose a day",
+            "choose_time": "Preferred time",
+            "pick_day": "Please pick a day.",
+            "pick_time": "Please pick a time.",
+            "name": "Name",
+            "email": "Email",
+            "phone": "Phone",
+            "note": "Note for the agent (optional)",
+            "sending": "Sending…",
+            "submit": "Request Viewing",
+            "done_title": "Viewing requested",
+            "done_text": "The agent will contact you shortly to confirm the exact time.",
+            "close": "Done"
+        }
     },
     "about": {
         "breadcrumb_aria": "Breadcrumb",
@@ -869,7 +892,20 @@
         "divider_or": "OR",
         "google_cta": "Continue with Google",
         "generic_error": "Something went wrong — please try again.",
-        "agent_tab_hint": "Registered as an agent or agency? Switch to the Agent / Agency tab."
+        "agent_tab_hint": "Registered as an agent or agency? Switch to the Agent / Agency tab.",
+        "new_device_title": "Verify it's you",
+        "new_device_subtitle": "You're signing in from a new device. We've sent a verification code to",
+        "two_factor_title": "Two-factor authentication",
+        "two_factor_subtitle": "Open your authenticator app (Authy, Google Authenticator…) and enter the 6-digit code for MW Realty.",
+        "email_code_label": "Verification code",
+        "two_factor_code_label": "Authentication code",
+        "recovery_hint": "Lost your phone? Enter one of your recovery codes instead.",
+        "verify": "Verify",
+        "verifying": "Verifying…",
+        "resend_code": "Resend code",
+        "resending": "Sending…",
+        "code_resent": "A new code has been sent.",
+        "back_to_login": "Back to sign in"
     },
     "signup": {
         "photo_alt": "Cozy Dubai apartment interior",

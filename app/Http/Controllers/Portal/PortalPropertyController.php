@@ -44,11 +44,221 @@ class PortalPropertyController extends Controller
     /** Listings per page on the card grid — a multiple of the 4-column row so pages end on a full row. */
     protected const PER_PAGE = 16;
 
-    /** Compliance tab text / date inputs (files are saved by ListingComplianceService::storeUploads()). */
+    /** Permit text / date inputs (Core details; the QR file is saved by ListingComplianceService::storeUploads()). */
     protected const COMPLIANCE_INPUTS = [
         'permit_number', 'permit_expires_at', 'permit_verification_url',
-        'authorization_type', 'authorization_expires_at', 'title_deed_no',
     ];
+
+    /** Must match the DLD permit, so read-only once it's approved (Super Admin can still change them). */
+    public const PERMIT_LOCKED_FIELDS = ['emirate', 'permit_type', 'permit_city', 'category', 'listing_type', 'property_type', 'location', 'bedrooms', 'sqft', 'permit_number'];
+
+    /**
+     * Fields the current user can't change on this listing (Super Admin can change everything):
+     *  - once DLD / ADREC verified the permit: the emirate / permit choice, the permit number and every
+     *    field the permit filled in (PermitVerifier::PERMIT_FIELDS) — they must stay as the permit says;
+     *  - once the listing is approved: all PERMIT_LOCKED_FIELDS.
+     * A field still empty stays editable, so a listing approved before it existed (e.g. Emirate) can fill it in.
+     */
+    protected function lockedFields(?Property $property): array
+    {
+        if (!$property || $this->isAdmin()) {
+            return [];
+        }
+        // The permit has to be replaced: taken down by Super Admin, expired, or about to expire
+        // (renewal) — everything is editable again until the new permit is validated.
+        if (in_array($property->compliance_status, [Property::COMPLIANCE_CHANGES_REQUESTED, Property::COMPLIANCE_EXPIRED], true)
+            || ($property->permit_expires_at && $property->permit_expires_at->lte(today()->addDays(30)))) {
+            return [];
+        }
+        $fields = [];
+        if ($property->permit_verified_at && in_array($property->permit_verified_via, ['dld', 'adrec'], true)) {
+            $fromPermit = array_keys(array_filter(\Illuminate\Support\Arr::only($property->permit_data ?? [], \App\Services\Permits\PermitVerifier::PERMIT_FIELDS), 'filled'));
+            $fields = ['emirate', 'permit_type', 'permit_city', 'permit_number', ...$fromPermit];
+        }
+        if ($property->compliance_status === Property::COMPLIANCE_APPROVED) {
+            $fields = [...$fields, ...self::PERMIT_LOCKED_FIELDS];
+        }
+
+        return array_values(array_unique(array_filter($fields, fn ($field) => filled($property->{$field}))));
+    }
+
+    /** The licenses the form shows per permit type ("Real estate company license" / "Broker license"). */
+    protected function permitLicenses(?\App\Models\PortalUser $owner): array
+    {
+        $licenses = [
+            'rera' => \App\Support\PermitRules::license('rera', $owner),
+            'adrec' => \App\Support\PermitRules::license('adrec', $owner),
+        ];
+
+        // When a license is missing: who has to add it, and where (shown instead of the license).
+        $holder = $owner && $owner->isAgent() && $owner->company ? $owner->company : $owner;
+        $viewer = $this->viewer();
+        $missing = [];
+        foreach (['rera' => ['RERA ORN', 'ORN number'], 'adrec' => ['ADREC brokerage registration number', 'ADREC brokerage registration number']] as $type => [$what, $field]) {
+            if ($licenses[$type]) {
+                continue;
+            }
+            $missing[$type] = match (true) {
+                !$holder => $this->isAdmin()
+                    ? ['text' => "MW Realty's {$what} isn't set yet. Add it in CMS › Site Information to validate permits of MW Realty listings.", 'url' => route('cms.site-information.index'), 'link' => 'Open Site Information']
+                    : ['text' => "MW Realty's {$what} isn't set yet.", 'url' => null, 'link' => null],
+                $holder->isAgency() && $viewer?->id === $holder->id
+                    => ['text' => "Your company's {$what} isn't in your profile yet. Add it under Profile › Corporate licenses to validate this permit.", 'url' => route('portal.profile.edit'), 'link' => 'Open profile'],
+                $holder->isAgency()
+                    => ['text' => "{$holder->displayName()} hasn't added its {$what} yet — ask your agency to add it in their profile (Corporate licenses).", 'url' => null, 'link' => null],
+                default => ['text' => 'Permits are issued to a brokerage, so an independent agent can\'t validate one here. Join your brokerage under My Agency, or save the listing and MW Realty will check the permit.', 'url' => route('portal.agency.index'), 'link' => 'My Agency'],
+            };
+            $missing[$type]['text'] .= ' You can still save the listing — MW Realty checks the permit before it goes live.';
+        }
+
+        return $licenses + ['missing' => $missing];
+    }
+
+    /** Whose license a listing's permit is issued under: its owner (null = MW Realty house listing). */
+    protected function permitOwner(?Property $property): ?\App\Models\PortalUser
+    {
+        if ($property) {
+            return $property->owner;
+        }
+        $viewer = $this->viewer();
+
+        return $viewer && $viewer->isAgencyAgent() ? $viewer->company : $viewer;
+    }
+
+    /**
+     * The form's Validate / Refresh button: checks the permit with DLD / ADREC. Returns the status,
+     * the details to fill in and a token the form posts back on save (see PermitVerifier).
+     */
+    public function validatePermit(Request $request)
+    {
+        $input = $request->validate([
+            'emirate' => 'required|string|max:100',
+            'permit_type' => 'nullable|string|max:20',
+            'permit_city' => 'nullable|string|max:30',
+            'permit_number' => ['required', 'string', 'max:64', 'regex:/^[A-Za-z0-9\-\/]+$/'],
+            'property_id' => 'nullable|integer',
+        ], ['permit_number.regex' => 'The permit number may only contain letters, numbers, dashes and slashes.']);
+
+        $property = !empty($input['property_id']) ? $this->findAccessible($input['property_id']) : null;
+        $type = \App\Support\PermitRules::resolve($input['emirate'], $input['permit_type'] ?? null, $input['permit_city'] ?? null);
+        $result = app(\App\Services\Permits\PermitVerifier::class)
+            ->validate((string) $type, $this->permitOwner($property), $input['permit_number'], $property?->id);
+        $check = $result['check'];
+
+        return response()->json([
+            'status' => $check->status,
+            'message' => $check->message,
+            'token' => $result['token'],
+            'license' => $result['license'],
+            // Only the listing fields the form fills in and locks; the raw response stays server-side.
+            'fields' => $check->isVerified() ? \Illuminate\Support\Arr::only($check->data, [...\App\Services\Permits\PermitVerifier::PERMIT_FIELDS, 'expires_at', 'zone_name']) : [],
+        ]);
+    }
+
+    /** Per-emirate permit rules the form can't express on its own (PermitRules). */
+    protected function assertPermitRules(array $data): void
+    {
+        $errors = [];
+        if (\App\Support\PermitRules::rentOnly($data['permit_type'] ?? null) && ($data['listing_type'] ?? null) !== 'rent') {
+            $errors['listing_type'] = 'A DTCM permit is for holiday homes, which can only be listed for rent.';
+        }
+        if (($data['emirate'] ?? null) === \App\Support\PermitRules::NORTHERN && !isset(\App\Support\PermitRules::NORTHERN_CITIES[$data['permit_city'] ?? ''])) {
+            $errors['permit_city'] = 'Choose the city.';
+        }
+        if ($errors) {
+            throw \Illuminate\Validation\ValidationException::withMessages($errors);
+        }
+    }
+
+    /**
+     * Blocks entering the same listing twice: one permit = one listing (checked here as well as in
+     * PropertyRequest, with a clearer message), and the same unit can't be listed twice for the same
+     * purpose by the same account while the first one is still on the books.
+     */
+    protected function assertNotDuplicate(array $data, ?Property $property, ?int $ownerId): void
+    {
+        $verifier = app(\App\Services\Permits\PermitVerifier::class);
+        if (!empty($data['permit_number']) && ($taken = $verifier->listingUsing($data['permit_number'], $property?->id))) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'permit_number' => "This permit is already used by listing {$taken->reference_no}. Each permit covers one listing only.",
+            ]);
+        }
+
+        $unit = trim((string) request()->input('unit_number'));
+        if ($unit === '' || empty($data['listing_type'])) {
+            return;
+        }
+        $duplicate = Property::query()
+            ->when($ownerId, fn ($q) => $q->where('portal_user_id', $ownerId), fn ($q) => $q->whereNull('portal_user_id'))
+            ->when($property, fn ($q) => $q->whereKeyNot($property->id))
+            ->where('listing_type', $data['listing_type'])
+            ->where('location', $data['location'] ?? null)
+            ->whereNull('sold_at')
+            ->whereHas('details', fn ($q) => $q->whereRaw('LOWER(TRIM(unit_number)) = ?', [mb_strtolower($unit)]))
+            ->first(['id', 'reference_no']);
+        if ($duplicate) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'unit_number' => "Unit {$unit} in this location is already listed for " . ($data['listing_type'] === 'rent' ? 'rent' : 'sale') . " as {$duplicate->reference_no}. Edit that listing instead of adding it again.",
+            ]);
+        }
+    }
+
+    /** properties columns added with the listing form update: emirate, rental period, available dates. */
+    protected function listingFields(Request $request): array
+    {
+        $dates = $request->input('availability') === 'from_date'
+            ? collect((array) $request->input('available_dates', []))->filter()->unique()->sort()->values()->all()
+            : [];
+
+        return [
+            'emirate' => $request->input('emirate') ?: null,
+            // A rental period only means something on a rent listing.
+            'rental_period' => $request->input('listing_type') === 'rent' ? ($request->input('rental_period') ?: null) : null,
+            'available_dates' => $dates ?: null,
+        ];
+    }
+
+    /** property_details columns from the Specifications / Price sections. */
+    protected function specificationFields(Request $request): array
+    {
+        return [
+            'developer' => $request->input('developer'),
+            'unit_number' => $request->input('unit_number'),
+            'owner_name' => $request->input('owner_name'),
+            'upgraded' => $request->boolean('upgraded'),
+            'video_tour_url' => $request->input('video_tour_url'),
+            'cheques' => $request->input('listing_type') === 'rent' ? $request->input('cheques') : null,
+        ];
+    }
+
+    /**
+     * Amenities / Easy Access / Attributes: the options ticked on the form (values from Master ›
+     * Property Options), stored as {key, icon, label} rows in the option list's order. The label and
+     * icon are a copy for older readers; pages resolve the live option by key (PropertyPageService).
+     */
+    protected function processOptionList(Request $request, string $filterKey): array
+    {
+        $picked = array_map('strval', (array) $request->input(Filter::ICON_LISTS[$filterKey], []));
+        if (!$picked) {
+            return [];
+        }
+
+        return \App\Models\FilterValue::whereHas('filter', fn ($q) => $q->where('key', $filterKey))
+            ->whereIn('value', $picked)->orderBy('order_index')->orderBy('id')->get()
+            ->map(fn ($o) => [
+                'key' => $o->value,
+                'icon' => $o->icon,
+                'label' => collect($o->translations)->map(fn ($t) => $t['label'] ?? '')->filter()->all(),
+            ])->values()->all();
+    }
+
+    /** Amenities / Easy Access / Attributes option lists for the form's checkbox grids. */
+    protected function optionLists(): \Illuminate\Support\Collection
+    {
+        return Filter::whereIn('key', array_keys(Filter::ICON_LISTS))
+            ->with(['values' => fn ($q) => $q->orderBy('order_index')->orderBy('id')])
+            ->get()->keyBy('key');
+    }
 
     /**
      * Which CRM menu this controller serves. Commercial is the same table, form and screens,
@@ -224,7 +434,7 @@ class PortalPropertyController extends Controller
 
     protected function selectFilterOptions(): \Illuminate\Support\Collection
     {
-        return Filter::whereIn('key', ['listing_type', 'completion_status', 'property_type', 'location', Filter::FURNISHING_KEY])
+        return Filter::whereIn('key', ['listing_type', 'completion_status', 'property_type', 'category', 'location', Filter::FURNISHING_KEY, Filter::EMIRATE_KEY, Filter::RENTAL_PERIOD_KEY])
             ->where('type', 'select')
             ->with(['activeValues'])
             ->get()
@@ -232,23 +442,22 @@ class PortalPropertyController extends Controller
     }
 
     /**
-     * PROP001, PROP002, ... — the next unused number after the highest currently on record.
-     * Doubles as the gallery folder/filename key (see storeGalleryImage()), so it's generated once
-     * up front and never changes afterwards.
+     * RERA70613, RERA70614, ... are generated using the next unused RERA number.
+     * It also becomes the gallery folder/filename key (see storeGalleryImage()).
      */
     protected function generateReferenceNo(): string
     {
-        $maxNumber = Property::where('reference_no', 'like', 'PROP%')
+        $maxNumber = Property::where('reference_no', 'like', 'RERA%')
             ->pluck('reference_no')
             ->map(fn ($ref) => (int) substr($ref, 4))
             ->max() ?? 0;
 
-        $number = $maxNumber + 1;
-        while (Property::where('reference_no', 'PROP' . str_pad((string) $number, 3, '0', STR_PAD_LEFT))->exists()) {
+        $number = max(70613, $maxNumber + 1);
+        while (Property::where('reference_no', 'RERA' . $number)->exists()) {
             $number++;
         }
 
-        return 'PROP' . str_pad((string) $number, 3, '0', STR_PAD_LEFT);
+        return 'RERA' . $number;
     }
 
     /**
@@ -256,16 +465,17 @@ class PortalPropertyController extends Controller
      * what was uploaded — so reordering (see reorderImages()) only ever has to rewrite the
      * `image_sequence` list, never rename a file.
      */
-    protected function storeGalleryImage(UploadedFile $file, string $folder, string $referenceNo, int $number): void
+    protected function storeGalleryImage(UploadedFile $file, string $folder, string $referenceNo, int $number, ?array $watermark = null): void
     {
         app(\App\Services\PropertyGallery::class)->put(
             $folder,
             $referenceNo . '-' . $number . '.jpeg',
-            $this->convertToJpeg($file->getRealPath())
+            $this->convertToJpeg($file->getRealPath(), $watermark)
         );
     }
 
-    protected function convertToJpeg(string $path): string
+    /** $watermark: the listing owner's active watermark settings (App\Services\Watermark), stamped in. */
+    protected function convertToJpeg(string $path, ?array $watermark = null): string
     {
         $mime = @getimagesize($path)['mime'] ?? null;
         $source = match ($mime) {
@@ -289,6 +499,10 @@ class PortalPropertyController extends Controller
         imagecopy($flattened, $source, 0, 0, 0, 0, $width, $height);
         imagedestroy($source);
 
+        if ($watermark) {
+            app(\App\Services\Watermark::class)->apply($flattened, $watermark);
+        }
+
         ob_start();
         imagejpeg($flattened, null, 85);
         $binary = ob_get_clean();
@@ -298,7 +512,7 @@ class PortalPropertyController extends Controller
     }
 
     /** Feeds the Nearby Places tab's Type dropdown — the Place dropdown loads via AJAX once a Type is picked. */
-    /** Submitted nearby place ids, limited to shared places + the current user's own (no tagging someone else's). */
+    /** Submitted nearby place ids that still exist — every place is usable by everyone, whoever added it. */
     protected function allowedNearbyPlaceIds(Request $request): array
     {
         $ids = array_map('intval', (array) $request->input('nearby_places', []));
@@ -306,45 +520,12 @@ class PortalPropertyController extends Controller
             return [];
         }
 
-        return \App\Models\NearbyPlace::visibleTo($this->ownerId())->whereIn('id', $ids)->pluck('id')->all();
+        return \App\Models\NearbyPlace::whereIn('id', $ids)->pluck('id')->all();
     }
 
     protected function nearbyPlaceTypes()
     {
         return \App\Models\Filter::where('key', \App\Models\NearbyPlace::FILTER_KEY)->with('activeValues')->first();
-    }
-
-    /**
-     * Builds one icon-repeater column (amenities / easy_access / property_attributes) from the
-     * request: uploads a new icon per row when provided, otherwise keeps whatever the row's
-     * `existing_icon` hidden field says (set by the form when editing) — a row with neither a new
-     * file nor an existing path just has no icon. Label is per-language (one text input per active
-     * language in the form); a row is dropped entirely only if every language's label is empty.
-     */
-    protected function processIconRepeater(Request $request, string $field): array
-    {
-        $rows = (array) $request->input($field, []);
-        $files = (array) $request->file($field, []);
-        $result = [];
-
-        foreach ($rows as $i => $row) {
-            $label = collect($row['label'] ?? [])
-                ->map(fn ($text) => trim((string) $text))
-                ->filter(fn ($text) => $text !== '')
-                ->all();
-            if (empty($label)) {
-                continue;
-            }
-
-            $icon = $row['existing_icon'] ?? null;
-            if (isset($files[$i]['icon']) && $files[$i]['icon'] instanceof UploadedFile) {
-                $icon = app(\App\Services\ManagedFiles::class)->store($files[$i]['icon'], 'properties/icons');
-            }
-
-            $result[] = ['icon' => $icon, 'label' => $label];
-        }
-
-        return $result;
     }
 
     /**
@@ -542,9 +723,13 @@ class PortalPropertyController extends Controller
         return view('portal.properties.create', array_merge([
             'languages' => $languages,
             'filterOptions' => $filterOptions,
+            'referenceNo' => $this->generateReferenceNo(),
             'isAdmin' => $this->isAdmin(),
             'remainingSlots' => $remainingSlots,
             'nearbyPlaceTypes' => $this->nearbyPlaceTypes(),
+            'optionLists' => $this->optionLists(),
+            'lockedFields' => [],
+            'permitLicenses' => $this->permitLicenses($this->permitOwner(null)),
         ], $this->agentAssignmentOptions(), $this->sectionData()));
     }
 
@@ -575,9 +760,20 @@ class PortalPropertyController extends Controller
             'location', 'postal_code', 'latitude', 'longitude', 'bedrooms', 'bathrooms', 'sqft', 'price', 'currency',
             ...self::COMPLIANCE_INPUTS,
         ]);
-        // Always auto-generated (PROP001, ...) — never taken from user input, since it also becomes
-        // the gallery folder/filename key (see storeGalleryImage()) and has to be final and unique.
-        $data['reference_no'] = $this->generateReferenceNo();
+        $data = array_merge($data, $this->listingFields($request));
+        $data = app(\App\Services\Permits\PermitVerifier::class)->apply($data, $request->all(), null, $listingOwner);
+        if (($data['listing_type'] ?? null) !== 'rent') {
+            $data['rental_period'] = null;
+        }
+        $this->assertPermitRules($data);
+        $this->assertNotDuplicate($data, null, $listingOwner?->id);
+        // Reuse the read-only form ID if valid and unused, otherwise generate a fresh RERA ID.
+        $referenceNo = $request->input('reference_no');
+        $data['reference_no'] = is_string($referenceNo)
+            && preg_match('/^RERA\d+$/', $referenceNo)
+            && !Property::where('reference_no', $referenceNo)->exists()
+                ? $referenceNo
+                : $this->generateReferenceNo();
         // null when Super Admin creates it directly (a house/MW Realty listing with no portal owner)
         // An agency agent's listing belongs to the agency (they stay its agent).
         $data['portal_user_id'] = $listingOwner?->id;
@@ -614,9 +810,10 @@ class PortalPropertyController extends Controller
             $folder = app(\App\Services\PropertyGallery::class)->folderValue('properties/' . $property->reference_no);
             $number = 0;
             $sequence = [];
+            $watermark = app(\App\Services\Watermark::class)->activeSettings($property->owner);
             foreach ($request->file('images') as $file) {
                 $number++;
-                $this->storeGalleryImage($file, $folder, $property->reference_no, $number);
+                $this->storeGalleryImage($file, $folder, $property->reference_no, $number, $watermark);
                 $sequence[] = $number;
             }
             $property->update([
@@ -628,9 +825,10 @@ class PortalPropertyController extends Controller
 
         $detailData = [
             'property_id' => $property->id,
-            'amenities' => $this->processIconRepeater($request, 'amenities'),
-            'easy_access' => $this->processIconRepeater($request, 'easy_access'),
-            'property_attributes' => $this->processIconRepeater($request, 'property_attributes'),
+            'amenities' => $this->processOptionList($request, 'amenity'),
+            'easy_access' => $this->processOptionList($request, 'easy_access'),
+            'property_attributes' => $this->processOptionList($request, 'property_attribute'),
+            ...$this->specificationFields($request),
             'year_built' => $request->input('year_built'),
             'floor' => $request->input('floor'),
             'parking' => $request->input('parking'),
@@ -663,22 +861,11 @@ class PortalPropertyController extends Controller
     protected function complianceToast(Property $property): string
     {
         return match ($property->compliance_status) {
-            Property::COMPLIANCE_PENDING => ' It was sent to Super Admin for permit approval and goes live once approved.',
-            Property::COMPLIANCE_DRAFT => ' It stays off the website until the DLD permit and Form A are added (Compliance tab).',
+            Property::COMPLIANCE_PENDING => ' It stays off the website until its permit is verified — click Validate next to the permit number in Core details.',
+            Property::COMPLIANCE_DRAFT => ' It stays off the website until the permit details are added and validated in Core details.',
+            Property::COMPLIANCE_EXPIRED => ' The permit has expired, so it stays off the website — enter and validate the renewed permit.',
             default => '',
         };
-    }
-
-    /** Form A / title deed download — for the listing's owner, its assigned agent, or Super Admin. */
-    public function complianceDocument($id, string $field)
-    {
-        abort_unless(array_key_exists($field, \App\Services\ListingComplianceService::DOCUMENT_FIELDS), 404);
-        $path = $this->findAccessible($id)->{$field};
-        abort_unless($path && Storage::disk('kyc')->exists($path), 404);
-
-        return Storage::disk('kyc')->download($path, $field . '.' . pathinfo($path, PATHINFO_EXTENSION), [
-            'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff',
-        ]);
     }
 
     /** Owner-only (delete, feature, reorder, status) — never an agency agent on the agency's listing. */
@@ -711,6 +898,9 @@ class PortalPropertyController extends Controller
             'filterOptions' => $filterOptions,
             'isAdmin' => $this->isAdmin(),
             'nearbyPlaceTypes' => $this->nearbyPlaceTypes(),
+            'optionLists' => $this->optionLists(),
+            'lockedFields' => $this->lockedFields($property),
+            'permitLicenses' => $this->permitLicenses($this->permitOwner($property)),
         ], $this->agentAssignmentOptions(), $this->sectionData()));
     }
 
@@ -728,6 +918,17 @@ class PortalPropertyController extends Controller
             'location', 'postal_code', 'latitude', 'longitude', 'bedrooms', 'bathrooms', 'sqft', 'price', 'currency',
             ...self::COMPLIANCE_INPUTS,
         ]);
+        $data = array_merge($data, $this->listingFields($request));
+        $data = app(\App\Services\Permits\PermitVerifier::class)->apply($data, $request->all(), $property, $property->owner);
+        // Fields that must match a verified / approved permit keep their saved values, whatever was posted.
+        foreach ($this->lockedFields($property) as $field) {
+            $data[$field] = $property->{$field};
+        }
+        if (($data['listing_type'] ?? null) !== 'rent') {
+            $data['rental_period'] = null;
+        }
+        $this->assertPermitRules($data);
+        $this->assertNotDuplicate($data, $property, $property->portal_user_id);
         $data['translations'] = $request->input('translations', []);
         $data['status'] = $request->has('status');
         $data['agent_id'] = $this->resolveAgentId($request, $property->owner);
@@ -770,9 +971,10 @@ class PortalPropertyController extends Controller
             $folder = app(\App\Services\PropertyGallery::class)->folderValue($property->image_path ?: ('properties/' . $property->reference_no));
             $number = $property->image_next_number;
             $sequence = $property->galleryNumbers();
+            $watermark = app(\App\Services\Watermark::class)->activeSettings($property->owner);
             foreach ($request->file('images') as $file) {
                 $number++;
-                $this->storeGalleryImage($file, $folder, $property->reference_no, $number);
+                $this->storeGalleryImage($file, $folder, $property->reference_no, $number, $watermark);
                 $sequence[] = $number;
             }
             $property->update([
@@ -783,9 +985,10 @@ class PortalPropertyController extends Controller
         }
 
         $detailData = [
-            'amenities' => $this->processIconRepeater($request, 'amenities'),
-            'easy_access' => $this->processIconRepeater($request, 'easy_access'),
-            'property_attributes' => $this->processIconRepeater($request, 'property_attributes'),
+            'amenities' => $this->processOptionList($request, 'amenity'),
+            'easy_access' => $this->processOptionList($request, 'easy_access'),
+            'property_attributes' => $this->processOptionList($request, 'property_attribute'),
+            ...$this->specificationFields($request),
             'year_built' => $request->input('year_built'),
             'floor' => $request->input('floor'),
             'parking' => $request->input('parking'),
@@ -961,7 +1164,9 @@ class PortalPropertyController extends Controller
             }
             foreach (['amenities', 'easy_access', 'property_attributes'] as $field) {
                 foreach ($detail->{$field} ?? [] as $row) {
-                    if (!empty($row['icon'])) {
+                    // Rows picked from Master › Property Options (they carry a `key`) share the option's
+                    // icon with every other listing — only an old per-listing upload belongs to this one.
+                    if (!empty($row['icon']) && empty($row['key']) && str_starts_with($row['icon'], 'properties/icons')) {
                         $files->delete($row['icon']);
                     }
                 }
@@ -1043,7 +1248,7 @@ class PortalPropertyController extends Controller
             return response()->json(['message' => 'This listing is marked ' . $property->sold_type . '. Revert it to available first (Sold Listings).'], 422);
         }
         if (!$property->status && !$property->canGoLive()) {
-            return response()->json(['message' => "This listing can't go live yet (" . strtolower($property->complianceLabel()) . '). It needs a valid DLD permit and Form A in the Compliance tab, and Super Admin approval.'], 422);
+            return response()->json(['message' => "This listing can't go live yet (" . strtolower($property->complianceLabel()) . '). Its advertising permit has to be verified first — open the listing and use Validate in Core details.'], 422);
         }
         $property->status = !$property->status;
         $property->save();

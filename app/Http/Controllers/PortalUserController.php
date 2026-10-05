@@ -409,6 +409,7 @@ class PortalUserController extends Controller
             'trade_license_no' => 'sometimes|nullable|string|max:50',
             'trade_license_expiry' => 'sometimes|nullable|date',
             'orn_number' => 'sometimes|nullable|string|max:50',
+            'adrec_license_no' => 'sometimes|nullable|string|max:50',
             'trn_number' => 'sometimes|nullable|string|max:50',
             'trn_expiry' => 'sometimes|nullable|date',
             'authorized_signatory_name' => 'sometimes|nullable|string|max:255',
@@ -432,7 +433,7 @@ class PortalUserController extends Controller
             // The KYC "Affiliated Brokerage" is information only. Agency membership (and the agency's
             // plan) is not edited here — only through an accepted invitation / join request (Agency Agents).
             'agent' => ['brn_number', 'affiliated_brokerage', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
-            'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'trn_number', 'trn_expiry', 'authorized_signatory_name', 'landline', 'office_address'],
+            'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'adrec_license_no', 'trn_number', 'trn_expiry', 'authorized_signatory_name', 'landline', 'office_address'],
             'about' => ['years_of_experience', 'website', 'founding_year'],
         ];
 
@@ -502,6 +503,20 @@ class PortalUserController extends Controller
         $portalUser->save();
 
         return response()->json(['success' => true]);
+    }
+
+    /** Clears authenticator-app 2FA for a user who has lost access to it (and their recovery codes). */
+    public function resetTwoFactor($id)
+    {
+        $portalUser = PortalUser::findOrFail($id);
+        $portalUser->forceFill([
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+            'two_factor_last_step' => null,
+        ])->save();
+
+        return back()->with('success', 'Two-factor authentication has been reset for this account.');
     }
 
     public function approve($id)

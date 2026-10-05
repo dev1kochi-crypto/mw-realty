@@ -60,14 +60,21 @@ class UrlRedirectController extends Controller
     public function update(Request $request, UrlRedirect $url_redirect)
     {
         $data = $this->validated($request, $url_redirect->id);
+        $oldPath = UrlRedirectService::normalizePath($data['old_path']);
+        $newUrl = $this->normalizeNewUrlForStorage((int) $data['status_code'], $data['new_url'] ?? null);
+
+        // Same loop / self-redirect checks as Add (App\Services\Seo\SafeUrlRedirectService).
+        $safe = $this->redirectService instanceof \App\Services\Seo\SafeUrlRedirectService ? $this->redirectService : null;
+        $safe?->assertSafe($oldPath, $newUrl, $url_redirect->id);
 
         $url_redirect->update([
-            'old_path' => UrlRedirectService::normalizePath($data['old_path']),
-            'new_url' => $this->normalizeNewUrlForStorage((int) $data['status_code'], $data['new_url'] ?? null),
+            'old_path' => $oldPath,
+            'new_url' => $newUrl,
             'status_code' => (int) $data['status_code'],
             'notes' => $data['notes'] ?? null,
             'is_active' => $request->boolean('is_active'),
         ]);
+        $safe?->collapseChainsInto($oldPath, $newUrl, $url_redirect->id);
 
         return redirect()->route('cms.url-redirects.index')->with('success', 'Redirect updated.');
     }

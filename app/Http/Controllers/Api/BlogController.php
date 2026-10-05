@@ -33,4 +33,12 @@ class BlogController extends Controller
 
         return response()->json($data);
     }
+
+    /** A "Blog design" landing page (/{slug}), in the same shape as show() — see BlogDetails.vue. */
+    public function landingPage(Request $request, string $slug)
+    {
+        $data = $this->blogPage->getLandingPageData($request->input('lang', app()->getLocale()), $slug);
+
+        return $data ? response()->json($data) : response()->json(['message' => 'Not found'], 404);
+    }
 }

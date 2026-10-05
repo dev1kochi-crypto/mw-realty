@@ -8,14 +8,16 @@ use App\Models\Filter;
 use App\Models\CmsKit\Language;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 /**
  * Nearby landmarks (schools, hospitals, restaurants, attractions, ...) that properties can be
  * tagged with — see Property::nearbyPlaces() / the property form's "Nearby Places" tab.
  *
- * Two tiers: shared places (portal_user_id NULL) are managed by a Super Admin and visible to
- * everyone; an Agent/Company can also add their own, which only they see and manage. Which one
- * applies is decided by ownerId() — null means Super Admin (no scope), same as the properties side.
+ * Super Admin (portal_user_id NULL, "Shared") and Agents/Companies can all add places, and every
+ * place is visible to and usable by everyone. Editing/toggling/deleting is limited to whoever added
+ * it (Super Admin can manage any), and a place still tagged on a property can't be deleted.
+ * ownerId() null means Super Admin, same as the properties side.
  */
 class NearbyPlaceController extends Controller
 {
@@ -39,8 +41,7 @@ class NearbyPlaceController extends Controller
     {
         $this->ensureAllowed();
 
-        return NearbyPlace::when($this->ownerId(), fn ($q, $ownerId) => $q->where('portal_user_id', $ownerId))
-            ->findOrFail($id);
+        return NearbyPlace::manageableBy($this->ownerId())->findOrFail($id);
     }
 
     protected function typeFilter()
@@ -53,7 +54,7 @@ class NearbyPlaceController extends Controller
         $this->ensureAllowed();
 
         $places = NearbyPlace::with('owner')
-            ->visibleTo($this->ownerId())
+            ->withCount('properties')
             ->when($request->input('scope') === 'mine' && $this->ownerId(), fn ($q) => $q->where('portal_user_id', $this->ownerId()))
             ->when($request->input('scope') === 'shared', fn ($q) => $q->whereNull('portal_user_id'))
             ->orderByRaw('portal_user_id IS NULL')
@@ -75,14 +76,16 @@ class NearbyPlaceController extends Controller
 
         $languages = Language::where('status', true)->get();
         $typeFilter = $this->typeFilter();
-        return view('portal.nearby-places.create', compact('languages', 'typeFilter'));
+        $isAdmin = $this->isAdmin();
+        return view('portal.nearby-places.create', compact('languages', 'typeFilter', 'isAdmin'));
     }
 
     protected function rules(): array
     {
         $languages = Language::where('status', true)->pluck('code');
         $rules = [
-            'category' => 'required|string|max:100',
+            // Must be one of the types Super Admin maintains under Master › Property Options.
+            'category' => ['required', 'string', 'max:100', Rule::exists('filter_values', 'value')->where('filter_id', $this->typeFilter()?->id)],
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
         ];
@@ -116,7 +119,8 @@ class NearbyPlaceController extends Controller
         $place = $this->findManageable($id);
         $languages = Language::where('status', true)->get();
         $typeFilter = $this->typeFilter();
-        return view('portal.nearby-places.edit', compact('place', 'languages', 'typeFilter'));
+        $isAdmin = $this->isAdmin();
+        return view('portal.nearby-places.edit', compact('place', 'languages', 'typeFilter', 'isAdmin'));
     }
 
     public function update(Request $request, $id)
@@ -146,16 +150,19 @@ class NearbyPlaceController extends Controller
 
     public function destroy($id)
     {
-        $this->findManageable($id)->delete();
+        $place = $this->findManageable($id);
+        if ($used = $place->properties()->count()) {
+            return response()->json(['message' => "Tagged on {$used} propert" . ($used === 1 ? 'y' : 'ies') . ' — remove it from those first, or switch it off instead.'], 422);
+        }
+        $place->delete();
 
         return response()->json(['success' => true]);
     }
 
-    /** Feeds the property form's Type -> Place cascading picker: shared places plus the user's own. */
+    /** Feeds the property form's Type -> Place cascading picker: every active place, whoever added it. */
     public function byType(Request $request)
     {
         $places = NearbyPlace::active()
-            ->visibleTo($this->ownerId())
             ->when($request->input('type'), fn ($q, $type) => $q->where('category', $type))
             ->get(['id', 'translations', 'portal_user_id'])
             ->map(fn ($p) => ['id' => $p->id, 'name' => $p->getTranslation('name'), 'own' => !$p->isShared()]);

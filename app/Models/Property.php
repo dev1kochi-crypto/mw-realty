@@ -24,17 +24,20 @@ class Property extends Model
         'permit_qr',
         'permit_verification_url',
         'permit_expiry_notified_at',
-        'authorization_type',
-        'authorization_expires_at',
-        'authorization_document',
-        'title_deed_no',
-        'title_deed_document',
         'compliance_status',
-        'compliance_note',
         'compliance_submitted_at',
         'compliance_reviewed_at',
         'compliance_reviewed_by',
         'listing_type',
+        'rental_period',
+        'available_dates',
+        'emirate',
+        'permit_type',
+        'permit_city',
+        'permit_license_no',
+        'permit_verified_at',
+        'permit_verified_via',
+        'permit_data',
         'completion_status',
         'property_type',
         'category',
@@ -76,28 +79,24 @@ class Property extends Model
     public const RENTED = 'rented';
 
     /**
-     * `compliance_status` — the platform's review of the listing's DLD advertising permit and the
-     * owner's marketing authorisation (Form A). Only APPROVED listings with an unexpired permit may be
-     * live (`status` = true). Transitions: ListingComplianceService.
+     * `compliance_status` — the state of the listing's advertising permit, worked out automatically on
+     * every save (ListingComplianceService::afterSave). There is no approval step: a listing whose
+     * permit is verified (Validate with DLD / ADREC in the property form) — or that
+     * needs no permit — is VERIFIED ("approved") and may be live (`status` = true) until the permit
+     * expires. The stored values are unchanged from the old review flow.
      */
-    public const COMPLIANCE_DRAFT = 'draft';                         // permit / Form A details incomplete
-    public const COMPLIANCE_PENDING = 'pending';                     // submitted, waiting for Super Admin
-    public const COMPLIANCE_CHANGES_REQUESTED = 'changes_requested'; // sent back (or taken down) by Super Admin
-    public const COMPLIANCE_APPROVED = 'approved';
+    public const COMPLIANCE_DRAFT = 'draft';                         // permit details incomplete
+    public const COMPLIANCE_PENDING = 'pending';                     // permit entered, not verified yet
+    public const COMPLIANCE_CHANGES_REQUESTED = 'changes_requested'; // taken down by Super Admin
+    public const COMPLIANCE_APPROVED = 'approved';                   // permit verified (or none needed) — may be live
     public const COMPLIANCE_EXPIRED = 'expired';                     // permit expiry date passed
 
     public const COMPLIANCE_LABELS = [
         self::COMPLIANCE_DRAFT => 'Permit details needed',
-        self::COMPLIANCE_PENDING => 'Pending approval',
-        self::COMPLIANCE_CHANGES_REQUESTED => 'Changes requested',
-        self::COMPLIANCE_APPROVED => 'Approved',
+        self::COMPLIANCE_PENDING => 'Not verified',
+        self::COMPLIANCE_CHANGES_REQUESTED => 'Taken down',
+        self::COMPLIANCE_APPROVED => 'Verified',
         self::COMPLIANCE_EXPIRED => 'Permit expired',
-    ];
-
-    /** Owner -> brokerage marketing agreement (RERA Form A) types. */
-    public const AUTHORIZATION_TYPES = [
-        'exclusive' => 'Exclusive',
-        'non_exclusive' => 'Non-exclusive',
     ];
 
     protected $casts = [
@@ -111,6 +110,10 @@ class Property extends Model
         'status' => 'boolean',
         'published_at' => 'datetime',
         'metadata' => 'array',
+        'available_dates' => 'array',
+        'last_open_house_date' => 'date',
+        'permit_verified_at' => 'datetime',
+        'permit_data' => 'array',
         'sold_at' => 'datetime',
         'sold_price' => 'decimal:2',
         'sold_commission' => 'decimal:2',
@@ -118,10 +121,20 @@ class Property extends Model
         'status_before_sold' => 'boolean',
         'permit_expires_at' => 'date',
         'permit_expiry_notified_at' => 'datetime',
-        'authorization_expires_at' => 'date',
         'compliance_submitted_at' => 'datetime',
         'compliance_reviewed_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // Mirror the latest open house / viewing day into an indexed column for the "Open house" filter.
+        static::saving(function (Property $property) {
+            if ($property->isDirty('available_dates')) {
+                $dates = array_filter((array) $property->available_dates, 'is_string');
+                $property->last_open_house_date = $dates ? max($dates) : null;
+            }
+        });
+    }
 
     /**
      * May this listing be switched on for the website? Approved by Super Admin, not sold, and the

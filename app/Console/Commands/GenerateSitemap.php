@@ -2,90 +2,30 @@
 
 namespace App\Console\Commands;
 
-use App\Models\CmsKit\Blog;
-use App\Models\PortalUser;
-use App\Models\Property;
+use App\Services\Seo\SiteLlmsTxtService;
+use App\Services\Seo\SiteSitemapService;
 use Illuminate\Console\Command;
-use Spatie\Sitemap\Sitemap;
-use Spatie\Sitemap\Tags\Url;
 
 /**
- * Writes public/sitemap.xml and public/robots.txt directly from this app's own routes +
- * published content.
- *
- * The vendored cms-kit package ships its own admin "Generate Sitemap" button
- * (CMS\SiteManager\Services\SitemapService::fullCrawl()), but that works by *crawling* the site's
- * server-rendered HTML — which finds nothing here, since this is a client-rendered Vue SPA with an
- * empty <div id="app"> on the wire (see SpaController) and no server-rendered <a> links to follow.
- * This command builds the sitemap directly from known static routes and real DB slugs instead, and
- * writes to the exact same public_path('sitemap.xml') the admin's Sitemap page already reads/edits,
- * so nothing else needs to change — just don't use that page's "Generate" button, which would
- * overwrite this with an empty one (note left in that section's admin view + here).
+ * Writes public/sitemap.xml, public/llms.txt and public/robots.txt from this app's static pages
+ * and published content. The sitemap / llms.txt themselves come from SiteSitemapService /
+ * SiteLlmsTxtService (configured in config/cms/sitemap.php) — the same code the CMS "Generate"
+ * buttons and the on-save rebuild use. The package's own crawler can't be used: this is a
+ * client-rendered Vue SPA, so there are no server-rendered links to follow.
  */
 class GenerateSitemap extends Command
 {
     protected $signature = 'sitemap:generate';
 
-    protected $description = 'Regenerate public/sitemap.xml and public/robots.txt from real static pages and published content';
+    protected $description = 'Regenerate public/sitemap.xml, public/llms.txt and public/robots.txt from real static pages and published content';
 
-    /** page_key => frontend path, for the static pages that have a real SPA route (see routes/web.php).
-     *  'residential'/'developments' are deliberately omitted — they exist as Metadata rows for future
-     *  use but have no corresponding route yet. */
-    private const STATIC_PAGES = [
-        'home' => '/',
-        'about' => '/about',
-        'properties' => '/properties',
-        'commercial' => '/commercial',
-        'agents' => '/agents',
-        'agencies' => '/agencies',
-        'blog' => '/blogs',
-        'contact' => '/contact',
-        'terms' => '/terms-and-conditions',
-        'privacy' => '/privacy-policy',
-        'security' => '/security-policy',
-        'cookie' => '/cookie-settings',
-    ];
-
-    public function handle(): int
+    public function handle(SiteSitemapService $sitemap, SiteLlmsTxtService $llms): int
     {
-        $sitemap = Sitemap::create();
+        $sitemap->generate();
+        $this->info('Wrote ' . substr_count((string) file_get_contents(public_path('sitemap.xml')), '<url>') . ' URLs to public/sitemap.xml');
 
-        foreach (self::STATIC_PAGES as $path) {
-            $sitemap->add(
-                Url::create($path)
-                    ->setPriority($path === '/' ? 1.0 : 0.8)
-                    ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
-            );
-        }
-
-        Property::where('status', true)->pluck('slug')->each(
-            fn ($slug) => $sitemap->add(
-                Url::create("/property-details/{$slug}")
-                    ->setPriority(0.7)
-                    ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
-            )
-        );
-
-        Blog::where('status', true)->pluck('slug')->each(
-            fn ($slug) => $sitemap->add(
-                Url::create("/blog-details/{$slug}")
-                    ->setPriority(0.6)
-                    ->setChangeFrequency(Url::CHANGE_FREQUENCY_MONTHLY)
-            )
-        );
-
-        PortalUser::where('type', 'agent')->where('status', 'approved')->where('is_active', true)
-            ->pluck('slug')->each(
-                fn ($slug) => $sitemap->add(Url::create("/agent-details/{$slug}")->setPriority(0.5))
-            );
-
-        PortalUser::where('type', 'company')->where('status', 'approved')->where('is_active', true)
-            ->pluck('slug')->each(
-                fn ($slug) => $sitemap->add(Url::create("/agency-details/{$slug}")->setPriority(0.5))
-            );
-
-        $sitemap->writeToFile(public_path('sitemap.xml'));
-        $this->info('Wrote ' . count($sitemap->getTags()) . ' URLs to public/sitemap.xml');
+        $llms->generate();
+        $this->info('Wrote public/llms.txt');
 
         $this->writeRobotsTxt();
         $this->info('Wrote public/robots.txt (Sitemap: line points at ' . url('sitemap.xml') . ')');
@@ -94,11 +34,8 @@ class GenerateSitemap extends Command
     }
 
     /**
-     * robots.txt is a static file (same reason sitemap.xml is — see class docblock), so its
-     * "Sitemap:" line can't be templated per-request like a normal Blade view; it's baked in here
-     * using url(), which follows APP_URL, so regenerating after changing that config keeps it
-     * correct. Also keeps admin/portal/auth pages out of the index — nothing there is meant to
-     * be found via search.
+     * robots.txt is a static file, so its "Sitemap:" line is baked in using url() (follows
+     * APP_URL — regenerate after changing it). Also keeps admin/portal/auth pages out of the index.
      */
     private function writeRobotsTxt(): void
     {

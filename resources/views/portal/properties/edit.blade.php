@@ -14,14 +14,14 @@
     </div>
 </div>
 
-{{-- Why this listing isn't live (DLD permit review) — the DLD Permit tab has the full form. --}}
+{{-- Why this listing isn't live (permit not verified / expired / taken down) — the permit is in Core details. --}}
 @if(!$property->canGoLive() && !$property->isSold())
 @php
     [$reviewTone, $reviewIcon, $reviewText] = match ($property->compliance_status) {
-        \App\Models\Property::COMPLIANCE_CHANGES_REQUESTED => ['danger', 'fa-rotate-left', 'MW Realty sent this listing back. Fix the points below, then click Update — it goes back for approval.'],
-        \App\Models\Property::COMPLIANCE_EXPIRED => ['danger', 'fa-ban', 'The DLD permit expired, so the listing is offline. Add the renewed permit and click Update to resubmit.'],
-        \App\Models\Property::COMPLIANCE_PENDING => ['info', 'fa-hourglass-half', 'Waiting for MW Realty to approve the DLD permit. It goes live once approved — you\'ll get an email.'],
-        default => ['warning', 'fa-file-circle-exclamation', 'Not on the website yet: add the DLD permit, QR code and Form A in the DLD Permit tab, then click Update to send it for approval.'],
+        \App\Models\Property::COMPLIANCE_CHANGES_REQUESTED => ['danger', 'fa-rotate-left', 'MW Realty took this listing down. Check the permit details, validate the permit again in Core details, then click Update.'],
+        \App\Models\Property::COMPLIANCE_EXPIRED => ['danger', 'fa-ban', 'The permit expired, so the listing is offline. Enter the renewed permit in Core details, validate it and click Update.'],
+        \App\Models\Property::COMPLIANCE_PENDING => ['info', 'fa-shield-halved', 'Not on the website yet: the permit isn\'t verified. Click Validate next to the permit number in Core details, then Update — it goes live as soon as the permit is verified.'],
+        default => ['warning', 'fa-file-circle-exclamation', 'Not on the website yet: add the permit details in Core details and validate the permit, then click Update.'],
     };
 @endphp
 <div class="alert alert-{{ $reviewTone }} d-flex gap-3 align-items-start">
@@ -29,11 +29,8 @@
     <div class="flex-grow-1">
         <div class="fw-bold">{{ $property->complianceLabel() }}</div>
         <div class="small">{{ $reviewText }}</div>
-        @if($property->compliance_note && in_array($property->compliance_status, [\App\Models\Property::COMPLIANCE_CHANGES_REQUESTED, \App\Models\Property::COMPLIANCE_EXPIRED], true))
-        <div class="small mt-2 p-2 rounded bg-white bg-opacity-75" style="white-space: pre-line;"><strong>Note from MW Realty:</strong> {{ $property->compliance_note }}</div>
-        @endif
     </div>
-    <button type="button" class="btn btn-sm btn-light flex-shrink-0" data-open-tab="#tab-compliance">Open DLD Permit</button>
+    <button type="button" class="btn btn-sm btn-light flex-shrink-0" data-open-tab="#tab-basic">Open permit details</button>
 </div>
 @endif
 

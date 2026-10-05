@@ -108,6 +108,8 @@ const maxSqft = ref('');
 const sort = ref('default');
 const amenities = ref([]);
 const floorPlans = ref(false);
+// Listings with an upcoming open house / viewing day.
+const openHouse = ref(false);
 const currentPage = ref(1);
 
 // Every string filter, as [queryKey, ref] — the fixed ones plus whatever extra admin filters are in play.
@@ -120,7 +122,7 @@ function fields() {
         ...Object.keys(extraSelect).map((k) => [k, toRef(extraSelect, k)]),
     ];
 }
-const NON_FILTER_QUERY = ['sort', 'amenities', 'floor_plans', 'page'];
+const NON_FILTER_QUERY = ['sort', 'amenities', 'floor_plans', 'open_house', 'page'];
 
 // Snapshot of the filters the current results were actually fetched with — the Clear Filters count
 // and the heading read this, so half-typed input in the Location box doesn't count as "applied".
@@ -132,6 +134,7 @@ function snapshot() {
     s.sort = sort.value;
     s.amenities = [...amenities.value].sort();
     s.floor_plans = floorPlans.value;
+    s.open_house = openHouse.value;
     return s;
 }
 
@@ -141,6 +144,7 @@ function currentQuery() {
     if (applied.sort && applied.sort !== 'default') query.sort = applied.sort;
     if (applied.amenities?.length) query.amenities = applied.amenities.join(',');
     if (applied.floor_plans) query.floor_plans = '1';
+    if (applied.open_house) query.open_house = '1';
     return query;
 }
 
@@ -151,6 +155,7 @@ function load() {
     fields().forEach(([key]) => { if (applied[key]) filterParams[key] = applied[key]; });
     if (applied.amenities.length) filterParams.amenities = applied.amenities;
     if (applied.floor_plans) filterParams.floor_plans = 1;
+    if (applied.open_house) filterParams.open_house = 1;
     mapParams.value = filterParams;
     // The map view loads its own pins (PropertyMap.vue) — no page of cards needed.
     if (!mapView.value) {
@@ -190,6 +195,7 @@ function readQuery(rawQuery) {
     sort.value = query.sort ? String(query.sort) : 'default';
     amenities.value = query.amenities ? String(query.amenities).split(',').filter(Boolean) : [];
     floorPlans.value = query.floor_plans === '1';
+    openHouse.value = query.open_house === '1';
     locationInput.value = cityFilter.value || communityFilter.value || locationQuery.value;
     pickedPlace.value = null;
     syncPriceSlider();
@@ -320,6 +326,7 @@ const activeFilters = computed(() => {
             ? `${applied.min_sqft} – ${applied.max_sqft} sq.ft` : applied.min_sqft ? `${applied.min_sqft}+ sq.ft` : `≤ ${applied.max_sqft} sq.ft`);
     }
     (applied.amenities || []).forEach((a) => add(`amenity:${a}`, t('properties_listing.filter_panel.amenities_title', 'Amenity'), amenityLabel(a)));
+    if (applied.open_house) add('open_house', t('properties_listing.filter_panel.features_title', 'Feature'), t('properties_listing.filter_panel.feature_open_house', 'Open house'));
     if (applied.floor_plans) add('floor_plans', t('properties_listing.filter_panel.features_title', 'Feature'), t('properties_listing.filter_panel.feature_floor_plans', 'Floor plans'));
     if (applied.agent) add('agent', t('properties_listing.listing.agent_label', 'Agent'), ownerName.value || humanize(applied.agent));
     if (applied.agency) add('agency', t('properties_listing.listing.agency_label', 'Agency'), ownerName.value || humanize(applied.agency));
@@ -387,6 +394,7 @@ function clearFilters() {
     sort.value = 'default';
     amenities.value = [];
     floorPlans.value = false;
+    openHouse.value = false;
     syncPriceSlider();
     applyFilters();
 }
@@ -548,6 +556,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                 <h3 class="mw-filter-panel__section-title">{{ t('properties_listing.filter_panel.features_title') }}</h3>
                 <div class="mw-filter-panel__checks">
                     <label class="mw-filter-panel__check"><input type="checkbox" name="property-feature" value="floor-plans" v-model="floorPlans"><span>{{ t('properties_listing.filter_panel.feature_floor_plans') }}</span></label>
+                    <label class="mw-filter-panel__check"><input type="checkbox" name="property-feature" value="open-house" v-model="openHouse"><span>{{ t('properties_listing.filter_panel.feature_open_house_properties', 'Open house properties') }}</span></label>
                 </div>
             </section>
 

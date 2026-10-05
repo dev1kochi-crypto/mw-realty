@@ -9,8 +9,10 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Portal › Listings › Listing Approvals (Super Admin only): review each agency / agent listing's
- * DLD advertising permit, Madmoun QR and Form A before it can go live. Rules: ListingComplianceService.
+ * Portal › Listings › Listing Permits (Super Admin only): an overview of which listings' advertising
+ * permits are verified. Super Admin doesn't verify anything — the agency / agent validates the permit
+ * in the property form (DLD / ADREC) and a verified listing goes live by itself; not-verified or expired
+ * ones stay off the website. Super Admin can still take a listing down. Rules: ListingComplianceService.
  */
 class PortalListingApprovalController extends Controller
 {
@@ -29,7 +31,7 @@ class PortalListingApprovalController extends Controller
     {
         $this->authorizeAdmin();
 
-        $tab = array_key_exists($request->input('tab'), Property::COMPLIANCE_LABELS) ? $request->input('tab') : Property::COMPLIANCE_PENDING;
+        $tab = array_key_exists($request->input('tab'), Property::COMPLIANCE_LABELS) ? $request->input('tab') : Property::COMPLIANCE_APPROVED;
         $search = trim((string) $request->input('q', ''));
 
         $listings = Property::query()
@@ -66,33 +68,14 @@ class PortalListingApprovalController extends Controller
         ]);
     }
 
-    public function approve(Request $request, $id)
+    /** Take a listing off the website (wrong details, a DLD complaint …). */
+    public function takeDown($id)
     {
         $this->authorizeAdmin();
-        $data = $request->validate(['note' => 'nullable|string|max:2000']);
         $property = Property::findOrFail($id);
 
-        if ($property->isSold()) {
-            return back()->with('error', 'This listing is marked ' . $property->sold_type . ' — nothing to approve.');
-        }
-        if ($missing = $this->compliance->missingItems($property)) {
-            return back()->with('error', 'Cannot approve yet. Missing: ' . implode(', ', $missing) . '.');
-        }
+        $this->compliance->takeDown($property);
 
-        $this->compliance->approve($property, $data['note'] ?? null);
-
-        return redirect()->route('portal.listing-approvals.index')->with('toast', 'Listing approved and published.');
-    }
-
-    /** Send back to the agent / agency — also how a live listing is taken down (e.g. a DLD complaint). */
-    public function requestChanges(Request $request, $id)
-    {
-        $this->authorizeAdmin();
-        $data = $request->validate(['note' => 'required|string|max:2000']);
-        $property = Property::findOrFail($id);
-
-        $this->compliance->requestChanges($property, $data['note']);
-
-        return redirect()->route('portal.listing-approvals.index')->with('toast', 'Changes requested — the listing is off the website until it is resubmitted.');
+        return redirect()->route('portal.listing-approvals.index')->with('toast', 'Listing taken down — it stays off the website until its permit details are changed.');
     }
 }

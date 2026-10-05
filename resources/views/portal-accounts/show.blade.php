@@ -211,6 +211,13 @@
         <button type="button" class="btn btn-reject reject-item" data-id="{{ $portalUser->id }}"><i class="fas fa-ban me-1"></i> Reject</button>
         @endif
         <button type="button" class="btn btn-reject trigger-reset-password" data-id="{{ $portalUser->id }}" data-name="{{ $displayName ?? $portalUser->name }}"><i class="fas fa-key me-1"></i> Reset Password</button>
+        @if($portalUser->hasTwoFactorEnabled())
+        {{-- For a user locked out of their authenticator app (lost phone + recovery codes). --}}
+        <form method="POST" action="{{ route('cms.portal-accounts.reset-two-factor', $portalUser->id) }}" onsubmit="return confirm('Turn off two-factor authentication for this account? They can sign in with just their password (plus the new-device email code) and set it up again.');">
+            @csrf
+            <button type="submit" class="btn btn-reject"><i class="fas fa-shield-halved me-1"></i> Reset 2FA</button>
+        </form>
+        @endif
     </div>
     @endcan
 </div>
@@ -414,6 +421,7 @@
                     <div class="col-md-4 info-row"><div class="info-label">Trade License No.</div><div class="info-value">{{ $portalUser->trade_license_no ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">Trade License Expiry</div><div class="info-value">{{ $portalUser->trade_license_expiry?->format('d M Y') ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">ORN</div><div class="info-value">{{ $portalUser->orn_number ?: '-' }}</div></div>
+                    <div class="col-md-4 info-row"><div class="info-label">ADREC Brokerage No.</div><div class="info-value">{{ $portalUser->adrec_license_no ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">TRN (VAT)</div><div class="info-value">{{ $portalUser->trn_number ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">TRN Expiry</div><div class="info-value">{{ $portalUser->trn_expiry?->format('d M Y') ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">Authorized Signatory</div><div class="info-value">{{ $portalUser->authorized_signatory_name ?: '-' }}</div></div>
@@ -435,6 +443,10 @@
                     <div class="col-md-4">
                         <label class="form-label">ORN</label>
                         <input type="text" name="orn_number" class="form-control form-control-sm" value="{{ $portalUser->orn_number }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">ADREC Brokerage No. <span class="text-muted small">(Abu Dhabi listings)</span></label>
+                        <input type="text" name="adrec_license_no" class="form-control form-control-sm" value="{{ $portalUser->adrec_license_no }}">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">TRN (VAT)</label>

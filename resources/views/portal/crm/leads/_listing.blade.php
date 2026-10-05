@@ -244,12 +244,12 @@
                                 @empty
                                 <span class="portal-tags-empty"><i class="fas fa-plus" aria-hidden="true"></i> Add tags</span>
                                 @endforelse
-                                @if($lead->tags->isNotEmpty())
-                                <i class="fas fa-pen portal-tags-picker-icon" aria-hidden="true"></i>
-                                @endif
                             </button>
                             @if($lead->tags->count() > 1)
                             <button type="button" class="portal-tag-overflow" data-id="{{ $lead->id }}" aria-haspopup="true" aria-expanded="false" title="Show other tags">+{{ $lead->tags->count() - 1 }}</button>
+                            @endif
+                            @if($lead->tags->isNotEmpty())
+                            <button type="button" class="portal-tags-picker portal-tags-add" data-id="{{ $lead->id }}" title="Add tags" aria-label="Add tags to {{ $lead->name ?: 'lead' }}"><i class="fas fa-plus" aria-hidden="true"></i></button>
                             @endif
                         </div>
                     </td>

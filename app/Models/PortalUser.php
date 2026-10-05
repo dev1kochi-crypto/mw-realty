@@ -63,6 +63,18 @@ class PortalUser extends Authenticatable
         'trade_license_expiry',
         'trade_license_expiry_notified_at',
         'orn_number',
+        'adrec_license_no',
+        'adrec_license_expiry',
+        'orn_expiry',
+        'other_license',
+        'other_license_expiry',
+        'public_email',
+        'secondary_phone',
+        'city',
+        'position',
+        'linkedin_url',
+        'spoken_languages',
+        'experience_since',
         'rera_certificate_document',
         'office_address',
         'trn_number',
@@ -137,6 +149,8 @@ class PortalUser extends Authenticatable
         'password',
         'remember_token',
         'otp_code',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     protected $casts = [
@@ -162,6 +176,16 @@ class PortalUser extends Authenticatable
         'features' => 'array',
         'badges' => 'array',
         'metadata' => 'array',
+        'orn_expiry' => 'date',
+        'adrec_license_expiry' => 'date',
+        'other_license_expiry' => 'date',
+        'spoken_languages' => 'array',
+        'two_factor_secret' => 'encrypted',
+        'two_factor_recovery_codes' => 'encrypted:array',
+        'two_factor_confirmed_at' => 'datetime',
+        'two_factor_prompt_pending' => 'boolean',
+        'watermark' => 'array',
+        'two_factor_enforced' => 'boolean',
     ];
 
     /**
@@ -232,6 +256,28 @@ class PortalUser extends Authenticatable
     public function agents()
     {
         return $this->hasMany(PortalUser::class, 'company_id');
+    }
+
+    /** Authenticator-app 2FA is set up and confirmed. */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_confirmed_at !== null && !empty($this->two_factor_secret);
+    }
+
+    /** New account that hasn't yet set up 2FA or chosen "Skip for now" on the sign-up step. */
+    public function needsTwoFactorPrompt(): bool
+    {
+        return $this->two_factor_prompt_pending && !$this->hasTwoFactorEnabled();
+    }
+
+    /** 2FA is mandatory for this account: its own company setting, or its agency's. */
+    public function twoFactorRequired(): bool
+    {
+        if ($this->isAgency()) {
+            return (bool) $this->two_factor_enforced;
+        }
+
+        return $this->isAgencyAgent() && (bool) $this->company?->two_factor_enforced;
     }
 
     public function scopeCompanies($query)

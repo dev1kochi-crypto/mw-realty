@@ -160,6 +160,25 @@ return [
                 'editor' => 'tinymce',
                 'translatable' => true,
             ],
+            // MW Realty's own brokerage licenses — the advertising permits of listings Super Admin
+            // creates directly are validated against these (App\Support\PermitRules::license).
+            'license_name' => [
+                'label' => 'Licensed company name',
+                'type' => 'text',
+                'placeholder' => 'Mighty Warners Real Estate L.L.C',
+                'helpText' => 'As on the trade license. Shown as the agency on MW Realty listings.',
+            ],
+            'rera_orn' => [
+                'label' => 'RERA ORN (Dubai)',
+                'type' => 'text',
+                'placeholder' => 'e.g. 48153',
+                'helpText' => 'Office registration number — DLD checks permits of MW Realty listings against it.',
+            ],
+            'adrec_license' => [
+                'label' => 'ADREC brokerage registration no. (Abu Dhabi)',
+                'type' => 'text',
+                'helpText' => 'Used for Abu Dhabi / Al Ain permits of MW Realty listings.',
+            ],
         ],
         'facebook' => true,
         'twitter' => true,

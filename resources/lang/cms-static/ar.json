@@ -267,7 +267,9 @@
             "amenity_concierge": "خدمة الكونسيرج",
             "amenity_private_pool": "مسبح خاص",
             "reset": "إعادة تعيين",
-            "apply": "تطبيق الفلاتر"
+            "apply": "تطبيق الفلاتر",
+            "feature_open_house": "بيت مفتوح",
+            "feature_open_house_properties": "عقارات البيت المفتوح"
         },
         "property_types": {
             "apartment": "شقة",
@@ -621,7 +623,28 @@
             "message": "إعلان هذا العقار غير موجود أو لم يعد متاحاً.",
             "back_link": "العودة إلى العقارات"
         },
-        "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى."
+        "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى.",
+        "book_a_viewing": "احجز معاينة",
+        "available_now_text_book": "جاهز للسكن أو المعاينة في أي وقت — اختر اليوم والوقت المناسبين لك.",
+        "viewing": {
+            "morning": "صباحاً",
+            "afternoon": "بعد الظهر",
+            "evening": "مساءً",
+            "open_house_days": "أيام البيت المفتوح",
+            "choose_day": "اختر يوماً",
+            "choose_time": "الوقت المفضل",
+            "pick_day": "يرجى اختيار يوم.",
+            "pick_time": "يرجى اختيار وقت.",
+            "name": "الاسم",
+            "email": "البريد الإلكتروني",
+            "phone": "الهاتف",
+            "note": "ملاحظة للوكيل (اختياري)",
+            "sending": "جارٍ الإرسال…",
+            "submit": "طلب معاينة",
+            "done_title": "تم طلب المعاينة",
+            "done_text": "سيتواصل معك الوكيل قريباً لتأكيد الموعد بالضبط.",
+            "close": "تم"
+        }
     },
     "about": {
         "breadcrumb_aria": "مسار التنقل",
@@ -869,7 +892,20 @@
         "divider_or": "أو",
         "google_cta": "المتابعة باستخدام Google",
         "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى.",
-        "agent_tab_hint": "مسجّل كوكيل أو وكالة؟ انتقل إلى تبويب الوكيل \/ الوكالة."
+        "agent_tab_hint": "مسجّل كوكيل أو وكالة؟ انتقل إلى تبويب الوكيل \/ الوكالة.",
+        "new_device_title": "تأكيد هويتك",
+        "new_device_subtitle": "أنت تسجّل الدخول من جهاز جديد. لقد أرسلنا رمز تحقق إلى",
+        "two_factor_title": "المصادقة الثنائية",
+        "two_factor_subtitle": "افتح تطبيق المصادقة (Authy أو Google Authenticator…) وأدخل الرمز المكوّن من 6 أرقام الخاص بـ MW Realty.",
+        "email_code_label": "رمز التحقق",
+        "two_factor_code_label": "رمز المصادقة",
+        "recovery_hint": "فقدت هاتفك؟ أدخل أحد رموز الاسترداد بدلاً من ذلك.",
+        "verify": "تحقق",
+        "verifying": "جارٍ التحقق…",
+        "resend_code": "إعادة إرسال الرمز",
+        "resending": "جارٍ الإرسال…",
+        "code_resent": "تم إرسال رمز جديد.",
+        "back_to_login": "العودة لتسجيل الدخول"
     },
     "signup": {
         "photo_alt": "شقة دافئة في دبي",

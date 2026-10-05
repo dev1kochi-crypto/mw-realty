@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Property;
 use App\Models\PropertyComplianceLog;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Storage;
 
@@ -27,30 +26,18 @@ class ListingComplianceDemoSeeder extends Seeder
         Property::COMPLIANCE_EXPIRED => 3,
     ];
 
-    private const CHANGE_NOTES = [
-        'The permit on DLD is for unit 1204, but the ad says unit 1402. Please check the unit number or upload the correct permit.',
-        'The advertised price (AED 2,350,000) does not match the permit (AED 2,200,000). Update the price or renew the permit.',
-        'Form A is not signed by the owner. Please upload the signed, RERA-registered Form A.',
-    ];
-
     public function run(): void
     {
         mt_srand(20260930);
-        $formA = $this->sampleFormA();
         $filled = 0;
 
-        Property::query()->whereNull('permit_number')->orderBy('id')->chunkById(200, function ($properties) use ($formA, &$filled) {
+        Property::query()->whereNull('permit_number')->orderBy('id')->chunkById(200, function ($properties) use (&$filled) {
             foreach ($properties as $property) {
                 $permit = '71' . str_pad((string) (10000000 + $property->id * 7919 % 89999999), 8, '0', STR_PAD_LEFT);
                 $property->forceFill([
                     'permit_number' => $permit,
                     'permit_expires_at' => today()->addDays(mt_rand(45, 330)),
                     'permit_qr' => $this->sampleQr($permit),
-                    'authorization_type' => mt_rand(0, 3) ? 'exclusive' : 'non_exclusive',
-                    'authorization_expires_at' => today()->addDays(mt_rand(120, 365)),
-                    'authorization_document' => $formA,
-                    'title_deed_no' => $property->completion_status === 'off-plan' ? 'OQ-' . mt_rand(100000, 999999) : 'TD-' . mt_rand(1000000, 9999999),
-                    'compliance_note' => null,
                     'compliance_reviewed_at' => $property->compliance_reviewed_at ?? now()->subDays(mt_rand(3, 60)),
                     'compliance_submitted_at' => $property->compliance_submitted_at ?? now()->subDays(mt_rand(61, 90)),
                 ])->saveQuietly();
@@ -82,13 +69,13 @@ class ListingComplianceDemoSeeder extends Seeder
     private function moveTo(Property $property, string $state, int $i): void
     {
         $submitted = now()->subHours(mt_rand(2, 96));
-        $changes = ['compliance_status' => $state, 'status' => false, 'compliance_reviewed_at' => null, 'compliance_note' => null];
+        $changes = ['compliance_status' => $state, 'status' => false, 'compliance_reviewed_at' => null];
         $logs = [];
 
         switch ($state) {
             case Property::COMPLIANCE_DRAFT:
-                // Saved without the QR and Form A yet.
-                $changes = array_merge($changes, ['permit_qr' => null, 'authorization_document' => null, 'compliance_submitted_at' => null]);
+                // Saved without the permit QR yet.
+                $changes = array_merge($changes, ['permit_qr' => null, 'compliance_submitted_at' => null]);
                 $logs[] = [null, Property::COMPLIANCE_DRAFT, null, $submitted];
                 break;
             case Property::COMPLIANCE_PENDING:
@@ -97,15 +84,15 @@ class ListingComplianceDemoSeeder extends Seeder
                 $logs[] = [Property::COMPLIANCE_DRAFT, Property::COMPLIANCE_PENDING, null, $submitted];
                 break;
             case Property::COMPLIANCE_CHANGES_REQUESTED:
-                $note = self::CHANGE_NOTES[$i % count(self::CHANGE_NOTES)];
-                $changes = array_merge($changes, ['compliance_submitted_at' => $submitted, 'compliance_reviewed_at' => $submitted->copy()->addHours(3), 'compliance_note' => $note]);
+                $note = 'Taken down by MW Realty.';
+                $changes = array_merge($changes, ['compliance_submitted_at' => $submitted, 'compliance_reviewed_at' => $submitted->copy()->addHours(3)]);
                 $logs[] = [Property::COMPLIANCE_DRAFT, Property::COMPLIANCE_PENDING, null, $submitted];
                 $logs[] = [Property::COMPLIANCE_PENDING, Property::COMPLIANCE_CHANGES_REQUESTED, $note, $submitted->copy()->addHours(3), 'admin'];
                 break;
             case Property::COMPLIANCE_EXPIRED:
                 $expiredOn = today()->subDays(mt_rand(1, 20));
                 $note = 'DLD permit expired on ' . $expiredOn->format('d M Y') . '.';
-                $changes = array_merge($changes, ['permit_expires_at' => $expiredOn, 'compliance_note' => $note, 'compliance_submitted_at' => $expiredOn->copy()->subMonths(6)]);
+                $changes = array_merge($changes, ['permit_expires_at' => $expiredOn, 'compliance_submitted_at' => $expiredOn->copy()->subMonths(6)]);
                 $logs[] = [Property::COMPLIANCE_PENDING, Property::COMPLIANCE_APPROVED, null, $expiredOn->copy()->subMonths(6), 'admin'];
                 $logs[] = [Property::COMPLIANCE_APPROVED, Property::COMPLIANCE_EXPIRED, $note, $expiredOn->copy()->addDay()->setTime(0, 5), 'system'];
                 break;
@@ -129,18 +116,6 @@ class ListingComplianceDemoSeeder extends Seeder
     }
 
     /** One shared sample Form A on the private disk. */
-    private function sampleFormA(): string
-    {
-        $path = 'property-compliance/demo/sample-form-a.pdf';
-        if (!Storage::disk('kyc')->exists($path)) {
-            $html = '<h2 style="font-family:sans-serif">RERA Form A — SAMPLE</h2>'
-                . '<p style="font-family:sans-serif">Agreement between Seller &amp; Broker. Demo document generated for testing Listing Approvals. Not a real contract.</p>';
-            Storage::disk('kyc')->put($path, Pdf::loadHTML($html)->output());
-        }
-
-        return $path;
-    }
-
     /**
      * A QR-looking SAMPLE image for a permit, drawn with GD (finder squares + a pattern from the
      * permit number, "SAMPLE" underneath). Stored on the public disk.

@@ -19,6 +19,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(\App\Services\ManagedFiles::class);
         $this->app->scoped(\App\Services\PropertyLabels::class);
 
+        // SEO files built from the database (the package crawls the site, which can't see the
+        // Vue SPA's links) — used by the CMS buttons, `sitemap:generate` and the package jobs.
+        $this->app->bind(\CMS\SiteManager\Services\SitemapService::class, \App\Services\Seo\SiteSitemapService::class);
+        $this->app->bind(\CMS\SiteManager\Services\LlmsTxtService::class, \App\Services\Seo\SiteLlmsTxtService::class);
+        // Loop/chain-safe URL redirects (slug renames, deletions, manual rules).
+        $this->app->bind(\CMS\SiteManager\Services\UrlRedirectService::class, \App\Services\Seo\SafeUrlRedirectService::class);
+
         // Which concrete AI provider backs the chat widget — see config/chatbot.php's
         // 'provider' (CHATBOT_PROVIDER env). Both implementations ship regardless of which is
         // active, so switching providers (or back) is a one-line env change, no code change.
@@ -35,6 +42,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->regenerateSeoFilesOnChange();
+        $this->redirectOnSlugChange();
+
+        // The admin and portal are Bootstrap 5 — Laravel's default Tailwind pagination rendered
+        // unstyled there (giant arrow icons). ->links() now produces Bootstrap markup everywhere.
+        \Illuminate\Pagination\Paginator::useBootstrapFive();
+
         \Illuminate\Support\Facades\RateLimiter::for('admin-login', fn ($request) => [
             \Illuminate\Cache\RateLimiting\Limit::perMinute(5)->by(strtolower((string) $request->input('email')).'|'.$request->ip()),
             \Illuminate\Cache\RateLimiting\Limit::perMinute(30)->by($request->ip()),
@@ -104,5 +118,58 @@ class AppServiceProvider extends ServiceProvider
                 ? \App\Models\SupportTicket::needsAdminReply()->count()
                 : 0);
         });
+    }
+
+    /**
+     * Listing / agent / agency slug renamed → 301 from the old detail URL to the new one; listing
+     * deleted → 301 to /properties (config/cms/url_redirects.php). Blogs, careers and market
+     * insights already record theirs in their CMS controllers. SafeUrlRedirectService keeps the
+     * rules loop- and chain-free.
+     */
+    private function redirectOnSlugChange(): void
+    {
+        $redirects = fn () => app(\CMS\SiteManager\Services\UrlRedirectService::class);
+        $actor = fn () => \Illuminate\Support\Facades\Auth::guard('cms')->id();
+
+        \App\Models\Property::updated(function ($property) use ($redirects, $actor) {
+            if ($property->wasChanged('slug') && $property->getOriginal('slug')) {
+                $redirects()->recordSlugChange('property', $property->getOriginal('slug'), (string) $property->slug, $actor());
+            }
+        });
+        \App\Models\Property::deleted(function ($property) use ($redirects, $actor) {
+            if ($property->slug) {
+                $redirects()->recordDeletion('property', $property->slug, $actor());
+            }
+        });
+        \App\Models\PortalUser::updated(function ($user) use ($redirects, $actor) {
+            if ($user->wasChanged('slug') && $user->getOriginal('slug')) {
+                $redirects()->recordSlugChange($user->type === 'company' ? 'agency' : 'agent', $user->getOriginal('slug'), (string) $user->slug, $actor());
+            }
+        });
+    }
+
+    /**
+     * Saving/deleting a model listed in config/cms/sitemap.php 'regenerate_on_change' queues one
+     * sitemap.xml + llms.txt rebuild. Saves that only touch bookkeeping columns (login codes,
+     * timestamps…) are ignored so routine activity doesn't keep rebuilding the files.
+     */
+    private function regenerateSeoFilesOnChange(): void
+    {
+        $ignored = ['updated_at', 'remember_token', 'password', 'otp_code', 'otp_expires_at', 'two_factor_last_step', 'two_factor_recovery_codes', 'image_sequence'];
+        $queue = function ($model) use ($ignored) {
+            if (!config('cms.sitemap.auto_regenerate', true)) {
+                return;
+            }
+            if ($model->wasRecentlyCreated || !$model->exists || array_diff(array_keys($model->getChanges()), $ignored)) {
+                \App\Jobs\RegenerateSeoFiles::dispatch();
+            }
+        };
+
+        foreach (config('cms.sitemap.regenerate_on_change', []) as $class) {
+            if (class_exists($class)) {
+                $class::saved($queue);
+                $class::deleted($queue);
+            }
+        }
     }
 }

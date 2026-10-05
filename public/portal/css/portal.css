@@ -1107,14 +1107,25 @@ body.portal-body {
     text-decoration: underline;
 }
 
-.portal-tags-picker-icon {
-    margin-left: 0.08rem;
-    color: var(--portal-muted);
+/* Small round "+" after a lead's tags — opens the tag picker. */
+.portal-tags-add {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px dashed #c4ccdd;
+    color: var(--portal-primary);
     font-size: 0.62rem;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
-.portal-tags-picker:hover .portal-tags-picker-icon {
-    color: var(--portal-primary);
+.portal-tags-add:hover,
+.portal-tags-add:focus-visible {
+    background: var(--portal-primary);
+    border-color: var(--portal-primary);
+    border-style: solid;
+    color: #fff;
 }
 
 .portal-lead-tags-modal {

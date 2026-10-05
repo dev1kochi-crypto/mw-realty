@@ -2,9 +2,8 @@
     let tinymceInitialized = false;
 
     function initTinyMce() {
-        // No-op while the Template page type (the only one that used TinyMCE) is disabled and its
-        // script tag is commented out — guards against a ReferenceError if it's ever loaded without
-        // the .tinymce-editor field it targets, or vice versa.
+        // Content editor for the "Blog design" (template) page type — guarded in case the TinyMCE
+        // script didn't load.
         if (tinymceInitialized || typeof tinymce === 'undefined') return;
         tinymce.init({
             selector: '.tinymce-editor',
@@ -16,8 +15,8 @@
     }
 
     function togglePageType() {
-        // The Template-type radio is currently commented out of the form (Custom HTML only) — when it's
-        // not in the DOM, default to "custom" so the fields below still show correctly.
+        // Page Type switch (_page-type-switch): "Blog design" shows the blog inputs, "Custom HTML"
+        // the code editor. Defaults to custom if the switch isn't on the page.
         const customRadio = document.getElementById('typeCustom');
         const isCustom = customRadio ? customRadio.checked : true;
         document.querySelectorAll('.template-only-field').forEach(el => el.classList.toggle('d-none', isCustom));

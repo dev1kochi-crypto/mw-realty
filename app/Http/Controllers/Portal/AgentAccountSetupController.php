@@ -44,6 +44,8 @@ class AgentAccountSetupController extends Controller
         Auth::guard('portal')->login($agent);
         $request->session()->regenerate();
         $request->session()->put('password_hash_portal', $agent->getAuthPassword());
+        // Arrived via the emailed link, so this browser counts as email-verified.
+        app(\App\Services\TwoFactor\PortalDeviceTrust::class)->trust($request, $agent);
 
         return redirect()->route('portal.dashboard')->with('success', 'Password set — welcome to your agency portal.');
     }

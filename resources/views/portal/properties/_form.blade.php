@@ -6,12 +6,6 @@
     $meta = $isEdit ? ($property->metadata ?? []) : [];
     $metaVal = fn ($field) => old("metadata.{$field}", $meta[$field] ?? '');
 
-    $repeaterSections = [
-        'amenities' => ['title' => 'Amenities', 'hint' => 'Pool, Gym, Parking, etc.', 'icon' => 'fa-swimming-pool'],
-        'easy_access' => ['title' => 'Easy Access', 'hint' => 'Metro, highway access, etc.', 'icon' => 'fa-route'],
-        'property_attributes' => ['title' => 'Attributes', 'hint' => 'Any other notable attribute.', 'icon' => 'fa-star'],
-    ];
-
     // Property Type / Listing Type / Completion Status option text comes from the static-texts
     // JSON files (lang/cms-static/{code}.json, editable under CMS > Languages > Static Texts) —
     // these are fixed, developer-defined value sets, unlike Category/Location which are fully
@@ -23,17 +17,41 @@
     }
     $staticSelectFields = ['property_type', 'listing_type', 'completion_status'];
     $fallbackLang = config('app.fallback_locale', 'en');
+    $sourceLang = $languages->first();
 @endphp
+
+@if($languages->count() > 1)
+{{-- Content language switcher (drives the Description + Location language tabs) and auto-fill:
+     text typed in the first language is translated into the others — see PropertyTranslateController. --}}
+<div class="property-lang-bar" id="propertyLangBar" data-source="{{ $sourceLang->code }}" data-source-name="{{ $sourceLang->name }}"
+     data-translate-url="{{ route('portal.properties.translate') }}" data-configured="{{ \App\Services\AutoTranslator::configured() ? 1 : 0 }}">
+    <div class="property-lang-bar__label"><i class="fas fa-language"></i> Content language</div>
+    <div class="property-lang-bar__switch" role="tablist" aria-label="Content language">
+        @foreach($languages as $lang)
+        <button type="button" role="tab" class="property-lang-pill {{ $loop->first ? 'active' : '' }}" data-lang="{{ $lang->code }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}">
+            <span class="property-lang-pill__dot" data-state-for="{{ $lang->code }}"></span>{{ $lang->name }}
+        </button>
+        @endforeach
+    </div>
+    <div class="property-lang-bar__tools">
+        <div class="form-check form-switch m-0" title="Translate {{ $sourceLang->name }} text into the other languages as you type">
+            <input class="form-check-input" type="checkbox" id="autoTranslateToggle" checked>
+            <label class="form-check-label small fw-semibold" for="autoTranslateToggle">Auto-fill from {{ $sourceLang->name }}</label>
+        </div>
+        <button type="button" class="btn btn-sm btn-portal-light" id="translateNowBtn"><i class="fas fa-wand-magic-sparkles me-1"></i>Translate now</button>
+    </div>
+    <div class="property-lang-bar__status" id="translateStatus" aria-live="polite"></div>
+</div>
+@endif
 
 <div class="property-tabs-shell">
     <div class="nav property-tabs-sidebar" role="tablist" aria-orientation="vertical">
         <div class="property-tabs-group-label">Listing Info</div>
         <button type="button" role="tab" class="property-tab-link active" data-bs-toggle="pill" data-bs-target="#tab-basic">
-            <span class="property-tab-icon"><i class="fas fa-file-lines"></i></span> <span>Basic</span>
+            <span class="property-tab-icon"><i class="fas fa-file-lines"></i></span> <span>Core details</span>
         </button>
-        <button type="button" role="tab" class="property-tab-link" data-bs-toggle="pill" data-bs-target="#tab-compliance">
-            <span class="property-tab-icon"><i class="fas fa-file-shield"></i></span> <span>DLD Permit</span>
-            @if(!$isEdit || $property->compliance_status !== \App\Models\Property::COMPLIANCE_APPROVED)<span class="badge rounded-pill bg-warning-subtle text-warning-emphasis ms-auto">Required</span>@endif
+        <button type="button" role="tab" class="property-tab-link" data-bs-toggle="pill" data-bs-target="#tab-specifications">
+            <span class="property-tab-icon"><i class="fas fa-list-check"></i></span> <span>Property Details</span>
         </button>
         <button type="button" role="tab" class="property-tab-link" data-bs-toggle="pill" data-bs-target="#tab-agent">
             <span class="property-tab-icon"><i class="fas fa-user-tie"></i></span> <span>Agent &amp; Agency</span>
@@ -71,313 +89,244 @@
 
     <div class="property-tabs-content tab-content">
 
-        {{-- Basic (Reference & Classification, Title/Description per language, Pricing & Status, Map) --}}
+        {{-- Core details / Specifications / Price / Description — one tab each (Core details keeps the "tab-basic" id) --}}
+        @php
+            // Params for _option-select, all passed every time (an @include also sees this view's variables).
+            $opt = fn (string $field, string $label, array $extra = []) => array_merge(
+                ['field' => $field, 'label' => $label, 'name' => null, 'required' => false, 'current' => null, 'placeholder' => null], $extra);
+            $isLocked = fn (string $field) => in_array($field, $lockedFields ?? [], true);
+            $lockIcon = '<i class="fas fa-lock text-muted ms-1 small" title="Matches the approved DLD permit"></i>';
+            $availableDates = collect(old('available_dates', $isEdit ? ($property->available_dates ?? []) : []))->filter()->sort()->values();
+            $availability = old('availability', $availableDates->isNotEmpty() ? 'from_date' : 'immediately');
+        @endphp
         <div class="tab-pane fade show active" id="tab-basic" role="tabpanel">
             <div class="property-tab-pane-head">
-                <div class="property-tab-pane-title">Basic Information</div>
-                <div class="property-tab-pane-hint">Reference, classification, title and description, per language</div>
-            </div>
-            <ul class="nav property-lang-tabs mb-4" id="langTabs" role="tablist" data-langs="{{ $languages->pluck('code')->implode(',') }}">
-                @foreach($languages as $lang)
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="{{ $lang->code }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $lang->code }}-content" type="button" role="tab" data-lang="{{ $lang->code }}">
-                        {{ $lang->name }}
-                    </button>
-                </li>
-                @endforeach
-            </ul>
-
-            <div class="tab-content mb-4">
-                @foreach($languages as $lang)
-                @php $t = $isEdit ? ($property->translations[$lang->code] ?? []) : []; @endphp
-                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $lang->code }}-content" role="tabpanel">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
-                            <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $t['title'] ?? '') }}">
-                            @error("translations.{$lang->code}.title")<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Key Features</label>
-                            <textarea name="translations[{{ $lang->code }}][key_features]" class="form-control" rows="2" placeholder="Short highlights, one per line">{{ old("translations.{$lang->code}.key_features", $t['key_features'] ?? '') }}</textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Description</label>
-                            <textarea name="translations[{{ $lang->code }}][description]" class="form-control tinymce-editor" rows="6">{{ old("translations.{$lang->code}.description", $t['description'] ?? '') }}</textarea>
-                        </div>
-                    </div>
-                </div>
-                @endforeach
+                <div class="property-tab-pane-title">Core details</div>
+                <div class="property-tab-pane-hint">Emirate, offering and property type, location, reference and availability</div>
             </div>
 
-            <hr class="my-4">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Reference ID</label>
-                    <input type="text" class="form-control" value="{{ $val('reference_no') }}" placeholder="Auto-generated on save" readonly disabled>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">RERA ID</label>
-                    <input type="text" name="rera_id" class="form-control" value="{{ $val('rera_id') }}" placeholder="e.g. RERA70613">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Slug <span class="text-danger">*</span></label>
-                    <input type="text" name="slug" id="slugInput" class="form-control" value="{{ $val('slug') }}" placeholder="Auto-generated from title">
-                </div>
-                @php
-                    $selectFields = [
-                        'property_type' => 'Property Type',
-                        'listing_type' => 'Listing Type (Buy / Rent)',
-                        'category' => 'Category',
-                        'completion_status' => 'Completion Status',
-                    ];
-                    $requiredSelectFields = ['property_type', 'listing_type'];
-                    $searchPlaceholders = [
-                        'property_type' => 'Search property type',
-                        'listing_type' => 'Search listing type',
-                        'category' => 'Search category',
-                        'completion_status' => 'Search completion status',
-                    ];
-                @endphp
-                @foreach($selectFields as $field => $label)
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">{{ $label }} @if(in_array($field, $requiredSelectFields, true))<span class="text-danger">*</span>@endif</label>
-                    @if(isset($filterOptions[$field]) && $filterOptions[$field]->activeValues->count())
-                        {{-- Option text is swapped live via JS to match whichever language tab above is
-                        currently active — the selected value itself isn't per-language. For the fixed,
-                        developer-defined value sets (Property Type/Listing Type/Completion Status) the
-                        text comes from the static-texts JSON files (CMS > Languages > Static Texts);
-                        everything else (Category, Location — fully admin-configurable) uses the
-                        FilterValue's own per-language label. --}}
-                        <select name="{{ $field }}" class="form-select lang-aware-select" data-placeholder="{{ $searchPlaceholders[$field] ?? 'Search' }}">
-                            <option value=""></option>
-                            @foreach($filterOptions[$field]->activeValues as $option)
-                            @php
-                                $labelFor = function (string $langCode) use ($field, $option, $staticLabels, $staticSelectFields, $fallbackLang) {
-                                    if (in_array($field, $staticSelectFields, true)) {
-                                        // Super Admin's label for this language (CRM › Master › Property Options) wins;
-                                        // the static-texts JSON is the fallback for values it hasn't labelled.
-                                        return ($option->translations[$langCode]['label'] ?? null)
-                                            ?: ($staticLabels[$langCode]["{$field}.{$option->value}"]
-                                            ?? $staticLabels[$fallbackLang]["{$field}.{$option->value}"]
-                                            ?? $option->getTranslation('label', $langCode));
-                                    }
-                                    return $option->getTranslation('label', $langCode) ?: $option->getTranslation('label', $fallbackLang);
-                                };
-                            @endphp
-                            <option value="{{ $option->value }}"
-                                {{ $val($field) == $option->value ? 'selected' : '' }}
-                                @foreach($languages as $lang)
-                                data-label-{{ $lang->code }}="{{ $labelFor($lang->code) }}"
-                                @endforeach
-                            >{{ $labelFor($languages->first()->code ?? $fallbackLang) }}</option>
-                            @endforeach
-                        </select>
-                    @else
-                        <input type="text" name="{{ $field }}" class="form-control" value="{{ $val($field) }}" placeholder="Free text (no options configured yet)">
-                    @endif
-                </div>
-                @endforeach
-
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Furnishing</label>
-                    {{-- Managed list (CRM › Master › Property Options); `furnished` holds the option value. --}}
-                    @php $currentFurnishing = (string) $detailVal('furnished'); @endphp
-                    <select name="furnished" class="form-select lang-aware-select" data-placeholder="Search furnishing">
-                        <option value=""></option>
-                        @foreach($filterOptions[\App\Models\Filter::FURNISHING_KEY]?->activeValues ?? [] as $option)
-                        <option value="{{ $option->value }}" {{ $currentFurnishing === $option->value ? 'selected' : '' }}
-                            @foreach($languages as $lang)
-                            data-label-{{ $lang->code }}="{{ ($option->translations[$lang->code]['label'] ?? null) ?: $option->getTranslation('label', $fallbackLang) }}"
-                            @endforeach
-                        >{{ $option->getTranslation('label', $languages->first()->code ?? $fallbackLang) }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-12">
-                    <div class="small text-muted d-flex align-items-center gap-2">
-                        <i class="fas fa-circle-info"></i>
-                        @if($isAdmin ?? false)
-                            Property Type, Listing Type, Completion Status and Furnishing options are managed in
-                            <a href="{{ route('portal.crm.master.property-options.index') }}">Master › Property Options</a>.
-                        @else
-                            Need a property type, listing type, completion status or furnishing option that isn't listed?
-                            <a href="{{ route('portal.contact.index') }}" target="_blank">Raise a ticket</a> and our team will add it.
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            <hr class="my-4">
-            <div class="property-tab-pane-title mb-3" style="font-size: 0.95rem;">Pricing &amp; Status</div>
-            <div class="row g-3">
-                <div class="col-md-8">
-                    <label class="form-label fw-semibold">Price <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" name="price" class="form-control" value="{{ $val('price') }}" min="0">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Currency <span class="text-danger">*</span></label>
-                    <input type="text" name="currency" class="form-control" value="{{ $val('currency', 'AED') }}">
-                </div>
-                <div class="col-12">
-                    <label class="form-label fw-semibold">Direct From Owner</label>
-                    <input type="text" name="direct_from_owner" class="form-control" value="{{ $detailVal('direct_from_owner') }}" placeholder="Example: Yes, Owner Listed">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Security Deposit</label>
-                    <input type="number" step="0.01" name="security_deposit" class="form-control" value="{{ $detailVal('security_deposit') }}">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Virtual Tour URL</label>
-                    <input type="url" name="virtual_tour_url" class="form-control" value="{{ $detailVal('virtual_tour_url') }}" placeholder="https://example.com/tour">
-                </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Bedrooms</label>
-                    <input type="number" name="bedrooms" class="form-control" value="{{ $val('bedrooms') }}" min="0">
-                </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Bathrooms</label>
-                    <input type="number" name="bathrooms" class="form-control" value="{{ $val('bathrooms') }}" min="0">
-                </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Sqft</label>
-                    <input type="number" name="sqft" class="form-control" value="{{ $val('sqft') }}" min="0">
-                </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Garage</label>
-                    <input type="number" name="garage" class="form-control" value="{{ $detailVal('garage') }}" min="0">
-                </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Parking Spaces</label>
-                    <input type="number" name="parking" class="form-control" value="{{ $detailVal('parking') }}">
-                </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Year Built</label>
-                    <input type="number" name="year_built" class="form-control" value="{{ $detailVal('year_built') }}">
-                </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Floor</label>
-                    <input type="text" name="floor" class="form-control" value="{{ $detailVal('floor') }}">
-                </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">View</label>
-                    <input type="text" name="view" class="form-control" value="{{ $detailVal('view') }}" placeholder="e.g. Sea View">
-                </div>
-                <div class="col-12"><hr class="my-1"></div>
-                <div class="col-12">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="status" id="propertyStatus" {{ $val('status', true) ? 'checked' : '' }}>
-                        <label class="form-check-label fw-semibold" for="propertyStatus">Active (visible on site)</label>
-                    </div>
-                    @if(!$isEdit || !$property->canGoLive())
-                    <div class="form-text">Goes live only after the DLD permit is approved (DLD Permit tab).</div>
-                    @endif
-                </div>
-                {{-- Featured — deferred for later, per request; re-enable when ready.
-                @if($isAdmin ?? false)
-                <div class="col-12">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="featured" id="propertyFeatured" {{ $val('featured') ? 'checked' : '' }}>
-                        <label class="form-check-label fw-semibold" for="propertyFeatured">Featured</label>
-                    </div>
-                </div>
-                @endif
-                --}}
-            </div>
-        </div>
-
-        {{-- DLD Permit & owner authorisation (see ListingComplianceService) --}}
-        @php
-            $dateVal = fn ($field) => old($field, $isEdit && $property->{$field} ? $property->{$field}->format('Y-m-d') : '');
-            $complianceState = $isEdit ? $property->compliance_status : \App\Models\Property::COMPLIANCE_DRAFT;
-        @endphp
-        <div class="tab-pane fade" id="tab-compliance" role="tabpanel">
-            <div class="property-tab-pane-head">
-                <div class="property-tab-pane-title">DLD Advertising Permit</div>
-                <div class="property-tab-pane-hint">Dubai law requires every property advertisement to carry a DLD (Trakheesi) permit and its Madmoun QR code. Get the permit from DLD first, then enter it here — Super Admin checks it before the listing goes live.</div>
-            </div>
-
-            @if($isEdit)
-            <div class="alert {{ $complianceState === \App\Models\Property::COMPLIANCE_APPROVED ? 'alert-success' : (in_array($complianceState, [\App\Models\Property::COMPLIANCE_CHANGES_REQUESTED, \App\Models\Property::COMPLIANCE_EXPIRED], true) ? 'alert-danger' : 'alert-info') }} small">
-                <div class="fw-semibold"><i class="fas fa-file-shield me-1"></i>Review status: {{ $property->complianceLabel() }}</div>
-                @if($property->compliance_note)<div class="mt-1">{{ $property->compliance_note }}</div>@endif
-                @if($complianceState === \App\Models\Property::COMPLIANCE_APPROVED)
-                <div class="mt-1 portal-muted">Changing the permit, Form A, price, purpose, type, bedrooms or size sends the listing back for review (it goes offline until approved), because the DLD permit is issued for those exact details.</div>
-                @endif
+            @if(!empty($lockedFields))
+            <div class="alert alert-info d-flex gap-2 align-items-start py-2 small">
+                <i class="fas fa-lock mt-1"></i>
+                <div>This listing's permit is {{ $isEdit && $property->compliance_status === \App\Models\Property::COMPLIANCE_APPROVED ? 'approved' : 'verified' }}, so the fields marked <i class="fas fa-lock"></i> must stay as they are on the permit.
+                    Need one changed? <a href="{{ route('portal.contact.index') }}" target="_blank">Raise a ticket</a>.</div>
             </div>
             @endif
 
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">DLD Permit Number (Trakheesi) <span class="text-danger">*</span></label>
-                    <input type="text" name="permit_number" class="form-control @error('permit_number') is-invalid @enderror" value="{{ $val('permit_number') }}" maxlength="64" placeholder="e.g. 7112345678">
-                    @error('permit_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            @include('portal.properties._permit')
+
+                {{-- One field per row, in the order the listing portals use. --}}
+                <div class="row g-3 core-details-grid">
+                    <div class="col-12">@include('portal.properties._option-buttons', ['field' => 'category', 'label' => 'Category', 'required' => true, 'icons' => ['residential' => 'fa-house', 'commercial' => 'fa-building']])</div>
+                    <div class="col-12">@include('portal.properties._option-buttons', ['field' => 'listing_type', 'label' => 'Offering type', 'required' => true, 'icons' => ['rent' => 'fa-key', 'sale' => 'fa-tag']])</div>
+                    <div class="col-12 rent-only">@include('portal.properties._option-select', $opt(\App\Models\Filter::RENTAL_PERIOD_KEY, 'Rental period', ['required' => true, 'current' => $val('rental_period', 'yearly')]))</div>
+                    <div class="col-12">@include('portal.properties._option-select', $opt('property_type', 'Property type', ['required' => true]))</div>
+                    <div class="col-12">@include('portal.properties._option-select', $opt('location', 'Property location', ['required' => true, 'placeholder' => 'Search community / area']))</div>
+                    <div class="col-12">@include('portal.properties._option-select', $opt('completion_status', 'Completion status'))</div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Reference</label>
+                        <input type="text" name="reference_no" class="form-control" value="{{ $val('reference_no', $referenceNo ?? '') }}" placeholder="Auto-generated" readonly>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">RERA ID</label>
+                        <input type="text" name="rera_id" class="form-control" value="{{ $val('rera_id') }}" placeholder="e.g. RERA70613">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Slug <span class="text-danger">*</span></label>
+                        <input type="text" name="slug" id="slugInput" class="form-control" value="{{ $val('slug') }}" placeholder="Auto-generated from title">
+                    </div>
+
+                    {{-- Available: immediately, or on one or more dates (open house / viewing days). --}}
+                    <div class="col-12">
+                        <label class="form-label fw-semibold d-block">Available</label>
+                        <div class="property-segmented" role="radiogroup" aria-label="Available">
+                            <input type="radio" class="btn-check" name="availability" id="availImmediately" value="immediately" @checked($availability !== 'from_date')>
+                            <label for="availImmediately">Immediately</label>
+                            <input type="radio" class="btn-check" name="availability" id="availFromDate" value="from_date" @checked($availability === 'from_date')>
+                            <label for="availFromDate">From date</label>
+                        </div>
+                        <div id="availableDatesBox" class="property-dates-box {{ $availability === 'from_date' ? '' : 'd-none' }}">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <input type="date" id="availableDateInput" class="form-control" style="max-width: 220px;" min="{{ now()->toDateString() }}" aria-label="Add an available date">
+                                <span class="form-text m-0">Pick a date to add it — add as many open house / viewing days as you need.</span>
+                            </div>
+                            <div id="availableDatesList" class="d-flex flex-wrap gap-2 mt-2">
+                                @foreach($availableDates as $date)
+                                <span class="nearby-chip" data-date="{{ $date }}">
+                                    {{ \Illuminate\Support\Carbon::parse($date)->format('D, d M Y') }}
+                                    <input type="hidden" name="available_dates[]" value="{{ $date }}">
+                                    <button type="button" class="nearby-chip-remove" aria-label="Remove date"><i class="fas fa-times"></i></button>
+                                </span>
+                                @endforeach
+                            </div>
+                            @error('available_dates')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Permit Expiry Date <span class="text-danger">*</span></label>
-                    <input type="date" name="permit_expires_at" class="form-control @error('permit_expires_at') is-invalid @enderror" value="{{ $dateVal('permit_expires_at') }}">
-                    @error('permit_expires_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    <div class="form-text">The listing is taken off the website automatically when the permit expires.</div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Permit QR Code (Madmoun) <span class="text-danger">*</span></label>
-                    <input type="file" name="permit_qr" class="form-control @error('permit_qr') is-invalid @enderror" accept="image/*">
-                    @error('permit_qr')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    <div class="form-text">The QR image issued with the permit. It is shown on the listing page so buyers can verify the ad.</div>
-                    @if($isEdit && $property->permit_qr)
-                    <img src="{{ media_url($property->permit_qr) }}" alt="Permit QR" class="mt-2 border rounded" style="height: 80px;">
-                    @endif
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Permit Verification Link</label>
-                    <input type="url" name="permit_verification_url" class="form-control @error('permit_verification_url') is-invalid @enderror" value="{{ $val('permit_verification_url') }}" placeholder="The link the QR code opens (optional)">
-                    @error('permit_verification_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-            </div>
 
             <hr class="my-4">
-            <div class="property-tab-pane-title mb-1" style="font-size: 0.95rem;">Owner Authorisation (Form A)</div>
-            <p class="text-muted small mb-3">The owner's marketing agreement with your brokerage, registered with RERA. Needed for the DLD permit, and kept private — only you and Super Admin can open these files.</p>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Agreement Type <span class="text-danger">*</span></label>
-                    <select name="authorization_type" class="form-select @error('authorization_type') is-invalid @enderror">
-                        <option value="">Select</option>
-                        @foreach(\App\Models\Property::AUTHORIZATION_TYPES as $value => $label)
-                        <option value="{{ $value }}" @selected($val('authorization_type') === $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                    @error('authorization_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Form A Expiry Date</label>
-                    <input type="date" name="authorization_expires_at" class="form-control @error('authorization_expires_at') is-invalid @enderror" value="{{ $dateVal('authorization_expires_at') }}">
-                    @error('authorization_expires_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Form A Document <span class="text-danger">*</span></label>
-                    <input type="file" name="authorization_document" class="form-control @error('authorization_document') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png">
-                    @error('authorization_document')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    @if($isEdit && $property->authorization_document)
-                    <a class="small d-inline-block mt-2" href="{{ route('portal.properties.compliance-document', [$property->id, 'authorization_document']) }}">View current Form A</a>
-                    @endif
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Title Deed / Oqood Number</label>
-                    <input type="text" name="title_deed_no" class="form-control @error('title_deed_no') is-invalid @enderror" value="{{ $val('title_deed_no') }}" maxlength="64" placeholder="Title deed, or Oqood for off-plan">
-                    @error('title_deed_no')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Title Deed / Oqood Document</label>
-                    <input type="file" name="title_deed_document" class="form-control @error('title_deed_document') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png">
-                    @error('title_deed_document')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    @if($isEdit && $property->title_deed_document)
-                    <a class="small d-inline-block mt-2" href="{{ route('portal.properties.compliance-document', [$property->id, 'title_deed_document']) }}">View current document</a>
-                    @endif
-                </div>
-                <div class="col-12 form-text">PDF, JPG or PNG, up to 10 MB each.</div>
+            <div class="small text-muted d-flex align-items-center gap-2 mb-3">
+                <i class="fas fa-circle-info"></i>
+                @if($isAdmin ?? false)
+                    Emirate, offering type, rental period, property type, completion status, furnishing, amenities, easy access and attributes are managed in
+                    <a href="{{ route('portal.crm.master.property-options.index') }}">Master › Property Options</a>.
+                @else
+                    Need an option that isn't listed?
+                    <a href="{{ route('portal.contact.index') }}" target="_blank">Raise a ticket</a> and our team will add it.
+                @endif
             </div>
+
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="status" id="propertyStatus" {{ $val('status', true) ? 'checked' : '' }}>
+                <label class="form-check-label fw-semibold" for="propertyStatus">Active (visible on site)</label>
+            </div>
+            @if(!$isEdit || !$property->canGoLive())
+            <div class="form-text">Goes live only after MW Realty approves the listing's permit.</div>
+            @endif
+        </div>
+
+        {{-- Property Details: Description, Specifications and Price in one tab --}}
+        <div class="tab-pane fade" id="tab-specifications" role="tabpanel">
+            <div class="property-tab-pane-head">
+                <div class="property-tab-pane-title">Property Details</div>
+                <div class="property-tab-pane-hint">Description, specifications and price</div>
+            </div>
+            {{-- Description (title, key features, description — per language) --}}
+            <div class="property-subsection-title" id="section-description"><i class="fas fa-align-left"></i> Description <span>Title, key features and description, per language</span></div>
+                <ul class="nav property-lang-tabs mb-4" id="langTabs" role="tablist" data-langs="{{ $languages->pluck('code')->implode(',') }}">
+                    @foreach($languages as $lang)
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {{ $loop->first ? 'active' : '' }}" id="{{ $lang->code }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $lang->code }}-content" type="button" role="tab" data-lang="{{ $lang->code }}">
+                            {{ $lang->name }}
+                        </button>
+                    </li>
+                    @endforeach
+                </ul>
+
+                <div class="tab-content">
+                    @foreach($languages as $lang)
+                    @php $t = $isEdit ? ($property->translations[$lang->code] ?? []) : []; @endphp
+                    <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $lang->code }}-content" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+                                <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $t['title'] ?? '') }}">
+                                @error("translations.{$lang->code}.title")<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Key Features</label>
+                                <textarea name="translations[{{ $lang->code }}][key_features]" class="form-control" rows="2" placeholder="Short highlights, one per line">{{ old("translations.{$lang->code}.key_features", $t['key_features'] ?? '') }}</textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Description</label>
+                                <textarea name="translations[{{ $lang->code }}][description]" class="form-control tinymce-editor" rows="6">{{ old("translations.{$lang->code}.description", $t['description'] ?? '') }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                <div class="form-text mt-3">The language picked here also sets the language of the dropdown options in the other tabs.</div>
+
+            <div class="property-subsection-title" id="section-specifications"><i class="fas fa-ruler-combined"></i> Specifications <span>Rooms, size, furnishing, building and media links</span></div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Rooms (bedrooms) {!! $isLocked('bedrooms') ? $lockIcon : '' !!}</label>
+                        <input type="number" name="bedrooms" class="form-control" value="{{ $val('bedrooms') }}" min="0" @readonly($isLocked('bedrooms'))>
+                        <div class="form-text">0 = Studio</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Bathrooms</label>
+                        <input type="number" name="bathrooms" class="form-control" value="{{ $val('bathrooms') }}" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Property size (sqft) {!! $isLocked('sqft') ? $lockIcon : '' !!}</label>
+                        <input type="number" name="sqft" class="form-control" value="{{ $val('sqft') }}" min="0" @readonly($isLocked('sqft'))>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Developer</label>
+                        <input type="text" name="developer" class="form-control" value="{{ $detailVal('developer') }}" maxlength="255" placeholder="e.g. Emaar">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Unit number</label>
+                        <input type="text" name="unit_number" class="form-control" value="{{ $detailVal('unit_number') }}" maxlength="100">
+                        <div class="form-text">For internal use only — never shown on the website.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">No. of parking spaces</label>
+                        <input type="number" name="parking" class="form-control" value="{{ $detailVal('parking') }}" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Garage</label>
+                        <input type="number" name="garage" class="form-control" value="{{ $detailVal('garage') }}" min="0">
+                    </div>
+                    <div class="col-md-4">@include('portal.properties._option-select', $opt(\App\Models\Filter::FURNISHING_KEY, 'Furnishing type', ['name' => 'furnished', 'current' => (string) $detailVal('furnished')]))</div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold mb-1">Property enhancements</label>
+                        <div class="form-text mt-0 mb-2">Select the key improvements to highlight.</div>
+                        <label class="property-check-card">
+                            <input type="hidden" name="upgraded" value="0">
+                            <input type="checkbox" class="form-check-input" name="upgraded" value="1" @checked(old('upgraded', $detailVal('upgraded')))>
+                            <span><strong>Upgraded</strong><small>Renovated finishes, fixtures or appliances</small></span>
+                        </label>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Year built</label>
+                        <input type="number" name="year_built" class="form-control" value="{{ $detailVal('year_built') }}" min="1800" max="2200" placeholder="e.g. 2019">
+                        <div class="form-text">The property's age is worked out from this.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Floor number</label>
+                        <input type="text" name="floor" class="form-control" value="{{ $detailVal('floor') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">View</label>
+                        <input type="text" name="view" class="form-control" value="{{ $detailVal('view') }}" placeholder="e.g. Sea View">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Owner name</label>
+                        <input type="text" name="owner_name" class="form-control" value="{{ $detailVal('owner_name') }}" maxlength="255" placeholder="Enter owner name">
+                        <div class="form-text">For internal use only — never shown on the website.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Direct from owner</label>
+                        <input type="text" name="direct_from_owner" class="form-control" value="{{ $detailVal('direct_from_owner') }}" placeholder="Example: Yes, Owner Listed">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">360 URL link</label>
+                        <input type="url" name="virtual_tour_url" class="form-control" value="{{ $detailVal('virtual_tour_url') }}" placeholder="https://example.com/tour">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Video tour URL</label>
+                        <input type="url" name="video_tour_url" class="form-control @error('video_tour_url') is-invalid @enderror" value="{{ $detailVal('video_tour_url') }}" placeholder="https://youtube.com/...">
+                        @error('video_tour_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+
+            <div class="property-subsection-title" id="section-price"><i class="fas fa-tag"></i> Price <span>Price, currency, cheques and deposit</span></div>
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold">Property price <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" name="price" class="form-control" value="{{ $val('price') }}" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Currency <span class="text-danger">*</span></label>
+                        <input type="text" name="currency" class="form-control" value="{{ $val('currency', 'AED') }}">
+                    </div>
+                    <div class="col-md-6 rent-only">
+                        <label class="form-label fw-semibold">Number of cheques</label>
+                        @php $cheques = (string) $detailVal('cheques'); @endphp
+                        <select name="cheques" class="form-select">
+                            <option value="">Select</option>
+                            @foreach([1, 2, 3, 4, 6, 12] as $n)
+                            <option value="{{ $n }}" @selected($cheques === (string) $n)>{{ $n }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Security deposit</label>
+                        <input type="number" step="0.01" name="security_deposit" class="form-control" value="{{ $detailVal('security_deposit') }}">
+                    </div>
+                </div>
         </div>
 
         {{-- Agent & Agency --}}
@@ -532,46 +481,48 @@
             </div>
         </div>
 
-        {{-- Icon-repeater sections: Amenities / Easy Access / Attributes --}}
-        @php $repeaterTabIds = ['amenities' => 'tab-amenities', 'easy_access' => 'tab-easy-access', 'property_attributes' => 'tab-attributes']; @endphp
-        @foreach($repeaterSections as $field => $section)
-        <div class="tab-pane fade" id="{{ $repeaterTabIds[$field] }}" role="tabpanel">
-            <div class="property-tab-pane-head">
-                <div class="property-tab-pane-title">{{ $section['title'] }}</div>
-                <div class="property-tab-pane-hint">{{ $section['hint'] }}</div>
-            </div>
-            <div class="d-flex justify-content-end mb-3">
-                <button type="button" class="btn btn-sm portal-btn-ghost repeater-add-btn" data-target="{{ $field }}"><i class="fas fa-plus me-1"></i>Add Row</button>
-            </div>
-            <div id="repeater-{{ $field }}" data-field="{{ $field }}">
-                @foreach($detailVal($field, []) as $i => $row)
-                <div class="d-flex align-items-center gap-2 mb-2 repeater-row">
-                    <div class="repeater-icon-preview">
-                        @if(!empty($row['icon']))
-                            <img src="{{ str_starts_with($row['icon'], 'http') ? $row['icon'] : media_url($row['icon']) }}">
-                        @else
-                            <i class="fas fa-image text-muted"></i>
-                        @endif
-                    </div>
-                    <input type="hidden" name="{{ $field }}[{{ $i }}][existing_icon]" value="{{ $row['icon'] ?? '' }}">
-                    <input type="file" name="{{ $field }}[{{ $i }}][icon]" class="form-control form-control-sm repeater-icon-input" accept="image/*" style="max-width:160px;">
-                    @foreach($languages as $lang)
-                    <input type="text" name="{{ $field }}[{{ $i }}][label][{{ $lang->code }}]" class="form-control form-control-sm" value="{{ $row['label'][$lang->code] ?? '' }}" placeholder="Label ({{ strtoupper($lang->code) }})">
-                    @endforeach
-                    <button type="button" class="btn btn-sm btn-outline-danger repeater-remove-btn text-nowrap"><i class="fas fa-times"></i></button>
+        {{-- Amenities / Easy Access / Attributes: tick options from Master › Property Options --}}
+        @foreach(['amenity' => ['tab-amenities', 'Amenities', 'Tick everything this property offers.'], 'easy_access' => ['tab-easy-access', 'Easy Access', 'What is close by and easy to reach.'], 'property_attribute' => ['tab-attributes', 'Attributes', 'Other notable features of this unit.']] as $listKey => [$tabId, $tabTitle, $tabHint])
+        @php
+            $column = \App\Models\Filter::ICON_LISTS[$listKey];
+            $picked = collect(old($column, collect($detailVal($column, []))->pluck('key')->filter()->all()))->map(fn ($v) => (string) $v)->all();
+            // Active options, plus any switched-off one this listing already has (so saving doesn't drop it).
+            $choices = ($optionLists[$listKey]->values ?? collect())->filter(fn ($o) => $o->status || in_array($o->value, $picked, true));
+        @endphp
+        <div class="tab-pane fade" id="{{ $tabId }}" role="tabpanel">
+            <div class="property-tab-pane-head d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <div class="property-tab-pane-title">{{ $tabTitle }}</div>
+                    <div class="property-tab-pane-hint">{{ $tabHint }} <span class="option-picked-count" data-list="{{ $column }}">{{ count($picked) }}</span> selected</div>
                 </div>
-                @endforeach
+                @if($choices->count() > 8)
+                <input type="search" class="form-control form-control-sm option-search" data-list="{{ $column }}" placeholder="Search {{ strtolower($tabTitle) }}" style="max-width: 220px;">
+                @endif
             </div>
-            <template id="repeater-template-{{ $field }}">
-                <div class="d-flex align-items-center gap-2 mb-2 repeater-row">
-                    <div class="repeater-icon-preview"><i class="fas fa-image text-muted"></i></div>
-                    <input type="file" name="{{ $field }}[__INDEX__][icon]" class="form-control form-control-sm repeater-icon-input" accept="image/*" style="max-width:160px;">
-                    @foreach($languages as $lang)
-                    <input type="text" name="{{ $field }}[__INDEX__][label][{{ $lang->code }}]" class="form-control form-control-sm" placeholder="Label ({{ strtoupper($lang->code) }})">
-                    @endforeach
-                    <button type="button" class="btn btn-sm btn-outline-danger repeater-remove-btn text-nowrap"><i class="fas fa-times"></i></button>
+            <div class="option-check-grid" data-list="{{ $column }}">
+                @forelse($choices as $option)
+                <label class="option-check {{ $option->status ? '' : 'is-off' }}" data-name="{{ mb_strtolower(collect($option->translations)->pluck('label')->implode(' ')) }}">
+                    <input type="checkbox" name="{{ $column }}[]" value="{{ $option->value }}" @checked(in_array($option->value, $picked, true))>
+                    <span class="option-check-icon">
+                        @if($option->icon)<img src="{{ media_url($option->icon) }}" alt="" width="22" height="22" loading="lazy">@else<i class="fas fa-check"></i>@endif
+                    </span>
+                    <span class="option-check-label">
+                        {{ $option->getTranslation('label') }}
+                        @unless($option->status)<small class="d-block text-muted">No longer offered for new listings</small>@endunless
+                    </span>
+                    <i class="fas fa-circle-check option-check-tick"></i>
+                </label>
+                @empty
+                <div class="portal-empty">
+                    No {{ strtolower($tabTitle) }} options yet.
+                    @if($isAdmin ?? false)<a href="{{ route('portal.crm.master.property-options.index', ['list' => $listKey]) }}" target="_blank">Add them in Master › Property Options</a>.@endif
                 </div>
-            </template>
+                @endforelse
+            </div>
+            @if($isAdmin ?? false)
+            <div class="small text-muted mt-3"><i class="fas fa-circle-info me-1"></i>Manage this list (names and icons) in
+                <a href="{{ route('portal.crm.master.property-options.index', ['list' => $listKey]) }}" target="_blank">Master › Property Options</a>.</div>
+            @endif
         </div>
         @endforeach
 
@@ -839,8 +790,13 @@
         border: 1px solid var(--portal-border);
         border-radius: var(--portal-radius);
         box-shadow: var(--portal-shadow);
+        /* Sticks under the portal top bar + the content-language bar (its height is published as
+           --property-lang-bar-h by the script below), and scrolls itself when taller than that. */
         position: sticky;
-        top: 1.25rem;
+        top: calc(var(--portal-topbar-h, 80px) + var(--property-lang-bar-h, 0px) + 1.25rem);
+        max-height: calc(100vh - var(--portal-topbar-h, 80px) - var(--property-lang-bar-h, 0px) - 2.5rem);
+        overflow-y: auto;
+        scrollbar-width: thin;
     }
     .property-tabs-group-label { text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.08em; color: var(--portal-muted); font-weight: 800; margin: 1.1rem 0.75rem 0.4rem; }
     .property-tabs-group-label:first-child { margin-top: 0.1rem; }
@@ -888,10 +844,35 @@
     .property-tab-pane-head { margin-bottom: 1.25rem; }
     .property-tab-pane-title { font-weight: 800; font-size: 1.05rem; color: var(--portal-text); }
     .property-tab-pane-hint { font-size: 0.8rem; color: var(--portal-muted); margin-top: 0.15rem; }
+    /* Sub-sections inside one tab (Property Details: Specifications / Price / Description). */
+    .property-subsection-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.35rem 0.5rem; font-weight: 800; font-size: 0.95rem; color: var(--portal-primary); padding-bottom: 0.6rem; margin-bottom: 1rem; border-bottom: 1px solid var(--portal-border); }
+    .property-subsection-title i { font-size: 0.85rem; }
+    .property-subsection-title span { font-size: 0.78rem; font-weight: 500; color: var(--portal-muted); }
+    #section-specifications, #section-price { margin-top: 2rem; }
+
+    /* Content language switcher + auto-fill bar */
+    .property-lang-bar { position: sticky; top: calc(var(--portal-topbar-h, 80px) + 8px); z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; padding: .7rem 1rem; margin-bottom: 1rem; background: var(--portal-surface); border: 1px solid var(--portal-border); border-radius: 14px; box-shadow: var(--portal-shadow); }
+    .property-lang-bar__label { font-weight: 800; font-size: .85rem; color: var(--portal-text); }
+    .property-lang-bar__label i { color: var(--portal-primary); margin-right: .25rem; }
+    .property-lang-bar__switch { display: inline-flex; gap: .25rem; padding: .2rem; background: #f1f3f9; border-radius: 999px; }
+    .property-lang-pill { display: inline-flex; align-items: center; gap: .4rem; border: 0; background: transparent; padding: .35rem .9rem; border-radius: 999px; font-weight: 700; font-size: .82rem; color: var(--portal-muted); transition: background .15s, color .15s; }
+    .property-lang-pill:hover { color: var(--portal-primary); }
+    .property-lang-pill.active { background: var(--portal-primary); color: #fff; box-shadow: 0 4px 10px rgba(36, 67, 115, .25); }
+    .property-lang-pill__dot { width: 8px; height: 8px; border-radius: 50%; background: #c9cedb; }
+    .property-lang-pill__dot.is-partial { background: #f5a623; }
+    .property-lang-pill__dot.is-done { background: #2fbf71; }
+    .property-lang-bar__tools { display: flex; align-items: center; gap: .75rem; margin-left: auto; }
+    .property-lang-bar__tools .form-check-input:checked { background-color: var(--portal-primary); border-color: var(--portal-primary); }
+    .property-lang-bar__status { flex-basis: 100%; font-size: .78rem; color: var(--portal-muted); min-height: 0; }
+    .property-lang-bar__status:empty { display: none; }
+    .property-lang-bar__status.is-error { color: #b02a37; }
+    .property-lang-bar__status .fa-spinner { color: var(--portal-primary); }
+    .is-auto-translated { background-image: linear-gradient(90deg, rgba(36, 67, 115, .05), transparent); }
+    @media (max-width: 767.98px) { .property-lang-bar { position: static; } .property-lang-bar__tools { margin-left: 0; } }
 
     @media (max-width: 991.98px) {
         .property-tabs-shell { flex-direction: column; }
-        .property-tabs-sidebar { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; width: 100%; padding: 0.75rem; position: sticky; top: 0; z-index: 2; }
+        .property-tabs-sidebar { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; width: 100%; padding: 0.75rem; position: sticky; top: 0; z-index: 2; max-height: none; overflow-y: hidden; }
         .property-tabs-group-label { display: none; }
         .property-tab-link { flex: 0 0 auto; }
         .property-tabs-content { padding: 1.5rem; }
@@ -901,8 +882,66 @@
     .property-lang-tabs .nav-link { border-radius: 50px; padding: 0.4rem 1.1rem; font-weight: 700; font-size: 0.85rem; color: var(--portal-muted); border: none; }
     .property-lang-tabs .nav-link.active { background: var(--portal-primary); color: #fff; }
 
-    .repeater-icon-preview { width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; border: 1px solid var(--portal-border); background: var(--portal-bg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .repeater-icon-preview img { width: 100%; height: 100%; object-fit: cover; }
+    /* Basic tab sections (Core details / Specifications / Price / Description) */
+    .property-form-section { border: 1px solid var(--portal-border); border-radius: 14px; padding: 1.25rem 1.25rem 1.4rem; margin-bottom: 1.25rem; background: var(--portal-surface); }
+    .property-form-section-title { display: flex; align-items: center; gap: 0.55rem; font-weight: 700; font-size: 0.98rem; color: var(--portal-text); margin-bottom: 1rem; }
+    .property-form-section-title i { color: var(--portal-primary); font-size: 0.9rem; }
+    .property-segmented { display: inline-flex; width: 100%; max-width: 520px; border: 1.5px solid var(--portal-border); border-radius: 10px; padding: 3px; background: var(--portal-bg); }
+    .property-segmented label { flex: 1; text-align: center; padding: 0.5rem 0.75rem; border-radius: 8px; font-weight: 600; font-size: 0.88rem; color: var(--portal-muted); cursor: pointer; transition: background 0.15s ease, color 0.15s ease; }
+    .property-segmented .btn-check:checked + label { background: var(--portal-surface); color: var(--portal-primary); box-shadow: 0 0 0 1.5px var(--portal-primary); }
+    .property-segmented .btn-check:focus-visible + label { outline: 2px solid var(--portal-primary); outline-offset: 2px; }
+    .property-segmented--wide { max-width: none; }
+
+    /* Core details: big icon buttons for Category / Offering type */
+    .option-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; }
+    .option-button { display: flex; align-items: center; justify-content: center; gap: 0.55rem; padding: 0.85rem 1rem; border: 1.5px solid var(--portal-border); border-radius: 12px; background: var(--portal-bg); color: var(--portal-text); font-weight: 600; font-size: 0.9rem; cursor: pointer; margin: 0; transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease; }
+    .option-button i { color: var(--portal-primary); font-size: 1rem; }
+    .option-button:hover { border-color: rgba(79, 70, 229, 0.45); }
+    .btn-check:checked + .option-button { border-color: var(--portal-primary); background: var(--portal-surface); box-shadow: 0 0 0 1px var(--portal-primary); color: var(--portal-primary); }
+    .btn-check:focus-visible + .option-button { outline: 2px solid var(--portal-primary); outline-offset: 2px; }
+    .btn-check:disabled + .option-button { opacity: 0.55; cursor: not-allowed; }
+    .btn-check:disabled:checked + .option-button { opacity: 0.85; background: var(--portal-bg); }
+
+    /* Permit (Core details) */
+    .permit-validate-btn { min-width: 110px; height: calc(2.6rem + 3px); font-weight: 700; color: var(--portal-primary); border: 1.5px solid var(--portal-primary) !important; border-radius: 10px; }
+    .permit-validate-btn:disabled { color: var(--portal-muted); border-color: var(--portal-border) !important; }
+    .permit-status { display: flex; align-items: center; gap: 0.8rem; margin-top: 0.75rem; padding: 0.8rem 1rem; border-radius: 12px; background: var(--portal-bg); font-size: 0.85rem; }
+    .permit-status strong { display: block; color: var(--portal-text); }
+    .permit-status span:not(.permit-status-icon) { color: var(--portal-muted); }
+    .permit-status-icon { flex: 0 0 32px; height: 32px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; color: var(--portal-muted); }
+    .permit-status.is-idle .permit-status-icon i::before { content: "\f062"; }
+    .permit-status.is-checking .permit-status-icon i::before { content: "\f110"; }
+    .permit-status.is-checking .permit-status-icon i { animation: fa-spin 1s linear infinite; }
+    .permit-status.is-verified { background: #dcfce7; }
+    .permit-status.is-verified .permit-status-icon { color: #15803d; }
+    .permit-status.is-verified .permit-status-icon i::before { content: "\f00c"; }
+    .permit-status.is-verified strong { color: #166534; }
+    .permit-status.is-pending { background: #fef9c3; }
+    .permit-status.is-pending .permit-status-icon { color: #a16207; }
+    .permit-status.is-pending .permit-status-icon i::before { content: "\f017"; }
+    .permit-status.is-error { background: #fee2e2; }
+    .permit-status.is-error .permit-status-icon { color: #b91c1c; }
+    .permit-status.is-error .permit-status-icon i::before { content: "\f00d"; }
+    .property-dates-box { margin-top: 0.75rem; padding: 0.85rem; border: 1px dashed var(--portal-border); border-radius: 12px; }
+    .property-check-card { display: inline-flex; align-items: flex-start; gap: 0.7rem; padding: 0.8rem 1rem; border: 1.5px solid var(--portal-border); border-radius: 12px; cursor: pointer; min-width: 280px; }
+    .property-check-card:has(input:checked) { border-color: var(--portal-primary); background: rgba(79, 70, 229, 0.04); }
+    .property-check-card .form-check-input { margin-top: 0.2rem; }
+    .property-check-card strong { display: block; font-size: 0.9rem; }
+    .property-check-card small { color: var(--portal-muted); }
+
+    /* Amenities / Easy Access / Attributes checkbox grid */
+    .option-check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.6rem; }
+    .option-check { position: relative; display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 2.2rem 0.7rem 0.75rem; border: 1.5px solid var(--portal-border); border-radius: 12px; cursor: pointer; background: var(--portal-surface); transition: border-color 0.15s ease, background 0.15s ease; }
+    .option-check:hover { border-color: rgba(79, 70, 229, 0.45); }
+    .option-check input { position: absolute; opacity: 0; pointer-events: none; }
+    .option-check:has(input:checked) { border-color: var(--portal-primary); background: rgba(79, 70, 229, 0.05); }
+    .option-check:has(input:focus-visible) { outline: 2px solid var(--portal-primary); outline-offset: 2px; }
+    .option-check.is-off { opacity: 0.7; }
+    .option-check-icon { flex: 0 0 36px; height: 36px; border-radius: 10px; background: var(--portal-bg); display: flex; align-items: center; justify-content: center; color: var(--portal-muted); }
+    .option-check-icon img { width: 22px; height: 22px; object-fit: contain; }
+    .option-check-label { font-weight: 600; font-size: 0.86rem; color: var(--portal-text); line-height: 1.25; }
+    .option-check-tick { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--portal-border); font-size: 1.05rem; transition: color 0.15s ease; }
+    .option-check:has(input:checked) .option-check-tick { color: var(--portal-primary); }
 
     /* Floor plan rows: image tile · Title / Sqft From / Sqft To · remove, all on one aligned line. */
     .floor-plan-card { display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem; margin-bottom: 0.75rem; background: var(--portal-surface); border: 1px solid var(--portal-border); border-radius: 14px; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
@@ -1052,6 +1091,12 @@ document.addEventListener('DOMContentLoaded', function () {
             height: 260,
             plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
             toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link | removeformat | code | help',
+            // Lets the language auto-fill below react to Description edits.
+            setup: function (editor) {
+                editor.on('input change undo redo', function () {
+                    document.dispatchEvent(new CustomEvent('property-editor-change', { detail: editor }));
+                });
+            },
         });
     }
 
@@ -1127,6 +1172,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (label) opt.textContent = label;
             });
         });
+        document.querySelectorAll('.lang-aware-label').forEach(function (el) {
+            const label = el.dataset['label' + capitalizeLang(lang)];
+            if (label) el.querySelector('span').textContent = label;
+        });
         initLangAwareSelects();
     }
     initLangAwareSelects();
@@ -1135,6 +1184,174 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     const initialLangTab = document.querySelector('#langTabs [data-lang].active');
     if (initialLangTab) applyLangAwareSelectOptions(initialLangTab.dataset.lang);
+
+    // --- Content language switcher + auto-fill. The bar's pills switch the Description and
+    // Location language tabs together. Text typed in the source language (first one) is translated
+    // into the others (PropertyTranslateController → Google Translate). A target field is only
+    // filled while it's empty or still holds the last auto-filled text — once someone edits it
+    // by hand it's theirs and is never overwritten. ---
+    (function () {
+        const bar = document.getElementById('propertyLangBar');
+        if (!bar) return;
+
+        // Publish the bar's height (+ its gap) so the sticky section menu sits below it, not under it.
+        const publishBarHeight = function () {
+            const sticky = getComputedStyle(bar).position === 'sticky';
+            document.documentElement.style.setProperty('--property-lang-bar-h', sticky ? (bar.offsetHeight + 8) + 'px' : '0px');
+        };
+        publishBarHeight();
+        if (window.ResizeObserver) new ResizeObserver(publishBarHeight).observe(bar);
+        window.addEventListener('resize', publishBarHeight);
+
+        const source = bar.dataset.source;
+        const targets = allLangCodes.filter(function (c) { return c !== source; });
+        const FIELDS = ['title', 'key_features', 'description', 'address', 'community', 'city', 'country'];
+        const REQUIRED = ['title', 'address', 'city', 'country'];
+        const pills = Array.from(bar.querySelectorAll('.property-lang-pill'));
+        const statusEl = document.getElementById('translateStatus');
+        const toggle = document.getElementById('autoTranslateToggle');
+        const configured = bar.dataset.configured === '1';
+        const csrf = document.querySelector('meta[name="csrf-token"]').content;
+
+        const fieldEl = function (lang, f) { return form.querySelector('[name="translations[' + lang + '][' + f + ']"]'); };
+        const editorOf = function (el) { return el && window.tinymce && el.id ? tinymce.get(el.id) : null; };
+        const getVal = function (el) { const ed = editorOf(el); return (ed ? ed.getContent() : el.value).trim(); };
+        function setVal(el, value) {
+            const ed = editorOf(el);
+            if (ed) { ed.setContent(value); ed.save(); el.dataset.autoValue = ed.getContent().trim(); }
+            else { el.value = value; el.dataset.autoValue = value.trim(); el.dispatchEvent(new Event('input', { bubbles: true })); }
+            (ed ? ed.getContainer() : el).classList.add('is-auto-translated');
+        }
+        // Still "linked" to the source: empty, or unchanged since we last filled it.
+        const isLinked = function (el) { if (el.readOnly || el.disabled) return false; const v = getVal(el); return v === '' || (el.dataset.autoValue !== undefined && v === el.dataset.autoValue); };
+
+        function setStatus(html, isError) {
+            statusEl.innerHTML = html || '';
+            statusEl.classList.toggle('is-error', !!isError);
+        }
+
+        // --- switching ---
+        function switchLang(code) {
+            pills.forEach(function (p) { const on = p.dataset.lang === code; p.classList.toggle('active', on); p.setAttribute('aria-selected', on); });
+            [document.querySelector('#langTabs [data-lang="' + code + '"]'), document.getElementById('loc-' + code + '-tab')].forEach(function (btn) {
+                if (btn && !btn.classList.contains('active')) bootstrap.Tab.getOrCreateInstance(btn).show();
+            });
+        }
+        pills.forEach(function (p) { p.addEventListener('click', function () { switchLang(p.dataset.lang); }); });
+        document.querySelectorAll('#langTabs [data-lang]').forEach(function (btn) {
+            btn.addEventListener('shown.bs.tab', function () { switchLang(btn.dataset.lang); });
+        });
+        allLangCodes.forEach(function (code) {
+            document.getElementById('loc-' + code + '-tab')?.addEventListener('shown.bs.tab', function () { switchLang(code); });
+        });
+
+        // --- per-language completeness dots ---
+        function refreshDots() {
+            allLangCodes.forEach(function (code) {
+                const dot = bar.querySelector('[data-state-for="' + code + '"]');
+                if (!dot) return;
+                const filled = REQUIRED.filter(function (f) { const el = fieldEl(code, f); return el && getVal(el) !== ''; }).length;
+                dot.classList.toggle('is-done', filled === REQUIRED.length);
+                dot.classList.toggle('is-partial', filled > 0 && filled < REQUIRED.length);
+                dot.title = filled === REQUIRED.length ? 'Complete' : filled ? 'Partly filled' : 'Empty';
+            });
+        }
+
+        // --- translating ---
+        let timer = null;
+        let inFlight = false;
+        let queued = false;
+
+        async function translate(force) {
+            if (!configured) { setStatus('<i class="fas fa-circle-info me-1"></i>Auto-translate isn\'t set up yet — type each language by hand (or ask the site admin to add a Google Translate key).', true); return; }
+            if (inFlight) { queued = true; return; }
+
+            // Per target: the source fields whose target is still linked (or everything, when forced).
+            const sourceValues = {};
+            FIELDS.forEach(function (f) { const el = fieldEl(source, f); if (el && getVal(el) !== '') sourceValues[f] = getVal(el); });
+            const wanted = {};
+            targets.forEach(function (t) {
+                Object.keys(sourceValues).forEach(function (f) {
+                    const el = fieldEl(t, f);
+                    if (el && (force || isLinked(el))) (wanted[f] = wanted[f] || []).push(t);
+                });
+            });
+            const fields = {};
+            Object.keys(wanted).forEach(function (f) { fields[f] = sourceValues[f]; });
+            if (!Object.keys(fields).length) { if (force) setStatus('<i class="fas fa-circle-check text-success me-1"></i>Nothing to translate yet — fill in the ' + bar.dataset.sourceName + ' fields first.'); return; }
+
+            inFlight = true;
+            setStatus('<i class="fas fa-spinner fa-spin me-1"></i>Translating from ' + bar.dataset.sourceName + '…');
+            try {
+                const res = await fetch(bar.dataset.translateUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    body: JSON.stringify({ source: source, targets: targets, fields: fields }),
+                });
+                const data = await res.json().catch(function () { return {}; });
+                if (!res.ok) throw new Error(data.message || 'Translation failed — please try again.');
+
+                let count = 0;
+                Object.keys(wanted).forEach(function (f) {
+                    wanted[f].forEach(function (t) {
+                        const el = fieldEl(t, f);
+                        const value = data.translations?.[t]?.[f];
+                        // Skip if the user typed into it while the request was running.
+                        if (el && value && (force || isLinked(el))) { setVal(el, value); count++; }
+                    });
+                });
+                refreshDots();
+                const names = targets.map(function (t) { return pills.find(function (p) { return p.dataset.lang === t; })?.textContent.trim(); }).join(', ');
+                setStatus(count ? '<i class="fas fa-circle-check text-success me-1"></i>Auto-filled ' + names + ' from ' + bar.dataset.sourceName + '. You can edit any field by hand — edited fields won\'t be overwritten.' : '');
+            } catch (e) {
+                setStatus('<i class="fas fa-triangle-exclamation me-1"></i>' + e.message, true);
+            } finally {
+                inFlight = false;
+                if (queued) { queued = false; schedule(); }
+            }
+        }
+
+        function schedule() {
+            refreshDots();
+            if (!toggle.checked) return;
+            clearTimeout(timer);
+            timer = setTimeout(function () { translate(false); }, 1200);
+        }
+
+        FIELDS.forEach(function (f) {
+            const el = fieldEl(source, f);
+            if (el && !el.classList.contains('tinymce-editor')) el.addEventListener('input', schedule);
+        });
+        document.addEventListener('property-editor-change', function (e) {
+            const el = e.detail.getElement();
+            if (el.name === 'translations[' + source + '][description]') schedule();
+            else refreshDots();
+        });
+        targets.forEach(function (t) {
+            FIELDS.forEach(function (f) {
+                const el = fieldEl(t, f);
+                if (el) el.addEventListener('input', function (ev) {
+                    if (ev.isTrusted) el.classList.remove('is-auto-translated');
+                    refreshDots();
+                });
+            });
+        });
+
+        document.getElementById('translateNowBtn').addEventListener('click', function () {
+            const anyManual = targets.some(function (t) {
+                return FIELDS.some(function (f) { const el = fieldEl(t, f), src = fieldEl(source, f); return el && src && getVal(src) !== '' && !isLinked(el); });
+            });
+            const force = anyManual && confirm('Some translated fields were edited by hand. Overwrite them with a fresh translation?\n\nOK = overwrite everything · Cancel = only fill the untouched fields');
+            translate(force);
+        });
+        toggle.addEventListener('change', function () { if (toggle.checked) translate(false); });
+        if (!configured) {
+            toggle.checked = false;
+            toggle.disabled = true;
+            setStatus('<i class="fas fa-circle-info me-1"></i>Auto-translate isn\'t set up yet — type each language by hand (or ask the site admin to add a Google Translate key).');
+        }
+        refreshDots();
+    })();
 
     // --- Dropzone-powered pickers feeding the real hidden <input type="file"> the form already
     // submits normally with — no separate upload endpoint needed, this is purely a nicer picker UI.
@@ -1340,28 +1557,225 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     });
-
-    // --- Icon repeaters (Amenities / Easy Access / Property Attributes) ---
-    function wireRepeaterRemove(row) {
-        row.querySelector('.repeater-remove-btn')?.addEventListener('click', function () {
-            row.remove();
-        });
-    }
-    document.querySelectorAll('.repeater-row').forEach(wireRepeaterRemove);
-
-    document.querySelectorAll('.repeater-add-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const field = btn.dataset.target;
-            const container = document.getElementById('repeater-' + field);
-            const index = container.querySelectorAll('.repeater-row').length;
-            const template = document.getElementById('repeater-template-' + field);
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = template.innerHTML.trim().replaceAll('__INDEX__', index);
-            const row = wrapper.firstElementChild;
-            container.appendChild(row);
-            wireRepeaterRemove(row);
+    // --- Amenities / Easy Access / Attributes checkbox grids: live "N selected" + search ---
+    document.querySelectorAll('.option-check-grid').forEach(function (grid) {
+        const counter = document.querySelector(`.option-picked-count[data-list="${grid.dataset.list}"]`);
+        grid.addEventListener('change', function () {
+            if (counter) counter.textContent = grid.querySelectorAll('input:checked').length;
         });
     });
+    document.querySelectorAll('.option-search').forEach(function (input) {
+        input.addEventListener('input', function () {
+            const q = input.value.trim().toLowerCase();
+            document.querySelectorAll(`.option-check-grid[data-list="${input.dataset.list}"] .option-check`).forEach(function (item) {
+                item.hidden = q !== '' && !item.dataset.name.includes(q);
+            });
+        });
+    });
+
+    // --- Available: Immediately, or one or more dates (each date becomes a removable chip) ---
+    const datesBox = document.getElementById('availableDatesBox');
+    const datesList = document.getElementById('availableDatesList');
+    const dateInput = document.getElementById('availableDateInput');
+    function wireDateChip(chip) {
+        chip.querySelector('.nearby-chip-remove')?.addEventListener('click', function () { chip.remove(); });
+    }
+    datesList?.querySelectorAll('.nearby-chip').forEach(wireDateChip);
+    document.querySelectorAll('input[name="availability"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            datesBox.classList.toggle('d-none', radio.value !== 'from_date' || !radio.checked);
+            if (radio.value === 'from_date' && radio.checked && !datesList.children.length) dateInput.focus();
+        });
+    });
+    dateInput?.addEventListener('change', function () {
+        const value = dateInput.value;
+        if (!value || datesList.querySelector(`[data-date="${value}"]`)) { dateInput.value = ''; return; }
+        const label = new Date(value + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+        const chip = document.createElement('span');
+        chip.className = 'nearby-chip';
+        chip.dataset.date = value;
+        chip.innerHTML = `${label} <input type="hidden" name="available_dates[]" value="${value}"> <button type="button" class="nearby-chip-remove" aria-label="Remove date"><i class="fas fa-times"></i></button>`;
+        // Keep the chips in date order.
+        const after = [...datesList.children].find(function (c) { return c.dataset.date > value; });
+        datesList.insertBefore(chip, after || null);
+        wireDateChip(chip);
+        dateInput.value = '';
+    });
+
+    // --- Rental period / number of cheques only apply to a rent listing ---
+    // Offering type is a radio group (or a hidden input once the permit locks it).
+    const listingTypeValue = () => (form.querySelector('[name="listing_type"]:checked') || form.querySelector('input[type="hidden"][name="listing_type"]') || {}).value || '';
+    function toggleRentOnly() {
+        const isRent = listingTypeValue() === 'rent';
+        document.querySelectorAll('.rent-only').forEach(function (el) { el.classList.toggle('d-none', !isRent); });
+    }
+    form.querySelectorAll('[data-option-buttons="listing_type"] input').forEach(function (radio) { radio.addEventListener('change', toggleRentOnly); });
+    toggleRentOnly();
+
+    // --- Permit (Core details): which permit the emirate needs, and Validate (see _permit) ---
+    (function () {
+        const block = document.getElementById('permitBlock');
+        if (!block) return;
+        const types = JSON.parse(block.dataset.types || '{}');
+        const licenses = JSON.parse(block.dataset.licenses || '{}');
+        const numberInput = document.getElementById('permitNumber');
+        const validateBtn = document.getElementById('permitValidate');
+        const statusBox = document.getElementById('permitStatus');
+        const tokenInput = document.getElementById('permitToken');
+        const licenseSelect = document.getElementById('permitLicense');
+        let verified = block.dataset.verified === '1';
+
+        const fieldValue = name => (form.querySelector(`[name="${name}"]:not([type="radio"])`) || form.querySelector(`[name="${name}"]:checked`) || {}).value || '';
+        const emirate = () => fieldValue('emirate');
+        const permitType = () => {
+            const city = fieldValue('permit_city');
+            switch (emirate()) {
+                case 'dubai': return fieldValue('permit_type') || 'rera';
+                case 'abu_dhabi': return 'adrec';
+                case 'northern_emirates': return city === 'al_ain' ? 'adrec' : (city === 'other' ? 'not_required' : null);
+                default: return null;
+            }
+        };
+
+        function setStatus(state, title, text) {
+            statusBox.className = 'permit-status is-' + state;
+            statusBox.querySelector('strong').textContent = title;
+            statusBox.querySelector('span:not(.permit-status-icon)').textContent = text;
+        }
+
+        // Rent only (DTCM holiday homes): Sale can't be picked.
+        function applyRentOnly(rentOnly) {
+            const sale = document.getElementById('opt-listing_type-sale');
+            const rent = document.getElementById('opt-listing_type-rent');
+            if (!sale || !sale.name) return; // locked by the permit
+            sale.disabled = rentOnly;
+            if (rentOnly && sale.checked && rent) { rent.checked = true; toggleRentOnly(); }
+        }
+
+        function render() {
+            const type = permitType();
+            const info = types[type] || {};
+            const show = {
+                dubai: emirate() === 'dubai',
+                northern: emirate() === 'northern_emirates',
+                licensed: type === 'rera' || type === 'adrec',
+                numbered: ['rera', 'dtcm', 'adrec'].includes(type),
+                qr: type === 'rera' || type === 'adrec',
+                validates: !!info.validates,
+                'no-permit': type === 'none' || type === 'not_required',
+            };
+            block.querySelectorAll('[data-permit-show]').forEach(el => el.classList.toggle('d-none', !show[el.dataset.permitShow]));
+            if (info.number_label) block.querySelector('[data-permit-number-label]').textContent = info.number_label;
+
+            if (show.licensed) {
+                const license = licenses[type];
+                block.querySelector('[data-permit-license-label]').textContent = info.license_label || 'License';
+                licenseSelect.innerHTML = license
+                    ? `<option>${license.name} — ${type === 'adrec' ? 'Brokerage Registration Number' : 'ORN'}: ${license.number}</option>`
+                    : '<option>No license on file</option>';
+                block.querySelector('[data-permit-license-help]').textContent = type === 'adrec'
+                    ? 'ADREC checks the broker license together with the permit number.'
+                    : 'DLD checks the permit against this RERA office registration number (ORN).';
+                const missing = block.querySelector('[data-permit-license-missing]');
+                missing.classList.toggle('d-none', !!license);
+                // Who has to add the license, and where (PortalPropertyController::permitLicenses).
+                const help = (licenses.missing || {})[type] || {};
+                missing.querySelector('[data-permit-license-missing-text]').textContent = help.text || '';
+                const link = missing.querySelector('[data-permit-license-missing-link]');
+                link.classList.toggle('d-none', !help.url);
+                if (help.url) { link.href = help.url; link.textContent = help.link; }
+                validateBtn.disabled = !license;
+            }
+            applyRentOnly(type === 'dtcm');
+        }
+
+        // Anything that changes which permit is checked throws away an earlier, unsaved result.
+        function resetVerification() {
+            if (!tokenInput.value) return;
+            tokenInput.value = '';
+            setStatus('idle', 'Ready to validate', 'Enter the permit number above.');
+            validateBtn.textContent = 'Validate';
+        }
+
+        // Fill a listing field from the permit and lock it (posted through a hidden input).
+        function lockField(name, value) {
+            const el = form.querySelector(`[name="${name}"]`);
+            if (!el || value === undefined || value === null || value === '') return;
+            if (el.type === 'radio') {
+                const radios = [...form.querySelectorAll(`input[type="radio"][name="${name}"]`)];
+                const pick = radios.find(r => r.value === String(value));
+                if (!pick) return; // the permit's value isn't an option here
+                pick.checked = true;
+                radios.forEach(r => { r.disabled = true; r.removeAttribute('name'); });
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden'; hidden.name = name; hidden.value = String(value); hidden.dataset.permitLock = '1';
+                pick.closest('[data-option-buttons]').after(hidden);
+                pick.closest('[class*="col-"]')?.querySelector('.form-label')?.insertAdjacentHTML('beforeend', ' <i class="fas fa-lock text-muted ms-1 small" title="Filled in from the verified permit"></i>');
+                return;
+            }
+            if (el.tagName === 'SELECT') {
+                if (![...el.options].some(o => o.value === String(value))) return; // the permit's value isn't an option here
+                $(el).val(String(value)).trigger('change');
+                el.disabled = true;
+                el.removeAttribute('name');
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden'; hidden.name = name; hidden.value = String(value); hidden.dataset.permitLock = '1';
+                el.after(hidden);
+            } else {
+                el.value = value;
+                el.readOnly = true;
+            }
+            el.closest('[class*="col-"]')?.querySelector('.form-label')?.insertAdjacentHTML('beforeend', ' <i class="fas fa-lock text-muted ms-1 small" title="Filled in from the verified permit"></i>');
+        }
+
+        validateBtn?.addEventListener('click', async function () {
+            const number = numberInput.value.trim();
+            if (!number) { numberInput.classList.add('is-invalid'); numberInput.focus(); return; }
+            validateBtn.disabled = true;
+            setStatus('checking', 'Checking…', 'Asking ' + (permitType() === 'adrec' ? 'ADREC' : 'DLD') + ' about this permit.');
+            try {
+                const res = await fetch(block.dataset.validateUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({
+                        emirate: emirate(), permit_type: fieldValue('permit_type'), permit_city: fieldValue('permit_city'),
+                        permit_number: number, property_id: block.dataset.propertyId || null,
+                    }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.status === 422) {
+                    setStatus('error', 'Check the permit number', Object.values(data.errors || {})[0]?.[0] || data.message || 'This permit number is not valid.');
+                } else if (!res.ok) {
+                    setStatus('error', 'Could not validate', 'Something went wrong. Please try again.');
+                } else if (data.status === 'verified') {
+                    tokenInput.value = data.token || '';
+                    verified = true;
+                    setStatus('verified', 'Verification successful', data.message || 'Permit verified successfully.');
+                    const f = data.fields || {};
+                    ['category', 'listing_type', 'property_type', 'location'].forEach(name => lockField(name, f[name]));
+                    ['bedrooms', 'sqft'].forEach(name => lockField(name, f[name]));
+                    if (f.expires_at) document.getElementById('permitExpires').value = f.expires_at;
+                    numberInput.readOnly = true;
+                    validateBtn.textContent = 'Refresh';
+                    toggleRentOnly();
+                } else if (data.status === 'invalid') {
+                    setStatus('error', 'Verification failed', data.message);
+                } else {
+                    setStatus('pending', 'Not verified online', data.message);
+                }
+            } catch (e) {
+                setStatus('error', 'Could not validate', 'Check your connection and try again.');
+            } finally {
+                validateBtn.disabled = false;
+            }
+        });
+
+        numberInput?.addEventListener('input', () => { numberInput.classList.remove('is-invalid'); resetVerification(); });
+        block.querySelectorAll('[name="permit_type"], #permitCity').forEach(el => el.addEventListener('change', () => { resetVerification(); render(); }));
+        const emirateSelect = document.getElementById('field-emirate');
+        if (emirateSelect) $(emirateSelect).on('change', () => { resetVerification(); render(); });
+        render();
+    })();
 
     // --- Floor plan rows ---
     const floorPlanRows = document.getElementById('floorPlanRows');
@@ -1478,16 +1892,19 @@ document.addEventListener('DOMContentLoaded', function () {
     // validation bubble — this fully custom check replaces that, and jumps straight to whichever
     // tab (and language sub-tab, for per-language fields) holds the first missing value. ---
     const globalRequiredFields = [
+        { name: 'emirate', tab: 'tab-basic', label: 'Emirate', select2: true },
         { name: 'slug', tab: 'tab-basic', label: 'Slug' },
         { name: 'property_type', tab: 'tab-basic', label: 'Property Type', select2: true },
-        { name: 'listing_type', tab: 'tab-basic', label: 'Listing Type', select2: true },
-        { name: 'price', tab: 'tab-basic', label: 'Price' },
-        { name: 'currency', tab: 'tab-basic', label: 'Currency' },
+        { name: 'category', tab: 'tab-basic', label: 'Category', radio: true },
+        { name: 'listing_type', tab: 'tab-basic', label: 'Offering type', radio: true },
+        { name: 'location', tab: 'tab-basic', label: 'Property location', select2: true },
+        { name: 'price', tab: 'tab-specifications', label: 'Price' },
+        { name: 'currency', tab: 'tab-specifications', label: 'Currency' },
         { name: 'latitude', tab: 'tab-location', label: 'Latitude' },
         { name: 'longitude', tab: 'tab-location', label: 'Longitude' },
     ];
     const perLangRequiredFields = [
-        { field: 'title', tab: 'tab-basic', innerPrefix: '', label: 'Title' },
+        { field: 'title', tab: 'tab-specifications', innerPrefix: '', label: 'Title' },
         { field: 'address', tab: 'tab-location', innerPrefix: 'loc-', label: 'Address' },
         { field: 'city', tab: 'tab-location', innerPrefix: 'loc-', label: 'City' },
         { field: 'country', tab: 'tab-location', innerPrefix: 'loc-', label: 'Country' },
@@ -1497,6 +1914,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const missing = [];
         globalRequiredFields.forEach(function (f) {
             const el = form.querySelector(`[name="${f.name}"]`);
+            // Button groups (Category, Offering type): one of them must be picked.
+            if (el && el.type === 'radio') {
+                if (!form.querySelector(`[name="${f.name}"]:checked`)) missing.push(Object.assign({ el: el.closest('[data-option-buttons]'), innerTabId: null }, f));
+                return;
+            }
             if (el && !el.value.trim()) missing.push(Object.assign({ el: el, innerTabId: null }, f));
         });
         allLangCodes.forEach(function (code) {
@@ -1605,9 +2027,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 @push('scripts')
 <script>
-    // Open a form tab from the URL (#tab-compliance, e.g. the "Fix now" link on a listing card) or a [data-open-tab] button.
+    // Open a form tab from the URL (#tab-basic, e.g. the "Fix now" link on a listing card) or a [data-open-tab] button.
     (function () {
         const open = target => {
+            if (target === '#tab-compliance') target = '#tab-basic'; // older links (emails) — the permit now lives in Core details
             const link = document.querySelector('.property-tab-link[data-bs-target="' + target + '"]');
             if (!link || !window.bootstrap) return;
             bootstrap.Tab.getOrCreateInstance(link).show();
@@ -1620,6 +2043,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (/^#tab-[\w-]+$/.test(location.hash)) {
             window.addEventListener('load', () => open(location.hash));
         }
+        @if($errors->any())
+        // After a failed save, show the tab holding the first field with an error.
+        window.addEventListener('load', () => {
+            const pane = document.querySelector('.property-tabs-content > .tab-pane .is-invalid, .property-tabs-content > .tab-pane .invalid-feedback.d-block, .property-tabs-content > .tab-pane .text-danger.small')
+                ?.closest('.property-tabs-content > .tab-pane');
+            if (pane) open('#' + pane.id);
+        });
+        @endif
     })();
 </script>
 @endpush

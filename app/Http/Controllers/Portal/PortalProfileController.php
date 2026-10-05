@@ -27,6 +27,33 @@ use Illuminate\Validation\Rule;
  */
 class PortalProfileController extends Controller
 {
+    /**
+     * Profile sections (one edit form each on the profile page): which account types have it, the
+     * fields it saves (per type, or "*" for all), and whether a change re-opens a submitted KYC review.
+     */
+    public const SECTIONS = [
+        // Agent
+        'public' => ['types' => ['agent'], 'kyc' => false, 'fields' => ['*' => ['name', 'public_email', 'phone', 'secondary_phone', 'whatsapp_number']]],
+        'compliance' => ['types' => ['agent'], 'kyc' => true, 'fields' => ['*' => ['brn_number', 'adrec_license_no', 'other_license', 'other_license_expiry', 'affiliated_brokerage', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry']]],
+        // Agency
+        'contact' => ['types' => ['company'], 'kyc' => false, 'fields' => ['*' => ['phone', 'landline', 'whatsapp_number', 'public_email', 'city', 'office_address', 'website']]],
+        'other' => ['types' => ['company'], 'kyc' => true, 'fields' => ['*' => ['company_name', 'name', 'trn_number', 'trn_expiry', 'authorized_signatory_name']]],
+        'licenses' => ['types' => ['company'], 'kyc' => true, 'fields' => ['*' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'orn_expiry', 'adrec_license_no', 'adrec_license_expiry']]],
+        // Both
+        'about' => ['types' => ['agent', 'company'], 'kyc' => false, 'fields' => [
+            'agent' => ['nationality', 'position', 'linkedin_url', 'website'],
+            'company' => ['founding_year', 'linkedin_url'],
+        ]],
+        'identity' => ['types' => ['agent', 'company'], 'kyc' => true, 'fields' => ['*' => ['emirates_id_no', 'passport_no', 'passport_expiry']]],
+        'seo' => ['types' => ['agent', 'company'], 'kyc' => false, 'fields' => []],
+    ];
+
+    /** Choices for an agent's "Spoken languages". */
+    public const SPOKEN_LANGUAGES = [
+        'English', 'Arabic', 'Hindi', 'Urdu', 'Malayalam', 'Tamil', 'Bengali', 'Tagalog', 'Persian', 'Russian',
+        'French', 'German', 'Spanish', 'Italian', 'Portuguese', 'Turkish', 'Chinese', 'Japanese', 'Korean', 'Ukrainian',
+    ];
+
     public function edit()
     {
         $portalUser = Auth::guard('portal')->user();
@@ -63,7 +90,21 @@ class PortalProfileController extends Controller
         $portalUser = Auth::guard('portal')->user();
 
         $request->validate([
-            'section' => ['required', Rule::in(['identity', 'agent', 'company', 'about', 'seo'])],
+            'section' => ['required', Rule::in(array_keys(self::SECTIONS))],
+            'public_email' => 'sometimes|nullable|email|max:255',
+            'secondary_phone' => ['sometimes', 'nullable', 'string', 'max:30', 'regex:/^\+?[0-9 ()\-]{6,30}$/'],
+            'whatsapp_number' => ['sometimes', 'nullable', 'string', 'max:30', 'regex:/^\+?[0-9 ()\-]{6,30}$/'],
+            'city' => 'sometimes|nullable|string|max:100',
+            'orn_expiry' => 'sometimes|nullable|date',
+            'adrec_license_expiry' => 'sometimes|nullable|date',
+            'other_license' => 'sometimes|nullable|string|max:100',
+            'other_license_expiry' => 'sometimes|nullable|date',
+            'position' => 'sometimes|nullable|string|max:150',
+            'linkedin_url' => 'sometimes|nullable|url|max:255',
+            'spoken_languages' => 'sometimes|nullable|array|max:20',
+            'spoken_languages.*' => ['string', Rule::in(self::SPOKEN_LANGUAGES)],
+            'experience_since' => 'sometimes|nullable|integer|min:1950|max:' . now()->year,
+            'bio_ar' => 'sometimes|nullable|string|max:2000',
             'name' => 'sometimes|required|string|max:255',
             'company_name' => 'sometimes|nullable|string|max:255',
             'phone' => ['sometimes', ...\App\Rules\PhoneNumber::rules()],
@@ -77,6 +118,7 @@ class PortalProfileController extends Controller
             'trade_license_no' => 'sometimes|nullable|string|max:50',
             'trade_license_expiry' => 'sometimes|nullable|date',
             'orn_number' => 'sometimes|nullable|string|max:50',
+            'adrec_license_no' => 'sometimes|nullable|string|max:50',
             'trn_number' => 'sometimes|nullable|string|max:50',
             'trn_expiry' => 'sometimes|nullable|date',
             'authorized_signatory_name' => 'sometimes|nullable|string|max:255',
@@ -99,31 +141,41 @@ class PortalProfileController extends Controller
             'remove_metadata_og_image' => 'nullable|boolean',
         ]);
 
-        if (in_array($request->input('section'), ['agent', 'company'], true)) {
-            abort_unless($request->input('section') === $portalUser->type, 422, 'This section does not apply to this account.');
-        }
-        $fieldsBySection = [
-            'identity' => ['name', 'company_name', 'phone', 'nationality', 'emirates_id_no', 'passport_no', 'passport_expiry'],
-            // company_id is deliberately absent: joining/leaving an agency goes through My Agency
-            // (invitation / join request + admin approval), never a free profile field.
-            // affiliated_brokerage is only the brokerage named for RERA/KYC — not membership, not a plan change.
-            'agent' => ['brn_number', 'affiliated_brokerage', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
-            'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'trn_number', 'trn_expiry', 'authorized_signatory_name', 'landline', 'office_address'],
-            'about' => ['years_of_experience', 'website', 'founding_year'],
-        ];
+        $section = $request->input('section');
+        abort_unless(in_array($portalUser->type, self::SECTIONS[$section]['types'], true), 422, 'This section does not apply to this account.');
+        // company_id is deliberately absent everywhere: joining/leaving an agency goes through My Agency
+        // (invitation / join request + admin approval), never a free profile field.
+        // affiliated_brokerage is only the brokerage named for RERA/KYC — not membership, not a plan change.
+        $fields = self::SECTIONS[$section]['fields'][$portalUser->type] ?? self::SECTIONS[$section]['fields']['*'] ?? [];
 
-        if ($request->input('section') === 'about') {
-            $portalUser->fill($request->only($fieldsBySection['about']));
-            $portalUser->preferred_areas = $request->filled('preferred_areas')
-                ? array_values(array_filter(array_map('trim', explode(',', $request->input('preferred_areas')))))
-                : [];
+        if ($section === 'about') {
+            $portalUser->fill($request->only($fields));
+            if ($request->has('preferred_areas')) {
+                $portalUser->preferred_areas = $request->filled('preferred_areas')
+                    ? array_values(array_filter(array_map('trim', explode(',', $request->input('preferred_areas')))))
+                    : [];
+            }
+            if ($request->has('spoken_languages') || $request->has('spoken_languages_sent')) {
+                $portalUser->spoken_languages = array_values(array_unique((array) $request->input('spoken_languages', [])));
+            }
+            // "Experience since" is what's asked; the years shown on the website follow from it.
+            if ($request->has('experience_since')) {
+                $portalUser->experience_since = $request->input('experience_since') ?: null;
+                $portalUser->years_of_experience = $portalUser->experience_since ? max(0, now()->year - $portalUser->experience_since) : $portalUser->years_of_experience;
+            }
 
-            if ($request->has('bio')) {
+            if ($request->has('bio') || $request->has('bio_ar')) {
                 $defaultLocale = Language::active()->where('is_default', true)->value('code') ?? config('app.fallback_locale');
                 $translations = $portalUser->translations ?? [];
-                $translations['bio'][$defaultLocale] = $request->input('bio') ?? '';
+                if ($request->has('bio_ar')) {
+                    // Written by hand: kept as is (the auto-translation only fills empty languages).
+                    $translations['bio']['ar'] = (string) $request->input('bio_ar');
+                }
+                if ($request->has('bio')) {
+                    $translations['bio'][$defaultLocale] = $request->input('bio') ?? '';
+                    \App\Jobs\TranslatePortalBio::dispatch($portalUser->id, $translations['bio'][$defaultLocale], $defaultLocale)->afterCommit();
+                }
                 $portalUser->translations = $translations;
-                \App\Jobs\TranslatePortalBio::dispatch($portalUser->id, $translations['bio'][$defaultLocale], $defaultLocale)->afterCommit();
             }
 
             $portalUser->save();
@@ -145,7 +197,7 @@ class PortalProfileController extends Controller
 
             $portalUser->update(['metadata' => $metadata]);
         } else {
-            $data = $request->only($fieldsBySection[$request->input('section')]);
+            $data = $request->only($fields);
             if (array_key_exists('phone', $data) && filled($data['phone'])) {
                 // Stored as one value with its code ("+971501234567"), as tel: / WhatsApp links expect.
                 $data['phone'] = $request->input('phone_country_code', '+971') . preg_replace('/\D/', '', $data['phone']);
@@ -153,8 +205,7 @@ class PortalProfileController extends Controller
             $portalUser->update($data);
         }
 
-        if (in_array($request->input('section'), ['identity', 'agent', 'company'], true)
-            && $portalUser->kyc_review_status === 'submitted') {
+        if (self::SECTIONS[$section]['kyc'] && $portalUser->kyc_review_status === 'submitted') {
             $portalUser->forceFill(['kyc_review_status' => 'changes_requested'])->save();
         }
 
