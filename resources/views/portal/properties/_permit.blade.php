@@ -12,6 +12,16 @@
     $permitCityVal = (string) old('permit_city', $isEdit ? $property->permit_city : '');
     $verifiedVia = $isEdit && $property->permit_verified_at ? $property->permit_verified_via : null;
     $permitDate = old('permit_expires_at', $isEdit && $property->permit_expires_at ? $property->permit_expires_at->format('Y-m-d') : '');
+    // Per permit type, for the "Permit" script in _form (built here: @json can't take a multi-argument closure).
+    $permitTypes = [];
+    foreach (\App\Support\PermitRules::TYPES as $key => $t) {
+        $permitTypes[$key] = [
+            'number_label' => $t['number_label'],
+            'license_label' => $t['license_label'],
+            'validates' => $t['validates'],
+            'needs_approval' => \App\Support\PermitRules::needsApproval($key),
+        ];
+    }
     // Initial status box: what we already know about the saved permit.
     $permitStatus = match (true) {
         in_array($verifiedVia, ['dld', 'adrec'], true) => ['verified', 'Verification successful', 'Verified with ' . strtoupper($verifiedVia) . ' on ' . $property->permit_verified_at->format('d M Y') . '.'],
@@ -25,7 +35,7 @@
 <div id="permitBlock" class="permit-block"
      data-validate-url="{{ route('portal.properties.permit.validate') }}"
      data-property-id="{{ $isEdit ? $property->id : '' }}"
-     data-types='@json(collect(\App\Support\PermitRules::TYPES)->map(fn ($t, $key) => ['number_label' => $t['number_label'], 'license_label' => $t['license_label'], 'validates' => $t['validates'], 'needs_approval' => \App\Support\PermitRules::needsApproval($key)]))'
+     data-types='@json($permitTypes)'
      data-licenses='@json($permitLicenses ?? [])'
      data-verified="{{ in_array($verifiedVia, ['dld', 'adrec'], true) ? '1' : '' }}">
     <div class="row g-3">
