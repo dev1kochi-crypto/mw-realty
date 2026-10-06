@@ -894,7 +894,6 @@ Route::prefix('portal')->name('portal.')->group(function () {
                 Route::get('/facebook/connect', 'connect')->name('facebook.connect');
                 Route::post('/facebook/pages', 'storePages')->name('facebook.pages.store');
                 Route::post('/facebook/pages/cancel', 'cancelPages')->name('facebook.pages.cancel');
-                Route::patch('/facebook/{id}/owner', 'reassign')->name('facebook.reassign')->whereNumber('id');
                 Route::post('/facebook/{id}/sync', 'sync')->name('facebook.sync')->whereNumber('id')->middleware('throttle:10,1');
                 Route::delete('/facebook/{id}', 'destroy')->name('facebook.destroy')->whereNumber('id');
             });

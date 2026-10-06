@@ -104,39 +104,41 @@ class FacebookLeadIntegrationTest extends TestCase
         $this->assertSame('Facebook Lead Ads', Lead::with('source')->firstOrFail()->source->name);
     }
 
-    public function test_the_super_admin_links_pages_to_agencies_and_agents(): void
+    private function pendingPages(string $actor, array $pages): void
+    {
+        \Illuminate\Support\Facades\Cache::put('facebook_integration.pages.' . $actor, encrypt(array_map(
+            fn ($page) => $page + ['access_token' => 'token-' . $page['id'], 'picture' => null], $pages
+        )), now()->addMinutes(5));
+    }
+
+    public function test_the_super_admin_assigns_pages_to_agencies_and_agents(): void
     {
         Http::fake(['graph.facebook.com/*/subscribed_apps' => Http::response(['success' => true])]);
         $admin = $this->superAdmin();
         $agency = $this->agency();
         $agent = $this->independentAgent();
-        \Illuminate\Support\Facades\Cache::put('facebook_integration.pages.' . $admin->id, encrypt([
-            ['id' => 'PAGE1', 'name' => 'Agency Page', 'access_token' => 'token-1', 'picture' => null],
-            ['id' => 'PAGE2', 'name' => 'Agent Page', 'access_token' => 'token-2', 'picture' => null],
-            ['id' => 'PAGE3', 'name' => 'Skipped Page', 'access_token' => 'token-3', 'picture' => null],
-        ]), now()->addMinutes(5));
+        $this->pendingPages('admin.' . $admin->id, [
+            ['id' => 'PAGE1', 'name' => 'Agency Page'], ['id' => 'PAGE2', 'name' => 'Agent Page'], ['id' => 'PAGE3', 'name' => 'Skipped Page'],
+        ]);
 
-        $this->signIn($admin, 'cms')->get('/portal/crm/integrations')->assertOk()->assertSee('Link the Pages to agencies / agents');
+        $this->signIn($admin, 'cms')->get('/portal/crm/integrations')->assertOk()->assertSee('Assign the Pages to agencies / agents');
         $this->post('/portal/crm/integrations/facebook/pages', ['owners' => ['PAGE1' => $agency->id, 'PAGE2' => $agent->id, 'PAGE3' => null]])
             ->assertRedirect('/portal/crm/integrations');
 
         $this->assertSame($agency->id, FacebookPageConnection::where('page_id', 'PAGE1')->value('portal_user_id'));
         $this->assertSame($agent->id, FacebookPageConnection::where('page_id', 'PAGE2')->value('portal_user_id'));
         $this->assertFalse(FacebookPageConnection::where('page_id', 'PAGE3')->exists());
-        $this->assertSame('token-1', FacebookPageConnection::where('page_id', 'PAGE1')->firstOrFail()->page_access_token);
+        $this->assertSame('token-PAGE1', FacebookPageConnection::where('page_id', 'PAGE1')->firstOrFail()->page_access_token);
         Http::assertSent(fn ($request) => str_contains($request->url(), 'PAGE1/subscribed_apps') && $request['subscribed_fields'] === 'leadgen');
     }
 
-    public function test_pages_cannot_be_linked_to_agency_agents_or_the_admin_owner(): void
+    public function test_pages_cannot_be_assigned_to_agency_agents_or_the_admin_owner(): void
     {
         Http::fake(['graph.facebook.com/*/subscribed_apps' => Http::response(['success' => true])]);
         $admin = $this->superAdmin();
         $member = $this->memberAgent($this->agency());
         $adminOwner = \App\Services\Crm\AdminOwnerResolver::resolve();
-        \Illuminate\Support\Facades\Cache::put('facebook_integration.pages.' . $admin->id, encrypt([
-            ['id' => 'PAGE1', 'name' => 'Page one', 'access_token' => 't1', 'picture' => null],
-            ['id' => 'PAGE2', 'name' => 'Page two', 'access_token' => 't2', 'picture' => null],
-        ]), now()->addMinutes(5));
+        $this->pendingPages('admin.' . $admin->id, [['id' => 'PAGE1', 'name' => 'Page one'], ['id' => 'PAGE2', 'name' => 'Page two']]);
 
         $this->signIn($admin, 'cms')->post('/portal/crm/integrations/facebook/pages', ['owners' => ['PAGE1' => $member->id, 'PAGE2' => $adminOwner->id]])
             ->assertSessionHas('error');
@@ -147,13 +149,33 @@ class FacebookLeadIntegrationTest extends TestCase
         $this->assertNotContains($adminOwner->id, $results);
     }
 
-    public function test_the_super_admin_moves_a_page_to_another_account(): void
+    public function test_an_agency_connects_its_own_pages(): void
     {
-        $connection = $this->connection();
-        $agent = $this->independentAgent();
+        Http::fake(['graph.facebook.com/*/subscribed_apps' => Http::response(['success' => true])]);
+        $agency = $this->agency();
+        $this->pendingPages('owner.' . $agency->id, [['id' => 'PAGE1', 'name' => 'MW Test Page']]);
 
-        $this->signIn($this->superAdmin(), 'cms')->patch("/portal/crm/integrations/facebook/{$connection->id}/owner", ['owner_id' => $agent->id])->assertRedirect();
-        $this->assertSame($agent->id, $connection->fresh()->portal_user_id);
+        $this->signIn($agency)->get('/portal/crm/integrations')->assertOk()->assertSee('Choose the Pages to connect');
+        $this->post('/portal/crm/integrations/facebook/pages', ['page_ids' => ['PAGE1']])->assertRedirect('/portal/crm/integrations');
+
+        $this->assertSame($agency->id, FacebookPageConnection::where('page_id', 'PAGE1')->value('portal_user_id'));
+        $this->get('/portal/crm/integrations/accounts')->assertForbidden(); // only the admin assigns to other accounts
+    }
+
+    public function test_a_page_connected_to_one_account_cannot_go_to_another(): void
+    {
+        Http::fake(['graph.facebook.com/*/subscribed_apps' => Http::response(['success' => true])]);
+        $connection = $this->connection(); // PAGE1 → an agency
+        $other = $this->agency();
+        $admin = $this->superAdmin();
+        $this->pendingPages('owner.' . $other->id, [['id' => 'PAGE1', 'name' => 'MW Test Page']]);
+        $this->pendingPages('admin.' . $admin->id, [['id' => 'PAGE1', 'name' => 'MW Test Page']]);
+
+        $this->signIn($other)->post('/portal/crm/integrations/facebook/pages', ['page_ids' => ['PAGE1']])->assertSessionHas('error');
+        $this->signIn($admin, 'cms')->post('/portal/crm/integrations/facebook/pages', ['owners' => ['PAGE1' => $other->id]])->assertSessionHas('error');
+
+        $this->assertSame(1, FacebookPageConnection::count());
+        $this->assertSame($connection->portal_user_id, $connection->fresh()->portal_user_id);
     }
 
     public function test_the_callback_is_public_and_needs_the_one_time_state(): void
@@ -162,32 +184,28 @@ class FacebookLeadIntegrationTest extends TestCase
             'graph.facebook.com/*/oauth/access_token*' => Http::response(['access_token' => 'user-token']),
             'graph.facebook.com/*/me/accounts*' => Http::response(['data' => [['id' => 'PAGE1', 'name' => 'MW Test Page', 'access_token' => 'page-token']]]),
         ]);
-        \Illuminate\Support\Facades\Cache::put('facebook_integration.state.good-state', 7, now()->addMinutes(5));
+        \Illuminate\Support\Facades\Cache::put('facebook_integration.state.good-state', 'admin.7', now()->addMinutes(5));
 
         $this->get('/integrations/facebook/callback?state=bad&code=abc')->assertRedirect('/portal/crm/integrations')->assertSessionHas('error');
         $this->get('/integrations/facebook/callback?state=good-state&code=abc')->assertRedirect('/portal/crm/integrations')->assertSessionHas('toast');
 
-        $this->assertSame('PAGE1', decrypt(\Illuminate\Support\Facades\Cache::get('facebook_integration.pages.7'))[0]['id']);
+        $this->assertSame('PAGE1', decrypt(\Illuminate\Support\Facades\Cache::get('facebook_integration.pages.admin.7'))[0]['id']);
         $this->get('/integrations/facebook/callback?state=good-state&code=abc')->assertSessionHas('error'); // state is one-time
     }
 
-    public function test_agencies_see_their_pages_but_cannot_connect_or_disconnect(): void
+    public function test_accounts_only_reach_their_own_pages(): void
     {
-        $agency = $this->agency();
-        $connection = $this->connection($agency);
+        $connection = $this->connection();
 
-        $this->signIn($agency)->get('/portal/crm/integrations')->assertOk()->assertSee('MW Test Page')->assertSee('MW Realty connects Facebook Pages for you');
-        $this->get('/portal/crm/integrations/facebook/connect')->assertForbidden();
-        $this->get('/portal/crm/integrations/accounts')->assertForbidden();
-        $this->delete("/portal/crm/integrations/facebook/{$connection->id}")->assertForbidden();
-        $this->patch("/portal/crm/integrations/facebook/{$connection->id}/owner", ['owner_id' => $agency->id])->assertForbidden();
+        $this->signIn($this->agency())->delete("/portal/crm/integrations/facebook/{$connection->id}")->assertNotFound();
+        $this->assertTrue($connection->exists());
     }
 
-    public function test_agency_agents_see_their_agency_manages_pages(): void
+    public function test_agency_agents_cannot_manage_integrations(): void
     {
         $agent = $this->memberAgent($this->agency());
 
-        $this->signIn($agent)->get('/portal/crm/integrations')->assertOk()->assertSee('Facebook Pages are linked to your agency');
+        $this->signIn($agent)->get('/portal/crm/integrations')->assertOk()->assertSee('Your agency manages integrations');
         $this->get('/portal/crm/integrations/facebook/connect')->assertForbidden();
     }
 
