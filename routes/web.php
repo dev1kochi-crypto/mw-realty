@@ -890,6 +890,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::post('/leads/import', [LeadController::class, 'import'])->name('leads.import');
             Route::get('/leads/import/template', [LeadController::class, 'downloadImportTemplate'])->name('leads.import.template');
             Route::get('/leads/trashed', [LeadController::class, 'trashed'])->name('leads.trashed');
+            Route::post('/leads/trashed/bulk', [LeadController::class, 'bulkTrashed'])->name('leads.bulk-trashed');
             Route::post('/leads/{id}/restore', [LeadController::class, 'restore'])->name('leads.restore');
             Route::delete('/leads/{id}/force', [LeadController::class, 'forceDestroy'])->name('leads.force-delete');
             Route::patch('/leads/{id}/stage', [LeadController::class, 'updateStage'])->name('leads.stage.update');

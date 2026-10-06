@@ -623,6 +623,32 @@ class LeadController extends Controller
         ]);
     }
 
+    /** Deleted Leads toolbar — restore / permanently delete the ticked leads, or all of them. */
+    public function bulkTrashed(Request $request)
+    {
+        $data = $request->validate([
+            'action' => ['required', Rule::in(['restore', 'force'])],
+            'select_all' => ['nullable', 'boolean'],
+            'ids' => ['required_unless:select_all,1', 'array'],
+            'ids.*' => ['integer'],
+            'exclude_ids' => ['nullable', 'array'],
+            'exclude_ids.*' => ['integer'],
+        ], ['ids.required_unless' => 'Select at least one lead.']);
+
+        $count = $this->leadService->bulkTrashed(
+            $this->ownerId(),
+            $data['action'],
+            $request->boolean('select_all'),
+            array_map('intval', $data['ids'] ?? []),
+            array_map('intval', $data['exclude_ids'] ?? []),
+        );
+
+        $noun = $count === 1 ? '1 lead' : "{$count} leads";
+
+        return redirect()->route('portal.crm.leads.trashed')
+            ->with('success', $data['action'] === 'restore' ? "{$noun} restored." : "{$noun} permanently deleted.");
+    }
+
     public function restore($id)
     {
         $this->leadService->restoreLead($this->findStrictlyOwned($id, withTrashed: true));

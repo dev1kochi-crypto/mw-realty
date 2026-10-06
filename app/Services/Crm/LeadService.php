@@ -440,4 +440,26 @@ class LeadService
     {
         $lead->forceDelete();
     }
+
+    /**
+     * Deleted Leads bulk action — restore or permanently delete the owner's trashed leads:
+     * the given ids, or (all = true) every trashed lead minus $excludeIds. Returns the count.
+     */
+    public function bulkTrashed(?int $ownerId, string $action, bool $all, array $ids, array $excludeIds = []): int
+    {
+        $query = Lead::onlyTrashed()->ownedBy($ownerId)
+            ->when(!$all, fn ($q) => $q->whereIn('id', $ids))
+            ->when($all && $excludeIds, fn ($q) => $q->whereNotIn('id', $excludeIds));
+
+        $count = 0;
+        // Model by model so restore / forceDelete events (and any cleanup hooked to them) still run.
+        $query->chunkById(200, function ($leads) use ($action, &$count) {
+            foreach ($leads as $lead) {
+                $action === 'restore' ? $this->restoreLead($lead) : $this->forceDeleteLead($lead);
+                $count++;
+            }
+        });
+
+        return $count;
+    }
 }
