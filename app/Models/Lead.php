@@ -84,6 +84,27 @@ class Lead extends Model
             }
         });
 
+        // Permanent delete removes everything about the lead (a soft delete keeps it all for Restore).
+        // Notes, tags, contacts and assignment history go by FK cascade; this clears the rest: the
+        // Facebook import record (so "All leads" can bring the lead back, and the Page's count drops)
+        // and the bell notifications that name the lead and link to it.
+        static::forceDeleting(function (Lead $lead) {
+            FacebookLead::where('lead_id', $lead->id)->get()->each(function (FacebookLead $record) {
+                if ($record->facebook_page_connection_id) {
+                    FacebookPageConnection::whereKey($record->facebook_page_connection_id)
+                        ->where('leads_count', '>', 0)->decrement('leads_count');
+                }
+                $record->delete();
+            });
+
+            \Illuminate\Support\Facades\DB::table('notifications')
+                ->where('type', \App\Notifications\NewLeadNotification::class)
+                ->where(fn ($q) => $q->where('data->lead_id', $lead->id)
+                    // Notifications from before lead_id was stored: match on their link.
+                    ->orWhere('data->url', route('portal.crm.leads.show', $lead->id)))
+                ->delete();
+        });
+
         // Every email / phone the lead has used is kept, so duplicate detection matches on any of
         // them — an edited primary email/phone is added, the previous one stays as an alternate.
         static::saved(function (Lead $lead) {

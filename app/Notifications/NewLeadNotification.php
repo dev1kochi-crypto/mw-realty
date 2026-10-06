@@ -24,6 +24,8 @@ class NewLeadNotification extends Notification
         $repeat = $this->lead->enquiry_count > 1;
 
         return [
+            // Lets a permanent delete of the lead remove this notification too (Lead::forceDeleting).
+            'lead_id' => $this->lead->id,
             'title' => $repeat ? 'Existing lead enquired again' : 'New lead received',
             'message' => $this->lead->name . ($repeat ? ' enquired again about ' : ' enquired about ') . $propertyLabel . '.',
             'url' => route('portal.crm.leads.show', $this->lead->id),

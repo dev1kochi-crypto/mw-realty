@@ -63,7 +63,18 @@ class FacebookLeadImporter
         $this->lastSource = null;
         $this->lastLead = null;
         $leadgenId = (string) ($data['id'] ?? '');
-        if ($leadgenId === '' || FacebookLead::where('leadgen_id', $leadgenId)->exists()) {
+        if ($leadgenId === '') {
+            return null;
+        }
+        // Its CRM lead was permanently deleted (lead_id nulled by the FK) → it may be imported again,
+        // e.g. by "All leads". A lead only in Deleted Leads still has its lead_id, so stays skipped.
+        // The age check leaves alone a record another import has just claimed and is still filling.
+        $reimport = FacebookLead::where('leadgen_id', $leadgenId)
+            ->where(fn ($q) => $q->whereNull('lead_id')->orWhereNotExists(
+                fn ($leads) => $leads->selectRaw('1')->from('leads')->whereColumn('leads.id', 'facebook_leads.lead_id')
+            ))
+            ->where('updated_at', '<', now()->subMinutes(10))->delete() > 0;
+        if (FacebookLead::where('leadgen_id', $leadgenId)->exists()) {
             return null;
         }
 
@@ -139,7 +150,8 @@ class FacebookLeadImporter
         ], ownerId: $connection->portal_user_id, notify: $notify, noteAuthor: 'Facebook Lead Ads');
 
         $record->update(['lead_id' => $lead->id]);
-        $connection->forceFill(['last_lead_at' => now(), 'leads_count' => $connection->leads_count + 1])->save();
+        // A re-import of a deleted lead was counted the first time round.
+        $connection->forceFill(['last_lead_at' => now(), 'leads_count' => $connection->leads_count + ($reimport ? 0 : 1)])->save();
         $this->lastOutcome = $lead->wasMerged ? 'merged' : 'new';
         $this->lastSource = $adsetName ?: $adName ?: self::FALLBACK_SOURCE;
         $this->lastLead = $lead;
