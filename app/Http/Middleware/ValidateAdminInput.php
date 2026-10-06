@@ -40,8 +40,11 @@ class ValidateAdminInput
         if (str_ends_with($name, '.bulk-action')) {
             $rules['action'] = ['required', Rule::in(['delete', 'active', 'activate', 'inactive', 'deactivate'])];
         }
-        if (str_contains($name, '.bulk-')) {
-            $rules['ids'] = 'required|array|min:1|max:100';
+        // "Select all N" sends select_all=1 (+ filters) instead of an id list — the controller
+        // resolves that selection itself, so only a ticked id list is checked here. Leads can be
+        // ticked across many pages, hence the higher cap there.
+        if (str_contains($name, '.bulk-') && !$request->boolean('select_all') && !$request->boolean('all')) {
+            $rules['ids'] = 'required|array|min:1|max:' . (str_starts_with($name, 'portal.crm.leads.') ? 1000 : 100);
             $rules['ids.*'] = 'required|integer|min:1|distinct';
         }
         $request->validate($rules);
