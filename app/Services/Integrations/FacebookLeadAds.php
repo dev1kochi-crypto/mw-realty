@@ -106,34 +106,44 @@ class FacebookLeadAds
         }
     }
 
-    /** @return array<int, array{id: string, name: ?string}> The Page's lead forms. */
+    /**
+     * @return array<int, array{id: string, name: ?string, status: ?string, leads_count: ?int}> All the Page's
+     * lead forms (active and archived — old campaigns' leads live on archived forms).
+     */
     public function forms(string $pageId, string $pageToken): array
     {
-        return array_map(fn ($f) => ['id' => (string) $f['id'], 'name' => $f['name'] ?? null],
-            iterator_to_array($this->paginate("{$pageId}/leadgen_forms", ['fields' => 'id,name', 'limit' => 100, 'access_token' => $pageToken]), false));
+        return array_map(fn ($f) => [
+            'id' => (string) $f['id'],
+            'name' => $f['name'] ?? null,
+            'status' => $f['status'] ?? null,
+            'leads_count' => isset($f['leads_count']) ? (int) $f['leads_count'] : null,
+        ], iterator_to_array($this->paginate("{$pageId}/leadgen_forms", ['fields' => 'id,name,status,leads_count', 'limit' => 100, 'access_token' => $pageToken]), false));
     }
 
-    /** Leads of a form created after $since (Unix time), newest first. */
+    /** Leads of a form created after $since (Unix time; 0 = all of them), newest first. */
     public function formLeads(string $formId, string $pageToken, int $since): \Generator
     {
-        $filter = json_encode([['field' => 'time_created', 'operator' => 'GREATER_THAN', 'value' => $since]]);
+        // $since <= 0 → every lead the form has, no date filter.
+        $filter = $since > 0 ? ['filtering' => json_encode([['field' => 'time_created', 'operator' => 'GREATER_THAN', 'value' => $since]])] : [];
         try {
-            yield from $this->paginate("{$formId}/leads", ['fields' => self::LEAD_FIELDS, 'filtering' => $filter, 'limit' => 100, 'access_token' => $pageToken]);
+            yield from $this->paginate("{$formId}/leads", ['fields' => self::LEAD_FIELDS, 'limit' => 100, 'access_token' => $pageToken] + $filter);
         } catch (FacebookTokenException $e) {
             throw $e;
         } catch (RuntimeException) {
-            yield from $this->paginate("{$formId}/leads", ['fields' => self::LEAD_FIELDS_BASIC, 'filtering' => $filter, 'limit' => 100, 'access_token' => $pageToken]);
+            yield from $this->paginate("{$formId}/leads", ['fields' => self::LEAD_FIELDS_BASIC, 'limit' => 100, 'access_token' => $pageToken] + $filter);
         }
     }
 
-    /** Ad name for an ad id (when the lead itself didn't carry it). */
-    public function adName(string $adId, string $token): ?string
+    /** @return array{ad: ?string, adset: ?string, campaign: ?string} Names for an ad id (when the lead itself didn't carry them). */
+    public function adInfo(string $adId, string $token): array
     {
         try {
-            return $this->get($adId, ['fields' => 'name', 'access_token' => $token])['name'] ?? null;
-        } catch (RuntimeException) {
-            return null;
+            $ad = $this->get($adId, ['fields' => 'name,adset{name},campaign{name}', 'access_token' => $token]);
+        } catch (\Throwable) { // names are a nice-to-have: never fail the lead over them
+            return ['ad' => null, 'adset' => null, 'campaign' => null];
         }
+
+        return ['ad' => $ad['name'] ?? null, 'adset' => $ad['adset']['name'] ?? null, 'campaign' => $ad['campaign']['name'] ?? null];
     }
 
     /** Webhook request really from Facebook: X-Hub-Signature-256 = sha256 HMAC of the raw body with the app secret. */

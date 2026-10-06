@@ -27,7 +27,8 @@ class ImportFacebookPageLeads implements ShouldQueue
     public int $tries = 1;
     public int $timeout = 1800;
 
-    public function __construct(public int $connectionId, public int $since, public bool $notify = false)
+    /** $since: Unix time, or null for every lead (no date limit). $context: see FacebookLeadsSyncedMail::CONTEXTS. */
+    public function __construct(public int $connectionId, public ?int $since, public string $context = 'import')
     {
     }
 
@@ -35,10 +36,10 @@ class ImportFacebookPageLeads implements ShouldQueue
      * Mark the Page's import as waiting and run it right after the response is sent — it starts at
      * once, without waiting for a queue worker (the page shows its progress meanwhile).
      */
-    public static function start(FacebookPageConnection $connection, \DateTimeInterface $since, bool $notify = false): void
+    public static function start(FacebookPageConnection $connection, ?\DateTimeInterface $since, string $context = 'import'): void
     {
         $connection->forceFill(['import_status' => 'queued', 'import_added' => 0, 'import_skipped' => 0, 'import_error' => null, 'import_finished_at' => null])->save();
-        static::dispatchAfterResponse($connection->id, $since->getTimestamp(), $notify);
+        static::dispatchAfterResponse($connection->id, $since?->getTimestamp(), $context);
     }
 
     public function handle(FacebookLeadImporter $importer, FacebookConnectionHealth $health, FacebookLeadAds $facebook): void
@@ -60,19 +61,21 @@ class ImportFacebookPageLeads implements ShouldQueue
                 return;
             }
 
-            $importer->sync($connection, Carbon::createFromTimestamp($this->since), $this->notify, function (int $added, int $skipped) use ($connection) {
+            // Bulk: no email per lead — one summary email when it's done.
+            $importer->sync($connection, $this->since ? Carbon::createFromTimestamp($this->since) : null, false, function (int $added, int $skipped) use ($connection) {
                 // Every few leads is enough for the progress shown on the page.
                 if (($added + $skipped) % 5 === 0) {
                     $connection->forceFill(['import_added' => $added, 'import_skipped' => $skipped])->saveQuietly();
                 }
                 $connection->import_added = $added;
                 $connection->import_skipped = $skipped;
-            });
+            }, allLeads: $this->since === null);
             $found = $connection->import_added + $connection->import_skipped;
             $connection->forceFill($found
                 ? ['import_status' => 'done', 'import_finished_at' => now()]
-                : ['import_status' => 'empty', 'import_error' => 'No leads on Facebook for this Page since ' . Carbon::createFromTimestamp($this->since)->format('d M Y') . '.', 'import_finished_at' => now()]
+                : ['import_status' => 'empty', 'import_error' => 'No leads on Facebook for this Page' . ($this->since ? ' since ' . Carbon::createFromTimestamp($this->since)->format('d M Y') : '') . '.', 'import_finished_at' => now()]
             )->save();
+            $importer->emailSummary($connection, $this->context);
         } catch (FacebookTokenException $e) {
             $health->tokenFailed($connection, $e);
             $connection->forceFill(['import_status' => 'failed', 'import_error' => $e->reason(), 'import_finished_at' => now()])->save();

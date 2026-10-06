@@ -172,10 +172,10 @@ class IntegrationController extends Controller
             $choices = array_fill_keys($data['page_ids'], $this->ownerId());
             $accounts = collect([$this->ownerId() => $this->owner()]);
         }
-        // "Import the leads these Pages already have?" — Facebook keeps leads for 90 days.
-        $importDays = $request->boolean('import_existing')
-            ? ((int) ($request->validate(['import_days' => 'nullable|in:7,30,90'])['import_days'] ?? 0) ?: 90)
-            : null;
+        // "Import the leads these Pages already have?" — all of them (default) or the last N days.
+        $import = $request->boolean('import_existing');
+        $importDays = $import ? ($request->validate(['import_days' => 'nullable|in:7,30,90,all'])['import_days'] ?? 'all') : null;
+        $importFrom = $import && $importDays !== 'all' ? now()->subDays((int) $importDays) : null;
 
         $connected = [];
         $importing = 0;
@@ -218,16 +218,18 @@ class IntegrationController extends Controller
 
             // Fetch in the background: the leads missed while it needed reconnecting (from its last
             // good sync), and/or its existing leads if asked. Duplicates are skipped by the importer.
-            $since = null;
+            // Either way it's a bulk fetch: one summary email at the end, not one per lead.
+            $catchUpFrom = null;
             if ($existing?->needs_reconnect_at) {
-                $since = $existing->last_synced_at && $existing->last_synced_at->lt($existing->needs_reconnect_at) ? $existing->last_synced_at : $existing->needs_reconnect_at->copy()->subDay();
+                $catchUpFrom = $existing->last_synced_at && $existing->last_synced_at->lt($existing->needs_reconnect_at) ? $existing->last_synced_at : $existing->needs_reconnect_at->copy()->subDay();
             }
-            if ($importDays && (!$since || $since->gt(now()->subDays($importDays)))) {
-                $since = now()->subDays($importDays);
-            }
-            if ($since) {
-                // Missed leads are new to the team (notify); a bulk import of older ones isn't.
-                \App\Jobs\ImportFacebookPageLeads::start($connection, $since, notify: !$importDays);
+            if ($import) {
+                // All leads (null), or the earlier of the chosen period and the reconnect gap.
+                $from = $importFrom && $catchUpFrom && $catchUpFrom->lt($importFrom) ? $catchUpFrom : $importFrom;
+                \App\Jobs\ImportFacebookPageLeads::start($connection, $from, 'import');
+                $importing++;
+            } elseif ($catchUpFrom) {
+                \App\Jobs\ImportFacebookPageLeads::start($connection, $catchUpFrom, 'catch-up');
                 $importing++;
             }
         }
@@ -263,13 +265,27 @@ class IntegrationController extends Controller
         return redirect()->route('portal.crm.integrations.index');
     }
 
-    /** Pull recent leads now (also catches up on leads the webhook missed). */
-    public function sync($id, FacebookLeadImporter $importer, FacebookConnectionHealth $health)
+    /**
+     * "Sync now": leads since the last sync (first time: all of them), right away. "Sync all leads"
+     * (?all=1): every lead the Page's forms have, in the background with live progress. Both send
+     * one summary email instead of an email per lead.
+     */
+    public function sync(Request $request, $id, FacebookLeadImporter $importer, FacebookConnectionHealth $health)
     {
         $connection = $this->findConnection($id);
 
+        if ($request->boolean('all') || !$connection->last_synced_at) {
+            if ($connection->importInProgress()) {
+                return back()->with('toast', "{$connection->page_name} is already importing — see its progress below.");
+            }
+            \App\Jobs\ImportFacebookPageLeads::start($connection, null, 'sync');
+
+            return back()->with('toast', "Fetching all leads from {$connection->page_name} in the background — you'll get one summary email when it's done.");
+        }
+
         try {
             $added = $importer->sync($connection);
+            $importer->emailSummary($connection, 'sync');
         } catch (FacebookTokenException $e) {
             $health->tokenFailed($connection, $e);
 
@@ -280,7 +296,14 @@ class IntegrationController extends Controller
             return back()->with('error', "Sync failed for {$connection->page_name}: {$e->getMessage()}");
         }
 
-        return back()->with('toast', $added ? "{$added} new lead" . ($added === 1 ? '' : 's') . " added from {$connection->page_name}." : "No new leads on {$connection->page_name}.");
+        $summary = $importer->summary();
+        if (!$added) {
+            return back()->with('toast', "No new leads on {$connection->page_name}" . ($summary['skipped'] ? " ({$summary['skipped']} already in the CRM)." : '.'));
+        }
+
+        return back()->with('toast', "{$connection->page_name}: {$summary['new']} new lead" . ($summary['new'] === 1 ? '' : 's')
+            . ($summary['merged'] ? ", {$summary['merged']} existing lead" . ($summary['merged'] === 1 ? '' : 's') . ' updated' : '')
+            . ($summary['skipped'] ? ", {$summary['skipped']} already in the CRM" : '') . '. A summary email is on its way.');
     }
 
     public function destroy($id)

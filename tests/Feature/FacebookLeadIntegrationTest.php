@@ -211,6 +211,7 @@ class FacebookLeadIntegrationTest extends TestCase
 
     public function test_the_same_person_from_the_same_ad_is_skipped_and_from_a_new_ad_goes_to_history(): void
     {
+        Http::fake(); // ad-name lookups
         $connection = $this->connection();
         $importer = app(\App\Services\Integrations\FacebookLeadImporter::class);
 
@@ -236,7 +237,7 @@ class FacebookLeadIntegrationTest extends TestCase
 
         $connection = FacebookPageConnection::firstOrFail();
         $this->assertSame('queued', $connection->import_status);
-        \Illuminate\Support\Facades\Bus::assertDispatchedAfterResponse(\App\Jobs\ImportFacebookPageLeads::class, fn ($job) => $job->connectionId === $connection->id && !$job->notify
+        \Illuminate\Support\Facades\Bus::assertDispatchedAfterResponse(\App\Jobs\ImportFacebookPageLeads::class, fn ($job) => $job->connectionId === $connection->id && $job->context === 'import'
             && abs($job->since - now()->subDays(30)->getTimestamp()) < 60);
     }
 
@@ -256,17 +257,34 @@ class FacebookLeadIntegrationTest extends TestCase
         $this->get('/portal/crm/integrations/facebook/connect')->assertForbidden();
     }
 
-    public function test_sync_pulls_recent_leads_from_the_pages_forms(): void
+    public function test_sync_pulls_new_leads_from_every_form_and_sends_one_summary_email(): void
     {
         $agency = $this->agency();
         $connection = $this->connection($agency);
+        $connection->forceFill(['last_synced_at' => now()->subDay()])->save();
         Http::fake([
-            'graph.facebook.com/*/PAGE1/leadgen_forms*' => Http::response(['data' => [['id' => 'F1', 'name' => 'Villa form']]]),
+            'graph.facebook.com/*/PAGE1/leadgen_forms*' => Http::response(['data' => [['id' => 'F1', 'name' => 'Villa form'], ['id' => 'F2', 'name' => 'Flat form', 'status' => 'ARCHIVED']]]),
             'graph.facebook.com/*/F1/leads*' => Http::response(['data' => [$this->graphLead(['id' => 'LG9'])]]),
+            'graph.facebook.com/*/F2/leads*' => Http::response(['data' => [$this->graphLead(['id' => 'LG10', 'adset_name' => 'Flats set', 'field_data' => [['name' => 'email', 'values' => ['other@example.test']]]])]]),
         ]);
 
-        $this->signIn($agency)->post("/portal/crm/integrations/facebook/{$connection->id}/sync")->assertRedirect()->assertSessionHas('toast', '1 new lead added from MW Test Page.');
-        $this->assertSame(1, Lead::where('portal_user_id', $agency->id)->count());
+        $this->signIn($agency)->post("/portal/crm/integrations/facebook/{$connection->id}/sync")->assertRedirect()->assertSessionHas('toast');
+
+        $this->assertSame(2, Lead::where('portal_user_id', $agency->id)->count());
+        $this->assertSame('Flats set', Lead::with('source')->where('email', 'other@example.test')->firstOrFail()->source->name, 'the ad set name is the Source');
         $this->assertNotNull($connection->fresh()->last_synced_at);
+        Mail::assertQueued(\App\Mail\FacebookLeadsSyncedMail::class, 1);
+        Mail::assertNotQueued(\App\Mail\NewLeadReceived::class); // bulk: no email per lead
+    }
+
+    public function test_sync_all_leads_runs_in_the_background_without_a_date_limit(): void
+    {
+        \Illuminate\Support\Facades\Bus::fake();
+        $agency = $this->agency();
+        $connection = $this->connection($agency);
+
+        $this->signIn($agency)->post("/portal/crm/integrations/facebook/{$connection->id}/sync?all=1")->assertRedirect();
+
+        \Illuminate\Support\Facades\Bus::assertDispatchedAfterResponse(\App\Jobs\ImportFacebookPageLeads::class, fn ($job) => $job->since === null && $job->context === 'sync');
     }
 }

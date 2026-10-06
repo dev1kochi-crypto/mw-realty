@@ -242,9 +242,10 @@
                         </span>
                     </label>
                     <select name="import_days" class="form-select form-select-sm fbpick__days" id="fbImportDays" disabled aria-label="How far back to import">
-                        <option value="7">Last 7 days</option>
+                        <option value="all" selected>All leads (no date limit)</option>
+                        <option value="90">Last 90 days</option>
                         <option value="30">Last 30 days</option>
-                        <option value="90" selected>Last 90 days (all Facebook keeps)</option>
+                        <option value="7">Last 7 days</option>
                     </select>
                 </div>
 
@@ -353,10 +354,12 @@
                                 @if($connection->needs_reconnect_at)
                                 <a href="{{ route('portal.crm.integrations.facebook.connect') }}" data-popup-url="{{ route('portal.crm.integrations.facebook.connect', ['popup' => 1]) }}" class="btn btn-sm text-white js-fb-connect" style="background: #1877f2;"><i class="fab fa-facebook me-1"></i>Reconnect</a>
                                 @endif
-                                <form method="POST" action="{{ route('portal.crm.integrations.facebook.sync', $connection->id) }}" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm portal-btn-ghost" title="Fetch leads from the last 30 days (or since the last sync)"><i class="fas fa-rotate me-1"></i>Sync now</button>
-                                </form>
+                                <div class="btn-group" role="group" aria-label="Sync {{ $connection->page_name }}">
+                                    <button type="submit" form="fbSync{{ $connection->id }}" class="btn btn-sm portal-btn-ghost" title="Fetch leads since the last sync — all campaigns and forms"><i class="fas fa-rotate me-1"></i>Sync now</button>
+                                    <button type="submit" form="fbSyncAll{{ $connection->id }}" class="btn btn-sm portal-btn-ghost" title="Fetch every lead on this Page, no date limit — runs in the background"><i class="fas fa-clock-rotate-left me-1"></i>All leads</button>
+                                </div>
+                                <form method="POST" action="{{ route('portal.crm.integrations.facebook.sync', $connection->id) }}" id="fbSync{{ $connection->id }}" class="d-none">@csrf</form>
+                                <form method="POST" action="{{ route('portal.crm.integrations.facebook.sync', [$connection->id, 'all' => 1]) }}" id="fbSyncAll{{ $connection->id }}" class="d-none">@csrf</form>
                                 <form method="POST" action="{{ route('portal.crm.integrations.facebook.destroy', $connection->id) }}" class="d-inline js-disconnect" data-page="{{ $connection->page_name }}">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Disconnect</button>

@@ -27,7 +27,7 @@
     2. Click <strong>Reconnect</strong> next to {{ $connection->page_name }} (or <strong>Connect Facebook Page</strong>).<br>
     3. Log in with a Facebook account that is an <strong>admin of the Page</strong>, and allow all the permissions asked.<br>
     4. Tick <strong>{{ $connection->page_name }}</strong> and click <strong>Connect Pages</strong>.<br>
-    5. Click <strong>Sync now</strong> on the Page to pull in any leads received while it was disconnected (up to the last 30 days).
+    5. The leads received while it was disconnected are fetched automatically — you'll get one summary email. (<strong>All leads</strong> on the Page re-checks everything.)
 </x-email.callout>
 
 <x-email.muted>If MW Realty connected this Page for you, reply to this email and our team will reconnect it.</x-email.muted>
