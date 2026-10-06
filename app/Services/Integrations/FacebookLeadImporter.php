@@ -130,7 +130,9 @@ class FacebookLeadImporter
             }
         }
 
-        $connection->forceFill(['last_synced_at' => $startedAt, 'last_error' => null])->save();
+        $connection->forceFill(['last_synced_at' => $startedAt, 'last_error' => null]
+            // A successful sync supersedes an earlier failed import — stop showing its error.
+            + ($connection->import_status === 'failed' ? ['import_status' => null, 'import_error' => null] : []))->save();
 
         return $added;
     }
