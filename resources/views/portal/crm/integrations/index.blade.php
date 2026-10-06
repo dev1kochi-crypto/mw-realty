@@ -38,6 +38,22 @@
     .fbempty__steps li:not(:last-child)::after { content: ''; position: absolute; left: 13px; top: 30px; bottom: -16px; width: 2px; background: #d9e3f4; }
     .fbempty__num { position: relative; z-index: 1; display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--portal-primary); color: #fff; font-size: .78rem; font-weight: 700; }
     @media (max-width: 767.98px) { .fbempty { grid-template-columns: 1fr; } .fbempty__steps { border-left: 0; border-top: 1px solid var(--portal-border); } }
+    /* Bulk disconnect bar + checkbox column */
+    .fbcheck-col { width: 36px; }
+    .fbbulk { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; padding: 10px 14px; border: 1px solid #f3c7cc; border-radius: 12px; background: #fff5f6; }
+    .fbbulk[hidden] { display: none; }
+    .fbbulk__count { font-size: .85rem; font-weight: 600; color: #b8283a; margin-right: auto; }
+    /* Connection guide */
+    .fbguide { margin-top: 18px; border: 1px solid var(--portal-border); border-radius: 14px; background: var(--portal-bg); }
+    .fbguide summary { padding: 14px 18px; font-weight: 600; color: var(--portal-primary-dark); cursor: pointer; list-style: none; }
+    .fbguide summary::-webkit-details-marker { display: none; }
+    .fbguide summary::after { content: '\f078'; font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free'; font-weight: 900; float: right; font-size: .75rem; color: var(--portal-muted); transition: transform .2s; }
+    .fbguide[open] summary::after { transform: rotate(180deg); }
+    .fbguide__hint { font-weight: 400; font-size: .82rem; color: var(--portal-muted); }
+    .fbguide__body { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; padding: 4px 18px 18px; font-size: .84rem; }
+    .fbguide__heading { font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--portal-muted); margin-bottom: 6px; }
+    .fbguide ul, .fbguide ol { margin: 0; padding-left: 18px; }
+    .fbguide li + li { margin-top: 6px; }
     /* Toolbar above the connected Pages table */
     .fbtoolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
     .fbtoolbar__title { font-weight: 700; color: var(--portal-primary-dark); }
@@ -305,12 +321,23 @@
             @endif
 
             @if($connections->isNotEmpty())
+            {{-- Bulk disconnect: the row checkboxes belong to this form (form="fbBulkForm"). --}}
+            <form method="POST" action="{{ route('portal.crm.integrations.facebook.bulk-destroy') }}" id="fbBulkForm" class="fbbulk" hidden>
+                @csrf @method('DELETE')
+                <span class="fbbulk__count"><i class="fas fa-check-square me-1"></i><span id="fbBulkCount">0</span> selected</span>
+                <button type="button" class="btn btn-sm portal-btn-ghost" id="fbBulkClear">Clear</button>
+                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-link-slash me-1"></i>Disconnect selected</button>
+            </form>
             <div class="table-responsive mb-3">
                 <table class="table portal-table align-middle mb-0">
-                    <thead><tr><th>Page</th>@if($isAdmin)<th>Leads go to</th>@endif<th>Status</th><th class="text-center">Leads</th><th>Last lead</th><th class="text-end">Actions</th></tr></thead>
+                    <thead><tr>
+                        <th class="fbcheck-col"><input type="checkbox" class="form-check-input" id="fbBulkAll" aria-label="Select all Pages"></th>
+                        <th>Page</th>@if($isAdmin)<th>Leads go to</th>@endif<th>Status</th><th class="text-center">Leads</th><th>Last lead</th><th class="text-end">Actions</th>
+                    </tr></thead>
                     <tbody>
                         @foreach($connections as $connection)
                         <tr class="{{ $connection->needs_reconnect_at ? 'intg-reconnect' : '' }}">
+                            <td class="fbcheck-col"><input type="checkbox" class="form-check-input js-bulk-check" name="ids[]" value="{{ $connection->id }}" form="fbBulkForm" data-page="{{ $connection->page_name }}" aria-label="Select {{ $connection->page_name }}"></td>
                             <td>
                                 <div class="fw-semibold">{{ $connection->page_name }}</div>
                                 <div class="small text-muted">Connected {{ $connection->created_at->format('d M Y') }}@if($connection->connected_by) by {{ $connection->connected_by }}@endif</div>
@@ -344,6 +371,40 @@
             @elseif($isAdmin && $search !== '')
             <p class="text-muted small mb-0">No connected Pages match “{{ $search }}”.</p>
             @endif
+
+            {{-- How to connect + common problems. --}}
+            <details class="fbguide">
+                <summary><i class="fas fa-book-open me-2"></i>How to connect a Facebook Page <span class="fbguide__hint">— steps &amp; troubleshooting</span></summary>
+                <div class="fbguide__body">
+                    <div>
+                        <div class="fbguide__heading">Before you start</div>
+                        <ul>
+                            <li>Use a Facebook account with <strong>full control (admin)</strong> of the Page — in Meta Business Suite › Settings › Pages › People.</li>
+                            <li>Lead ads need a <strong>lead form</strong> (Instant Form) on the Page — create one in Meta Ads Manager or Business Suite.</li>
+                            <li>Allow pop-ups for this site — Facebook Login opens in a small window.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="fbguide__heading">Connecting</div>
+                        <ol>
+                            <li>Click <strong>{{ $connectedCount ? 'Connect another Page' : 'Continue with Facebook' }}</strong> and log in.</li>
+                            <li>If Facebook asks <em>"Continue with previous settings?"</em>, click <strong>Edit settings</strong>.</li>
+                            <li>Select <strong>all the Pages</strong> you want and keep <strong>every permission switched on</strong> (Pages, lead access, manage ads).</li>
+                            <li>Back here, {{ $isAdmin ? 'assign each Page to its agency / agent' : 'tick the Pages' }}, choose whether to import existing leads, and click <strong>Connect Pages</strong>.</li>
+                            <li>New leads now arrive in <strong>Leads</strong> within seconds. Use <strong>Sync now</strong> any time to fetch recent ones.</li>
+                        </ol>
+                    </div>
+                    <div>
+                        <div class="fbguide__heading">If something goes wrong</div>
+                        <ul>
+                            <li><strong>Reconnect needed</strong> — Facebook stopped accepting access (password changed, admin removed, or a permission missing). Click <strong>Reconnect</strong> and repeat the steps; missed leads are fetched automatically.</li>
+                            <li><strong>"Requires … permission"</strong> — a permission was switched off during login. Remove the app in Facebook › Settings › Business integrations, then connect again with all switches on.</li>
+                            <li><strong>Already connected to another account</strong> — a Page can feed one account only; it must be disconnected there first.</li>
+                            <li><strong>No lead forms yet</strong> — the Page is connected; leads arrive once a lead form gets submissions.</li>
+                        </ul>
+                    </div>
+                </div>
+            </details>
         @endif
     </div>
 </div>
@@ -441,6 +502,33 @@
     try {
         new BroadcastChannel('fb-connect').onmessage = function () { window.location.reload(); };
     } catch (e) {}
+
+    // Bulk disconnect: select all, live count, confirm.
+    (function () {
+        var form = document.getElementById('fbBulkForm');
+        if (!form) return;
+        var all = document.getElementById('fbBulkAll'), checks = Array.prototype.slice.call(document.querySelectorAll('.js-bulk-check'));
+        function picked() { return checks.filter(function (c) { return c.checked; }); }
+        function refresh() {
+            var n = picked().length;
+            form.hidden = n === 0;
+            document.getElementById('fbBulkCount').textContent = n;
+            all.checked = n > 0 && n === checks.length;
+            all.indeterminate = n > 0 && n < checks.length;
+        }
+        all.addEventListener('change', function () { checks.forEach(function (c) { c.checked = all.checked; }); refresh(); });
+        checks.forEach(function (c) { c.addEventListener('change', refresh); });
+        document.getElementById('fbBulkClear').addEventListener('click', function () { checks.forEach(function (c) { c.checked = false; }); refresh(); });
+        form.addEventListener('submit', async function (e) {
+            if (form.dataset.confirmed) return;
+            e.preventDefault();
+            var names = picked().map(function (c) { return c.dataset.page; });
+            if (await window.portalConfirm({ title: 'Disconnect ' + names.length + ' Page' + (names.length === 1 ? '' : 's') + '?', message: names.join(', ') + ' will stop sending new Facebook leads. Leads already in the CRM stay.', confirmText: 'Disconnect', tone: 'danger' })) {
+                form.dataset.confirmed = '1';
+                form.requestSubmit();
+            }
+        });
+    })();
 
     // Confirm before disconnecting a Page.
     document.querySelectorAll('.js-disconnect').forEach(function (form) {

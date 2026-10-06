@@ -287,15 +287,33 @@ class IntegrationController extends Controller
     {
         $this->authorizeManage();
         $connection = $this->findConnection($id);
+        $this->disconnect($connection);
 
+        return back()->with('toast', "{$connection->page_name} disconnected — its leads already in the CRM stay.");
+    }
+
+    /** Disconnect the ticked Pages (only ones this user may manage). */
+    public function bulkDestroy(Request $request)
+    {
+        $this->authorizeManage();
+        $ids = $request->validate(['ids' => 'required|array|min:1', 'ids.*' => 'integer'])['ids'];
+
+        $connections = FacebookPageConnection::when(!$this->isAdmin(), fn ($q) => $q->where('portal_user_id', $this->ownerId() ?? 0))
+            ->whereIn('id', $ids)->get();
+        $connections->each(fn (FacebookPageConnection $connection) => $this->disconnect($connection));
+
+        return back()->with('toast', $connections->count() . ' Page' . ($connections->count() === 1 ? '' : 's') . ' disconnected — their leads already in the CRM stay.');
+    }
+
+    /** Stop the Page's webhook (best effort — the token may already be dead) and forget it. */
+    private function disconnect(FacebookPageConnection $connection): void
+    {
         try {
             $this->facebook->unsubscribe($connection->page_id, $connection->page_access_token);
         } catch (\Throwable $e) {
             Log::info("Facebook unsubscribe for page {$connection->page_id} failed: " . $e->getMessage());
         }
         $connection->delete();
-
-        return back()->with('toast', "{$connection->page_name} disconnected — its leads already in the CRM stay.");
     }
 
     /** Who is connecting: the Super Admin (cms user) or the portal account. Keys their pending Pages. */
