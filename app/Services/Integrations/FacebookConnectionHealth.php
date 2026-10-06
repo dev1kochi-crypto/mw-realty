@@ -19,7 +19,10 @@ class FacebookConnectionHealth
         $connection->forceFill([
             'last_error' => $e->getMessage(),
             'needs_reconnect_at' => $connection->needs_reconnect_at ?? now(),
-        ])->save();
+        ] + (in_array($connection->import_status, ['queued', 'running'], true)
+            // A lead import can't go on without access — stop showing it as in progress.
+            ? ['import_status' => 'failed', 'import_error' => $e->reason(), 'import_finished_at' => now()]
+            : []))->save();
 
         if ($connection->reconnect_notified_at || !($owner = $connection->owner)) {
             return;

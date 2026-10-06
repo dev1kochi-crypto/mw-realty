@@ -16,13 +16,17 @@
     @endif
 
     {{-- Background lead import (ImportFacebookPageLeads) — updated live by the page's poller. --}}
-    @if(in_array($connection->import_status, ['queued', 'running'], true))
+    @if($connection->needs_reconnect_at)
+    {{-- No import progress while access is broken — the reconnect message above says what to do. --}}
+    @elseif($connection->importInProgress())
     <div class="fbimport js-import" data-id="{{ $connection->id }}">
         <div class="fbimport__label"><span class="fbimport__spin"></span><span class="js-import-text">{{ $connection->import_status === 'queued' ? 'Starting lead import…' : "Importing leads… {$connection->import_added} added" }}</span></div>
         <div class="fbbar"><span></span></div>
     </div>
     @elseif($connection->import_status === 'done' && $connection->import_finished_at?->gt(now()->subDays(3)))
     <div class="small text-success mt-1"><i class="fas fa-circle-check me-1"></i>Imported {{ number_format($connection->import_added) }} lead{{ $connection->import_added === 1 ? '' : 's' }}@if($connection->import_skipped), {{ number_format($connection->import_skipped) }} already in the CRM @endif</div>
+    @elseif($connection->import_status === 'empty' && $connection->import_finished_at?->gt(now()->subDays(3)))
+    <div class="small text-muted mt-1" style="max-width: 300px;"><i class="fas fa-inbox me-1"></i>{{ $connection->import_error ?: 'No leads to import.' }}</div>
     @elseif($connection->import_status === 'failed' && $connection->import_finished_at?->gt(now()->subDays(3)))
     <div class="small text-danger mt-1" style="max-width: 300px;"><i class="fas fa-circle-xmark me-1"></i>Lead import stopped: {{ \Illuminate\Support\Str::limit($connection->import_error, 120) }}</div>
     @endif

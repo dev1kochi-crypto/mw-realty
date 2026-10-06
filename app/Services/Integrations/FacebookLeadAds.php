@@ -13,8 +13,11 @@ use RuntimeException;
  */
 class FacebookLeadAds
 {
-    /** Permissions asked for at Facebook Login: list the user's Pages, subscribe them, read their leads (+ ad names). */
-    public const SCOPES = ['pages_show_list', 'pages_read_engagement', 'pages_manage_metadata', 'leads_retrieval', 'ads_read'];
+    /**
+     * Permissions asked for at Facebook Login: list the user's Pages, subscribe them, read their lead
+     * forms + leads (Facebook requires pages_manage_ads for {page}/leadgen_forms) and the ad names.
+     */
+    public const SCOPES = ['pages_show_list', 'pages_read_engagement', 'pages_manage_metadata', 'pages_manage_ads', 'leads_retrieval', 'ads_read'];
 
     /** Lead fields read from Facebook. The ad / campaign ones need ads_read — see lead(). */
     private const LEAD_FIELDS = 'id,created_time,field_data,form_id,ad_id,ad_name,adset_name,campaign_name,platform,is_organic';

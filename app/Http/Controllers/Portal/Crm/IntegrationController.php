@@ -52,6 +52,7 @@ class IntegrationController extends Controller
                     ->orWhereHas('owner', fn ($o) => $o->where('name', 'like', "%{$search}%")->orWhere('company_name', 'like', "%{$search}%"))))
                 ->orderBy('page_name')->paginate(20)->withQueryString()
             : FacebookPageConnection::where('portal_user_id', $this->ownerId() ?? 0)->orderBy('page_name')->get();
+        $connections->each(fn (FacebookPageConnection $c) => $c->failStaleImport());
 
         return view('portal.crm.integrations.index', [
             'isAdmin' => $isAdmin,
@@ -245,7 +246,9 @@ class IntegrationController extends Controller
     {
         $connections = FacebookPageConnection::when(!$this->isAdmin(), fn ($q) => $q->where('portal_user_id', $this->ownerId() ?? 0))
             ->whereIn('import_status', ['queued', 'running'])
-            ->get(['id', 'import_status', 'import_added', 'import_skipped']);
+            ->get(['id', 'import_status', 'import_added', 'import_skipped', 'updated_at'])
+            ->each->failStaleImport()
+            ->filter->importInProgress();
 
         return response()->json(['importing' => $connections->map(fn ($c) => [
             'id' => $c->id, 'status' => $c->import_status, 'added' => $c->import_added, 'skipped' => $c->import_skipped,

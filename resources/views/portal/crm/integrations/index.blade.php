@@ -256,7 +256,7 @@
             <div class="alert alert-warning small d-flex gap-2 align-items-start">
                 <i class="fas fa-plug-circle-xmark mt-1"></i>
                 <div>
-                    <strong>{{ $brokenPages->pluck('page_name')->join(', ', ' and ') }}</strong> {{ $brokenPages->count() === 1 ? 'has' : 'have' }} stopped sending leads — Facebook no longer accepts the access.
+                    <strong>{{ $brokenPages->pluck('page_name')->join(', ', ' and ') }}</strong> {{ $brokenPages->count() === 1 ? 'has' : 'have' }} stopped sending leads — Facebook needs a fresh login (the access expired or a permission is missing).
                     Click <strong>Reconnect</strong>, log in with a Facebook account that is an admin of the Page, tick it and click <strong>Connect Pages</strong>. Then use <strong>Sync now</strong> to fetch the leads missed meanwhile.
                 </div>
             </div>
