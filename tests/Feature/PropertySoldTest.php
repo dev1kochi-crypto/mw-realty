@@ -6,6 +6,9 @@ use App\Models\Lead;
 use App\Models\LeadStage;
 use App\Models\Property;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\Feature\Concerns\BuildsAgencies;
 use Tests\TestCase;
 
@@ -22,6 +25,7 @@ class PropertySoldTest extends TestCase
         $property = $this->property($agency, $agent, ['price' => 2000000, 'listing_type' => 'sale', 'translations' => ['en' => ['title' => 'Palm Villa']]]);
         $lead = $this->enquire($property, 'Happy Buyer');
 
+        Storage::fake('kyc');
         $this->signIn($agency);
         $this->get('/portal/properties')->assertSee('portal-property-col" data-id="' . $property->id . '"', false)->assertDontSee(route('portal.sold.index'));
 
@@ -31,14 +35,23 @@ class PropertySoldTest extends TestCase
 
         $this->postJson("/portal/properties/{$property->id}/mark-sold", [
             'type' => 'sold', 'price' => 1850000, 'sold_at' => now()->subDay()->toDateString(), 'commission' => 37000,
-            'notes' => 'Cash buyer', 'buyer_mode' => 'existing', 'lead_id' => $lead->id,
-        ])->assertOk()->assertJsonPath('success', true);
+            'notes' => 'Cash buyer', 'buyer_mode' => 'existing', 'lead_id' => $lead->id, 'documents_password' => 'deed-1234',
+        ] + $this->documents())->assertOk()->assertJsonPath('success', true);
 
         $property->refresh();
         $this->assertTrue($property->isSold());
         $this->assertFalse($property->status, 'a sold listing is off the website');
         $this->assertSame($lead->id, $property->sold_lead_id);
         $this->assertEquals(1850000, $property->sold_price);
+
+        // The deal's proof: private disk, password encrypted at rest, opened only through the portal.
+        $ownershipDoc = $property->sold_ownership_document;
+        Storage::disk('kyc')->assertExists([$ownershipDoc, $property->sold_contract_document]);
+        $this->assertStringStartsWith(Property::SALE_DOCUMENTS_DIRECTORY . '/', $ownershipDoc);
+        $this->assertSame('deed-1234', $property->sold_documents_password);
+        $this->assertNotSame('deed-1234', \DB::table('properties')->where('id', $property->id)->value('sold_documents_password'));
+        $this->get("/portal/properties/{$property->id}/sale-document/ownership")->assertOk();
+        $this->get("/portal/properties/{$property->id}/sale-document/contract")->assertOk();
 
         $lead->refresh();
         $this->assertSame('Closed Won', $lead->stage->name);
@@ -59,6 +72,8 @@ class PropertySoldTest extends TestCase
         $property->refresh();
         $this->assertFalse($property->isSold());
         $this->assertTrue($property->status);
+        $this->assertNull($property->sold_ownership_document);
+        Storage::disk('kyc')->assertMissing($ownershipDoc);
         $this->getJson("/api/properties/{$property->slug}")->assertOk();
     }
 
@@ -67,11 +82,18 @@ class PropertySoldTest extends TestCase
         $agent = $this->independentAgent();
         $property = $this->property($agent, $agent, ['price' => 120000, 'listing_type' => 'rent']);
 
+        Storage::fake('kyc');
         $this->signIn($agent);
+        $this->postJson("/portal/properties/{$property->id}/mark-sold", [
+            'type' => 'rented', 'price' => 115000, 'sold_at' => now()->toDateString(),
+            'buyer_mode' => 'new', 'buyer' => ['name' => 'New Tenant', 'email' => 'tenant@example.test'],
+        ])->assertStatus(422)->assertJsonValidationErrors(['ownership_document', 'contract_document' => 'Ejari']);
+        $this->assertFalse($property->fresh()->isSold(), 'no documents, no sale');
+
         $this->postJson("/portal/properties/{$property->id}/mark-sold", [
             'type' => 'rented', 'price' => 115000, 'sold_at' => now()->toDateString(), 'rented_until' => now()->addYear()->toDateString(),
             'buyer_mode' => 'new', 'buyer' => ['name' => 'New Tenant', 'email' => 'tenant@example.test'],
-        ])->assertOk();
+        ] + $this->documents())->assertOk();
 
         $lead = Lead::where('email', 'tenant@example.test')->firstOrFail();
         $this->assertSame($agent->id, $lead->portal_user_id);
@@ -87,13 +109,14 @@ class PropertySoldTest extends TestCase
         $lead = $this->enquire($this->property($agency, null), 'Olga Petrova');
         $houseListing = $this->property(null, null, ['price' => 500000]);
 
+        Storage::fake('kyc');
         $this->signIn($this->superAdmin(), 'cms');
         $this->getJson("/portal/properties/{$houseListing->id}/sale-leads")->assertOk()->assertJsonPath('results.0.name', 'Olga Petrova');
         $this->getJson("/portal/properties/{$houseListing->id}/sale-leads?q=olga")->assertOk()->assertJsonCount(1, 'results');
 
         $this->postJson("/portal/properties/{$houseListing->id}/mark-sold", [
             'type' => 'sold', 'price' => 480000, 'sold_at' => now()->toDateString(), 'buyer_mode' => 'existing', 'lead_id' => $lead->id,
-        ])->assertOk();
+        ] + $this->documents())->assertOk();
         $this->assertSame('Closed Won', $lead->fresh()->stage->name, "uses the lead owner's won stage");
     }
 
@@ -105,11 +128,22 @@ class PropertySoldTest extends TestCase
         $myListing = $this->property($mine, $mine);
         $theirLead = $this->enquire($theirs, 'Their Buyer');
 
+        Storage::fake('kyc');
         $this->signIn($mine);
-        $payload = ['type' => 'sold', 'price' => 1, 'sold_at' => now()->toDateString(), 'buyer_mode' => 'existing', 'lead_id' => $theirLead->id];
+        $payload = ['type' => 'sold', 'price' => 1, 'sold_at' => now()->toDateString(), 'buyer_mode' => 'existing', 'lead_id' => $theirLead->id] + $this->documents();
         $this->postJson("/portal/properties/{$theirs->id}/mark-sold", $payload)->assertNotFound();
         $this->postJson("/portal/properties/{$myListing->id}/mark-sold", $payload)->assertNotFound();
         $this->assertFalse($myListing->fresh()->isSold());
         $this->postJson("/portal/properties/{$myListing->id}/mark-sold", array_merge($payload, ['buyer_mode' => 'new', 'buyer' => ['name' => 'X']]))->assertStatus(422);
+        $this->get("/portal/properties/{$theirs->id}/sale-document/ownership")->assertNotFound();
+    }
+
+    /** Title deed + DLD contract, as uploaded in the "Mark as sold / rented" popup. */
+    private function documents(): array
+    {
+        return [
+            'ownership_document' => UploadedFile::fake()->create('title-deed.pdf', 120, 'application/pdf'),
+            'contract_document' => UploadedFile::fake()->image('contract.jpg'),
+        ];
     }
 }

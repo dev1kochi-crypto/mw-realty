@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Portal;
 use App\Models\Property;
 use App\Services\PropertySaleService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 /**
@@ -90,9 +91,18 @@ class PortalSoldPropertyController extends PortalPropertyController
             'buyer.email' => 'nullable|email|max:255',
             'buyer.phone' => 'nullable|string|max:30',
             'buyer.phone_country_code' => 'nullable|string|max:8',
+            'ownership_document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'contract_document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'documents_password' => 'nullable|string|max:255',
         ], [
             'lead_id.required_if' => 'Pick the lead who bought / rented it, or add a new buyer.',
             'buyer.name.required_if' => "Enter the buyer's name.",
+            'ownership_document.required' => 'Upload the property ownership document (title deed).',
+            'contract_document.required' => $request->input('type') === Property::RENTED
+                ? 'Upload the Ejari (official DLD tenancy contract).'
+                : 'Upload the sale contract (Form F / MOU).',
+            'ownership_document.mimes' => 'The ownership document must be a PDF, JPG or PNG.',
+            'contract_document.mimes' => 'The contract must be a PDF, JPG or PNG.',
         ]);
 
         if ($data['buyer_mode'] === 'new' && empty($data['buyer']['email']) && empty($data['buyer']['phone'])) {
@@ -108,6 +118,24 @@ class PortalSoldPropertyController extends PortalPropertyController
             'success' => true,
             'message' => 'Marked ' . $data['type'] . '. It is now off the website and listed under Sold Listings.',
             'redirect' => route('portal.sold.index'),
+        ]);
+    }
+
+    /** Ownership / contract proof of a sold listing — private `kyc` disk, same access as the listing itself. */
+    public function document($id, string $kind)
+    {
+        $property = $this->findAccessible($id);
+        $path = match ($kind) {
+            'ownership' => $property->sold_ownership_document,
+            'contract' => $property->sold_contract_document,
+            default => null,
+        };
+        abort_unless($path && str_starts_with($path, Property::SALE_DOCUMENTS_DIRECTORY . '/') && Storage::disk('kyc')->exists($path), 404);
+
+        $name = ($property->reference_no ?: 'property-' . $property->id) . '-' . $kind . '.' . pathinfo($path, PATHINFO_EXTENSION);
+
+        return Storage::disk('kyc')->response($path, $name, [
+            'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 

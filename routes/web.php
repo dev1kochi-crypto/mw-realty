@@ -801,7 +801,8 @@ Route::prefix('portal')->name('portal.')->group(function () {
         // Mark as sold / rented (both menus' cards) + the Sold Listings menu.
         Route::get('/properties/{id}/sale-leads', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'leadOptions'])->name('properties.sale-leads')->middleware('portal.approved');
         Route::post('/properties/{id}/mark-sold', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'markSold'])->name('properties.mark-sold')->middleware('portal.approved');
-        Route::post('/properties/{id}/revert-sold', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'revert'])->name('properties.revert-sold')->middleware('portal.approved');
+        Route::get('/properties/{id}/sale-document/{kind}', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'document'])->name('properties.sale-document')->whereIn('kind', ['ownership', 'contract']);
+        Route::post('/properties/{id}/revert-sold',[\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'revert'])->name('properties.revert-sold')->middleware('portal.approved');
         Route::get('/sold-listings', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'soldIndex'])->name('sold.index')->middleware('portal.approved');
 
         // Commercial — same table/form/screens as Properties, segment = commercial (see

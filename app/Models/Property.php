@@ -74,8 +74,17 @@ class Property extends Model
         'sold_lead_id',
         'sold_agent_id',
         'sold_notes',
+        'sold_ownership_document',
+        'sold_contract_document',
+        'sold_documents_password',
         'status_before_sold',
     ];
+
+    /** Deal proof stays out of JSON (listing cards, API); it's only served through the sold-document download. */
+    protected $hidden = ['sold_ownership_document', 'sold_contract_document', 'sold_documents_password'];
+
+    /** Private `kyc` disk folder for the ownership / contract documents uploaded when marking sold. */
+    public const SALE_DOCUMENTS_DIRECTORY = 'property-sales';
 
     public const SOLD = 'sold';
     public const RENTED = 'rented';
@@ -122,6 +131,7 @@ class Property extends Model
         'sold_commission' => 'decimal:2',
         'rented_until' => 'date',
         'status_before_sold' => 'boolean',
+        'sold_documents_password' => 'encrypted',
         'permit_expires_at' => 'date',
         'permit_expiry_notified_at' => 'datetime',
         'compliance_submitted_at' => 'datetime',

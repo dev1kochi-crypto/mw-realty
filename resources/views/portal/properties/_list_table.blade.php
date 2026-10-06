@@ -95,3 +95,24 @@
         </table>
     </div>
 </div>
+
+@push('scripts')
+<script>
+// Row "More actions" menus: the table scrolls sideways (clips overflow) and every row's pinned actions
+// cell stacks over the rows above it, so an open menu would be cut off and covered by the next rows.
+// While open, the menu lives on <body>; it goes back to its row when closed.
+(function () {
+    document.querySelectorAll('.pl-list [data-bs-toggle="dropdown"]').forEach(toggle => {
+        const home = toggle.parentElement;
+        toggle.addEventListener('show.bs.dropdown', () => {
+            const menu = home.querySelector('.dropdown-menu');
+            if (menu) document.body.appendChild(menu);
+            toggle._plMenu = menu;
+        });
+        toggle.addEventListener('hidden.bs.dropdown', () => {
+            if (toggle._plMenu) home.appendChild(toggle._plMenu);
+        });
+    });
+})();
+</script>
+@endpush

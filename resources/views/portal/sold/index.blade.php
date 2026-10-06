@@ -99,6 +99,15 @@
                     <td class="small">{{ $property->soldAgent?->name ?? '—' }}</td>
                     @if($isAdmin)<td class="small">{{ $property->owner?->displayName() ?? 'MW Realty' }}</td>@endif
                     <td class="text-end text-nowrap">
+                        @if($property->sold_ownership_document)
+                        <a href="{{ route('portal.properties.sale-document', [$property->id, 'ownership']) }}" target="_blank" rel="noopener" class="btn btn-sm portal-btn-ghost" title="Ownership document (title deed)"><i class="fas fa-file-shield"></i></a>
+                        @endif
+                        @if($property->sold_contract_document)
+                        <a href="{{ route('portal.properties.sale-document', [$property->id, 'contract']) }}" target="_blank" rel="noopener" class="btn btn-sm portal-btn-ghost" title="{{ $rentedOut ? 'Ejari' : 'Sale contract (Form F / MOU)' }}"><i class="fas fa-file-contract"></i></a>
+                        @endif
+                        @if($property->sold_documents_password)
+                        <button type="button" class="btn btn-sm portal-btn-ghost" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-content="{{ $property->sold_documents_password }}" title="Document password"><i class="fas fa-key"></i></button>
+                        @endif
                         @if($property->sold_notes)
                         <button type="button" class="btn btn-sm portal-btn-ghost" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-content="{{ $property->sold_notes }}" title="Notes"><i class="fas fa-note-sticky"></i></button>
                         @endif

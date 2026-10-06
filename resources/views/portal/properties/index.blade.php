@@ -419,8 +419,8 @@
 
     const JSON_HEADERS = { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'Content-Type': 'application/json' };
 
-    // Card (grid) or row (list) — both are [data-property-row].
-    const cardTitle = el => el.closest('[data-property-row]')?.querySelector('.portal-property-card__title, [data-property-title]')?.textContent.trim();
+    // Card (grid) or row (list) — both are [data-property-row]. A list row's open menu sits on <body>, so fall back to its row by id.
+    const cardTitle = el => (el.closest('[data-property-row]') || document.querySelector(`tr[data-property-row][data-id="${el.dataset.id}"]`))?.querySelector('.portal-property-card__title, [data-property-title]')?.textContent.trim();
 
     // Filters: selects / checkbox apply at once; the agent picker searches the server (20 a page, more on scroll).
     (function () {

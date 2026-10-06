@@ -20,6 +20,13 @@
     .sm-lead.is-picked { background: rgba(36, 67, 115, 0.1); }
     .sm-lead small { color: var(--portal-muted); }
     .sm-leads-status { padding: 0.6rem; text-align: center; font-size: 0.8rem; color: var(--portal-muted); }
+    .sm-upload { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.85rem; border: 1px dashed var(--portal-border); border-radius: 10px; cursor: pointer; margin: 0; }
+    .sm-upload:hover, .sm-upload:focus-within { border-color: var(--portal-primary); }
+    .sm-upload.has-file { border-style: solid; border-color: var(--portal-primary); background: rgba(36, 67, 115, 0.05); }
+    .sm-upload input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .sm-upload-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.86rem; color: var(--portal-muted); }
+    .sm-upload.has-file .sm-upload-name { color: inherit; font-weight: 600; }
+    .sm-upload-btn { padding: 0.2rem 0.7rem; border: 1px solid var(--portal-border); border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
 </style>
 @endpush
 
@@ -99,6 +106,37 @@
                 <label class="form-label fw-semibold mt-3" for="soldNotes">Notes <span class="portal-muted small">(optional)</span></label>
                 <textarea class="form-control" name="notes" id="soldNotes" rows="2" maxlength="2000" placeholder="Payment terms, handover, anything worth keeping"></textarea>
 
+                <hr class="my-3">
+
+                <div class="fw-semibold mb-1">Proof of the deal</div>
+                <div class="form-text mt-0 mb-2">Official documents for this transaction. Kept private — only your account and MW Realty admins can open them.</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold mb-1" for="soldOwnershipDoc">Property ownership document <span class="portal-muted fw-normal">(title deed)</span></label>
+                        <label class="sm-upload">
+                            <i class="far fa-file-lines portal-muted"></i>
+                            <span class="sm-upload-name" data-empty="Click to upload">Click to upload</span>
+                            <span class="sm-upload-btn">Upload</span>
+                            <input type="file" name="ownership_document" id="soldOwnershipDoc" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required>
+                        </label>
+                        <div class="form-text">PDF, JPG or PNG · max 10 MB</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold mb-1" for="soldContractDoc" data-sold-label="contract">Sale contract (Form F / MOU)</label>
+                        <label class="sm-upload">
+                            <i class="far fa-file-lines portal-muted"></i>
+                            <span class="sm-upload-name" data-empty="Click to upload">Click to upload</span>
+                            <span class="sm-upload-btn">Upload</span>
+                            <input type="file" name="contract_document" id="soldContractDoc" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required>
+                        </label>
+                        <div class="form-text">PDF, JPG or PNG · max 10 MB</div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold mb-1" for="soldDocsPassword">Document password <span class="portal-muted fw-normal">(optional)</span></label>
+                        <input type="text" class="form-control" name="documents_password" id="soldDocsPassword" maxlength="255" autocomplete="off" placeholder="Add a password if your files are password protected">
+                    </div>
+                </div>
+
                 <div class="alert alert-info small mt-3 mb-0"><i class="fas fa-info-circle me-1"></i>The listing is taken off the website and moved to <strong>Sold Listings</strong>. The lead is moved to your won stage. You can undo this later.</div>
                 <div class="alert alert-danger small mt-3 mb-0 d-none" id="soldError"></div>
             </div>
@@ -134,6 +172,7 @@
         modalEl.querySelector('[data-sold-label="price"]').textContent = rented ? 'Rent (agreed)' : 'Sold price';
         modalEl.querySelector('[data-sold-label="date"]').textContent = rented ? 'Rented on' : 'Sale date';
         modalEl.querySelector('[data-sold-label="buyer"]').textContent = rented ? 'Tenant' : 'Buyer';
+        modalEl.querySelector('[data-sold-label="contract"]').textContent = rented ? 'Ejari (official DLD document)' : 'Sale contract (Form F / MOU)';
         submit.innerHTML = '<i class="fas fa-check me-1"></i>' + (rented ? 'Mark as rented' : 'Mark as sold');
     }
 
@@ -212,7 +251,16 @@
         clearTimeout(timer);
         timer = setTimeout(() => { term = search.value.trim(); loadLeads(true); }, 300);
     });
+    function showFile(input) {
+        const box = input.closest('.sm-upload');
+        const file = input.files[0];
+        box.classList.toggle('has-file', !!file);
+        box.querySelector('.sm-upload-name').textContent = file ? file.name : box.querySelector('.sm-upload-name').dataset.empty;
+        box.querySelector('.sm-upload-btn').textContent = file ? 'Change' : 'Upload';
+    }
+
     form.addEventListener('change', e => {
+        if (e.target.type === 'file') showFile(e.target);
         if (e.target.name === 'type') setType(e.target.value);
         if (e.target.name === 'buyer_mode') setMode(e.target.value);
     });
@@ -221,6 +269,7 @@
         const btn = e.target.closest('.mark-sold-property');
         if (!btn) return;
         form.reset();
+        form.querySelectorAll('input[type="file"]').forEach(showFile);
         propertyId = btn.dataset.id;
         clearPick();
         closeList();
@@ -245,6 +294,12 @@
             errorBox.textContent = 'Pick a lead from the list, or switch to “New buyer”.';
             errorBox.classList.remove('d-none');
             search.focus();
+            return;
+        }
+        const missing = [...form.querySelectorAll('input[type="file"]')].find(input => !input.files.length);
+        if (missing) {
+            errorBox.textContent = 'Upload both documents: ' + missing.closest('.col-md-6').querySelector('.form-label').textContent.trim() + ' is missing.';
+            errorBox.classList.remove('d-none');
             return;
         }
         submit.disabled = true;

@@ -6,6 +6,7 @@ use App\Models\Lead;
 use App\Models\LeadStage;
 use App\Models\Property;
 use App\Services\Crm\LeadNoteService;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -18,7 +19,7 @@ use Illuminate\Validation\ValidationException;
  */
 class PropertySaleService
 {
-    public function __construct(private readonly LeadNoteService $notes)
+    public function __construct(private readonly LeadNoteService $notes, private readonly ManagedFiles $files)
     {
     }
 
@@ -30,7 +31,8 @@ class PropertySaleService
 
     /**
      * @param array{type:string, price:float|string, sold_at:string, rented_until?:?string, commission?:float|string|null,
-     *              notes?:?string, lead_id?:?int, buyer?:array{name:string, email?:?string, phone?:?string, phone_country_code?:?string}} $data
+     *              notes?:?string, lead_id?:?int, buyer?:array{name:string, email?:?string, phone?:?string, phone_country_code?:?string},
+     *              ownership_document?:?UploadedFile, contract_document?:?UploadedFile, documents_password?:?string} $data
      */
     public function markSold(Property $property, array $data, ?int $viewerId = null): Property
     {
@@ -53,6 +55,9 @@ class PropertySaleService
                 'sold_lead_id' => $lead->id,
                 'sold_agent_id' => $lead->agent_id ?? $property->agent_id,
                 'sold_notes' => $data['notes'] ?? null,
+                'sold_ownership_document' => $this->storeDocument($data['ownership_document'] ?? null),
+                'sold_contract_document' => $this->storeDocument($data['contract_document'] ?? null),
+                'sold_documents_password' => ($data['documents_password'] ?? null) ?: null,
                 'status_before_sold' => $property->status,
                 // Off the website, and no longer using a premium slot.
                 'status' => false,
@@ -73,11 +78,15 @@ class PropertySaleService
         return DB::transaction(function () use ($property) {
             $lead = $property->soldLead;
             $type = $property->sold_type;
+            // The deal's proof goes with the deal (removed once the request commits).
+            $this->files->delete($property->sold_ownership_document, 'kyc');
+            $this->files->delete($property->sold_contract_document, 'kyc');
 
             $property->fill([
                 'status' => $property->status_before_sold ?? true,
                 'sold_at' => null, 'sold_type' => null, 'sold_price' => null, 'sold_commission' => null, 'rented_until' => null,
                 'sold_lead_id' => null, 'sold_agent_id' => null, 'sold_notes' => null, 'status_before_sold' => null,
+                'sold_ownership_document' => null, 'sold_contract_document' => null, 'sold_documents_password' => null,
             ]);
             // Back on the website only if the DLD permit review still allows it (e.g. not expired meanwhile).
             $property->status = $property->status && $property->canGoLive();
@@ -91,6 +100,12 @@ class PropertySaleService
 
             return $property;
         });
+    }
+
+    /** Private `kyc` disk — served only through the Sold Listings download, never a public URL. */
+    private function storeDocument(?UploadedFile $file): ?string
+    {
+        return $file ? $this->files->store($file, Property::SALE_DOCUMENTS_DIRECTORY, 'kyc') : null;
     }
 
     private function createBuyerLead(Property $property, array $buyer): Lead
