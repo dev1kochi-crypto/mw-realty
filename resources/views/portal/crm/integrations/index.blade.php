@@ -19,9 +19,32 @@
     .intg-status--ok { background: #e7f6ee; color: #0f7a43; }
     .intg-status--warn { background: #fff4e0; color: #9a5b00; }
     .intg-status--off { background: #eef0f6; color: var(--portal-muted); }
-    .intg-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
-    .intg-step { padding: 14px; border: 1px solid var(--portal-border); border-radius: 12px; background: var(--portal-bg); font-size: .85rem; }
-    .intg-step__num { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--portal-primary); color: #fff; font-size: .75rem; font-weight: 700; margin-bottom: 6px; }
+    /* Empty state: nothing connected yet */
+    .fbempty { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); border: 1px solid var(--portal-border); border-radius: 16px; overflow: hidden; }
+    .fbempty__main { padding: 32px 28px; text-align: center; background: radial-gradient(circle at 50% 0%, #eef4ff 0%, #fff 70%); }
+    .fbempty__art { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .fbempty__bubble { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; font-size: 1.4rem; box-shadow: 0 10px 22px rgba(24, 39, 75, .12); }
+    .fbempty__bubble--fb { background: #1877f2; color: #fff; }
+    .fbempty__bubble--crm { background: #fff; color: var(--portal-primary); border: 1px solid var(--portal-border); }
+    .fbempty__line { width: 54px; height: 2px; background: repeating-linear-gradient(90deg, #9cbcf3 0 6px, transparent 6px 11px); background-size: 22px 2px; animation: fbflow 1s linear infinite; }
+    @keyframes fbflow { to { background-position: 22px 0; } }
+    .fbempty__title { font-weight: 700; color: var(--portal-primary-dark); margin-bottom: 6px; }
+    .fbempty__text { font-size: .85rem; color: var(--portal-muted); max-width: 420px; margin: 0 auto 18px; }
+    .fbempty__btn { background: #1877f2; color: #fff; font-weight: 600; padding: 10px 22px; border-radius: 10px; box-shadow: 0 8px 18px rgba(24, 119, 242, .28); }
+    .fbempty__btn:hover { background: #166fe0; color: #fff; }
+    .fbempty__note { margin-top: 12px; font-size: .75rem; color: var(--portal-muted); }
+    .fbempty__steps { list-style: none; margin: 0; padding: 28px 26px; display: flex; flex-direction: column; justify-content: center; gap: 18px; background: var(--portal-bg); border-left: 1px solid var(--portal-border); font-size: .85rem; }
+    .fbempty__steps li { position: relative; display: flex; gap: 14px; }
+    .fbempty__steps li:not(:last-child)::after { content: ''; position: absolute; left: 13px; top: 30px; bottom: -16px; width: 2px; background: #d9e3f4; }
+    .fbempty__num { position: relative; z-index: 1; display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--portal-primary); color: #fff; font-size: .78rem; font-weight: 700; }
+    @media (max-width: 767.98px) { .fbempty { grid-template-columns: 1fr; } .fbempty__steps { border-left: 0; border-top: 1px solid var(--portal-border); } }
+    /* Toolbar above the connected Pages table */
+    .fbtoolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .fbtoolbar__title { font-weight: 700; color: var(--portal-primary-dark); }
+    .fbtoolbar__count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: #e7f0fe; color: #1877f2; font-size: .75rem; }
+    .fbtoolbar__search { position: relative; }
+    .fbtoolbar__search i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--portal-muted); font-size: .8rem; }
+    .fbtoolbar__search input { padding-left: 30px; min-width: 230px; border-radius: 8px; }
     /* Pages picker after Facebook Login */
     .fbpick { border: 1px solid #d6e4fb; border-radius: 16px; background: linear-gradient(180deg, #f5f9ff 0%, #fff 70%); overflow: hidden; }
     .fbpick__head { display: flex; gap: 14px; align-items: center; padding: 18px 20px; border-bottom: 1px solid #e3ecfa; }
@@ -35,15 +58,16 @@
     .fbpick__card.is-selected { border-color: #1877f2; box-shadow: 0 0 0 3px rgba(24, 119, 242, .1); }
     .fbpick__card.is-blocked { background: #fafbfd; }
     .fbpick__card.is-blocked .fbpick__main { opacity: .6; cursor: not-allowed; }
-    .fbpick__main { display: flex; align-items: center; gap: 12px; margin: 0; padding-right: 22px; cursor: pointer; }
+    .fbpick__main { display: flex; align-items: center; gap: 12px; min-width: 0; margin: 0; padding-right: 26px; cursor: pointer; }
     .fbpick__check { position: absolute; opacity: 0; pointer-events: none; }
     .fbpick__tick { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #c5cfdf; color: transparent; font-size: .65rem; flex-shrink: 0; transition: all .15s; }
     .fbpick__check:checked + .fbpick__tick { background: #1877f2; border-color: #1877f2; color: #fff; }
     .fbpick__check:focus-visible + .fbpick__tick { outline: 2px solid #1877f2; outline-offset: 2px; }
     .fbpick__pic { width: 46px; height: 46px; border-radius: 12px; object-fit: cover; flex-shrink: 0; background: #e7edf7; }
     .fbpick__pic--letter { display: grid; place-items: center; font-weight: 700; font-size: 1.1rem; color: #fff; background: linear-gradient(135deg, #4f8ef7, #1877f2); }
-    .fbpick__name { display: block; font-weight: 600; color: var(--portal-primary-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .fbpick__id { display: block; font-size: .75rem; color: var(--portal-muted); }
+    .fbpick__text { flex: 1 1 auto; min-width: 0; }
+    .fbpick__name { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; font-weight: 600; line-height: 1.3; color: var(--portal-primary-dark); }
+    .fbpick__id { display: block; margin-top: 2px; font-size: .75rem; color: var(--portal-muted); }
     .fbpick__remove { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border: 0; border-radius: 50%; background: transparent; color: #9aa3b5; display: grid; place-items: center; }
     .fbpick__remove:hover { background: #fdecec; color: #dc3545; }
     .fbpick__chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 600; background: #eef2f8; color: #5b6478; }
@@ -168,7 +192,7 @@
                             @else
                             <span class="fbpick__pic fbpick__pic--letter">{{ mb_strtoupper(mb_substr($page['name'], 0, 1)) }}</span>
                             @endif
-                            <span class="min-w-0">
+                            <span class="fbpick__text">
                                 <span class="fbpick__name" title="{{ $page['name'] }}">{{ $page['name'] }}</span>
                                 <span class="fbpick__id">ID {{ $page['id'] }}</span>
                             </span>
@@ -238,18 +262,47 @@
             </div>
             @endif
 
-            <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
-                <a href="{{ route('portal.crm.integrations.facebook.connect') }}" data-popup-url="{{ route('portal.crm.integrations.facebook.connect', ['popup' => 1]) }}" class="btn btn-sm text-white js-fb-connect" style="background: #1877f2;">
-                    <i class="fab fa-facebook me-1"></i>{{ $connectedCount ? 'Connect another Page' : 'Connect Facebook Page' }}
-                </a>
-                @if($isAdmin && ($connectedCount || $search !== ''))
-                <form method="GET" class="d-flex gap-2">
-                    <input type="search" name="q" value="{{ $search }}" class="form-control form-control-sm" placeholder="Search Page or account…" style="min-width: 220px;">
-                    <button class="btn btn-sm portal-btn-ghost" aria-label="Search"><i class="fas fa-search"></i></button>
-                </form>
-                @endif
+            @if(!$connectedCount && $search === '')
+            {{-- Nothing connected yet: one clear starting point, with how it works alongside. --}}
+            <div class="fbempty">
+                <div class="fbempty__main">
+                    <div class="fbempty__art" aria-hidden="true">
+                        <span class="fbempty__bubble fbempty__bubble--fb"><i class="fab fa-facebook-f"></i></span>
+                        <span class="fbempty__line"></span>
+                        <span class="fbempty__bubble fbempty__bubble--crm"><i class="fas fa-address-card"></i></span>
+                    </div>
+                    <h6 class="fbempty__title">{{ $pendingPages ? 'Pick your Pages above to finish' : ($isAdmin ? 'Connect Facebook Pages for your agencies & agents' : 'Connect your Facebook Page') }}</h6>
+                    <p class="fbempty__text">{{ $isAdmin ? 'Log in with a Facebook account that manages the Pages, then assign each Page to the agency or agent who should get its leads.' : 'Log in with a Facebook account that is an admin of your Page. Leads from your lead ads then land in your CRM automatically.' }}</p>
+                    <a href="{{ route('portal.crm.integrations.facebook.connect') }}" data-popup-url="{{ route('portal.crm.integrations.facebook.connect', ['popup' => 1]) }}" class="btn fbempty__btn js-fb-connect">
+                        <i class="fab fa-facebook me-2"></i>Continue with Facebook
+                    </a>
+                    <div class="fbempty__note"><i class="fas fa-lock me-1"></i>Opens a secure Facebook window. MW Realty only reads your Pages' lead forms.</div>
+                </div>
+                <ol class="fbempty__steps">
+                    <li><span class="fbempty__num">1</span><div><div class="fw-semibold">Connect the Page</div><div class="text-muted">Log in with Facebook and pick the Pages that run the lead ads — each Page goes to one account.</div></div></li>
+                    <li><span class="fbempty__num">2</span><div><div class="fw-semibold">Leads arrive instantly</div><div class="text-muted">Each form submission becomes a lead — name, email, phone and answers included.</div></div></li>
+                    <li><span class="fbempty__num">3</span><div><div class="fw-semibold">Sorted by ad</div><div class="text-muted">The ad's name is the lead's Source, so you can filter and report per campaign.</div></div></li>
+                </ol>
             </div>
-            <p class="small text-muted mb-3"><i class="fas fa-circle-info me-1"></i>Facebook Login opens in a popup window — when it's done, the Pages to choose from appear here.</p>
+            @else
+            <div class="fbtoolbar">
+                <div>
+                    <div class="fbtoolbar__title">Connected Pages <span class="fbtoolbar__count">{{ $connectedCount }}</span></div>
+                    <div class="small text-muted">{{ $isAdmin ? 'Each Page sends its leads to the account shown.' : 'New leads from these Pages arrive in Leads automatically.' }}</div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    @if($isAdmin)
+                    <form method="GET" class="fbtoolbar__search">
+                        <i class="fas fa-search"></i>
+                        <input type="search" name="q" value="{{ $search }}" class="form-control form-control-sm" placeholder="Search Page or account…" aria-label="Search Pages">
+                    </form>
+                    @endif
+                    <a href="{{ route('portal.crm.integrations.facebook.connect') }}" data-popup-url="{{ route('portal.crm.integrations.facebook.connect', ['popup' => 1]) }}" class="btn btn-sm text-white js-fb-connect" style="background: #1877f2;" title="Opens a Facebook window">
+                        <i class="fab fa-facebook me-1"></i>Connect another Page
+                    </a>
+                </div>
+            </div>
+            @endif
 
             @if($connections->isNotEmpty())
             <div class="table-responsive mb-3">
@@ -292,12 +345,6 @@
             <p class="text-muted small mb-0">No connected Pages match “{{ $search }}”.</p>
             @endif
         @endif
-
-        <div class="intg-steps mt-4">
-            <div class="intg-step"><span class="intg-step__num">1</span><div class="fw-semibold">Connect the Page</div><div class="text-muted">Log in with Facebook and pick the Pages that run the lead ads — each Page goes to one account.</div></div>
-            <div class="intg-step"><span class="intg-step__num">2</span><div class="fw-semibold">Leads arrive instantly</div><div class="text-muted">Each form submission becomes a lead — name, email, phone and answers included.</div></div>
-            <div class="intg-step"><span class="intg-step__num">3</span><div class="fw-semibold">Sorted by ad</div><div class="text-muted">The ad's name is the lead's Source, so you can filter and report per campaign.</div></div>
-        </div>
     </div>
 </div>
 @endsection
