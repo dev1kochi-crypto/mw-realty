@@ -13,12 +13,8 @@
 
 <div class="portal-card p-3 p-md-4">
     {{-- Bulk bar — shown while leads are ticked (or "select all" is on). --}}
-    <div id="trashBulkBar" class="d-none align-items-center flex-wrap gap-2 mb-3 p-2 rounded" style="background: rgba(0,0,0,.04);">
+    <div id="trashBulkBar" data-total="{{ $leads->total() }}" class="d-none align-items-center flex-wrap gap-2 mb-3 p-2 rounded" style="background: rgba(0,0,0,.04);">
         <span class="fw-semibold ms-1"><span id="trashBulkCount">0</span> selected</span>
-        <span id="trashSelectAllHint" class="text-muted d-none" style="font-size: .85rem;">
-            All {{ $leads->count() }} on this page are selected.
-            <a href="#" id="trashSelectAllLink">Select all {{ $leads->total() }} deleted leads</a>
-        </span>
         <div class="ms-auto d-flex gap-2">
             <button type="button" class="btn btn-sm portal-btn-ghost" id="trashBulkClear">Clear</button>
             <button type="button" class="btn btn-sm portal-btn-ghost" data-trash-action="restore"><i class="fas fa-rotate-left me-1"></i>Restore</button>
@@ -30,9 +26,9 @@
         <table class="table portal-table mb-0">
             <thead>
                 <tr>
-                    <th style="width: 36px;">
+                    <th style="width: 2.5rem;">
                         @if($leads->isNotEmpty())
-                        <input type="checkbox" class="form-check-input" id="trashSelectPage" aria-label="Select all on this page">
+                        <input type="checkbox" class="form-check-input" id="trashSelectAll" aria-label="Select all {{ $leads->total() }} deleted leads">
                         @endif
                     </th>
                     <th>Lead</th>
@@ -102,14 +98,14 @@
         });
 
         /*
-         * Selection: the ticked rows on this page, or "select all" = every deleted lead on every
-         * page (the server resolves it from select_all=1) minus any row unticked afterwards.
+         * Selection, as on the Leads page: the header checkbox selects every deleted lead on every
+         * page (the server resolves it from select_all=1), minus any row unticked afterwards;
+         * otherwise just the ticked rows.
          */
-        const total = {{ $leads->total() }};
+        const headerBox = document.getElementById('trashSelectAll');
+        const total = Number(document.getElementById('trashBulkBar').dataset.total || 0);
         const pageBoxes = Array.from(document.querySelectorAll('.trash-row-checkbox'));
-        const pageToggle = document.getElementById('trashSelectPage');
         const bar = document.getElementById('trashBulkBar');
-        const hint = document.getElementById('trashSelectAllHint');
         let selectAll = false;
 
         const ticked = () => pageBoxes.filter(b => b.checked);
@@ -118,15 +114,13 @@
 
         function refresh() {
             const n = count();
-            const allOnPage = pageBoxes.length > 0 && unticked().length === 0;
             document.getElementById('trashBulkCount').textContent = n;
             bar.classList.toggle('d-none', n === 0);
             bar.classList.toggle('d-flex', n > 0);
-            if (pageToggle) {
-                pageToggle.checked = allOnPage;
-                pageToggle.indeterminate = !allOnPage && ticked().length > 0;
+            if (headerBox) {
+                headerBox.checked = total > 0 && n === total;
+                headerBox.indeterminate = n > 0 && n < total;
             }
-            hint.classList.toggle('d-none', !(allOnPage && !selectAll && total > pageBoxes.length));
         }
 
         function clearSelection() {
@@ -135,18 +129,14 @@
             refresh();
         }
 
-        pageToggle?.addEventListener('change', function () {
-            if (!pageToggle.checked) return clearSelection();
+        headerBox?.addEventListener('change', function () {
+            if (!headerBox.checked) return clearSelection();
+            selectAll = true;
             pageBoxes.forEach(b => { b.checked = true; });
             refresh();
         });
         pageBoxes.forEach(b => b.addEventListener('change', refresh));
         document.getElementById('trashBulkClear').addEventListener('click', clearSelection);
-        document.getElementById('trashSelectAllLink').addEventListener('click', function (e) {
-            e.preventDefault();
-            selectAll = true;
-            refresh();
-        });
 
         document.querySelectorAll('[data-trash-action]').forEach(function (btn) {
             btn.addEventListener('click', async function () {
