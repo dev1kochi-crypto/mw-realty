@@ -883,6 +883,17 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::post('/leads/{id}/assign', [LeadController::class, 'assign'])->name('leads.assign');
             Route::post('/leads-distribute', [LeadController::class, 'distributeUnassigned'])->name('leads.distribute');
 
+            // Integrations — Facebook Lead Ads (connect Pages; their leads arrive via /api/webhooks/facebook).
+            Route::prefix('integrations')->name('integrations.')->controller(\App\Http\Controllers\Portal\Crm\IntegrationController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/facebook/connect', 'connect')->name('facebook.connect');
+                Route::get('/facebook/callback', 'callback')->name('facebook.callback');
+                Route::post('/facebook/pages', 'storePages')->name('facebook.pages.store');
+                Route::post('/facebook/pages/cancel', 'cancelPages')->name('facebook.pages.cancel');
+                Route::post('/facebook/{id}/sync', 'sync')->name('facebook.sync')->whereNumber('id')->middleware('throttle:10,1');
+                Route::delete('/facebook/{id}', 'destroy')->name('facebook.destroy')->whereNumber('id');
+            });
+
             Route::prefix('master')->name('master.')->group(function () {
                 Route::get('/stages', [LeadStageController::class, 'index'])->name('stages.index');
                 Route::post('/stages', [LeadStageController::class, 'store'])->name('stages.store');

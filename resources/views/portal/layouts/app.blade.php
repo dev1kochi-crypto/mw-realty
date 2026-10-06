@@ -85,6 +85,11 @@
                     </div>
                 </div>
 
+                <a href="{{ route('portal.crm.integrations.index') }}" class="nav-link @if(request()->routeIs('portal.crm.integrations.*')) active @endif">
+                    <i class="fas fa-plug"></i> Integrations
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
+                </a>
+
                 <div class="nav-section-label">Listings</div>
                 <a href="{{ route('portal.properties.index') }}" class="nav-link @if(request()->routeIs('portal.properties.*')) active @endif">
                     <i class="fas fa-building"></i> Properties

@@ -247,6 +247,28 @@ class Property extends Model
         return $agentAvailable ? $agent : ($available($owner) ? $owner : null);
     }
 
+    /**
+     * Listings the public sees under this agent — the same rule as displayContact(), so the agent's
+     * profile, counts and "View all" only list properties whose page shows that agent:
+     *   assigned to them, on a listing of their own agency (or of no / a non-agency owner), or
+     *   their own listing, unless another available agent is assigned to it.
+     */
+    public function scopeShownUnderAgent($query, PortalUser $agent)
+    {
+        return $query->where(fn ($q) => $q
+            ->where(fn ($assigned) => $assigned
+                ->where('properties.agent_id', $agent->id)
+                ->where(fn ($owner) => $owner
+                    ->whereIn('properties.portal_user_id', array_filter([$agent->id, $agent->company_id]))
+                    ->orWhereDoesntHave('owner', fn ($o) => $o->where('type', 'company'))))
+            ->orWhere(fn ($own) => $own
+                ->where('properties.portal_user_id', $agent->id)
+                ->where(fn ($a) => $a
+                    ->whereNull('properties.agent_id')
+                    ->orWhere('properties.agent_id', $agent->id)
+                    ->orWhereDoesntHave('agent', fn ($other) => $other->where('is_active', true)->approved()))));
+    }
+
     public function assignmentHistory()
     {
         return $this->hasMany(PropertyAssignmentHistory::class)->latest('id');

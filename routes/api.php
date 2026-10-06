@@ -117,3 +117,7 @@ Route::post('/chatbot/message', [ChatbotController::class, 'send'])->middleware(
 
 // Stripe plan-subscription events (signature-verified inside the controller) — /api/stripe/webhook
 Route::post('/stripe/webhook', \App\Http\Controllers\StripeWebhookController::class)->name('stripe.webhook');
+
+// Facebook Lead Ads "leadgen" webhook (verify handshake + signature-checked events) — /api/webhooks/facebook
+Route::get('/webhooks/facebook', [\App\Http\Controllers\Api\FacebookWebhookController::class, 'verify'])->name('webhooks.facebook.verify');
+Route::post('/webhooks/facebook', [\App\Http\Controllers\Api\FacebookWebhookController::class, 'receive'])->name('webhooks.facebook')->middleware('throttle:600,1');

@@ -132,6 +132,9 @@ class Lead extends Model
         });
     }
 
+    /** Source of a lead added by hand (Add Lead) — preselected in the form, the user can change it. */
+    public const DIRECT_SOURCE = 'Direct Lead';
+
     /** Channel (page_source) → the Source name leads from it get. Unknown channels are title-cased. */
     public const SOURCE_NAMES = [
         'property-detail' => 'Website',
@@ -143,7 +146,7 @@ class Lead extends Model
         'agent-profile-request' => 'Agent Profile',
         'agency-profile-request' => 'Agency Profile',
         'marked sold' => 'Direct Sale',
-        'manual' => 'Manual Entry',
+        'manual' => self::DIRECT_SOURCE,
         'import' => 'Import',
         'home page' => 'Website',
         'contact page' => 'Website',
@@ -153,7 +156,7 @@ class Lead extends Model
     {
         $key = mb_strtolower(trim((string) $pageSource));
         if ($key === '') {
-            return 'Manual Entry';
+            return self::DIRECT_SOURCE;
         }
         if (str_starts_with($key, 'landing page')) {
             return 'Landing Page';

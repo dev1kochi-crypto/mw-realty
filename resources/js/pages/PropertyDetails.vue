@@ -658,43 +658,76 @@ function agentAria(template, name) {
                     </div>
 
                     <aside ref="sidebarEl" class="mw-property__agent-wrap" data-reveal :style="{ top: sidebarTop }">
-                        <article v-if="property.contact" class="mw-agent-card mw-property-agent">
-                            <div class="mw-agent-card__head">
-                                <div class="mw-agent-card__avatar">
-                                    <!-- The listing's agent, or its agency when no agent is available (PropertyPageService::mapContact). -->
-                                    <img :src="property.contact.avatar_url || (property.contact.type === 'company' ? '/frontend/assets/images/icons/building.svg' : '/frontend/assets/images/placeholders/avatar.svg')" :alt="property.contact.name" width="80" height="80" :class="{ 'mw-agent-card__avatar-img--agency': property.contact.type === 'company' && !property.contact.avatar_url }">
-                                </div>
-                                <div class="mw-agent-card__intro">
-                                    <h4 class="mw-agent-card__name">{{ property.contact.name }}</h4>
-                                    <div class="mw-agent-card__tags">
-                                        <span v-if="property.contact.type === 'company'" class="mw-agent-card__tag mw-agent-card__tag--fill">{{ t('property_details.agent_card.agency_tag', 'Agency') }}</span>
-                                        <span class="mw-agent-card__tag mw-agent-card__tag--fill">{{ t('property_details.agent_card.serves_in_dubai') }}</span>
-                                        <span v-for="badge in property.contact.badges" :key="badge" class="mw-agent-card__tag">{{ badge }}</span>
-                                    </div>
-                                </div>
+                        <!-- Who to contact: the listing's agent (or its agency when no agent is available) as the
+                             main card, and the agent's agency as a strip below (PropertyPageService::mapContact / mapAgency). -->
+                        <article v-if="property.contact" class="mw-contact-card">
+                            <div class="mw-contact-card__banner">
+                                <span class="mw-contact-card__label">{{ t('property_details.agent_card.listed_by', 'Listed by') }}</span>
+                                <img class="mw-contact-card__brand" src="/frontend/assets/images/logo-dark.png" alt="MW Realty" width="50" height="28">
                             </div>
-                            <div class="mw-agent-card__body">
-                                <p v-if="property.contact.years_of_experience" class="mw-property-agent__stat">{{ t('property_details.agent_card.years_of_experience_prefix') }}: {{ property.contact.years_of_experience }}</p>
-                                <p v-if="property.contact.preferred_areas?.length" class="mw-property-agent__stat">{{ t('property_details.agent_card.preferred_areas_prefix') }}: {{ property.contact.preferred_areas.join(', ') }}</p>
-                                <div class="mw-property-agent__cta">
-                                    <a v-if="property.contact.phone" :href="`tel:${property.contact.phone}`" class="mw-property-agent__cta-btn mw-property-agent__cta-btn--call" :aria-label="agentAria('property_details.agent_card.call_aria', property.contact.name)">
-                                        <img src="/frontend/assets/images/icons/phone.svg" alt="" width="18" height="18">
-                                    </a>
-                                    <a v-if="property.contact.whatsapp_number" :href="whatsappUrl(property.contact.whatsapp_number)" target="_blank" rel="noopener" class="mw-property-agent__cta-btn mw-property-agent__cta-btn--whatsapp" :aria-label="agentAria('property_details.agent_card.whatsapp_aria', property.contact.name)">
-                                        <img src="/frontend/assets/images/icons/whatsapp.svg" alt="" width="18" height="18">
-                                    </a>
-                                    <a v-if="property.contact.email" :href="`mailto:${property.contact.email}`" class="mw-property-agent__cta-btn mw-property-agent__cta-btn--email" :aria-label="agentAria('property_details.agent_card.email_aria', property.contact.name)">
-                                        <img src="/frontend/assets/images/icons/email.svg" alt="" width="18" height="18">
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="mw-agent-card__foot">
-                                <img class="mw-agent-card__logo" src="/frontend/assets/images/logo-dark.png" alt="MW Realty" width="50" height="28">
-                                <span class="mw-agent-card__rule" aria-hidden="true"></span>
-                                <router-link :to="property.contact.detail_url" class="mw-agent-card__link">
-                                    {{ t('property_details.agent_card.view_details') }}
-                                    <img src="/frontend/assets/images/icons/find-cta-arrow.svg" alt="" width="18" height="18">
+                            <div class="mw-contact-card__main">
+                                <router-link :to="property.contact.detail_url" class="mw-contact-card__photo" :class="{ 'mw-contact-card__photo--agency': property.contact.type === 'company' }" tabindex="-1" aria-hidden="true">
+                                    <img :src="property.contact.avatar_url || (property.contact.type === 'company' ? '/frontend/assets/images/icons/building.svg' : '/frontend/assets/images/placeholders/avatar.svg')" alt="" width="88" height="88" :class="{ 'is-icon': property.contact.type === 'company' && !property.contact.avatar_url }">
                                 </router-link>
+                                <h4 class="mw-contact-card__name"><router-link :to="property.contact.detail_url">{{ property.contact.name }}</router-link></h4>
+                                <p class="mw-contact-card__meta">
+                                    <span class="mw-contact-card__role">{{ property.contact.type === 'company' ? t('property_details.agent_card.agency_tag', 'Agency') : t('property_details.agent_card.agent_tag', 'Agent') }}</span>
+                                    <span>{{ t('property_details.agent_card.serves_in_dubai') }}</span>
+                                    <span v-if="property.contact.years_of_experience">{{ property.contact.years_of_experience }} {{ t('property_details.agent_card.years_short', 'yrs experience') }}</span>
+                                </p>
+                                <div v-if="property.contact.badges?.length" class="mw-contact-card__badges">
+                                    <span v-for="badge in property.contact.badges" :key="badge" class="mw-contact-card__badge">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{ badge }}
+                                    </span>
+                                </div>
+                                <p v-if="property.contact.preferred_areas?.length" class="mw-contact-card__areas">
+                                    {{ t('property_details.agent_card.preferred_areas_prefix') }}: {{ property.contact.preferred_areas.slice(0, 3).join(' · ') }}
+                                </p>
+
+                                <div class="mw-contact-card__actions">
+                                    <a v-if="property.contact.phone" :href="`tel:${property.contact.phone}`" class="mw-contact-card__action mw-contact-card__action--call" :aria-label="agentAria('property_details.agent_card.call_aria', property.contact.name)">
+                                        <img src="/frontend/assets/images/icons/phone.svg" alt="" width="16" height="16">{{ t('property_details.agent_card.call', 'Call') }}
+                                    </a>
+                                    <a v-if="property.contact.whatsapp_number" :href="whatsappUrl(property.contact.whatsapp_number)" target="_blank" rel="noopener" class="mw-contact-card__action mw-contact-card__action--whatsapp" :aria-label="agentAria('property_details.agent_card.whatsapp_aria', property.contact.name)">
+                                        <img src="/frontend/assets/images/icons/whatsapp.svg" alt="" width="16" height="16">{{ t('property_details.agent_card.whatsapp', 'WhatsApp') }}
+                                    </a>
+                                    <a v-if="property.contact.email" :href="`mailto:${property.contact.email}`" class="mw-contact-card__action mw-contact-card__action--email" :aria-label="agentAria('property_details.agent_card.email_aria', property.contact.name)">
+                                        <img src="/frontend/assets/images/icons/email.svg" alt="" width="16" height="16">{{ t('property_details.agent_card.email', 'Email') }}
+                                    </a>
+                                </div>
+
+                                <div class="mw-contact-card__links">
+                                    <router-link :to="property.contact.detail_url" class="mw-contact-card__link">{{ t('property_details.agent_card.view_profile', 'View profile') }}</router-link>
+                                    <span class="mw-contact-card__divider" aria-hidden="true"></span>
+                                    <!-- Their other listings: the Properties page filtered to this agent / agency. -->
+                                    <router-link :to="property.contact.properties_url" class="mw-contact-card__link mw-contact-card__link--strong">
+                                        {{ t('property_details.agent_card.view_listings', 'View listings') }}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                                    </router-link>
+                                </div>
+                            </div>
+
+                            <!-- The agent's agency. -->
+                            <div v-if="property.agency" class="mw-contact-card__agency">
+                                <router-link :to="property.agency.detail_url" class="mw-contact-card__agency-logo" tabindex="-1" aria-hidden="true">
+                                    <img :src="property.agency.avatar_url || '/frontend/assets/images/icons/building.svg'" alt="" width="44" height="44" :class="{ 'is-icon': !property.agency.avatar_url }">
+                                </router-link>
+                                <div class="mw-contact-card__agency-info">
+                                    <span class="mw-contact-card__agency-label">{{ t('property_details.agent_card.part_of', 'Part of') }}</span>
+                                    <router-link :to="property.agency.detail_url" class="mw-contact-card__agency-name">{{ property.agency.name }}</router-link>
+                                    <router-link :to="property.agency.properties_url" class="mw-contact-card__agency-listings">
+                                        {{ t('property_details.agent_card.agency_listings', 'Agency listings') }}
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                                    </router-link>
+                                </div>
+                                <div class="mw-contact-card__agency-actions">
+                                    <a v-if="property.agency.phone" :href="`tel:${property.agency.phone}`" class="mw-contact-card__mini mw-contact-card__mini--call" :aria-label="agentAria('property_details.agent_card.call_aria', property.agency.name)">
+                                        <img src="/frontend/assets/images/icons/phone.svg" alt="" width="14" height="14">
+                                    </a>
+                                    <a v-if="property.agency.email" :href="`mailto:${property.agency.email}`" class="mw-contact-card__mini mw-contact-card__mini--email" :aria-label="agentAria('property_details.agent_card.email_aria', property.agency.name)">
+                                        <img src="/frontend/assets/images/icons/email.svg" alt="" width="14" height="14">
+                                    </a>
+                                </div>
                             </div>
                         </article>
 

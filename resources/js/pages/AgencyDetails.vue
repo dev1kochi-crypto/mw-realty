@@ -115,7 +115,7 @@ function agencyAria(template, name) {
 
                 <div v-if="agency.properties.length" class="mw-agency-panel" data-reveal>
                     <div class="mw-agency-panel__head">
-                        <h2 class="mw-agency-panel__title">{{ t('agency_details.properties_panel_title') }}</h2>
+                        <h2 class="mw-agency-panel__title">{{ t('agency_details.listings_by', 'Listings by') }} {{ agency.name }} <span class="mw-agent-more__count">({{ agency.total_properties_count }})</span></h2>
                         <div class="mw-agency-panel__actions">
                             <router-link :to="{ path: '/properties', query: { agency: agency.slug } }" class="mw-btn mw-btn--outline mw-agency-panel__view-all">{{ t('agency_details.view_all') }}</router-link>
                             <div class="mw-agent-more__nav">

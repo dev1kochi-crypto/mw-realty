@@ -114,9 +114,12 @@ class PropertiesPageService
             // Open house: the listing's last open house / viewing day is today or later.
             ->when($refine['open_house'], fn ($q) => $q->whereDate('last_open_house_date', '>=', today()));
 
-        // ?agent= → that agent's listings; ?agency= → the agency's (same sets as their profile pages).
+        // ?agent= → the listings shown under that agent (Property::scopeShownUnderAgent); ?agency= → the
+        // agency's (same sets as their profile pages).
         if ($refine['agent']) {
-            $query->where('agent_id', $this->profileId('agent', $refine['agent']) ?? 0);
+            $agentId = $this->profileId('agent', $refine['agent']);
+            $agent = $agentId ? \App\Models\PortalUser::find($agentId) : null;
+            $agent ? $query->shownUnderAgent($agent) : $query->whereRaw('1 = 0');
         }
         if ($refine['agency']) {
             $query->where('portal_user_id', $this->profileId('company', $refine['agency']) ?? 0);

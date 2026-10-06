@@ -119,6 +119,7 @@ class PropertyPageService
                     : null,
                 'nearby' => $this->nearbyGroups($property, $lang),
                 'contact' => $this->mapContact($property),
+                'agency' => $this->mapAgency($property),
                 'similar' => $similar->map(fn ($p) => $this->mapProperty($p, $lang, true))->values(),
                 'seo' => SeoMeta::resolve($property->metadata, $property->seoFallback($lang)),
             ];
@@ -350,10 +351,32 @@ class PropertyPageService
     private function mapContact(Property $property): ?array
     {
         $contact = $property->displayContact();
-        if (!$contact) {
+
+        return $contact ? $this->mapProfile($contact) : null;
+    }
+
+    /**
+     * The agency behind the listing's agent, shown as a second card next to the agent's: the owning
+     * agency, else the agent's own agency. Null when the contact already is the agency, the agent is
+     * independent, or the agency isn't available (active and approved).
+     */
+    private function mapAgency(Property $property): ?array
+    {
+        $contact = $property->displayContact();
+        if (!$contact || $contact->type === 'company') {
             return null;
         }
+        $owner = $property->owner;
+        $agency = $owner && $owner->type === 'company' && $owner->id !== $contact->id ? $owner : $contact->company;
 
+        return $agency && $agency->type === 'company' && $agency->is_active && $agency->isApproved()
+            ? $this->mapProfile($agency)
+            : null;
+    }
+
+    /** Agent / agency card data for the property page. */
+    private function mapProfile(\App\Models\PortalUser $contact): array
+    {
         return [
             'type' => $contact->type,
             'slug' => $contact->slug,
@@ -366,6 +389,8 @@ class PropertyPageService
             'preferred_areas' => $contact->preferred_areas ?? [],
             'badges' => $contact->badges ?? [],
             'detail_url' => $contact->type === 'company' ? "/agency-details/{$contact->slug}" : "/agent-details/{$contact->slug}",
+            // Their other listings (the Properties page filtered to them).
+            'properties_url' => '/properties?' . ($contact->type === 'company' ? 'agency' : 'agent') . '=' . rawurlencode((string) $contact->slug),
         ];
     }
 }

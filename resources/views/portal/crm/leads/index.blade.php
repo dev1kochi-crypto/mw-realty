@@ -339,6 +339,11 @@
             });
         }
 
+        function setLeadFormHeading(icon, subtitle) {
+            document.getElementById('leadFormModalIcon').className = 'fas ' + icon;
+            document.getElementById('leadFormModalSubtitle').textContent = subtitle;
+        }
+
         function setSubmitting(isSubmitting) {
             leadFormSubmitBtn.disabled = isSubmitting;
             leadFormSpinner.classList.toggle('d-none', !isSubmitting);
@@ -373,10 +378,11 @@
             clearValidationErrors();
             leadForm.reset();
             leadFormTitle.textContent = 'Add Lead';
+            setLeadFormHeading('fa-user-plus', 'Add an enquiry you received by phone, email or in person.');
             leadFormSubmitLabel.textContent = 'Create Lead';
             setManagementFieldsVisible(false);
             renderStageOptions(defaultMasterData.defaultStageId);
-            renderSourceOptions(null);
+            renderSourceOptions(defaultMasterData.defaultSourceId);
             renderTagCheckboxes([]);
 
             const ownerSelect = document.getElementById('leadFormOwner');
@@ -411,6 +417,7 @@
                 clearValidationErrors();
                 leadForm.reset();
                 leadFormTitle.textContent = 'Edit Lead';
+                setLeadFormHeading('fa-user-pen', 'Update the contact details, owner, stage and tags.');
                 leadFormSubmitLabel.textContent = 'Save Changes';
                 setManagementFieldsVisible(true);
 

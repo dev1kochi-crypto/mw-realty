@@ -41,7 +41,8 @@ class AgentAgencyPageService
                 return null;
             }
 
-            $activeProperties = Property::where('status', true)->where('agent_id', $agent->id);
+            // The listings whose property page shows this agent (Property::scopeShownUnderAgent).
+            $activeProperties = Property::where('status', true)->shownUnderAgent($agent);
 
             return [
                 'id' => $agent->id,
@@ -126,8 +127,9 @@ class AgentAgencyPageService
 
     private function mapAgentCard(PortalUser $agent): array
     {
-        $rentCount = Property::where('agent_id', $agent->id)->where('listing_type', 'rent')->count();
-        $sellCount = Property::where('agent_id', $agent->id)->where('listing_type', 'sale')->count();
+        $shown = Property::where('status', true)->shownUnderAgent($agent);
+        $rentCount = (clone $shown)->where('listing_type', 'rent')->count();
+        $sellCount = (clone $shown)->where('listing_type', 'sale')->count();
 
         return [
             'slug' => $agent->slug,

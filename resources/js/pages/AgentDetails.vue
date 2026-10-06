@@ -155,7 +155,8 @@ async function shareToInstagram() {
         <section v-if="agent.properties.length" class="mw-agent-more">
             <div class="container-ctn">
                 <div class="mw-agent-more__head">
-                    <h2 class="mw-agent-more__title">{{ t('agent_details.other_properties_title') }}</h2>
+                    <!-- Listings whose property page shows this agent (Property::scopeShownUnderAgent). -->
+                    <h2 class="mw-agent-more__title">{{ t('agent_details.listings_by', 'Listings by') }} {{ agent.name }} <span class="mw-agent-more__count">({{ (agent.rent_count || 0) + (agent.sell_count || 0) }})</span></h2>
                     <div class="mw-agency-panel__actions">
                     <router-link :to="{ path: '/properties', query: { agent: agent.slug } }" class="mw-btn mw-btn--outline mw-agency-panel__view-all">{{ t('agent_details.view_all') }}</router-link>
                     <div class="mw-agent-more__nav">

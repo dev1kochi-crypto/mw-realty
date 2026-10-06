@@ -1,0 +1,146 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Jobs\ImportFacebookLead;
+use App\Models\FacebookPageConnection;
+use App\Models\Lead;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
+use Tests\Feature\Concerns\BuildsAgencies;
+use Tests\TestCase;
+
+/** CRM › Integrations: Facebook Lead Ads → CRM leads (webhook, import, connect, sync). */
+class FacebookLeadIntegrationTest extends TestCase
+{
+    use RefreshDatabase, BuildsAgencies;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['services.facebook_leads' => [
+            'app_id' => '123', 'app_secret' => 'app-secret', 'verify_token' => 'verify-me', 'graph_version' => 'v21.0',
+        ]]);
+        Notification::fake();
+        Mail::fake();
+    }
+
+    private function graphLead(array $overrides = []): array
+    {
+        return array_merge([
+            'id' => 'LG1',
+            'created_time' => '2026-10-05T10:00:00+0000',
+            'form_id' => 'F1',
+            'ad_id' => 'AD1',
+            'ad_name' => 'Palm Villas — October',
+            'campaign_name' => 'Q4 Villas',
+            'field_data' => [
+                ['name' => 'full_name', 'values' => ['Sara Khan']],
+                ['name' => 'email', 'values' => ['sara@example.test']],
+                ['name' => 'phone_number', 'values' => ['+971501234567']],
+                ['name' => 'what_is_your_budget?', 'values' => ['AED 3M']],
+            ],
+        ], $overrides);
+    }
+
+    private function connection(?\App\Models\PortalUser $owner = null): FacebookPageConnection
+    {
+        return FacebookPageConnection::create([
+            'portal_user_id' => ($owner ?? $this->agency())->id,
+            'page_id' => 'PAGE1', 'page_name' => 'MW Test Page', 'page_access_token' => 'page-token', 'subscribed_at' => now(),
+        ]);
+    }
+
+    public function test_webhook_verification_handshake(): void
+    {
+        $this->get('/api/webhooks/facebook?hub.mode=subscribe&hub.verify_token=verify-me&hub.challenge=abc123')
+            ->assertOk()->assertSee('abc123');
+        $this->get('/api/webhooks/facebook?hub.mode=subscribe&hub.verify_token=wrong&hub.challenge=abc123')->assertForbidden();
+    }
+
+    public function test_webhook_needs_a_valid_signature_and_queues_each_lead(): void
+    {
+        Queue::fake();
+        $body = json_encode(['object' => 'page', 'entry' => [['id' => 'PAGE1', 'changes' => [
+            ['field' => 'leadgen', 'value' => ['leadgen_id' => 'LG1', 'page_id' => 'PAGE1', 'form_id' => 'F1']],
+        ]]]]);
+
+        $this->call('POST', '/api/webhooks/facebook', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_X_HUB_SIGNATURE_256' => 'sha256=bad'], $body)->assertForbidden();
+        Queue::assertNothingPushed();
+
+        $signature = 'sha256=' . hash_hmac('sha256', $body, 'app-secret');
+        $this->call('POST', '/api/webhooks/facebook', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_X_HUB_SIGNATURE_256' => $signature], $body)->assertOk();
+        Queue::assertPushed(ImportFacebookLead::class, fn ($job) => $job->pageId === 'PAGE1' && $job->leadgenId === 'LG1');
+    }
+
+    public function test_a_facebook_lead_becomes_a_crm_lead_with_the_ad_name_as_source_once(): void
+    {
+        $connection = $this->connection();
+        Http::fake(['graph.facebook.com/*' => Http::response($this->graphLead())]);
+
+        (new ImportFacebookLead('PAGE1', 'LG1'))->handle(app(\App\Services\Integrations\FacebookLeadAds::class), app(\App\Services\Integrations\FacebookLeadImporter::class));
+        (new ImportFacebookLead('PAGE1', 'LG1'))->handle(app(\App\Services\Integrations\FacebookLeadAds::class), app(\App\Services\Integrations\FacebookLeadImporter::class));
+
+        $this->assertSame(1, Lead::count(), 'a repeated webhook is not imported twice');
+        $lead = Lead::with('source')->firstOrFail();
+        $this->assertSame($connection->portal_user_id, $lead->portal_user_id);
+        $this->assertSame('Sara Khan', $lead->name);
+        $this->assertSame('sara@example.test', $lead->email);
+        $this->assertSame('+971', $lead->phone_country_code);
+        $this->assertSame('501234567', $lead->phone);
+        $this->assertSame('Palm Villas — October', $lead->source->name);
+        $this->assertStringContainsString('What is your budget?: AED 3M', $lead->message);
+        $this->assertSame(1, $connection->fresh()->leads_count);
+    }
+
+    public function test_a_lead_without_an_ad_gets_the_facebook_source(): void
+    {
+        $connection = $this->connection();
+        app(\App\Services\Integrations\FacebookLeadImporter::class)->import($connection, $this->graphLead(['id' => 'LG2', 'ad_id' => null, 'ad_name' => null]));
+
+        $this->assertSame('Facebook Lead Ads', Lead::with('source')->firstOrFail()->source->name);
+    }
+
+    public function test_an_agency_connects_its_pages_and_subscribes_them(): void
+    {
+        Http::fake(['graph.facebook.com/*/subscribed_apps' => Http::response(['success' => true])]);
+        $agency = $this->agency();
+
+        $this->signIn($agency)->get('/portal/crm/integrations')->assertOk()->assertSee('Connect Facebook Page');
+
+        $this->withSession(['facebook_integration.pages' => ['expires' => now()->addMinutes(5)->timestamp, 'pages' => [
+            ['id' => 'PAGE1', 'name' => 'MW Test Page', 'access_token' => 'page-token', 'picture' => null],
+        ]]])->post('/portal/crm/integrations/facebook/pages', ['page_ids' => ['PAGE1']])->assertRedirect('/portal/crm/integrations');
+
+        $connection = FacebookPageConnection::firstOrFail();
+        $this->assertSame($agency->id, $connection->portal_user_id);
+        $this->assertNotNull($connection->subscribed_at);
+        $this->assertSame('page-token', $connection->page_access_token);
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'PAGE1/subscribed_apps') && $request['subscribed_fields'] === 'leadgen');
+    }
+
+    public function test_agency_agents_cannot_manage_integrations(): void
+    {
+        $agent = $this->memberAgent($this->agency());
+
+        $this->signIn($agent)->get('/portal/crm/integrations')->assertOk()->assertSee('Your agency manages integrations');
+        $this->get('/portal/crm/integrations/facebook/connect')->assertForbidden();
+    }
+
+    public function test_sync_pulls_recent_leads_from_the_pages_forms(): void
+    {
+        $agency = $this->agency();
+        $connection = $this->connection($agency);
+        Http::fake([
+            'graph.facebook.com/*/PAGE1/leadgen_forms*' => Http::response(['data' => [['id' => 'F1', 'name' => 'Villa form']]]),
+            'graph.facebook.com/*/F1/leads*' => Http::response(['data' => [$this->graphLead(['id' => 'LG9'])]]),
+        ]);
+
+        $this->signIn($agency)->post("/portal/crm/integrations/facebook/{$connection->id}/sync")->assertRedirect()->assertSessionHas('toast', '1 new lead added from MW Test Page.');
+        $this->assertSame(1, Lead::where('portal_user_id', $agency->id)->count());
+        $this->assertNotNull($connection->fresh()->last_synced_at);
+    }
+}

@@ -100,4 +100,14 @@ return [
         'currency' => env('STRIPE_CURRENCY', 'aed'),
     ],
 
+    // Facebook Lead Ads → CRM leads (CRM › Integrations, App\Services\Integrations\FacebookLeadAds).
+    // A Meta app with Facebook Login + the Webhooks product ("Page" object, "leadgen" field).
+    'facebook_leads' => [
+        'app_id' => env('FACEBOOK_APP_ID'),
+        'app_secret' => env('FACEBOOK_APP_SECRET'),
+        // Any random string — entered again as the "Verify token" of the app's Page webhook.
+        'verify_token' => env('FACEBOOK_WEBHOOK_VERIFY_TOKEN'),
+        'graph_version' => env('FACEBOOK_GRAPH_VERSION', 'v21.0'),
+    ],
+
 ];
