@@ -639,6 +639,10 @@ Route::middleware(['web'])->group(function () {
 });
 
 // --- Agent/Company self-service portal (separate credentials from the CMS admin) ---
+// Facebook Login comes back here (public — the one-time OAuth state identifies the Super Admin who started it).
+Route::get('/integrations/facebook/callback', [\App\Http\Controllers\Portal\Crm\IntegrationController::class, 'callback'])
+    ->name('integrations.facebook.callback')->middleware('throttle:30,1');
+
 Route::prefix('portal')->name('portal.')->group(function () {
     Route::middleware(['guest:portal'])->group(function () {
         Route::get('/register', [PortalAuthController::class, 'showRegister'])->name('register');
@@ -886,10 +890,11 @@ Route::prefix('portal')->name('portal.')->group(function () {
             // Integrations — Facebook Lead Ads (connect Pages; their leads arrive via /api/webhooks/facebook).
             Route::prefix('integrations')->name('integrations.')->controller(\App\Http\Controllers\Portal\Crm\IntegrationController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
+                Route::get('/accounts', 'accounts')->name('accounts')->middleware('throttle:120,1');
                 Route::get('/facebook/connect', 'connect')->name('facebook.connect');
-                Route::get('/facebook/callback', 'callback')->name('facebook.callback');
                 Route::post('/facebook/pages', 'storePages')->name('facebook.pages.store');
                 Route::post('/facebook/pages/cancel', 'cancelPages')->name('facebook.pages.cancel');
+                Route::patch('/facebook/{id}/owner', 'reassign')->name('facebook.reassign')->whereNumber('id');
                 Route::post('/facebook/{id}/sync', 'sync')->name('facebook.sync')->whereNumber('id')->middleware('throttle:10,1');
                 Route::delete('/facebook/{id}', 'destroy')->name('facebook.destroy')->whereNumber('id');
             });

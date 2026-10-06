@@ -4,89 +4,117 @@ namespace App\Http\Controllers\Portal\Crm;
 
 use App\Http\Controllers\Portal\Crm\Concerns\ScopesPortalOwner;
 use App\Models\FacebookPageConnection;
+use App\Models\PortalUser;
+use App\Services\Crm\AdminOwnerResolver;
 use App\Services\Integrations\FacebookLeadAds;
 use App\Services\Integrations\FacebookLeadImporter;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
- * CRM › Integrations: connect Facebook Pages so their Lead Ads leads arrive in this account's CRM.
+ * CRM › Integrations: Facebook Pages whose Lead Ads leads arrive in an agency's / agent's CRM.
  *
- * Connect → Facebook Login (FacebookLeadAds::loginUrl) → callback lists the Pages the user manages
- * (kept in the session for a few minutes) → the user picks Pages → each is saved with its Page token
- * and subscribed to the app's "leadgen" webhook (Api\FacebookWebhookController). "Sync now" pulls
- * recent leads directly (FacebookLeadImporter::sync). Agency agents' leads are their agency's, so
- * the agency manages integrations.
+ * Only the Super Admin connects Pages: Connect → Facebook Login (FacebookLeadAds::loginUrl) → the
+ * public callback (no portal login needed — the one-time state in the cache identifies the admin)
+ * lists the Pages the Facebook user manages → the admin links each Page to an agency or independent
+ * agent → it is saved with its Page token and subscribed to the app's "leadgen" webhook
+ * (Api\FacebookWebhookController), so its leads land in that account's CRM, never the admin's.
+ * Agencies / agents see the Pages linked to them and can "Sync now" (FacebookLeadImporter::sync).
  */
 class IntegrationController extends Controller
 {
     use ScopesPortalOwner;
 
-    private const PAGES_SESSION = 'facebook_integration.pages';
-    private const STATE_SESSION = 'facebook_integration.state';
+    private const STATE_CACHE = 'facebook_integration.state.';
+    private const PAGES_CACHE = 'facebook_integration.pages.';
+    private const PENDING_MINUTES = 15;
 
     public function __construct(private readonly FacebookLeadAds $facebook)
     {
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $pending = session(self::PAGES_SESSION);
-        if ($pending && now()->timestamp > ($pending['expires'] ?? 0)) {
-            session()->forget(self::PAGES_SESSION);
-            $pending = null;
-        }
-        $connectedElsewhere = $pending
-            ? FacebookPageConnection::whereIn('page_id', array_column($pending['pages'], 'id'))->where('portal_user_id', '!=', $this->effectiveOwnerId())->pluck('page_id')->all()
-            : [];
+        $isAdmin = $this->isAdmin();
+        $pending = $isAdmin ? $this->pendingPages() : [];
+        $search = mb_substr(trim((string) $request->query('q', '')), 0, 100);
+
+        $connections = $isAdmin
+            ? FacebookPageConnection::with('owner:id,type,name,company_name')
+                ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w->where('page_name', 'like', "%{$search}%")
+                    ->orWhereHas('owner', fn ($o) => $o->where('name', 'like', "%{$search}%")->orWhere('company_name', 'like', "%{$search}%"))))
+                ->orderBy('page_name')->paginate(20)->withQueryString()
+            : FacebookPageConnection::where('portal_user_id', $this->ownerId())->orderBy('page_name')->get();
 
         return view('portal.crm.integrations.index', [
-            'canManage' => $this->canManage(),
+            'isAdmin' => $isAdmin,
+            'isAgencyAgent' => (bool) $this->owner()?->isAgencyAgent(),
             'configured' => $this->facebook->configured(),
-            'connections' => $this->effectiveOwnerId()
-                ? FacebookPageConnection::where('portal_user_id', $this->effectiveOwnerId())->orderBy('page_name')->get()
+            'connections' => $connections,
+            'search' => $search,
+            'pendingPages' => $pending,
+            'connectedOwners' => $pending
+                ? FacebookPageConnection::with('owner:id,type,name,company_name')->whereIn('page_id', array_column($pending, 'id'))->get()->keyBy('page_id')
                 : collect(),
-            'pendingPages' => $pending['pages'] ?? [],
-            'connectedPageIds' => FacebookPageConnection::where('portal_user_id', $this->effectiveOwnerId())->pluck('page_id')->all(),
-            'connectedElsewhere' => $connectedElsewhere,
-            'isAdmin' => $this->isAdmin(),
-            'callbackUrl' => route('portal.crm.integrations.facebook.callback'),
+            'callbackUrl' => route('integrations.facebook.callback'),
             'webhookUrl' => route('webhooks.facebook'),
         ]);
     }
 
-    /** Off to Facebook Login. */
+    /** Agencies + independent agents a Page can be linked to (select2 format, 20 per page). */
+    public function accounts(Request $request)
+    {
+        $this->authorizeAdmin();
+        $term = mb_substr(trim((string) $request->query('q', '')), 0, 100);
+
+        $page = $this->linkableAccounts()
+            ->when($term !== '', fn ($q) => $q->where(fn ($w) => $w->where('company_name', 'like', "%{$term}%")
+                ->orWhere('name', 'like', "%{$term}%")->orWhere('email', 'like', "%{$term}%")))
+            ->orderByRaw("COALESCE(NULLIF(company_name, ''), name)")
+            ->paginate(20, ['id', 'type', 'name', 'company_name', 'company_id', 'email']);
+
+        return response()->json([
+            'results' => collect($page->items())->map(fn (PortalUser $account) => ['id' => $account->id, 'text' => $this->accountLabel($account)]),
+            'pagination' => ['more' => $page->hasMorePages()],
+        ]);
+    }
+
+    /** Off to Facebook Login (opened in a new tab). */
     public function connect()
     {
-        $this->authorizeManage();
+        $this->authorizeAdmin();
         if (!$this->facebook->configured()) {
-            return back()->with('error', 'Facebook isn\'t set up yet — add FACEBOOK_APP_ID and FACEBOOK_APP_SECRET to the .env file.');
+            return redirect()->route('portal.crm.integrations.index')->with('error', 'Facebook isn\'t set up yet — add FACEBOOK_APP_ID and FACEBOOK_APP_SECRET to the .env file.');
         }
 
         $state = Str::random(40);
-        session([self::STATE_SESSION => $state]);
+        Cache::put(self::STATE_CACHE . $state, Auth::guard('cms')->id(), now()->addMinutes(self::PENDING_MINUTES));
 
-        return redirect()->away($this->facebook->loginUrl(route('portal.crm.integrations.facebook.callback'), $state));
+        return redirect()->away($this->facebook->loginUrl(route('integrations.facebook.callback'), $state));
     }
 
-    /** Back from Facebook Login: list the user's Pages to choose from. */
+    /**
+     * Public route (outside the portal's login): Facebook sends the browser back here. The one-time
+     * state names the admin who started the login; their Pages wait in the cache for them to link.
+     */
     public function callback(Request $request)
     {
-        $this->authorizeManage();
-        $expected = session()->pull(self::STATE_SESSION);
         $index = redirect()->route('portal.crm.integrations.index');
+        $adminId = $request->filled('state') ? Cache::pull(self::STATE_CACHE . $request->input('state')) : null;
 
         if ($request->filled('error')) {
             return $index->with('error', 'Facebook connection cancelled' . ($request->filled('error_description') ? ': ' . $request->input('error_description') : '.'));
         }
-        if (!$expected || !hash_equals($expected, (string) $request->input('state')) || !$request->filled('code')) {
+        if (!$adminId || !$request->filled('code')) {
             return $index->with('error', 'The Facebook login could not be verified — please try connecting again.');
         }
 
         try {
-            $userToken = $this->facebook->userToken((string) $request->input('code'), route('portal.crm.integrations.facebook.callback'));
+            $userToken = $this->facebook->userToken((string) $request->input('code'), route('integrations.facebook.callback'));
             $pages = $this->facebook->pages($userToken);
         } catch (\Throwable $e) {
             Log::warning('Facebook connect failed: ' . $e->getMessage());
@@ -98,52 +126,56 @@ class IntegrationController extends Controller
             return $index->with('error', 'No Facebook Pages found. Log in with a Facebook account that manages the Page, and allow access to it.');
         }
 
-        session([self::PAGES_SESSION => ['pages' => $pages, 'expires' => now()->addMinutes(15)->timestamp]]);
+        Cache::put(self::PAGES_CACHE . $adminId, encrypt($pages), now()->addMinutes(self::PENDING_MINUTES));
 
-        return $index->with('toast', 'Choose the Facebook Pages to connect.');
+        return $index->with('toast', 'Choose the agency or agent each Facebook Page belongs to.');
     }
 
-    /** Save the chosen Pages and subscribe each to the leadgen webhook. */
+    /** Link the chosen Pages to their accounts and subscribe each to the leadgen webhook. */
     public function storePages(Request $request)
     {
-        $this->authorizeManage();
-        $data = $request->validate(['page_ids' => 'required|array|min:1', 'page_ids.*' => 'string|max:64']);
-        $pending = collect(session(self::PAGES_SESSION)['pages'] ?? [])->keyBy('id');
-        $ownerId = $this->effectiveOwnerId();
+        $this->authorizeAdmin();
+        $data = $request->validate(['owners' => 'required|array', 'owners.*' => 'nullable|integer']);
+        $pending = collect($this->pendingPages())->keyBy('id');
+        $choices = array_filter($data['owners']);
+        if (!$choices) {
+            return back()->with('error', 'Choose an agency or agent for at least one Page.');
+        }
+        $accounts = $this->linkableAccounts()->whereIn('id', $choices)->get()->keyBy('id');
 
         $connected = [];
         $problems = [];
-        foreach ($data['page_ids'] as $pageId) {
-            $page = $pending->get($pageId);
+        foreach ($choices as $pageId => $ownerId) {
+            $page = $pending->get((string) $pageId);
+            $account = $accounts->get($ownerId);
             if (!$page) {
                 continue;
             }
-            $existing = FacebookPageConnection::where('page_id', $pageId)->first();
-            if ($existing && $existing->portal_user_id !== $ownerId) {
-                $problems[] = "{$page['name']} is already connected to another account";
+            if (!$account) {
+                $problems[] = "{$page['name']}: choose an approved agency or independent agent";
                 continue;
             }
 
-            $connection = FacebookPageConnection::updateOrCreate(['page_id' => $pageId], [
-                'portal_user_id' => $ownerId,
+            $connection = FacebookPageConnection::updateOrCreate(['page_id' => $page['id']], [
+                'portal_user_id' => $account->id,
                 'page_name' => $page['name'],
                 'page_access_token' => $page['access_token'],
                 'connected_by' => $this->actorName(),
             ]);
             try {
-                $this->facebook->subscribe($pageId, $page['access_token']);
+                $this->facebook->subscribe($page['id'], $page['access_token']);
                 $connection->forceFill(['subscribed_at' => now(), 'last_error' => null])->save();
-                $connected[] = $page['name'];
+                $connected[] = "{$page['name']} → {$account->displayName()}";
             } catch (\Throwable $e) {
                 $connection->forceFill(['subscribed_at' => null, 'last_error' => $e->getMessage()])->save();
                 $problems[] = "{$page['name']}: {$e->getMessage()}";
             }
         }
-        session()->forget(self::PAGES_SESSION);
+        Cache::forget(self::PAGES_CACHE . Auth::guard('cms')->id());
 
         $redirect = redirect()->route('portal.crm.integrations.index');
         if ($connected) {
-            $redirect->with('toast', 'Connected: ' . implode(', ', $connected) . '. New Facebook leads will arrive in Leads.');
+            $redirect->with('toast', 'Connected: ' . implode(', ', $connected) . '. New Facebook leads go to their CRM.');
         }
 
         return $problems ? $redirect->with('error', implode('. ', $problems) . '.') : $redirect;
@@ -151,15 +183,27 @@ class IntegrationController extends Controller
 
     public function cancelPages()
     {
-        session()->forget(self::PAGES_SESSION);
+        $this->authorizeAdmin();
+        Cache::forget(self::PAGES_CACHE . Auth::guard('cms')->id());
 
         return redirect()->route('portal.crm.integrations.index');
+    }
+
+    /** Move a connected Page to another agency / agent — its new leads go there; past leads stay put. */
+    public function reassign(Request $request, $id)
+    {
+        $this->authorizeAdmin();
+        $connection = FacebookPageConnection::findOrFail($id);
+        $account = $this->linkableAccounts()->findOrFail($request->validate(['owner_id' => 'required|integer'])['owner_id']);
+
+        $connection->forceFill(['portal_user_id' => $account->id])->save();
+
+        return back()->with('toast', "{$connection->page_name} now sends its leads to {$account->displayName()}.");
     }
 
     /** Pull recent leads now (also catches up on leads the webhook missed). */
     public function sync($id, FacebookLeadImporter $importer)
     {
-        $this->authorizeManage();
         $connection = $this->findConnection($id);
 
         try {
@@ -175,8 +219,8 @@ class IntegrationController extends Controller
 
     public function destroy($id)
     {
-        $this->authorizeManage();
-        $connection = $this->findConnection($id);
+        $this->authorizeAdmin();
+        $connection = FacebookPageConnection::findOrFail($id);
 
         try {
             $this->facebook->unsubscribe($connection->page_id, $connection->page_access_token);
@@ -188,21 +232,38 @@ class IntegrationController extends Controller
         return back()->with('toast', "{$connection->page_name} disconnected — its leads already in the CRM stay.");
     }
 
-    /** Agency agents work their agency's leads, so the agency (or an independent agent / Super Admin) connects Pages. */
-    private function canManage(): bool
+    /** Pages from the admin's last Facebook Login, still waiting to be linked. */
+    private function pendingPages(): array
     {
-        $owner = $this->owner();
+        $cached = Cache::get(self::PAGES_CACHE . Auth::guard('cms')->id());
 
-        return $this->isAdmin() || ($owner && !($owner->isAgent() && $owner->company_id));
+        return $cached ? decrypt($cached) : [];
     }
 
-    private function authorizeManage(): void
+    /**
+     * Accounts that own their CRM leads: approved, active agencies and independent agents. Agency
+     * agents work their agency's leads, and the shared Admin owner row must never receive them.
+     */
+    private function linkableAccounts()
     {
-        abort_unless($this->canManage() && $this->effectiveOwnerId(), 403);
+        return PortalUser::approved()->where('is_active', true)
+            ->where('email', '!=', AdminOwnerResolver::EMAIL)
+            ->where(fn ($q) => $q->where('type', 'company')->orWhere(fn ($a) => $a->where('type', 'agent')->whereNull('company_id')));
     }
 
+    private function accountLabel(PortalUser $account): string
+    {
+        return $account->displayName() . ($account->isAgency() ? ' — Agency' : ' — Agent') . " ({$account->email})";
+    }
+
+    private function authorizeAdmin(): void
+    {
+        abort_unless($this->isAdmin(), 403);
+    }
+
+    /** The admin reaches every Page; an agency / agent only the Pages linked to them. */
     private function findConnection($id): FacebookPageConnection
     {
-        return FacebookPageConnection::where('portal_user_id', $this->effectiveOwnerId())->findOrFail($id);
+        return FacebookPageConnection::when(!$this->isAdmin(), fn ($q) => $q->where('portal_user_id', $this->ownerId() ?? 0))->findOrFail($id);
     }
 }
