@@ -5,6 +5,7 @@ namespace App\Services\Integrations;
 use App\Models\FacebookLead;
 use App\Models\FacebookPageConnection;
 use App\Models\Lead;
+use App\Models\LeadNote;
 use App\Models\LeadSource;
 use App\Rules\PhoneNumber;
 use App\Services\Crm\LeadCreationService;
@@ -35,9 +36,13 @@ class FacebookLeadImporter
 
     /**
      * $data is the lead as Graph API returns it (id, created_time, field_data, ad_name, …).
-     * Returns the CRM lead, or null when this Facebook lead was already imported.
+     * Returns the CRM lead (new, or the existing one it was merged into), or null when it was skipped:
+     * this Facebook lead was already imported, or the same person (email / phone) is already a lead
+     * whose latest source is this same ad — nothing new to record. The same person from a different
+     * ad is merged by LeadCreationService: no duplicate lead, a history entry with the new source.
+     * $notify = false for bulk imports of older leads (no bell / email per lead).
      */
-    public function import(FacebookPageConnection $connection, array $data): ?Lead
+    public function import(FacebookPageConnection $connection, array $data, bool $notify = true): ?Lead
     {
         $leadgenId = (string) ($data['id'] ?? '');
         if ($leadgenId === '' || FacebookLead::where('leadgen_id', $leadgenId)->exists()) {
@@ -66,25 +71,36 @@ class FacebookLeadImporter
             ?? trim(($answers['first_name'] ?? '') . ' ' . ($answers['last_name'] ?? ''));
         [$code, $phone] = PhoneNumber::split($this->first($answers, self::PHONE_FIELDS));
         $used = [...self::NAME_FIELDS, 'first_name', 'last_name', ...self::EMAIL_FIELDS, ...self::PHONE_FIELDS, 'company_name', 'country'];
+        $email = $this->first($answers, self::EMAIL_FIELDS);
+        $sourceId = $this->sourceId($connection->portal_user_id, $adName ?: self::FALLBACK_SOURCE);
+
+        // Already a lead, and its latest source is this same ad → it's already in the CRM: skip.
+        $existing = $this->leads->findDuplicate($connection->portal_user_id, $email, $phone ?: null);
+        if ($existing && $this->latestSourceId($existing) === $sourceId) {
+            $record->update(['lead_id' => $existing->id]);
+
+            return null;
+        }
 
         $lead = $this->leads->create([
             'name' => $name !== '' ? Str::limit($name, 255, '') : 'Facebook lead',
-            'email' => $this->first($answers, self::EMAIL_FIELDS),
+            'email' => $email,
             'phone' => $phone ?: null,
             'phone_country_code' => $phone ? $code : null,
             'company' => $answers['company_name'] ?? null,
             'country' => $answers['country'] ?? null,
             'message' => $this->message(array_diff_key($answers, array_flip($used)), $data, $adName),
             'page_source' => self::PAGE_SOURCE,
-            'source_id' => $this->sourceId($connection->portal_user_id, $adName ?: self::FALLBACK_SOURCE),
+            'source_id' => $sourceId,
             'extra_fields' => array_filter([
                 'facebook_lead_id' => $leadgenId,
                 'facebook_page' => $connection->page_name,
                 'facebook_form_id' => $data['form_id'] ?? null,
                 'facebook_ad' => $adName,
                 'facebook_campaign' => $data['campaign_name'] ?? null,
+                'facebook_created_time' => $data['created_time'] ?? null,
             ]),
-        ], ownerId: $connection->portal_user_id, noteAuthor: 'Facebook Lead Ads');
+        ], ownerId: $connection->portal_user_id, notify: $notify, noteAuthor: 'Facebook Lead Ads');
 
         $record->update(['lead_id' => $lead->id]);
         $connection->forceFill(['last_lead_at' => now(), 'leads_count' => $connection->leads_count + 1])->save();
@@ -93,19 +109,23 @@ class FacebookLeadImporter
     }
 
     /**
-     * Pulls the Page's leads since the last sync (first sync: the last 30 days) — the "Sync now"
-     * button, and the catch-up for leads the webhook missed. Returns how many new leads were added.
+     * Pulls the Page's leads since $since (default: the last sync; first sync: the last 30 days) —
+     * the "Sync now" button, the import of existing leads at connect time, and the catch-up for leads
+     * missed while the Page needed reconnecting. $progress(added, skipped) is called after each lead.
+     * Returns how many leads were added or merged (skipped ones — already in the CRM — not counted).
      */
-    public function sync(FacebookPageConnection $connection): int
+    public function sync(FacebookPageConnection $connection, ?\DateTimeInterface $since = null, bool $notify = true, ?callable $progress = null): int
     {
-        $since = ($connection->last_synced_at ?? now()->subDays(30))->subMinutes(5)->getTimestamp();
+        $since = \Illuminate\Support\Carbon::instance($since ?? $connection->last_synced_at ?? now()->subDays(30))->subMinutes(5)->getTimestamp();
         $startedAt = now();
         $added = 0;
+        $skipped = 0;
 
         foreach ($this->facebook->forms($connection->page_id, $connection->page_access_token) as $form) {
             foreach ($this->facebook->formLeads($form['id'], $connection->page_access_token, $since) as $data) {
-                if ($this->import($connection, $data + ['form_id' => $form['id']])) {
-                    $added++;
+                $this->import($connection, $data + ['form_id' => $form['id']], $notify) ? $added++ : $skipped++;
+                if ($progress) {
+                    $progress($added, $skipped);
                 }
             }
         }
@@ -113,6 +133,15 @@ class FacebookLeadImporter
         $connection->forceFill(['last_synced_at' => $startedAt, 'last_error' => null])->save();
 
         return $added;
+    }
+
+    /** The source the lead last came in from: its latest enquiry's source, else the source it was created with. */
+    private function latestSourceId(Lead $lead): ?int
+    {
+        $meta = $lead->notesHistory()->where('type', LeadNote::TYPE_ENQUIRY)->latest('id')->value('meta');
+        $fromHistory = is_array($meta) ? ($meta['source_id'] ?? null) : (json_decode((string) $meta, true)['source_id'] ?? null);
+
+        return (int) ($fromHistory ?? $lead->source_id) ?: null;
     }
 
     /** field_data [{name, values[]}] → [name => "value, value"]. */

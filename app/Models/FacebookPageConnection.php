@@ -12,7 +12,8 @@ class FacebookPageConnection extends Model
 {
     protected $fillable = [
         'portal_user_id', 'page_id', 'page_name', 'page_access_token', 'connected_by',
-        'subscribed_at', 'last_synced_at', 'last_lead_at', 'leads_count', 'last_error',
+        'subscribed_at', 'last_synced_at', 'last_lead_at', 'leads_count', 'last_error', 'needs_reconnect_at', 'reconnect_notified_at',
+        'import_status', 'import_added', 'import_skipped', 'import_error', 'import_finished_at',
     ];
 
     protected $hidden = ['page_access_token'];
@@ -22,6 +23,9 @@ class FacebookPageConnection extends Model
         'subscribed_at' => 'datetime',
         'last_synced_at' => 'datetime',
         'last_lead_at' => 'datetime',
+        'needs_reconnect_at' => 'datetime',
+        'reconnect_notified_at' => 'datetime',
+        'import_finished_at' => 'datetime',
     ];
 
     public function owner()

@@ -4,7 +4,9 @@ namespace App\Jobs;
 
 use App\Models\FacebookLead;
 use App\Models\FacebookPageConnection;
+use App\Services\Integrations\FacebookConnectionHealth;
 use App\Services\Integrations\FacebookLeadAds;
+use App\Services\Integrations\FacebookTokenException;
 use App\Services\Integrations\FacebookLeadImporter;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -27,7 +29,7 @@ class ImportFacebookLead implements ShouldQueue
     {
     }
 
-    public function handle(FacebookLeadAds $facebook, FacebookLeadImporter $importer): void
+    public function handle(FacebookLeadAds $facebook, FacebookLeadImporter $importer, ?FacebookConnectionHealth $health = null): void
     {
         $connection = FacebookPageConnection::where('page_id', $this->pageId)->first();
         if (!$connection) {
@@ -44,6 +46,10 @@ class ImportFacebookLead implements ShouldQueue
             if ($connection->last_error) {
                 $connection->forceFill(['last_error' => null])->save();
             }
+        } catch (FacebookTokenException $e) {
+            // Retrying can't help: flag the Page and email its owner to reconnect. "Sync now" after
+            // reconnecting picks this lead up.
+            ($health ?? app(FacebookConnectionHealth::class))->tokenFailed($connection, $e);
         } catch (\Throwable $e) {
             $connection->forceFill(['last_error' => $e->getMessage()])->save();
             throw $e;

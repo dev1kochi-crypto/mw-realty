@@ -22,10 +22,60 @@
     .intg-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
     .intg-step { padding: 14px; border: 1px solid var(--portal-border); border-radius: 12px; background: var(--portal-bg); font-size: .85rem; }
     .intg-step__num { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--portal-primary); color: #fff; font-size: .75rem; font-weight: 700; margin-bottom: 6px; }
-    .intg-page { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--portal-border); border-radius: 12px; }
-    .intg-page + .intg-page { margin-top: 10px; }
-    .intg-page__pic { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; background: #e7edf7; display: grid; place-items: center; color: #1877f2; flex-shrink: 0; }
-    .intg-page__owner { flex: 1 1 280px; max-width: 420px; }
+    /* Pages picker after Facebook Login */
+    .fbpick { border: 1px solid #d6e4fb; border-radius: 16px; background: linear-gradient(180deg, #f5f9ff 0%, #fff 70%); overflow: hidden; }
+    .fbpick__head { display: flex; gap: 14px; align-items: center; padding: 18px 20px; border-bottom: 1px solid #e3ecfa; }
+    .fbpick__head-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: #e7f0fe; color: #1877f2; font-size: 1.1rem; flex-shrink: 0; }
+    .fbpick__title { font-weight: 700; color: var(--portal-primary-dark); }
+    .fbpick__sub { font-size: .82rem; color: var(--portal-muted); }
+    .fbpick__all { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; font-weight: 600; color: var(--portal-primary-dark); white-space: nowrap; cursor: pointer; padding: 6px 12px; border: 1px solid var(--portal-border); border-radius: 999px; background: #fff; }
+    .fbpick__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; padding: 18px 20px; }
+    .fbpick__card { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1.5px solid var(--portal-border); border-radius: 14px; background: #fff; transition: border-color .15s, box-shadow .15s; }
+    .fbpick__card:hover { box-shadow: 0 6px 18px rgba(24, 39, 75, .07); }
+    .fbpick__card.is-selected { border-color: #1877f2; box-shadow: 0 0 0 3px rgba(24, 119, 242, .1); }
+    .fbpick__card.is-blocked { background: #fafbfd; }
+    .fbpick__card.is-blocked .fbpick__main { opacity: .6; cursor: not-allowed; }
+    .fbpick__main { display: flex; align-items: center; gap: 12px; margin: 0; padding-right: 22px; cursor: pointer; }
+    .fbpick__check { position: absolute; opacity: 0; pointer-events: none; }
+    .fbpick__tick { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #c5cfdf; color: transparent; font-size: .65rem; flex-shrink: 0; transition: all .15s; }
+    .fbpick__check:checked + .fbpick__tick { background: #1877f2; border-color: #1877f2; color: #fff; }
+    .fbpick__check:focus-visible + .fbpick__tick { outline: 2px solid #1877f2; outline-offset: 2px; }
+    .fbpick__pic { width: 46px; height: 46px; border-radius: 12px; object-fit: cover; flex-shrink: 0; background: #e7edf7; }
+    .fbpick__pic--letter { display: grid; place-items: center; font-weight: 700; font-size: 1.1rem; color: #fff; background: linear-gradient(135deg, #4f8ef7, #1877f2); }
+    .fbpick__name { display: block; font-weight: 600; color: var(--portal-primary-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fbpick__id { display: block; font-size: .75rem; color: var(--portal-muted); }
+    .fbpick__remove { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border: 0; border-radius: 50%; background: transparent; color: #9aa3b5; display: grid; place-items: center; }
+    .fbpick__remove:hover { background: #fdecec; color: #dc3545; }
+    .fbpick__chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 600; background: #eef2f8; color: #5b6478; }
+    .fbpick__chip--ok { background: #e7f6ee; color: #0f7a43; }
+    .fbpick__chip--blocked { background: #fdecec; color: #b8283a; }
+    .fbpick__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px 20px; border-top: 1px solid #e3ecfa; background: #fff; }
+    .fbpick__count { font-size: .82rem; font-weight: 600; color: var(--portal-muted); }
+    .intg-reconnect { background: #fff8ec; }
+    .fbpick__import { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0 20px 18px; padding: 14px 16px; border: 1px dashed #c9d8f2; border-radius: 12px; background: #fff; }
+    .fbpick__switch { display: flex; align-items: flex-start; gap: 12px; margin: 0; cursor: pointer; flex: 1 1 360px; font-size: .85rem; }
+    .fbpick__switch input { position: absolute; opacity: 0; }
+    .fbpick__switch-track { position: relative; flex-shrink: 0; width: 38px; height: 22px; margin-top: 1px; border-radius: 999px; background: #cfd6e3; transition: background .2s; }
+    .fbpick__switch-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s; }
+    .fbpick__switch input:checked + .fbpick__switch-track { background: #1877f2; }
+    .fbpick__switch input:checked + .fbpick__switch-track::after { transform: translateX(16px); }
+    .fbpick__switch input:focus-visible + .fbpick__switch-track { outline: 2px solid #1877f2; outline-offset: 2px; }
+    .fbpick__days { width: auto; min-width: 210px; }
+    /* Indeterminate progress bar + spinner (connecting overlay, row imports) */
+    .fbbar { position: relative; height: 4px; border-radius: 999px; background: #e3ecfa; overflow: hidden; }
+    .fbbar span { position: absolute; top: 0; left: -40%; width: 40%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4f8ef7, #1877f2); animation: fbbar 1.2s ease-in-out infinite; }
+    @keyframes fbbar { to { left: 100%; } }
+    .fbimport { margin-top: 8px; max-width: 260px; }
+    .fbimport__label { display: flex; align-items: center; gap: 8px; font-size: .78rem; font-weight: 600; color: #1360c6; margin-bottom: 5px; }
+    .fbimport__spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #c6dafc; border-top-color: #1877f2; animation: fbspin .8s linear infinite; }
+    @keyframes fbspin { to { transform: rotate(360deg); } }
+    .fbbusy { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; background: rgba(17, 27, 51, .45); backdrop-filter: blur(2px); }
+    .fbbusy[hidden] { display: none; }
+    .fbbusy__box { width: min(360px, calc(100vw - 32px)); padding: 28px 24px; border-radius: 18px; background: #fff; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,.2); }
+    .fbbusy__logo { position: relative; display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: #1877f2; color: #fff; font-size: 1.6rem; }
+    .fbbusy__ring { position: absolute; inset: -6px; border-radius: 50%; border: 3px solid transparent; border-top-color: #1877f2; border-right-color: #8bb6f9; animation: fbspin 1s linear infinite; }
+    @media (prefers-reduced-motion: reduce) { .fbbar span, .fbimport__spin, .fbbusy__ring { animation-duration: 3s; } }
+    @media (max-width: 575.98px) { .fbpick__head { flex-wrap: wrap; } .fbpick__grid { padding: 14px; } }
     .intg-copy { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; word-break: break-all; }
     .select2-container--default .select2-selection--single { height: 36px; border-color: var(--portal-border, #dee2e6); border-radius: 8px; }
     .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 34px; padding-left: .7rem; font-size: .85rem; }
@@ -83,53 +133,113 @@
         @else
             {{-- Back from Facebook Login: Super Admin assigns each Page to an account; an agency / agent ticks their own. --}}
             @if($pendingPages)
-            <form method="POST" action="{{ route('portal.crm.integrations.facebook.pages.store') }}" class="mb-4 p-3 rounded-3" style="background: #f2f7ff; border: 1px solid #cfe0fb;">
+            <form method="POST" action="{{ route('portal.crm.integrations.facebook.pages.store') }}" class="fbpick mb-4" id="fbPickForm">
                 @csrf
-                <div class="fw-bold mb-1">{{ $isAdmin ? 'Assign the Pages to agencies / agents' : 'Choose the Pages to connect' }}</div>
-                <p class="small text-muted mb-3">
-                    {{ $isAdmin ? 'Pick whose CRM receives each Page\'s leads. Leave a Page empty to skip it.' : 'Leads from the lead forms on these Pages will come into your CRM.' }}
-                    A Page can be connected to one account only.
-                </p>
-                @foreach($pendingPages as $page)
-                @php
-                    $existing = $existingConnections->get($page['id']);
-                    $mine = $existing && !$isAdmin && $existing->portal_user_id === $ownerId;
-                    $blocked = $existing && !$mine;
-                @endphp
-                <div class="intg-page bg-white {{ $blocked ? 'opacity-75' : '' }}">
+                <div class="fbpick__head">
+                    <span class="fbpick__head-icon"><i class="fab fa-facebook-f"></i></span>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="fbpick__title">{{ $isAdmin ? 'Assign your Facebook Pages' : 'Choose the Pages to connect' }}</div>
+                        <div class="fbpick__sub">
+                            {{ $isAdmin ? 'Pick the agency or agent whose CRM receives each Page\'s leads. Pages left unassigned are skipped.' : 'Leads from the lead forms on the selected Pages will come into your CRM.' }}
+                            Each Page can belong to one account only.
+                        </div>
+                    </div>
                     @unless($isAdmin)
-                    <input type="checkbox" class="form-check-input mt-0" name="page_ids[]" value="{{ $page['id'] }}" id="fbPage{{ $loop->index }}" @checked(!$blocked) @disabled($blocked)>
+                    <label class="fbpick__all"><input type="checkbox" class="form-check-input mt-0" id="fbPickAll" checked> Select all</label>
                     @endunless
-                    @if($page['picture'])<img src="{{ $page['picture'] }}" alt="" class="intg-page__pic">@else<span class="intg-page__pic"><i class="fab fa-facebook"></i></span>@endif
-                    <label class="flex-grow-1 min-w-0 mb-0" @unless($isAdmin) for="fbPage{{ $loop->index }}" @endunless>
-                        <span class="fw-semibold d-block text-truncate">{{ $page['name'] }}</span>
-                        <span class="small {{ $blocked ? 'text-danger' : 'text-muted' }}">
-                            @if($blocked && $isAdmin) Already connected to {{ $existing->owner?->displayName() ?? 'another account' }} — disconnect it first to assign it elsewhere
-                            @elseif($blocked) Already connected to another MW Realty account
-                            @elseif($mine) Connected — reconnecting refreshes its access
-                            @else Page ID {{ $page['id'] }}
+                </div>
+
+                <div class="fbpick__grid">
+                    @foreach($pendingPages as $page)
+                    @php
+                        $existing = $existingConnections->get($page['id']);
+                        $mine = $existing && !$isAdmin && $existing->portal_user_id === $ownerId;
+                        $blocked = $existing && !$mine;
+                    @endphp
+                    <div class="fbpick__card {{ $blocked ? 'is-blocked' : (!$isAdmin ? 'is-selected' : '') }} js-pick-card">
+                        <button type="button" class="fbpick__remove js-pick-remove" title="Remove from this list" aria-label="Remove {{ $page['name'] }} from this list"><i class="fas fa-xmark"></i></button>
+                        <label class="fbpick__main" @unless($isAdmin || $blocked) for="fbPage{{ $loop->index }}" @endunless>
+                            @unless($isAdmin)
+                            <input type="checkbox" class="fbpick__check js-pick-check" name="page_ids[]" value="{{ $page['id'] }}" id="fbPage{{ $loop->index }}" @checked(!$blocked) @disabled($blocked)>
+                            <span class="fbpick__tick" aria-hidden="true"><i class="fas fa-check"></i></span>
+                            @endunless
+                            @if($page['picture'])
+                            <img src="{{ $page['picture'] }}" alt="" class="fbpick__pic">
+                            @else
+                            <span class="fbpick__pic fbpick__pic--letter">{{ mb_strtoupper(mb_substr($page['name'], 0, 1)) }}</span>
                             @endif
-                        </span>
-                    </label>
-                    @if($isAdmin && !$blocked)
-                    <div class="intg-page__owner">
+                            <span class="min-w-0">
+                                <span class="fbpick__name" title="{{ $page['name'] }}">{{ $page['name'] }}</span>
+                                <span class="fbpick__id">ID {{ $page['id'] }}</span>
+                            </span>
+                        </label>
+                        <div class="fbpick__foot">
+                            @if($blocked)
+                            <span class="fbpick__chip fbpick__chip--blocked"><i class="fas fa-ban"></i>{{ $isAdmin ? 'Connected to ' . ($existing->owner?->displayName() ?? 'another account') : 'Connected to another account' }}</span>
+                            @elseif($existing)
+                            <span class="fbpick__chip fbpick__chip--ok"><i class="fas fa-rotate"></i>Connected — access will be refreshed</span>
+                            @else
+                            <span class="fbpick__chip"><i class="fas fa-plus"></i>New Page</span>
+                            @endif
+                        </div>
+                        @if($isAdmin && !$blocked)
                         <select name="owners[{{ $page['id'] }}]" class="js-account-picker" data-placeholder="Assign to agency / agent…">
                             <option value=""></option>
                         </select>
+                        @endif
                     </div>
-                    @endif
+                    @endforeach
                 </div>
-                @endforeach
-                <div class="d-flex gap-2 justify-content-end mt-3">
-                    <button type="submit" form="cancelPagesForm" class="btn btn-sm portal-btn-ghost">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-portal-primary"><i class="fas fa-link me-1"></i>Connect Pages</button>
+
+                {{-- Bring in the leads these Pages already have (runs in the background, duplicates skipped). --}}
+                <div class="fbpick__import">
+                    <label class="fbpick__switch">
+                        <input type="checkbox" name="import_existing" value="1" id="fbImportToggle">
+                        <span class="fbpick__switch-track" aria-hidden="true"></span>
+                        <span>
+                            <span class="fw-semibold d-block">Also import the leads these Pages already have</span>
+                            <span class="small text-muted">Runs in the background. People already in the CRM aren't added twice — a lead from a new ad is added to their history.</span>
+                        </span>
+                    </label>
+                    <select name="import_days" class="form-select form-select-sm fbpick__days" id="fbImportDays" disabled aria-label="How far back to import">
+                        <option value="7">Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90" selected>Last 90 days (all Facebook keeps)</option>
+                    </select>
+                </div>
+
+                <div class="fbpick__actions">
+                    @unless($isAdmin)<span class="fbpick__count" id="fbPickCount"></span>@endunless
+                    <button type="submit" form="cancelPagesForm" class="btn btn-sm portal-btn-ghost ms-auto">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-portal-primary" id="fbPickSubmit"><i class="fas fa-link me-1"></i>Connect Pages</button>
                 </div>
             </form>
             <form method="POST" action="{{ route('portal.crm.integrations.facebook.pages.cancel') }}" id="cancelPagesForm" class="d-none">@csrf</form>
+
+            {{-- Shown while the chosen Pages are being connected. --}}
+            <div class="fbbusy" id="fbBusy" hidden>
+                <div class="fbbusy__box" role="status" aria-live="polite">
+                    <div class="fbbusy__logo"><i class="fab fa-facebook-f"></i><span class="fbbusy__ring"></span></div>
+                    <div class="fw-bold mt-3" id="fbBusyTitle">Connecting your Pages…</div>
+                    <div class="small text-muted">Subscribing them to Facebook lead notifications. This takes a few seconds.</div>
+                    <div class="fbbar mt-3"><span></span></div>
+                </div>
+            </div>
+            @endif
+
+            @php $brokenPages = $connections->filter(fn ($c) => $c->needs_reconnect_at); @endphp
+            @if($brokenPages->isNotEmpty())
+            <div class="alert alert-warning small d-flex gap-2 align-items-start">
+                <i class="fas fa-plug-circle-xmark mt-1"></i>
+                <div>
+                    <strong>{{ $brokenPages->pluck('page_name')->join(', ', ' and ') }}</strong> {{ $brokenPages->count() === 1 ? 'has' : 'have' }} stopped sending leads — Facebook no longer accepts the access.
+                    Click <strong>Reconnect</strong>, log in with a Facebook account that is an admin of the Page, tick it and click <strong>Connect Pages</strong>. Then use <strong>Sync now</strong> to fetch the leads missed meanwhile.
+                </div>
+            </div>
             @endif
 
             <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
-                <a href="{{ route('portal.crm.integrations.facebook.connect') }}" target="_blank" rel="noopener" class="btn btn-sm text-white" style="background: #1877f2;">
+                <a href="{{ route('portal.crm.integrations.facebook.connect') }}" data-popup-url="{{ route('portal.crm.integrations.facebook.connect', ['popup' => 1]) }}" class="btn btn-sm text-white js-fb-connect" style="background: #1877f2;">
                     <i class="fab fa-facebook me-1"></i>{{ $connectedCount ? 'Connect another Page' : 'Connect Facebook Page' }}
                 </a>
                 @if($isAdmin && ($connectedCount || $search !== ''))
@@ -139,7 +249,7 @@
                 </form>
                 @endif
             </div>
-            <p class="small text-muted mb-3"><i class="fas fa-circle-info me-1"></i>Facebook Login opens in a new tab and comes back to this page with the Pages to choose from.</p>
+            <p class="small text-muted mb-3"><i class="fas fa-circle-info me-1"></i>Facebook Login opens in a popup window — when it's done, the Pages to choose from appear here.</p>
 
             @if($connections->isNotEmpty())
             <div class="table-responsive mb-3">
@@ -147,7 +257,7 @@
                     <thead><tr><th>Page</th>@if($isAdmin)<th>Leads go to</th>@endif<th>Status</th><th class="text-center">Leads</th><th>Last lead</th><th class="text-end">Actions</th></tr></thead>
                     <tbody>
                         @foreach($connections as $connection)
-                        <tr>
+                        <tr class="{{ $connection->needs_reconnect_at ? 'intg-reconnect' : '' }}">
                             <td>
                                 <div class="fw-semibold">{{ $connection->page_name }}</div>
                                 <div class="small text-muted">Connected {{ $connection->created_at->format('d M Y') }}@if($connection->connected_by) by {{ $connection->connected_by }}@endif</div>
@@ -160,6 +270,9 @@
                             @endif
                             @include('portal.crm.integrations._connection_cells', ['connection' => $connection])
                             <td class="text-end text-nowrap">
+                                @if($connection->needs_reconnect_at)
+                                <a href="{{ route('portal.crm.integrations.facebook.connect') }}" data-popup-url="{{ route('portal.crm.integrations.facebook.connect', ['popup' => 1]) }}" class="btn btn-sm text-white js-fb-connect" style="background: #1877f2;"><i class="fab fa-facebook me-1"></i>Reconnect</a>
+                                @endif
                                 <form method="POST" action="{{ route('portal.crm.integrations.facebook.sync', $connection->id) }}" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-sm portal-btn-ghost" title="Fetch leads from the last 30 days (or since the last sync)"><i class="fas fa-rotate me-1"></i>Sync now</button>
@@ -214,6 +327,74 @@
 </script>
 @endif
 <script>
+    // Pages picker: selected-card highlight, select all, count, and removing a Page from the list.
+    (function () {
+        var form = document.getElementById('fbPickForm');
+        if (!form) return;
+        var all = document.getElementById('fbPickAll'), count = document.getElementById('fbPickCount'), submit = document.getElementById('fbPickSubmit');
+        function checks() { return Array.prototype.slice.call(form.querySelectorAll('.js-pick-check:not(:disabled)')); }
+        function refresh() {
+            var list = checks(), picked = list.filter(function (c) { return c.checked; }).length;
+            list.forEach(function (c) { c.closest('.js-pick-card').classList.toggle('is-selected', c.checked); });
+            if (count) count.textContent = picked + ' of ' + list.length + ' Page' + (list.length === 1 ? '' : 's') + ' selected';
+            if (all) { all.checked = list.length > 0 && picked === list.length; all.indeterminate = picked > 0 && picked < list.length; }
+            if (count && submit) submit.disabled = picked === 0;
+        }
+        form.addEventListener('change', function (e) { if (e.target.classList.contains('js-pick-check')) refresh(); });
+        if (all) all.addEventListener('change', function () { checks().forEach(function (c) { c.checked = all.checked; }); refresh(); });
+        var importToggle = document.getElementById('fbImportToggle'), importDays = document.getElementById('fbImportDays');
+        if (importToggle) importToggle.addEventListener('change', function () { importDays.disabled = !importToggle.checked; });
+        form.addEventListener('submit', function () {
+            if (importToggle && importToggle.checked) document.getElementById('fbBusyTitle').textContent = 'Connecting your Pages and starting the lead import…';
+            document.getElementById('fbBusy').hidden = false;
+            if (submit) submit.disabled = true;
+        });
+        form.querySelectorAll('.js-pick-remove').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                btn.closest('.js-pick-card').remove();
+                if (!form.querySelector('.js-pick-card')) { document.getElementById('cancelPagesForm').submit(); return; }
+                refresh();
+            });
+        });
+        refresh();
+    })();
+
+    // Background lead imports: poll their progress; reload once they've all finished to show the totals.
+    (function () {
+        if (!document.querySelector('.js-import')) return;
+        var url = @json(route('portal.crm.integrations.facebook.import-status'));
+        function poll() {
+            fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+                .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+                .then(function (data) {
+                    if (!data.importing.length) { window.location.reload(); return; }
+                    data.importing.forEach(function (row) {
+                        var el = document.querySelector('.js-import[data-id="' + row.id + '"] .js-import-text');
+                        if (el) el.textContent = row.status === 'queued' ? 'Starting lead import…' : 'Importing leads… ' + row.added + ' added' + (row.skipped ? ', ' + row.skipped + ' already in CRM' : '');
+                    });
+                    setTimeout(poll, 3000);
+                })
+                .catch(function () { setTimeout(poll, 10000); });
+        }
+        setTimeout(poll, 3000);
+    })();
+
+    // Facebook Login in a centred popup over this page (it reloads this page when done); popup blocked → this tab.
+    document.querySelectorAll('.js-fb-connect').forEach(function (link) {
+        link.addEventListener('click', function (e) {
+            var w = 600, h = 720;
+            var left = window.screenX + Math.max(0, (window.outerWidth - w) / 2), top = window.screenY + Math.max(0, (window.outerHeight - h) / 2);
+            var popup = window.open(link.dataset.popupUrl, 'fbConnect', 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',scrollbars=yes');
+            if (popup) {
+                e.preventDefault();
+                popup.focus();
+            }
+        });
+    });
+    try {
+        new BroadcastChannel('fb-connect').onmessage = function () { window.location.reload(); };
+    } catch (e) {}
+
     // Confirm before disconnecting a Page.
     document.querySelectorAll('.js-disconnect').forEach(function (form) {
         form.addEventListener('submit', async function (e) {

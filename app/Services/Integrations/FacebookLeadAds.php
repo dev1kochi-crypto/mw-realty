@@ -85,11 +85,19 @@ class FacebookLeadAds
         $this->request()->delete($this->url("{$pageId}/subscribed_apps"), ['access_token' => $pageToken]);
     }
 
+    /** Cheap call with the Page token — throws FacebookTokenException once Facebook stops accepting it. */
+    public function checkPageToken(string $pageId, string $pageToken): void
+    {
+        $this->get($pageId, ['fields' => 'id', 'access_token' => $pageToken]);
+    }
+
     /** One lead by its leadgen id. Without ads_read the ad / campaign names are left out. */
     public function lead(string $leadgenId, string $pageToken): array
     {
         try {
             return $this->get($leadgenId, ['fields' => self::LEAD_FIELDS, 'access_token' => $pageToken]);
+        } catch (FacebookTokenException $e) {
+            throw $e;
         } catch (RuntimeException) {
             return $this->get($leadgenId, ['fields' => self::LEAD_FIELDS_BASIC, 'access_token' => $pageToken]);
         }
@@ -108,6 +116,8 @@ class FacebookLeadAds
         $filter = json_encode([['field' => 'time_created', 'operator' => 'GREATER_THAN', 'value' => $since]]);
         try {
             yield from $this->paginate("{$formId}/leads", ['fields' => self::LEAD_FIELDS, 'filtering' => $filter, 'limit' => 100, 'access_token' => $pageToken]);
+        } catch (FacebookTokenException $e) {
+            throw $e;
         } catch (RuntimeException) {
             yield from $this->paginate("{$formId}/leads", ['fields' => self::LEAD_FIELDS_BASIC, 'filtering' => $filter, 'limit' => 100, 'access_token' => $pageToken]);
         }
@@ -164,6 +174,10 @@ class FacebookLeadAds
         $response = $call();
         $json = $response->json() ?? [];
         if ($response->failed() || isset($json['error'])) {
+            $code = (int) ($json['error']['code'] ?? 0);
+            if (in_array($code, FacebookTokenException::CODES, true)) {
+                throw new FacebookTokenException($json['error']['message'] ?? 'Facebook rejected the access token.', $code);
+            }
             throw new RuntimeException($json['error']['message'] ?? ('Facebook request failed (HTTP ' . $response->status() . ').'));
         }
 

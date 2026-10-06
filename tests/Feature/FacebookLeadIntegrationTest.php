@@ -184,13 +184,60 @@ class FacebookLeadIntegrationTest extends TestCase
             'graph.facebook.com/*/oauth/access_token*' => Http::response(['access_token' => 'user-token']),
             'graph.facebook.com/*/me/accounts*' => Http::response(['data' => [['id' => 'PAGE1', 'name' => 'MW Test Page', 'access_token' => 'page-token']]]),
         ]);
-        \Illuminate\Support\Facades\Cache::put('facebook_integration.state.good-state', 'admin.7', now()->addMinutes(5));
+        \Illuminate\Support\Facades\Cache::put('facebook_integration.state.good-state', ['actor' => 'admin.7', 'popup' => false], now()->addMinutes(5));
 
         $this->get('/integrations/facebook/callback?state=bad&code=abc')->assertRedirect('/portal/crm/integrations')->assertSessionHas('error');
         $this->get('/integrations/facebook/callback?state=good-state&code=abc')->assertRedirect('/portal/crm/integrations')->assertSessionHas('toast');
 
         $this->assertSame('PAGE1', decrypt(\Illuminate\Support\Facades\Cache::get('facebook_integration.pages.admin.7'))[0]['id']);
         $this->get('/integrations/facebook/callback?state=good-state&code=abc')->assertSessionHas('error'); // state is one-time
+    }
+
+    public function test_a_rejected_token_flags_the_page_and_emails_the_owner_once(): void
+    {
+        $connection = $this->connection();
+        Http::fake(['graph.facebook.com/*' => Http::response(['error' => ['message' => 'Error validating access token: The session has been invalidated.', 'code' => 190]], 400)]);
+        $job = fn () => (new ImportFacebookLead('PAGE1', 'LG1'))->handle(app(\App\Services\Integrations\FacebookLeadAds::class), app(\App\Services\Integrations\FacebookLeadImporter::class));
+
+        $job();
+        $job();
+
+        $connection->refresh();
+        $this->assertNotNull($connection->needs_reconnect_at);
+        $this->assertStringContainsString('session has been invalidated', $connection->last_error);
+        Mail::assertQueued(\App\Mail\FacebookPageReconnectMail::class, 1);
+        Mail::assertQueued(\App\Mail\FacebookPageReconnectMail::class, fn ($mail) => $mail->hasTo($connection->owner->email));
+    }
+
+    public function test_the_same_person_from_the_same_ad_is_skipped_and_from_a_new_ad_goes_to_history(): void
+    {
+        $connection = $this->connection();
+        $importer = app(\App\Services\Integrations\FacebookLeadImporter::class);
+
+        $first = $importer->import($connection, $this->graphLead(['id' => 'LG1']));
+        $this->assertNull($importer->import($connection, $this->graphLead(['id' => 'LG2'])), 'same email + same ad → already in the CRM');
+
+        $merged = $importer->import($connection, $this->graphLead(['id' => 'LG3', 'ad_name' => 'Marina Flats — November']));
+        $this->assertSame($first->id, $merged->id, 'no duplicate lead');
+        $this->assertSame(1, Lead::count());
+        $this->assertSame(1, $first->notesHistory()->where('type', \App\Models\LeadNote::TYPE_ENQUIRY)->count(), 'the new ad is logged in the lead history');
+
+        $this->assertNull($importer->import($connection, $this->graphLead(['id' => 'LG4', 'ad_name' => 'Marina Flats — November'])), 'latest source is now that ad');
+    }
+
+    public function test_connecting_with_import_queues_a_background_import_of_existing_leads(): void
+    {
+        Queue::fake();
+        Http::fake(['graph.facebook.com/*/subscribed_apps' => Http::response(['success' => true])]);
+        $agency = $this->agency();
+        $this->pendingPages('owner.' . $agency->id, [['id' => 'PAGE1', 'name' => 'MW Test Page']]);
+
+        $this->signIn($agency)->post('/portal/crm/integrations/facebook/pages', ['page_ids' => ['PAGE1'], 'import_existing' => 1, 'import_days' => 30]);
+
+        $connection = FacebookPageConnection::firstOrFail();
+        $this->assertSame('queued', $connection->import_status);
+        Queue::assertPushed(\App\Jobs\ImportFacebookPageLeads::class, fn ($job) => $job->connectionId === $connection->id && !$job->notify
+            && abs($job->since - now()->subDays(30)->getTimestamp()) < 60);
     }
 
     public function test_accounts_only_reach_their_own_pages(): void

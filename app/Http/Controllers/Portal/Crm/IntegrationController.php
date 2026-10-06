@@ -6,7 +6,9 @@ use App\Http\Controllers\Portal\Crm\Concerns\ScopesPortalOwner;
 use App\Models\FacebookPageConnection;
 use App\Models\PortalUser;
 use App\Services\Crm\AdminOwnerResolver;
+use App\Services\Integrations\FacebookConnectionHealth;
 use App\Services\Integrations\FacebookLeadAds;
+use App\Services\Integrations\FacebookTokenException;
 use App\Services\Integrations\FacebookLeadImporter;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -89,16 +91,16 @@ class IntegrationController extends Controller
         ]);
     }
 
-    /** Off to Facebook Login (opened in a new tab). */
-    public function connect()
+    /** Off to Facebook Login — in a popup window over Integrations (?popup=1), or this tab as a fallback. */
+    public function connect(Request $request)
     {
         $this->authorizeManage();
         if (!$this->facebook->configured()) {
-            return redirect()->route('portal.crm.integrations.index')->with('error', 'Facebook isn\'t set up yet — add FACEBOOK_APP_ID and FACEBOOK_APP_SECRET to the .env file.');
+            return $this->finishLogin($request->boolean('popup'), 'error', 'Facebook isn\'t set up yet — add FACEBOOK_APP_ID and FACEBOOK_APP_SECRET to the .env file.');
         }
 
         $state = Str::random(40);
-        Cache::put(self::STATE_CACHE . $state, $this->actorKey(), now()->addMinutes(self::PENDING_MINUTES));
+        Cache::put(self::STATE_CACHE . $state, ['actor' => $this->actorKey(), 'popup' => $request->boolean('popup')], now()->addMinutes(self::PENDING_MINUTES));
 
         return redirect()->away($this->facebook->loginUrl(route('integrations.facebook.callback'), $state));
     }
@@ -109,14 +111,15 @@ class IntegrationController extends Controller
      */
     public function callback(Request $request)
     {
-        $index = redirect()->route('portal.crm.integrations.index');
-        $actor = $request->filled('state') ? Cache::pull(self::STATE_CACHE . $request->input('state')) : null;
+        $started = $request->filled('state') ? Cache::pull(self::STATE_CACHE . $request->input('state')) : null;
+        $actor = $started['actor'] ?? null;
+        $popup = (bool) ($started['popup'] ?? false);
 
         if ($request->filled('error')) {
-            return $index->with('error', 'Facebook connection cancelled' . ($request->filled('error_description') ? ': ' . $request->input('error_description') : '.'));
+            return $this->finishLogin($popup, 'error', 'Facebook connection cancelled' . ($request->filled('error_description') ? ': ' . $request->input('error_description') : '.'));
         }
         if (!$actor || !$request->filled('code')) {
-            return $index->with('error', 'The Facebook login could not be verified — please try connecting again.');
+            return $this->finishLogin($popup, 'error', 'The Facebook login could not be verified — please try connecting again.');
         }
 
         try {
@@ -125,16 +128,26 @@ class IntegrationController extends Controller
         } catch (\Throwable $e) {
             Log::warning('Facebook connect failed: ' . $e->getMessage());
 
-            return $index->with('error', 'Facebook connection failed: ' . $e->getMessage());
+            return $this->finishLogin($popup, 'error', 'Facebook connection failed: ' . $e->getMessage());
         }
 
         if (!$pages) {
-            return $index->with('error', 'No Facebook Pages found. Log in with a Facebook account that manages the Page, and allow access to it.');
+            return $this->finishLogin($popup, 'error', 'No Facebook Pages found. Log in with a Facebook account that manages the Page, and allow access to it.');
         }
 
         Cache::put(self::PAGES_CACHE . $actor, encrypt($pages), now()->addMinutes(self::PENDING_MINUTES));
 
-        return $index->with('toast', str_starts_with($actor, 'admin.') ? 'Choose the agency or agent each Facebook Page belongs to.' : 'Choose the Facebook Pages to connect.');
+        return $this->finishLogin($popup, 'toast', str_starts_with($actor, 'admin.') ? 'Choose the agency or agent each Facebook Page belongs to.' : 'Choose the Facebook Pages to connect.');
+    }
+
+    /** Back to Integrations with a message: a popup closes itself and reloads the page that opened it. */
+    private function finishLogin(bool $popup, string $type, string $message)
+    {
+        session()->flash($type, $message);
+
+        return $popup
+            ? response()->view('portal.crm.integrations.popup-done', ['indexUrl' => route('portal.crm.integrations.index')])
+            : redirect()->route('portal.crm.integrations.index');
     }
 
     /**
@@ -158,8 +171,13 @@ class IntegrationController extends Controller
             $choices = array_fill_keys($data['page_ids'], $this->ownerId());
             $accounts = collect([$this->ownerId() => $this->owner()]);
         }
+        // "Import the leads these Pages already have?" — Facebook keeps leads for 90 days.
+        $importDays = $request->boolean('import_existing')
+            ? ((int) ($request->validate(['import_days' => 'nullable|in:7,30,90'])['import_days'] ?? 0) ?: 90)
+            : null;
 
         $connected = [];
+        $importing = 0;
         $problems = [];
         foreach ($choices as $pageId => $ownerId) {
             $page = $pending->get((string) $pageId);
@@ -183,6 +201,9 @@ class IntegrationController extends Controller
                 'page_name' => $page['name'],
                 'page_access_token' => $page['access_token'],
                 'connected_by' => $this->actorName(),
+                // A fresh token: a Page that needed reconnecting works again.
+                'needs_reconnect_at' => null,
+                'reconnect_notified_at' => null,
             ]);
             try {
                 $this->facebook->subscribe($page['id'], $page['access_token']);
@@ -191,16 +212,44 @@ class IntegrationController extends Controller
             } catch (\Throwable $e) {
                 $connection->forceFill(['subscribed_at' => null, 'last_error' => $e->getMessage()])->save();
                 $problems[] = "{$page['name']}: {$e->getMessage()}";
+                continue;
+            }
+
+            // Fetch in the background: the leads missed while it needed reconnecting (from its last
+            // good sync), and/or its existing leads if asked. Duplicates are skipped by the importer.
+            $since = null;
+            if ($existing?->needs_reconnect_at) {
+                $since = $existing->last_synced_at && $existing->last_synced_at->lt($existing->needs_reconnect_at) ? $existing->last_synced_at : $existing->needs_reconnect_at->copy()->subDay();
+            }
+            if ($importDays && (!$since || $since->gt(now()->subDays($importDays)))) {
+                $since = now()->subDays($importDays);
+            }
+            if ($since) {
+                // Missed leads are new to the team (notify); a bulk import of older ones isn't.
+                \App\Jobs\ImportFacebookPageLeads::start($connection, $since, notify: !$importDays);
+                $importing++;
             }
         }
         Cache::forget(self::PAGES_CACHE . $this->actorKey());
 
         $redirect = redirect()->route('portal.crm.integrations.index');
         if ($connected) {
-            $redirect->with('toast', 'Connected: ' . implode(', ', $connected) . '. New Facebook leads will arrive in Leads.');
+            $redirect->with('toast', 'Connected: ' . implode(', ', $connected) . '.' . ($importing ? ' Importing their leads in the background — you can keep working.' : ' New Facebook leads will arrive in Leads.'));
         }
 
         return $problems ? $redirect->with('error', implode('. ', $problems) . '.') : $redirect;
+    }
+
+    /** Live progress of background lead imports, polled by the Integrations page. */
+    public function importStatus()
+    {
+        $connections = FacebookPageConnection::when(!$this->isAdmin(), fn ($q) => $q->where('portal_user_id', $this->ownerId() ?? 0))
+            ->whereIn('import_status', ['queued', 'running'])
+            ->get(['id', 'import_status', 'import_added', 'import_skipped']);
+
+        return response()->json(['importing' => $connections->map(fn ($c) => [
+            'id' => $c->id, 'status' => $c->import_status, 'added' => $c->import_added, 'skipped' => $c->import_skipped,
+        ])->values()]);
     }
 
     public function cancelPages()
@@ -212,12 +261,16 @@ class IntegrationController extends Controller
     }
 
     /** Pull recent leads now (also catches up on leads the webhook missed). */
-    public function sync($id, FacebookLeadImporter $importer)
+    public function sync($id, FacebookLeadImporter $importer, FacebookConnectionHealth $health)
     {
         $connection = $this->findConnection($id);
 
         try {
             $added = $importer->sync($connection);
+        } catch (FacebookTokenException $e) {
+            $health->tokenFailed($connection, $e);
+
+            return back()->with('error', "{$connection->page_name} needs reconnecting: {$e->reason()} Click Reconnect and log in with Facebook again.");
         } catch (\Throwable $e) {
             $connection->forceFill(['last_error' => $e->getMessage()])->save();
 
