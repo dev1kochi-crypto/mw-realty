@@ -681,13 +681,6 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('/logout', [PortalAuthController::class, 'logout'])->name('logout');
 
         // Two-factor authentication (authenticator app) — set-up page is also the step after sign-up.
-        // Listings Settings → Watermark stamped on uploaded listing photos — unlocks with KYC approval, like listings.
-        Route::middleware('portal.approved')->group(function () {
-            Route::get('/listing-settings/watermark', [\App\Http\Controllers\Portal\PortalWatermarkController::class, 'edit'])->name('watermark.edit');
-            Route::post('/listing-settings/watermark', [\App\Http\Controllers\Portal\PortalWatermarkController::class, 'update'])->name('watermark.update');
-            Route::get('/listing-settings/watermark/image', [\App\Http\Controllers\Portal\PortalWatermarkController::class, 'image'])->name('watermark.image');
-        });
-
         Route::get('/security', [\App\Http\Controllers\Portal\PortalTwoFactorController::class, 'index'])->name('security');
         Route::prefix('two-factor')->name('two-factor.')->controller(\App\Http\Controllers\Portal\PortalTwoFactorController::class)->group(function () {
             Route::get('/setup', 'setup')->name('setup');
@@ -769,6 +762,15 @@ Route::prefix('portal')->name('portal.')->group(function () {
     // either session is accepted; controllers scope data per guard.
     Route::middleware(['portal.or.cms', 'portal.2fa'])->group(function () {
         Route::get('/dashboard', [PortalDashboardController::class, 'index'])->name('dashboard');
+
+        // Listings Settings → Watermark stamped on uploaded listing photos — unlocks with KYC approval,
+        // like listings. Super Admin edits the default one (used where an account has none) and sees
+        // every agency / agent watermark. See PortalWatermarkController.
+        Route::middleware('portal.approved')->group(function () {
+            Route::get('/listing-settings/watermark', [\App\Http\Controllers\Portal\PortalWatermarkController::class, 'edit'])->name('watermark.edit');
+            Route::post('/listing-settings/watermark', [\App\Http\Controllers\Portal\PortalWatermarkController::class, 'update'])->name('watermark.update');
+            Route::get('/listing-settings/watermark/image', [\App\Http\Controllers\Portal\PortalWatermarkController::class, 'image'])->name('watermark.image');
+        });
 
         // Real (server-side) gating on top of the create()/store()/toggleStatus() controller's own
         // inline "approved only" checks — index/edit/update/destroy had none at all before this.
@@ -900,6 +902,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::patch('/leads/{id}/contacts/{contact}/primary', [LeadController::class, 'setPrimaryContact'])->name('leads.contacts.primary');
             Route::delete('/leads/{id}/contacts/{contact}', [LeadController::class, 'removeContact'])->name('leads.contacts.destroy');
             Route::get('/leads/{id}', [LeadController::class, 'show'])->name('leads.show');
+            Route::get('/leads/{id}/insights', [LeadController::class, 'insights'])->name('leads.insights')->middleware('throttle:120,1');
             Route::put('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
             Route::delete('/leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
             Route::post('/leads/{id}/notes', [LeadNoteController::class, 'store'])->name('leads.notes.store');
@@ -914,6 +917,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
                 Route::get('/transfer-targets', 'targets')->name('targets')->middleware('throttle:120,1');
                 Route::post('/transfer', 'transfer')->name('transfer');
                 Route::get('/{websiteLead}', 'show')->whereNumber('websiteLead')->name('show');
+                Route::get('/{websiteLead}/insights', 'insights')->whereNumber('websiteLead')->name('insights')->middleware('throttle:120,1');
             });
 
             // Lead Insights — website activity of the viewer's own leads (property views, time spent, AI chats…).

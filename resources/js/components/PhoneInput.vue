@@ -97,5 +97,7 @@ watch(() => props.countryCode, (code) => {
 .mw-phone-input .iti { display: block; width: 100%; }
 .mw-phone-input .iti input[type='tel'] { width: 100%; }
 .mw-phone-input .iti__selected-dial-code { font-size: 15px; }
+/* :class="{ 'is-invalid': … }" on the component lands on this wrapper — mark the field itself. */
+.mw-phone-input.is-invalid input[type='tel'] { border-color: #c92844; }
 .iti--container, .mw-phone-input .iti__dropdown-content { z-index: 10050 !important; }
 </style>

@@ -50,6 +50,23 @@ class LeadService
             });
         }
 
+        // The listing's "Quick search" box (table_search) — like search, but also matches the
+        // other columns the table shows (message, owner, agent, stage, source, tags).
+        if (!empty($filters['table_search'])) {
+            $term = $filters['table_search'];
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%")
+                    ->orWhere('phone', 'like', "%{$term}%")
+                    ->orWhere('message', 'like', "%{$term}%")
+                    ->orWhereHas('owner', fn ($o) => $o->where('name', 'like', "%{$term}%"))
+                    ->orWhereHas('agent', fn ($a) => $a->where('name', 'like', "%{$term}%"))
+                    ->orWhereHas('stage', fn ($s) => $s->where('name', 'like', "%{$term}%"))
+                    ->orWhereHas('source', fn ($s) => $s->where('name', 'like', "%{$term}%"))
+                    ->orWhereHas('tags', fn ($t) => $t->where('lead_tags.name', 'like', "%{$term}%"));
+            });
+        }
+
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
@@ -107,7 +124,56 @@ class LeadService
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
 
+        if (!empty($filters['quick']) && array_key_exists($filters['quick'], self::QUICK_FILTERS)) {
+            [$sql, $bindings] = $this->quickFilterCondition($filters['quick']);
+            $query->whereRaw($sql, $bindings);
+        }
+
         return $query;
+    }
+
+    /** The stat cards on top of the Leads listing — each one is also a quick filter (`quick`). */
+    public const QUICK_FILTERS = [
+        'active_24h' => 'Active · 24 hours',
+        'last_7d' => 'New · last 7 days',
+        'website' => 'With website insights',
+    ];
+
+    /**
+     * [sql, bindings] for a quick filter, used both to filter the listing and, as a CASE, to
+     * count every card in one query (quickFilterCounts):
+     *  - active_24h: received in the last 24 hours, or its website visitor was on the site then;
+     *  - last_7d:    received in the last 7 days;
+     *  - website:    came from a tracked website visitor (has the Insights tab / Lead Insights).
+     */
+    protected function quickFilterCondition(string $key): array
+    {
+        $day = now()->subDay();
+
+        return match ($key) {
+            'active_24h' => ['(leads.created_at >= ? or exists (select 1 from visitor_leads where visitor_leads.id = leads.visitor_lead_id and visitor_leads.last_seen_at >= ?))', [$day, $day]],
+            'last_7d' => ['leads.created_at >= ?', [now()->subDays(7)->startOfDay()]],
+            'website' => ['leads.visitor_lead_id is not null', []],
+        };
+    }
+
+    /**
+     * Counts for the stat cards — Total plus each quick filter — under the listing's other filters
+     * (search, agent, stage, source, tag, dates), so the cards follow what's being filtered.
+     * One aggregate query, whatever the number of leads.
+     */
+    public function quickFilterCounts(?int $ownerId, array $filters = []): array
+    {
+        $query = $this->filteredQuery($ownerId, \Illuminate\Support\Arr::except($filters, 'quick'))
+            ->setEagerLoads([])->reorder()
+            ->select(DB::raw('count(*) as total'));
+
+        foreach (array_keys(self::QUICK_FILTERS) as $key) {
+            [$sql, $bindings] = $this->quickFilterCondition($key);
+            $query->selectRaw("coalesce(sum(case when {$sql} then 1 else 0 end), 0) as {$key}", $bindings);
+        }
+
+        return array_map('intval', (array) $query->toBase()->first());
     }
 
     /**
@@ -133,10 +199,31 @@ class LeadService
         return $this->filteredQuery($ownerId, $filters)->paginate($perPage)->withQueryString();
     }
 
-    /** All filtered leads for the client-side DataTable on the CRM listing. */
-    public function getAllFilteredLeads(?int $ownerId, array $filters = []): Collection
+    /** Columns the CRM listing can be sorted by (the table's data-column-key values). */
+    public const SORTABLE_COLUMNS = ['lead', 'email', 'phone', 'owner', 'agent', 'stage', 'status', 'source', 'message', 'notes', 'received'];
+
+    /**
+     * One page of the CRM listing (server-side DataTable) — only the rows on screen are loaded
+     * and rendered, so filtering stays fast however many leads there are.
+     */
+    public function getListingPage(?int $ownerId, array $filters, string $sort = 'received', string $dir = 'desc', int $perPage = 10, int $page = 1): LengthAwarePaginator
     {
-        return $this->filteredQuery($ownerId, $filters)->get();
+        $dir = $dir === 'asc' ? 'asc' : 'desc';
+        $query = $this->filteredQuery($ownerId, $filters)->reorder();
+        $nameOf = fn (string $table, string $foreignKey) => DB::table($table)->select('name')->whereColumn("{$table}.id", "leads.{$foreignKey}")->limit(1);
+
+        match ($sort) {
+            'lead' => $query->orderBy('leads.name', $dir),
+            'email', 'phone', 'status', 'message' => $query->orderBy("leads.{$sort}", $dir),
+            'owner' => $query->orderBy($nameOf('portal_users', 'portal_user_id'), $dir),
+            'agent' => $query->orderBy($nameOf('portal_users', 'agent_id'), $dir),
+            'stage' => $query->orderBy($nameOf('lead_stages', 'stage_id'), $dir),
+            'source' => $query->orderBy($nameOf('lead_sources', 'source_id'), $dir),
+            'notes' => $query->orderBy('notes_history_count', $dir),
+            default => $query->orderBy('leads.created_at', $dir),
+        };
+
+        return $query->orderBy('leads.id', $dir)->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**

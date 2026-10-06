@@ -54,6 +54,10 @@ class LeadController extends Controller
             'tag_id' => $request->input('tag_id'),
             'date_from' => $request->input('date_from'),
             'date_to' => $request->input('date_to'),
+            // The table's "Quick search" box (server-side DataTable).
+            'table_search' => is_string($request->input('q')) ? trim($request->input('q')) : null,
+            // A stat card on top of the listing (LeadService::QUICK_FILTERS).
+            'quick' => array_key_exists((string) $request->input('quick'), LeadService::QUICK_FILTERS) ? $request->input('quick') : null,
         ], fn ($value) => $value !== null && $value !== '');
     }
 
@@ -67,7 +71,21 @@ class LeadController extends Controller
         }
 
         $filters = $this->filtersFromRequest($request);
-        $leads = $this->leadService->getAllFilteredLeads($ownerId, $filters);
+
+        // Only the page on screen is loaded and rendered (server-side DataTable) — rendering every
+        // matching lead on each filter change is what made filtering slow.
+        $perPage = (int) $request->input('per_page', 10);
+        $listing = [
+            'sort' => in_array($request->input('sort'), LeadService::SORTABLE_COLUMNS, true) ? $request->input('sort') : 'received',
+            'dir' => $request->input('dir') === 'asc' ? 'asc' : 'desc',
+            'per_page' => in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10,
+            'q' => $filters['table_search'] ?? '',
+        ];
+        $leads = $this->leadService->getListingPage($ownerId, $filters, $listing['sort'], $listing['dir'], $listing['per_page'], max(1, (int) $request->input('page', 1)));
+        // Matching leads before the Quick search — DataTables' "filtered from N" total.
+        $listingTotal = empty($filters['table_search'])
+            ? $leads->total()
+            : $this->leadService->filteredQuery($ownerId, \Illuminate\Support\Arr::except($filters, 'table_search'))->setEagerLoads([])->reorder()->count();
 
         // In the Super Admin's global view, use the same shared Admin master
         // data managed under Master > Stage, Tag, and Source. Selecting an
@@ -78,11 +96,31 @@ class LeadController extends Controller
         }
 
         $stages = LeadStage::forOwner($masterDataOwnerId)->orderBy('order_index')->get();
+
+        // The table's own page / sort / Quick search requests (index.blade.php, DataTables ajax):
+        // just this page's rows plus the counts.
+        if ($request->boolean('dt')) {
+            return response()->json([
+                'total' => $listingTotal,
+                'filtered' => $leads->total(),
+                'rows' => view('portal.crm.leads._lead_rows', [
+                    'leads' => $leads,
+                    'stages' => $stages,
+                    'isAdmin' => $this->isAdmin(),
+                    'leadTableColumns' => $this->leadTablePreferenceService->getUserColumns(),
+                ])->render(),
+            ]);
+        }
+
         $sources = LeadSource::forOwner($masterDataOwnerId)->orderBy('order_index')->get();
         $tags = LeadTag::forOwner($masterDataOwnerId)->orderBy('name')->get();
 
         $viewData = [
             'leads' => $leads,
+            'listing' => $listing,
+            'listingTotal' => $listingTotal,
+            // The stat cards ignore the Quick search, like the filters' own counts.
+            'quickCounts' => $this->leadService->quickFilterCounts($ownerId, \Illuminate\Support\Arr::except($filters, 'table_search')),
             'stages' => $stages,
             'sources' => $sources,
             'tags' => $tags,
@@ -190,6 +228,15 @@ class LeadController extends Controller
      * restricts them to their own leads; for Super Admin editing another
      * owner's lead, it deliberately always shows Admin's own Master data.
      */
+    /** Insights tab — the next page of the website visitor's timeline / favorites / saved searches / chats (load on scroll). */
+    public function insights(Request $request, $id)
+    {
+        $visitorLead = $this->findOwned($id)->visitorLead;
+        abort_unless($visitorLead, 404);
+
+        return response()->json(app(\App\Services\Visitors\VisitorInsights::class)->feed($visitorLead, $request));
+    }
+
     public function show(Request $request, $id)
     {
         $lead = $this->findOwned($id);

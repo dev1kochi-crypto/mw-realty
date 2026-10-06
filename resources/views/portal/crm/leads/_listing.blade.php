@@ -1,10 +1,12 @@
 {{-- Filters + stats cards + table + pagination — reloaded via AJAX (LeadController::index
      with an XHR header) after Create/Edit/Delete so the page never has to fully reload. --}}
-@php($activeFilterCount = collect(['search', 'owner_id', 'agent_id', 'stage_id', 'source_id', 'tag_id', 'date_from', 'date_to'])->filter(fn ($key) => filled(request($key)))->count())
+@php($activeFilterCount = collect(['search', 'owner_id', 'agent_id', 'stage_id', 'source_id', 'tag_id', 'date_from', 'date_to', 'quick'])->filter(fn ($key) => filled($filters[$key] ?? null))->count())
 @php($filterSet = fn (string ...$keys) => collect($keys)->contains(fn ($key) => filled(request($key))) ? 'is-set' : '')
+@php($quick = $filters['quick'] ?? '')
 <div class="portal-card portal-filter-bar mb-3">
     <form method="GET" class="portal-filter-bar__form">
         <input type="hidden" name="status" value="{{ request('status') }}">
+        <input type="hidden" name="quick" value="{{ $quick }}">
         <div class="portal-filter-field portal-filter-field--search {{ $filterSet('search') }}">
             <label class="visually-hidden" for="leadFilterSearch">Search</label>
             <div class="portal-filter-control">
@@ -98,15 +100,36 @@
 
 
 @php($hasTableField = fn (string $field) => in_array($field, $leadTableColumns, true))
-<div class="portal-card p-3 p-md-4">
+<div class="portal-card p-3 portal-leads-table-card">
+    {{-- Quick filters — counts follow the filters above; clicking one also filters the list to it
+         (quick=…, LeadService::QUICK_FILTERS), clicking it again or Total shows everything. The table
+         script moves this into its top row, between "Show N leads" and Quick search. --}}
+    <div class="portal-lead-quick" id="leadQuickFilters" role="group" aria-label="Quick filters">
+        @foreach([
+            ['', 'Total', 'fa-users', 'indigo', 'All received leads', $quickCounts['total']],
+            ['active_24h', 'Active 24h', 'fa-bolt', 'teal', 'Received in the last 24 hours, or on the website then', $quickCounts['active_24h']],
+            ['last_7d', 'Last 7 days', 'fa-calendar-week', 'amber', 'Received in the last 7 days', $quickCounts['last_7d']],
+            ['website', 'Website Insights', 'fa-chart-line', 'rose', 'Came from a tracked website visitor', $quickCounts['website']],
+        ] as [$key, $label, $icon, $tone, $hint, $count])
+        <button type="button" class="portal-lead-quick__chip tone-{{ $tone }} {{ $quick === $key ? 'is-active' : '' }}" data-lead-quick="{{ $key }}" aria-pressed="{{ $quick === $key ? 'true' : 'false' }}" title="{{ $hint }}">
+            <i class="fas {{ $icon }}" aria-hidden="true"></i>{{ $label }}<strong>{{ number_format($count) }}</strong>
+        </button>
+        @endforeach
+    </div>
+    {{-- Shown while filters / pages / sorting load (#leadsListingWrapper.leads-loading). --}}
+    <div class="portal-leads-loader" role="status" aria-live="polite"><span class="portal-leads-loader__box"><span class="portal-leads-loader__spin" aria-hidden="true"></span>Loading leads…</span></div>
     <div class="portal-table-toolbar">
         <span id="leadTableScrollHint" class="portal-table-scroll-hint d-none"><i class="fas fa-arrows-left-right me-1" aria-hidden="true"></i>Scroll horizontally to see all selected fields</span>
     </div>
     <div class="table-responsive">
-        <table class="table portal-table mb-0" id="leadsDataTable" data-has-rows="{{ $leads->isNotEmpty() ? 'true' : 'false' }}" data-total-rows="{{ $leads->count() }}">
+        {{-- Server-side DataTable (index.blade.php): data-total-rows = leads matching everything incl. the
+             Quick search (what "select all" covers); data-listing-total = before the Quick search. --}}
+        <table class="table portal-table mb-0" id="leadsDataTable" data-has-rows="{{ $listingTotal ? 'true' : 'false' }}" data-total-rows="{{ $leads->total() }}" data-listing-total="{{ $listingTotal }}" data-sort="{{ $listing['sort'] }}" data-dir="{{ $listing['dir'] }}" data-per-page="{{ $listing['per_page'] }}" data-q="{{ $listing['q'] }}">
             <thead>
                 <tr>
                     <th style="width: 2.5rem;"><input type="checkbox" class="form-check-input" id="selectAllLeads"></th>
+                    {{-- Row number in the current order / page — filled in by the table script. --}}
+                    <th class="portal-lead-sn">#</th>
                     <th data-column-key="lead">Lead</th>
                     @if($hasTableField('email'))
                     <th data-column-key="email">Email</th>
@@ -130,7 +153,7 @@
                     <th data-column-key="source">Source</th>
                     @endif
                     @if($hasTableField('tags'))
-                    <th data-column-key="tags">Tags</th>
+                    <th data-column-key="tags" data-orderable="false">Tags</th>
                     @endif
                     @if($hasTableField('message'))
                     <th data-column-key="message">Message</th>
@@ -144,133 +167,18 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($leads as $lead)
-                <tr class="portal-lead-row" data-lead-id="{{ $lead->id }}" tabindex="0" aria-label="View {{ $lead->name ?: 'lead' }} details">
-                    <td data-lead-selection><input type="checkbox" class="form-check-input lead-select-checkbox" value="{{ $lead->id }}"></td>
-                    <td data-column-key="lead">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="portal-lead-avatar">{{ strtoupper(mb_substr($lead->name ?: '?', 0, 1)) }}</span>
-                            <div class="min-w-0">
-                                {{-- Name + repeat-enquiry count on one line, so the row keeps its height. --}}
-                                <div class="d-flex align-items-center gap-1 flex-nowrap" style="max-width: 200px;">
-                                    <a href="{{ route('portal.crm.leads.show', $lead->id) }}" class="portal-lead-name-button text-decoration-none text-truncate" style="min-width: 0;" aria-label="View details for {{ $lead->name ?: 'lead' }}" title="{{ $lead->name }}">
-                                        {{ $lead->name ?: 'Unknown' }}
-                                    </a>
-                                    @if($lead->enquiry_count > 1)
-                                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis flex-shrink-0" style="font-size: 0.66rem; padding: 0.2em 0.5em;" title="Enquired {{ $lead->enquiry_count }} times{{ $lead->last_enquired_at ? ' — latest ' . $lead->last_enquired_at->format('d M Y') : '' }}">&times;{{ $lead->enquiry_count }}</span>
-                                    @endif
-                                </div>
-                                <div class="text-muted text-truncate" style="font-size: 0.78rem; max-width: 180px;">{{ $lead->email ?: $lead->formatted_phone ?: '-' }}</div>
-                            </div>
-                        </div>
-                    </td>
-                    @if($hasTableField('email'))
-                    <td data-column-key="email" data-search="{{ $lead->email ?? '' }}"><span class="portal-table-email">{{ $lead->email ?: '-' }}</span></td>
-                    @endif
-                    @if($hasTableField('phone'))
-                    <td data-column-key="phone" data-search="{{ $lead->formatted_phone ?? '' }}">{{ $lead->formatted_phone ?: '-' }}</td>
-                    @endif
-                    @if($isAdmin && $hasTableField('owner'))
-                    <td data-column-key="owner">
-                        @if($lead->owner)
-                            {{ $lead->owner->displayName() }}
-                        @else
-                            <span class="text-muted">-</span>
-                        @endif
-                    </td>
-                    @endif
-                    @if($hasTableField('agent'))
-                    <td data-column-key="agent" data-search="{{ $lead->agent?->name ?? 'Unassigned' }}" data-order="{{ $lead->agent?->name ?? '' }}">
-                        @if($lead->agent)
-                            <div class="fw-semibold">{{ $lead->agent->name }}</div>
-                        @else
-                            <span class="badge bg-warning-subtle text-warning-emphasis">Unassigned</span>
-                        @endif
-                        @if($lead->assignmentLabel() && $lead->agent)
-                            <div class="text-muted" style="font-size: 0.72rem;">{{ $lead->assignmentLabel() }}</div>
-                        @endif
-                    </td>
-                    @endif
-                    @if($hasTableField('stage'))
-                    <td data-column-key="stage" data-search="{{ $lead->stage?->name ?? '' }}" data-order="{{ $lead->stage?->name ?? '' }}">
-                        <div class="portal-inline-stage">
-                            <button type="button" class="portal-stage-picker" title="Change stage" aria-label="Change stage for {{ $lead->name ?: 'lead' }}">
-                                @if($lead->stage)
-                                <span class="portal-stage-pill" style="background: {{ $lead->stage->color }}22; color: {{ $lead->stage->color }};">
-                                    <span class="portal-color-dot" style="background: {{ $lead->stage->color }};"></span>{{ $lead->stage->name }}
-                                </span>
-                                @else
-                                <span class="portal-stage-picker-empty"><i class="fas fa-plus" aria-hidden="true"></i> Set stage</span>
-                                @endif
-                                <i class="fas fa-chevron-down portal-stage-picker-chevron" aria-hidden="true"></i>
-                            </button>
-                            <select class="form-select form-select-sm portal-stage-select d-none" data-lead-id="{{ $lead->id }}" aria-label="Stage for {{ $lead->name ?: 'lead' }}">
-                                <option value="">No stage</option>
-                                @foreach($stages as $stage)
-                                <option value="{{ $stage->id }}" {{ (int) $lead->stage_id === $stage->id ? 'selected' : '' }}>{{ $stage->name }}</option>
-                                @endforeach
-                                @if($lead->stage && !$stages->contains('id', $lead->stage_id))
-                                <option value="{{ $lead->stage->id }}" selected>{{ $lead->stage->name }} (current)</option>
-                                @endif
-                            </select>
-                            <span class="spinner-border spinner-border-sm text-primary d-none portal-stage-spinner" role="status" aria-hidden="true"></span>
-                        </div>
-                    </td>
-                    @endif
-                    @if($hasTableField('status'))
-                    <td data-column-key="status" data-search="{{ $lead->status }}">
-                        <span class="portal-badge-status portal-badge-{{ $lead->status }}">{{ ucfirst($lead->status) }}</span>
-                    </td>
-                    @endif
-                    @if($hasTableField('source'))
-                    <td>{{ $lead->source?->name ?? '—' }}</td>
-                    @endif
-                    @if($hasTableField('tags'))
-                    <td data-column-key="tags" data-search="{{ $lead->tags->pluck('name')->implode(' ') }}">
-                        <div class="portal-tags-cell">
-                            <button type="button" class="portal-tags-picker" data-id="{{ $lead->id }}" title="Manage tags" aria-label="Manage tags for {{ $lead->name ?: 'lead' }}">
-                                @forelse($lead->tags->take(1) as $tag)
-                                <span class="portal-tag-chip" style="background: {{ $tag->color }}22; color: {{ $tag->color }};">{{ $tag->name }}</span>
-                                @empty
-                                <span class="portal-tags-empty"><i class="fas fa-plus" aria-hidden="true"></i> Add tags</span>
-                                @endforelse
-                            </button>
-                            @if($lead->tags->count() > 1)
-                            <button type="button" class="portal-tag-overflow" data-id="{{ $lead->id }}" aria-haspopup="true" aria-expanded="false" title="Show other tags">+{{ $lead->tags->count() - 1 }}</button>
-                            @endif
-                            @if($lead->tags->isNotEmpty())
-                            <button type="button" class="portal-tags-picker portal-tags-add" data-id="{{ $lead->id }}" title="Add tags" aria-label="Add tags to {{ $lead->name ?: 'lead' }}"><i class="fas fa-plus" aria-hidden="true"></i></button>
-                            @endif
-                        </div>
-                    </td>
-                    @endif
-                    @if($hasTableField('message'))
-                    <td data-column-key="message" data-search="{{ $lead->message ?? '' }}">
-                        <span class="portal-lead-message-excerpt">{{ \Illuminate\Support\Str::limit($lead->message ?: '-', 70) }}</span>
-                    </td>
-                    @endif
-                    @if($hasTableField('notes'))
-                    <td data-column-key="notes" data-order="{{ $lead->notes_history_count }}">
-                        @if($lead->notes_history_count)
-                        <span class="portal-lead-notes-count"><i class="fas fa-note-sticky" aria-hidden="true"></i>{{ $lead->notes_history_count }}</span>
-                        @else
-                        <span class="text-muted">-</span>
-                        @endif
-                    </td>
-                    @endif
-                    @if($hasTableField('received'))
-                    <td data-column-key="received" class="text-muted" data-order="{{ $lead->created_at->format('Y-m-d H:i:s') }}">{{ $lead->created_at->format('d M Y') }}</td>
-                    @endif
-                </tr>
-                @empty
+                @if($leads->isNotEmpty())
+                @include('portal.crm.leads._lead_rows')
+                @elseif(!$listingTotal)
+                {{-- With leads but no Quick search match, DataTables shows its own "No matching leads". --}}
                 <tr>
-                    <td colspan="{{ count($leadTableColumns) + 1 }}" class="portal-empty" data-empty-cell>
+                    <td colspan="{{ count($leadTableColumns) + 2 }}" class="portal-empty" data-empty-cell>
                         <div class="portal-empty-icon"><i class="fas fa-address-book"></i></div>
-                        <div class="fw-semibold mb-1">No leads {{ request('status') || request('stage_id') || request('source_id') || request('tag_id') ? 'match these filters' : 'yet' }}</div>
+                        <div class="fw-semibold mb-1">No leads {{ $activeFilterCount ? 'match these filters' : 'yet' }}</div>
                         <div style="font-size: 0.85rem;">They'll show up here the moment a visitor enquires about {{ $isAdmin ? 'a' : 'one of your' }} listing{{ $isAdmin ? '' : 's' }}.</div>
                     </td>
                 </tr>
-                @endforelse
+                @endif
             </tbody>
         </table>
     </div>

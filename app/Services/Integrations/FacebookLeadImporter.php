@@ -31,9 +31,6 @@ class FacebookLeadImporter
     private ?string $lastSource = null;
     private ?Lead $lastLead = null;
 
-    /** Leads listed per agent in their summary email (the count covers all of them). */
-    private const AGENT_EMAIL_LIST = 50;
-
     /** Totals of the last sync() — see summary(). */
     private array $summary = [];
 
@@ -178,7 +175,7 @@ class FacebookLeadImporter
         $this->summary = [
             'since' => $sinceAt?->toDateTimeString(), 'forms' => count($forms), 'facebook_total' => array_sum(array_column($forms, 'leads_count')),
             'fetched' => 0, 'new' => 0, 'merged' => 0, 'skipped' => 0, 'campaigns' => [],
-            // agent id => ['count' => n, 'leads' => [first AGENT_EMAIL_LIST leads]] — round-robin results.
+            // agent id => ['count' => n, 'new' => n, 'updated' => n, 'sources' => [name => n]] — round-robin results.
             'agents' => [],
         ];
 
@@ -240,7 +237,7 @@ class FacebookLeadImporter
         foreach ($this->summary['agents'] as $agentId => $assigned) {
             $agent = $agents->get($agentId);
             if ($agent?->email) {
-                $this->queueMail($agent->email, new \App\Mail\FacebookLeadsAssignedMail($connection, $agent, $assigned['count'], $assigned['leads'], $context), $connection);
+                $this->queueMail($agent->email, new \App\Mail\FacebookLeadsAssignedMail($connection, $agent, $assigned, $context), $connection);
             }
         }
     }
@@ -262,20 +259,13 @@ class FacebookLeadImporter
             return;
         }
 
+        // Totals only — the agent's email is a summary, not a list of leads.
         $entry = &$this->summary['agents'][$lead->agent_id];
-        $entry ??= ['count' => 0, 'leads' => []];
+        $entry ??= ['count' => 0, 'new' => 0, 'updated' => 0, 'sources' => []];
         $entry['count']++;
-        if (count($entry['leads']) < self::AGENT_EMAIL_LIST) {
-            $entry['leads'][] = [
-                'id' => $lead->id,
-                'name' => $lead->name,
-                'email' => $lead->email,
-                'phone' => $lead->phone ? trim(($lead->phone_country_code ?? '') . ' ' . $lead->phone) : null,
-                'source' => $this->lastSource,
-                'campaign' => $this->lastCampaign,
-                'updated' => $this->lastOutcome === 'merged',
-            ];
-        }
+        $entry[$this->lastOutcome === 'merged' ? 'updated' : 'new']++;
+        $source = $this->lastSource ?: self::FALLBACK_SOURCE;
+        $entry['sources'][$source] = ($entry['sources'][$source] ?? 0) + 1;
         unset($entry);
     }
 

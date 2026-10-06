@@ -3,6 +3,7 @@
 @section('title', 'Create Account')
 
 @push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.1/build/css/intlTelInput.css">
 <style>
     .portal-auth-card { max-width: 760px; }
     .portal-form-section {
@@ -61,8 +62,10 @@
         </div>
         <div class="col-md-6">
             <label>Phone</label>
-            <input type="text" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone') }}">
-            @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            <input type="hidden" name="phone_country_code" value="{{ old('phone_country_code', '+971') }}">
+            <input type="tel" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone') }}" maxlength="20" placeholder="50 123 4567" data-phone-input>
+            @error('phone')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+            @error('phone_country_code')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
         </div>
         <div class="col-md-6">
             <label>Password</label>
@@ -192,6 +195,9 @@
 @endsection
 
 @push('scripts')
+{{-- Country-code picker for the phone field (as in the portal — see portal/js/phone-input.js). --}}
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.1/build/js/intlTelInput.min.js"></script>
+<script src="{{ asset('portal/js/phone-input.js') }}?v={{ filemtime(public_path('portal/js/phone-input.js')) }}"></script>
 <script>
     document.querySelectorAll('input[name="type"]').forEach(function (radio) {
         radio.addEventListener('change', function () {

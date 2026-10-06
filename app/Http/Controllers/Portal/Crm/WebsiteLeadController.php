@@ -96,7 +96,16 @@ class WebsiteLeadController extends Controller
         return view('portal.crm.website-leads.show', $insights->for($websiteLead) + [
             'previousLeadId' => $newer,
             'nextLeadId' => $older,
+            'feedUrl' => route('portal.crm.website-leads.insights', $websiteLead),
         ]);
+    }
+
+    /** Insights panel — the next page of its timeline / favorites / saved searches / chats (load on scroll). */
+    public function insights(Request $request, VisitorLead $websiteLead, VisitorInsights $insights)
+    {
+        $this->authorizeAdmin();
+
+        return response()->json($insights->feed($websiteLead, $request));
     }
 
     /** Transfer one lead, the ticked ones, or (all=1) every lead matching the listing's filters. */

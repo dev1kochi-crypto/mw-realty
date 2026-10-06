@@ -3,6 +3,7 @@
 namespace App\Services\Visitors;
 
 use App\Models\Property;
+use App\Models\Visitors\ChatMessage;
 use App\Models\Visitors\VisitorEvent;
 use App\Models\Visitors\VisitorLead;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,9 @@ use Illuminate\Support\Facades\DB;
  */
 class VisitorInsights
 {
-    private const TIMELINE_LIMIT = 200;
+    /** Rows per request for every list on the panel — the rest loads on scroll (page()). */
+    public const PAGE_SIZE = 20;
+    public const SECTIONS = ['timeline', 'favorites', 'searches', 'chats', 'messages'];
 
     public function for(VisitorLead $lead): array
     {
@@ -41,6 +44,7 @@ class VisitorInsights
                 'favorites' => $customer ? $customer->wishlistProperties()->count() : $count(VisitorEvent::FAVORITE_ADDED),
                 'saved_searches' => $customer ? $customer->savedSearches()->count() : $count(VisitorEvent::SAVED_SEARCH),
                 'chats' => $lead->conversations()->where('message_count', '>', 0)->count(),
+                'chat_messages' => (int) $lead->conversations()->sum('message_count'),
                 'enquiries' => $count(VisitorEvent::ENQUIRY),
                 'first_seen' => (clone $events)->min('created_at') ?? $lead->created_at,
                 'last_seen' => $lead->last_seen_at ?? $lead->updated_at,
@@ -51,11 +55,10 @@ class VisitorInsights
                 'seconds' => (int) $row->seconds,
                 'last_viewed_at' => \Illuminate\Support\Carbon::parse($row->last_viewed_at),
             ])->filter(fn ($row) => $row['property'])->values(),
-            'favorites' => $customer
-                ? $customer->wishlistProperties()->latest('property_wishlists.created_at')->limit(20)->get()
-                : collect(),
-            'savedSearches' => $customer ? $customer->savedSearches()->latest()->limit(20)->get() : collect(),
-            'conversations' => $lead->conversations()->where('message_count', '>', 0)->with('messages')->latest('last_message_at')->get(),
+            // First page of each list; the panel loads the rest on scroll through page().
+            'favorites' => $this->page($lead, 'favorites'),
+            'savedSearches' => $this->page($lead, 'searches'),
+            'conversations' => $this->page($lead, 'chats'),
             'crmLeads' => $lead->crmLeads()->with(['owner', 'agent', 'property'])->latest()->get(),
             // What they search for: the most used listing filters (e.g. "Bedrooms: 2" ×3).
             'searchInterests' => (clone $events)->whereIn('type', [VisitorEvent::SEARCH, VisitorEvent::SAVED_SEARCH])
@@ -65,8 +68,76 @@ class VisitorInsights
                     ->map(fn ($value, $key) => ucfirst(str_replace(['_', '-'], ' ', $key)) . ': ' . $value)
                     ->values())
                 ->countBy()->sortDesc()->take(10),
-            'timeline' => (clone $events)->with('property')->latest('id')->limit(self::TIMELINE_LIMIT)->get(),
-            'timelineLimit' => self::TIMELINE_LIMIT,
+            'timeline' => $this->page($lead, 'timeline'),
+            // Activity Timeline counts: every event but chats (those live in AI Chat History); key = no plain page views.
+            'activityCounts' => [
+                'all' => (int) $counts->toBase()->except([VisitorEvent::CHAT_STARTED])->sum('total'),
+                'key' => (int) $counts->toBase()->except([VisitorEvent::CHAT_STARTED, VisitorEvent::PAGE_VIEW])->sum('total'),
+            ],
+        ];
+    }
+
+    /**
+     * One page (PAGE_SIZE rows) of a panel list — keyset-paged on id, so a lead with hundreds of
+     * thousands of events costs the same per request as one with ten. `after` is the last id the
+     * panel already shows, `filter` the timeline's key|all, `conversation` the chat being read.
+     * Returns ['items' => Collection, 'next' => ?int]; next is null on the last page.
+     */
+    public function page(VisitorLead $lead, string $section, array $params = []): array
+    {
+        $after = (int) ($params['after'] ?? 0);
+        $customer = $lead->customer;
+
+        [$query, $key, $direction] = match ($section) {
+            'timeline' => [
+                VisitorEvent::where('visitor_lead_id', $lead->id)->with('property')->whereNotIn('type', ($params['filter'] ?? 'key') === 'all'
+                    ? [VisitorEvent::CHAT_STARTED]
+                    : [VisitorEvent::CHAT_STARTED, VisitorEvent::PAGE_VIEW]),
+                'visitor_events.id', 'desc',
+            ],
+            'favorites' => [$customer?->wishlistProperties()->withPivot('id'), 'property_wishlists.id', 'desc'],
+            'searches' => [$customer?->savedSearches(), 'saved_searches.id', 'desc'],
+            'chats' => [$lead->conversations()->where('message_count', '>', 0), 'chat_conversations.id', 'desc'],
+            // Oldest first, like a chat — and only from this lead's own conversations.
+            'messages' => [
+                ChatMessage::where('chat_conversation_id', (int) ($params['conversation'] ?? 0))
+                    ->whereHas('conversation', fn ($q) => $q->where('visitor_lead_id', $lead->id)),
+                'chat_messages.id', 'asc',
+            ],
+        };
+
+        if (!$query) {
+            return ['items' => collect(), 'next' => null];
+        }
+
+        $rows = $query->when($after > 0, fn ($q) => $q->where($key, $direction === 'desc' ? '<' : '>', $after))
+            ->reorder($key, $direction)->limit(self::PAGE_SIZE + 1)->get();
+        $items = $rows->take(self::PAGE_SIZE);
+        $last = $items->last();
+
+        return [
+            'items' => $items,
+            'next' => $rows->count() > self::PAGE_SIZE ? ($section === 'favorites' ? $last->pivot->id : $last->id) : null,
+        ];
+    }
+
+    /**
+     * The panel's load-on-scroll endpoint (CRM lead page and Super Admin's website lead page):
+     * the next page of one list as rendered rows (visitor-insights._rows) plus the next cursor.
+     */
+    public function feed(VisitorLead $lead, \Illuminate\Http\Request $request): array
+    {
+        $params = $request->validate([
+            'section' => 'required|in:' . implode(',', self::SECTIONS),
+            'after' => 'nullable|integer|min:0',
+            'filter' => 'nullable|in:key,all',
+            'conversation' => 'required_if:section,messages|integer',
+        ]);
+        $page = $this->page($lead, $params['section'], $params);
+
+        return [
+            'html' => view('visitor-insights._rows', ['section' => $params['section'], 'items' => $page['items'], 'lead' => $lead])->render(),
+            'next' => $page['next'],
         ];
     }
 

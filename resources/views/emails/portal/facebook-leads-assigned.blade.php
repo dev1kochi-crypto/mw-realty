@@ -15,20 +15,20 @@
     and <strong>{{ $count }}</strong> {{ $count === 1 ? 'was' : 'were' }} assigned to you. They're in your Leads now — please follow up.
 </p>
 
-<x-email.details :title="count($leads) < $count ? 'Your first ' . count($leads) . ' leads' : 'Your leads'">
-    @foreach($leads as $lead)
-    <x-email.row :label="$lead['name']" :strong="true">
-        @if($lead['phone']){{ $lead['phone'] }}@endif
-        @if($lead['phone'] && $lead['email']) · @endif
-        @if($lead['email']){{ $lead['email'] }}@endif
-        <br><span style="color:#838aa3;">{{ $lead['source'] }}@if($lead['campaign'] && $lead['campaign'] !== $lead['source']) · {{ $lead['campaign'] }}@endif{{ $lead['updated'] ? ' · existing lead, new enquiry' : '' }}</span>
-        <br><a href="{{ route('portal.crm.leads.show', $lead['id']) }}" style="color:#04789a;">Open lead</a>
-    </x-email.row>
-    @endforeach
+<x-email.details title="Summary">
+    <x-email.row label="Assigned to you" :strong="true">{{ number_format($count) }}</x-email.row>
+    <x-email.row label="New leads">{{ number_format($newCount) }}</x-email.row>
+    @if($updatedCount)
+    <x-email.row label="Existing leads, new enquiry">{{ number_format($updatedCount) }}</x-email.row>
+    @endif
 </x-email.details>
 
-@if(count($leads) < $count)
-<x-email.muted>…and {{ $count - count($leads) }} more. See them all in Leads.</x-email.muted>
+@if(count($sources) > 1)
+<x-email.details title="By source">
+    @foreach($sources as $source => $n)
+    <x-email.row :label="$source">{{ number_format($n) }}</x-email.row>
+    @endforeach
+</x-email.details>
 @endif
 @endsection
 

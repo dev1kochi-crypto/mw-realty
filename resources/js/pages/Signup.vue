@@ -8,18 +8,17 @@ import { usePasswordValidation } from '../composables/usePasswordValidation';
 import { useStaticText } from '../composables/useStaticText';
 import AuthGlassAmbient from '../components/auth/AuthGlassAmbient.vue';
 import PasswordCreationField from '../components/auth/PasswordCreationField.vue';
+import PhoneInput from '../components/PhoneInput.vue';
+import { phoneError } from '../composables/useContactValidation';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_RE = /^[+]?[\d\s()-]{7,20}$/;
 function isValidEmail(value) {
     return EMAIL_RE.test((value || '').trim());
 }
+// Phone is optional on every signup tab; when given: 7–13 digits, without the country code
+// (picked separately) — the same check the server makes (AppRulesPhoneNumber).
 function isValidPhone(value) {
-    const v = (value || '').trim();
-    if (v === '') return true; // phone is optional on every signup tab
-    if (!PHONE_RE.test(v)) return false;
-    const digitCount = v.replace(/\D/g, '').length;
-    return digitCount >= 7 && digitCount <= 15;
+    return phoneError(value) === null;
 }
 
 const { t } = useStaticText();
@@ -72,6 +71,8 @@ const { isValid: passwordValid, passwordsMatch } = usePasswordValidation(passwor
 const userName = ref(oldInput.name || '');
 const userEmail = ref(oldInput.email || '');
 const userPhone = ref(oldInput.phone || '');
+// Dial code for whichever tab is showing (only one is mounted) — sent as phone_country_code.
+const phoneCountryCode = ref(oldInput.phone_country_code || '+971');
 const agreeTerms = ref(false);
 
 const agentName = ref(oldInput.name || '');
@@ -200,7 +201,8 @@ onMounted(() => playAuthEntrance(cardEl.value));
 
                                 <div class="mw-login-form__field">
                                     <label for="signup-user-phone">{{ t('signup.phone_label') }}</label>
-                                    <input type="tel" id="signup-user-phone" name="phone" v-model="userPhone" @blur="touch('userPhone')" :class="{ 'is-invalid': touched.userPhone && !isValidPhone(userPhone) }" :placeholder="t('signup.phone_placeholder')" autocomplete="tel">
+                                    <PhoneInput id="signup-user-phone" v-model="userPhone" v-model:country-code="phoneCountryCode" :class="{ 'is-invalid': touched.userPhone && !isValidPhone(userPhone) }" @focusout="touch('userPhone')" />
+                                    <input type="hidden" name="phone_country_code" :value="phoneCountryCode">
                                     <p v-if="touched.userPhone && !isValidPhone(userPhone)" class="mw-field-error">{{ t('signup.phone_invalid') }}</p>
                                 </div>
 
@@ -221,7 +223,8 @@ onMounted(() => playAuthEntrance(cardEl.value));
 
                                 <div class="mw-login-form__field">
                                     <label for="signup-agent-phone">{{ t('signup.phone_label') }}</label>
-                                    <input type="tel" id="signup-agent-phone" name="phone" v-model="agentPhone" @blur="touch('agentPhone')" :class="{ 'is-invalid': touched.agentPhone && !isValidPhone(agentPhone) }" :placeholder="t('signup.phone_placeholder')" autocomplete="tel">
+                                    <PhoneInput id="signup-agent-phone" v-model="agentPhone" v-model:country-code="phoneCountryCode" :class="{ 'is-invalid': touched.agentPhone && !isValidPhone(agentPhone) }" @focusout="touch('agentPhone')" />
+                                    <input type="hidden" name="phone_country_code" :value="phoneCountryCode">
                                     <p v-if="touched.agentPhone && !isValidPhone(agentPhone)" class="mw-field-error">{{ t('signup.phone_invalid') }}</p>
                                 </div>
 
@@ -257,7 +260,8 @@ onMounted(() => playAuthEntrance(cardEl.value));
 
                                 <div class="mw-login-form__field">
                                     <label for="signup-agency-phone">{{ t('signup.phone_label') }}</label>
-                                    <input type="tel" id="signup-agency-phone" name="phone" v-model="agencyPhone" @blur="touch('agencyPhone')" :class="{ 'is-invalid': touched.agencyPhone && !isValidPhone(agencyPhone) }" :placeholder="t('signup.phone_placeholder')" autocomplete="tel">
+                                    <PhoneInput id="signup-agency-phone" v-model="agencyPhone" v-model:country-code="phoneCountryCode" :class="{ 'is-invalid': touched.agencyPhone && !isValidPhone(agencyPhone) }" @focusout="touch('agencyPhone')" />
+                                    <input type="hidden" name="phone_country_code" :value="phoneCountryCode">
                                     <p v-if="touched.agencyPhone && !isValidPhone(agencyPhone)" class="mw-field-error">{{ t('signup.phone_invalid') }}</p>
                                 </div>
 

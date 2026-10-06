@@ -165,7 +165,8 @@
                     <i class="fas fa-map-marker-alt"></i> Nearby Places
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
-                @if($owner)
+                @if($owner || $cmsActor?->hasRole('superadmin'))
+                {{-- Watermark — Super Admin: the default one + every agency / agent watermark. --}}
                 <a href="{{ route('portal.watermark.edit') }}" class="nav-link @if(request()->routeIs('portal.watermark.*')) active @endif">
                     <i class="fas fa-stamp"></i> Listing Settings
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif

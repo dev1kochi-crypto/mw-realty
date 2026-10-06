@@ -2,17 +2,24 @@
 
 namespace App\Services;
 
+use App\Models\CmsKit\SiteInformation;
 use App\Models\PortalUser;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * Listing-photo watermark for an agency or independent agent (Listings Settings → Watermark).
- * Stamped into each gallery photo at upload time (PortalPropertyController::storeGalleryImage()),
- * so it's part of the image file itself everywhere the photo is shown.
+ * Listing-photo watermark (Listings Settings → Watermark). Stamped into each gallery photo at
+ * upload time (PortalPropertyController::storeGalleryImage()), so it's part of the image file
+ * itself everywhere the photo is shown.
  *
- * Settings (portal_users.watermark JSON):
+ * Whose watermark a listing gets (activeSettings()):
+ *   1. the agency's / independent agent's own (an agency's agents use the agency's), when it's on;
+ *   2. otherwise Super Admin's default (site_information.watermark) — also used on Super Admin's
+ *      own listings, which have no portal owner.
+ * In this class a null PortalUser means "Super Admin's default".
+ *
+ * Settings (portal_users.watermark / site_information.watermark JSON):
  *   enabled bool · type image|text · image (path on the private `local` disk) · text · color #rrggbb
  *   opacity 5–100 (%) · size 5–80 (% of the photo's width) · position tl|tc|tr|ml|mc|mr|bl|bc|br
  */
@@ -34,9 +41,24 @@ class Watermark
     private const DISK = 'local';
     private const FONT = 'fonts/DejaVuSans-Bold.ttf';
 
-    public function settings(PortalUser $user): array
+    /** An account's settings — or, for null, Super Admin's default. */
+    public function settings(?PortalUser $user): array
     {
-        return array_merge(self::DEFAULTS, array_intersect_key($user->watermark ?? [], self::DEFAULTS));
+        $stored = $user ? $user->watermark : SiteInformation::first()?->watermark;
+
+        return array_merge(self::DEFAULTS, array_intersect_key($stored ?? [], self::DEFAULTS));
+    }
+
+    public function save(?PortalUser $user, array $settings): void
+    {
+        $settings = array_intersect_key($settings, self::DEFAULTS);
+
+        if ($user) {
+            $user->forceFill(['watermark' => $settings])->save();
+            return;
+        }
+        $info = SiteInformation::first() ?? new SiteInformation();
+        $info->forceFill(['watermark' => $settings])->save();
     }
 
     /** The watermark used on this account's listing photos — an agency's agents use the agency's. */
@@ -45,22 +67,28 @@ class Watermark
         return $user->isAgencyAgent() && $user->company ? $user->company : $user;
     }
 
-    /** Settings to stamp with, or null when the watermark is off / incomplete. */
-    public function activeSettings(?PortalUser $owner): ?array
+    /** These settings when they're on and complete, else null. */
+    public function ready(array $s): ?array
     {
-        if (!$owner) {
-            return null;
-        }
-        $s = $this->settings($owner);
-        $ready = $s['type'] === 'text'
+        $complete = $s['type'] === 'text'
             ? trim((string) $s['text']) !== ''
             : $s['image'] && Storage::disk(self::DISK)->exists($s['image']);
 
-        return $s['enabled'] && $ready ? $s : null;
+        return $s['enabled'] && $complete ? $s : null;
+    }
+
+    /**
+     * Settings to stamp a listing owned by $owner with: the owner's own watermark when it's on,
+     * else Super Admin's default when that's on, else null (no watermark).
+     */
+    public function activeSettings(?PortalUser $owner): ?array
+    {
+        return ($owner ? $this->ready($this->settings($this->ownerFor($owner))) : null)
+            ?? $this->ready($this->settings(null));
     }
 
     /** Normalises an uploaded logo to a PNG (alpha kept, max 1600px wide) on the private disk. */
-    public function storeImage(UploadedFile $file, PortalUser $user): string
+    public function storeImage(UploadedFile $file, ?PortalUser $user): string
     {
         $source = @imagecreatefromstring((string) file_get_contents($file->getRealPath()));
         if (!$source) {
@@ -79,7 +107,7 @@ class Watermark
         $png = ob_get_clean();
         imagedestroy($image);
 
-        $path = 'watermarks/' . $user->id . '-' . Str::random(16) . '.png';
+        $path = 'watermarks/' . ($user?->id ?? 'default') . '-' . Str::random(16) . '.png';
         Storage::disk(self::DISK)->put($path, $png);
 
         return $path;

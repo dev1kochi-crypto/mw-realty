@@ -57,6 +57,14 @@ class PhoneNumber implements ValidationRule
         return [$required ? 'required' : 'nullable', 'string', 'max:30', new self()];
     }
 
+    /** Dial code + number as stored on an account: ("+971", "50 123 4567") → "+971501234567"; no number → null. */
+    public static function combine(?string $countryCode, ?string $number): ?string
+    {
+        $digits = preg_replace('/\D/', '', (string) $number);
+
+        return $digits === '' ? null : ($countryCode ?: '+971') . $digits;
+    }
+
     /** "+971" style dial code sent next to the phone — must be a real calling code (libphonenumber). */
     public static function countryCodeRules(): array
     {

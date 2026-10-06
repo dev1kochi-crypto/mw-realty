@@ -2,17 +2,15 @@
     A website lead's tracked activity (App\Services\Visitors\VisitorInsights::for()) — the Insights
     tab of the CRM lead page and of Super Admin's website lead page. Built from the lead page's own
     pieces (portal-lp-card, portal-lp-stat, portal-lead-timeline) so it reads as part of that page.
-    Expects: $lead (VisitorLead), $stats, $topProperties, $favorites, $savedSearches, $searchInterests,
-    $conversations, $timeline, $timelineLimit.
+    Expects: $lead (VisitorLead), $stats, $topProperties, $searchInterests, $activityCounts, $feedUrl,
+    and the first page (['items', 'next']) of $timeline, $favorites, $savedSearches, $conversations.
+    Long lists (a lead can have thousands of events) load 20 rows at a time as they scroll: each
+    [data-vi-feed] list asks $feedUrl for the rows after its data-vi-next cursor (VisitorInsights::feed()).
 --}}
 @php
     $fmt = fn ($s) => \App\Services\Visitors\VisitorInsights::duration((int) $s);
     [$engagement, $engagementTone] = \App\Services\Visitors\VisitorInsights::engagement($stats);
     $maxPropertySeconds = max(1, (int) $topProperties->max('seconds'));
-    $eventTones = [
-        'property_view' => 'accent', 'favorite_added' => 'accent', 'enquiry' => 'warning', 'saved_search' => 'warning',
-        'routed' => 'success', 'transferred' => 'success', 'identified' => 'success', 'chat_started' => 'primary', 'contact_click' => 'warning',
-    ];
     $firstSeen = \Illuminate\Support\Carbon::parse($stats['first_seen']);
 @endphp
 
@@ -82,7 +80,21 @@
     .vi-act-text a { color: #244373; }
     .vi-act-time { flex: 0 0 auto; font-size: .72rem; color: var(--portal-muted, #6b7094); white-space: nowrap; }
     .vi-act-time i { margin-right: .2rem; }
-    .vi-show-key .is-minor { display: none; }
+    .vi-feed-more { text-align: center; font-size: .75rem; color: var(--portal-muted, #6b7094); padding: .6rem 0; }
+    .vi-tab-count { display: inline-block; min-width: 1.2rem; margin-left: .2rem; padding: 0 .3rem; border-radius: 999px; background: rgba(31, 35, 64, .07); font-size: .66rem; text-align: center; }
+    .vi-toggle button.is-active .vi-tab-count { background: rgba(202, 40, 68, .1); color: var(--portal-accent, #ca2844); }
+
+    .vi-saved-list { max-height: 340px; overflow-y: auto; margin: -.25rem -.35rem; padding: .25rem .35rem; }
+    .vi-saved { display: flex; align-items: center; gap: .7rem; padding: .5rem .4rem; border-radius: 10px; text-decoration: none; color: inherit; }
+    .vi-saved + .vi-saved { border-top: 1px solid #f4f5f9; }
+    .vi-saved:hover { background: #fafbfd; }
+    .vi-saved:hover .vi-saved-title { color: var(--portal-accent, #ca2844); }
+    .vi-saved-thumb { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 9px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(202, 40, 68, .08); color: var(--portal-accent, #ca2844); font-size: .8rem; }
+    .vi-saved-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .vi-saved-thumb.is-search { background: #e8eefb; color: #244373; }
+    .vi-saved-title { display: block; font-weight: 600; font-size: .84rem; color: #1f2340; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .vi-saved-meta { display: block; font-size: .72rem; color: var(--portal-muted, #6b7094); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .vi-saved-time { flex: 0 0 auto; font-size: .7rem; color: var(--portal-muted, #6b7094); white-space: nowrap; }
 
     @media (max-width: 1199.98px) { .vi-strip .portal-lp-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
     @media (max-width: 575.98px) { .vi-strip .portal-lp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -91,19 +103,128 @@
 
 @push('scripts')
 <script>
-// Activity Timeline: "Key events" hides plain page views; "All activity" shows everything.
-document.addEventListener('click', function (e) {
-    const button = e.target.closest('[data-vi-show]');
-    if (!button) return;
-    const card = button.closest('[data-vi-activity]');
-    card.querySelectorAll('[data-vi-show]').forEach((b) => b.classList.toggle('is-active', b === button));
-    card.querySelector('.vi-timeline-wrap')?.classList.toggle('vi-show-key', button.dataset.viShow === 'key');
-});
+(function () {
+    // Load on scroll: a [data-vi-feed] list is its own scroll box ending in a .vi-feed-more sentinel;
+    // when the sentinel scrolls into view the next 20 rows after data-vi-next are fetched and
+    // appended. No data-vi-next = everything is loaded. Hidden lists (closed chats, the other tab,
+    // the Insights tab itself) don't load until they're shown.
+    const observers = new WeakMap();
+
+    function sentinelOf(feed) {
+        let sentinel = feed.querySelector(':scope > .vi-feed-more');
+        if (!sentinel) {
+            sentinel = document.createElement('div');
+            sentinel.className = 'vi-feed-more';
+            sentinel.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            feed.append(sentinel);
+        }
+        return sentinel;
+    }
+
+    function watch(root) {
+        root.querySelectorAll('[data-vi-feed]').forEach((feed) => {
+            if (observers.has(feed) || !('viNext' in feed.dataset)) return;
+            const observer = new IntersectionObserver((entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) load(feed);
+            }, { root: feed, rootMargin: '0px 0px 150px 0px' });
+            observers.set(feed, observer);
+            observer.observe(sentinelOf(feed));
+        });
+    }
+
+    function load(feed) {
+        if (feed.dataset.viLoading || !('viNext' in feed.dataset)) return;
+        feed.dataset.viLoading = '1';
+        const sentinel = sentinelOf(feed);
+        sentinel.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        const url = new URL(feed.closest('[data-vi-url]').dataset.viUrl, window.location.origin);
+        const params = Object.assign({ section: feed.dataset.viFeed, after: feed.dataset.viNext }, JSON.parse(feed.dataset.viParams || '{}'));
+        Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+        const filter = params.filter;
+
+        fetch(url, { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+            .then((response) => (response.ok ? response.json() : Promise.reject(response)))
+            .then((page) => {
+                // The timeline switched Key events ↔ All activity while this page was on its way.
+                if (filter !== JSON.parse(feed.dataset.viParams || '{}').filter) return;
+                const chunk = document.createElement('template');
+                chunk.innerHTML = page.html;
+                // A page that starts on the same day the previous one ended on doesn't repeat the day header.
+                const firstDay = chunk.content.querySelector('[data-vi-day]');
+                const days = feed.querySelectorAll(':scope > [data-vi-day]');
+                if (firstDay && days.length && days[days.length - 1].dataset.viDay === firstDay.dataset.viDay) firstDay.remove();
+                feed.insertBefore(chunk.content, sentinel);
+
+                if (page.next) {
+                    feed.dataset.viNext = page.next;
+                } else {
+                    delete feed.dataset.viNext;
+                    sentinel.remove();
+                    if (!feed.children.length && feed.dataset.viEmpty) {
+                        feed.innerHTML = '<div class="portal-lp-empty"></div>';
+                        feed.firstChild.textContent = feed.dataset.viEmpty;
+                    }
+                }
+                watch(feed);
+                // Still in view (a short page)? Re-observing makes the observer report again.
+                if (page.next) {
+                    observers.get(feed)?.unobserve(sentinel);
+                    observers.get(feed)?.observe(sentinel);
+                }
+            })
+            .catch(() => {
+                sentinel.innerHTML = 'Couldn\'t load more. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-vi-retry>Retry</button>';
+            })
+            .finally(() => { delete feed.dataset.viLoading; });
+    }
+
+    document.addEventListener('click', function (e) {
+        const retry = e.target.closest('[data-vi-retry]');
+        if (retry) {
+            load(retry.closest('[data-vi-feed]'));
+            return;
+        }
+
+        // Activity Timeline: "Key events" leaves out plain page views; "All activity" shows everything.
+        // Filtered on the server, so the list restarts from the newest event.
+        const show = e.target.closest('[data-vi-show]');
+        if (show && !show.classList.contains('is-active')) {
+            const card = show.closest('[data-vi-activity]');
+            card.querySelectorAll('[data-vi-show]').forEach((b) => b.classList.toggle('is-active', b === show));
+            card.querySelector('[data-vi-activity-count]').textContent = show.dataset.count;
+            const feed = card.querySelector('[data-vi-feed]');
+            if (!feed) return;
+            feed.dataset.viParams = JSON.stringify({ filter: show.dataset.viShow });
+            feed.dataset.viNext = '0';
+            delete feed.dataset.viLoading;
+            feed.replaceChildren();
+            feed.scrollTop = 0;
+            observers.get(feed)?.disconnect();
+            observers.delete(feed);
+            watch(card);
+            return;
+        }
+
+        // Saved by Lead: switch between the Favorites and Saved searches lists.
+        const tab = e.target.closest('[data-vi-tab]');
+        if (tab) {
+            const card = tab.closest('[data-vi-tabs]');
+            card.querySelectorAll('[data-vi-tab]').forEach((b) => b.classList.toggle('is-active', b === tab));
+            card.querySelectorAll('[data-vi-pane]').forEach((pane) => { pane.hidden = pane.dataset.viPane !== tab.dataset.viTab; });
+        }
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => watch(document));
+    } else {
+        watch(document);
+    }
+})();
 </script>
 @endpush
 @endonce
 
-<div class="vi-panel">
+<div class="vi-panel" data-vi-url="{{ $feedUrl }}">
     {{-- Engagement strip --}}
     <div class="portal-card vi-strip">
         <div class="portal-lp-stats">
@@ -125,7 +246,7 @@ document.addEventListener('click', function (e) {
             </div>
             <div class="portal-lp-stat">
                 <span class="portal-lp-stat-icon"><i class="fas fa-robot"></i></span>
-                <div class="min-w-0"><div class="portal-lp-stat-label">AI chats</div><div class="portal-lp-stat-value">{{ $stats['chats'] }}</div><div class="vi-sub">{{ $conversations->sum('message_count') }} messages</div></div>
+                <div class="min-w-0"><div class="portal-lp-stat-label">AI chats</div><div class="portal-lp-stat-value">{{ $stats['chats'] }}</div><div class="vi-sub">{{ number_format($stats['chat_messages']) }} messages</div></div>
             </div>
             <div class="portal-lp-stat">
                 <span class="portal-lp-stat-icon is-success"><i class="fas fa-envelope-open-text"></i></span>
@@ -162,52 +283,28 @@ document.addEventListener('click', function (e) {
                 </div>
             </section>
 
-            {{-- Activity timeline — one compact row per event. Chats live in AI Chat History, so they're
-                 left out here; plain page views only show under "All activity". --}}
-            @php
-                $activity = $timeline->reject(fn ($e) => $e->type === 'chat_started');
-                $keyCount = $activity->where('type', '!=', 'page_view')->count();
-            @endphp
+            {{-- Activity timeline — one compact row per event, newest first, 20 more on each scroll. Chats
+                 live in AI Chat History, so they're left out; plain page views only under "All activity". --}}
             <section class="portal-lp-card" data-vi-activity>
                 <header class="portal-lp-card-head">
-                    <h2><span class="portal-lp-card-icon"><i class="fas fa-stream"></i></span>Activity Timeline <span class="portal-lp-count">{{ $keyCount }}</span></h2>
+                    <h2><span class="portal-lp-card-icon"><i class="fas fa-stream"></i></span>Activity Timeline <span class="portal-lp-count" data-vi-activity-count>{{ number_format($activityCounts['key']) }}</span></h2>
+                    @if($activityCounts['all'])
                     <div class="vi-toggle" role="group" aria-label="Show">
-                        <button type="button" class="is-active" data-vi-show="key">Key events</button>
-                        <button type="button" data-vi-show="all">All activity</button>
+                        <button type="button" class="is-active" data-vi-show="key" data-count="{{ number_format($activityCounts['key']) }}">Key events</button>
+                        <button type="button" data-vi-show="all" data-count="{{ number_format($activityCounts['all']) }}">All activity</button>
                     </div>
+                    @endif
                 </header>
                 <div class="portal-lp-card-body">
-                    @if($activity->isEmpty())
+                    @if(!$activityCounts['all'])
                     <div class="portal-lp-empty">No activity tracked yet.</div>
                     @else
-                    <div class="vi-timeline-wrap vi-show-key">
-                        @foreach($activity->groupBy(fn ($e) => $e->created_at->toDateString()) as $day => $events)
-                        @php $date = \Illuminate\Support\Carbon::parse($day); @endphp
-                        <div class="vi-day {{ $events->every(fn ($e) => $e->type === 'page_view') ? 'is-minor' : '' }}">{{ $date->isToday() ? 'Today' : ($date->isYesterday() ? 'Yesterday' : $date->format('D, d M Y')) }}</div>
-                        @foreach($events as $event)
-                        @php
-                            $detail = match (true) {
-                                in_array($event->type, ['routed', 'transferred'], true) => trim((!empty($event->meta['from']) ? $event->meta['from'] . ' → ' : '') . ($event->meta['owner'] ?? $event->title) . (!empty($event->meta['agent']) ? ' · agent ' . $event->meta['agent'] : '')),
-                                in_array($event->type, ['search', 'saved_search'], true) => collect($event->meta['filters'] ?? [])->filter(fn ($v) => is_scalar($v) && $v !== '')->map(fn ($v, $k) => ucfirst(str_replace(['_', '-'], ' ', $k)) . ': ' . $v)->implode(' · ') ?: ($event->title ?: 'All listings'),
-                                $event->type === 'enquiry' => trim(($event->title ?: 'Form') . (!empty($event->meta['message']) ? ' — “' . \Illuminate\Support\Str::limit($event->meta['message'], 80) . '”' : '')),
-                                $event->type === 'page_view' => $event->title ?: $event->url,
-                                default => $event->property ? null : $event->title,
-                            };
-                            $hint = $event->meta['reason'] ?? ($event->type === 'transferred' && !empty($event->meta['note']) ? 'Note: ' . $event->meta['note'] : null);
-                        @endphp
-                        <div class="vi-act {{ $event->type === 'page_view' ? 'is-minor' : '' }}" @if($hint) title="{{ $hint }}" @endif>
-                            <span class="vi-act-icon tone-{{ $eventTones[$event->type] ?? 'muted' }}"><i class="fas {{ $event->icon() }}" aria-hidden="true"></i></span>
-                            <span class="vi-act-text">
-                                <strong>{{ $event->label() }}</strong>
-                                @if($event->property && $event->type !== 'transferred')<a href="{{ url('/property-details/' . $event->property->slug) }}" target="_blank" rel="noopener">{{ $event->property->getTranslation('title') ?: $event->property->reference_no }}</a>@endif
-                                @if($detail)<span class="text-muted">{{ $event->property && $event->type !== 'transferred' ? '→ ' : '' }}{{ $detail }}</span>@endif
-                            </span>
-                            <span class="vi-act-time">@if($event->duration_seconds > 0)<i class="far fa-clock"></i>{{ $fmt($event->duration_seconds) }} · @endif{{ $event->created_at->format('H:i') }}</span>
-                        </div>
-                        @endforeach
-                        @endforeach
-                        @if($timeline->count() >= $timelineLimit)
-                        <div class="text-muted small mt-2">Showing the latest {{ $timelineLimit }} events.</div>
+                    <div class="vi-timeline-wrap" data-vi-feed="timeline" data-vi-params='{"filter":"key"}' data-vi-empty="No key events yet — switch to All activity to see page views."
+                         @if($timeline['next']) data-vi-next="{{ $timeline['next'] }}" @endif>
+                        @if($timeline['items']->isEmpty())
+                        <div class="portal-lp-empty">No key events yet — switch to All activity to see page views.</div>
+                        @else
+                        @include('visitor-insights._rows', ['section' => 'timeline', 'items' => $timeline['items']])
                         @endif
                     </div>
                     @endif
@@ -218,34 +315,13 @@ document.addEventListener('click', function (e) {
         <div class="col-xl-5">
             {{-- AI chat history --}}
             <section class="portal-lp-card">
-                <header class="portal-lp-card-head"><h2><span class="portal-lp-card-icon"><i class="fas fa-robot"></i></span>AI Chat History @if($conversations->count())<span class="portal-lp-count">{{ $conversations->count() }}</span>@endif</h2></header>
-                <div class="portal-lp-card-body vi-chat-list">
-                    @forelse($conversations as $conversation)
-                    <details class="vi-chat" @if($loop->first) open @endif>
-                        <summary>
-                            <i class="fas fa-comments text-muted"></i>
-                            <span><strong>{{ $conversation->created_at->format('d M Y, H:i') }}</strong> <span class="text-muted">· {{ $conversation->message_count }} messages</span></span>
-                            <i class="fas fa-chevron-down"></i>
-                        </summary>
-                        <div class="vi-chat-body">
-                            @foreach($conversation->messages as $message)
-                            <div class="vi-msg {{ $message->role === 'user' ? 'is-user' : '' }}">
-                                <span class="vi-msg-avatar">@if($message->role === 'user'){{ mb_strtoupper(mb_substr($lead->displayName(), 0, 1)) }}@else<i class="fas fa-robot"></i>@endif</span>
-                                <div class="vi-msg-text">{{ $message->text }}</div>
-                            </div>
-                            @if(!empty($message->properties))
-                            <div class="vi-chips vi-msg-props">
-                                @foreach(array_slice($message->properties, 0, 6) as $card)
-                                    @if(!empty($card['slug']))<a class="vi-chip" href="{{ url('/property-details/' . $card['slug']) }}" target="_blank" rel="noopener"><i class="fas fa-house"></i>{{ \Illuminate\Support\Str::limit($card['name'] ?? $card['slug'], 40) }}</a>@endif
-                                @endforeach
-                            </div>
-                            @endif
-                            @endforeach
-                        </div>
-                    </details>
-                    @empty
+                <header class="portal-lp-card-head"><h2><span class="portal-lp-card-icon"><i class="fas fa-robot"></i></span>AI Chat History @if($stats['chats'])<span class="portal-lp-count">{{ number_format($stats['chats']) }}</span>@endif</h2></header>
+                <div class="portal-lp-card-body vi-chat-list" data-vi-feed="chats" @if($conversations['next']) data-vi-next="{{ $conversations['next'] }}" @endif>
+                    @if($conversations['items']->isEmpty())
                     <div class="portal-lp-empty">No AI chat conversations.</div>
-                    @endforelse
+                    @else
+                    @include('visitor-insights._rows', ['section' => 'chats', 'items' => $conversations['items']])
+                    @endif
                 </div>
             </section>
 
@@ -265,27 +341,31 @@ document.addEventListener('click', function (e) {
                 </div>
             </section>
 
-            {{-- Favorites & saved searches --}}
-            <section class="portal-lp-card">
-                <header class="portal-lp-card-head"><h2><span class="portal-lp-card-icon is-accent"><i class="fas fa-heart"></i></span>Favorites &amp; Saved Searches</h2></header>
+            {{-- Favorites & saved searches — one tab each, compact rows, 20 more on each scroll. --}}
+            @php $savedTab = $favorites['items']->isEmpty() && $savedSearches['items']->isNotEmpty() ? 'searches' : 'favorites'; @endphp
+            <section class="portal-lp-card" data-vi-tabs>
+                <header class="portal-lp-card-head">
+                    <h2><span class="portal-lp-card-icon is-accent"><i class="fas fa-heart"></i></span>Saved by Lead</h2>
+                    @if($favorites['items']->isNotEmpty() || $savedSearches['items']->isNotEmpty())
+                    <div class="vi-toggle" role="tablist">
+                        <button type="button" class="{{ $savedTab === 'favorites' ? 'is-active' : '' }}" data-vi-tab="favorites"><i class="fas fa-heart me-1"></i>Favorites <span class="vi-tab-count">{{ number_format($stats['favorites']) }}</span></button>
+                        <button type="button" class="{{ $savedTab === 'searches' ? 'is-active' : '' }}" data-vi-tab="searches"><i class="fas fa-bookmark me-1"></i>Searches <span class="vi-tab-count">{{ number_format($stats['saved_searches']) }}</span></button>
+                    </div>
+                    @endif
+                </header>
                 <div class="portal-lp-card-body">
-                    @if($favorites->isEmpty() && $savedSearches->isEmpty())
+                    @if($favorites['items']->isEmpty() && $savedSearches['items']->isEmpty())
                     <div class="portal-lp-empty">{{ $lead->user_id ? 'Nothing saved to their account yet.' : 'Needs a customer account — this visitor hasn\'t signed in.' }}</div>
                     @else
-                    <div class="d-grid gap-2">
-                        @foreach($favorites as $property)
-                        <a href="{{ url('/property-details/' . $property->slug) }}" target="_blank" rel="noopener" class="portal-lp-contact text-decoration-none">
-                            <span class="portal-lp-contact-icon is-accent"><i class="fas fa-heart" aria-hidden="true"></i></span>
-                            <span class="portal-lp-contact-value text-truncate">{{ $property->getTranslation('title') ?: $property->reference_no }}</span>
-                        </a>
-                        @endforeach
-                        @foreach($savedSearches as $search)
-                        <div class="portal-lp-contact">
-                            <span class="portal-lp-contact-icon"><i class="fas fa-bookmark" aria-hidden="true"></i></span>
-                            <span class="portal-lp-contact-value text-truncate">{{ $search->title }}</span>
-                        </div>
-                        @endforeach
+                    @foreach(['favorites' => [$favorites, 'No favorite properties.'], 'searches' => [$savedSearches, 'No saved searches.']] as $pane => [$page, $empty])
+                    <div class="vi-saved-list" data-vi-pane="{{ $pane }}" data-vi-feed="{{ $pane }}" @if($page['next']) data-vi-next="{{ $page['next'] }}" @endif @if($savedTab !== $pane) hidden @endif>
+                        @if($page['items']->isEmpty())
+                        <div class="portal-lp-empty">{{ $empty }}</div>
+                        @else
+                        @include('visitor-insights._rows', ['section' => $pane, 'items' => $page['items']])
+                        @endif
                     </div>
+                    @endforeach
                     @endif
                 </div>
             </section>

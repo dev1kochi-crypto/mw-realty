@@ -37,7 +37,7 @@
     <x-email.row :label="number_format($assigned['count']) . ' lead' . ($assigned['count'] === 1 ? '' : 's')">{{ $summary['agent_names'][$agentId] ?? 'Agent #' . $agentId }}</x-email.row>
     @endforeach
 </x-email.details>
-<x-email.muted>Each agent got one email listing their leads.</x-email.muted>
+<x-email.muted>Each agent got one summary email of their leads.</x-email.muted>
 @endif
 
 <x-email.muted>Each lead's Source is its ad set (or ad) name, and the lead shows its campaign, ad set, ad and form.</x-email.muted>

@@ -30,14 +30,15 @@ class CustomerAuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'phone' => 'nullable|string|max:50',
+            'phone' => \App\Rules\PhoneNumber::rules(),
+            'phone_country_code' => \App\Rules\PhoneNumber::countryCodeRules(),
             'password' => ['required', 'confirmed', Password::min(8)],
         ]);
 
         $user = User::create([
             'name' => $request->input('name'),
             'email' => $request->input('email'),
-            'phone' => $request->input('phone'),
+            'phone' => \App\Rules\PhoneNumber::combine($request->input('phone_country_code'), $request->input('phone')),
             'password' => Hash::make($request->input('password')),
         ]);
 

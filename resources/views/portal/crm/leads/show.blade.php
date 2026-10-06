@@ -445,7 +445,7 @@
         {{-- ============ Insights — the website visitor's tracked activity (VisitorInsights) ============ --}}
         <div class="tab-pane fade" id="leadPageInsights" role="tabpanel">
             @if($visitorInsights)
-                @include('visitor-insights._panel', $visitorInsights)
+                @include('visitor-insights._panel', $visitorInsights + ['feedUrl' => route('portal.crm.leads.insights', $lead->id)])
             @else
             <section class="portal-lp-card">
                 <div class="portal-lp-card-body text-center text-muted py-5">

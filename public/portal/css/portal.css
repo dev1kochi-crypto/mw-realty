@@ -740,7 +740,28 @@ body.portal-body {
 .portal-table-toolbar {
     display: flex;
     justify-content: flex-end;
-    min-height: 1.15rem;
+}
+
+/* Leads table top row: Show N leads · quick filter chips · Quick search. */
+.portal-leads-dt-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1rem;
+    margin-bottom: 0.75rem;
+}
+.portal-leads-dt-top .dataTables_length,
+.portal-leads-dt-top .dataTables_filter { flex: 0 0 auto; }
+.portal-leads-dt-top .dataTables_filter label { margin: 0; }
+.portal-leads-dt-quick { flex: 1 1 auto; display: flex; justify-content: center; min-width: 0; }
+.portal-leads-table-card > .portal-lead-quick { margin-bottom: 0.75rem; }
+/* Leads table: tighter rows, and the narrow "#" row-number column. */
+#leadsDataTable td { padding: 0.6rem 0.5rem; }
+#leadsDataTable thead th { padding: 0.5rem 0.5rem 0.6rem; }
+#leadsDataTable .portal-lead-sn { width: 2.75rem; color: var(--portal-muted); font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+@media (max-width: 991.98px) {
+    .portal-leads-dt-quick { order: 3; flex-basis: 100%; justify-content: flex-start; }
+    .portal-leads-dt-top .dataTables_filter { margin-left: auto; }
 }
 
 .portal-lead-action:focus-visible {
@@ -1321,6 +1342,41 @@ body.portal-body {
     text-decoration: none;
     display: block;
 }
+
+/* Compact quick-filter chips above the Leads filter bar (count + filter in one). */
+.portal-lead-quick { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.portal-lead-quick__chip {
+    --chip: #244373;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.45rem 0.35rem 0.75rem;
+    border: 1px solid var(--portal-border);
+    border-radius: 999px;
+    background: var(--portal-surface);
+    color: #3b4064;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.portal-lead-quick__chip.tone-teal { --chip: #ca2844; }
+.portal-lead-quick__chip.tone-amber { --chip: #d97706; }
+.portal-lead-quick__chip.tone-rose { --chip: #e11d48; }
+.portal-lead-quick__chip i { color: var(--chip); font-size: 0.75rem; }
+.portal-lead-quick__chip strong {
+    min-width: 1.6rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: #f1f2f7;
+    color: #1f2340;
+    font-size: 0.75rem;
+    text-align: center;
+}
+.portal-lead-quick__chip:hover { border-color: var(--chip); color: var(--chip); }
+.portal-lead-quick__chip.is-active { border-color: var(--chip); background: var(--chip); color: #fff; }
+.portal-lead-quick__chip.is-active i { color: #fff; }
+.portal-lead-quick__chip.is-active strong { background: rgba(255, 255, 255, 0.22); color: #fff; }
 
 .portal-lead-stat-link .portal-stat-card {
     cursor: pointer;

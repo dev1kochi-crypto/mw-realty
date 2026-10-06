@@ -4,10 +4,29 @@
 
 @push('styles')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<style>
+    /* Loading state while filters / pages / sorting fetch (#leadsListingWrapper.leads-loading). */
+    .portal-leads-table-card { position: relative; }
+    .portal-leads-loader { display: none; position: absolute; inset: 0; z-index: 6; align-items: center; justify-content: center; pointer-events: none; }
+    .portal-leads-loader__box { display: inline-flex; align-items: center; gap: .6rem; padding: .55rem 1.1rem; border-radius: 999px; background: #fff; box-shadow: 0 8px 28px rgba(15, 23, 42, .14); font-size: .85rem; font-weight: 600; color: #1e3a5f; }
+    .portal-leads-loader__spin { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(30, 58, 95, .18); border-top-color: #c8102e; animation: portalLeadsSpin .7s linear infinite; }
+    .portal-leads-table-card::before { content: ''; position: absolute; top: 0; left: 0; height: 3px; width: 35%; border-radius: 3px; background: linear-gradient(90deg, transparent, #c8102e, transparent); opacity: 0; z-index: 7; }
+    #leadsListingWrapper.leads-loading .portal-leads-loader { display: flex; animation: portalLeadsFade .15s ease-out; }
+    #leadsListingWrapper.leads-loading .portal-leads-table-card::before { opacity: 1; animation: portalLeadsBar 1s ease-in-out infinite; }
+    #leadsListingWrapper.leads-loading .portal-leads-table-card table tbody { opacity: .35; transition: opacity .15s; }
+    #leadsListingWrapper.leads-loading .portal-leads-table-card table,
+    #leadsListingWrapper.leads-loading .portal-lead-quick,
+    #leadsListingWrapper.leads-loading .dataTables_paginate { pointer-events: none; }
+    #leadsListingWrapper.leads-loading .portal-filter-submit i::before { content: '\f110'; }
+    #leadsListingWrapper.leads-loading .portal-filter-submit i { animation: portalLeadsSpin .8s linear infinite; }
+    @keyframes portalLeadsSpin { to { transform: rotate(360deg); } }
+    @keyframes portalLeadsBar { 0% { left: -35%; } 100% { left: 100%; } }
+    @keyframes portalLeadsFade { from { opacity: 0; } to { opacity: 1; } }
+</style>
 @endpush
 
 @section('crm-content')
-<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-4">
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
     <div>
         <div class="d-flex align-items-center gap-3">
             <div class="portal-section-title mb-0">{{ $isAdmin ? 'All Leads' : 'My Leads' }}</div>
@@ -156,24 +175,118 @@
             }
 
             const headers = Array.from(table.querySelectorAll('thead th'));
-            const receivedColumn = headers.findIndex(function (header) {
-                return header.textContent.trim().toLowerCase() === 'received';
+            const sortColumn = headers.findIndex(function (header) {
+                return header.dataset.columnKey === table.dataset.sort;
             });
+
+            // Server-side: the server renders only the page on screen (the first one arrives with
+            // the listing, deferLoading); paging, sorting and Quick search fetch the next page's
+            // rows from LeadController::index (dt=1). The listing's state (per_page / sort / dir / q)
+            // is kept in the URL, so reloads, "select all" and exports see the same leads.
+            let tableRequest = null;
+            let lastQuickSearch = table.dataset.q || '';
 
             leadsDataTable = $(table).DataTable({
                 autoWidth: false,
-                pageLength: 10,
+                serverSide: true,
+                deferLoading: [Number(table.dataset.totalRows || 0), Number(table.dataset.listingTotal || 0)],
+                searchDelay: 400,
+                search: { search: table.dataset.q || '' },
+                pageLength: Number(table.dataset.perPage) || 10,
+                ajax: function (data, callback) {
+                    const params = new URLSearchParams(window.location.search);
+                    const sorted = data.order && data.order[0] ? headers[data.order[0].column] : null;
+                    const quickSearch = String(data.search.value || '').trim();
+                    params.set('per_page', data.length);
+                    params.set('sort', sorted && sorted.dataset.columnKey ? sorted.dataset.columnKey : 'received');
+                    params.set('dir', data.order && data.order[0] ? data.order[0].dir : 'desc');
+                    quickSearch ? params.set('q', quickSearch) : params.delete('q');
+                    params.delete('page');
+                    history.replaceState(null, '', window.location.pathname + '?' + params.toString());
+
+                    // A different Quick search means a different set of leads — start the selection over.
+                    if (quickSearch !== lastQuickSearch) {
+                        lastQuickSearch = quickSearch;
+                        clearSelection();
+                    }
+
+                    params.set('page', Math.floor(data.start / data.length) + 1);
+                    params.set('dt', '1');
+
+                    if (tableRequest) tableRequest.abort();
+                    const request = tableRequest = new AbortController();
+                    const wrapper = document.getElementById('leadsListingWrapper');
+                    wrapper.classList.add('leads-loading');
+
+                    fetch(window.location.pathname + '?' + params.toString(), {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                        signal: request.signal,
+                    })
+                        .then(function (r) {
+                            if (!r.ok) throw new Error('Could not load the leads.');
+                            return r.json();
+                        })
+                        .then(function (json) {
+                            table.dataset.totalRows = json.filtered;
+                            // Rows come back as HTML (_lead_rows); each one keeps its <tr>/<td>
+                            // attributes for createdRow below.
+                            const tbody = document.createElement('tbody');
+                            tbody.innerHTML = json.rows;
+                            const rows = Array.from(tbody.rows).map(function (tr) {
+                                const cells = Array.from(tr.cells).map(function (td) { return td.innerHTML; });
+                                cells.sourceRow = tr;
+                                return cells;
+                            });
+                            callback({ draw: data.draw, recordsTotal: json.total, recordsFiltered: json.filtered, data: rows });
+                        })
+                        .catch(function (error) {
+                            if (error.name === 'AbortError') return;
+                            showFlash('error', error.message);
+                            callback({ draw: data.draw, recordsTotal: 0, recordsFiltered: 0, data: [] });
+                        })
+                        .finally(function () {
+                            if (tableRequest === request) {
+                                tableRequest = null;
+                                wrapper.classList.remove('leads-loading');
+                            }
+                        });
+                },
+                createdRow: function (row, data) {
+                    const source = data.sourceRow;
+                    if (!source) return;
+                    Array.from(source.attributes).forEach(function (attr) { row.setAttribute(attr.name, attr.value); });
+                    Array.from(source.cells).forEach(function (td, i) {
+                        if (!row.cells[i]) return;
+                        Array.from(td.attributes).forEach(function (attr) { row.cells[i].setAttribute(attr.name, attr.value); });
+                    });
+                },
                 lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-                order: receivedColumn >= 0 ? [[receivedColumn, 'desc']] : [],
-                columnDefs: [{
-                    orderable: false,
-                    targets: [0],
-                }],
+                // One top row: Show N leads · quick filter chips · Quick search (no empty gap between).
+                dom: "<'portal-leads-dt-top'l<'portal-leads-dt-quick'>f>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row align-items-center mt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                initComplete: function () {
+                    const slot = this.api().table().container().querySelector('.portal-leads-dt-quick');
+                    const chips = document.getElementById('leadQuickFilters');
+                    if (slot && chips) slot.appendChild(chips);
+                },
+                order: sortColumn >= 0 ? [[sortColumn, table.dataset.dir === 'asc' ? 'asc' : 'desc']] : [],
+                columnDefs: [
+                    { orderable: false, targets: [0, 1] },
+                    { searchable: false, targets: [1] },
+                ],
+                // "#" column: 1, 2, 3… in the order shown, continuing across pages.
+                drawCallback: function () {
+                    const api = this.api();
+                    const start = api.page.info().start;
+                    api.column(1, { page: 'current' }).nodes().each(function (cell, i) { cell.textContent = start + i + 1; });
+                },
                 language: {
                     search: 'Quick search:',
                     searchPlaceholder: 'Search displayed leads',
                     lengthMenu: 'Show _MENU_ leads',
                     info: 'Showing _START_ to _END_ of _TOTAL_ leads',
+                    infoFiltered: '(filtered from _MAX_)',
                     infoEmpty: 'No leads to show',
                     zeroRecords: 'No matching leads found',
                 },
@@ -652,6 +765,11 @@
                 new FormData(form).forEach(function (value, key) {
                     if (String(value).trim() !== '') params.append(key, String(value).trim());
                 });
+                // Keep the table's page size and sort order across filter changes.
+                const current = new URLSearchParams(window.location.search);
+                ['per_page', 'sort', 'dir'].forEach(function (key) {
+                    if (current.get(key)) params.set(key, current.get(key));
+                });
                 url = form.getAttribute('action') || window.location.pathname;
                 url = url.split('?')[0] + (params.toString() ? '?' + params.toString() : '');
             }
@@ -712,6 +830,15 @@
             clearTimeout(leadSearchTimer);
             runLeadFilters();
         });
+        // Stat cards: filter to that card (or back to everything when it's already selected / Total).
+        leadsWrapper.addEventListener('click', function (e) {
+            const card = e.target.closest('[data-lead-quick]');
+            if (!card) return;
+            const input = leadsWrapper.querySelector('.portal-filter-bar__form [name="quick"]');
+            input.value = card.getAttribute('aria-pressed') === 'true' ? '' : card.dataset.leadQuick;
+            clearTimeout(leadSearchTimer);
+            runLeadFilters();
+        });
         leadsWrapper.addEventListener('click', function (e) {
             const clear = e.target.closest('.js-clear-lead-filters');
             if (!clear) return;
@@ -719,11 +846,6 @@
             clearTimeout(leadSearchTimer);
             runLeadFilters(clear.href);
         });
-        (function () {
-            const style = document.createElement('style');
-            style.textContent = '#leadsListingWrapper.leads-loading .portal-card:not(.portal-filter-bar){opacity:.55;pointer-events:none;transition:opacity .15s}';
-            document.head.appendChild(style);
-        })();
         window.runLeadFilters = runLeadFilters;
 
         document.getElementById('openCreateLeadModal').addEventListener('click', openCreateModal);

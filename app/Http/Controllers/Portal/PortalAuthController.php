@@ -39,7 +39,8 @@ class PortalAuthController extends Controller
             'name' => 'required|string|max:255',
             'company_name' => 'required_if:type,company|nullable|string|max:255',
             'email' => 'required|email|unique:portal_users,email',
-            'phone' => 'nullable|string|max:50',
+            'phone' => \App\Rules\PhoneNumber::rules(),
+            'phone_country_code' => \App\Rules\PhoneNumber::countryCodeRules(),
             'password' => ['required', 'confirmed', Password::min(8)],
 
             'nationality' => 'nullable|string|max:100',
@@ -68,7 +69,7 @@ class PortalAuthController extends Controller
             'name' => $request->input('name'),
             'company_name' => $request->input('type') === 'company' ? $request->input('company_name') : null,
             'email' => $request->input('email'),
-            'phone' => $request->input('phone'),
+            'phone' => \App\Rules\PhoneNumber::combine($request->input('phone_country_code'), $request->input('phone')),
             'password' => Hash::make($request->input('password')),
             'status' => 'pending',
             'kyc_review_status' => 'draft',
