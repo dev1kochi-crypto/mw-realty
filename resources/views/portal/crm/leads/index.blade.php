@@ -1072,11 +1072,14 @@
             btn.disabled = true;
             spinner.classList.remove('d-none');
 
+            // POST + _method spoofing: a raw DELETE body is dropped by some servers/proxies,
+            // which left the selection empty ("The ids field is required").
             const body = new URLSearchParams();
+            body.append('_method', 'DELETE');
             window.appendLeadSelection(body);
 
             fetch("{{ route('portal.crm.leads.bulk-delete') }}", {
-                method: 'DELETE',
+                method: 'POST',
                 headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                 body: body,
             })
