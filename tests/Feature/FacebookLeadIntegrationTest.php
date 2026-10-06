@@ -225,9 +225,9 @@ class FacebookLeadIntegrationTest extends TestCase
         $this->assertNull($importer->import($connection, $this->graphLead(['id' => 'LG4', 'ad_name' => 'Marina Flats — November'])), 'latest source is now that ad');
     }
 
-    public function test_connecting_with_import_queues_a_background_import_of_existing_leads(): void
+    public function test_connecting_with_import_starts_a_background_import_of_existing_leads(): void
     {
-        Queue::fake();
+        \Illuminate\Support\Facades\Bus::fake();
         Http::fake(['graph.facebook.com/*/subscribed_apps' => Http::response(['success' => true])]);
         $agency = $this->agency();
         $this->pendingPages('owner.' . $agency->id, [['id' => 'PAGE1', 'name' => 'MW Test Page']]);
@@ -236,7 +236,7 @@ class FacebookLeadIntegrationTest extends TestCase
 
         $connection = FacebookPageConnection::firstOrFail();
         $this->assertSame('queued', $connection->import_status);
-        Queue::assertPushed(\App\Jobs\ImportFacebookPageLeads::class, fn ($job) => $job->connectionId === $connection->id && !$job->notify
+        \Illuminate\Support\Facades\Bus::assertDispatchedAfterResponse(\App\Jobs\ImportFacebookPageLeads::class, fn ($job) => $job->connectionId === $connection->id && !$job->notify
             && abs($job->since - now()->subDays(30)->getTimestamp()) < 60);
     }
 

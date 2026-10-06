@@ -31,11 +31,14 @@ class ImportFacebookPageLeads implements ShouldQueue
     {
     }
 
-    /** Mark the Page's import as waiting and queue it. */
+    /**
+     * Mark the Page's import as waiting and run it right after the response is sent — it starts at
+     * once, without waiting for a queue worker (the page shows its progress meanwhile).
+     */
     public static function start(FacebookPageConnection $connection, \DateTimeInterface $since, bool $notify = false): void
     {
         $connection->forceFill(['import_status' => 'queued', 'import_added' => 0, 'import_skipped' => 0, 'import_error' => null, 'import_finished_at' => null])->save();
-        static::dispatch($connection->id, $since->getTimestamp(), $notify)->afterCommit();
+        static::dispatchAfterResponse($connection->id, $since->getTimestamp(), $notify);
     }
 
     public function handle(FacebookLeadImporter $importer, FacebookConnectionHealth $health, FacebookLeadAds $facebook): void
@@ -44,6 +47,9 @@ class ImportFacebookPageLeads implements ShouldQueue
         if (!$connection) {
             return;
         }
+        // Runs after the response in the web process: don't let the PHP time limit / a closed tab cut it short.
+        @set_time_limit(0);
+        ignore_user_abort(true);
         $connection->forceFill(['import_status' => 'running'])->save();
 
         try {
