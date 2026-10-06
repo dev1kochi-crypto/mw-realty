@@ -15,7 +15,7 @@ class FacebookPageReconnectMail extends Mailable
     use Queueable, SerializesModels;
 
     public function __construct(
-        public FacebookPageConnection $connection,
+        public FacebookPageConnection $pageConnection,
         public string $reason,
         public string $facebookMessage,
     ) {
@@ -23,7 +23,7 @@ class FacebookPageReconnectMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: "Reconnect your Facebook Page \"{$this->connection->page_name}\" — MW Realty");
+        return new Envelope(subject: "Reconnect your Facebook Page \"{$this->pageConnection->page_name}\" — MW Realty");
     }
 
     public function content(): Content
@@ -31,8 +31,8 @@ class FacebookPageReconnectMail extends Mailable
         return new Content(
             view: 'emails.portal.facebook-reconnect',
             with: [
-                'connection' => $this->connection,
-                'owner' => $this->connection->owner,
+                'page' => $this->pageConnection,
+                'owner' => $this->pageConnection->owner,
                 'reason' => $this->reason,
                 'facebookMessage' => $this->facebookMessage,
                 'integrationsUrl' => route('portal.crm.integrations.index'),

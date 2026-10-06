@@ -7,7 +7,9 @@ use App\Models\PortalUser;
 use App\Models\Property;
 use App\Rules\PhoneNumber;
 use App\Rules\RecaptchaRule;
+use App\Models\Visitors\VisitorLead;
 use App\Services\Crm\LeadCreationService;
+use App\Services\Visitors\VisitorTracker;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -21,8 +23,10 @@ use Illuminate\Support\Facades\Auth;
  */
 class LeadCaptureController extends Controller
 {
-    public function __construct(private readonly LeadCreationService $leadCreation)
-    {
+    public function __construct(
+        private readonly LeadCreationService $leadCreation,
+        private readonly VisitorTracker $tracker,
+    ) {
     }
 
     /** Capture a property-search request from an agent or agency profile and route it to that CRM. */
@@ -55,10 +59,14 @@ class LeadCaptureController extends Controller
             ? PortalUser::find($profile->company_id)
             : null;
         $agentIsAgencyMember = $agencyOwner?->hasEligibleAgent($profile->id) ?? false;
+        $profileOwnerId = $agentIsAgencyMember ? $agencyOwner->id : $profile->id;
+        // One person, one account: someone already another account's lead stays with it.
+        $assignedOwnerId = $this->tracker->assignedOwnerIdFor($request, $data['email'], $data['phone'] ?? null);
+        $keepsOwner = $assignedOwnerId && $assignedOwnerId !== $profileOwnerId;
 
-        $this->leadCreation->create(
+        $lead = $this->leadCreation->create(
             [
-                'agent_id' => $data['profile_type'] === 'agent' && !$agentIsAgencyMember ? $profile->id : null,
+                'agent_id' => !$keepsOwner && $data['profile_type'] === 'agent' && !$agentIsAgencyMember ? $profile->id : null,
                 'user_id' => Auth::guard('web')->id(),
                 'name' => trim($data['first_name'] . ' ' . ($data['last_name'] ?? '')),
                 'email' => $data['email'],
@@ -70,10 +78,11 @@ class LeadCaptureController extends Controller
                 'status' => 'active',
                 'extra_fields' => $this->requestExtraFields($request),
             ],
-            ownerId: $agentIsAgencyMember ? $agencyOwner->id : $profile->id,
+            ownerId: $keepsOwner ? $assignedOwnerId : $profileOwnerId,
             // An agency agent's own profile → that agent works it within the agency.
-            preferredAgentId: $data['profile_type'] === 'agent' && $agentIsAgencyMember ? $profile->id : null,
+            preferredAgentId: !$keepsOwner && $data['profile_type'] === 'agent' && $agentIsAgencyMember ? $profile->id : null,
         );
+        $this->trackEnquiry($request, $lead, ucfirst($data['profile_type']) . ' profile request');
 
         return response()->json(['message' => 'Thanks — your request has been sent to ' . $profile->displayName() . '.']);
     }
@@ -215,10 +224,15 @@ class LeadCaptureController extends Controller
         return $request->wantsJson() ? response()->json(['message' => $message, 'when' => $when]) : back()->with('success', $message);
     }
 
-    /** A property enquiry — routed to the listing's owner. Expects an already-validated request. */
+    /**
+     * A property enquiry — routed to the listing's owner, unless the person is already another
+     * account's lead: then it updates that lead (one person, one account). Expects a validated request.
+     */
     private function capturePropertyLead(Request $request, Property $property): Lead
     {
-        return $this->leadCreation->create([
+        $assignedOwnerId = $this->tracker->assignedOwnerIdFor($request, $request->input('email'), $request->input('phone'));
+
+        $lead = $this->leadCreation->create([
             'property_id' => $property->id,
             'user_id' => Auth::guard('web')->id(),
             'name' => $request->input('name'),
@@ -231,7 +245,28 @@ class LeadCaptureController extends Controller
             'page_url' => $request->header('referer'),
             'page_source' => $request->input('page_source', 'property-detail'),
             'status' => 'active',
-        ]);
+        ], ownerId: $assignedOwnerId);
+        $this->trackEnquiry($request, $lead, match ($request->input('page_source', 'property-detail')) {
+            'ai-chatbot' => 'AI chat property enquiry',
+            'book-viewing' => 'Viewing request',
+            'brochure-download' => 'Brochure download',
+            'floor-plan-download' => 'Floor plan download',
+            default => 'Property enquiry',
+        });
+
+        return $lead;
+    }
+
+    /** The enquirer becomes / stays this browser's website lead; the CRM lead links to their activity. */
+    private function trackEnquiry(Request $request, Lead $lead, string $form): void
+    {
+        $this->tracker->captureEnquiry(
+            $request,
+            ['name' => $lead->name] + $request->only(['email', 'phone', 'phone_country_code']),
+            $request->input('page_source') === 'ai-chatbot' ? VisitorLead::SOURCE_CHATBOT : VisitorLead::SOURCE_PROPERTY_ENQUIRY,
+            ['form' => $form, 'message' => \Illuminate\Support\Str::limit((string) $request->input('message', $lead->message), 500)],
+            $lead,
+        );
     }
 
     /**
@@ -259,7 +294,7 @@ class LeadCaptureController extends Controller
             'recaptcha_token' => ['nullable', new RecaptchaRule()],
         ]);
 
-        $this->leadCreation->create([
+        $lead = $this->leadCreation->create([
             'user_id' => Auth::guard('web')->id(),
             'name' => trim($data['first_name'] . ' ' . ($data['last_name'] ?? '')),
             'email' => $data['email'],
@@ -270,7 +305,9 @@ class LeadCaptureController extends Controller
             'page_source' => 'custom-request',
             'status' => 'active',
             'extra_fields' => $this->requestExtraFields($request),
-        ]);
+        // Already an agency's / agent's lead → it updates that lead; otherwise Super Admin's unassigned pool.
+        ], ownerId: $this->tracker->assignedOwnerIdFor($request, $data['email'], $data['phone'] ?? null));
+        $this->trackEnquiry($request, $lead, 'Custom property request');
 
         $message = "Thanks — your request has been received and our team will reach out soon.";
 

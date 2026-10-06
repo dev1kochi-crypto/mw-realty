@@ -33,7 +33,9 @@ use Illuminate\Support\Facades\Mail;
  * Duplicate boundary = the owning account (leads.portal_user_id). An agency and the agents it
  * shares leads with work from one lead; the same person enquiring with an unrelated agent or
  * agency is a separate lead there — expected, not a duplicate. Ownerless leads (Super Admin's
- * unassigned pool) de-duplicate among themselves. Deleted leads never match.
+ * unassigned pool) de-duplicate among themselves. A soft-deleted lead (Deleted Leads) still
+ * matches — it is restored and the enquiry merged into it, so its history comes back; an active
+ * match always wins over a deleted one. A permanently deleted lead is gone, so a new one is created.
  */
 class LeadCreationService
 {
@@ -66,6 +68,10 @@ class LeadCreationService
 
         $lead = DB::transaction(function () use ($attributes, $ownerId, $preferredAgentId, $autoAssign, $tagIds, $noteAuthor, $property) {
             if ($existing = $this->findDuplicate($ownerId, $attributes['email'] ?? null, $attributes['phone'] ?? null)) {
+                if ($existing->trashed()) {
+                    $existing->restore();
+                    $existing->wasRestored = true;
+                }
                 $this->mergeInto($existing, $attributes, $noteAuthor);
                 if ($tagIds) {
                     $existing->tags()->syncWithoutDetaching($tagIds);
@@ -107,7 +113,10 @@ class LeadCreationService
         return $lead;
     }
 
-    /** The owner's existing (not deleted) lead sharing this email or phone — any contact it has used. */
+    /**
+     * The owner's existing lead sharing this email or phone — any contact it has used. Soft-deleted
+     * leads are included (check ->trashed()), but an active match is always preferred.
+     */
     public function findDuplicate(?int $ownerId, ?string $email, ?string $phone): ?Lead
     {
         $emailKey = LeadContact::emailKey($email);
@@ -117,7 +126,7 @@ class LeadCreationService
             return null;
         }
 
-        return Lead::query()
+        return Lead::withTrashed()
             ->when($ownerId, fn ($q) => $q->where('portal_user_id', $ownerId), fn ($q) => $q->whereNull('portal_user_id'))
             ->whereHas('contacts', fn ($q) => $q->where(function ($match) use ($emailKey, $phoneKey) {
                 if ($emailKey) {
@@ -127,6 +136,7 @@ class LeadCreationService
                     $match->orWhere(fn ($c) => $c->where('type', LeadContact::TYPE_PHONE)->where('match_key', $phoneKey));
                 }
             }))
+            ->orderByRaw('deleted_at IS NOT NULL')
             ->orderBy('id')
             ->lockForUpdate()
             ->first();
@@ -160,7 +170,7 @@ class LeadCreationService
         // meta feeds the lead page's Source history (where each enquiry came from).
         $lead->notesHistory()->create([
             'type' => LeadNote::TYPE_ENQUIRY,
-            'body' => $this->enquirySummary($attributes),
+            'body' => $this->enquirySummary($attributes, $lead->wasRestored),
             'meta' => array_filter([
                 'page_source' => $attributes['page_source'] ?? null,
                 'page_url' => $attributes['page_url'] ?? null,
@@ -220,13 +230,13 @@ class LeadCreationService
         });
     }
 
-    private function enquirySummary(array $attributes): string
+    private function enquirySummary(array $attributes, bool $restored = false): string
     {
         $contact = implode(' · ', array_filter([$attributes['name'] ?? null, $attributes['email'] ?? null, $attributes['phone'] ?? null]));
         $property = !empty($attributes['property_id']) ? Property::find($attributes['property_id'])?->getTranslation('title') : null;
 
         return implode("\n", array_filter([
-            'Repeat enquiry' . (!empty($attributes['page_source']) ? ' (' . $attributes['page_source'] . ')' : '') . ($contact ? ' — ' . $contact : ''),
+            ($restored ? 'Restored from Deleted Leads — repeat enquiry' : 'Repeat enquiry') . (!empty($attributes['page_source']) ? ' (' . $attributes['page_source'] . ')' : '') . ($contact ? ' — ' . $contact : ''),
             $property ? 'Property: ' . $property : null,
             $attributes['message'] ?? null,
         ]));

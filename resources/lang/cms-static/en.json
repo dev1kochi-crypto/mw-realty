@@ -1180,6 +1180,16 @@
         "voice_read": "Read replies aloud",
         "clear_conversation_aria": "Clear conversation",
         "dialog_aria": "AI chat assistant",
+        "details_form": {
+            "title": "Want to keep chatting?",
+            "subtitle": "Share your details so we can save this chat and send you properties that match.",
+            "thanks": "Thanks, {name}! What else would you like to know?",
+            "name_placeholder": "Your name",
+            "email_placeholder": "Email address",
+            "phone_placeholder": "Phone number",
+            "name_required": "Please enter your name.",
+            "submit": "Continue chatting"
+        },
         "card": {
             "bed_suffix": "bed",
             "bath_suffix": "bath",
@@ -1216,6 +1226,7 @@
             "voice_aria": "Ask by voice",
             "listening_placeholder": "Listening…",
             "ask_placeholder": "Ask about properties or buying process…",
+            "details_placeholder": "Share your details above to continue…",
             "send_aria": "Send"
         }
     },

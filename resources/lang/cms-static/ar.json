@@ -1180,6 +1180,16 @@
         "voice_read": "قراءة الردود بصوت عالٍ",
         "clear_conversation_aria": "مسح المحادثة",
         "dialog_aria": "مساعد الدردشة الذكي",
+        "details_form": {
+            "title": "هل تريد متابعة المحادثة؟",
+            "subtitle": "شاركنا بياناتك لنحفظ هذه المحادثة ونرسل لك العقارات المناسبة.",
+            "thanks": "شكراً {name}! ما الذي تود معرفته أيضاً؟",
+            "name_placeholder": "اسمك",
+            "email_placeholder": "البريد الإلكتروني",
+            "phone_placeholder": "رقم الهاتف",
+            "name_required": "يرجى إدخال اسمك.",
+            "submit": "متابعة المحادثة"
+        },
         "card": {
             "bed_suffix": "غرفة نوم",
             "bath_suffix": "حمام",
@@ -1216,6 +1226,7 @@
             "voice_aria": "اسأل بالصوت",
             "listening_placeholder": "جارٍ الاستماع…",
             "ask_placeholder": "اسأل عن العقارات أو إجراءات الشراء…",
+            "details_placeholder": "شارك بياناتك أعلاه للمتابعة…",
             "send_aria": "إرسال"
         }
     },

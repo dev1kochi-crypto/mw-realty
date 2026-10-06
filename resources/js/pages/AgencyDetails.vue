@@ -130,7 +130,7 @@ function agencyAria(template, name) {
                     </div>
 
                     <div class="mw-agent-more__track" data-agency-properties-slider>
-                        <div v-for="property in agency.properties" :key="property.slug" class="mw-agent-more__slide"><article class="mw-agent-prop">
+                        <div v-for="property in agency.properties" :key="property.slug" class="mw-agent-more__slide"><article class="mw-agent-prop" v-track-impression="property.id">
                             <div class="mw-agent-prop__media" data-card-gallery role="link" tabindex="0" @click="$router.push(`/property-details/${property.slug}`)" @keydown.enter="$router.push(`/property-details/${property.slug}`)" style="cursor: pointer;">
                                 <div class="mw-agent-prop__slides" data-gallery-track>
                                     <img v-for="(image, imgIndex) in property.images" :key="imgIndex" :src="image" :alt="property.name" class="mw-agent-prop__photo" loading="lazy">

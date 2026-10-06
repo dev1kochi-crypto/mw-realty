@@ -17,53 +17,96 @@
     $leadUrl = route('portal.crm.leads.show', $lead->id);
     $telHref = fn ($label) => 'tel:' . preg_replace('/[^\d+]/', '', $label);
     $waHref = fn ($label) => 'https://wa.me/' . preg_replace('/\D+/', '', $label);
+    $initialOf = fn ($name) => strtoupper(mb_substr(trim((string) $name) ?: '?', 0, 1));
+    $status = $lead->status ?: 'inactive';
+    $ownerName = $lead->owner?->displayName();
+    $agentName = $lead->agent?->name;
 @endphp
 
 @section('crm-content')
 <div class="portal-lead-page">
     {{-- Header --}}
     <div class="portal-card portal-lp-header mb-3">
-        <div class="d-flex flex-wrap align-items-center gap-3">
+        <div class="portal-lp-header-top">
+            <a href="{{ route('portal.crm.leads.index') }}" class="portal-lp-back"><i class="fas fa-arrow-left" aria-hidden="true"></i> All leads</a>
+            <div class="portal-lp-nav" role="group" aria-label="Lead navigation">
+                <a @if($previousLeadId) href="{{ route('portal.crm.leads.show', $previousLeadId) }}" @endif class="portal-lp-icon-btn {{ $previousLeadId ? '' : 'disabled' }}" title="Previous lead" aria-label="Previous lead"><i class="fas fa-chevron-left"></i></a>
+                <a @if($nextLeadId) href="{{ route('portal.crm.leads.show', $nextLeadId) }}" @endif class="portal-lp-icon-btn {{ $nextLeadId ? '' : 'disabled' }}" title="Next lead" aria-label="Next lead"><i class="fas fa-chevron-right"></i></a>
+                <a href="{{ route('portal.crm.leads.index') }}" class="portal-lp-icon-btn" title="Close — back to all leads" aria-label="Close"><i class="fas fa-xmark"></i></a>
+            </div>
+        </div>
+
+        <div class="portal-lp-header-main">
             <span class="portal-lp-initials">{{ $initials }}</span>
             <div class="flex-grow-1 min-w-0">
-                <h1 class="portal-lp-name">{{ $lead->name ?: 'Unknown' }}</h1>
-                <div class="portal-lp-header-meta">
-                    <span>Stage:
-                        @if($lead->stage)
-                        <span class="portal-lp-badge" style="--badge: {{ $lead->stage->color }};"><i class="fas fa-layer-group" aria-hidden="true"></i>{{ $lead->stage->name }}</span>
-                        @else
-                        <span class="portal-lp-badge portal-lp-badge-empty">No stage</span>
-                        @endif
-                    </span>
-                    <span>Source:
-                        <span class="portal-lp-badge portal-lp-badge-accent"><i class="fas fa-globe" aria-hidden="true"></i>{{ $lead->source?->name ?: $channel }}</span>
-                    </span>
-                    <span data-highlight-key="status" class="portal-badge-status portal-badge-{{ $lead->status ?: 'inactive' }}">{{ ucfirst($lead->status ?: 'inactive') }}</span>
-                    @if($lead->enquiry_count > 1)
-                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis">Enquired {{ $lead->enquiry_count }}×</span>
-                    @endif
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h1 class="portal-lp-name">{{ $lead->name ?: 'Unknown' }}</h1>
+                    <span data-highlight-key="status" class="portal-lp-status is-{{ $status }}">{{ ucfirst($status) }}</span>
                 </div>
-                <div class="text-muted small mt-1">#{{ $lead->id }} · Received {{ $lead->created_at->format('d M Y, H:i') }} via {{ $channel }}</div>
+                <div class="portal-lp-header-meta">
+                    <span><i class="fas fa-hashtag" aria-hidden="true"></i>{{ $lead->id }}</span>
+                    <span><i class="far fa-calendar" aria-hidden="true"></i>Received {{ $lead->created_at->format('d M Y, H:i') }}</span>
+                    <span><i class="fas fa-arrow-right-to-bracket" aria-hidden="true"></i>via {{ $channel }}</span>
+                </div>
+                <div class="portal-lp-header-chips">
+                    @if($lead->stage)
+                    <span class="portal-lp-badge" style="--badge: {{ $lead->stage->color }};" title="Stage"><span class="portal-lp-badge-dot"></span>{{ $lead->stage->name }}</span>
+                    @else
+                    <span class="portal-lp-badge portal-lp-badge-empty" title="Stage"><span class="portal-lp-badge-dot"></span>No stage</span>
+                    @endif
+                    <span class="portal-lp-badge portal-lp-badge-accent" title="Source"><i class="fas fa-globe" aria-hidden="true"></i>{{ $lead->source?->name ?: $channel }}</span>
+                    @if($lead->enquiry_count > 1)
+                    <span class="portal-lp-badge portal-lp-badge-warning"><i class="fas fa-repeat" aria-hidden="true"></i>Enquired {{ $lead->enquiry_count }}×</span>
+                    @endif
+                    @foreach($lead->tags as $tag)
+                    <span class="portal-lp-badge" style="--badge: {{ $tag->color }};"><i class="fas fa-tag" aria-hidden="true"></i>{{ $tag->name }}</span>
+                    @endforeach
+                </div>
             </div>
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <a @if($previousLeadId) href="{{ route('portal.crm.leads.show', $previousLeadId) }}" @endif class="portal-lp-icon-btn {{ $previousLeadId ? '' : 'disabled' }}" title="Previous lead" aria-label="Previous lead"><i class="fas fa-backward-step"></i></a>
-                <a @if($nextLeadId) href="{{ route('portal.crm.leads.show', $nextLeadId) }}" @endif class="portal-lp-icon-btn {{ $nextLeadId ? '' : 'disabled' }}" title="Next lead" aria-label="Next lead"><i class="fas fa-forward-step"></i></a>
-                <a href="{{ route('portal.crm.leads.index') }}" class="portal-lp-icon-btn" title="Close — back to all leads" aria-label="Close"><i class="fas fa-xmark"></i></a>
+            <div class="portal-lp-quick">
+                @if($lead->formatted_phone)
+                <a href="{{ $telHref($lead->formatted_phone) }}" class="portal-lp-quick-btn" title="Call {{ $lead->formatted_phone }}"><i class="fas fa-phone"></i><span>Call</span></a>
+                <a href="{{ $waHref($lead->formatted_phone) }}" target="_blank" rel="noopener" class="portal-lp-quick-btn is-whatsapp" title="WhatsApp"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></a>
+                @endif
+                @if($lead->email)
+                <a href="mailto:{{ $lead->email }}" class="portal-lp-quick-btn" title="Email {{ $lead->email }}"><i class="fas fa-envelope"></i><span>Email</span></a>
+                @endif
+            </div>
+        </div>
+
+        <div class="portal-lp-stats">
+            <div class="portal-lp-stat">
+                <span class="portal-lp-stat-icon"><i class="fas fa-user-tie"></i></span>
+                <div class="min-w-0"><div class="portal-lp-stat-label">Assigned agent</div><div class="portal-lp-stat-value text-truncate" title="{{ $agentName }}">{{ $agentName ?: 'Unassigned' }}</div></div>
+            </div>
+            <div class="portal-lp-stat">
+                <span class="portal-lp-stat-icon is-accent"><i class="fas fa-building"></i></span>
+                <div class="min-w-0"><div class="portal-lp-stat-label">Property</div><div class="portal-lp-stat-value text-truncate" title="{{ $propertyTitle }}">{{ $propertyTitle ?: '—' }}</div></div>
+            </div>
+            <div class="portal-lp-stat">
+                <span class="portal-lp-stat-icon is-warning"><i class="fas fa-envelope-open-text"></i></span>
+                <div class="min-w-0"><div class="portal-lp-stat-label">Enquiries</div><div class="portal-lp-stat-value">{{ $lead->enquiry_count ?: 1 }}</div></div>
+            </div>
+            <div class="portal-lp-stat">
+                <span class="portal-lp-stat-icon is-success"><i class="fas fa-clock-rotate-left"></i></span>
+                <div class="min-w-0"><div class="portal-lp-stat-label">Last updated</div><div class="portal-lp-stat-value">{{ $lead->updated_at->diffForHumans() }}</div></div>
             </div>
         </div>
     </div>
 
-
     {{-- Tabs --}}
     <ul class="nav portal-lp-tabs mb-3" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#leadPageProfile" type="button" role="tab">Profile</button>
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#leadPageProfile" type="button" role="tab"><i class="fas fa-id-card" aria-hidden="true"></i>Profile</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#leadPageTimeline" type="button" role="tab">Timeline <span class="portal-lp-tab-count">{{ $timeline->count() }}</span></button>
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#leadPageTimeline" type="button" role="tab"><i class="fas fa-stream" aria-hidden="true"></i>Timeline <span class="portal-lp-tab-count">{{ $timeline->count() }}</span></button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#leadPageSummary" type="button" role="tab">Summary</button>
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#leadPageSummary" type="button" role="tab"><i class="fas fa-chart-pie" aria-hidden="true"></i>Summary</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="leadPageInsightsTab" data-bs-toggle="tab" data-bs-target="#leadPageInsights" type="button" role="tab"><i class="fas fa-chart-line" aria-hidden="true"></i>Insights @if($visitorInsights)<span class="portal-lp-tab-count">{{ $visitorInsights['stats']['property_views'] }}</span>@endif</button>
         </li>
     </ul>
 
@@ -75,11 +118,11 @@
                     {{-- Name --}}
                     <section class="portal-lp-card" data-card>
                         <header class="portal-lp-card-head">
-                            <h2>Name</h2>
+                            <h2><span class="portal-lp-card-icon"><i class="fas fa-user"></i></span>Name</h2>
                             <button type="button" class="portal-lp-card-action" data-card-edit title="Edit name"><i class="fas fa-pen"></i></button>
                         </header>
                         <div class="portal-lp-card-body">
-                            <div class="portal-lp-field" data-card-view>{{ $lead->name ?: '—' }}</div>
+                            <div class="portal-lp-field" data-card-view><i class="far fa-user" aria-hidden="true"></i>{{ $lead->name ?: '—' }}</div>
                             <form class="d-none" data-card-form data-lead-form data-url="{{ $leadUrl }}/fields" data-method="PATCH">
                                 <input type="text" name="name" class="form-control" value="{{ $lead->name }}" required maxlength="255" aria-label="Name">
                                 @include('portal.crm.leads._show_form_actions')
@@ -94,7 +137,7 @@
                     ] as $group)
                     <section class="portal-lp-card" data-card>
                         <header class="portal-lp-card-head">
-                            <h2>{{ $group['title'] }} @if(count($group['items']) > 1)<span class="portal-lp-count">{{ count($group['items']) }}</span>@endif</h2>
+                            <h2><span class="portal-lp-card-icon {{ $group['type'] === 'email' ? 'is-accent' : '' }}"><i class="fas {{ $group['icon'] }}"></i></span>{{ $group['title'] }} @if(count($group['items']) > 1)<span class="portal-lp-count">{{ count($group['items']) }}</span>@endif</h2>
                             <button type="button" class="portal-lp-card-add" data-card-edit title="Add {{ $group['type'] === 'phone' ? 'phone number' : 'email' }}"><i class="fas fa-plus"></i></button>
                         </header>
                         <div class="portal-lp-card-body">
@@ -113,12 +156,12 @@
                             <div class="d-grid gap-2">
                                 @forelse($group['items'] as $item)
                                 <div class="portal-lp-contact {{ $item['primary'] ? 'is-primary' : '' }}">
-                                    <i class="fas {{ $group['icon'] }} portal-lp-contact-icon" aria-hidden="true"></i>
+                                    <span class="portal-lp-contact-icon {{ $group['type'] === 'email' ? 'is-accent' : '' }}"><i class="fas {{ $group['icon'] }}" aria-hidden="true"></i></span>
                                     <a class="portal-lp-contact-value" href="{{ $group['type'] === 'phone' ? $telHref($item['label']) : 'mailto:' . $item['value'] }}">{{ $item['label'] }}</a>
-                                    @if($item['primary'])<span class="portal-lp-primary">Primary</span>@endif
+                                    @if($item['primary'])<span class="portal-lp-primary"><i class="fas fa-star" aria-hidden="true"></i>Primary</span>@endif
                                     <div class="portal-lp-contact-actions">
                                         @if($group['type'] === 'phone')
-                                        <a href="{{ $waHref($item['label']) }}" target="_blank" rel="noopener" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                                        <a href="{{ $waHref($item['label']) }}" target="_blank" rel="noopener" title="WhatsApp" class="is-whatsapp"><i class="fab fa-whatsapp"></i></a>
                                         @endif
                                         @unless($item['primary'])
                                         <button type="button" title="Make primary" data-lead-action data-url="{{ $leadUrl }}/contacts/{{ $item['id'] }}/primary" data-method="PATCH"><i class="far fa-star"></i></button>
@@ -137,28 +180,35 @@
                     {{-- Lead basic details --}}
                     <section class="portal-lp-card" data-card>
                         <header class="portal-lp-card-head">
-                            <h2>Lead Basic Details</h2>
+                            <h2><span class="portal-lp-card-icon"><i class="fas fa-circle-info"></i></span>Lead Basic Details</h2>
                             <button type="button" class="portal-lp-card-action" data-card-edit title="Edit details"><i class="fas fa-pen"></i></button>
                         </header>
                         <div class="portal-lp-card-body">
                             <div data-card-view>
+                                @if($propertyTitle)
+                                <div class="portal-lp-property">
+                                    <span class="portal-lp-property-icon"><i class="fas fa-building"></i></span>
+                                    <div class="min-w-0 flex-grow-1">
+                                        <div class="portal-lp-label">Interested in</div>
+                                        @if($propertyUrl)<a href="{{ $propertyUrl }}" target="_blank" rel="noopener" class="portal-lp-property-title">{{ $propertyTitle }} <i class="fas fa-arrow-up-right-from-square"></i></a>@else<div class="portal-lp-property-title">{{ $propertyTitle }}</div>@endif
+                                        @if($lead->property->reference_no)<div class="portal-lp-property-ref">Ref: {{ $lead->property->reference_no }}</div>@endif
+                                    </div>
+                                </div>
+                                @endif
                                 <dl class="portal-lp-grid">
-                                    <div><dt>Company</dt><dd>{{ $lead->company ?: '—' }}</dd></div>
-                                    <div><dt>Country</dt><dd>{{ $lead->country ?: '—' }}</dd></div>
-                                    <div><dt>Came in via</dt><dd>{{ $channel }}</dd></div>
-                                    <div><dt>Property</dt><dd>
-                                        @if($propertyTitle)
-                                            @if($propertyUrl)<a href="{{ $propertyUrl }}" target="_blank" rel="noopener">{{ $propertyTitle }} <i class="fas fa-arrow-up-right-from-square small"></i></a>@else{{ $propertyTitle }}@endif
-                                            @if($lead->property->reference_no)<span class="d-block text-muted small">Ref: {{ $lead->property->reference_no }}</span>@endif
-                                        @else — @endif
-                                    </dd></div>
+                                    <div class="portal-lp-fact"><dt><i class="fas fa-briefcase" aria-hidden="true"></i>Company</dt><dd>{{ $lead->company ?: '—' }}</dd></div>
+                                    <div class="portal-lp-fact"><dt><i class="fas fa-earth-asia" aria-hidden="true"></i>Country</dt><dd>{{ $lead->country ?: '—' }}</dd></div>
+                                    <div class="portal-lp-fact"><dt><i class="fas fa-arrow-right-to-bracket" aria-hidden="true"></i>Came in via</dt><dd>{{ $channel }}</dd></div>
+                                    @unless($propertyTitle)
+                                    <div class="portal-lp-fact"><dt><i class="fas fa-building" aria-hidden="true"></i>Property</dt><dd>—</dd></div>
+                                    @endunless
                                     @foreach($enquiryDetails as $row)
-                                    <div><dt>{{ $row['label'] }}</dt><dd>{{ $row['value'] }}</dd></div>
+                                    <div class="portal-lp-fact"><dt><i class="fas fa-list-check" aria-hidden="true"></i>{{ $row['label'] }}</dt><dd>{{ $row['value'] }}</dd></div>
                                     @endforeach
                                 </dl>
-                                <div class="portal-lead-view-message mt-3">
-                                    <div class="portal-lead-view-label mb-1">Enquiry message</div>
-                                    <div class="portal-lead-view-message-copy">{{ $lead->message ?: '—' }}</div>
+                                <div class="portal-lp-message">
+                                    <div class="portal-lp-label"><i class="fas fa-quote-left me-1" aria-hidden="true"></i>Enquiry message</div>
+                                    <div class="portal-lp-message-copy">{{ $lead->message ?: 'No message was left with this enquiry.' }}</div>
                                 </div>
                             </div>
                             <form class="d-none" data-card-form data-lead-form data-url="{{ $leadUrl }}/fields" data-method="PATCH">
@@ -186,10 +236,10 @@
                     @if($purchases->isNotEmpty())
                     {{-- Purchases — listings marked sold / rented to this lead --}}
                     <section class="portal-lp-card">
-                        <header class="portal-lp-card-head"><h2><i class="fas fa-handshake me-1"></i>Purchases</h2></header>
+                        <header class="portal-lp-card-head"><h2><span class="portal-lp-card-icon is-success"><i class="fas fa-handshake"></i></span>Purchases</h2></header>
                         <div class="portal-lp-card-body">
                             @foreach($purchases as $purchase)
-                            <div class="d-flex justify-content-between gap-2 py-2 @if(!$loop->last) border-bottom @endif">
+                            <div class="d-flex justify-content-between gap-2 py-2 @if(!$loop->last) portal-lp-divided @endif">
                                 <div class="min-w-0">
                                     <a href="{{ route(($purchase->segment === \App\Models\Property::SEGMENT_COMMERCIAL ? 'portal.commercial' : 'portal.properties') . '.show', $purchase->id) }}" class="fw-semibold text-decoration-none d-block text-truncate">{{ $purchase->getTranslation('title') ?: 'Property' }}</a>
                                     <div class="small text-muted">
@@ -208,15 +258,15 @@
                     {{-- Tags --}}
                     <section class="portal-lp-card" data-card id="leadTagsCard">
                         <header class="portal-lp-card-head">
-                            <h2>Tags</h2>
+                            <h2><span class="portal-lp-card-icon is-accent"><i class="fas fa-tags"></i></span>Tags</h2>
                             <button type="button" class="portal-lp-card-add" data-card-edit title="Manage tags"><i class="fas fa-plus"></i></button>
                         </header>
                         <div class="portal-lp-card-body">
-                            <div class="d-flex flex-wrap gap-1" data-card-view>
+                            <div class="d-flex flex-wrap gap-2" data-card-view>
                                 @forelse($lead->tags as $tag)
-                                <span class="portal-tag-chip" style="background: {{ $tag->color }}22; color: {{ $tag->color }};">{{ $tag->name }}</span>
+                                <span class="portal-lp-tag" style="--tag: {{ $tag->color }};"><i class="fas fa-tag" aria-hidden="true"></i>{{ $tag->name }}</span>
                                 @empty
-                                <div class="portal-lp-empty w-100">No tags yet.</div>
+                                <div class="portal-lp-empty w-100"><i class="fas fa-tags" aria-hidden="true"></i>No tags yet.</div>
                                 @endforelse
                             </div>
                             <form class="d-none" data-card-form data-lead-form data-url="{{ $leadUrl }}/tags" data-method="PATCH" data-empty-param="tags">
@@ -237,11 +287,14 @@
 
                     {{-- Stage --}}
                     <section class="portal-lp-card" data-card>
-                        <header class="portal-lp-card-head"><h2>Stage</h2></header>
+                        <header class="portal-lp-card-head">
+                            <h2><span class="portal-lp-card-icon"><i class="fas fa-layer-group"></i></span>Stage</h2>
+                            <button type="button" class="portal-lp-card-action" data-card-edit title="Change stage"><i class="fas fa-pen"></i></button>
+                        </header>
                         <div class="portal-lp-card-body">
-                            <button type="button" class="portal-lp-pill-btn" data-card-view data-card-edit title="Change stage">
-                                @if($lead->stage)<span class="portal-color-dot" style="background: {{ $lead->stage->color }};"></span>{{ $lead->stage->name }}@else No stage @endif
-                                <i class="fas fa-pen-to-square ms-1"></i>
+                            <button type="button" class="portal-lp-pill-btn" data-card-view data-card-edit title="Change stage" style="--stage: {{ $lead->stage?->color ?: '#6b7094' }};">
+                                <span class="portal-lp-pill-dot"></span>{{ $lead->stage?->name ?: 'No stage' }}
+                                <i class="fas fa-chevron-down portal-lp-pill-caret" aria-hidden="true"></i>
                             </button>
                             <form class="d-none" data-card-form data-lead-form data-url="{{ $leadUrl }}/stage" data-method="PATCH">
                                 <select name="stage_id" class="form-select" aria-label="Stage">
@@ -257,10 +310,18 @@
 
                     {{-- Source — where the lead came from; fixed once captured, so read-only. --}}
                     <section class="portal-lp-card">
-                        <header class="portal-lp-card-head"><h2>Source</h2></header>
+                        <header class="portal-lp-card-head">
+                            <h2><span class="portal-lp-card-icon is-accent"><i class="fas fa-globe"></i></span>Source</h2>
+                            <span class="portal-lp-readonly" title="The source is fixed once the lead is captured"><i class="fas fa-lock" aria-hidden="true"></i>Read-only</span>
+                        </header>
                         <div class="portal-lp-card-body">
-                            <span class="portal-lp-pill-btn" style="cursor: default;">{{ $lead->source?->name ?: 'No source' }}</span>
-                            <div class="text-muted small mt-2">Came in via {{ $channel }}</div>
+                            <div class="portal-lp-row">
+                                <span class="portal-lp-row-icon is-accent"><i class="fas fa-share-nodes"></i></span>
+                                <div class="min-w-0">
+                                    <div class="portal-lp-row-title">{{ $lead->source?->name ?: 'No source' }}</div>
+                                    <div class="portal-lp-row-sub">Came in via {{ $channel }}</div>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
@@ -268,11 +329,17 @@
                     @if($isAdmin)
                     <section class="portal-lp-card" data-card>
                         <header class="portal-lp-card-head">
-                            <h2>Owner</h2>
+                            <h2><span class="portal-lp-card-icon"><i class="fas fa-building-user"></i></span>Owner</h2>
                             <button type="button" class="portal-lp-card-action" data-card-edit title="Transfer lead"><i class="fas fa-pen"></i></button>
                         </header>
                         <div class="portal-lp-card-body">
-                            <div class="portal-lp-field" data-card-view>{{ $lead->owner?->displayName() ?: 'Unassigned (Super Admin)' }}</div>
+                            <div class="portal-lp-row" data-card-view>
+                                <span class="portal-lp-avatar">{{ $ownerName ? $initialOf($ownerName) : 'SA' }}</span>
+                                <div class="min-w-0">
+                                    <div class="portal-lp-row-title text-truncate">{{ $ownerName ?: 'Unassigned (Super Admin)' }}</div>
+                                    <div class="portal-lp-row-sub">{{ $lead->owner ? ($lead->owner->isAgency() ? 'Agency' : 'Agent') . ' account' : 'Not transferred yet' }}</div>
+                                </div>
+                            </div>
                             <form class="d-none" data-card-form data-lead-form data-url="{{ $leadUrl }}/fields" data-method="PATCH">
                                 <select name="owner_id" class="form-select" aria-label="Owner" required>
                                     @if(!$lead->portal_user_id)<option value="" selected disabled>Choose an agency / agent</option>@endif
@@ -290,15 +357,18 @@
                     {{-- Assigned agent --}}
                     <section class="portal-lp-card" data-card>
                         <header class="portal-lp-card-head">
-                            <h2>Assigned Agent</h2>
+                            <h2><span class="portal-lp-card-icon is-success"><i class="fas fa-user-tie"></i></span>Assigned Agent</h2>
                             @if($canAssign)<button type="button" class="portal-lp-card-action" data-card-edit title="Assign agent"><i class="fas fa-pen"></i></button>@endif
                         </header>
                         <div class="portal-lp-card-body">
-                            <div data-card-view>
-                                <div class="portal-lp-field">{{ $lead->agent?->name ?: ($lead->owner?->isAgency() ? 'Unassigned (agency level)' : '—') }}</div>
-                                @if($lead->agent && $lead->assignmentLabel())
-                                <div class="text-muted small mt-1">{{ $lead->assignmentLabel() }}{{ $lead->assigned_at ? ' · ' . $lead->assigned_at->format('d M Y, H:i') : '' }}</div>
-                                @endif
+                            <div class="portal-lp-row" data-card-view>
+                                <span class="portal-lp-avatar {{ $agentName ? 'is-success' : 'is-empty' }}">@if($agentName){{ $initialOf($agentName) }}@else<i class="fas fa-user-slash"></i>@endif</span>
+                                <div class="min-w-0">
+                                    <div class="portal-lp-row-title text-truncate">{{ $agentName ?: ($lead->owner?->isAgency() ? 'Unassigned (agency level)' : 'Unassigned') }}</div>
+                                    @if($lead->agent && $lead->assignmentLabel())
+                                    <div class="portal-lp-row-sub">{{ $lead->assignmentLabel() }}{{ $lead->assigned_at ? ' · ' . $lead->assigned_at->format('d M Y, H:i') : '' }}</div>
+                                    @endif
+                                </div>
                             </div>
                             @if($canAssign)
                             <form class="d-none" data-card-form data-lead-form data-url="{{ $leadUrl }}/assign" data-method="POST">
@@ -312,8 +382,8 @@
                             </form>
                             @endif
                             @if($assignmentHistory->isNotEmpty())
-                            <details class="mt-2">
-                                <summary class="small text-muted">Assignment history ({{ $assignmentHistory->count() }})</summary>
+                            <details class="portal-lp-history">
+                                <summary><i class="fas fa-clock-rotate-left me-1" aria-hidden="true"></i>Assignment history ({{ $assignmentHistory->count() }})</summary>
                                 <ul class="list-unstyled small mt-2 mb-0">
                                     @foreach($assignmentHistory as $row)
                                     <li class="mb-1">{{ $row->assigned_at->format('d M Y, H:i') }} — {{ $row->agent?->name ?: 'Unassigned' }} · {{ (new \App\Models\Lead(['assignment_type' => $row->assignment_type]))->assignmentLabel() ?? $row->assignment_type }}{{ $row->note ? ' — ' . $row->note : '' }}</li>
@@ -337,10 +407,10 @@
             <div class="row g-3">
                 <div class="col-lg-6">
                     <section class="portal-lp-card">
-                        <header class="portal-lp-card-head"><h2>Lead</h2></header>
+                        <header class="portal-lp-card-head"><h2><span class="portal-lp-card-icon"><i class="fas fa-id-badge"></i></span>Lead</h2></header>
                         <div class="portal-lp-card-body">
                             <dl class="portal-lead-page-summary mb-0">
-                                <div><dt>Status</dt><dd><span data-highlight-key="status" class="portal-badge-status portal-badge-{{ $lead->status ?: 'inactive' }}">{{ ucfirst($lead->status ?: 'inactive') }}</span></dd></div>
+                                <div><dt>Status</dt><dd><span data-highlight-key="status" class="portal-lp-status is-{{ $status }}">{{ ucfirst($status) }}</span></dd></div>
                                 <div><dt>Stage</dt><dd>{{ $lead->stage?->name ?: 'No stage' }}</dd></div>
                                 <div><dt>Source</dt><dd>{{ $lead->source?->name ?: 'No source' }}</dd></div>
                                 <div><dt>Came in via</dt><dd>{{ $channel }}</dd></div>
@@ -354,7 +424,7 @@
                 </div>
                 <div class="col-lg-6">
                     <section class="portal-lp-card">
-                        <header class="portal-lp-card-head"><h2>Activity</h2></header>
+                        <header class="portal-lp-card-head"><h2><span class="portal-lp-card-icon is-warning"><i class="fas fa-chart-line"></i></span>Activity</h2></header>
                         <div class="portal-lp-card-body">
                             <dl class="portal-lead-page-summary mb-0">
                                 <div><dt>Received</dt><dd>{{ $lead->created_at->format('d M Y, H:i') }}</dd></div>
@@ -370,6 +440,22 @@
                     </section>
                 </div>
             </div>
+        </div>
+
+        {{-- ============ Insights — the website visitor's tracked activity (VisitorInsights) ============ --}}
+        <div class="tab-pane fade" id="leadPageInsights" role="tabpanel">
+            @if($visitorInsights)
+                @include('visitor-insights._panel', $visitorInsights)
+            @else
+            <section class="portal-lp-card">
+                <div class="portal-lp-card-body text-center text-muted py-5">
+                    <i class="fas fa-chart-line fa-2x mb-3 d-block opacity-50" aria-hidden="true"></i>
+                    <div class="fw-semibold mb-1">No website activity for this lead</div>
+                    <div class="small">Insights — property views, time spent, searches, favorites, AI chats — appear for leads that came from the website
+                        (AI chat, enquiry forms, customer accounts). This one came in via {{ $channel }}.</div>
+                </div>
+            </section>
+            @endif
         </div>
     </div>
 
@@ -407,6 +493,11 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // …/leads/{id}#insights (the leads table's Insights cell) opens straight on the Insights tab.
+    if (window.location.hash === '#insights') {
+        bootstrap.Tab.getOrCreateInstance(document.getElementById('leadPageInsightsTab')).show();
+    }
+
     const leadUrl = @json($leadUrl);
     const csrf = @json(csrf_token());
 

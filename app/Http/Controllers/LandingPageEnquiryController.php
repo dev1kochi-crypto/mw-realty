@@ -71,6 +71,14 @@ class LandingPageEnquiryController extends Controller
             Mail::to($adminEmail)->queue((new LandingPageEnquiryReceived($enquiry, $title ?: $page->slug))->afterCommit());
         }
 
+        // An enquirer who left an email / phone becomes a Website Lead with their browsing history.
+        app(\App\Services\Visitors\VisitorTracker::class)->captureEnquiry(
+            $request,
+            ['name' => $data['name'], 'email' => $data['email'], 'phone' => $data['phone']],
+            \App\Models\Visitors\VisitorLead::SOURCE_LANDING_PAGE,
+            ['form' => $enquiry->page_source, 'enquiry_id' => $enquiry->id, 'message' => \Illuminate\Support\Str::limit((string) $enquiry->message, 500)],
+        );
+
         // A configured Thank You URL wins over the same-page banner — it can be another landing page,
         // a relative path, or a full external URL; url()->to() leaves an absolute URL alone.
         if ($page->thank_you_url) {

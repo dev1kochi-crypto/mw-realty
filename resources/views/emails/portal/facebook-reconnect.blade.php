@@ -1,7 +1,7 @@
 @extends('emails.layout')
 
-@section('subject', 'Reconnect your Facebook Page "' . $connection->page_name . '" — MW Realty')
-@section('preheader', 'New Facebook leads from ' . $connection->page_name . ' are paused until the Page is reconnected.')
+@section('subject', 'Reconnect your Facebook Page "' . $page->page_name . '" — MW Realty')
+@section('preheader', 'New Facebook leads from ' . $page->page_name . ' are paused until the Page is reconnected.')
 @section('eyebrow', 'Action Needed')
 @section('icon', '⚠')
 @section('tone', 'amber')
@@ -11,22 +11,22 @@
 <p style="margin:0 0 16px;">Hi {{ $owner?->displayName() ?? 'there' }},</p>
 
 <p style="margin:0;">
-    Facebook stopped accepting MW Realty's access to your Page <strong>{{ $connection->page_name }}</strong>,
+    Facebook stopped accepting MW Realty's access to your Page <strong>{{ $page->page_name }}</strong>,
     so <strong>new Facebook Lead Ads leads from this Page are not reaching your CRM</strong> right now.
 </p>
 
 <x-email.details title="What happened">
-    <x-email.row label="Page" :strong="true">{{ $connection->page_name }}</x-email.row>
-    <x-email.row label="Failed on">{{ ($connection->needs_reconnect_at ?? now())->format('d M Y, H:i') }}</x-email.row>
+    <x-email.row label="Page" :strong="true">{{ $page->page_name }}</x-email.row>
+    <x-email.row label="Failed on">{{ ($page->needs_reconnect_at ?? now())->format('d M Y, H:i') }}</x-email.row>
     <x-email.row label="Reason">{{ $reason }}</x-email.row>
     <x-email.row label="Facebook said">{{ \Illuminate\Support\Str::limit($facebookMessage, 300) }}</x-email.row>
 </x-email.details>
 
 <x-email.callout tone="warning" title="How to reconnect">
     1. Sign in to MW Realty and open <strong>CRM › Integrations</strong>.<br>
-    2. Click <strong>Reconnect</strong> next to {{ $connection->page_name }} (or <strong>Connect Facebook Page</strong>).<br>
+    2. Click <strong>Reconnect</strong> next to {{ $page->page_name }} (or <strong>Connect Facebook Page</strong>).<br>
     3. Log in with a Facebook account that is an <strong>admin of the Page</strong>, and allow all the permissions asked.<br>
-    4. Tick <strong>{{ $connection->page_name }}</strong> and click <strong>Connect Pages</strong>.<br>
+    4. Tick <strong>{{ $page->page_name }}</strong> and click <strong>Connect Pages</strong>.<br>
     5. The leads received while it was disconnected are fetched automatically — you'll get one summary email. (<strong>All leads</strong> on the Page re-checks everything.)
 </x-email.callout>
 

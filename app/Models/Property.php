@@ -15,6 +15,8 @@ class Property extends Model
         'agent_id',
         'created_by_type',
         'created_by_id',
+        'updated_by_type',
+        'updated_by_id',
         'translations',
         'slug',
         'reference_no',
@@ -227,6 +229,30 @@ class Property extends Model
     public function agent()
     {
         return $this->belongsTo(PortalUser::class, 'agent_id');
+    }
+
+    /** Who created the listing (created_by_*) — an admin's name, or the agency / agent. */
+    public function createdByName(): ?string
+    {
+        return static::actorName($this->created_by_type, $this->created_by_id);
+    }
+
+    /** Who last edited the listing (updated_by_*). */
+    public function updatedByName(): ?string
+    {
+        return static::actorName($this->updated_by_type, $this->updated_by_id);
+    }
+
+    private static function actorName(?string $type, ?int $id): ?string
+    {
+        if (!$type) {
+            return null;
+        }
+        if ($type === 'admin') {
+            return ($id ? \App\Models\CmsKit\Admin::find($id)?->name : null) ?? 'MW Realty Admin';
+        }
+
+        return $id ? PortalUser::find($id)?->displayName() : null;
     }
 
     /**

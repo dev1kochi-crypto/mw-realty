@@ -1,29 +1,23 @@
 {{-- Filters + stats cards + table + pagination — reloaded via AJAX (LeadController::index
      with an XHR header) after Create/Edit/Delete so the page never has to fully reload. --}}
 @php($activeFilterCount = collect(['search', 'owner_id', 'agent_id', 'stage_id', 'source_id', 'tag_id', 'date_from', 'date_to'])->filter(fn ($key) => filled(request($key)))->count())
+@php($filterSet = fn (string ...$keys) => collect($keys)->contains(fn ($key) => filled(request($key))) ? 'is-set' : '')
 <div class="portal-card portal-filter-bar mb-3">
-    <div class="portal-filter-bar__header d-flex flex-wrap align-items-center gap-2">
-        <span class="portal-filter-bar__icon"><i class="fas fa-sliders" aria-hidden="true"></i></span>
-        <span class="fw-semibold" style="font-size: 0.88rem;">Filter Leads</span>
-        @if($activeFilterCount)
-        <span class="portal-filter-bar__badge">{{ $activeFilterCount }} active</span>
-        @endif
-    </div>
-    <form method="GET" class="portal-filter-bar__form p-3 d-flex flex-nowrap gap-3 align-items-end">
+    <form method="GET" class="portal-filter-bar__form">
         <input type="hidden" name="status" value="{{ request('status') }}">
-        <div class="portal-filter-field portal-filter-field--search">
-            <label class="form-label mb-1">Search</label>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text"><i class="fas fa-magnifying-glass"></i></span>
-                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Name, email, phone">
+        <div class="portal-filter-field portal-filter-field--search {{ $filterSet('search') }}">
+            <label class="visually-hidden" for="leadFilterSearch">Search</label>
+            <div class="portal-filter-control">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" id="leadFilterSearch" name="search" value="{{ request('search') }}" class="form-control" placeholder="Name, email or phone" autocomplete="off">
             </div>
         </div>
         @if($isAdmin)
-        <div class="portal-filter-field portal-filter-field--owner">
-            <label class="form-label mb-1">Owner</label>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text"><i class="fas fa-user"></i></span>
-                <select name="owner_id" class="form-select">
+        <div class="portal-filter-field {{ $filterSet('owner_id') }}">
+            <label class="visually-hidden" for="leadFilterOwner">Owner</label>
+            <div class="portal-filter-control">
+                <i class="fas fa-building-user" aria-hidden="true"></i>
+                <select id="leadFilterOwner" name="owner_id" class="form-select">
                     <option value="">All owners</option>
                     @foreach($owners as $owner)
                     <option value="{{ $owner->id }}" {{ (string) request('owner_id') === (string) $owner->id ? 'selected' : '' }}>{{ $owner->displayName() }}</option>
@@ -33,11 +27,11 @@
         </div>
         @endif
         @if($agencyAgents->isNotEmpty() || $isAgencyViewer)
-        <div class="portal-filter-field portal-filter-field--owner">
-            <label class="form-label mb-1">Agent</label>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
-                <select name="agent_id" class="form-select">
+        <div class="portal-filter-field {{ $filterSet('agent_id') }}">
+            <label class="visually-hidden" for="leadFilterAgent">Agent</label>
+            <div class="portal-filter-control">
+                <i class="fas fa-user-tie" aria-hidden="true"></i>
+                <select id="leadFilterAgent" name="agent_id" class="form-select">
                     <option value="">All agents</option>
                     <option value="unassigned" {{ request('agent_id') === 'unassigned' ? 'selected' : '' }}>Unassigned</option>
                     @foreach($agencyAgents as $agencyAgent)
@@ -47,11 +41,11 @@
             </div>
         </div>
         @endif
-        <div class="portal-filter-field portal-filter-field--stage">
-            <label class="form-label mb-1">Stage</label>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text"><i class="fas fa-layer-group"></i></span>
-                <select name="stage_id" class="form-select">
+        <div class="portal-filter-field {{ $filterSet('stage_id') }}">
+            <label class="visually-hidden" for="leadFilterStage">Stage</label>
+            <div class="portal-filter-control">
+                <i class="fas fa-layer-group" aria-hidden="true"></i>
+                <select id="leadFilterStage" name="stage_id" class="form-select">
                     <option value="">All stages</option>
                     @foreach($stages as $stage)
                     <option value="{{ $stage->id }}" {{ (string) request('stage_id') === (string) $stage->id ? 'selected' : '' }}>{{ $stage->name }}</option>
@@ -59,11 +53,11 @@
                 </select>
             </div>
         </div>
-        <div class="portal-filter-field portal-filter-field--source">
-            <label class="form-label mb-1">Source</label>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text"><i class="fas fa-share-nodes"></i></span>
-                <select name="source_id" class="form-select">
+        <div class="portal-filter-field {{ $filterSet('source_id') }}">
+            <label class="visually-hidden" for="leadFilterSource">Source</label>
+            <div class="portal-filter-control">
+                <i class="fas fa-share-nodes" aria-hidden="true"></i>
+                <select id="leadFilterSource" name="source_id" class="form-select">
                     <option value="">All sources</option>
                     @foreach($sources as $source)
                     <option value="{{ $source->id }}" {{ (string) request('source_id') === (string) $source->id ? 'selected' : '' }}>{{ $source->name }}</option>
@@ -71,11 +65,11 @@
                 </select>
             </div>
         </div>
-        <div class="portal-filter-field portal-filter-field--tag">
-            <label class="form-label mb-1">Tag</label>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text"><i class="fas fa-tag"></i></span>
-                <select name="tag_id" class="form-select">
+        <div class="portal-filter-field {{ $filterSet('tag_id') }}">
+            <label class="visually-hidden" for="leadFilterTag">Tag</label>
+            <div class="portal-filter-control">
+                <i class="fas fa-tag" aria-hidden="true"></i>
+                <select id="leadFilterTag" name="tag_id" class="form-select">
                     <option value="">All tags</option>
                     @foreach($tags as $tag)
                     <option value="{{ $tag->id }}" {{ (string) request('tag_id') === (string) $tag->id ? 'selected' : '' }}>{{ $tag->name }}</option>
@@ -83,24 +77,20 @@
                 </select>
             </div>
         </div>
-        <div class="portal-filter-field portal-filter-field--date">
-            <label class="form-label mb-1">From</label>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text"><i class="fas fa-calendar-days"></i></span>
-                <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control">
+        <div class="portal-filter-field portal-filter-field--range {{ $filterSet('date_from', 'date_to') }}">
+            <label class="visually-hidden" for="leadFilterFrom">Received</label>
+            <div class="portal-filter-control portal-filter-control--range" title="Received between">
+                <i class="far fa-calendar" aria-hidden="true"></i>
+                <input type="date" id="leadFilterFrom" name="date_from" value="{{ request('date_from') }}" class="form-control" aria-label="Received from">
+                <span class="portal-filter-range-sep">to</span>
+                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control" aria-label="Received to">
             </div>
         </div>
-        <div class="portal-filter-field portal-filter-field--date">
-            <label class="form-label mb-1">To</label>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text"><i class="fas fa-calendar-check"></i></span>
-                <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control">
-            </div>
-        </div>
-        <div class="d-flex gap-2 flex-shrink-0">
-            <button type="submit" class="btn btn-portal-primary btn-sm text-nowrap"><i class="fas fa-filter me-1"></i> Filter</button>
+        {{-- Filters apply as you type / choose (index.blade.php, runLeadFilters); the button is a fallback. --}}
+        <div class="portal-filter-actions">
+            <button type="submit" class="portal-filter-submit" title="Apply filters" aria-label="Apply filters"><i class="fas fa-filter" aria-hidden="true"></i></button>
             @if($activeFilterCount)
-            <a href="{{ route('portal.crm.leads.index', ['status' => request('status')]) }}" class="btn btn-outline-secondary btn-sm text-nowrap"><i class="fas fa-rotate-left me-1"></i> Clear</a>
+            <a href="{{ route('portal.crm.leads.index', ['status' => request('status')]) }}" class="portal-filter-bar__clear js-clear-lead-filters" title="Clear all filters"><i class="fas fa-xmark" aria-hidden="true"></i> Clear <span class="portal-filter-bar__badge">{{ $activeFilterCount }}</span></a>
             @endif
         </div>
     </form>

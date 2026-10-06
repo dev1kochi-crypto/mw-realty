@@ -70,6 +70,22 @@ Route::post('/leads/custom-request', [LeadCaptureController::class, 'storeCustom
 Route::post('/leads/profile-request', [LeadCaptureController::class, 'storeProfileRequest'])->name('leads.profile-request')->middleware('throttle:lead-capture');
 Route::get('/newsletter/unsubscribe/{token}', [\App\Http\Controllers\Api\NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 
+// Public — the AI chat widget. Web (not API) routes: the visitor is identified by the mw_vid
+// cookie and every conversation is saved against them (see Api\ChatbotController / VisitorTracker).
+Route::prefix('chatbot')->name('chatbot.')->controller(\App\Http\Controllers\Api\ChatbotController::class)->group(function () {
+    Route::get('/session', 'session')->name('session')->middleware('throttle:60,1');
+    Route::post('/start', 'start')->name('start')->middleware('throttle:lead-capture');
+    Route::post('/reset', 'reset')->name('reset')->middleware('throttle:30,1');
+    Route::post('/message', 'send')->name('message')->middleware('throttle:ai-chatbot');
+});
+
+// Public — the site's page tracker (useVisitorTracking.js): page / property views and time spent.
+Route::post('/track/page', [\App\Http\Controllers\VisitorTrackingController::class, 'page'])->name('track.page')->middleware('throttle:120,1');
+Route::post('/track/page/{event}/time', [\App\Http\Controllers\VisitorTrackingController::class, 'time'])->whereNumber('event')->name('track.time')->middleware('throttle:240,1');
+// Listing performance: cards seen on screen (useListingImpressions.js) and contact clicks on a listing.
+Route::post('/track/impressions', [\App\Http\Controllers\VisitorTrackingController::class, 'impressions'])->name('track.impressions')->middleware('throttle:120,1');
+Route::post('/track/lead-click', [\App\Http\Controllers\VisitorTrackingController::class, 'leadClick'])->name('track.lead-click')->middleware('throttle:60,1');
+
 // The public-site "customer" (buyer/visitor) account — guard 'web', separate from the
 // agent/company portal above. Real <form> POSTs (CustomerLogin.vue / CustomerSignup.vue),
 // same pattern as the portal's own login form.
@@ -772,6 +788,8 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::delete('/properties/{id}', [PortalPropertyController::class, 'destroy'])->name('properties.destroy')->middleware('portal.approved');
         // Numeric only — otherwise it swallows later fixed paths like /properties/nearby-places-by-type.
         Route::get('/properties/{id}', [PortalPropertyController::class, 'show'])->name('properties.show')->whereNumber('id');
+        // Listing Performance panel (cards' Insights button) — both menus' cards use this one.
+        Route::get('/properties/{id}/insights', [PortalPropertyController::class, 'insights'])->name('properties.insights')->whereNumber('id')->middleware(['portal.approved', 'throttle:120,1']);
         Route::delete('/properties/{propertyId}/images/{imageId}', [PortalPropertyController::class, 'destroyImage'])->name('properties.images.destroy');
         Route::delete('/properties/{propertyId}/images', [PortalPropertyController::class, 'destroyAllImages'])->name('properties.images.destroy-all');
         Route::post('/properties/{propertyId}/images/reorder', [PortalPropertyController::class, 'reorderImages'])->name('properties.images.reorder');
@@ -886,6 +904,19 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::post('/leads/{id}/notes', [LeadNoteController::class, 'store'])->name('leads.notes.store');
             Route::post('/leads/{id}/assign', [LeadController::class, 'assign'])->name('leads.assign');
             Route::post('/leads-distribute', [LeadController::class, 'distributeUnassigned'])->name('leads.distribute');
+
+            // Website Leads — AI chat / form / customer-account visitors with their tracked activity;
+            // the pool not routed to an agency / agent yet, and transferring them. Super Admin only
+            // (enforced in the controller). See VisitorTracker.
+            Route::prefix('website-leads')->name('website-leads.')->controller(\App\Http\Controllers\Portal\Crm\WebsiteLeadController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/transfer-targets', 'targets')->name('targets')->middleware('throttle:120,1');
+                Route::post('/transfer', 'transfer')->name('transfer');
+                Route::get('/{websiteLead}', 'show')->whereNumber('websiteLead')->name('show');
+            });
+
+            // Lead Insights — website activity of the viewer's own leads (property views, time spent, AI chats…).
+            Route::get('/lead-insights', [\App\Http\Controllers\Portal\Crm\LeadInsightsController::class, 'index'])->name('lead-insights.index');
 
             // Integrations — Facebook Lead Ads (connect Pages; their leads arrive via /api/webhooks/facebook).
             Route::prefix('integrations')->name('integrations.')->controller(\App\Http\Controllers\Portal\Crm\IntegrationController::class)->group(function () {

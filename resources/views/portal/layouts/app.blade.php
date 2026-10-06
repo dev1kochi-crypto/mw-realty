@@ -63,6 +63,35 @@
                     <i class="fas fa-address-book"></i> Leads
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
+                {{-- Website activity of these leads (property views, time spent, AI chats…). --}}
+                <a href="{{ route('portal.crm.lead-insights.index') }}" class="nav-link @if(request()->routeIs('portal.crm.lead-insights.*')) active @endif">
+                    <i class="fas fa-chart-line"></i> Lead Insights
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
+                </a>
+
+                @if(!$owner && $cmsActor?->hasRole('superadmin'))
+                {{-- Website Leads — AI chat / form / customer visitors with their insights; the pool is everyone not
+                     routed to an agency / agent yet (badge = pool leads from the last 7 days). Super Admin only. --}}
+                @php
+                    $websiteLeadsOpen = request()->routeIs('portal.crm.website-leads.*');
+                    $newWebsiteLeads = \App\Models\Visitors\VisitorLead::inPool()->where('created_at', '>=', now()->subDays(7))->count();
+                @endphp
+                <div class="nav-item portal-nav-group">
+                    <a class="nav-link portal-nav-group-toggle @if($websiteLeadsOpen) active @endif"
+                       data-bs-toggle="collapse" href="#websiteLeadsMenu" role="button" aria-expanded="{{ $websiteLeadsOpen ? 'true' : 'false' }}">
+                        <i class="fas fa-user-clock"></i> <span>Website Leads</span>
+                        @if($newWebsiteLeads > 0)<span class="portal-nav-badge" title="New in the lead pool this week">{{ $newWebsiteLeads }}</span>@endif
+                        <i class="fas fa-chevron-down ms-auto portal-nav-chevron"></i>
+                    </a>
+                    <div class="collapse portal-nav-submenu @if($websiteLeadsOpen) show @endif" id="websiteLeadsMenu">
+                        <nav class="nav flex-column">
+                            @foreach(\App\Http\Controllers\Portal\Crm\WebsiteLeadController::STATUSES as $key => $label)
+                            <a class="nav-link py-2 @if(request()->routeIs('portal.crm.website-leads.index') && request('status', 'pool') === $key) active @endif" href="{{ route('portal.crm.website-leads.index', ['status' => $key]) }}">{{ $label }}</a>
+                            @endforeach
+                        </nav>
+                    </div>
+                </div>
+                @endif
 
                 <div class="nav-item portal-nav-group">
                     <a class="nav-link portal-nav-group-toggle @if(request()->routeIs('portal.crm.master.*')) active @endif"

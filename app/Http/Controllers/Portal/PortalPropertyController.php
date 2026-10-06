@@ -590,7 +590,8 @@ class PortalPropertyController extends Controller
         $search = trim((string) $request->input('q', ''));
         $search = mb_substr($search, 0, 100);
 
-        $query = $this->orderedListings()->with(['owner', 'agent:id,name,avatar']);
+        // details / floorPlans feed the quality score (ListingQualityService), leads_count the Leads figure.
+        $query = $this->orderedListings()->with(['owner', 'agent:id,name,avatar', 'details', 'floorPlans'])->withCount('leads');
         if ($search !== '') {
             $this->applySearch($query, $search);
         }
@@ -615,6 +616,12 @@ class PortalPropertyController extends Controller
 
         $properties = $query->paginate(self::PER_PAGE)->withQueryString();
 
+        // Grid (cards) or List (table) — remembered for the session, so filters / paging keep it.
+        if (in_array($request->query('view'), ['grid', 'list'], true)) {
+            $request->session()->put('portal.listing_view', $request->query('view'));
+        }
+        $viewMode = $request->session()->get('portal.listing_view', 'grid');
+
         $planUsage = null;
         if (!$this->isAdmin()) {
             $owner = $this->viewer()->listingOwner();
@@ -627,6 +634,7 @@ class PortalPropertyController extends Controller
 
         return view('portal.properties.index', array_merge([
             'properties' => $properties,
+            'viewMode' => $viewMode,
             'search' => $search,
             'filters' => $filters,
             'filtered' => $filtered,
@@ -780,6 +788,7 @@ class PortalPropertyController extends Controller
         $data['agent_id'] = $this->resolveAgentId($request, $listingOwner);
         $data['created_by_type'] = $this->isAdmin() ? 'admin' : ($this->viewer()->isAgency() ? 'agency' : 'agent');
         $data['created_by_id'] = $this->isAdmin() ? Auth::guard('cms')->id() : $this->viewer()->id;
+        $data += $this->editorStamp();
         $data['translations'] = $request->input('translations', []);
         $data['status'] = $request->boolean('status') && ($this->isAdmin() || Auth::guard('portal')->user()->isApproved());
         // Featuring is booked afterwards from the listing card / Featured menu (dates + plan quota).
@@ -956,6 +965,7 @@ class PortalPropertyController extends Controller
             $metadata['og_image'] = $existingMetadata['og_image'] ?? null;
         }
         $data['metadata'] = $metadata;
+        $data += $this->editorStamp();
 
         $property->update($data);
         if ($request->hasFile('brochure')) {
@@ -1178,6 +1188,29 @@ class PortalPropertyController extends Controller
         }
 
         $property->delete();
+    }
+
+    /** Who is saving the listing — updated_by_* (shown as "Updated by" in Listing Performance). */
+    protected function editorStamp(): array
+    {
+        return [
+            'updated_by_type' => $this->isAdmin() ? 'admin' : ($this->viewer()->isAgency() ? 'agency' : 'agent'),
+            'updated_by_id' => $this->isAdmin() ? Auth::guard('cms')->id() : $this->viewer()->id,
+        ];
+    }
+
+    /**
+     * Listing Performance side panel (index cards' Insights button) — overview, performance funnel,
+     * quality score and the listing's leads. Returns the panel's HTML.
+     */
+    public function insights($id, \App\Services\ListingPerformanceService $performance)
+    {
+        $property = $this->findAccessible($id);
+
+        return view('portal.properties._insights_panel', $performance->for($property, $this->ownerId()) + [
+            'routePrefix' => $property->segment === Property::SEGMENT_COMMERCIAL ? 'portal.commercial' : 'portal.properties',
+            'isAdmin' => $this->isAdmin(),
+        ]);
     }
 
     public function show($id)

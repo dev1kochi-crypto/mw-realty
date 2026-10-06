@@ -150,9 +150,11 @@ class LeadController extends Controller
             noteAuthor: $this->actorName(),
         );
 
-        $message = $lead->wasMerged
-            ? 'This contact already exists as "' . $lead->name . '" — the existing lead was updated instead of creating a duplicate.'
-            : 'Lead created.';
+        $message = match (true) {
+            $lead->wasRestored => 'This contact was in Deleted Leads as "' . $lead->name . '" — that lead was restored and updated instead of creating a duplicate.',
+            $lead->wasMerged => 'This contact already exists as "' . $lead->name . '" — the existing lead was updated instead of creating a duplicate.',
+            default => 'Lead created.',
+        };
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'message' => $message, 'id' => $lead->id, 'merged' => $lead->wasMerged]);
@@ -295,6 +297,8 @@ class LeadController extends Controller
             'purchases' => \App\Models\Property::where('sold_lead_id', $lead->id)->orderByDesc('sold_at')
                 ->get(['id', 'translations', 'reference_no', 'segment', 'currency', 'price', 'sold_at', 'sold_type', 'sold_price', 'rented_until']),
             'sourceHistory' => $details->sourceHistory($lead),
+            // Website activity of the visitor this lead came from (AI chat, views, time spent…) — Insights tab.
+            'visitorInsights' => $lead->visitorLead ? app(\App\Services\Visitors\VisitorInsights::class)->for($lead->visitorLead) : null,
             'notes' => $lead->notesHistory->where('type', \App\Models\LeadNote::TYPE_NOTE)->sortByDesc('id')->values(),
             'stages' => $stages,
             'sources' => $sources,

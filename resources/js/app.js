@@ -2,5 +2,9 @@ import './bootstrap';
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
+import { installVisitorTracking } from './composables/useVisitorTracking';
+import { vTrackImpression } from './composables/useListingImpressions';
 
-createApp(App).use(router).mount('#app');
+installVisitorTracking(router);
+
+createApp(App).use(router).directive('track-impression', vTrackImpression).mount('#app');

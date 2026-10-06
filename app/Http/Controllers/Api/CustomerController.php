@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Lead;
 use App\Models\Property;
 use App\Models\SavedSearch;
+use App\Models\Visitors\VisitorEvent;
 use App\Support\MapsPropertyCards;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -149,6 +150,12 @@ class CustomerController extends Controller
             $user->wishlistProperties()->attach($property->id);
         }
 
+        app(\App\Services\Visitors\VisitorTracker::class)->record($request, $existing ? VisitorEvent::FAVORITE_REMOVED : VisitorEvent::FAVORITE_ADDED, [
+            'property_id' => $property->id,
+            'title' => $property->getTranslation('title') ?: $property->reference_no,
+            'url' => $request->header('referer'),
+        ]);
+
         return response()->json(['wishlisted' => !$existing]);
     }
 
@@ -162,6 +169,12 @@ class CustomerController extends Controller
         $savedSearch = $request->user('web')->savedSearches()->create([
             'title' => $request->input('title'),
             'criteria' => $request->input('criteria', []),
+        ]);
+
+        app(\App\Services\Visitors\VisitorTracker::class)->record($request, VisitorEvent::SAVED_SEARCH, [
+            'title' => $savedSearch->title,
+            'url' => $request->header('referer'),
+            'meta' => ['summary' => $this->savedSearchMeta($savedSearch->criteria ?? []), 'filters' => $savedSearch->criteria ?: null],
         ]);
 
         return response()->json([

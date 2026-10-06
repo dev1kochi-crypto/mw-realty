@@ -71,6 +71,14 @@ class ContactController extends Controller
             Mail::to($adminEmail)->queue((new ContactEnquiryReceived($enquiry))->afterCommit());
         }
 
+        // The enquirer becomes a Website Lead (Super Admin's pool) with their browsing history.
+        app(\App\Services\Visitors\VisitorTracker::class)->captureEnquiry(
+            $request,
+            $request->only(['name', 'email', 'phone', 'phone_country_code']),
+            \App\Models\Visitors\VisitorLead::SOURCE_CONTACT_FORM,
+            ['form' => $enquiry->page_source . ' form', 'enquiry_id' => $enquiry->id, 'message' => \Illuminate\Support\Str::limit((string) $enquiry->message, 500)],
+        );
+
         return response()->json(['message' => "Thanks — we've received your message and will be in touch soon."]);
     }
 }

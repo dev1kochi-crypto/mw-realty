@@ -262,8 +262,26 @@ class LeadAssignmentService
         ]);
 
         // The owning account is notified by the capture flow; this is for the agent who now works it.
-        if ($agentId && $agentId !== $lead->portal_user_id) {
+        // Muted during bulk imports, which send each agent one summary instead (see muteAgentNotifications).
+        if ($agentId && $agentId !== $lead->portal_user_id && self::$muted === 0) {
             DB::afterCommit(fn () => $this->notifyAgent($lead, $agentId));
+        }
+    }
+
+    /** > 0 while muteAgentNotifications() runs. Static: it must cover every instance resolved meanwhile. */
+    private static int $muted = 0;
+
+    /**
+     * Run $callback without the per-lead "new lead assigned" bell + email to agents — for bulk
+     * imports (e.g. a Facebook full sync), whose caller sends each agent one summary instead.
+     */
+    public static function muteAgentNotifications(callable $callback): mixed
+    {
+        self::$muted++;
+        try {
+            return $callback();
+        } finally {
+            self::$muted--;
         }
     }
 

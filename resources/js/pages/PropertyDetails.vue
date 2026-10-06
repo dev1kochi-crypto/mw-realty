@@ -10,6 +10,7 @@ import AdBlock from '../components/AdBlock.vue';
 import PhoneInput from '../components/PhoneInput.vue';
 import PropertyNearbyMap from '../components/PropertyNearbyMap.vue';
 import { contactError, responseError } from '../composables/useContactValidation';
+import { trackLeadClick } from '../composables/useListingImpressions';
 
 const route = useRoute();
 const router = useRouter();
@@ -83,6 +84,7 @@ const downloadConfig = computed(() => DOWNLOADS[download.kind]);
 let downloadCloseTimer = null;
 
 function openDownload(kind) {
+    trackLeadClick(property.value?.id, kind === 'floor_plan' ? 'floor_plan' : 'brochure');
     clearTimeout(downloadCloseTimer);
     Object.assign(download, { open: true, kind, stage: 'form', progress: null, error: null });
 }
@@ -308,6 +310,7 @@ const viewingDays = computed(() => {
 const viewingDay = computed(() => viewingDays.value.find((d) => d.iso === viewing.date) || null);
 
 function bookViewing(day) {
+    trackLeadClick(property.value?.id, 'viewing');
     Object.assign(viewing, { open: true, stage: 'form', date: day?.iso || '', time: '', error: null });
 }
 function closeViewing() {
@@ -685,13 +688,13 @@ function agentAria(template, name) {
                                 </p>
 
                                 <div class="mw-contact-card__actions">
-                                    <a v-if="property.contact.phone" :href="`tel:${property.contact.phone}`" class="mw-contact-card__action mw-contact-card__action--call" :aria-label="agentAria('property_details.agent_card.call_aria', property.contact.name)">
+                                    <a v-if="property.contact.phone" :href="`tel:${property.contact.phone}`" class="mw-contact-card__action mw-contact-card__action--call" @click="trackLeadClick(property.id, 'call')" :aria-label="agentAria('property_details.agent_card.call_aria', property.contact.name)">
                                         <img src="/frontend/assets/images/icons/phone.svg" alt="" width="16" height="16">{{ t('property_details.agent_card.call', 'Call') }}
                                     </a>
-                                    <a v-if="property.contact.whatsapp_number" :href="whatsappUrl(property.contact.whatsapp_number)" target="_blank" rel="noopener" class="mw-contact-card__action mw-contact-card__action--whatsapp" :aria-label="agentAria('property_details.agent_card.whatsapp_aria', property.contact.name)">
+                                    <a v-if="property.contact.whatsapp_number" :href="whatsappUrl(property.contact.whatsapp_number)" target="_blank" rel="noopener" class="mw-contact-card__action mw-contact-card__action--whatsapp" @click="trackLeadClick(property.id, 'whatsapp')" :aria-label="agentAria('property_details.agent_card.whatsapp_aria', property.contact.name)">
                                         <img src="/frontend/assets/images/icons/whatsapp.svg" alt="" width="16" height="16">{{ t('property_details.agent_card.whatsapp', 'WhatsApp') }}
                                     </a>
-                                    <a v-if="property.contact.email" :href="`mailto:${property.contact.email}`" class="mw-contact-card__action mw-contact-card__action--email" :aria-label="agentAria('property_details.agent_card.email_aria', property.contact.name)">
+                                    <a v-if="property.contact.email" :href="`mailto:${property.contact.email}`" class="mw-contact-card__action mw-contact-card__action--email" @click="trackLeadClick(property.id, 'email')" :aria-label="agentAria('property_details.agent_card.email_aria', property.contact.name)">
                                         <img src="/frontend/assets/images/icons/email.svg" alt="" width="16" height="16">{{ t('property_details.agent_card.email', 'Email') }}
                                     </a>
                                 </div>
@@ -721,10 +724,10 @@ function agentAria(template, name) {
                                     </router-link>
                                 </div>
                                 <div class="mw-contact-card__agency-actions">
-                                    <a v-if="property.agency.phone" :href="`tel:${property.agency.phone}`" class="mw-contact-card__mini mw-contact-card__mini--call" :aria-label="agentAria('property_details.agent_card.call_aria', property.agency.name)">
+                                    <a v-if="property.agency.phone" :href="`tel:${property.agency.phone}`" class="mw-contact-card__mini mw-contact-card__mini--call" @click="trackLeadClick(property.id, 'call')" :aria-label="agentAria('property_details.agent_card.call_aria', property.agency.name)">
                                         <img src="/frontend/assets/images/icons/phone.svg" alt="" width="14" height="14">
                                     </a>
-                                    <a v-if="property.agency.email" :href="`mailto:${property.agency.email}`" class="mw-contact-card__mini mw-contact-card__mini--email" :aria-label="agentAria('property_details.agent_card.email_aria', property.agency.name)">
+                                    <a v-if="property.agency.email" :href="`mailto:${property.agency.email}`" class="mw-contact-card__mini mw-contact-card__mini--email" @click="trackLeadClick(property.id, 'email')" :aria-label="agentAria('property_details.agent_card.email_aria', property.agency.name)">
                                         <img src="/frontend/assets/images/icons/email.svg" alt="" width="14" height="14">
                                     </a>
                                 </div>
@@ -733,7 +736,7 @@ function agentAria(template, name) {
 
                         <div class="mw-property-enquiry">
                             <h4 class="mw-property-enquiry__title">{{ t('property_details.enquiry.title') }}</h4>
-                            <form class="mw-property-enquiry__form" novalidate @submit.prevent="handleEnquirySubmit">
+                            <form class="mw-property-enquiry__form" novalidate @submit.prevent="handleEnquirySubmit" @focusin.once="trackLeadClick(property.id, 'enquiry')">
                                 <div class="mw-property-enquiry__field">
                                     <label for="enquiry-name">{{ t('property_details.enquiry.name_label') }}</label>
                                     <input type="text" id="enquiry-name" name="name" :placeholder="t('property_details.enquiry.name_placeholder')" v-model="enquiryForm.name" required>

@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Morning-before reminder for subscriptions that auto-renew tomorrow (UAE time).
         $schedule->command('portal:remind-subscription-renewals')->dailyAt('09:00')->timezone(\App\Console\Commands\RemindSubscriptionRenewals::TIMEZONE)->withoutOverlapping();
         $schedule->command('properties:expire-featured')->everyFifteenMinutes();
+        $schedule->command('visitors:prune')->dailyAt('03:30')->withoutOverlapping();
         // DLD permits: unpublish listings whose permit expired, remind 7 days before (UAE midnight).
         $schedule->command('properties:expire-permits')->dailyAt('00:05')->timezone(\App\Console\Commands\RemindSubscriptionRenewals::TIMEZONE)->withoutOverlapping();
         $schedule->call(fn () => app(\App\Services\NewsletterCampaignService::class)->sendDueContent())->everyFifteenMinutes();
@@ -39,6 +40,12 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\ValidateAdminInput::class,
             \App\Http\Middleware\AtomicAdminChanges::class,
         ]);
+
+        // The visitor-tracking cookie is a random id, not a secret — left unencrypted so the
+        // stateless API forms (POST /api/contact) can read it too. The page tracker's beacons
+        // (sent as the visitor leaves a page) can't carry the CSRF header.
+        $middleware->encryptCookies(except: [\App\Services\Visitors\VisitorTracker::COOKIE]);
+        $middleware->validateCsrfTokens(except: ['track/*']);
 
         $middleware->alias([
             'portal.or.cms' => \App\Http\Middleware\PortalOrCmsAuth::class,

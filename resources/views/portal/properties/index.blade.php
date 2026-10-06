@@ -54,6 +54,11 @@
         @endif
 
         <div class="pl-panel__actions">
+            {{-- Grid (cards) / List (table) — remembered for the session (PortalPropertyController::index). --}}
+            <div class="pv-toggle" role="group" aria-label="Layout">
+                <a href="{{ route($routePrefix . '.index', array_merge(request()->query(), ['view' => 'grid'])) }}" class="{{ $viewMode === 'grid' ? 'is-active' : '' }}" title="Grid view" aria-label="Grid view" @if($viewMode === 'grid') aria-current="true" @endif><i class="fas fa-grip"></i><span>Grid</span></a>
+                <a href="{{ route($routePrefix . '.index', array_merge(request()->query(), ['view' => 'list'])) }}" class="{{ $viewMode === 'list' ? 'is-active' : '' }}" title="List view" aria-label="List view" @if($viewMode === 'list') aria-current="true" @endif><i class="fas fa-list"></i><span>List</span></a>
+            </div>
             <div id="bulkActionsBar" class="dropdown d-none">
                 <button class="btn btn-portal-danger btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     Bulk Actions (<span id="bulkSelectedCount">0</span>)
@@ -140,12 +145,16 @@
     @endif
 </div>
 
+@if($viewMode === 'list' && $properties->isNotEmpty())
+    @include('portal.properties._list_table')
+@else
 @forelse($properties as $property)
     @if($loop->first)
     <div class="row g-4" id="propertyGrid">
     @endif
     @php
         $thumb = $property->galleryImages()[0]['url'] ?? null;
+        $quality = app(\App\Services\ListingQualityService::class)->score($property);
         $listingLabel = $property->filterLabel('listing_type');
         $typeLabel = $property->filterLabel('property_type');
         $ownerLabel = $property->owner
@@ -193,6 +202,13 @@
                 @if($notLive)
                 <span class="portal-property-card__review pr-tone-{{ $property->compliance_status }}"><i class="fas {{ $reviewIcon }}"></i>{{ $property->complianceLabel() }}</span>
                 @endif
+                {{-- Quality score (ListingQualityService) — hover for the breakdown, click for Listing Performance. --}}
+                <button type="button" class="pq-ring is-{{ $quality['tone'] }} listing-insights" data-id="{{ $property->id }}" data-quality="{{ $property->id }}"
+                        style="--pq: {{ $quality['score'] }};" aria-label="Quality score {{ $quality['score'] }} of 100 — open listing performance"><span>{{ $quality['score'] }}%</span></button>
+                <template id="pqBreakdown{{ $property->id }}">
+                    <div class="pq-pop-head"><span>Quality score</span><span class="pq-pop-score is-{{ $quality['tone'] }}"><i class="fas fa-gauge-high me-1"></i>{{ $quality['score'] }}/100</span></div>
+                    @include('portal.properties._quality_breakdown', ['quality' => $quality])
+                </template>
             </div>
             <div class="portal-property-card__body">
                 <h3 class="portal-property-card__title" title="{{ $property->getTranslation('title') }}">{{ $property->getTranslation('title') }}</h3>
@@ -229,6 +245,11 @@
                         <span class="pf-agent__avatar pf-agent__avatar--agency"><i class="fas fa-building"></i></span>
                         <span class="text-truncate"><strong>Agency listing</strong> <span class="portal-muted">· no agent</span></span>
                     @endif
+                </div>
+
+                <div class="pl-card-perf">
+                    <button type="button" class="listing-insights" data-id="{{ $property->id }}" title="Listing performance & leads"><i class="fas fa-user-group"></i>Leads <strong>{{ $property->leads_count ?: '-' }}</strong></button>
+                    <span class="pl-card-perf__q is-{{ $quality['tone'] }}"><i class="fas fa-gauge-high"></i>Quality score <strong>{{ $quality['score'] }}</strong></span>
                 </div>
 
                 <div class="portal-property-card__meta">
@@ -269,6 +290,7 @@
                 <div class="portal-property-card__actions">
                     <a href="{{ route($routePrefix . '.show', $property->id) }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-eye me-1"></i>View</a>
                     <a href="{{ route($routePrefix . '.edit', $property->id) }}" class="portal-btn-ghost btn btn-sm"><i class="fas fa-edit me-1"></i>Edit</a>
+                    <button type="button" class="portal-btn-ghost btn btn-sm portal-property-card__icon-btn listing-insights" data-id="{{ $property->id }}" title="Listing performance" aria-label="Listing performance"><i class="fas fa-chart-line"></i></button>
                     <button type="button" class="portal-btn-ghost btn btn-sm portal-property-card__icon-btn mark-sold-property" data-id="{{ $property->id }}"
                             data-title="{{ $property->getTranslation('title') }}" data-ref="{{ $property->reference_no }}" data-thumb="{{ $thumb }}"
                             data-price="{{ $property->price ? (float) $property->price : '' }}" data-currency="{{ $property->currency ?: 'AED' }}"
@@ -304,6 +326,7 @@
         @endif
     </div>
 @endforelse
+@endif
 
 @if($properties->total() > 0)
 <div class="mt-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -314,6 +337,16 @@
 
 @include('portal.properties._feature_modal')
 @include('portal.properties._sold_modal')
+
+{{-- Listing Performance — filled from properties.insights (PortalPropertyController::insights). --}}
+<div class="offcanvas offcanvas-end lp-offcanvas" tabindex="-1" id="listingPerformance" aria-labelledby="listingPerformanceTitle">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="listingPerformanceTitle">Listing Performance</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body" id="listingPerformanceBody"></div>
+</div>
+<div class="pq-pop d-none" id="pqPop" role="tooltip"></div>
 
 {{-- Move to position modal --}}
 <div class="modal fade" id="moveModal" tabindex="-1" aria-labelledby="moveModalTitle" aria-hidden="true">
@@ -341,9 +374,53 @@
 
 @push('scripts')
 <script>
+// Listing Performance side panel + quality score hover breakdown.
+(function () {
+    const panelEl = document.getElementById('listingPerformance');
+    const body = document.getElementById('listingPerformanceBody');
+    const insightsUrl = @json(route('portal.properties.insights', ['id' => '__ID__']));
+    let request = 0;
+
+    document.addEventListener('click', function (e) {
+        const trigger = e.target.closest('.listing-insights');
+        if (!trigger) return;
+        e.preventDefault();
+        const id = ++request;
+        body.innerHTML = '<div class="lp-loading"><span class="spinner-border spinner-border-sm me-2"></span>Loading performance…</div>';
+        bootstrap.Offcanvas.getOrCreateInstance(panelEl).show();
+        fetch(insightsUrl.replace('__ID__', trigger.dataset.id), { headers: { Accept: 'text/html' } })
+            .then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); })
+            .then((html) => { if (id === request) body.innerHTML = html; })
+            .catch(() => { if (id === request) body.innerHTML = '<div class="lp-empty"><i class="fas fa-triangle-exclamation"></i>Couldn\'t load the performance — please try again.</div>'; });
+    });
+
+    // Hover breakdown, positioned next to the ring (fixed, so card overflow never clips it).
+    const pop = document.getElementById('pqPop');
+    let hideTimer = null;
+    document.addEventListener('mouseover', function (e) {
+        const ring = e.target.closest('.pq-ring');
+        if (!ring) return;
+        clearTimeout(hideTimer);
+        const template = document.getElementById('pqBreakdown' + ring.dataset.quality);
+        if (!template) return;
+        pop.innerHTML = template.innerHTML;
+        pop.classList.remove('d-none');
+        const r = ring.getBoundingClientRect();
+        const width = pop.offsetWidth, height = pop.offsetHeight;
+        const left = Math.min(window.innerWidth - width - 12, Math.max(12, r.right - width));
+        const top = r.bottom + 8 + height > window.innerHeight ? r.top - height - 8 : r.bottom + 8;
+        pop.style.left = left + 'px';
+        pop.style.top = Math.max(12, top) + 'px';
+    });
+    document.addEventListener('mouseout', function (e) {
+        if (e.target.closest('.pq-ring')) hideTimer = setTimeout(() => pop.classList.add('d-none'), 120);
+    });
+})();
+
     const JSON_HEADERS = { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'Content-Type': 'application/json' };
 
-    const cardTitle = el => el.closest('.portal-property-card')?.querySelector('.portal-property-card__title')?.textContent.trim();
+    // Card (grid) or row (list) — both are [data-property-row].
+    const cardTitle = el => el.closest('[data-property-row]')?.querySelector('.portal-property-card__title, [data-property-title]')?.textContent.trim();
 
     // Filters: selects / checkbox apply at once; the agent picker searches the server (20 a page, more on scroll).
     (function () {

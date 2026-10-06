@@ -568,7 +568,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                 <p v-else-if="activeCity && !cityLoading && !projectCards.length" class="mw-projects__empty" style="text-align: center; padding: 40px 0;">{{ t('home.projects.no_results', 'No properties found in this city yet.') }}</p>
 
                 <div v-else class="mw-projects__grid" id="projects-grid" data-projects-slider :style="cityLoading ? 'opacity: .5;' : ''">
-                    <article v-for="card in projectCards" :key="card.id" class="mw-projects__card">
+                    <article v-for="card in projectCards" :key="card.id" class="mw-projects__card" v-track-impression="card.id">
                         <div class="mw-projects__media" data-card-gallery role="link" tabindex="0" @click="card.slug && $router.push(`/property-details/${card.slug}`)" @keydown.enter="card.slug && $router.push(`/property-details/${card.slug}`)" :style="card.slug ? 'cursor: pointer;' : ''">
                             <div class="mw-projects__slides" data-gallery-track>
                                 <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-projects__photo" loading="lazy">
@@ -652,7 +652,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
 
                 <div class="mw-highlight__carousel">
                     <div class="mw-highlight__track" data-highlight-slider>
-                        <article v-for="(card, index) in highlightCards" :key="index" class="mw-highlight__card">
+                        <article v-for="(card, index) in highlightCards" :key="index" class="mw-highlight__card" v-track-impression="card.id">
                             <div class="mw-highlight__media" data-card-gallery role="link" tabindex="0" @click="card.slug && $router.push(`/property-details/${card.slug}`)" @keydown.enter="card.slug && $router.push(`/property-details/${card.slug}`)" :style="card.slug ? 'cursor: pointer;' : ''">
                                 <div class="mw-highlight__slides" data-gallery-track>
                                     <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-highlight__photo" loading="lazy">
@@ -811,7 +811,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
 
                     <div class="mw-luxury__stage">
                         <div class="mw-luxury__slider" data-luxury-slider @click="openPropertyCard">
-                            <article v-for="(card, index) in luxuryCards" :key="index" class="mw-luxury__card" :data-property-slug="card.slug" :style="card.slug ? 'cursor: pointer;' : ''">
+                            <article v-for="(card, index) in luxuryCards" :key="index" class="mw-luxury__card" v-track-impression="card.id" :data-property-slug="card.slug" :style="card.slug ? 'cursor: pointer;' : ''">
                                 <img :src="card.image" :alt="card.name" class="mw-luxury__photo" :class="{ 'mw-luxury__photo--villa': card.villa }" loading="lazy">
                                 <span class="mw-luxury__tag">{{ t('home.hero.tabs.buy') }}</span>
                                 <button type="button" class="mw-luxury__save" :class="{ 'is-saved': isWishlisted(card.id) }" :aria-label="t('home.aria.save_property')" :aria-pressed="isWishlisted(card.id)" @click.stop="toggleWishlist(card.id)">
@@ -909,7 +909,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
 
                 <div class="mw-realty__carousel">
                     <div class="mw-realty__track" data-realty-slider @click="openPropertyCard">
-                        <article v-for="(card, index) in realtyCards" :key="index" class="mw-realty__card" :data-property-slug="card.slug" :style="card.slug ? 'cursor: pointer;' : ''">
+                        <article v-for="(card, index) in realtyCards" :key="index" class="mw-realty__card" v-track-impression="card.id" :data-property-slug="card.slug" :style="card.slug ? 'cursor: pointer;' : ''">
                             <div class="mw-realty__media">
                                 <img :src="card.image" :alt="card.name" class="mw-realty__photo" loading="lazy">
                                 <span class="mw-badge mw-badge--success mw-realty__verified">

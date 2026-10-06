@@ -7,6 +7,7 @@ use App\Models\FacebookPageConnection;
 use App\Models\Lead;
 use App\Models\LeadNote;
 use App\Models\LeadSource;
+use App\Models\PortalUser;
 use App\Rules\PhoneNumber;
 use App\Services\Crm\LeadCreationService;
 use Illuminate\Database\QueryException;
@@ -27,6 +28,11 @@ class FacebookLeadImporter
     /** What the last import() did: 'new' | 'merged' | 'skipped', and its campaign — read by sync(). */
     private string $lastOutcome = 'skipped';
     private ?string $lastCampaign = null;
+    private ?string $lastSource = null;
+    private ?Lead $lastLead = null;
+
+    /** Leads listed per agent in their summary email (the count covers all of them). */
+    private const AGENT_EMAIL_LIST = 50;
 
     /** Totals of the last sync() — see summary(). */
     private array $summary = [];
@@ -54,6 +60,8 @@ class FacebookLeadImporter
     {
         $this->lastOutcome = 'skipped';
         $this->lastCampaign = null;
+        $this->lastSource = null;
+        $this->lastLead = null;
         $leadgenId = (string) ($data['id'] ?? '');
         if ($leadgenId === '' || FacebookLead::where('leadgen_id', $leadgenId)->exists()) {
             return null;
@@ -133,6 +141,8 @@ class FacebookLeadImporter
         $record->update(['lead_id' => $lead->id]);
         $connection->forceFill(['last_lead_at' => now(), 'leads_count' => $connection->leads_count + 1])->save();
         $this->lastOutcome = $lead->wasMerged ? 'merged' : 'new';
+        $this->lastSource = $adsetName ?: $adName ?: self::FALLBACK_SOURCE;
+        $this->lastLead = $lead;
 
         return $lead;
     }
@@ -156,22 +166,29 @@ class FacebookLeadImporter
         $this->summary = [
             'since' => $sinceAt?->toDateTimeString(), 'forms' => count($forms), 'facebook_total' => array_sum(array_column($forms, 'leads_count')),
             'fetched' => 0, 'new' => 0, 'merged' => 0, 'skipped' => 0, 'campaigns' => [],
+            // agent id => ['count' => n, 'leads' => [first AGENT_EMAIL_LIST leads]] — round-robin results.
+            'agents' => [],
         ];
 
-        foreach ($forms as $form) {
-            foreach ($this->facebook->formLeads($form['id'], $connection->page_access_token, $since) as $data) {
-                $this->summary['fetched']++;
-                $this->import($connection, $data + ['form_id' => $form['id'], 'form_name' => $form['name']], $notify) ? $added++ : $skipped++;
-                $this->summary[$this->lastOutcome]++;
-                if ($this->lastOutcome !== 'skipped') {
-                    $campaign = $this->lastCampaign ?: 'No campaign (organic / test)';
-                    $this->summary['campaigns'][$campaign] = ($this->summary['campaigns'][$campaign] ?? 0) + 1;
-                }
-                if ($progress) {
-                    $progress($added, $skipped);
+        $run = function () use ($connection, $forms, $since, $notify, $progress, &$added, &$skipped) {
+            foreach ($forms as $form) {
+                foreach ($this->facebook->formLeads($form['id'], $connection->page_access_token, $since) as $data) {
+                    $this->summary['fetched']++;
+                    $this->import($connection, $data + ['form_id' => $form['id'], 'form_name' => $form['name']], $notify) ? $added++ : $skipped++;
+                    $this->summary[$this->lastOutcome]++;
+                    if ($this->lastOutcome !== 'skipped') {
+                        $campaign = $this->lastCampaign ?: 'No campaign (organic / test)';
+                        $this->summary['campaigns'][$campaign] = ($this->summary['campaigns'][$campaign] ?? 0) + 1;
+                        $this->recordAgentLead($connection);
+                    }
+                    if ($progress) {
+                        $progress($added, $skipped);
+                    }
                 }
             }
-        }
+        };
+        // Bulk: no per-lead email / bell to the owner ($notify) or to round-robin agents — summaries instead.
+        $notify ? $run() : \App\Services\Agency\LeadAssignmentService::muteAgentNotifications($run);
         arsort($this->summary['campaigns']);
 
         $connection->forceFill(['last_synced_at' => $startedAt, 'last_error' => null]
@@ -190,19 +207,64 @@ class FacebookLeadImporter
         return $this->summary;
     }
 
-    /** One summary email to the Page's account after a bulk sync — only when leads were added or updated. */
+    /**
+     * After a bulk sync, one summary email to the Page's account (with how the leads were shared out)
+     * and one to each agent that round robin gave leads to, listing theirs — only when leads were
+     * added or updated. Replaces the per-lead emails a bulk sync doesn't send.
+     */
     public function emailSummary(FacebookPageConnection $connection, string $context = 'sync'): void
     {
-        $owner = $connection->owner;
-        if (!$owner?->email || ($this->summary['new'] ?? 0) + ($this->summary['merged'] ?? 0) === 0) {
+        if (($this->summary['new'] ?? 0) + ($this->summary['merged'] ?? 0) === 0) {
             return;
         }
+        $agents = PortalUser::whereIn('id', array_keys($this->summary['agents']))->get(['id', 'type', 'name', 'company_name', 'email'])->keyBy('id');
+        $this->summary['agent_names'] = $agents->map(fn (PortalUser $agent) => $agent->displayName())->all();
 
+        $owner = $connection->owner;
+        if ($owner?->email) {
+            $this->queueMail($owner->email, new \App\Mail\FacebookLeadsSyncedMail($connection, $this->summary, $context), $connection);
+        }
+
+        foreach ($this->summary['agents'] as $agentId => $assigned) {
+            $agent = $agents->get($agentId);
+            if ($agent?->email) {
+                $this->queueMail($agent->email, new \App\Mail\FacebookLeadsAssignedMail($connection, $agent, $assigned['count'], $assigned['leads'], $context), $connection);
+            }
+        }
+    }
+
+    private function queueMail(string $to, \Illuminate\Mail\Mailable $mail, FacebookPageConnection $connection): void
+    {
         try {
-            \Illuminate\Support\Facades\Mail::to($owner->email)->queue((new \App\Mail\FacebookLeadsSyncedMail($connection, $this->summary, $context))->afterCommit());
+            \Illuminate\Support\Facades\Mail::to($to)->queue($mail->afterCommit());
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error("Facebook sync summary email for page {$connection->page_id} failed: " . $e->getMessage());
         }
+    }
+
+    /** The lead just imported went to an agent (round robin / their existing agent) — note it for their summary. */
+    private function recordAgentLead(FacebookPageConnection $connection): void
+    {
+        $lead = $this->lastLead;
+        if (!$lead?->agent_id || $lead->agent_id === $connection->portal_user_id) {
+            return;
+        }
+
+        $entry = &$this->summary['agents'][$lead->agent_id];
+        $entry ??= ['count' => 0, 'leads' => []];
+        $entry['count']++;
+        if (count($entry['leads']) < self::AGENT_EMAIL_LIST) {
+            $entry['leads'][] = [
+                'id' => $lead->id,
+                'name' => $lead->name,
+                'email' => $lead->email,
+                'phone' => $lead->phone ? trim(($lead->phone_country_code ?? '') . ' ' . $lead->phone) : null,
+                'source' => $this->lastSource,
+                'campaign' => $this->lastCampaign,
+                'updated' => $this->lastOutcome === 'merged',
+            ];
+        }
+        unset($entry);
     }
 
     /** The source the lead last came in from: its latest enquiry's source, else the source it was created with. */

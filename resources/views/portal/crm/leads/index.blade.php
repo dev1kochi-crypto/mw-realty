@@ -276,43 +276,113 @@
             });
         }
 
-        function renderListingTagChoices(masterTags, currentTags, selectedIds) {
-            leadTagsChoices.innerHTML = '';
-            const selected = (selectedIds || []).map(String);
-            const selectedNames = new Set((currentTags || [])
-                .filter(function (tag) { return selected.includes(String(tag.id)); })
-                .map(function (tag) { return String(tag.name).trim().toLocaleLowerCase(); }));
-            const tags = (masterTags || []).slice();
-            const knownNames = new Set(tags.map(function (tag) { return String(tag.name).trim().toLocaleLowerCase(); }));
+        // Lead tags popup: the account's tags are searched and paged on the server (masterOptions,
+        // 20 a time, more on scroll). The ticked tags live in tagPicker.selected (id → tag), so
+        // saving keeps every ticked tag even when it isn't in the list currently loaded.
+        const tagPicker = { selected: new Map(), search: '', page: 1, next: null, loading: false, request: null, timer: null };
+        const leadTagsSearch = document.getElementById('leadTagsSearch');
+        const leadTagsStatus = document.getElementById('leadTagsStatus');
+        const leadTagsSelected = document.getElementById('leadTagsSelected');
+        const leadTagsCount = document.getElementById('leadTagsCount');
 
-            (currentTags || []).forEach(function (tag) {
-                const tagName = String(tag.name).trim().toLocaleLowerCase();
-                if (!knownNames.has(tagName)) {
-                    tags.push(tag);
-                    knownNames.add(tagName);
-                }
+        function escapeTagHtml(value) {
+            return String(value).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+        }
+
+        function renderSelectedTags() {
+            leadTagsSelected.innerHTML = '';
+            tagPicker.selected.forEach(function (tag) {
+                const chip = document.createElement('span');
+                chip.className = 'lead-tags-selected__chip';
+                chip.style.background = tag.color || '#14b8a6';
+                chip.innerHTML = escapeTagHtml(tag.name) + ' <button type="button" aria-label="Remove ' + escapeTagHtml(tag.name) + '">&times;</button>';
+                chip.querySelector('button').addEventListener('click', function () {
+                    tagPicker.selected.delete(String(tag.id));
+                    const box = leadTagsChoices.querySelector('input[value="' + tag.id + '"]');
+                    if (box) box.checked = false;
+                    renderSelectedTags();
+                });
+                leadTagsSelected.appendChild(chip);
             });
+            const n = tagPicker.selected.size;
+            leadTagsCount.textContent = n ? n + ' tag' + (n === 1 ? '' : 's') + ' selected' : 'No tags selected';
+        }
 
-            if (!tags.length) {
-                leadTagsChoices.innerHTML = '<span class="text-muted small">No tags available yet. Add them under Master &gt; Tag.</span>';
+        function appendTagChoice(tag) {
+            const label = document.createElement('label');
+            label.className = 'portal-tag-chip-check';
+            label.style.borderColor = tag.color || '#14b8a6';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.value = tag.id;
+            input.checked = tagPicker.selected.has(String(tag.id));
+            input.addEventListener('change', function () {
+                if (input.checked) tagPicker.selected.set(String(tag.id), tag);
+                else tagPicker.selected.delete(String(tag.id));
+                renderSelectedTags();
+            });
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(' ' + tag.name));
+            leadTagsChoices.appendChild(label);
+        }
+
+        function loadTagChoices(reset) {
+            if (reset) {
+                tagPicker.page = 1;
+                tagPicker.next = null;
+                leadTagsChoices.innerHTML = '';
+            } else if (!tagPicker.next || tagPicker.loading) {
                 return;
             }
+            if (tagPicker.request) tagPicker.request.abort(); // only the latest search counts
+            tagPicker.request = new AbortController();
+            tagPicker.loading = true;
+            leadTagsStatus.textContent = 'Loading tags…';
 
-            tags.forEach(function (tag) {
-                const label = document.createElement('label');
-                label.className = 'portal-tag-chip-check';
-                label.style.borderColor = tag.color || '#14b8a6';
+            const page = reset ? 1 : tagPicker.next;
+            const url = "{{ url('portal/crm/leads/options/tags') }}?" + new URLSearchParams({ search: tagPicker.search, page: page });
+            fetch(url, { headers: { 'Accept': 'application/json' }, signal: tagPicker.request.signal })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('Could not load tags.');
+                    return r.json();
+                })
+                .then(function (data) {
+                    (data.data || []).forEach(appendTagChoice);
+                    tagPicker.next = data.next_page;
+                    tagPicker.loading = false;
+                    if (!leadTagsChoices.children.length) {
+                        leadTagsStatus.textContent = '';
+                        leadTagsChoices.innerHTML = '<span class="text-muted small">' + (tagPicker.search ? 'No tags match “' + escapeTagHtml(tagPicker.search) + '”.' : 'No tags available yet. Add them under Master &gt; Tag.') + '</span>';
+                    } else {
+                        leadTagsStatus.textContent = data.total > leadTagsChoices.children.length
+                            ? 'Showing ' + leadTagsChoices.children.length + ' of ' + data.total + ' — scroll for more'
+                            : data.total + ' tag' + (data.total === 1 ? '' : 's');
+                    }
+                })
+                .catch(function (error) {
+                    if (error.name === 'AbortError') return;
+                    tagPicker.loading = false;
+                    leadTagsStatus.textContent = error.message;
+                });
+        }
 
-                const input = document.createElement('input');
-                input.type = 'checkbox';
-                input.name = 'tags[]';
-                input.value = tag.id;
-                input.checked = selected.includes(String(tag.id)) || selectedNames.has(String(tag.name).trim().toLocaleLowerCase());
+        leadTagsSearch.addEventListener('input', function () {
+            clearTimeout(tagPicker.timer);
+            tagPicker.timer = setTimeout(function () {
+                tagPicker.search = leadTagsSearch.value.trim();
+                loadTagChoices(true);
+            }, 300);
+        });
+        leadTagsChoices.addEventListener('scroll', function () {
+            if (leadTagsChoices.scrollTop + leadTagsChoices.clientHeight >= leadTagsChoices.scrollHeight - 40) loadTagChoices(false);
+        });
 
-                label.appendChild(input);
-                label.appendChild(document.createTextNode(' ' + tag.name));
-                leadTagsChoices.appendChild(label);
-            });
+        function openTagPicker(currentTags) {
+            tagPicker.selected = new Map((currentTags || []).map(function (tag) { return [String(tag.id), tag]; }));
+            tagPicker.search = '';
+            leadTagsSearch.value = '';
+            renderSelectedTags();
+            loadTagChoices(true);
         }
 
         function clearValidationErrors() {
@@ -450,7 +520,7 @@
                 document.getElementById('leadTagsModalTitle').textContent = 'Tags for ' + (data.name || 'lead');
                 leadTagsError.classList.add('d-none');
                 leadTagsError.textContent = '';
-                renderListingTagChoices(data.tags_master, data.tags, data.tag_ids);
+                openTagPicker(data.tags);
                 leadTagsModal.show();
             }).catch(function () {
                 alert('Could not load tags for this lead. Please try again.');
@@ -568,6 +638,93 @@
                     initialiseLeadsDataTable();
                 });
         };
+
+        // Live filters: typing in Search (debounced) or changing any filter reloads the listing via
+        // AJAX. Each new request cancels the one still running, so only the latest result is shown.
+        let leadFilterRequest = null;
+        let leadSearchTimer = null;
+
+        function runLeadFilters(url) {
+            const wrapper = document.getElementById('leadsListingWrapper');
+            const form = wrapper.querySelector('.portal-filter-bar__form');
+            if (!url) {
+                const params = new URLSearchParams();
+                new FormData(form).forEach(function (value, key) {
+                    if (String(value).trim() !== '') params.append(key, String(value).trim());
+                });
+                url = form.getAttribute('action') || window.location.pathname;
+                url = url.split('?')[0] + (params.toString() ? '?' + params.toString() : '');
+            }
+
+            if (leadFilterRequest) leadFilterRequest.abort();
+            leadFilterRequest = new AbortController();
+
+            // Remember where the cursor was, so typing carries on after the list is swapped in.
+            const active = document.activeElement;
+            const focusName = active && wrapper.contains(active) ? active.name : null;
+            const caret = active && typeof active.selectionStart === 'number' ? active.selectionStart : null;
+            wrapper.classList.add('leads-loading');
+
+            return fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal: leadFilterRequest.signal })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('Could not filter the leads.');
+                    return r.text();
+                })
+                .then(function (html) {
+                    if (leadsDataTable) {
+                        leadsDataTable.destroy();
+                        leadsDataTable = null;
+                    }
+                    wrapper.innerHTML = html;
+                    history.replaceState(null, '', url);
+                    clearSelection();
+                    initialiseLeadsDataTable();
+                    if (focusName) {
+                        const field = wrapper.querySelector('.portal-filter-bar__form [name="' + focusName + '"]');
+                        if (field) {
+                            field.focus();
+                            if (caret !== null && typeof field.setSelectionRange === 'function') field.setSelectionRange(caret, caret);
+                        }
+                    }
+                })
+                .catch(function (error) {
+                    if (error.name !== 'AbortError') showFlash('error', error.message);
+                })
+                .finally(function () {
+                    wrapper.classList.remove('leads-loading');
+                });
+        }
+
+        const leadsWrapper = document.getElementById('leadsListingWrapper');
+        leadsWrapper.addEventListener('input', function (e) {
+            if (!e.target.matches('.portal-filter-bar__form [name="search"]')) return;
+            clearTimeout(leadSearchTimer);
+            leadSearchTimer = setTimeout(function () { runLeadFilters(); }, 350);
+        });
+        leadsWrapper.addEventListener('change', function (e) {
+            if (!e.target.closest('.portal-filter-bar__form') || e.target.name === 'search') return;
+            clearTimeout(leadSearchTimer);
+            runLeadFilters();
+        });
+        leadsWrapper.addEventListener('submit', function (e) {
+            if (!e.target.matches('.portal-filter-bar__form')) return;
+            e.preventDefault();
+            clearTimeout(leadSearchTimer);
+            runLeadFilters();
+        });
+        leadsWrapper.addEventListener('click', function (e) {
+            const clear = e.target.closest('.js-clear-lead-filters');
+            if (!clear) return;
+            e.preventDefault();
+            clearTimeout(leadSearchTimer);
+            runLeadFilters(clear.href);
+        });
+        (function () {
+            const style = document.createElement('style');
+            style.textContent = '#leadsListingWrapper.leads-loading .portal-card:not(.portal-filter-bar){opacity:.55;pointer-events:none;transition:opacity .15s}';
+            document.head.appendChild(style);
+        })();
+        window.runLeadFilters = runLeadFilters;
 
         document.getElementById('openCreateLeadModal').addEventListener('click', openCreateModal);
         document.getElementById('openLeadTableFieldsModal').addEventListener('click', function () {
@@ -887,7 +1044,8 @@
             fetch("{{ url('portal/crm/leads') }}/" + leadId + '/tags', {
                 method: 'PATCH',
                 headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                body: new URLSearchParams(new FormData(leadTagsForm)),
+                // Every ticked tag — loaded in the list or not (the endpoint replaces the lead's tags).
+                body: new URLSearchParams(Array.from(tagPicker.selected.keys()).map(function (id) { return ['tags[]', id]; })),
             })
             .then(async function (response) {
                 const data = await response.json().catch(function () { return {}; });

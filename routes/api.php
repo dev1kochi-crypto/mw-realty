@@ -5,7 +5,6 @@ use App\Http\Controllers\Api\AgencyController;
 use App\Http\Controllers\Api\AgentController;
 use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\CareerController;
-use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\CommercialController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\HomeController;
@@ -110,10 +109,6 @@ Route::get('/site-information', [SiteInformationController::class, 'index']);
 
 // Public, read-only — one endpoint shared by all 4 legal pages, keyed by {key} = terms|privacy|security|cookie.
 Route::get('/legal/{key}', [LegalController::class, 'show']);
-
-// Public — the floating AI chat widget's message endpoint. Grounded via Gemini function-calling
-// against PropertiesPageService; never returns free-hallucinated listings.
-Route::post('/chatbot/message', [ChatbotController::class, 'send'])->middleware('throttle:ai-chatbot');
 
 // Stripe plan-subscription events (signature-verified inside the controller) — /api/stripe/webhook
 Route::post('/stripe/webhook', \App\Http\Controllers\StripeWebhookController::class)->name('stripe.webhook');

@@ -13,15 +13,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('ads', function (Blueprint $table) {
-            $table->json('translations')->nullable()->after('image_alt');
-        });
+        // Some deployed databases already have this column from a manual change.
+        // Keep the migration safe to run against either schema state.
+        if (! Schema::hasColumn('ads', 'translations')) {
+            Schema::table('ads', function (Blueprint $table) {
+                $table->json('translations')->nullable()->after('image_alt');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('ads', function (Blueprint $table) {
-            $table->dropColumn('translations');
-        });
+        if (Schema::hasColumn('ads', 'translations')) {
+            Schema::table('ads', function (Blueprint $table) {
+                $table->dropColumn('translations');
+            });
+        }
     }
 };

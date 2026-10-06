@@ -21,6 +21,7 @@ class Lead extends Model
         'assignment_type',
         'assigned_at',
         'user_id',
+        'visitor_lead_id',
         'name',
         'email',
         'phone',
@@ -41,6 +42,9 @@ class Lead extends Model
 
     /** Set (not persisted) when a new enquiry was merged into this existing lead instead of creating one. */
     public bool $wasMerged = false;
+
+    /** Set (not persisted) when the enquiry matched a soft-deleted lead, which was restored and merged into. */
+    public bool $wasRestored = false;
 
     /** Set (not persisted) when a merged, unassigned lead was routed to an agent — who was notified by the assignment. */
     public bool $assignedOnMerge = false;
@@ -140,6 +144,8 @@ class Lead extends Model
         'property-detail' => 'Website',
         'property details' => 'Website',
         'ai-chatbot' => 'AI Chatbot',
+        'website-visitor' => 'Website',
+        'customer-account' => 'Website',
         'brochure-download' => 'Brochure Download',
         'floor-plan-download' => 'Floor Plan Download',
         'custom-request' => 'Custom Request',
@@ -241,6 +247,12 @@ class Lead extends Model
     public function customer()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /** The website visitor this lead came from — their browsing / chat history (Insights tab). */
+    public function visitorLead()
+    {
+        return $this->belongsTo(\App\Models\Visitors\VisitorLead::class);
     }
 
     public function stage()

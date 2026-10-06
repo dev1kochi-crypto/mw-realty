@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Mail\OtpCodeMail;
 use App\Models\User;
+use App\Services\Visitors\VisitorTracker;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -118,6 +119,7 @@ class CustomerAuthController extends Controller
 
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
+        app(VisitorTracker::class)->customerSignedIn($request, $user);
 
         return response()->json(['redirect' => '/profile']);
     }
@@ -195,6 +197,7 @@ class CustomerAuthController extends Controller
 
         Auth::guard('web')->login($user, $request->boolean('remember'));
         $request->session()->regenerate();
+        app(VisitorTracker::class)->customerSignedIn($request, $user);
 
         if ($request->wantsJson()) {
             return response()->json(['redirect' => '/profile']);
@@ -205,6 +208,7 @@ class CustomerAuthController extends Controller
 
     public function logout(Request $request)
     {
+        app(VisitorTracker::class)->forget($request);
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -249,6 +253,7 @@ class CustomerAuthController extends Controller
 
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
+        app(VisitorTracker::class)->customerSignedIn($request, $user);
 
         return redirect('/profile');
     }

@@ -1,8 +1,8 @@
 @php $count = $summary['new'] + $summary['merged']; @endphp
 @extends('emails.layout')
 
-@section('subject', $count . ' Facebook lead' . ($count === 1 ? '' : 's') . ' synced from ' . $connection->page_name . ' — MW Realty')
-@section('preheader', $summary['new'] . ' new, ' . $summary['merged'] . ' added to existing leads, from ' . $connection->page_name . '.')
+@section('subject', $count . ' Facebook lead' . ($count === 1 ? '' : 's') . ' synced from ' . $page->page_name . ' — MW Realty')
+@section('preheader', $summary['new'] . ' new, ' . $summary['merged'] . ' added to existing leads, from ' . $page->page_name . '.')
 @section('eyebrow', 'Facebook Lead Ads')
 @section('icon', '✓')
 @section('tone', 'green')
@@ -12,7 +12,7 @@
 <p style="margin:0 0 16px;">Hi {{ $owner?->displayName() ?? 'there' }},</p>
 
 <p style="margin:0;">
-    The {{ mb_strtolower($contextLabel) }} of your Facebook Page <strong>{{ $connection->page_name }}</strong> has finished.
+    The {{ mb_strtolower($contextLabel) }} of your Facebook Page <strong>{{ $page->page_name }}</strong> has finished.
     Here's what reached your CRM:
 </p>
 
@@ -29,6 +29,15 @@
     <x-email.row :label="number_format($leads) . ' lead' . ($leads === 1 ? '' : 's')">{{ $campaign }}</x-email.row>
     @endforeach
 </x-email.details>
+@endif
+
+@if(!empty($summary['agents']))
+<x-email.details title="Assigned to agents (round robin)">
+    @foreach($summary['agents'] as $agentId => $assigned)
+    <x-email.row :label="number_format($assigned['count']) . ' lead' . ($assigned['count'] === 1 ? '' : 's')">{{ $summary['agent_names'][$agentId] ?? 'Agent #' . $agentId }}</x-email.row>
+    @endforeach
+</x-email.details>
+<x-email.muted>Each agent got one email listing their leads.</x-email.muted>
 @endif
 
 <x-email.muted>Each lead's Source is its ad set (or ad) name, and the lead shows its campaign, ad set, ad and form.</x-email.muted>

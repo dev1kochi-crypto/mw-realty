@@ -374,7 +374,7 @@ watch(openedId, () => nextTick(() => document.querySelector('.pm-card__scroll')?
                             <span>{{ selectedGroup.items[0].location }}</span>
                         </div>
                     </div>
-                    <button v-for="(p, i) in selectedGroup.items" :key="p.id" type="button" class="pm-row" :style="{ '--i': i }" @click="openedId = p.id">
+                    <button v-for="(p, i) in selectedGroup.items" :key="p.id" type="button" class="pm-row" v-track-impression="p.id" :style="{ '--i': i }" @click="openedId = p.id">
                         <img :src="p.image" :alt="p.name" class="pm-row__img" loading="lazy">
                         <span class="pm-row__body">
                             <span class="pm-row__price">{{ formatPrice(p.price_value, p.price) }}</span>

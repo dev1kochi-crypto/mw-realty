@@ -747,7 +747,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
 
                 <div class="mw-dubai-listing__grid" data-properties-grid>
 
-                    <article v-for="property in properties" :key="property.slug" class="mw-dubai-card" data-reveal>
+                    <article v-for="property in properties" :key="property.slug" class="mw-dubai-card" data-reveal v-track-impression="property.id">
                         <div class="mw-projects__media" data-card-gallery role="link" tabindex="0" @click="$router.push(`/property-details/${property.slug}`)" @keydown.enter="$router.push(`/property-details/${property.slug}`)" style="cursor: pointer;">
                             <div class="mw-projects__slides" data-gallery-track>
                                 <img v-for="(image, index) in property.images" :key="image" :src="image" :alt="index === 0 ? property.name : ''" class="mw-projects__photo" loading="lazy">
