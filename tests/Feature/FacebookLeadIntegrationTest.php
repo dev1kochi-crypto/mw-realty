@@ -249,12 +249,27 @@ class FacebookLeadIntegrationTest extends TestCase
         $this->assertTrue($connection->exists());
     }
 
-    public function test_agency_agents_cannot_manage_integrations(): void
+    public function test_an_agency_agent_connects_their_own_pages_as_personal_leads(): void
     {
-        $agent = $this->memberAgent($this->agency());
+        Http::fake(['graph.facebook.com/*/subscribed_apps' => Http::response(['success' => true])]);
+        $agency = $this->agency();
+        $agent = $this->memberAgent($agency);
+        $this->pendingPages('owner.' . $agent->id, [['id' => 'PAGE1', 'name' => 'Agent Own Page']]);
 
-        $this->signIn($agent)->get('/portal/crm/integrations')->assertOk()->assertSee('Your agency manages integrations');
-        $this->get('/portal/crm/integrations/facebook/connect')->assertForbidden();
+        $this->signIn($agent)->get('/portal/crm/integrations')->assertOk()->assertSee('Choose the Pages to connect')->assertSee('personal leads');
+        $this->post('/portal/crm/integrations/facebook/pages', ['page_ids' => ['PAGE1']])->assertRedirect('/portal/crm/integrations');
+
+        $connection = FacebookPageConnection::where('page_id', 'PAGE1')->firstOrFail();
+        $this->assertSame($agent->id, $connection->portal_user_id);
+
+        app(\App\Services\Integrations\FacebookLeadImporter::class)->import($connection, $this->graphLead(['ad_id' => null]));
+        $lead = Lead::firstOrFail();
+        $this->assertSame($agent->id, $lead->portal_user_id, 'the agent owns the lead, not the agency');
+        $this->assertSame($agent->id, $lead->agent_id);
+
+        // The agency doesn't see or manage its agent's Page.
+        $this->signIn($agency)->get('/portal/crm/integrations')->assertDontSee('Agent Own Page');
+        $this->delete("/portal/crm/integrations/facebook/{$connection->id}")->assertNotFound();
     }
 
     public function test_sync_pulls_new_leads_from_every_form_and_sends_one_summary_email(): void

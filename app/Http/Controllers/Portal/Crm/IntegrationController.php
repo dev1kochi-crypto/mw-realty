@@ -22,8 +22,8 @@ use Illuminate\Support\Str;
  *
  * Connect → Facebook Login (FacebookLeadAds::loginUrl) → the public callback (no portal login needed —
  * the one-time state in the cache names who started it) lists the Pages the Facebook user manages →
- * the Super Admin links each Page to an agency or independent agent, or an agency / independent
- * agent connects Pages to their own account → each is saved with its Page token and subscribed to
+ * the Super Admin links each Page to an agency or independent agent, or any agency / agent
+ * connects Pages to their own account (an agency agent's become their personal leads) → each is saved with its Page token and subscribed to
  * the app's "leadgen" webhook (Api\FacebookWebhookController). A Page belongs to one account only:
  * the webhook names just the Page, so it must point to a single CRM (never the admin's own).
  * "Sync now" pulls recent leads directly (FacebookLeadImporter::sync).
@@ -57,6 +57,7 @@ class IntegrationController extends Controller
         return view('portal.crm.integrations.index', [
             'isAdmin' => $isAdmin,
             'canManage' => $this->canManage(),
+            'isAgencyAgent' => (bool) $this->owner()?->isAgencyAgent(),
             'configured' => $this->facebook->configured(),
             'connections' => $connections,
             'search' => $search,
@@ -364,12 +365,13 @@ class IntegrationController extends Controller
             ->where(fn ($q) => $q->where('type', 'company')->orWhere(fn ($a) => $a->where('type', 'agent')->whereNull('company_id')));
     }
 
-    /** Super Admin, agencies and independent agents connect Pages; agency agents work their agency's leads. */
+    /**
+     * Super Admin and every portal account connect Pages. An agency agent's own Pages feed their
+     * personal leads (owned by the agent, not the agency) — the agency's Pages stay the agency's.
+     */
     private function canManage(): bool
     {
-        $owner = $this->owner();
-
-        return $this->isAdmin() || ($owner && !$owner->isAgencyAgent());
+        return $this->isAdmin() || $this->owner() !== null;
     }
 
     private function authorizeManage(): void

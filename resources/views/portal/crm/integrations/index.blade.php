@@ -169,8 +169,11 @@
             <div class="alert alert-light border small mb-0"><i class="fas fa-circle-info me-1"></i>The Facebook integration isn't available yet — MW Realty is setting it up.</div>
             @endif
         @elseif(!$canManage)
-            <div class="alert alert-light border small mb-0"><i class="fas fa-circle-info me-1"></i>Your agency manages integrations. Facebook leads it receives are shared with you like any other agency lead.</div>
+            <div class="alert alert-light border small mb-0"><i class="fas fa-circle-info me-1"></i>Sign in to your MW Realty account to connect Facebook Pages.</div>
         @else
+            @if($isAgencyAgent)
+            <div class="alert alert-light border small"><i class="fas fa-circle-info me-1"></i>Pages you connect here are your own — their leads come to you as personal leads, not to your agency. Leads from your agency's Pages are still shared with you when assigned.</div>
+            @endif
             {{-- Back from Facebook Login: Super Admin assigns each Page to an account; an agency / agent ticks their own. --}}
             @if($pendingPages)
             <form method="POST" action="{{ route('portal.crm.integrations.facebook.pages.store') }}" class="fbpick mb-4" id="fbPickForm">
