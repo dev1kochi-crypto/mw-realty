@@ -711,6 +711,9 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('/notifications/{id}/read', [PortalNotificationController::class, 'markRead'])->name('notifications.read');
         Route::post('/notifications/read-all', [PortalNotificationController::class, 'markAllRead'])->name('notifications.read-all');
 
+        // Module help guides (top bar "!" icon) — remember which ones opened by themselves already.
+        Route::post('/help/{topic}/seen', [\App\Http\Controllers\Portal\PortalHelpController::class, 'seen'])->name('help.seen');
+
         // Self-service plan upgrade — portal guard only, a Super Admin doesn't request plans for itself.
         // Choosing/buying a plan unlocks only after KYC approval; payment history, invoices and
         // managing an existing subscription stay reachable regardless.

@@ -227,6 +227,16 @@
                     </a>
 
                     @php
+                        $helpTopic = \App\Support\PortalHelp::topicFor(request());
+                        $help = $helpTopic ? \App\Support\PortalHelp::load($helpTopic) : null;
+                    @endphp
+                    @if($help)
+                    <button type="button" class="portal-help-btn" id="portalHelpBtn" title="How {{ $help['title'] }} works" aria-label="Help: how {{ $help['title'] }} works">
+                        <i class="fas fa-circle-exclamation"></i>
+                    </button>
+                    @endif
+
+                    @php
                         $notifiable = $owner ?? $cmsActor;
                         $recentNotifications = $notifiable?->notifications()->latest()->take(20)->get();
                         $unreadNotifCount = $notifiable?->unreadNotifications()->count() ?? 0;
@@ -359,6 +369,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @if($help)
+        @include('portal.layouts._help')
+    @endif
     {{-- Phone fields with a country-code picker: [data-phone-input] (see portal/js/phone-input.js). --}}
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.1/build/js/intlTelInput.min.js"></script>
     <script src="{{ asset('portal/js/phone-input.js') }}?v={{ filemtime(public_path('portal/js/phone-input.js')) }}"></script>

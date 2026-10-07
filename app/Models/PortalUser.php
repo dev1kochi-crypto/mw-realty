@@ -180,6 +180,7 @@ class PortalUser extends Authenticatable
         'adrec_license_expiry' => 'date',
         'other_license_expiry' => 'date',
         'spoken_languages' => 'array',
+        'seen_help_topics' => 'array',
         'two_factor_secret' => 'encrypted',
         'two_factor_recovery_codes' => 'encrypted:array',
         'two_factor_confirmed_at' => 'datetime',

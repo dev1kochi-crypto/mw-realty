@@ -784,6 +784,8 @@
         flex: 0 0 250px;
         display: flex;
         flex-direction: column;
+        /* Bootstrap's .nav wraps; on a short screen that spilled the list into a clipped second column. */
+        flex-wrap: nowrap;
         gap: 0.3rem;
         padding: 1.25rem 1rem;
         background: var(--portal-bg);
