@@ -39,6 +39,46 @@ class PropertyGallery
         return $root !== '' && str_starts_with($publicId, $root . '/') ? substr($publicId, strlen($root) + 1) : $publicId;
     }
 
+    /**
+     * Any image file → JPEG bytes for the gallery: flattened onto white (no transparency in JPEG) and,
+     * with $watermark (the owner's active settings, App\Services\Watermark), stamped.
+     */
+    public static function jpeg(string $path, ?array $watermark = null): string
+    {
+        $mime = @getimagesize($path)['mime'] ?? null;
+        $source = match ($mime) {
+            'image/png' => @imagecreatefrompng($path),
+            'image/gif' => @imagecreatefromgif($path),
+            'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
+            default => @imagecreatefromjpeg($path),
+        };
+        if (!$source) {
+            $source = @imagecreatefromstring(file_get_contents($path));
+        }
+        if (!$source) {
+            throw new \RuntimeException('Could not read the uploaded image.');
+        }
+
+        // Flatten onto a white background — PNG/GIF transparency has no equivalent in JPEG.
+        $width = imagesx($source);
+        $height = imagesy($source);
+        $flattened = imagecreatetruecolor($width, $height);
+        imagefill($flattened, 0, 0, imagecolorallocate($flattened, 255, 255, 255));
+        imagecopy($flattened, $source, 0, 0, 0, 0, $width, $height);
+        imagedestroy($source);
+
+        if ($watermark) {
+            app(Watermark::class)->apply($flattened, $watermark);
+        }
+
+        ob_start();
+        imagejpeg($flattened, null, 85);
+        $binary = ob_get_clean();
+        imagedestroy($flattened);
+
+        return $binary;
+    }
+
     public function put(string $folderValue, string $filename, string $contents): void
     {
         $relative = $this->relativeFolder($folderValue) . '/' . $filename;

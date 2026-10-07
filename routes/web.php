@@ -856,6 +856,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('/agents', [\App\Http\Controllers\Portal\AgentController::class, 'store'])->name('agents.store');
         Route::controller(\App\Http\Controllers\Portal\AgentController::class)->prefix('agents')->name('agents.')->group(function () {
             Route::post('/invite', 'invite')->name('invite');
+            Route::put('/lead-assignment', 'updateAssignment')->name('lead-assignment');
             Route::get('/{id}', 'show')->name('show')->whereNumber('id');
             Route::post('/{id}/accept-request', 'acceptRequest')->name('accept-request');
             Route::post('/{id}/decline-request', 'declineRequest')->name('decline-request');
@@ -924,9 +925,12 @@ Route::prefix('portal')->name('portal.')->group(function () {
             // Lead Insights — website activity of the viewer's own leads (property views, time spent, AI chats…).
             Route::get('/lead-insights', [\App\Http\Controllers\Portal\Crm\LeadInsightsController::class, 'index'])->name('lead-insights.index');
 
-            // Integrations — Facebook Lead Ads (connect Pages; their leads arrive via /api/webhooks/facebook).
+            // Integrations — hub of cards, Facebook Lead Ads (connect Pages; their leads arrive via
+            // /api/webhooks/facebook) and the Property Finder page (its actions are just below).
             Route::prefix('integrations')->name('integrations.')->controller(\App\Http\Controllers\Portal\Crm\IntegrationController::class)->group(function () {
-                Route::get('/', 'index')->name('index');
+                Route::get('/', 'index')->name('index'); // hub: one card per integration
+                Route::get('/facebook', 'facebook')->name('facebook');
+                Route::get('/property-finder', 'propertyFinder')->name('property-finder.show');
                 Route::get('/accounts', 'accounts')->name('accounts')->middleware('throttle:120,1');
                 Route::get('/facebook/connect', 'connect')->name('facebook.connect');
                 Route::post('/facebook/pages', 'storePages')->name('facebook.pages.store');
@@ -935,6 +939,15 @@ Route::prefix('portal')->name('portal.')->group(function () {
                 Route::delete('/facebook/bulk', 'bulkDestroy')->name('facebook.bulk-destroy');
                 Route::post('/facebook/{id}/sync', 'sync')->name('facebook.sync')->whereNumber('id')->middleware('throttle:10,1');
                 Route::delete('/facebook/{id}', 'destroy')->name('facebook.destroy')->whereNumber('id');
+            });
+            // Integrations — Property Finder (API key → listings imported as properties, Super Admin reviews them).
+            Route::prefix('integrations/property-finder')->name('integrations.property-finder.')->controller(\App\Http\Controllers\Portal\Crm\PropertyFinderController::class)->group(function () {
+                Route::post('/', 'connect')->name('connect')->middleware('throttle:10,1');
+                Route::post('/sync', 'sync')->name('sync')->middleware('throttle:10,1');
+                Route::get('/status', 'status')->name('status')->middleware('throttle:120,1');
+                Route::delete('/', 'destroy')->name('destroy');
+                Route::get('/review', 'review')->name('review');
+                Route::post('/review', 'reviewAction')->name('review.action');
             });
 
             Route::prefix('master')->name('master.')->group(function () {

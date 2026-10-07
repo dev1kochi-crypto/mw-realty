@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Portal;
 
 use App\Models\AgencyAgent;
+use App\Models\AgencyLeadAssignmentSetting;
 use App\Models\Lead;
 use App\Models\PortalUser;
 use App\Models\Property;
@@ -113,6 +114,7 @@ class AgentController extends Controller
                 'last' => $agency->leadAssignmentSetting?->lastAgent,
                 'last_at' => $agency->leadAssignmentSetting?->last_assigned_at,
                 'next' => $leadAssignment->peekNextAgent($agency),
+                'setting' => $agency->leadAssignmentSetting ?? new AgencyLeadAssignmentSetting(['mode' => AgencyLeadAssignmentSetting::MODE_AUTOMATIC]),
                 'unassigned' => Lead::where('portal_user_id', $agency->id)->whereNull('agent_id')->count(),
             ],
             'agentSlots' => [
@@ -121,6 +123,35 @@ class AgentController extends Controller
                 'remaining' => $agency->remainingAgentSlots(),
             ],
         ]);
+    }
+
+    /**
+     * How new agency leads reach agents: automatic round robin (for the chosen kinds of lead) or
+     * manual — leads wait unassigned for the agency. Listing-agent routing applies either way.
+     */
+    public function updateAssignment(Request $request, LeadAssignmentService $leadAssignment)
+    {
+        $agency = $this->agency();
+        $data = $request->validate([
+            'mode' => 'required|in:' . AgencyLeadAssignmentSetting::MODE_AUTOMATIC . ',' . AgencyLeadAssignmentSetting::MODE_MANUAL,
+            'sources' => 'array',
+            'sources.*' => 'in:' . implode(',', array_keys(AgencyLeadAssignmentSetting::SOURCES)),
+        ]);
+        $sources = array_values(array_unique($data['sources'] ?? []));
+        if ($data['mode'] === AgencyLeadAssignmentSetting::MODE_AUTOMATIC && !$sources) {
+            return back()->with('error', 'Choose at least one kind of lead for round robin, or switch to manual assignment.');
+        }
+
+        $leadAssignment->ensureSettings($agency);
+        $agency->leadAssignmentSetting()->firstOrFail()->update([
+            'mode' => $data['mode'],
+            // Every kind ticked is stored as null (= all), so kinds added later are covered too.
+            'round_robin_sources' => $data['mode'] === AgencyLeadAssignmentSetting::MODE_MANUAL || count($sources) === count(AgencyLeadAssignmentSetting::SOURCES) ? null : $sources,
+        ]);
+
+        return back()->with('toast', $data['mode'] === AgencyLeadAssignmentSetting::MODE_MANUAL
+            ? 'Manual assignment on — new leads wait in Unassigned for you to assign.'
+            : 'Round robin updated.');
     }
 
     /** One agent of this agency: profile, membership history with this agency, their workload. */

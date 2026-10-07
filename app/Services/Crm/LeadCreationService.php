@@ -66,7 +66,10 @@ class LeadCreationService
         $property = !empty($attributes['property_id']) ? Property::find($attributes['property_id']) : null;
         $ownerId ??= $property ? $this->assignment->resolveOwnerId($property, $property->portal_user_id) : null;
 
-        $lead = DB::transaction(function () use ($attributes, $ownerId, $preferredAgentId, $autoAssign, $tagIds, $noteAuthor, $property) {
+        // This enquiry's kind (Facebook / property / generic) — the agency's round-robin options go by it.
+        $kind = LeadAssignmentService::leadKind($attributes['page_source'] ?? null, (bool) $property);
+
+        $lead = DB::transaction(function () use ($attributes, $ownerId, $preferredAgentId, $autoAssign, $tagIds, $noteAuthor, $property, $kind) {
             if ($existing = $this->findDuplicate($ownerId, $attributes['email'] ?? null, $attributes['phone'] ?? null)) {
                 if ($existing->trashed()) {
                     $existing->restore();
@@ -82,7 +85,7 @@ class LeadCreationService
                     if ($preferredAgentId) {
                         $this->assignment->assignManually($existing, $preferredAgentId, AssignmentActor::system(), 'Repeat request from agent profile');
                     } elseif ($autoAssign) {
-                        $this->assignment->assignNewLead($existing, $property);
+                        $this->assignment->assignNewLead($existing, $property, $kind);
                     }
                     if ($existing->agent_id) {
                         $existing->assignedOnMerge = true;
@@ -100,7 +103,7 @@ class LeadCreationService
             if ($preferredAgentId) {
                 $this->assignment->assignManually($lead, $preferredAgentId, AssignmentActor::system(), 'Custom request from agent profile');
             } elseif ($autoAssign) {
-                $this->assignment->assignNewLead($lead);
+                $this->assignment->assignNewLead($lead, kind: $kind);
             }
 
             return $lead;

@@ -25,6 +25,9 @@ use Illuminate\Validation\ValidationException;
  *   owner is an agency with active agents → next agent in rotation      (round_robin)
  *   owner is an agency with no agents     → agency-level, agent_id null (agency_unassigned)
  *
+ * Round robin only runs when the agency's assignment mode is automatic and covers this kind of
+ * lead (AgencyLeadAssignmentSetting); otherwise the lead waits unassigned for the agency.
+ *
  * "Eligible" = approved membership + approved, active account in that same agency
  * (PortalUser::eligibleAgentsQuery()). A property still pointing at an agent who has since been
  * suspended or has left falls back to round-robin rather than routing to someone who can't act.
@@ -40,11 +43,11 @@ class LeadAssignmentService
 
     /**
      * Assign a freshly captured lead (or an unassigned one that just enquired again — then
-     * $property is the listing of that new enquiry).
+     * $property is the listing of that new enquiry, and $kind that enquiry's leadKind()).
      */
-    public function assignNewLead(Lead $lead, ?\App\Models\Property $property = null): Lead
+    public function assignNewLead(Lead $lead, ?\App\Models\Property $property = null, ?string $kind = null): Lead
     {
-        DB::transaction(function () use ($lead, $property) {
+        DB::transaction(function () use ($lead, $property, $kind) {
             // A repeat enquiry routes by the listing just asked about, not the lead's first one.
             $property ??= $lead->property;
             $owner = $lead->portal_user_id ? PortalUser::find($lead->portal_user_id) : null;
@@ -70,7 +73,10 @@ class LeadAssignmentService
                 return;
             }
 
-            if ($agentId = $this->nextRoundRobinAgent($owner)) {
+            // Manual mode, or a kind of lead the agency keeps out of round robin → it waits unassigned.
+            $setting = $owner->leadAssignmentSetting;
+            $kind ??= self::leadKind($lead->page_source, (bool) $property);
+            if ((!$setting || $setting->roundRobins($kind)) && ($agentId = $this->nextRoundRobinAgent($owner))) {
                 $this->apply($lead, $agentId, Lead::ASSIGN_ROUND_ROBIN, AssignmentActor::system());
                 return;
             }
@@ -79,6 +85,19 @@ class LeadAssignmentService
         });
 
         return $lead;
+    }
+
+    /**
+     * What kind of lead this is, for the agency's round-robin options: a Facebook Lead Ads lead, an
+     * enquiry about a listing, or a generic one (agency / agent profile, contact, custom request, …).
+     */
+    public static function leadKind(?string $pageSource, bool $aboutProperty): string
+    {
+        return match (true) {
+            $pageSource === \App\Services\Integrations\FacebookLeadImporter::PAGE_SOURCE => AgencyLeadAssignmentSetting::SOURCE_FACEBOOK,
+            $aboutProperty => AgencyLeadAssignmentSetting::SOURCE_PROPERTY,
+            default => AgencyLeadAssignmentSetting::SOURCE_GENERIC,
+        };
     }
 
     /**

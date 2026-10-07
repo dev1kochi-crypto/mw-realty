@@ -26,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Every email (KYC, leads, enquiries…) is queued. On hosting without a supervisor-managed
         // `queue:work`, this drains the queue once a minute off the existing schedule:run cron.
         $schedule->command('queue:work --stop-when-empty --tries=3 --max-time=50')->everyMinute()->withoutOverlapping();
+        // Long imports (Property Finder sync) on their own worker, so they never hold up the emails above.
+        $schedule->command('queue:work imports --queue=imports --stop-when-empty --tries=1 --timeout=3600 --max-time=50')->everyMinute()->withoutOverlapping(90);
     })
     ->withMiddleware(function (Middleware $middleware): void {
         // Only the portal routes use Laravel's built-in auth/guest middleware

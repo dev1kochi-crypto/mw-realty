@@ -12,7 +12,7 @@
     <div>
         <div class="portal-section-title mb-1">My Agents</div>
         <p class="text-muted small mb-0">
-            Enquiries on a listing with an assigned agent go to that agent. Listings without one rotate enquiries across your active agents in turn.
+            Enquiries on a listing with an assigned agent go to that agent. Other leads are rotated across your active agents, or wait for you to assign them — see Lead assignment below.
         </p>
     </div>
     <div class="d-flex align-items-center flex-wrap gap-2">
@@ -70,8 +70,13 @@
         <div class="portal-stat-card h-100">
             <div class="portal-stat-icon amber"><i class="fas fa-forward"></i></div>
             <div class="min-w-0">
+                @if($roundRobin['setting']->isManual())
+                <div class="fw-bold">Manual assignment</div>
+                <div class="portal-stat-label">You assign each new lead</div>
+                @else
                 <div class="fw-bold">{{ $roundRobin['next']?->name ?? 'No active agents' }}</div>
                 <div class="portal-stat-label">{{ $roundRobin['next'] ? 'Next in line' : 'Leads stay with the agency' }}</div>
+                @endif
             </div>
         </div>
     </div>
@@ -91,6 +96,29 @@
         </div>
     </div>
 </div>
+
+{{-- Lead assignment: one slim summary line; the settings open in a modal (shared with Leads). --}}
+@php
+    $assignSetting = $roundRobin['setting'];
+    $assignSources = $assignSetting->roundRobinSources();
+@endphp
+<div class="portal-card lassign-bar mb-3">
+    <span class="lassign-bar__icon" aria-hidden="true"><i class="fas fa-shuffle"></i></span>
+    <span class="lassign-bar__title">Lead assignment</span>
+    <div class="lassign-bar__chips">
+        @if($assignSetting->isManual())
+        <span class="lassign-chip lassign-chip--mode"><i class="fas fa-hand-pointer"></i>Manual</span>
+        <span class="lassign-chip">New leads wait in Unassigned</span>
+        @else
+        <span class="lassign-chip lassign-chip--mode"><i class="fas fa-rotate"></i>Automatic round robin</span>
+        @foreach(\App\Models\AgencyLeadAssignmentSetting::SOURCES as $key => $label)
+        <span class="lassign-chip {{ in_array($key, $assignSources, true) ? '' : 'lassign-chip--off' }}" title="{{ in_array($key, $assignSources, true) ? 'Round robin' : 'Waits in Unassigned' }}">{{ $label }}</span>
+        @endforeach
+        @endif
+    </div>
+    <button type="button" class="btn btn-sm portal-btn-ghost" data-bs-toggle="modal" data-bs-target="#leadAssignModal"><i class="fas fa-sliders me-1"></i>Change</button>
+</div>
+@include('portal.agents._lead_assignment', ['assignSetting' => $assignSetting, 'agentCount' => $eligibleAgents->count()])
 
 <ul class="nav portal-lang-tabs mb-3">
     @foreach(['active' => 'Active', 'pending' => 'Pending & Invited', 'requests' => 'Join Requests', 'history' => 'History'] as $key => $label)
@@ -214,3 +242,4 @@
 
 <div class="mt-3">{{ $memberships->links('pagination::bootstrap-5') }}</div>
 @endsection
+

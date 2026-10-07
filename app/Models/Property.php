@@ -138,6 +138,25 @@ class Property extends Model
         'compliance_reviewed_at' => 'datetime',
     ];
 
+    /**
+     * The next unused RERA reference — RERA70613, RERA70614, … It is also the gallery folder /
+     * filename key (App\Services\PropertyGallery).
+     */
+    public static function nextReferenceNo(): string
+    {
+        $maxNumber = self::where('reference_no', 'like', 'RERA%')
+            ->pluck('reference_no')
+            ->map(fn ($ref) => (int) substr($ref, 4))
+            ->max() ?? 0;
+
+        $number = max(70613, $maxNumber + 1);
+        while (self::where('reference_no', 'RERA' . $number)->exists()) {
+            $number++;
+        }
+
+        return 'RERA' . $number;
+    }
+
     protected static function booted(): void
     {
         // Mirror the latest open house / viewing day into an indexed column for the "Open house" filter.
@@ -162,6 +181,9 @@ class Property extends Model
 
     public function complianceLabel(): string
     {
+        if ($this->awaitingImportReview()) {
+            return 'In MW Realty review';
+        }
         if ($this->awaitingApproval()) {
             return 'Awaiting approval';
         }
@@ -170,6 +192,12 @@ class Property extends Model
     }
 
     /** Pending, and it's Super Admin's approval (not a permit validation) that it waits for. */
+    /** Imported from Property Finder and still waiting for Super Admin's import review (PropertyFinderReview). */
+    public function awaitingImportReview(): bool
+    {
+        return ($this->metadata['property_finder_review'] ?? null) === 'pending';
+    }
+
     public function awaitingApproval(): bool
     {
         return $this->compliance_status === self::COMPLIANCE_PENDING

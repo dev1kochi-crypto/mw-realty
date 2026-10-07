@@ -192,12 +192,13 @@
                     // DLD permit review (ListingComplianceService): not live until approved. Shown as a
                     // chip on the photo + a one-line bar in the Premium slot, so every card keeps its layout.
                     $notLive = !$property->canGoLive() && !$property->isSold();
-                    [$reviewIcon, $reviewText, $reviewCta] = $property->awaitingApproval() ? ['fa-user-shield', 'Waiting for MW Realty to approve it', 'View'] : match ($property->compliance_status) {
+                    [$reviewIcon, $reviewText, $reviewCta] = $property->awaitingImportReview() ? ['fa-user-shield', 'Imported from Property Finder — in MW Realty review', 'View']
+                        : ($property->awaitingApproval() ? ['fa-user-shield', 'Waiting for MW Realty to approve it', 'View'] : match ($property->compliance_status) {
                         $P::COMPLIANCE_CHANGES_REQUESTED => ['fa-rotate-left', 'Taken down by MW Realty — update and validate the permit', 'Fix now'],
                         $P::COMPLIANCE_EXPIRED => ['fa-ban', 'Permit expired — add the renewed permit', 'Renew'],
                         $P::COMPLIANCE_PENDING => ['fa-shield-halved', 'Permit not verified — validate it to go live', 'Validate'],
                         default => ['fa-file-circle-exclamation', 'Add the permit details to go live', 'Add'],
-                    };
+                    });
                 @endphp
                 @if($notLive)
                 <span class="portal-property-card__review pr-tone-{{ $property->compliance_status }}"><i class="fas {{ $reviewIcon }}"></i>{{ $property->complianceLabel() }}</span>

@@ -44,6 +44,9 @@
         <span class="portal-xbtn-sep" aria-hidden="true"></span>
         <button type="button" id="openLeadTableFieldsModal" class="portal-xbtn" aria-label="Table fields"><i class="fas fa-table-columns"></i><span>Table Fields</span></button>
         <button type="button" id="openLeadImportModal" class="portal-xbtn" aria-label="Import"><i class="fas fa-file-import"></i><span>Import</span></button>
+        @if($isAgencyViewer && $assignSetting)
+        <button type="button" class="portal-xbtn" data-bs-toggle="modal" data-bs-target="#leadAssignModal" aria-label="Lead assignment: {{ $assignSetting->isManual() ? 'manual' : 'automatic round robin' }}"><i class="fas {{ $assignSetting->isManual() ? 'fa-hand-pointer' : 'fa-rotate' }}"></i><span>Lead Assignment<em class="lassign-xbtn-state">{{ $assignSetting->isManual() ? 'Manual' : 'Auto' }}</em></span></button>
+        @endif
         @if($isAgencyViewer && $unassignedCount > 0 && $agencyAgents->isNotEmpty())
         <form method="POST" action="{{ route('portal.crm.leads.distribute') }}" class="m-0" onsubmit="return confirm('Round-robin all {{ $unassignedCount }} unassigned lead(s) across your active agents?');">
             @csrf
@@ -86,6 +89,9 @@
 @include('portal.crm.leads._lead_export_modal')
 @include('portal.crm.leads._stage_quick_add_modal')
 @include('portal.crm.leads._lead_master_picker_modal')
+@if($isAgencyViewer && $assignSetting)
+@include('portal.agents._lead_assignment', ['assignSetting' => $assignSetting, 'agentCount' => $agencyAgents->count()])
+@endif
 
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>

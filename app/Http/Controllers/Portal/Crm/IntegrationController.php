@@ -40,7 +40,65 @@ class IntegrationController extends Controller
     {
     }
 
-    public function index(Request $request)
+    /**
+     * The Integrations hub: one card per integration with its status; each opens its own page.
+     * A new integration is a new entry here plus its page.
+     */
+    public function index()
+    {
+        $isAdmin = $this->isAdmin();
+        $facebookCount = FacebookPageConnection::when(!$isAdmin, fn ($q) => $q->where('portal_user_id', $this->ownerId() ?? 0))->count();
+        $pf = $this->propertyFinderData();
+
+        return view('portal.crm.integrations.index', [
+            'isAdmin' => $isAdmin,
+            'integrations' => [
+                [
+                    'key' => 'facebook',
+                    'name' => 'Facebook Lead Ads',
+                    'category' => 'Leads',
+                    'icon' => 'fab fa-facebook-f',
+                    'color' => '#1877f2',
+                    'description' => $isAdmin
+                        ? 'Connect Facebook Pages and send each one\'s lead form leads to an agency or agent.'
+                        : 'Leads from your Facebook & Instagram lead forms arrive in Leads automatically.',
+                    'url' => route('portal.crm.integrations.facebook'),
+                    'status' => match (true) {
+                        !$this->facebook->configured() => ['off', 'Not set up'],
+                        $facebookCount > 0 => ['ok', $facebookCount . ' page' . ($facebookCount === 1 ? '' : 's') . ' connected'],
+                        default => ['off', 'Not connected'],
+                    },
+                ],
+                [
+                    'key' => 'property-finder',
+                    'name' => 'Property Finder',
+                    'category' => 'Listings',
+                    'icon' => 'fas fa-house-chimney',
+                    'color' => '#ef5e4e',
+                    'description' => $isAdmin
+                        ? 'Agencies and agents import their Property Finder listings — you review them before they go live.'
+                        : 'Import your Property Finder listings as properties — all of them once, then just the new ones.',
+                    'url' => route('portal.crm.integrations.property-finder.show'),
+                    'status' => match (true) {
+                        $isAdmin && $pf['pfPending'] > 0 => ['warn', $pf['pfPending'] . ' to review'],
+                        $isAdmin => ['off', $pf['pfAccounts'] . ' account' . ($pf['pfAccounts'] === 1 ? '' : 's') . ' connected'],
+                        $pf['pfConnection']?->syncInProgress() => ['warn', 'Syncing…'],
+                        $pf['pfConnection'] !== null => ['ok', 'Connected'],
+                        default => ['off', 'Not connected'],
+                    },
+                ],
+            ],
+        ]);
+    }
+
+    /** Integrations › Property Finder (actions: PropertyFinderController). */
+    public function propertyFinder()
+    {
+        return view('portal.crm.integrations.property-finder', ['isAdmin' => $this->isAdmin(), ...$this->propertyFinderData()]);
+    }
+
+    /** Integrations › Facebook Lead Ads. */
+    public function facebook(Request $request)
     {
         $isAdmin = $this->isAdmin();
         $pending = $this->canManage() ? $this->pendingPages() : [];
@@ -54,7 +112,7 @@ class IntegrationController extends Controller
             : FacebookPageConnection::where('portal_user_id', $this->ownerId() ?? 0)->orderBy('page_name')->get();
         $connections->each(fn (FacebookPageConnection $c) => $c->failStaleImport());
 
-        return view('portal.crm.integrations.index', [
+        return view('portal.crm.integrations.facebook', [
             'isAdmin' => $isAdmin,
             'canManage' => $this->canManage(),
             'isAgencyAgent' => (bool) $this->owner()?->isAgencyAgent(),
@@ -70,6 +128,36 @@ class IntegrationController extends Controller
             'callbackUrl' => route('integrations.facebook.callback'),
             'webhookUrl' => route('webhooks.facebook'),
         ]);
+    }
+
+    /**
+     * The Property Finder card (portal.crm.integrations._property_finder): the viewer's connection —
+     * an agency agent sees their agency's — or, for Super Admin, totals and the review queue.
+     */
+    private function propertyFinderData(): array
+    {
+        if ($this->isAdmin()) {
+            return [
+                'pfConnection' => null,
+                'pfCanManage' => false,
+                'pfAccounts' => \App\Models\PropertyFinderConnection::count(),
+                'pfPending' => \App\Models\PropertyFinderImport::where('review_status', \App\Models\PropertyFinderImport::PENDING)->whereNotNull('property_id')->count(),
+                'pfImported' => 0,
+            ];
+        }
+        $owner = $this->owner();
+        $accountId = $owner?->isAgencyAgent() ? $owner->company_id : $owner?->id;
+        $connection = $accountId ? \App\Models\PropertyFinderConnection::with('owner:id,type,name,company_name')->where('portal_user_id', $accountId)->first() : null;
+        $connection?->failStaleSync();
+
+        return [
+            'pfConnection' => $connection,
+            'pfCanManage' => $owner && !$owner->isAgencyAgent(),
+            'pfAccounts' => 0,
+            'pfPending' => $accountId ? \App\Models\PropertyFinderImport::where('portal_user_id', $accountId)->where('review_status', \App\Models\PropertyFinderImport::PENDING)->whereNotNull('property_id')->count() : 0,
+            // Imported listings that still exist here (a deleted one may be imported again).
+            'pfImported' => $accountId ? \App\Models\PropertyFinderImport::where('portal_user_id', $accountId)->whereNotNull('property_id')->count() : 0,
+        ];
     }
 
     /** Agencies + independent agents a Page can be linked to (select2 format, 20 per page). */
@@ -148,8 +236,8 @@ class IntegrationController extends Controller
         session()->flash($type, $message);
 
         return $popup
-            ? response()->view('portal.crm.integrations.popup-done', ['indexUrl' => route('portal.crm.integrations.index')])
-            : redirect()->route('portal.crm.integrations.index');
+            ? response()->view('portal.crm.integrations.popup-done', ['indexUrl' => route('portal.crm.integrations.facebook')])
+            : redirect()->route('portal.crm.integrations.facebook');
     }
 
     /**
@@ -236,7 +324,7 @@ class IntegrationController extends Controller
         }
         Cache::forget(self::PAGES_CACHE . $this->actorKey());
 
-        $redirect = redirect()->route('portal.crm.integrations.index');
+        $redirect = redirect()->route('portal.crm.integrations.facebook');
         if ($connected) {
             $redirect->with('toast', 'Connected: ' . implode(', ', $connected) . '.' . ($importing ? ' Importing their leads in the background — you can keep working.' : ' New Facebook leads will arrive in Leads.'));
         }
@@ -263,7 +351,7 @@ class IntegrationController extends Controller
         $this->authorizeManage();
         Cache::forget(self::PAGES_CACHE . $this->actorKey());
 
-        return redirect()->route('portal.crm.integrations.index');
+        return redirect()->route('portal.crm.integrations.facebook');
     }
 
     /**

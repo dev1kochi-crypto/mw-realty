@@ -35,7 +35,7 @@ class FacebookPageReconnectMail extends Mailable
                 'owner' => $this->pageConnection->owner,
                 'reason' => $this->reason,
                 'facebookMessage' => $this->facebookMessage,
-                'integrationsUrl' => route('portal.crm.integrations.index'),
+                'integrationsUrl' => route('portal.crm.integrations.facebook'),
             ],
         );
     }

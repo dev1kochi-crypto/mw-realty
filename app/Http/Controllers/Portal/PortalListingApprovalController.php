@@ -44,10 +44,9 @@ class PortalListingApprovalController extends Controller
             ->when($search !== '', fn ($q) => $q->where(fn ($s) => $s
                 ->portalSearch($search, true)
                 ->orWhere('permit_number', 'like', '%' . $search . '%')))
-            // Oldest submission first, so nobody waits longest.
-            ->orderByRaw('compliance_submitted_at IS NULL')
-            ->orderBy('compliance_submitted_at')
-            ->orderBy('id')
+            // Latest first: the most recently submitted / saved listing at the top.
+            ->orderByRaw('COALESCE(compliance_submitted_at, updated_at) DESC')
+            ->orderByDesc('id')
             ->paginate(self::PER_PAGE)
             ->withQueryString();
 

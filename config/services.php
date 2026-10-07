@@ -102,6 +102,11 @@ return [
 
     // Facebook Lead Ads → CRM leads (CRM › Integrations, App\Services\Integrations\FacebookLeadAds).
     // A Meta app with Facebook Login + the Webhooks product ("Page" object, "leadgen" field).
+    // Property Finder Enterprise API (CRM › Integrations): each account enters its own API key + secret.
+    'property_finder' => [
+        'base_url' => env('PROPERTY_FINDER_API_URL', 'https://atlas.propertyfinder.com'),
+    ],
+
     'facebook_leads' => [
         'app_id' => env('FACEBOOK_APP_ID'),
         'app_secret' => env('FACEBOOK_APP_SECRET'),

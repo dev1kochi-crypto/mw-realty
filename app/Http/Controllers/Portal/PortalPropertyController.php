@@ -447,17 +447,7 @@ class PortalPropertyController extends Controller
      */
     protected function generateReferenceNo(): string
     {
-        $maxNumber = Property::where('reference_no', 'like', 'RERA%')
-            ->pluck('reference_no')
-            ->map(fn ($ref) => (int) substr($ref, 4))
-            ->max() ?? 0;
-
-        $number = max(70613, $maxNumber + 1);
-        while (Property::where('reference_no', 'RERA' . $number)->exists()) {
-            $number++;
-        }
-
-        return 'RERA' . $number;
+        return Property::nextReferenceNo();
     }
 
     /**
@@ -477,38 +467,7 @@ class PortalPropertyController extends Controller
     /** $watermark: the listing owner's active watermark settings (App\Services\Watermark), stamped in. */
     protected function convertToJpeg(string $path, ?array $watermark = null): string
     {
-        $mime = @getimagesize($path)['mime'] ?? null;
-        $source = match ($mime) {
-            'image/png' => @imagecreatefrompng($path),
-            'image/gif' => @imagecreatefromgif($path),
-            'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
-            default => @imagecreatefromjpeg($path),
-        };
-        if (!$source) {
-            $source = @imagecreatefromstring(file_get_contents($path));
-        }
-        if (!$source) {
-            throw new \RuntimeException('Could not read the uploaded image.');
-        }
-
-        // Flatten onto a white background — PNG/GIF transparency has no equivalent in JPEG.
-        $width = imagesx($source);
-        $height = imagesy($source);
-        $flattened = imagecreatetruecolor($width, $height);
-        imagefill($flattened, 0, 0, imagecolorallocate($flattened, 255, 255, 255));
-        imagecopy($flattened, $source, 0, 0, 0, 0, $width, $height);
-        imagedestroy($source);
-
-        if ($watermark) {
-            app(\App\Services\Watermark::class)->apply($flattened, $watermark);
-        }
-
-        ob_start();
-        imagejpeg($flattened, null, 85);
-        $binary = ob_get_clean();
-        imagedestroy($flattened);
-
-        return $binary;
+        return \App\Services\PropertyGallery::jpeg($path, $watermark);
     }
 
     /** Feeds the Nearby Places tab's Type dropdown — the Place dropdown loads via AJAX once a Type is picked. */

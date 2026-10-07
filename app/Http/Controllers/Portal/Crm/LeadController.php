@@ -133,6 +133,10 @@ class LeadController extends Controller
             'isAgencyViewer' => (bool) $this->owner()?->isAgency(),
             'agencyAgents' => $this->owner()?->isAgency() ? $this->owner()->eligibleAgentsQuery()->get(['portal_users.id', 'portal_users.name']) : collect(),
             'unassignedCount' => $this->owner()?->isAgency() ? Lead::where('portal_user_id', $this->owner()->id)->whereNull('agent_id')->count() : 0,
+            // Lead assignment modal (portal/agents/_lead_assignment) — agencies only.
+            'assignSetting' => $this->owner()?->isAgency()
+                ? ($this->owner()->leadAssignmentSetting ?? new \App\Models\AgencyLeadAssignmentSetting(['mode' => \App\Models\AgencyLeadAssignmentSetting::MODE_AUTOMATIC]))
+                : null,
         ];
 
         // The "reload after Create/Edit/Delete" AJAX call re-requests this same

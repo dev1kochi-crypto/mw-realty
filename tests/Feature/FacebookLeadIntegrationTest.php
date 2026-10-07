@@ -121,9 +121,9 @@ class FacebookLeadIntegrationTest extends TestCase
             ['id' => 'PAGE1', 'name' => 'Agency Page'], ['id' => 'PAGE2', 'name' => 'Agent Page'], ['id' => 'PAGE3', 'name' => 'Skipped Page'],
         ]);
 
-        $this->signIn($admin, 'cms')->get('/portal/crm/integrations')->assertOk()->assertSee('Assign the Pages to agencies / agents');
+        $this->signIn($admin, 'cms')->get('/portal/crm/integrations/facebook')->assertOk()->assertSee('Assign the Pages to agencies / agents');
         $this->post('/portal/crm/integrations/facebook/pages', ['owners' => ['PAGE1' => $agency->id, 'PAGE2' => $agent->id, 'PAGE3' => null]])
-            ->assertRedirect('/portal/crm/integrations');
+            ->assertRedirect('/portal/crm/integrations/facebook');
 
         $this->assertSame($agency->id, FacebookPageConnection::where('page_id', 'PAGE1')->value('portal_user_id'));
         $this->assertSame($agent->id, FacebookPageConnection::where('page_id', 'PAGE2')->value('portal_user_id'));
@@ -155,8 +155,8 @@ class FacebookLeadIntegrationTest extends TestCase
         $agency = $this->agency();
         $this->pendingPages('owner.' . $agency->id, [['id' => 'PAGE1', 'name' => 'MW Test Page']]);
 
-        $this->signIn($agency)->get('/portal/crm/integrations')->assertOk()->assertSee('Choose the Pages to connect');
-        $this->post('/portal/crm/integrations/facebook/pages', ['page_ids' => ['PAGE1']])->assertRedirect('/portal/crm/integrations');
+        $this->signIn($agency)->get('/portal/crm/integrations/facebook')->assertOk()->assertSee('Choose the Pages to connect');
+        $this->post('/portal/crm/integrations/facebook/pages', ['page_ids' => ['PAGE1']])->assertRedirect('/portal/crm/integrations/facebook');
 
         $this->assertSame($agency->id, FacebookPageConnection::where('page_id', 'PAGE1')->value('portal_user_id'));
         $this->get('/portal/crm/integrations/accounts')->assertForbidden(); // only the admin assigns to other accounts
@@ -186,8 +186,8 @@ class FacebookLeadIntegrationTest extends TestCase
         ]);
         \Illuminate\Support\Facades\Cache::put('facebook_integration.state.good-state', ['actor' => 'admin.7', 'popup' => false], now()->addMinutes(5));
 
-        $this->get('/integrations/facebook/callback?state=bad&code=abc')->assertRedirect('/portal/crm/integrations')->assertSessionHas('error');
-        $this->get('/integrations/facebook/callback?state=good-state&code=abc')->assertRedirect('/portal/crm/integrations')->assertSessionHas('toast');
+        $this->get('/integrations/facebook/callback?state=bad&code=abc')->assertRedirect('/portal/crm/integrations/facebook')->assertSessionHas('error');
+        $this->get('/integrations/facebook/callback?state=good-state&code=abc')->assertRedirect('/portal/crm/integrations/facebook')->assertSessionHas('toast');
 
         $this->assertSame('PAGE1', decrypt(\Illuminate\Support\Facades\Cache::get('facebook_integration.pages.admin.7'))[0]['id']);
         $this->get('/integrations/facebook/callback?state=good-state&code=abc')->assertSessionHas('error'); // state is one-time
@@ -256,8 +256,8 @@ class FacebookLeadIntegrationTest extends TestCase
         $agent = $this->memberAgent($agency);
         $this->pendingPages('owner.' . $agent->id, [['id' => 'PAGE1', 'name' => 'Agent Own Page']]);
 
-        $this->signIn($agent)->get('/portal/crm/integrations')->assertOk()->assertSee('Choose the Pages to connect')->assertSee('personal leads');
-        $this->post('/portal/crm/integrations/facebook/pages', ['page_ids' => ['PAGE1']])->assertRedirect('/portal/crm/integrations');
+        $this->signIn($agent)->get('/portal/crm/integrations/facebook')->assertOk()->assertSee('Choose the Pages to connect')->assertSee('personal leads');
+        $this->post('/portal/crm/integrations/facebook/pages', ['page_ids' => ['PAGE1']])->assertRedirect('/portal/crm/integrations/facebook');
 
         $connection = FacebookPageConnection::where('page_id', 'PAGE1')->firstOrFail();
         $this->assertSame($agent->id, $connection->portal_user_id);
@@ -268,8 +268,42 @@ class FacebookLeadIntegrationTest extends TestCase
         $this->assertSame($agent->id, $lead->agent_id);
 
         // The agency doesn't see or manage its agent's Page.
-        $this->signIn($agency)->get('/portal/crm/integrations')->assertDontSee('Agent Own Page');
+        $this->signIn($agency)->get('/portal/crm/integrations/facebook')->assertDontSee('Agent Own Page');
         $this->delete("/portal/crm/integrations/facebook/{$connection->id}")->assertNotFound();
+    }
+
+    public function test_manual_assignment_keeps_agency_facebook_leads_unassigned(): void
+    {
+        $agency = $this->agency();
+        $this->memberAgent($agency);
+        $this->signIn($agency)->put('/portal/agents/lead-assignment', ['mode' => 'manual'])->assertSessionHas('toast');
+
+        app(\App\Services\Integrations\FacebookLeadImporter::class)->import($this->connection($agency), $this->graphLead(['ad_id' => null]));
+
+        $lead = Lead::firstOrFail();
+        $this->assertNull($lead->agent_id);
+        $this->assertSame(Lead::ASSIGN_AGENCY_UNASSIGNED, $lead->assignment_type);
+    }
+
+    public function test_round_robin_only_covers_the_chosen_kinds_of_lead(): void
+    {
+        $agency = $this->agency();
+        $agent = $this->memberAgent($agency);
+        $importer = app(\App\Services\Integrations\FacebookLeadImporter::class);
+        $connection = $this->connection($agency);
+
+        // Generic only: a Facebook lead waits unassigned.
+        $this->signIn($agency)->put('/portal/agents/lead-assignment', ['mode' => 'automatic', 'sources' => ['generic']]);
+        $importer->import($connection, $this->graphLead(['ad_id' => null]));
+        $this->assertNull(Lead::firstOrFail()->agent_id);
+
+        // Facebook ticked: the next one is round-robined to the agent.
+        $this->put('/portal/agents/lead-assignment', ['mode' => 'automatic', 'sources' => ['generic', 'facebook']]);
+        $importer->import($connection, $this->graphLead(['id' => 'LG9', 'ad_id' => null, 'field_data' => [['name' => 'email', 'values' => ['new@example.test']]]]));
+        $this->assertSame($agent->id, Lead::where('email', 'new@example.test')->value('agent_id'));
+
+        // Automatic with nothing ticked is refused.
+        $this->put('/portal/agents/lead-assignment', ['mode' => 'automatic', 'sources' => []])->assertSessionHas('error');
     }
 
     public function test_sync_pulls_new_leads_from_every_form_and_sends_one_summary_email(): void

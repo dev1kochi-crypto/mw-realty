@@ -17,13 +17,16 @@
 {{-- Why this listing isn't live (permit not verified / expired / taken down) — the permit is in Core details. --}}
 @if(!$property->canGoLive() && !$property->isSold())
 @php
-    [$reviewTone, $reviewIcon, $reviewText] = $property->awaitingApproval()
-        ? ['info', 'fa-user-shield', 'Not on the website yet: waiting for MW Realty to approve this listing. It goes live as soon as it is approved — you\'ll be told by email.']
-        : match ($property->compliance_status) {
+    $missingPermit = app(\App\Services\ListingComplianceService::class)->missingItems($property);
+    [$reviewTone, $reviewIcon, $reviewText] = match (true) {
+        $property->awaitingImportReview() => ['info', 'fa-user-shield', 'Imported from Property Finder — MW Realty is reviewing it. After approval, validate the permit in Core details to put it on the website.'],
+        $property->awaitingApproval() => ['info', 'fa-user-shield', 'Not on the website yet: waiting for MW Realty to approve this listing. It goes live as soon as it is approved — you\'ll be told by email.'],
+        default => match ($property->compliance_status) {
         \App\Models\Property::COMPLIANCE_CHANGES_REQUESTED => ['danger', 'fa-rotate-left', 'MW Realty took this listing down. Check the permit details, validate the permit again in Core details, then click Update.'],
         \App\Models\Property::COMPLIANCE_EXPIRED => ['danger', 'fa-ban', 'The permit expired, so the listing is offline. Enter the renewed permit in Core details, validate it and click Update.'],
         \App\Models\Property::COMPLIANCE_PENDING => ['info', 'fa-shield-halved', 'Not on the website yet: the permit isn\'t verified. Click Validate next to the permit number in Core details, then Update — it goes live as soon as the permit is verified.'],
-        default => ['warning', 'fa-file-circle-exclamation', 'Not on the website yet: add the permit details in Core details and validate the permit, then click Update.'],
+        default => ['warning', 'fa-file-circle-exclamation', 'Not on the website yet — still needed in Core details: ' . (implode(', ', $missingPermit) ?: 'the permit details') . '. Then validate the permit and click Update.'],
+        },
     };
 @endphp
 <div class="alert alert-{{ $reviewTone }} d-flex gap-3 align-items-start">
