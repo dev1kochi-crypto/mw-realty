@@ -39,11 +39,11 @@
     <div class="portal-xbtn-bar">
         <button type="button" data-open-master="stages" data-needs-selection class="portal-xbtn" aria-label="Assign stage" title="Select leads first" disabled><i class="fas fa-layer-group"></i><span>Assign Stage</span></button>
         <button type="button" data-open-master="tags" data-needs-selection class="portal-xbtn" aria-label="Assign tag" title="Select leads first" disabled><i class="fas fa-tags"></i><span>Assign Tag</span></button>
-        <button type="button" id="openLeadExportModal" data-needs-selection class="portal-xbtn" aria-label="Export" title="Select leads first" disabled><i class="fas fa-file-export"></i><span>Export</span></button>
+        <button type="button" id="openLeadExportModal" data-needs-selection class="portal-xbtn" aria-label="Export" title="Select leads first" disabled><i class="fas fa-file-arrow-down"></i><span>Export</span></button>
         <button type="button" id="bulkDeleteLeadsBtn" data-needs-selection class="portal-xbtn portal-xbtn-danger" aria-label="Delete leads" title="Select leads first" disabled><i class="fas fa-trash-can"></i><span>Delete Leads</span></button>
         <span class="portal-xbtn-sep" aria-hidden="true"></span>
         <button type="button" id="openLeadTableFieldsModal" class="portal-xbtn" aria-label="Table fields"><i class="fas fa-table-columns"></i><span>Table Fields</span></button>
-        <button type="button" id="openLeadImportModal" class="portal-xbtn" aria-label="Import"><i class="fas fa-file-import"></i><span>Import</span></button>
+        <button type="button" id="openLeadImportModal" class="portal-xbtn" aria-label="Import"><i class="fas fa-cloud-arrow-up"></i><span>Import</span></button>
         @if($isAgencyViewer && $assignSetting)
         <button type="button" class="portal-xbtn" data-bs-toggle="modal" data-bs-target="#leadAssignModal" aria-label="Lead assignment: {{ $assignSetting->isManual() ? 'manual' : 'automatic round robin' }}"><i class="fas {{ $assignSetting->isManual() ? 'fa-hand-pointer' : 'fa-rotate' }}"></i><span>Lead Assignment<em class="lassign-xbtn-state">{{ $assignSetting->isManual() ? 'Manual' : 'Auto' }}</em></span></button>
         @endif
@@ -62,18 +62,12 @@
 <script>document.addEventListener('DOMContentLoaded', function () { window.portalToast('success', @json(session('success'))); });</script>
 @endif
 
-@if(session('importResult'))
-@php($result = session('importResult'))
-<div class="portal-card p-3 mb-3">
-    <div class="fw-semibold mb-1">Import finished — {{ $result['imported'] }} imported, {{ $result['updated'] ?? 0 }} existing leads updated, {{ $result['skipped'] }} skipped.</div>
-    @if(!empty($result['rowErrors']))
-    <ul class="mb-0 small text-muted" style="max-height: 180px; overflow-y: auto;">
-        @foreach($result['rowErrors'] as $rowError)
-        <li>Row {{ $rowError['row'] }}: {{ implode(' ', $rowError['errors']) }}</li>
-        @endforeach
-    </ul>
-    @endif
-</div>
+{{-- A background lead import (running, or opened from its "finished" notification) — LeadImportTracker fills and updates it. --}}
+<div id="leadImportBanner" class="portal-card p-3 mb-3 {{ $leadImport ? '' : 'd-none' }}" data-lead-import-view="page"></div>
+@if($leadImport)
+@push('scripts')
+<script>document.addEventListener('DOMContentLoaded', function () { window.LeadImportTracker.track(@json($leadImport->toProgress())); });</script>
+@endpush
 @endif
 
 <div id="leadsListingWrapper">

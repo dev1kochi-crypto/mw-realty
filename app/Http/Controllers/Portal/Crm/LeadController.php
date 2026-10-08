@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Portal\Crm;
 
 use App\Exports\LeadsExport;
+use App\Exports\FacebookLeadsImportSampleExport;
 use App\Exports\LeadsImportTemplateExport;
 use App\Http\Controllers\Portal\Crm\Concerns\ScopesPortalOwner;
 use App\Http\Requests\Crm\StoreLeadRequest;
 use App\Http\Requests\Crm\UpdateLeadRequest;
+use App\Imports\LeadImportReader;
 use App\Imports\LeadsImport;
+use App\Jobs\ProcessLeadImport;
 use App\Models\Lead;
+use App\Models\LeadImport;
 use App\Models\LeadSource;
 use App\Models\LeadStage;
 use App\Models\LeadTag;
@@ -21,6 +25,7 @@ use App\Services\Crm\LeadService;
 use App\Services\Crm\LeadTablePreferenceService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -130,6 +135,8 @@ class LeadController extends Controller
             'currentOwnerId' => $this->effectiveOwnerId(),
             'leadTableColumns' => $this->leadTablePreferenceService->getUserColumns(),
             'leadTableFields' => $this->leadTablePreferenceService->availableColumns(),
+            // A background file import still running, or the one a "Lead import finished" notification opened.
+            'leadImport' => $this->leadImportForBanner($request),
             'isAgencyViewer' => (bool) $this->owner()?->isAgency(),
             'agencyAgents' => $this->owner()?->isAgency() ? $this->owner()->eligibleAgentsQuery()->get(['portal_users.id', 'portal_users.name']) : collect(),
             'unassignedCount' => $this->owner()?->isAgency() ? Lead::where('portal_user_id', $this->owner()->id)->whereNull('agent_id')->count() : 0,
@@ -773,29 +780,113 @@ class LeadController extends Controller
         return view('portal.crm.leads.import');
     }
 
+    public function downloadFacebookImportSample()
+    {
+        return Excel::download(new FacebookLeadsImportSampleExport(), 'facebook-leads-sample.csv', \Maatwebsite\Excel\Excel::CSV);
+    }
+
+    /**
+     * A lead file — our template / a Leads export ("template") or a Facebook leads CSV ("facebook").
+     * Its format is checked here, so a wrong file is reported straight away in the popup; the rows
+     * are imported in the background (ProcessLeadImport) — a file can hold 10,000+ leads. The popup
+     * (AJAX) gets the import's progress URL back and shows it live.
+     */
     public function import(Request $request)
     {
-        $ownerId = $this->effectiveOwnerId();
-        abort_if(!$ownerId, 403);
+        $owner = $this->effectiveOwner();
+        abort_if(!$owner, 403);
 
-        $request->validate([
-            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
+        $data = $request->validate([
+            'import_type' => ['required', Rule::in([LeadsImport::FORMAT_TEMPLATE, LeadsImport::FORMAT_FACEBOOK])],
+            'file' => ['required', 'file', 'extensions:xlsx,xls,csv,tsv,txt', 'max:10240'],
+        ], [
+            'file.extensions' => 'Upload an Excel (.xlsx, .xls) or CSV file.',
         ]);
+        $file = $request->file('file');
 
-        $ownerDisplayName = $this->effectiveOwner()->displayName();
-        $import = new LeadsImport($ownerId, $ownerDisplayName, $this->leadService);
-
-        Excel::import($import, $request->file('file'));
-
-        if ($import->structureError) {
-            return back()->with('error', $import->structureError);
+        if ($running = LeadImport::where('portal_user_id', $owner->id)->whereIn('status', [LeadImport::STATUS_QUEUED, LeadImport::STATUS_RUNNING])->latest('id')->first()?->failIfStale()) {
+            if ($running->inProgress()) {
+                return $this->importFailed($request, "{$running->file_name} is still importing — please wait for it to finish before uploading another file.");
+            }
         }
 
-        return redirect()->route('portal.crm.leads.index')->with('importResult', [
-            'imported' => $import->imported,
-            'updated' => $import->updated,
-            'skipped' => count($import->rowErrors),
-            'rowErrors' => $import->rowErrors,
+        try {
+            [$headers, $rows] = LeadImportReader::read($file);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $this->importFailed($request, 'This file could not be read. Please upload a valid Excel (.xlsx, .xls) or CSV file.');
+        }
+
+        $check = new LeadsImport($owner->id, $owner->displayName(), $data['import_type'], $this->leadService, app(LeadCreationService::class));
+        if ($error = $check->prepare($headers, $rows)) {
+            return $this->importFailed($request, $error);
+        }
+
+        $dir = "lead-imports/{$owner->id}/" . \Illuminate\Support\Str::uuid();
+        $path = $file->storeAs($dir, 'source.' . strtolower($file->getClientOriginalExtension()), 'local');
+
+        $leadImport = LeadImport::create([
+            'portal_user_id' => $owner->id,
+            'admin_id' => $this->isAdmin() ? auth('cms')->id() : null,
+            'format' => $data['import_type'],
+            'file_name' => \Illuminate\Support\Str::limit($file->getClientOriginalName(), 250, ''),
+            'file_path' => $path,
+            'status' => LeadImport::STATUS_QUEUED,
+            'total_rows' => count($rows),
         ]);
+        ProcessLeadImport::start($leadImport);
+
+        $message = 'Importing ' . number_format(count($rows)) . ' rows in the background — you\'ll get a notification and a summary email when it\'s done.';
+
+        return $request->wantsJson()
+            ? response()->json(['message' => $message, 'import' => $leadImport->toProgress()])
+            : redirect()->route('portal.crm.leads.index', ['import' => $leadImport->id])->with('success', $message);
+    }
+
+    /** Live progress of a background import (polled by the Leads page / import popup). */
+    public function importStatus(LeadImport $leadImport)
+    {
+        $this->authorizeLeadImport($leadImport);
+
+        return response()->json(['import' => $leadImport->failIfStale()->toProgress()]);
+    }
+
+    /** The uploaded file with its Import Status / Import Remarks columns. */
+    public function downloadImportResult(LeadImport $leadImport)
+    {
+        $this->authorizeLeadImport($leadImport);
+        abort_unless($leadImport->result_path && Storage::disk('local')->exists($leadImport->result_path), 404, 'This status file is no longer available (files are kept for 30 days).');
+
+        return Storage::disk('local')->download($leadImport->result_path, $leadImport->resultName());
+    }
+
+    /** The import to show on the Leads page: the one a notification links to, else one still running. */
+    private function leadImportForBanner(Request $request): ?LeadImport
+    {
+        $ownerId = $this->effectiveOwnerId();
+        if (!$ownerId) {
+            return null;
+        }
+        $query = LeadImport::where('portal_user_id', $ownerId);
+
+        $import = $request->filled('import')
+            ? (clone $query)->find((int) $request->input('import'))
+            : (clone $query)->whereIn('status', [LeadImport::STATUS_QUEUED, LeadImport::STATUS_RUNNING])->latest('id')->first();
+
+        return $import?->failIfStale();
+    }
+
+    private function authorizeLeadImport(LeadImport $leadImport): void
+    {
+        abort_unless($leadImport->portal_user_id === $this->effectiveOwnerId(), 404);
+    }
+
+    /** A file that can't be imported: JSON for the popup, else back to the form (shown once — in the popup, not the page alert). */
+    private function importFailed(Request $request, string $message)
+    {
+        return $request->wantsJson()
+            ? response()->json(['message' => $message], 422)
+            : back()->withInput()->with('importError', $message);
     }
 }

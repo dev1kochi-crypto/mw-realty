@@ -896,6 +896,9 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::get('/leads/import', [LeadController::class, 'importForm'])->name('leads.import.form');
             Route::post('/leads/import', [LeadController::class, 'import'])->name('leads.import');
             Route::get('/leads/import/template', [LeadController::class, 'downloadImportTemplate'])->name('leads.import.template');
+            Route::get('/leads/import/facebook-sample', [LeadController::class, 'downloadFacebookImportSample'])->name('leads.import.facebook-sample');
+            Route::get('/leads/imports/{leadImport}/status', [LeadController::class, 'importStatus'])->name('leads.import.status')->middleware('throttle:120,1');
+            Route::get('/leads/imports/{leadImport}/result', [LeadController::class, 'downloadImportResult'])->name('leads.import.result');
             Route::get('/leads/trashed', [LeadController::class, 'trashed'])->name('leads.trashed');
             Route::post('/leads/trashed/bulk', [LeadController::class, 'bulkTrashed'])->name('leads.bulk-trashed');
             Route::post('/leads/{id}/restore', [LeadController::class, 'restore'])->name('leads.restore');

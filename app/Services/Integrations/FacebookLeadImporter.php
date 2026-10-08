@@ -270,7 +270,7 @@ class FacebookLeadImporter
     }
 
     /** The source the lead last came in from: its latest enquiry's source, else the source it was created with. */
-    private function latestSourceId(Lead $lead): ?int
+    public function latestSourceId(Lead $lead): ?int
     {
         $meta = $lead->notesHistory()->where('type', LeadNote::TYPE_ENQUIRY)->latest('id')->value('meta');
         $fromHistory = is_array($meta) ? ($meta['source_id'] ?? null) : (json_decode((string) $meta, true)['source_id'] ?? null);
@@ -304,9 +304,8 @@ class FacebookLeadImporter
         return null;
     }
 
-    /** The form's other answers + where the lead came from, readable in the CRM. */
     /** The form's other answers, then where the lead came from (campaign → ad set → ad → form). */
-    private function message(array $otherAnswers, array $origin): string
+    public function message(array $otherAnswers, array $origin): string
     {
         $lines = [];
         foreach ($otherAnswers as $question => $answer) {
@@ -322,7 +321,7 @@ class FacebookLeadImporter
     }
 
     /** The account's source with this name (its own or a global one), created for the account when new. */
-    private function sourceId(int $ownerId, string $name): int
+    public function sourceId(int $ownerId, string $name): int
     {
         $name = Str::limit(trim($name), 100, '');
 

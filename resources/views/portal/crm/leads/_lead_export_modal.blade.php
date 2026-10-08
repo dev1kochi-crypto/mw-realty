@@ -6,7 +6,7 @@
             <div class="modal-header border-0 pb-0">
                 <div class="d-flex align-items-center gap-3">
                     <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 46px; height: 46px; background: rgba(20, 184, 166, 0.12);">
-                        <i class="fas fa-file-export" style="color: var(--portal-accent); font-size: 1.1rem;"></i>
+                        <i class="fas fa-file-arrow-down" style="color: var(--portal-accent); font-size: 1.1rem;"></i>
                     </div>
                     <div>
                         <h5 class="modal-title mb-0" id="leadExportModalLabel">Export Leads</h5>
