@@ -200,21 +200,35 @@ class LeadService
     }
 
     /** Columns the CRM listing can be sorted by (the table's data-column-key values). */
-    public const SORTABLE_COLUMNS = ['lead', 'email', 'phone', 'owner', 'agent', 'stage', 'status', 'source', 'message', 'notes', 'received'];
+    public const SORTABLE_COLUMNS = ['lead', 'email', 'phone', 'owner', 'agent', 'stage', 'status', 'source', 'message', 'notes', 'received', 'company', 'country', 'enquiries', 'last_enquiry', 'updated', 'assigned', 'closed', 'views', 'time_on_site', 'searches', 'chats', 'last_active'];
 
     /**
      * One page of the CRM listing (server-side DataTable) — only the rows on screen are loaded
-     * and rendered, so filtering stays fast however many leads there are.
+     * and rendered, so filtering stays fast however many leads there are. $columns = the fields
+     * the viewer shows; the website-insight counts are only queried when one of them is shown.
      */
-    public function getListingPage(?int $ownerId, array $filters, string $sort = 'received', string $dir = 'desc', int $perPage = 10, int $page = 1): LengthAwarePaginator
+    public function getListingPage(?int $ownerId, array $filters, string $sort = 'received', string $dir = 'desc', int $perPage = 10, int $page = 1, array $columns = []): LengthAwarePaginator
     {
         $dir = $dir === 'asc' ? 'asc' : 'desc';
-        $query = $this->filteredQuery($ownerId, $filters)->reorder();
+        $query = $this->filteredQuery($ownerId, $filters)->reorder()->with('property');
+        if (array_intersect([$sort, ...$columns], LeadTablePreferenceService::INSIGHT_COLUMNS)) {
+            $query->withVisitorStats();
+        }
         $nameOf = fn (string $table, string $foreignKey) => DB::table($table)->select('name')->whereColumn("{$table}.id", "leads.{$foreignKey}")->limit(1);
 
         match ($sort) {
             'lead' => $query->orderBy('leads.name', $dir),
-            'email', 'phone', 'status', 'message' => $query->orderBy("leads.{$sort}", $dir),
+            'email', 'phone', 'status', 'message', 'company', 'country' => $query->orderBy("leads.{$sort}", $dir),
+            'enquiries' => $query->orderBy('leads.enquiry_count', $dir),
+            'last_enquiry' => $query->orderBy('leads.last_enquired_at', $dir),
+            'updated' => $query->orderBy('leads.updated_at', $dir),
+            'assigned' => $query->orderBy('leads.assigned_at', $dir),
+            'closed' => $query->orderBy('leads.closed_at', $dir),
+            'views' => $query->orderBy('visitor_property_views', $dir),
+            'time_on_site' => $query->orderBy('visitor_seconds', $dir),
+            'searches' => $query->orderBy('visitor_searches', $dir),
+            'chats' => $query->orderBy('visitor_chats', $dir),
+            'last_active' => $query->orderBy('visitor_last_seen', $dir),
             'owner' => $query->orderBy($nameOf('portal_users', 'portal_user_id'), $dir),
             'agent' => $query->orderBy($nameOf('portal_users', 'agent_id'), $dir),
             'stage' => $query->orderBy($nameOf('lead_stages', 'stage_id'), $dir),

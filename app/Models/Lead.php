@@ -348,6 +348,29 @@ class Lead extends Model
         return $query->when($ownerId, fn ($q) => $q->where('leads.portal_user_id', $ownerId));
     }
 
+    /**
+     * Adds the website visitor's activity as visitor_property_views / _properties / _searches /
+     * _seconds / _chats / _last_seen (null / 0 for leads that didn't come from the website) —
+     * CRM › Lead Insights and the leads table's Website insights fields. Call after any select().
+     */
+    public function scopeWithVisitorStats($query)
+    {
+        $stat = fn (string $expression, $events) => $events->selectRaw($expression)->whereColumn('visitor_events.visitor_lead_id', 'leads.visitor_lead_id');
+
+        if (!$query->getQuery()->columns) {
+            $query->select('leads.*');
+        }
+
+        return $query->addSelect([
+            'visitor_property_views' => $stat('count(*)', Visitors\VisitorEvent::where('type', Visitors\VisitorEvent::PROPERTY_VIEW)),
+            'visitor_properties' => $stat('count(distinct property_id)', Visitors\VisitorEvent::where('type', Visitors\VisitorEvent::PROPERTY_VIEW)),
+            'visitor_searches' => $stat('count(*)', Visitors\VisitorEvent::where('type', Visitors\VisitorEvent::SEARCH)),
+            'visitor_seconds' => $stat('coalesce(sum(duration_seconds), 0)', Visitors\VisitorEvent::query()),
+            'visitor_chats' => Visitors\ChatConversation::selectRaw('count(*)')->whereColumn('chat_conversations.visitor_lead_id', 'leads.visitor_lead_id')->where('message_count', '>', 0),
+            'visitor_last_seen' => Visitors\VisitorLead::select('last_seen_at')->whereColumn('visitor_leads.id', 'leads.visitor_lead_id'),
+        ]);
+    }
+
     public function assignmentLabel(): ?string
     {
         return match ($this->assignment_type) {

@@ -22,6 +22,29 @@
     @keyframes portalLeadsSpin { to { transform: rotate(360deg); } }
     @keyframes portalLeadsBar { 0% { left: -35%; } 100% { left: 100%; } }
     @keyframes portalLeadsFade { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Frozen header + Lead column: the table scrolls inside .portal-leads-dt-scroll (DataTables dom),
+       so the header sticks to its top and checkbox / # / Lead stick to its left. The left offsets
+       (--lead-pin-2 / -3) are measured by pinLeadTableColumns(). Below the page loader (z-index 6). */
+    .portal-leads-dt-scroll { max-height: max(420px, calc(100vh - 240px)); overflow: auto; overscroll-behavior-x: contain; }
+    #leadsDataTable { border-collapse: separate; border-spacing: 0; }
+    /* Columns keep their natural width (the wrapper scrolls sideways) instead of squeezing to fit the
+       screen; long free-text fields wrap inside a minimum width instead of stretching a column. */
+    #leadsDataTable { width: auto; min-width: 100%; }
+    #leadsDataTable :is(th, td) { white-space: nowrap; }
+    #leadsDataTable td:is([data-column-key="source"], [data-column-key="tags"], [data-column-key="message"], [data-column-key="notes"], [data-column-key="property"], [data-column-key="campaign"], [data-column-key="page"]) { white-space: normal; min-width: 200px; }
+    #leadsDataTable thead th { position: sticky; top: 0; z-index: 3; background: var(--portal-surface); }
+    /* :where keeps this below the thead rule next, so the pinned headers stay above the pinned cells. */
+    #leadsDataTable :where(th, td:not([data-empty-cell])):is(:nth-child(1), :nth-child(2), [data-column-key="lead"]) { position: sticky; z-index: 2; background-color: var(--portal-surface); }
+    #leadsDataTable thead th:is(:nth-child(1), :nth-child(2), [data-column-key="lead"]) { z-index: 4; }
+    #leadsDataTable :is(th, td):nth-child(1) { left: 0; }
+    #leadsDataTable :is(th, td):nth-child(2) { left: var(--lead-pin-2, 2.5rem); }
+    #leadsDataTable :is(th, td)[data-column-key="lead"] { left: var(--lead-pin-3, 5.25rem); }
+    /* Divider on the pinned column's edge once the table is scrolled sideways. */
+    .portal-leads-dt-scroll.is-scrolled-x #leadsDataTable [data-column-key="lead"] { box-shadow: 8px 0 10px -8px rgba(15, 23, 42, .18); }
+    /* Opaque versions of the row hover / focus tints, so scrolled cells don't show through. */
+    #leadsDataTable .portal-lead-row:hover > td:is(:nth-child(1), :nth-child(2), [data-column-key="lead"]) { background-color: #f9f9fe; }
+    #leadsDataTable .portal-lead-row:focus-visible > td:is(:nth-child(1), :nth-child(2), [data-column-key="lead"]) { background-color: #f4f4fd; }
 </style>
 @endpush
 
@@ -132,36 +155,237 @@
         const leadTableFieldsSaveBtn = document.getElementById('leadTableFieldsSaveBtn');
         const leadTableFieldsSpinner = document.getElementById('leadTableFieldsSpinner');
 
+        // The shown fields in the viewer's saved order (Lead first) — the table's column order.
+        let leadTableColumnOrder = @json($leadTableColumns);
+        // Table Fields: every field available to this viewer ({key: {label, group, locked, default}}),
+        // the groups of the "Add fields" pane, and the default field order (Reset).
+        const leadTableFieldMeta = @json($leadTableFields);
+        const leadTableFieldGroups = @json($leadTableGroups);
+        const leadTableDefaultOrder = @json($leadTableDefaultOrder);
+        const leadTableFieldsShown = document.getElementById('leadTableFieldsShown');
+        const leadTableFieldsCatalog = document.getElementById('leadTableFieldsCatalog');
+        const leadTableFieldsSearch = document.getElementById('leadTableFieldsSearch');
+        // The modal's working copy — only saved on "Save Fields".
+        let leadTableFieldsDraft = [];
+
+        function tableFieldsEl(tag, className, text) {
+            const node = document.createElement(tag);
+            if (className) node.className = className;
+            if (text !== undefined) node.textContent = text;
+            return node;
+        }
+
+        function renderTableFieldsShown(flashKey) {
+            leadTableFieldsShown.replaceChildren(...leadTableFieldsDraft.map(function (key) {
+                const meta = leadTableFieldMeta[key];
+                const pinned = key === 'lead';
+                const item = tableFieldsEl('li', 'portal-tf-item' + (pinned ? ' is-pinned' : '') + (key === flashKey ? ' is-new' : ''));
+                item.dataset.field = key;
+
+                const grip = tableFieldsEl('span', 'portal-tf-grip' + (pinned ? ' is-disabled' : ''));
+                grip.innerHTML = pinned ? '<i class="fas fa-thumbtack"></i>' : '<i class="fas fa-grip-vertical"></i>';
+                grip.setAttribute('aria-hidden', 'true');
+                if (!pinned) grip.title = 'Drag to reorder';
+                item.append(grip, tableFieldsEl('span', 'portal-tf-label', meta.label));
+
+                if (pinned || meta.locked) {
+                    item.append(tableFieldsEl('span', 'portal-tf-meta', pinned ? 'Always first' : 'Always shown'));
+                } else {
+                    item.append(tableFieldsEl('span', 'portal-tf-meta d-none d-sm-inline', leadTableFieldGroups[meta.group]?.label || ''));
+                    const remove = tableFieldsEl('button', 'portal-tf-remove');
+                    remove.type = 'button';
+                    remove.dataset.removeField = key;
+                    remove.title = 'Hide ' + meta.label;
+                    remove.setAttribute('aria-label', 'Hide ' + meta.label);
+                    remove.innerHTML = '<i class="fas fa-xmark" aria-hidden="true"></i>';
+                    item.append(remove);
+                }
+
+                return item;
+            }));
+            document.getElementById('leadTableFieldsCount').textContent = leadTableFieldsDraft.length + ' of ' + Object.keys(leadTableFieldMeta).length;
+        }
+
+        // "Add fields": every field, by group — filled chips are shown; click to show / hide.
+        function renderTableFieldsCatalog() {
+            const term = leadTableFieldsSearch.value.trim().toLowerCase();
+            const groups = Object.keys(leadTableFieldGroups).map(function (groupKey) {
+                const keys = leadTableDefaultOrder.filter((key) => leadTableFieldMeta[key]?.group === groupKey
+                    && (!term || leadTableFieldMeta[key].label.toLowerCase().includes(term)));
+                if (!keys.length) return null;
+
+                const group = tableFieldsEl('div', 'portal-tf-group');
+                const title = tableFieldsEl('div', 'portal-tf-group-title');
+                title.innerHTML = '<i class="fas ' + leadTableFieldGroups[groupKey].icon + '" aria-hidden="true"></i>';
+                title.append(leadTableFieldGroups[groupKey].label);
+
+                const chips = tableFieldsEl('div', 'portal-tf-chips');
+                keys.forEach(function (key) {
+                    const meta = leadTableFieldMeta[key];
+                    const on = leadTableFieldsDraft.includes(key);
+                    const chip = tableFieldsEl('button', 'portal-tf-chip' + (on ? ' is-on' : ''));
+                    chip.type = 'button';
+                    chip.dataset.toggleField = key;
+                    chip.disabled = meta.locked;
+                    chip.setAttribute('aria-pressed', on ? 'true' : 'false');
+                    chip.title = meta.locked ? 'Always shown' : (on ? 'Hide ' : 'Show ') + meta.label;
+                    chip.innerHTML = '<i class="fas ' + (meta.locked ? 'fa-lock' : (on ? 'fa-check' : 'fa-plus')) + '" aria-hidden="true"></i>';
+                    chip.append(meta.label);
+                    chips.append(chip);
+                });
+
+                group.append(title, chips);
+                return group;
+            }).filter(Boolean);
+
+            leadTableFieldsCatalog.replaceChildren(...groups);
+            document.getElementById('leadTableFieldsNoMatch').classList.toggle('d-none', groups.length > 0);
+        }
+
+        function renderTableFields(flashKey) {
+            renderTableFieldsShown(flashKey);
+            renderTableFieldsCatalog();
+        }
+
+        // Opening the modal starts from what's saved.
         function syncTableFieldsForm() {
-            leadTableFieldsForm.querySelectorAll('input[name="columns[]"]').forEach(function (input) {
-                input.checked = leadTableColumns.has(input.value);
-            });
+            leadTableFieldsDraft = leadTableColumnOrder.filter((key) => leadTableFieldMeta[key]);
+            leadTableFieldsSearch.value = '';
+            renderTableFields();
         }
 
         function selectedTableFieldsFromForm() {
-            const selected = new Set(['lead', 'phone']);
-            leadTableFieldsForm.querySelectorAll('input[name="columns[]"]:checked').forEach(function (input) {
-                selected.add(input.value);
+            return leadTableFieldsDraft.slice();
+        }
+
+        // Show (added at the end of the table) / hide a field.
+        function toggleTableField(key, show) {
+            const meta = leadTableFieldMeta[key];
+            if (!meta || meta.locked) return;
+            leadTableFieldsDraft = leadTableFieldsDraft.filter((k) => k !== key);
+            if (show) leadTableFieldsDraft.push(key);
+            renderTableFields(show ? key : null);
+            if (show) leadTableFieldsShown.lastElementChild?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+
+        leadTableFieldsCatalog.addEventListener('click', function (e) {
+            const chip = e.target.closest('[data-toggle-field]');
+            if (chip) toggleTableField(chip.dataset.toggleField, !leadTableFieldsDraft.includes(chip.dataset.toggleField));
+        });
+        leadTableFieldsShown.addEventListener('click', function (e) {
+            const remove = e.target.closest('[data-remove-field]');
+            if (remove) toggleTableField(remove.dataset.removeField, false);
+        });
+        leadTableFieldsSearch.addEventListener('input', renderTableFieldsCatalog);
+        // Enter in the search box shows the first matching hidden field instead of saving.
+        leadTableFieldsSearch.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            const first = leadTableFieldsCatalog.querySelector('.portal-tf-chip:not(.is-on):not(:disabled)');
+            if (first) toggleTableField(first.dataset.toggleField, true);
+        });
+
+        // Drag to reorder "Shown in table" (Lead stays pinned first).
+        if (window.Sortable) {
+            Sortable.create(leadTableFieldsShown, {
+                handle: '.portal-tf-grip:not(.is-disabled)',
+                filter: '.is-pinned',
+                animation: 150,
+                onMove: (evt) => !evt.related.classList.contains('is-pinned'),
+                onEnd: function () {
+                    leadTableFieldsDraft = Array.from(leadTableFieldsShown.children).map((item) => item.dataset.field);
+                    renderTableFieldsShown();
+                },
+            });
+        }
+
+        // Reset: the default fields in the default order.
+        document.getElementById('leadTableFieldsReset').addEventListener('click', function () {
+            leadTableFieldsDraft = leadTableDefaultOrder.filter((key) => leadTableFieldMeta[key] && (leadTableFieldMeta[key].default || leadTableFieldMeta[key].locked));
+            renderTableFields();
+        });
+
+
+        // Saves the shown fields in this order for this user, then redraws the table.
+        function saveLeadTableColumns(columns) {
+            const body = new URLSearchParams();
+            columns.forEach(function (column) {
+                body.append('columns[]', column);
             });
 
-            return selected;
+            return fetch("{{ route('portal.crm.leads.table-columns.update') }}", {
+                method: 'PUT',
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                body: body,
+            })
+            .then(async function (response) {
+                const data = await response.json().catch(function () { return {}; });
+                if (!response.ok) throw new Error(data.message || 'Could not save table fields.');
+
+                leadTableColumnOrder = data.columns || [];
+                leadTableColumns = new Set(leadTableColumnOrder);
+                return data;
+            });
         }
 
-        function updateLeadTableScrollHint() {
+        // Drag a column header (its grip) to move the column — saved straight away.
+        function initialiseLeadTableHeaderDrag() {
+            const headerRow = document.querySelector('#leadsDataTable thead tr');
+            if (!window.Sortable || !headerRow || headerRow.dataset.dragReady) return;
+            headerRow.dataset.dragReady = '1';
+
+            // A click on the grip must not also sort the column.
+            headerRow.querySelectorAll('.portal-th-grip').forEach(function (grip) {
+                grip.addEventListener('click', (e) => e.stopPropagation());
+            });
+
+            Sortable.create(headerRow, {
+                handle: '.portal-th-grip',
+                draggable: 'th.portal-th-draggable',
+                direction: 'horizontal',
+                animation: 150,
+                onEnd: function (evt) {
+                    if (evt.oldIndex === evt.newIndex) return;
+                    const order = Array.from(headerRow.querySelectorAll('th[data-column-key]')).map((th) => th.dataset.columnKey);
+                    document.getElementById('leadsListingWrapper').classList.add('leads-loading');
+                    saveLeadTableColumns(order)
+                        .then(() => reloadLeadsListing())
+                        .then(() => showFlash('success', 'Column order saved.'))
+                        .catch(function (error) {
+                            showFlash('error', error.message || 'Could not save the column order.');
+                            return reloadLeadsListing();
+                        })
+                        .finally(() => document.getElementById('leadsListingWrapper').classList.remove('leads-loading'));
+                },
+            });
+        }
+
+        // Left offsets of the frozen # and Lead columns = the widths of the columns before them.
+        function pinLeadTableColumns() {
             const table = document.getElementById('leadsDataTable');
-            const hint = document.getElementById('leadTableScrollHint');
-            const responsiveWrapper = table?.closest('.table-responsive');
-            if (!table || !hint || !responsiveWrapper) return;
+            const headers = table?.querySelectorAll('thead th');
+            if (!headers || headers.length < 3) return;
 
-            hint.classList.toggle('d-none', responsiveWrapper.scrollWidth <= responsiveWrapper.clientWidth + 1);
+            const first = headers[0].getBoundingClientRect().width;
+            table.style.setProperty('--lead-pin-2', first + 'px');
+            table.style.setProperty('--lead-pin-3', (first + headers[1].getBoundingClientRect().width) + 'px');
+
+            const scroller = table.closest('.portal-leads-dt-scroll');
+            if (scroller && !scroller.dataset.pinReady) {
+                scroller.dataset.pinReady = '1';
+                const markScrolled = () => scroller.classList.toggle('is-scrolled-x', scroller.scrollLeft > 0);
+                scroller.addEventListener('scroll', markScrolled, { passive: true });
+                markScrolled();
+            }
         }
+        window.addEventListener('resize', () => requestAnimationFrame(pinLeadTableColumns));
 
         function applyLeadTableColumns() {
             const table = document.getElementById('leadsDataTable');
             if (!table) return;
 
             table.classList.toggle('portal-table-is-wide', leadTableColumns.size >= 8);
-            requestAnimationFrame(updateLeadTableScrollHint);
+            requestAnimationFrame(pinLeadTableColumns);
         }
 
         function initialiseLeadsDataTable() {
@@ -169,6 +393,7 @@
 
             const table = document.getElementById('leadsDataTable');
             if (!table) return;
+            initialiseLeadTableHeaderDrag();
             if (table.dataset.hasRows !== 'true') {
                 applyLeadTableColumns();
                 return;
@@ -263,7 +488,7 @@
                 lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                 // One top row: Show N leads · quick filter chips · Quick search (no empty gap between).
                 dom: "<'portal-leads-dt-top'l<'portal-leads-dt-quick'>f>" +
-                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row'<'col-sm-12 portal-leads-dt-scroll'tr>>" +
                     "<'row align-items-center mt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
                 initComplete: function () {
                     const slot = this.api().table().container().querySelector('.portal-leads-dt-quick');
@@ -294,6 +519,8 @@
 
             // Page changes, sorting and quick search redraw rows — re-tick the selected ones.
             $(table).on('draw.dt', syncPageCheckboxes);
+            // New rows can change column widths — re-measure the frozen columns' offsets.
+            $(table).on('draw.dt', () => requestAnimationFrame(pinLeadTableColumns));
 
             applyLeadTableColumns();
         }
@@ -859,29 +1086,12 @@
         leadTableFieldsForm.addEventListener('submit', function (e) {
             e.preventDefault();
 
-            const selectedColumns = selectedTableFieldsFromForm();
-            const body = new URLSearchParams();
-            selectedColumns.forEach(function (column) {
-                body.append('columns[]', column);
-            });
-
             leadTableFieldsError.classList.add('d-none');
             leadTableFieldsSaveBtn.disabled = true;
             leadTableFieldsSpinner.classList.remove('d-none');
 
-            fetch("{{ route('portal.crm.leads.table-columns.update') }}", {
-                method: 'PUT',
-                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                body: body,
-            })
-            .then(async function (response) {
-                const data = await response.json().catch(function () { return {}; });
-                if (!response.ok) throw new Error(data.message || 'Could not save table fields.');
-
-                return data;
-            })
+            saveLeadTableColumns(selectedTableFieldsFromForm())
             .then(function (data) {
-                leadTableColumns = new Set(data.columns || []);
                 leadTableFieldsModal.hide();
                 return reloadLeadsListing().then(function () {
                     showFlash('success', data.message || 'Table fields saved.');

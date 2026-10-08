@@ -31,20 +31,11 @@ class LeadInsightsController extends Controller
         $sort = array_key_exists($request->query('sort'), self::SORTS) ? $request->query('sort') : 'active';
         $search = mb_substr(trim((string) $request->query('search', '')), 0, 100);
 
-        $stat = fn (string $expression, $query) => $query->selectRaw($expression)->whereColumn('visitor_events.visitor_lead_id', 'leads.visitor_lead_id');
         $base = Lead::forOwner($this->ownerId())->whereNotNull('visitor_lead_id');
 
         $leads = (clone $base)
             ->with(['owner', 'agent', 'stage', 'property'])
-            ->select('leads.*')
-            ->addSelect([
-                'visitor_property_views' => $stat('count(*)', VisitorEvent::where('type', VisitorEvent::PROPERTY_VIEW)),
-                'visitor_properties' => $stat('count(distinct property_id)', VisitorEvent::where('type', VisitorEvent::PROPERTY_VIEW)),
-                'visitor_searches' => $stat('count(*)', VisitorEvent::where('type', VisitorEvent::SEARCH)),
-                'visitor_seconds' => $stat('coalesce(sum(duration_seconds), 0)', VisitorEvent::query()),
-                'visitor_chats' => ChatConversation::selectRaw('count(*)')->whereColumn('chat_conversations.visitor_lead_id', 'leads.visitor_lead_id')->where('message_count', '>', 0),
-                'visitor_last_seen' => VisitorLead::select('last_seen_at')->whereColumn('visitor_leads.id', 'leads.visitor_lead_id'),
-            ])
+            ->withVisitorStats()
             ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")
                 ->orWhere('phone', 'like', "%{$search}%")))

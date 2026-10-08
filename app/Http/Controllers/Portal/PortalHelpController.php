@@ -14,7 +14,7 @@ class PortalHelpController extends Controller
 {
     public function seen(string $topic)
     {
-        abort_unless(PortalHelp::exists($topic), 404);
+        abort_unless($topic === PortalHelp::DISMISSED || PortalHelp::exists($topic), 404);
 
         $user = Auth::guard('portal')->user();
         $seen = $user->seen_help_topics ?? [];

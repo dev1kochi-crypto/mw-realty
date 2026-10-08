@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
  */
 class PortalHelp
 {
+    /** Saved on the account the first time a guide opens by itself: none opens by itself again, on any page. */
+    public const DISMISSED = 'all';
+
     /** Route name pattern => topic. First match wins, so specific pages come before their module. */
     private const ROUTES = [
         'portal.dashboard' => 'dashboard',

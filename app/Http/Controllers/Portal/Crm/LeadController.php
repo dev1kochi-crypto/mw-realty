@@ -86,7 +86,8 @@ class LeadController extends Controller
             'per_page' => in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10,
             'q' => $filters['table_search'] ?? '',
         ];
-        $leads = $this->leadService->getListingPage($ownerId, $filters, $listing['sort'], $listing['dir'], $listing['per_page'], max(1, (int) $request->input('page', 1)));
+        $leadTableColumns = $this->leadTablePreferenceService->getUserColumns();
+        $leads = $this->leadService->getListingPage($ownerId, $filters, $listing['sort'], $listing['dir'], $listing['per_page'], max(1, (int) $request->input('page', 1)), $leadTableColumns);
         // Matching leads before the Quick search — DataTables' "filtered from N" total.
         $listingTotal = empty($filters['table_search'])
             ? $leads->total()
@@ -112,7 +113,7 @@ class LeadController extends Controller
                     'leads' => $leads,
                     'stages' => $stages,
                     'isAdmin' => $this->isAdmin(),
-                    'leadTableColumns' => $this->leadTablePreferenceService->getUserColumns(),
+                    'leadTableColumns' => $leadTableColumns,
                 ])->render(),
             ]);
         }
@@ -133,8 +134,11 @@ class LeadController extends Controller
             'filters' => $filters,
             'isAdmin' => $this->isAdmin(),
             'currentOwnerId' => $this->effectiveOwnerId(),
-            'leadTableColumns' => $this->leadTablePreferenceService->getUserColumns(),
-            'leadTableFields' => $this->leadTablePreferenceService->availableColumns(),
+            'leadTableColumns' => $leadTableColumns,
+            'leadTableFields' => $this->leadTablePreferenceService->orderedAvailableColumns(),
+            // Table Fields › "Reset to default".
+            'leadTableDefaultOrder' => array_keys($this->leadTablePreferenceService->availableColumns()),
+            'leadTableGroups' => LeadTablePreferenceService::GROUPS,
             // A background file import still running, or the one a "Lead import finished" notification opened.
             'leadImport' => $this->leadImportForBanner($request),
             'isAgencyViewer' => (bool) $this->owner()?->isAgency(),

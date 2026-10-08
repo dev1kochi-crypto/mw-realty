@@ -99,7 +99,6 @@
 </div>
 
 
-@php($hasTableField = fn (string $field) => in_array($field, $leadTableColumns, true))
 <div class="portal-card p-3 portal-leads-table-card">
     {{-- Quick filters — counts follow the filters above; clicking one also filters the list to it
          (quick=…, LeadService::QUICK_FILTERS), clicking it again or Total shows everything. The table
@@ -118,9 +117,6 @@
     </div>
     {{-- Shown while filters / pages / sorting load (#leadsListingWrapper.leads-loading). --}}
     <div class="portal-leads-loader" role="status" aria-live="polite"><span class="portal-leads-loader__box"><span class="portal-leads-loader__spin" aria-hidden="true"></span>Loading leads…</span></div>
-    <div class="portal-table-toolbar">
-        <span id="leadTableScrollHint" class="portal-table-scroll-hint d-none"><i class="fas fa-arrows-left-right me-1" aria-hidden="true"></i>Scroll horizontally to see all selected fields</span>
-    </div>
     <div class="table-responsive">
         {{-- Server-side DataTable (index.blade.php): data-total-rows = leads matching everything incl. the
              Quick search (what "select all" covers); data-listing-total = before the Quick search. --}}
@@ -130,40 +126,12 @@
                     <th style="width: 2.5rem;"><input type="checkbox" class="form-check-input" id="selectAllLeads"></th>
                     {{-- Row number in the current order / page — filled in by the table script. --}}
                     <th class="portal-lead-sn">#</th>
-                    <th data-column-key="lead">Lead</th>
-                    @if($hasTableField('email'))
-                    <th data-column-key="email">Email</th>
-                    @endif
-                    @if($hasTableField('phone'))
-                    <th data-column-key="phone">Phone</th>
-                    @endif
-                    @if($isAdmin && $hasTableField('owner'))
-                    <th data-column-key="owner">Owner</th>
-                    @endif
-                    @if($hasTableField('agent'))
-                    <th data-column-key="agent">Assigned Agent</th>
-                    @endif
-                    @if($hasTableField('stage'))
-                    <th data-column-key="stage">Stage</th>
-                    @endif
-                    @if($hasTableField('status'))
-                    <th data-column-key="status">Status</th>
-                    @endif
-                    @if($hasTableField('source'))
-                    <th data-column-key="source">Source</th>
-                    @endif
-                    @if($hasTableField('tags'))
-                    <th data-column-key="tags" data-orderable="false">Tags</th>
-                    @endif
-                    @if($hasTableField('message'))
-                    <th data-column-key="message">Message</th>
-                    @endif
-                    @if($hasTableField('notes'))
-                    <th data-column-key="notes">Notes</th>
-                    @endif
-                    @if($hasTableField('received'))
-                    <th data-column-key="received">Received</th>
-                    @endif
+                    {{-- The viewer's shown fields in their saved order — drag a header (grip) to reorder; saved per user. --}}
+                    @foreach($leadTableColumns as $column)
+                    <th data-column-key="{{ $column }}" @if(!($leadTableFields[$column]['sortable'] ?? true) || $column === 'tags') data-orderable="false" @endif @if($column !== 'lead') class="portal-th-draggable" @endif>
+                        @if($column !== 'lead')<span class="portal-th-grip" title="Drag to move this column" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>@endif{{ $leadTableFields[$column]['label'] ?? ucfirst($column) }}
+                    </th>
+                    @endforeach
                 </tr>
             </thead>
             <tbody>

@@ -1,13 +1,12 @@
 {{--
     Module help guide — content from resources/help/portal/{topic}.php (App\Support\PortalHelp).
     A short slide tour: Welcome → What you can do → How it works → Good to know (empty ones skipped).
-    Opens from the top bar's "!" button, and by itself ~2.5s into the first visit of each module.
-    Portal users: "already shown" is saved on their account; a Super Admin viewing the portal: this browser.
+    Opens from the top bar's "!" button, and by itself ~2.5s into a portal account's first visit — once,
+    saved on the account (seen_help_topics). A Super Admin viewing the portal only opens it from "!".
 --}}
 @php
-    $helpSeenAlready = $owner
-        ? in_array($helpTopic, $owner->seen_help_topics ?? [], true)
-        : null; // decided client-side (localStorage)
+    // Opens by itself only for a portal account that has never had a guide open (saved on the account).
+    $helpAutoOpen = $owner && empty($owner->seen_help_topics);
     $helpSlides = array_values(array_filter([
         'welcome',
         !empty($help['features']) ? 'features' : null,
@@ -209,10 +208,8 @@
     const el = document.getElementById('portalHelpModal');
     const btn = document.getElementById('portalHelpBtn');
     if (!el || !btn) return;
-    const topic = @json($helpTopic);
-    const storageKey = 'portalHelpSeen:' + topic;
-    const serverSeen = @json($helpSeenAlready);
-    const seenUrl = @json($owner ? route('portal.help.seen', $helpTopic) : null);
+    const autoOpen = @json($helpAutoOpen);
+    const seenUrl = @json($helpAutoOpen ? route('portal.help.seen', \App\Support\PortalHelp::DISMISSED) : null);
     const modal = bootstrap.Modal.getOrCreateInstance(el);
 
     // --- Slide tour ---
@@ -259,22 +256,16 @@
 
     btn.addEventListener('click', function () { btn.classList.remove('is-new'); modal.show(); });
 
-    // --- First visit to this module: open the tour after a moment, once ---
-    // Seen = saved on the account, or remembered by this browser (a fallback if that save ever fails).
-    let seen = serverSeen === true;
-    try { seen = seen || localStorage.getItem(storageKey) === '1'; } catch (e) { seen = seen || serverSeen === null; }
-    if (seen) return;
+    // --- The account's first time in the portal: open the tour after a moment, once, ever ---
+    if (!autoOpen) return;
 
     btn.classList.add('is-new');
     setTimeout(function () {
-        if (document.querySelector('.modal.show')) return; // don't stack on another open dialog — try next visit
+        if (document.querySelector('.modal.show')) return; // don't stack on another open dialog — try next page
         modal.show();
         btn.classList.remove('is-new');
-        try { localStorage.setItem(storageKey, '1'); } catch (e) {}
-        if (seenUrl) {
-            fetch(seenUrl, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } })
-                .catch(function () {});
-        }
+        fetch(seenUrl, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } })
+            .catch(function () {});
     }, 2500);
 })();
 </script>
