@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Cache;
  * Builds the payload for the /commercial listing page.
  *
  * Shows listings with segment = commercial — the ones added from the CRM's Commercial menu
- * (PortalCommercialController). Not the `category` column: that was seeded somewhat arbitrarily
+ * (the CRM Commercial menu). Not the `category` column: that was seeded somewhat arbitrarily
  * on early demo data and ended up on apartment/villa listings that aren't commercial at all.
  */
 class CommercialPageService

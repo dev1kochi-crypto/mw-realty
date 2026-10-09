@@ -28,7 +28,7 @@ class PortalDocumentFlaggedNotification extends Notification
         return [
             'title' => 'Document needs your attention',
             'message' => $label . ' needs to be updated. Please check your email for details.',
-            'url' => route('portal.profile.edit'),
+            'url' => route('crm.app', 'profile'),
             'icon' => 'fa-flag',
             'tone' => 'red',
         ];

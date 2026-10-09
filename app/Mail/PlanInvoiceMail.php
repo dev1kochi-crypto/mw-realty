@@ -33,7 +33,7 @@ class PlanInvoiceMail extends Mailable
             view: 'emails.portal.invoice',
             with: $data + [
                 'displayName' => $this->payment->portalUser?->displayName(),
-                'invoiceUrl' => route('portal.plans.payments.show', $this->payment->id),
+                'invoiceUrl' => route('crm.app', 'plans/payments/' . $this->payment->id . '/invoice'),
             ],
         );
     }

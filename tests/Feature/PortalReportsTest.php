@@ -6,7 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Feature\Concerns\BuildsAgencies;
 use Tests\TestCase;
 
-/** Portal Reports: Leads / Properties for everyone on a reports plan, Agents for agencies only. */
+/** CRM Reports (/api/crm/reports): Leads / Properties for everyone on a reports plan, Agents for agencies only. */
 class PortalReportsTest extends TestCase
 {
     use RefreshDatabase, BuildsAgencies;
@@ -20,13 +20,14 @@ class PortalReportsTest extends TestCase
         $otherAgency = $this->agency([], $this->plan(['reports_access' => true]));
         $this->memberAgent($otherAgency, attributes: ['name' => 'Bob Elsewhere']);
 
-        $this->signIn($agency);
-        $this->get('/portal/crm/reports')->assertOk()->assertSee('Leads by Source')->assertSee('Agents');
+        $this->crmApi($agency);
+        $this->getJson('/api/crm/reports')->assertOk()->assertJsonPath('report', 'leads')->assertJsonPath('locked', null)
+            ->assertJsonFragment(['key' => 'agents', 'label' => 'Agents']);
         foreach ([7, 30, 90, 365] as $range) {
-            $this->get("/portal/crm/reports/leads?range={$range}")->assertOk();
+            $this->getJson("/api/crm/reports/leads?range={$range}")->assertOk()->assertJsonPath('days', $range);
         }
-        $this->get('/portal/crm/reports/properties?range=365')->assertOk()->assertSee('Marina Loft');
-        $this->get('/portal/crm/reports/agents')->assertOk()
+        $this->getJson('/api/crm/reports/properties?range=365')->assertOk()->assertSee('Marina Loft');
+        $this->getJson('/api/crm/reports/agents')->assertOk()
             ->assertSee('Alice Member')
             ->assertDontSee('Bob Elsewhere');
     }
@@ -35,20 +36,21 @@ class PortalReportsTest extends TestCase
     {
         $agent = $this->independentAgent(['plan_id' => $this->plan(['reports_access' => true, 'agent_limit' => 0])->id]);
 
-        $this->signIn($agent);
-        $this->get('/portal/crm/reports/leads')->assertOk()->assertDontSee('fa-user-tie"></i>Agents', false);
-        $this->get('/portal/crm/reports/properties')->assertOk();
-        $this->get('/portal/crm/reports/agents')->assertNotFound();
+        $this->crmApi($agent);
+        $this->getJson('/api/crm/reports/leads')->assertOk()->assertJsonMissing(['key' => 'agents', 'label' => 'Agents']);
+        $this->getJson('/api/crm/reports/properties')->assertOk();
+        $this->getJson('/api/crm/reports/agents')->assertNotFound();
     }
 
     public function test_reports_are_locked_without_the_plan_feature(): void
     {
         $agency = $this->agency([], $this->plan(['reports_access' => false]));
 
-        $this->signIn($agency);
+        $this->crmApi($agency);
         foreach (['leads', 'properties', 'agents'] as $report) {
-            $this->get("/portal/crm/reports/{$report}")->assertOk()->assertSee('Unlock reports');
+            $this->getJson("/api/crm/reports/{$report}")->assertOk()->assertJsonMissingPath('data')->assertJsonStructure(['locked' => ['plan', 'agency']]);
         }
+        $this->getJson('/api/crm/reports/sales/export')->assertForbidden();
     }
 
     public function test_sales_counts_won_deals_at_property_price_and_excludes_lost(): void
@@ -78,12 +80,11 @@ class PortalReportsTest extends TestCase
         $this->assertSame(1, $data['deals']->total(), 'the deal list shows won deals by default');
         $this->assertNull($data['plans'], 'plan sales are Super Admin only');
 
-        $this->signIn($agency);
-        $this->get('/portal/crm/reports/revenue?range=90')->assertRedirect('/portal/crm/reports/sales?range=90');
-        $this->get('/portal/crm/reports/sales?range=90')->assertOk()
-            ->assertSee('AED 1,500,000')->assertSee('Winning Buyer')->assertSee('Alice Member')
-            ->assertDontSee('MW Realty Plan Sales');
-        $this->get('/portal/crm/reports/sales?range=90&outcome=lost')->assertOk()->assertSee('Gone Buyer');
+        $this->crmApi($agency);
+        $this->getJson('/api/crm/reports/sales?range=90')->assertOk()
+            ->assertJsonPath('data.kpis.won_value', 1500000)->assertSee('Winning Buyer')->assertSee('Alice Member')
+            ->assertJsonPath('data.plans', null);
+        $this->getJson('/api/crm/reports/sales?range=90&outcome=lost')->assertOk()->assertSee('Gone Buyer');
 
         $names = fn (array $filters) => app(\App\Services\Crm\PortalReportService::class)->salesDeals($agency, 90, $filters)->pluck('leads.name')->all();
         $this->assertSame(['Winning Buyer'], $names([]));
@@ -91,7 +92,7 @@ class PortalReportsTest extends TestCase
         $this->assertSame(['Gone Buyer'], $names(['outcome' => 'all', 'q' => 'Gone']));
         $this->assertSame([], $names(['listing' => 'rent']));
 
-        $csv = $this->get('/portal/crm/reports/sales?range=90&export=csv');
+        $csv = $this->get('/api/crm/reports/sales/export?range=90');
         $csv->assertOk();
         $this->assertStringContainsString('Winning Buyer', $csv->streamedContent());
         $this->assertStringContainsString('1500000', $csv->streamedContent());
@@ -99,6 +100,15 @@ class PortalReportsTest extends TestCase
         // Moving back to an open stage clears the close date.
         $wonLead->update(['stage_id' => $open->id]);
         $this->assertNull($wonLead->fresh()->closed_at);
+    }
+
+    public function test_old_report_links_redirect_to_the_crm_app(): void
+    {
+        $agency = $this->agency([], $this->plan(['reports_access' => true]));
+
+        $this->signIn($agency);
+        $this->get('/portal/crm/reports/revenue?range=90')->assertRedirect('/crm/reports/sales?range=90');
+        $this->get('/portal/crm/reports')->assertRedirect('/crm/reports/leads');
     }
 
     public function test_super_admin_sales_includes_plan_sales(): void
@@ -110,8 +120,8 @@ class PortalReportsTest extends TestCase
             'period_year' => now()->year, 'period_month' => now()->month,
         ]);
 
-        $this->signIn($this->superAdmin(), 'cms');
-        $this->get('/portal/crm/reports/sales')->assertOk()->assertSee('MW Realty Plan Sales')->assertSee('AED 499');
+        $this->crmApiAsSuperAdmin()->getJson('/api/crm/reports/sales')->assertOk()
+            ->assertJsonPath('data.plans.total', 499)->assertJsonPath('data.plans.by_plan.0.name', 'Agency Pro');
     }
 
     public function test_super_admin_sees_every_agencys_agents(): void
@@ -119,8 +129,8 @@ class PortalReportsTest extends TestCase
         $this->memberAgent($this->agency(), attributes: ['name' => 'Alice Member']);
         $this->memberAgent($this->agency(), attributes: ['name' => 'Bob Elsewhere']);
 
-        $this->signIn($this->superAdmin(), 'cms');
-        $this->get('/portal/crm/reports/leads')->assertOk()->assertSee("every account's data", false);
-        $this->get('/portal/crm/reports/agents')->assertOk()->assertSee('Alice Member')->assertSee('Bob Elsewhere');
+        $this->crmApiAsSuperAdmin();
+        $this->getJson('/api/crm/reports/leads')->assertOk()->assertJsonPath('is_admin', true);
+        $this->getJson('/api/crm/reports/agents')->assertOk()->assertSee('Alice Member')->assertSee('Bob Elsewhere');
     }
 }

@@ -36,7 +36,7 @@ class ListingReviewRequestedMail extends Mailable
                 'accountName' => $this->property->owner?->displayName() ?? 'MW Realty',
                 'agentName' => $this->property->agent?->name,
                 'isResubmission' => $this->isResubmission,
-                'reviewUrl' => route('portal.listing-approvals.show', $this->property->id),
+                'reviewUrl' => route('crm.app', 'listing-permits/' . $this->property->id),
             ],
         );
     }

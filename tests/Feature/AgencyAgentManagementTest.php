@@ -35,12 +35,11 @@ class AgencyAgentManagementTest extends TestCase
         $invited = $this->independentAgent();
         app(AgencyMembershipService::class)->inviteExistingAgent($this->agency(), $invited);
 
-        $this->signIn($agency);
         foreach (['active', 'pending', 'requests', 'history'] as $tab) {
-            $this->get("/portal/agents?tab={$tab}")->assertOk();
+            $this->crmApi($agency)->getJson("/api/crm/agents?tab={$tab}")->assertOk();
         }
-        $this->get("/portal/agents/{$membership->id}")->assertOk()->assertSee($agent->email);
-        $this->get('/portal/agents/create')->assertOk()->assertSee('Invite an existing agent');
+        $this->getJson("/api/crm/agents/{$membership->id}")->assertOk()->assertJsonPath('agent.email', $agent->email);
+        $this->getJson('/api/crm/agents/create')->assertOk();
         $lead = $this->enquire($this->property($agency));
         $this->getJson("/portal/crm/leads/{$lead->id}")->assertOk()->assertJson(['can_assign' => true, 'owner_is_agency' => true]);
 
@@ -105,8 +104,9 @@ class AgencyAgentManagementTest extends TestCase
     {
         $agency = $this->agency();
 
-        $this->signIn($agency)->post('/portal/agents', ['name' => 'New Agent', 'email' => 'new@example.test', 'phone' => '+971500000001'])
-            ->assertRedirect(route('portal.agents.index', ['tab' => 'pending']));
+        $this->withToken($agency->createToken('test')->plainTextToken)
+            ->postJson('/api/crm/agents', ['name' => 'New Agent', 'email' => 'new@example.test', 'phone' => '+971500000001'])
+            ->assertCreated();
 
         $agent = PortalUser::where('email', 'new@example.test')->firstOrFail();
         $membership = AgencyAgent::where('agent_id', $agent->id)->firstOrFail();
@@ -163,7 +163,7 @@ class AgencyAgentManagementTest extends TestCase
         $agency = $this->agency([], $this->plan(['agent_limit' => 1]));
         $this->memberAgent($agency);
 
-        $this->signIn($agency)->post('/portal/agents', ['name' => 'Two', 'email' => 'two@example.test'])->assertSessionHasErrors('agent_limit');
+        $this->crmApi($agency)->postJson('/api/crm/agents', ['name' => 'Two', 'email' => 'two@example.test', 'phone' => '+971500000002'])->assertJsonValidationErrors('agent_limit');
         $this->assertDatabaseMissing('portal_users', ['email' => 'two@example.test']);
     }
 
@@ -176,11 +176,11 @@ class AgencyAgentManagementTest extends TestCase
         $this->memberAgent($agencyB);
         $foreign = AgencyAgent::where('agency_id', $agencyB->id)->firstOrFail();
 
-        $this->signIn($agencyA);
-        $this->get("/portal/agents/{$foreign->id}")->assertNotFound();
-        $this->post("/portal/agents/{$foreign->id}/suspend")->assertNotFound();
-        $this->post("/portal/agents/{$foreign->id}/remove")->assertNotFound();
-        $this->get('/portal/agents')->assertOk()->assertDontSee($foreign->agent->email);
+        $this->crmApi($agencyA);
+        $this->getJson("/api/crm/agents/{$foreign->id}")->assertNotFound();
+        $this->postJson("/api/crm/agents/{$foreign->id}/suspend")->assertNotFound();
+        $this->postJson("/api/crm/agents/{$foreign->id}/remove")->assertNotFound();
+        $this->getJson('/api/crm/agents')->assertOk()->assertDontSee($foreign->agent->email);
 
         $this->assertSame(AgencyAgent::APPROVED, $foreign->fresh()->status);
     }
@@ -196,11 +196,11 @@ class AgencyAgentManagementTest extends TestCase
         $accounts = PortalUser::count();
 
         // Trying to "add" John as a new agent is refused and offers an invitation instead.
-        $this->signIn($agency)->post('/portal/agents', ['name' => 'John', 'email' => 'someone-else@example.test', 'phone' => '+971501112222'])
-            ->assertSessionHas('duplicateAgent', fn ($d) => $d['can_invite'] === true && $d['identifier'] === 'john@example.test');
+        $this->crmApi($agency)->postJson('/api/crm/agents', ['name' => 'John', 'email' => 'someone-else@example.test', 'phone' => '+971501112222'])
+            ->assertStatus(409)->assertJsonPath('duplicate.can_invite', true)->assertJsonPath('duplicate.identifier', 'john@example.test');
         $this->assertSame($accounts, PortalUser::count());
 
-        $this->post('/portal/agents/invite', ['identifier' => '+971501112222'])->assertRedirect();
+        $this->postJson('/api/crm/agents/invite', ['identifier' => '+971501112222'])->assertOk();
         $invitation = AgencyAgent::where('agent_id', $john->id)->firstOrFail();
         $this->assertSame(AgencyAgent::INVITED, $invitation->status);
 
@@ -267,7 +267,7 @@ class AgencyAgentManagementTest extends TestCase
         $listing = $this->property($agency, $leaving);
         $membership = AgencyAgent::where('agent_id', $leaving->id)->firstOrFail();
 
-        $this->signIn($agency)->post("/portal/agents/{$membership->id}/remove", ['reassign_to' => $taking->id])->assertRedirect();
+        $this->crmApi($agency)->postJson("/api/crm/agents/{$membership->id}/remove", ['reassign_to' => $taking->id])->assertOk();
 
         $this->assertSame($taking->id, $listing->fresh()->agent_id);
     }
@@ -350,7 +350,7 @@ class AgencyAgentManagementTest extends TestCase
         $agencyA = $this->agency();
         $listing = $this->property($this->agency());
 
-        $this->signIn($agencyA);
+        $this->crmApi($agencyA);
         $this->get("/portal/properties/{$listing->id}/edit")->assertNotFound();
         $this->put("/portal/properties/{$listing->id}", $this->propertyPayload(['slug' => $listing->slug]))->assertNotFound();
         $this->deleteJson("/portal/properties/{$listing->id}")->assertNotFound();

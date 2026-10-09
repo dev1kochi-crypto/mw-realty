@@ -16,35 +16,7 @@ class PortalHelp
 
     /** Route name pattern => topic. First match wins, so specific pages come before their module. */
     private const ROUTES = [
-        'portal.dashboard' => 'dashboard',
-        'portal.crm.leads.*' => 'leads',
-        'portal.crm.lead-insights.*' => 'lead-insights',
-        'portal.crm.website-leads.*' => 'website-leads',
-        'portal.crm.master.stages.*' => 'stages',
-        'portal.crm.master.tags.*' => 'tags',
-        'portal.crm.master.sources.*' => 'sources',
-        'portal.crm.master.property-options.*' => 'property-options',
-        'portal.crm.integrations.facebook*' => 'facebook',
-        'portal.crm.integrations.property-finder.*' => 'property-finder',
-        'portal.crm.integrations.*' => 'integrations',
-        'portal.crm.reports.*' => 'reports',
-        'portal.properties.create' => 'property-form',
-        'portal.properties.edit' => 'property-form',
-        'portal.properties.*' => 'properties',
-        'portal.commercial.*' => 'commercial',
-        'portal.listing-approvals.*' => 'listing-approvals',
-        'portal.featured.*' => 'premium',
-        'portal.sold.*' => 'sold',
-        'portal.marketing.*' => 'marketing',
         'portal.agency.*' => 'agency',
-        'portal.agents.*' => 'agents',
-        'portal.nearby-places.*' => 'nearby-places',
-        'portal.watermark.*' => 'watermark',
-        'portal.contact.*' => 'support',
-        'portal.profile.*' => 'profile',
-        'portal.security' => 'security',
-        'portal.two-factor.*' => 'security',
-        'portal.plans.*' => 'plans',
     ];
 
     public static function topicFor(Request $request): ?string

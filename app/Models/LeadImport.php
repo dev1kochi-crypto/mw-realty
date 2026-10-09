@@ -84,8 +84,8 @@ class LeadImport extends Model
             'updated' => $this->updated,
             'skipped' => $this->skipped,
             'error' => $this->error,
-            'result_url' => $this->result_path ? route('portal.crm.leads.import.result', $this) : null,
-            'status_url' => route('portal.crm.leads.import.status', $this),
+            'result_url' => $this->result_path ? route('crm.api.leads.imports.result', $this) : null,
+            'status_url' => route('crm.api.leads.imports.status', $this),
         ];
     }
 }

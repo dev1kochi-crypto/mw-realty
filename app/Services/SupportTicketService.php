@@ -8,6 +8,7 @@ use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
 use App\Notifications\SupportTicketNotification;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -163,7 +164,7 @@ class SupportTicketService
     private function notifyClient(SupportTicket $ticket, string $title, string $message, string $icon = 'fa-headset', string $tone = 'teal'): void
     {
         try {
-            $ticket->portalUser?->notify(new SupportTicketNotification($title, $message, route('portal.contact.show', $ticket), $icon, $tone));
+            $ticket->portalUser?->notify(new SupportTicketNotification($title, $message, route('crm.app', 'contact/tickets/' . $ticket->id), $icon, $tone));
         } catch (\Throwable) {
             // Non-fatal — the ticket change itself already succeeded.
         }
@@ -179,5 +180,17 @@ class SupportTicketService
         } catch (\Throwable) {
             // Non-fatal — same as above.
         }
+    }
+
+    /** A message's attachment — private `kyc` disk, only ever from the ticket's own messages (CRM Contact Us + CMS). */
+    public function downloadAttachment(SupportTicket $ticket, int $messageId)
+    {
+        $message = $ticket->messages()->whereKey($messageId)->firstOrFail();
+        $path = $message->attachment_path;
+        abort_unless($path && str_starts_with($path, self::ATTACHMENT_DIRECTORY . '/') && Storage::disk('kyc')->exists($path), 404);
+
+        return Storage::disk('kyc')->download($path, $message->attachment_name ?: basename($path), [
+            'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 }

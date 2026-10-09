@@ -292,8 +292,8 @@ class StripeBillingService
             'line_items' => [['price' => $this->ensurePrice($plan, $interval), 'quantity' => 1]],
             'metadata' => $metadata,
             'subscription_data' => ['metadata' => $metadata],
-            'success_url' => route('portal.plans.checkout.success') . '?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('portal.plans.index') . '?checkout=cancelled',
+            'success_url' => route('crm.app', 'plans') . '?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => route('crm.app', 'plans') . '?checkout=cancelled',
         ];
         if ($pricing) {
             $params['discounts'] = [['coupon' => $this->ensureCoupon($pricing['coupon'])]];
@@ -423,7 +423,7 @@ class StripeBillingService
     {
         return $this->client()->billingPortal->sessions->create([
             'customer' => $this->ensureCustomer($user),
-            'return_url' => route('portal.plans.index'),
+            'return_url' => route('crm.app', 'plans'),
         ])->url;
     }
 

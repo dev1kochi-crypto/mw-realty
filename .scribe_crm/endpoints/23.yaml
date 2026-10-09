@@ -1,0 +1,577 @@
+name: 'CRM Integrations — Facebook Lead Ads'
+description: |-
+
+  Facebook Pages whose Lead Ads leads arrive in an agency's / agent's CRM.
+
+  Connect (GET connect-url) → Facebook Login → the public callback (no CRM login needed — the
+  one-time state in the cache names who started it) lists the Pages the Facebook user manages →
+  the Super Admin links each Page to an agency or independent agent, or any agency / agent
+  connects Pages to their own account (an agency agent's become their personal leads) → each is
+  saved with its Page token and subscribed to the app's "leadgen" webhook (Api\FacebookWebhookController).
+  A Page belongs to one account only: the webhook names just the Page, so it must point to a single
+  CRM (never the admin's own). "Sync now" pulls recent leads directly (FacebookLeadImporter::sync).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/integrations/facebook
+    metadata:
+      custom: []
+      groupName: 'CRM Integrations — Facebook Lead Ads'
+      groupDescription: |-
+
+        Facebook Pages whose Lead Ads leads arrive in an agency's / agent's CRM.
+
+        Connect (GET connect-url) → Facebook Login → the public callback (no CRM login needed — the
+        one-time state in the cache names who started it) lists the Pages the Facebook user manages →
+        the Super Admin links each Page to an agency or independent agent, or any agency / agent
+        connects Pages to their own account (an agency agent's become their personal leads) → each is
+        saved with its Page token and subscribed to the app's "leadgen" webhook (Api\FacebookWebhookController).
+        A Page belongs to one account only: the webhook names just the Page, so it must point to a single
+        CRM (never the admin's own). "Sync now" pulls recent leads directly (FacebookLeadImporter::sync).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Facebook Lead Ads screen'
+      description: |-
+        Connected Pages (Super Admin: every Page, searched and paged 20 at a time; otherwise the
+        account's own), the Pages waiting to be picked after a Facebook Login, and — once — the
+        outcome of that login (`notice`).
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      q:
+        custom: []
+        name: q
+        description: 'Super Admin: Page or account name.'
+        required: false
+        example: marina
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      q: marina
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/integrations/facebook/accounts
+    metadata:
+      custom: []
+      groupName: 'CRM Integrations — Facebook Lead Ads'
+      groupDescription: |-
+
+        Facebook Pages whose Lead Ads leads arrive in an agency's / agent's CRM.
+
+        Connect (GET connect-url) → Facebook Login → the public callback (no CRM login needed — the
+        one-time state in the cache names who started it) lists the Pages the Facebook user manages →
+        the Super Admin links each Page to an agency or independent agent, or any agency / agent
+        connects Pages to their own account (an agency agent's become their personal leads) → each is
+        saved with its Page token and subscribed to the app's "leadgen" webhook (Api\FacebookWebhookController).
+        A Page belongs to one account only: the webhook names just the Page, so it must point to a single
+        CRM (never the admin's own). "Sync now" pulls recent leads directly (FacebookLeadImporter::sync).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Agencies + independent agents a Page can be linked to'
+      description: 'Super Admin only. Searched and paged on the server, 20 per request.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: ''
+        required: false
+        example: prime
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: prime
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/integrations/facebook/connect-url
+    metadata:
+      custom: []
+      groupName: 'CRM Integrations — Facebook Lead Ads'
+      groupDescription: |-
+
+        Facebook Pages whose Lead Ads leads arrive in an agency's / agent's CRM.
+
+        Connect (GET connect-url) → Facebook Login → the public callback (no CRM login needed — the
+        one-time state in the cache names who started it) lists the Pages the Facebook user manages →
+        the Super Admin links each Page to an agency or independent agent, or any agency / agent
+        connects Pages to their own account (an agency agent's become their personal leads) → each is
+        saved with its Page token and subscribed to the app's "leadgen" webhook (Api\FacebookWebhookController).
+        A Page belongs to one account only: the webhook names just the Page, so it must point to a single
+        CRM (never the admin's own). "Sync now" pulls recent leads directly (FacebookLeadImporter::sync).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Start a Facebook Login'
+      description: |-
+        Returns the Facebook Login address to open — in a popup over the screen (`popup=1`: the
+        callback closes it and tells the screen to reload), or the whole window / an in-app browser.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      popup:
+        custom: []
+        name: popup
+        description: ''
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      popup: true
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"url": "https://www.facebook.com/v19.0/dialog/oauth?..."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/integrations/facebook/pages
+    metadata:
+      custom: []
+      groupName: 'CRM Integrations — Facebook Lead Ads'
+      groupDescription: |-
+
+        Facebook Pages whose Lead Ads leads arrive in an agency's / agent's CRM.
+
+        Connect (GET connect-url) → Facebook Login → the public callback (no CRM login needed — the
+        one-time state in the cache names who started it) lists the Pages the Facebook user manages →
+        the Super Admin links each Page to an agency or independent agent, or any agency / agent
+        connects Pages to their own account (an agency agent's become their personal leads) → each is
+        saved with its Page token and subscribed to the app's "leadgen" webhook (Api\FacebookWebhookController).
+        A Page belongs to one account only: the webhook names just the Page, so it must point to a single
+        CRM (never the admin's own). "Sync now" pulls recent leads directly (FacebookLeadImporter::sync).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Connect the chosen Pages'
+      description: |-
+        Saves them and subscribes each to the leadgen webhook. Super Admin sends owners[pageId] =
+        account id; an agency / independent agent sends page_ids[] for their own account.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      owners:
+        custom: []
+        name: owners
+        description: 'Super Admin: page id => account id.'
+        required: false
+        example:
+          1029384756: 12
+        type: object
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page_ids:
+        custom: []
+        name: page_ids
+        description: 'Agency / agent: the ticked Pages.'
+        required: false
+        example:
+          - '1029384756'
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      import_existing:
+        custom: []
+        name: import_existing
+        description: 'Also import the leads these Pages already have.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      import_days:
+        custom: []
+        name: import_days
+        description: '7 | 30 | 90 | all.'
+        required: false
+        example: all
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      owners:
+        1029384756: 12
+      page_ids:
+        - '1029384756'
+      import_existing: true
+      import_days: all
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/integrations/facebook/pages/cancel
+    metadata:
+      custom: []
+      groupName: 'CRM Integrations — Facebook Lead Ads'
+      groupDescription: |-
+
+        Facebook Pages whose Lead Ads leads arrive in an agency's / agent's CRM.
+
+        Connect (GET connect-url) → Facebook Login → the public callback (no CRM login needed — the
+        one-time state in the cache names who started it) lists the Pages the Facebook user manages →
+        the Super Admin links each Page to an agency or independent agent, or any agency / agent
+        connects Pages to their own account (an agency agent's become their personal leads) → each is
+        saved with its Page token and subscribed to the app's "leadgen" webhook (Api\FacebookWebhookController).
+        A Page belongs to one account only: the webhook names just the Page, so it must point to a single
+        CRM (never the admin's own). "Sync now" pulls recent leads directly (FacebookLeadImporter::sync).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Cancel picking Pages'
+      description: 'Forgets the Pages from the last Facebook Login.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/integrations/facebook/import-status
+    metadata:
+      custom: []
+      groupName: 'CRM Integrations — Facebook Lead Ads'
+      groupDescription: |-
+
+        Facebook Pages whose Lead Ads leads arrive in an agency's / agent's CRM.
+
+        Connect (GET connect-url) → Facebook Login → the public callback (no CRM login needed — the
+        one-time state in the cache names who started it) lists the Pages the Facebook user manages →
+        the Super Admin links each Page to an agency or independent agent, or any agency / agent
+        connects Pages to their own account (an agency agent's become their personal leads) → each is
+        saved with its Page token and subscribed to the app's "leadgen" webhook (Api\FacebookWebhookController).
+        A Page belongs to one account only: the webhook names just the Page, so it must point to a single
+        CRM (never the admin's own). "Sync now" pulls recent leads directly (FacebookLeadImporter::sync).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Lead import progress'
+      description: 'Live progress of background lead imports, polled while any is running.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"importing": [{"id": 3, "status": "running", "added": 40, "skipped": 2}]}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/integrations/facebook/bulk-disconnect
+    metadata:
+      custom: []
+      groupName: 'CRM Integrations — Facebook Lead Ads'
+      groupDescription: |-
+
+        Facebook Pages whose Lead Ads leads arrive in an agency's / agent's CRM.
+
+        Connect (GET connect-url) → Facebook Login → the public callback (no CRM login needed — the
+        one-time state in the cache names who started it) lists the Pages the Facebook user manages →
+        the Super Admin links each Page to an agency or independent agent, or any agency / agent
+        connects Pages to their own account (an agency agent's become their personal leads) → each is
+        saved with its Page token and subscribed to the app's "leadgen" webhook (Api\FacebookWebhookController).
+        A Page belongs to one account only: the webhook names just the Page, so it must point to a single
+        CRM (never the admin's own). "Sync now" pulls recent leads directly (FacebookLeadImporter::sync).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Disconnect several Pages'
+      description: 'Only ones this user may manage.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      ids:
+        custom: []
+        name: ids
+        description: ''
+        required: true
+        example:
+          - 3
+          - 4
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      ids:
+        - 3
+        - 4
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/integrations/facebook/{id}/sync'
+    metadata:
+      custom: []
+      groupName: 'CRM Integrations — Facebook Lead Ads'
+      groupDescription: |-
+
+        Facebook Pages whose Lead Ads leads arrive in an agency's / agent's CRM.
+
+        Connect (GET connect-url) → Facebook Login → the public callback (no CRM login needed — the
+        one-time state in the cache names who started it) lists the Pages the Facebook user manages →
+        the Super Admin links each Page to an agency or independent agent, or any agency / agent
+        connects Pages to their own account (an agency agent's become their personal leads) → each is
+        saved with its Page token and subscribed to the app's "leadgen" webhook (Api\FacebookWebhookController).
+        A Page belongs to one account only: the webhook names just the Page, so it must point to a single
+        CRM (never the admin's own). "Sync now" pulls recent leads directly (FacebookLeadImporter::sync).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Sync a Page'
+      description: |-
+        "Sync now": leads since the last sync (first time: all of them), right away. "All leads"
+        (all=1): every lead the Page's forms have, in the background with live progress. Both send
+        one summary email instead of an email per lead.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the facebook.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      all:
+        custom: []
+        name: all
+        description: ''
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      all: false
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/crm/integrations/facebook/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Integrations — Facebook Lead Ads'
+      groupDescription: |-
+
+        Facebook Pages whose Lead Ads leads arrive in an agency's / agent's CRM.
+
+        Connect (GET connect-url) → Facebook Login → the public callback (no CRM login needed — the
+        one-time state in the cache names who started it) lists the Pages the Facebook user manages →
+        the Super Admin links each Page to an agency or independent agent, or any agency / agent
+        connects Pages to their own account (an agency agent's become their personal leads) → each is
+        saved with its Page token and subscribed to the app's "leadgen" webhook (Api\FacebookWebhookController).
+        A Page belongs to one account only: the webhook names just the Page, so it must point to a single
+        CRM (never the admin's own). "Sync now" pulls recent leads directly (FacebookLeadImporter::sync).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Disconnect a Page'
+      description: 'Its leads already in the CRM stay.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the facebook.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

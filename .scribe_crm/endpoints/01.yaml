@@ -1,0 +1,1726 @@
+name: 'CRM Account'
+description: |-
+
+  The bell icon — the signed-in account's notifications (new leads, imports finished, KYC
+  approved…). For an agent / company their own; for a Super Admin (web app) the CMS admin's.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/notifications
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        The bell icon — the signed-in account's notifications (new leads, imports finished, KYC
+        approved…). For an agent / company their own; for a Super Admin (web app) the CMS admin's.
+      subgroup: ''
+      subgroupDescription: ''
+      title: Notifications
+      description: |-
+        Newest first, 20 per page. `route` = the CRM screen it opens (name + params), when it has
+        one; otherwise open `url`.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data": [{"id": "9a1…", "title": "New lead", "message": "Sara Ahmed enquired about…", "icon": "fa-user-plus", "tone": "teal", "url": "https://…/portal/crm/leads/101", "route": {"name": "leads.show", "params": {"id": 101}}, "read": false, "created_at": "2026-10-09T10:00:00+00:00"}], "unread_count": 3, "next_page": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/notifications/read-all
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        The bell icon — the signed-in account's notifications (new leads, imports finished, KYC
+        approved…). For an agent / company their own; for a Super Admin (web app) the CMS admin's.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Mark all read'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/notifications/{id}/read'
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        The bell icon — the signed-in account's notifications (new leads, imports finished, KYC
+        approved…). For an agent / company their own; for a Super Admin (web app) the CMS admin's.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Mark one read'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the notification.'
+        required: true
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: consequatur
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/account/two-factor
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        Authenticator-app two-factor authentication (Google Authenticator, Authy…) for the signed-in
+        agent / company — the app's version of the portal's Security screen. Reachable before 2FA is
+        set up, so an account that `/auth/me` reports as `two_factor.setup_required` can finish it here.
+
+        Set-up: `POST /setup` (shows the secret / QR) → scan it → `POST /confirm` with the first code.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Two-factor status'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"enabled": false, "required": false, "setup_required": true, "can_skip": true, "company_enforced": false, "recovery_codes_left": 0, "trusted_devices": []}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/account/two-factor/setup
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        Authenticator-app two-factor authentication (Google Authenticator, Authy…) for the signed-in
+        agent / company — the app's version of the portal's Security screen. Reachable before 2FA is
+        set up, so an account that `/auth/me` reports as `two_factor.setup_required` can finish it here.
+
+        Set-up: `POST /setup` (shows the secret / QR) → scan it → `POST /confirm` with the first code.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Start set-up'
+      description: |-
+        A new secret to add to the authenticator app — as a QR code (`qr_svg`), an `otpauth://`
+        link (`uri`, opens the app directly on the same phone) or typed in (`secret`). Moving 2FA
+        that is already on to a new phone needs the account `password`; the old app keeps working
+        until the new one is confirmed.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      password:
+        custom: []
+        name: password
+        description: 'Only when 2FA is already on.'
+        required: false
+        example: secret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      password: secret123
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"secret": "JBSWY3DPEHPK3PXP", "uri": "otpauth://totp/MW%20Realty:agent@example.com?secret=…", "qr_svg": "<svg…>"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/account/two-factor/confirm
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        Authenticator-app two-factor authentication (Google Authenticator, Authy…) for the signed-in
+        agent / company — the app's version of the portal's Security screen. Reachable before 2FA is
+        set up, so an account that `/auth/me` reports as `two_factor.setup_required` can finish it here.
+
+        Set-up: `POST /setup` (shows the secret / QR) → scan it → `POST /confirm` with the first code.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Confirm set-up'
+      description: |-
+        The first code the authenticator app shows. Switches 2FA on and returns the recovery
+        codes — show them once and ask the user to keep them safe. A company can pass
+        `enforce: true` to make 2FA mandatory for every agent right away.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      code:
+        custom: []
+        name: code
+        description: ''
+        required: true
+        example: '123456'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      enforce:
+        custom: []
+        name: enforce
+        description: 'Company only.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      code: '123456'
+      enforce: false
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Two-factor authentication is now enabled.", "recovery_codes": ["A1B2C-D3E4F"]}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"message": "That code is not valid. Make sure you scanned the latest QR code and that your phone''s time is correct."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/account/two-factor/skip
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        Authenticator-app two-factor authentication (Google Authenticator, Authy…) for the signed-in
+        agent / company — the app's version of the portal's Security screen. Reachable before 2FA is
+        set up, so an account that `/auth/me` reports as `two_factor.setup_required` can finish it here.
+
+        Set-up: `POST /setup` (shows the secret / QR) → scan it → `POST /confirm` with the first code.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Skip for now'
+      description: "After sign-up, when 2FA isn't required by the agency — it can be turned on later."
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/account/two-factor/recovery-codes
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        Authenticator-app two-factor authentication (Google Authenticator, Authy…) for the signed-in
+        agent / company — the app's version of the portal's Security screen. Reachable before 2FA is
+        set up, so an account that `/auth/me` reports as `two_factor.setup_required` can finish it here.
+
+        Set-up: `POST /setup` (shows the secret / QR) → scan it → `POST /confirm` with the first code.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'New recovery codes'
+      description: 'The old ones stop working.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      password:
+        custom: []
+        name: password
+        description: ''
+        required: true
+        example: secret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      password: secret123
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "recovery_codes": ["A1B2C-D3E4F"]}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/account/two-factor/disable
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        Authenticator-app two-factor authentication (Google Authenticator, Authy…) for the signed-in
+        agent / company — the app's version of the portal's Security screen. Reachable before 2FA is
+        set up, so an account that `/auth/me` reports as `two_factor.setup_required` can finish it here.
+
+        Set-up: `POST /setup` (shows the secret / QR) → scan it → `POST /confirm` with the first code.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Turn off'
+      description: 'Not possible while the agency (or, for a company, its own "mandatory" switch) requires it.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      password:
+        custom: []
+        name: password
+        description: ''
+        required: true
+        example: secret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      password: secret123
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Two-factor authentication has been turned off."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/account/two-factor/enforce
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        Authenticator-app two-factor authentication (Google Authenticator, Authy…) for the signed-in
+        agent / company — the app's version of the portal's Security screen. Reachable before 2FA is
+        set up, so an account that `/auth/me` reports as `two_factor.setup_required` can finish it here.
+
+        Set-up: `POST /setup` (shows the secret / QR) → scan it → `POST /confirm` with the first code.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Mandatory for my company'
+      description: |-
+        Company only. The company account needs 2FA itself first — set it up with `enforce: true`
+        on Confirm set-up instead.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      enforce:
+        custom: []
+        name: enforce
+        description: ''
+        required: true
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      enforce: true
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Two-factor authentication is now mandatory for all agents in your company."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/account/two-factor/forget-devices
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        Authenticator-app two-factor authentication (Google Authenticator, Authy…) for the signed-in
+        agent / company — the app's version of the portal's Security screen. Reachable before 2FA is
+        set up, so an account that `/auth/me` reports as `two_factor.setup_required` can finish it here.
+
+        Set-up: `POST /setup` (shows the secret / QR) → scan it → `POST /confirm` with the first code.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Forget other devices'
+      description: |-
+        Every other device needs the emailed code again on its next sign-in. From the web app this
+        browser stays recognised; from the mobile app every device (this one included) is forgotten.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/profile
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        My Profile for the signed-in agent / company — the only place they edit their own KYC details and
+        documents (the admin-side equivalent is Super Admin only). Reachable while pending or rejected,
+        since completing / fixing the profile is exactly what unblocks approval.
+
+        GET /profile returns the page as data: `sections` (each a list of fields with label, type, value,
+        and how to show it), `documents`, KYC progress and completeness — the web app and the mobile app
+        render the same definition. Each section is saved on its own with POST /profile (`section`).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'The profile page'
+      description: |-
+        Account summary, KYC progress, every section (fields with values, ready to show / edit),
+        documents, SEO metadata, what's still missing and the public page preview.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/profile
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        My Profile for the signed-in agent / company — the only place they edit their own KYC details and
+        documents (the admin-side equivalent is Super Admin only). Reachable while pending or rejected,
+        since completing / fixing the profile is exactly what unblocks approval.
+
+        GET /profile returns the page as data: `sections` (each a list of fields with label, type, value,
+        and how to show it), `documents`, KYC progress and completeness — the web app and the mobile app
+        render the same definition. Each section is saved on its own with POST /profile (`section`).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Save one section'
+      description: |-
+        Multipart for `seo` (OG image). Fields per section: see GET /profile. A change to a KYC section
+        (compliance, other, licenses, identity) sends a submitted review back to "changes requested".
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: multipart/form-data
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      section:
+        custom: []
+        name: section
+        description: 'public, compliance, contact, other, licenses, about, identity or seo.'
+        required: true
+        example: about
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      public_email:
+        custom: []
+        name: public_email
+        description: 'Must be a valid email address. Must not be greater than 255 characters.'
+        required: false
+        example: carolyne.luettgen@example.org
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      secondary_phone:
+        custom: []
+        name: secondary_phone
+        description: 'Must match the regex /^\+?[0-9 ()\-]{6,30}$/. Must not be greater than 30 characters.'
+        required: false
+        example: fuudtdsufvyvddqamniih
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      whatsapp_number:
+        custom: []
+        name: whatsapp_number
+        description: 'Must match the regex /^\+?[0-9 ()\-]{6,30}$/. Must not be greater than 30 characters.'
+        required: false
+        example: fqcoynlazghdtqtqxbajw
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      city:
+        custom: []
+        name: city
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: bpilpmufinllwloauydls
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      orn_expiry:
+        custom: []
+        name: orn_expiry
+        description: 'Must be a valid date.'
+        required: false
+        example: '2026-10-09T11:12:49'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      adrec_license_expiry:
+        custom: []
+        name: adrec_license_expiry
+        description: 'Must be a valid date.'
+        required: false
+        example: '2026-10-09T11:12:49'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      other_license:
+        custom: []
+        name: other_license
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: msjuryvojcybzvrbyickz
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      other_license_expiry:
+        custom: []
+        name: other_license_expiry
+        description: 'Must be a valid date.'
+        required: false
+        example: '2026-10-09T11:12:49'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      position:
+        custom: []
+        name: position
+        description: 'Must not be greater than 150 characters.'
+        required: false
+        example: nkygloigmkwxphlvazjrc
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      linkedin_url:
+        custom: []
+        name: linkedin_url
+        description: 'Must be a valid URL. Must not be greater than 255 characters.'
+        required: false
+        example: 'http://www.dubuque.com/fuga-a-debitis-autem.html'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      spoken_languages:
+        custom: []
+        name: spoken_languages
+        description: ''
+        required: false
+        example:
+          - consequatur
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      experience_since:
+        custom: []
+        name: experience_since
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      bio_ar:
+        custom: []
+        name: bio_ar
+        description: 'Must not be greater than 2000 characters.'
+        required: false
+        example: mqeopfuudtdsufvyvddqa
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      name:
+        custom: []
+        name: name
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: mniihfqcoynlazghdtqtq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      company_name:
+        custom: []
+        name: company_name
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: xbajwbpilpmufinllwloa
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      phone:
+        custom: []
+        name: phone
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      phone_country_code:
+        custom: []
+        name: phone_country_code
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      nationality:
+        custom: []
+        name: nationality
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: uydlsmsjuryvojcybzvrb
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      emirates_id_no:
+        custom: []
+        name: emirates_id_no
+        description: 'Must not be greater than 50 characters.'
+        required: false
+        example: yickznkygloigmkwxphlv
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      passport_no:
+        custom: []
+        name: passport_no
+        description: 'Must not be greater than 50 characters.'
+        required: false
+        example: azjrcnfbaqywuxhgjjmzu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      passport_expiry:
+        custom: []
+        name: passport_expiry
+        description: 'Must be a valid date.'
+        required: false
+        example: '2026-10-09T11:12:49'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      brn_number:
+        custom: []
+        name: brn_number
+        description: 'Must not be greater than 50 characters.'
+        required: false
+        example: xjubqouzswiwxtrkimfca
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      affiliated_brokerage:
+        custom: []
+        name: affiliated_brokerage
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: tbxspzmrazsroyjpxmqes
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      trade_license_no:
+        custom: []
+        name: trade_license_no
+        description: 'Must not be greater than 50 characters.'
+        required: false
+        example: edyghenqcopwvownkbaml
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      trade_license_expiry:
+        custom: []
+        name: trade_license_expiry
+        description: 'Must be a valid date.'
+        required: false
+        example: '2026-10-09T11:12:49'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      orn_number:
+        custom: []
+        name: orn_number
+        description: 'Must not be greater than 50 characters.'
+        required: false
+        example: nfngefbeilfzsyuxoezbd
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      adrec_license_no:
+        custom: []
+        name: adrec_license_no
+        description: 'Must not be greater than 50 characters.'
+        required: false
+        example: tabptcyyerevrljcbwkth
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      trn_number:
+        custom: []
+        name: trn_number
+        description: 'Must not be greater than 50 characters.'
+        required: false
+        example: jnescwsestcouxpqsydki
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      trn_expiry:
+        custom: []
+        name: trn_expiry
+        description: 'Must be a valid date.'
+        required: false
+        example: '2026-10-09T11:12:49'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      authorized_signatory_name:
+        custom: []
+        name: authorized_signatory_name
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: gioyoyprjkfdjsneawgaa
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      landline:
+        custom: []
+        name: landline
+        description: 'Must not be greater than 50 characters.'
+        required: false
+        example: vuiwlezlcraoooxrrjhbd
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      office_address:
+        custom: []
+        name: office_address
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: uowtbaqrrtgxiuvujtzci
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      bio:
+        custom: []
+        name: bio
+        description: 'Must not be greater than 2000 characters.'
+        required: false
+        example: rplnfqsaymxpayeblqozc
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      years_of_experience:
+        custom: []
+        name: years_of_experience
+        description: 'Must be at least 0. Must not be greater than 80.'
+        required: false
+        example: 11
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      preferred_areas:
+        custom: []
+        name: preferred_areas
+        description: 'Must not be greater than 500 characters.'
+        required: false
+        example: azplqjijwkuzgpjfumffs
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      website:
+        custom: []
+        name: website
+        description: 'Must be a valid URL. Must not be greater than 255 characters.'
+        required: false
+        example: mqnmbekhsobzoqisjmbiu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      founding_year:
+        custom: []
+        name: founding_year
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      metadata:
+        custom: []
+        name: metadata
+        description: ''
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.meta_title:
+        custom: []
+        name: metadata.meta_title
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: qxdnvttnwpjqkxxmutyza
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.meta_description:
+        custom: []
+        name: metadata.meta_description
+        description: 'Must not be greater than 500 characters.'
+        required: false
+        example: adbjkbosusobdoqhlrecw
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.meta_keywords:
+        custom: []
+        name: metadata.meta_keywords
+        description: 'Must not be greater than 500 characters.'
+        required: false
+        example: gwnfrnqkqzoekemczcjka
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.canonical_url:
+        custom: []
+        name: metadata.canonical_url
+        description: 'Must be a valid URL. Must not be greater than 2048 characters.'
+        required: false
+        example: 'http://www.walker.com/'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.og_title:
+        custom: []
+        name: metadata.og_title
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: wxjfjhqnumftkwbfqsgay
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.og_description:
+        custom: []
+        name: metadata.og_description
+        description: 'Must not be greater than 500 characters.'
+        required: false
+        example: wjxhjqovkxzlvalyuwppf
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.other_meta_tags:
+        custom: []
+        name: metadata.other_meta_tags
+        description: ''
+        required: false
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata_og_image:
+        custom: []
+        name: metadata_og_image
+        description: 'Must be an image. Must not be greater than 4096 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      remove_metadata_og_image:
+        custom: []
+        name: remove_metadata_og_image
+        description: ''
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      section: about
+      public_email: carolyne.luettgen@example.org
+      secondary_phone: fuudtdsufvyvddqamniih
+      whatsapp_number: fqcoynlazghdtqtqxbajw
+      city: bpilpmufinllwloauydls
+      orn_expiry: '2026-10-09T11:12:49'
+      adrec_license_expiry: '2026-10-09T11:12:49'
+      other_license: msjuryvojcybzvrbyickz
+      other_license_expiry: '2026-10-09T11:12:49'
+      position: nkygloigmkwxphlvazjrc
+      linkedin_url: 'http://www.dubuque.com/fuga-a-debitis-autem.html'
+      spoken_languages:
+        - consequatur
+      bio_ar: mqeopfuudtdsufvyvddqa
+      name: mniihfqcoynlazghdtqtq
+      company_name: xbajwbpilpmufinllwloa
+      nationality: uydlsmsjuryvojcybzvrb
+      emirates_id_no: yickznkygloigmkwxphlv
+      passport_no: azjrcnfbaqywuxhgjjmzu
+      passport_expiry: '2026-10-09T11:12:49'
+      brn_number: xjubqouzswiwxtrkimfca
+      affiliated_brokerage: tbxspzmrazsroyjpxmqes
+      trade_license_no: edyghenqcopwvownkbaml
+      trade_license_expiry: '2026-10-09T11:12:49'
+      orn_number: nfngefbeilfzsyuxoezbd
+      adrec_license_no: tabptcyyerevrljcbwkth
+      trn_number: jnescwsestcouxpqsydki
+      trn_expiry: '2026-10-09T11:12:49'
+      authorized_signatory_name: gioyoyprjkfdjsneawgaa
+      landline: vuiwlezlcraoooxrrjhbd
+      office_address: uowtbaqrrtgxiuvujtzci
+      bio: rplnfqsaymxpayeblqozc
+      years_of_experience: 11
+      preferred_areas: azplqjijwkuzgpjfumffs
+      website: mqnmbekhsobzoqisjmbiu
+      metadata:
+        meta_title: qxdnvttnwpjqkxxmutyza
+        meta_description: adbjkbosusobdoqhlrecw
+        meta_keywords: gwnfrnqkqzoekemczcjka
+        canonical_url: 'http://www.walker.com/'
+        og_title: wxjfjhqnumftkwbfqsgay
+        og_description: wjxhjqovkxzlvalyuwppf
+        other_meta_tags: consequatur
+      remove_metadata_og_image: true
+    fileParameters:
+      metadata_og_image: null
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/profile/avatar
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        My Profile for the signed-in agent / company — the only place they edit their own KYC details and
+        documents (the admin-side equivalent is Super Admin only). Reachable while pending or rejected,
+        since completing / fixing the profile is exactly what unblocks approval.
+
+        GET /profile returns the page as data: `sections` (each a list of fields with label, type, value,
+        and how to show it), `documents`, KYC progress and completeness — the web app and the mobile app
+        render the same definition. Each section is saved on its own with POST /profile (`section`).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Profile photo / logo'
+      description: 'Shown on the public agent / agency pages. Multipart, at least 120 × 120 px, max 4 MB.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: multipart/form-data
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      avatar:
+        custom: []
+        name: avatar
+        description: ''
+        required: true
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters: []
+    fileParameters:
+      avatar: null
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: api/crm/profile/avatar
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        My Profile for the signed-in agent / company — the only place they edit their own KYC details and
+        documents (the admin-side equivalent is Super Admin only). Reachable while pending or rejected,
+        since completing / fixing the profile is exactly what unblocks approval.
+
+        GET /profile returns the page as data: `sections` (each a list of fields with label, type, value,
+        and how to show it), `documents`, KYC progress and completeness — the web app and the mobile app
+        render the same definition. Each section is saved on its own with POST /profile (`section`).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Remove the profile photo / logo'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/profile/brokerages
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        My Profile for the signed-in agent / company — the only place they edit their own KYC details and
+        documents (the admin-side equivalent is Super Admin only). Reachable while pending or rejected,
+        since completing / fixing the profile is exactly what unblocks approval.
+
+        GET /profile returns the page as data: `sections` (each a list of fields with label, type, value,
+        and how to show it), `documents`, KYC progress and completeness — the web app and the mobile app
+        render the same definition. Each section is saved on its own with POST /profile (`section`).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Brokerage suggestions'
+      description: |-
+        Registered, active agencies for an agent's "Affiliated brokerage" field — 20 per page.
+        Picking one only fills the text; it never links the account to the agency.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      q:
+        custom: []
+        name: q
+        description: ''
+        required: false
+        example: prime
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      q: prime
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/crm/profile/documents/{field}'
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        My Profile for the signed-in agent / company — the only place they edit their own KYC details and
+        documents (the admin-side equivalent is Super Admin only). Reachable while pending or rejected,
+        since completing / fixing the profile is exactly what unblocks approval.
+
+        GET /profile returns the page as data: `sections` (each a list of fields with label, type, value,
+        and how to show it), `documents`, KYC progress and completeness — the web app and the mobile app
+        render the same definition. Each section is saved on its own with POST /profile (`section`).
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Download one of the account's own KYC documents (private storage)"
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      field:
+        custom: []
+        name: field
+        description: ''
+        required: true
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      field: consequatur
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/profile/documents/{field}'
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        My Profile for the signed-in agent / company — the only place they edit their own KYC details and
+        documents (the admin-side equivalent is Super Admin only). Reachable while pending or rejected,
+        since completing / fixing the profile is exactly what unblocks approval.
+
+        GET /profile returns the page as data: `sections` (each a list of fields with label, type, value,
+        and how to show it), `documents`, KYC progress and completeness — the web app and the mobile app
+        render the same definition. Each section is saved on its own with POST /profile (`section`).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Upload a KYC document'
+      description: 'JPG, PNG or PDF, max 4 MB. Replacing one clears its earlier verdict.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: multipart/form-data
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      field:
+        custom: []
+        name: field
+        description: ''
+        required: true
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      field: consequatur
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      document:
+        custom: []
+        name: document
+        description: ''
+        required: true
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters: []
+    fileParameters:
+      document: null
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/crm/profile/documents/{field}'
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        My Profile for the signed-in agent / company — the only place they edit their own KYC details and
+        documents (the admin-side equivalent is Super Admin only). Reachable while pending or rejected,
+        since completing / fixing the profile is exactly what unblocks approval.
+
+        GET /profile returns the page as data: `sections` (each a list of fields with label, type, value,
+        and how to show it), `documents`, KYC progress and completeness — the web app and the mobile app
+        render the same definition. Each section is saved on its own with POST /profile (`section`).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Remove a KYC document'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      field:
+        custom: []
+        name: field
+        description: ''
+        required: true
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      field: consequatur
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/profile/submit
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        My Profile for the signed-in agent / company — the only place they edit their own KYC details and
+        documents (the admin-side equivalent is Super Admin only). Reachable while pending or rejected,
+        since completing / fixing the profile is exactly what unblocks approval.
+
+        GET /profile returns the page as data: `sections` (each a list of fields with label, type, value,
+        and how to show it), `documents`, KYC progress and completeness — the web app and the mobile app
+        render the same definition. Each section is saved on its own with POST /profile (`section`).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Submit / resubmit KYC for approval'
+      description: 'Notifies Super Admin (bell + email) and the account itself.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/profile/email/request
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        My Profile for the signed-in agent / company — the only place they edit their own KYC details and
+        documents (the admin-side equivalent is Super Admin only). Reachable while pending or rejected,
+        since completing / fixing the profile is exactly what unblocks approval.
+
+        GET /profile returns the page as data: `sections` (each a list of fields with label, type, value,
+        and how to show it), `documents`, KYC progress and completeness — the web app and the mobile app
+        render the same definition. Each section is saved on its own with POST /profile (`section`).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Change login email — step 1'
+      description: 'Emails a 4-digit code to the NEW address; nothing changes until it is verified.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      new_email:
+        custom: []
+        name: new_email
+        description: ''
+        required: true
+        example: new@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      new_email: new@example.com
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/profile/email/verify
+    metadata:
+      custom: []
+      groupName: 'CRM Account'
+      groupDescription: |-
+
+        My Profile for the signed-in agent / company — the only place they edit their own KYC details and
+        documents (the admin-side equivalent is Super Admin only). Reachable while pending or rejected,
+        since completing / fixing the profile is exactly what unblocks approval.
+
+        GET /profile returns the page as data: `sections` (each a list of fields with label, type, value,
+        and how to show it), `documents`, KYC progress and completeness — the web app and the mobile app
+        render the same definition. Each section is saved on its own with POST /profile (`section`).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Change login email — step 2'
+      description: |-
+        The code swaps the email in and signs the account out everywhere (this browser's session, and
+        every app token) — they were all authenticated under the old identity.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      code:
+        custom: []
+        name: code
+        description: ''
+        required: true
+        example: '1234'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      code: '1234'
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

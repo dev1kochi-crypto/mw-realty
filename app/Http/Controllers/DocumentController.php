@@ -12,11 +12,6 @@ class DocumentController extends Controller
         return $this->download($portalUser, $field);
     }
 
-    public function own(string $field)
-    {
-        return $this->download(auth('portal')->user(), $field);
-    }
-
     private function download(PortalUser $user, string $field)
     {
         abort_unless(in_array($field, PortalUser::DOCUMENT_FIELDS, true), 404);

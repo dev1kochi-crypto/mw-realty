@@ -81,7 +81,7 @@ endpoints:
         name: page
         description: ''
         required: false
-        example: listing
+        example: home
         type: string
         enumValues:
           - home
@@ -105,7 +105,7 @@ endpoints:
         name: scope
         description: ''
         required: false
-        example: residential
+        example: marketing
         type: string
         enumValues:
           - residential
@@ -116,20 +116,11 @@ endpoints:
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      page: listing
+      page: home
       lang: vmqeopfuu
-      scope: residential
+      scope: marketing
     fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: '{"filters":[{"key":"listing_type","label":"Listing Type","type":"select","options":[{"value":"sale","label":"Buy","count":351},{"value":"rent","label":"Rent","count":299}]},{"key":"completion_status","label":"Completion Status","type":"select","options":[{"value":"ready","label":"Ready","count":446},{"value":"off_plan","label":"Off-Plan","count":204}]},{"key":"property_type","label":"Property Type","type":"select","options":[{"value":"apartment","label":"Apartment","count":171},{"value":"villa","label":"Villa","count":162},{"value":"townhouse","label":"Townhouse","count":162},{"value":"penthouse","label":"Penthouse","count":155}]},{"key":"category","label":"Category","type":"select","options":[{"value":"residential","label":"Residential","count":614},{"value":"commercial","label":"Commercial","count":10}]},{"key":"location","label":"Location","type":"select","options":[{"value":"downtown-dubai","label":"Downtown Dubai","count":49},{"value":"dubai-marina","label":"Dubai Marina","count":46},{"value":"business-bay","label":"Business Bay","count":50},{"value":"palm-jumeirah","label":"Palm Jumeirah","count":49},{"value":"jumeirah-village-circle","label":"Jumeirah Village Circle","count":44},{"value":"dubai-hills-estate","label":"Dubai Hills Estate","count":49},{"value":"jumeirah-lake-towers","label":"Jumeirah Lake Towers","count":45},{"value":"arabian-ranches","label":"Arabian Ranches","count":50},{"value":"al-furjan","label":"Al Furjan","count":45}]},{"key":"bedrooms","label":"Bedrooms","type":"select","options":[{"value":"1","label":"1"},{"value":"2","label":"2"},{"value":"3","label":"3"},{"value":"4","label":"4"},{"value":"5+","label":"5+"}]},{"key":"bathrooms","label":"Bathrooms","type":"select","options":[{"value":"1","label":"1"},{"value":"2","label":"2"},{"value":"3","label":"3"},{"value":"4","label":"4"},{"value":"5+","label":"5+"}]},{"key":"price","label":"Price Range","type":"range","min":0,"max":30000000,"step":50000},{"key":"sqft","label":"Sqft","type":"range","min":0,"max":9000,"step":50}]}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-        description: null
+    responses: []
     responseFields: []
     auth: []
     controller: null
@@ -238,18 +229,7 @@ endpoints:
       lang: amniihfqc
       scope: commercial
     fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: '{"suggestions":[]}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          x-ratelimit-limit: '120'
-          x-ratelimit-remaining: '118'
-          access-control-allow-origin: '*'
-        description: null
+    responses: []
     responseFields: []
     auth: []
     controller: null

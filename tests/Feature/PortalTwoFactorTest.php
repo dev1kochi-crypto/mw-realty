@@ -10,10 +10,12 @@ use Illuminate\Support\Facades\Mail;
 use Tests\Feature\Concerns\BuildsAgencies;
 use Tests\TestCase;
 
-/** Portal login: new-device email code, authenticator-app (TOTP) 2FA, recovery codes, company enforcement. */
+/** Portal login: new-device email code, authenticator-app (TOTP) 2FA (managed via the CRM API), recovery codes, company enforcement. */
 class PortalTwoFactorTest extends TestCase
 {
     use RefreshDatabase, BuildsAgencies;
+
+    private const API = '/api/crm/account/two-factor';
 
     protected function setUp(): void
     {
@@ -118,14 +120,14 @@ class PortalTwoFactorTest extends TestCase
     public function test_setup_confirms_secret_and_shows_recovery_codes(): void
     {
         $agent = $this->independentAgent();
-        $this->signIn($agent)->get('/portal/two-factor/setup')->assertOk()->assertSee('<svg', false);
-        $secret = session('portal_2fa_pending_secret');
+        $secret = $this->crmApi($agent)->postJson(self::API . '/setup')->assertOk()
+            ->assertJsonStructure(['secret', 'uri', 'qr_svg'])->json('secret');
 
-        $this->post('/portal/two-factor/confirm', ['code' => '000000'])->assertSessionHasErrors('code');
+        $this->postJson(self::API . '/confirm', ['code' => '000000'])->assertJsonValidationErrors('code');
         $this->assertFalse($agent->fresh()->hasTwoFactorEnabled());
 
-        $this->post('/portal/two-factor/confirm', ['code' => $this->currentCode($secret)])
-            ->assertRedirect()->assertSessionHas('two_factor_recovery_codes');
+        $this->postJson(self::API . '/confirm', ['code' => $this->currentCode($secret)])
+            ->assertOk()->assertJsonCount(8, 'recovery_codes');
         $this->assertTrue($agent->fresh()->hasTwoFactorEnabled());
         $this->assertSame($secret, $agent->fresh()->two_factor_secret);
     }
@@ -139,29 +141,29 @@ class PortalTwoFactorTest extends TestCase
         $agency->forceFill(['two_factor_enforced' => true])->save();
         $this->assertTrue($agent->fresh()->twoFactorRequired());
 
-        $this->signIn($agent->fresh())->get('/portal/dashboard')->assertRedirect(route('portal.two-factor.setup'));
-        $this->get('/portal/two-factor/setup')->assertOk()->assertSee('Your company requires two-factor authentication');
+        $this->crmApi($agent->fresh())->getJson('/api/crm/dashboard')->assertForbidden()->assertJsonPath('redirect', route('crm.two-factor'));
+        $this->getJson(self::API)->assertOk()->assertJsonPath('required', true)->assertJsonPath('can_skip', false);
 
         // Agency itself can't switch its own 2FA off while enforcing.
-        $this->signIn($agency)->post('/portal/two-factor/disable', ['password' => 'safe-password-123']);
+        $this->crmApi($agency)->postJson(self::API . '/disable', ['password' => 'safe-password-123'])->assertStatus(422);
         $this->assertTrue($agency->fresh()->hasTwoFactorEnabled());
     }
 
     public function test_enforce_requires_own_two_factor_and_disable_requires_password(): void
     {
-        // Company without its own 2FA: sent to set-up, and enforcement turns on once it's confirmed.
+        // Company without its own 2FA: asked to set it up, and enforcement turns on once it's confirmed.
         $agency = $this->agency();
-        $this->signIn($agency)->post('/portal/two-factor/enforce', ['enforce' => 1])->assertRedirect(route('portal.two-factor.setup'));
+        $this->crmApi($agency)->postJson(self::API . '/enforce', ['enforce' => true])->assertStatus(422)->assertJsonPath('setup_first', true);
         $this->assertFalse($agency->fresh()->two_factor_enforced);
-        $this->get('/portal/two-factor/setup')->assertSee('turns on automatically');
-        $this->post('/portal/two-factor/confirm', ['code' => $this->currentCode(session('portal_2fa_pending_secret'))]);
+        $secret = $this->postJson(self::API . '/setup')->json('secret');
+        $this->postJson(self::API . '/confirm', ['code' => $this->currentCode($secret), 'enforce' => true])->assertOk();
         $this->assertTrue($agency->fresh()->two_factor_enforced);
         $this->assertTrue($agency->fresh()->hasTwoFactorEnabled());
 
         [$agent] = $this->agentWithTwoFactor();
-        $this->signIn($agent)->post('/portal/two-factor/disable', ['password' => 'wrong'])->assertSessionHasErrors('password');
+        $this->crmApi($agent)->postJson(self::API . '/disable', ['password' => 'wrong'])->assertJsonValidationErrors('password');
         $this->assertTrue($agent->fresh()->hasTwoFactorEnabled());
-        $this->post('/portal/two-factor/disable', ['password' => 'safe-password-123']);
+        $this->postJson(self::API . '/disable', ['password' => 'safe-password-123'])->assertOk();
         $this->assertFalse($agent->fresh()->hasTwoFactorEnabled());
     }
 
@@ -170,46 +172,44 @@ class PortalTwoFactorTest extends TestCase
         $agent = $this->independentAgent(['otp_code' => \Illuminate\Support\Facades\Hash::make('4321'), 'otp_expires_at' => now()->addMinutes(5)]);
 
         $this->postJson('/portal/verify-otp', ['user_id' => $agent->id, 'code' => '4321'])
-            ->assertOk()->assertJsonPath('redirect', route('portal.two-factor.setup', ['onboarding' => 1]));
+            ->assertOk()->assertJsonPath('redirect', route('crm.two-factor', ['onboarding' => 1]));
 
-        // Other menus bounce back to the 2FA step…
-        $this->get('/portal/dashboard')->assertRedirect(route('portal.two-factor.setup', ['onboarding' => 1]));
-        $this->get('/portal/security')->assertRedirect(route('portal.two-factor.setup', ['onboarding' => 1]));
-        $this->get('/portal/two-factor/setup')->assertOk()->assertSee('Skip for now');
+        // Other screens bounce back to the 2FA step…
+        $this->get('/crm/dashboard')->assertRedirect(route('crm.two-factor', ['onboarding' => 1]));
+        $this->get('/crm/security')->assertRedirect(route('crm.two-factor', ['onboarding' => 1]));
+        $this->get('/crm/security/two-factor?onboarding=1')->assertOk();
+        $this->crmApi($agent)->getJson(self::API)->assertOk()->assertJsonPath('can_skip', true);
 
         // …until they skip it.
-        $this->post('/portal/two-factor/skip')->assertRedirect(route('portal.dashboard'));
-        $this->get('/portal/dashboard')->assertOk();
-        $this->get('/portal/security')->assertOk();
+        $this->postJson(self::API . '/skip')->assertOk();
+        $this->get('/crm/dashboard')->assertOk();
+        $this->get('/crm/security')->assertOk();
     }
 
-    public function test_security_page_renders_and_is_in_account_menu(): void
+    public function test_security_status_and_account_menu(): void
     {
         [$agency] = $this->agentWithTwoFactor($this->agency());
-        $this->signIn($agency)->get('/portal/security')->assertOk()
-            ->assertSee('2-Factor Authentication (My Company)')->assertSee('Configured')->assertSee('Reconfigure')->assertSee('Disable 2FA');
+        $this->crmApi($agency)->getJson(self::API)->assertOk()
+            ->assertJsonPath('is_agency', true)->assertJsonPath('enabled', true)->assertJsonPath('recovery_codes_left', 8);
 
-        $this->signIn($this->independentAgent())->get('/portal/dashboard')->assertOk()->assertSee(route('portal.security'));
-        $this->get('/portal/security')->assertOk()->assertDontSee('2-Factor Authentication (My Company)')->assertSee('Set up');
+        $this->crmApi($this->independentAgent());
+        $this->getJson('/api/crm/navigation')->assertOk()->assertJsonFragment(['key' => 'security', 'route' => 'security']);
+        $this->getJson(self::API)->assertOk()->assertJsonPath('is_agency', false)->assertJsonPath('enabled', false);
     }
 
     public function test_reconfigure_keeps_old_app_until_new_one_is_verified(): void
     {
         [$agent, $oldSecret] = $this->agentWithTwoFactor();
-        $this->signIn($agent)->post('/portal/two-factor/reconfigure', ['password' => 'safe-password-123'])
-            ->assertRedirect(route('portal.two-factor.setup'));
-        $this->get('/portal/two-factor/setup')->assertOk()->assertSee('Move 2FA to a new phone');
-        $newSecret = session('portal_2fa_pending_secret');
+        $this->crmApi($agent)->postJson(self::API . '/setup')->assertJsonValidationErrors('password');
+        $newSecret = $this->postJson(self::API . '/setup', ['password' => 'safe-password-123'])->assertOk()->json('secret');
         $this->assertNotSame($oldSecret, $newSecret);
 
         // Abandoned half-way: the old app still works.
         $this->assertSame($oldSecret, $agent->fresh()->two_factor_secret);
         $this->assertTrue($agent->fresh()->hasTwoFactorEnabled());
 
-        $this->post('/portal/two-factor/confirm', ['code' => $this->currentCode($newSecret)])->assertSessionHas('two_factor_recovery_codes');
+        $this->postJson(self::API . '/confirm', ['code' => $this->currentCode($newSecret)])->assertOk()->assertJsonCount(8, 'recovery_codes');
         $this->assertSame($newSecret, $agent->fresh()->two_factor_secret);
-        $this->get('/portal/two-factor/setup')->assertOk();   // shows the recovery codes once
-        $this->get('/portal/two-factor/setup')->assertRedirect(route('portal.security'));
     }
 
     /** @return array{0: PortalUser, 1: string} */

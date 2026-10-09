@@ -41,7 +41,7 @@ class SubscriptionRenewalReminderMail extends Mailable
                 'amount' => $this->amount,
                 'renewsAt' => $this->renewsAt,
                 'isPlanChange' => $this->portalUser->scheduled_plan_id === $this->plan->id,
-                'plansUrl' => route('portal.plans.index'),
+                'plansUrl' => route('crm.app', 'plans'),
             ],
         );
     }

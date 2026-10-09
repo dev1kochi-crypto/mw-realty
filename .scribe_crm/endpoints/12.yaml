@@ -1,0 +1,316 @@
+name: 'CRM Properties — Sold / rented'
+description: |-
+
+  "Mark as sold / rented" on a listing card, and the paged buyer-lead picker it uses. The listing
+  moves to Sold Listings; the buyer lead moves to the won stage. See PropertySaleService.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/crm/properties/{id}/sale-leads'
+    metadata:
+      custom: []
+      groupName: 'CRM Properties — Sold / rented'
+      groupDescription: |-
+
+        "Mark as sold / rented" on a listing card, and the paged buyer-lead picker it uses. The listing
+        moves to Sold Listings; the buyer lead moves to the won stage. See PropertySaleService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Buyer leads'
+      description: "Every lead the viewer sees in the CRM, this listing's enquirers first — 20 a page, searched on the server."
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the property.'
+        required: true
+        example: 82
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 82
+    queryParameters:
+      q:
+        custom: []
+        name: q
+        description: 'Name, email or phone.'
+        required: false
+        example: sara
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      q: sara
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/properties/{id}/mark-sold'
+    metadata:
+      custom: []
+      groupName: 'CRM Properties — Sold / rented'
+      groupDescription: |-
+
+        "Mark as sold / rented" on a listing card, and the paged buyer-lead picker it uses. The listing
+        moves to Sold Listings; the buyer lead moves to the won stage. See PropertySaleService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Mark as sold / rented'
+      description: 'Multipart — the ownership document and the contract are required.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: multipart/form-data
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the property.'
+        required: true
+        example: 82
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 82
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      type:
+        custom: []
+        name: type
+        description: 'sold | rented.'
+        required: true
+        example: sold
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      price:
+        custom: []
+        name: price
+        description: ''
+        required: true
+        example: 1850000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sold_at:
+        custom: []
+        name: sold_at
+        description: Y-m-d.
+        required: true
+        example: '2026-10-09'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      rented_until:
+        custom: []
+        name: rented_until
+        description: 'Must be a valid date. Must be a date after <code>sold_at</code>.'
+        required: false
+        example: '2107-11-07'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      commission:
+        custom: []
+        name: commission
+        description: 'Must be at least 0. Must not be greater than 9999999999999.'
+        required: false
+        example: 13
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: 'Must not be greater than 2000 characters.'
+        required: false
+        example: qeopfuudtdsufvyvddqam
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      buyer_mode:
+        custom: []
+        name: buyer_mode
+        description: 'existing | new.'
+        required: true
+        example: existing
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      lead_id:
+        custom: []
+        name: lead_id
+        description: 'With buyer_mode=existing.'
+        required: false
+        example: 101
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      buyer:
+        custom: []
+        name: buyer
+        description: ''
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      buyer.name:
+        custom: []
+        name: buyer.name
+        description: 'This field is required when <code>buyer_mode</code> is <code>new</code>. Must not be greater than 255 characters.'
+        required: false
+        example: mqeopfuudtdsufvyvddqa
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      buyer.email:
+        custom: []
+        name: buyer.email
+        description: 'Must be a valid email address. Must not be greater than 255 characters.'
+        required: false
+        example: eloisa.harber@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      buyer.phone:
+        custom: []
+        name: buyer.phone
+        description: 'Must not be greater than 30 characters.'
+        required: false
+        example: fqcoynlazghdtqtqxbajw
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      buyer.phone_country_code:
+        custom: []
+        name: buyer.phone_country_code
+        description: 'Must not be greater than 8 characters.'
+        required: false
+        example: bpilpmu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      ownership_document:
+        custom: []
+        name: ownership_document
+        description: 'Title deed (PDF / JPG / PNG).'
+        required: true
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      contract_document:
+        custom: []
+        name: contract_document
+        description: 'Form F / MOU, or the Ejari for a rental.'
+        required: true
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      documents_password:
+        custom: []
+        name: documents_password
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: finllwloauydlsmsjuryv
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      type: sold
+      price: 1850000.0
+      sold_at: '2026-10-09'
+      rented_until: '2107-11-07'
+      commission: 13
+      notes: qeopfuudtdsufvyvddqam
+      buyer_mode: existing
+      lead_id: 101
+      buyer:
+        name: mqeopfuudtdsufvyvddqa
+        email: eloisa.harber@example.com
+        phone: fqcoynlazghdtqtqxbajw
+        phone_country_code: bpilpmu
+      documents_password: finllwloauydlsmsjuryv
+    fileParameters:
+      ownership_document: null
+      contract_document: null
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

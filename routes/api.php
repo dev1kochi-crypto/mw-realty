@@ -20,6 +20,18 @@ use App\Http\Controllers\PublicAdController;
 use App\Http\Controllers\PublicLanguageController;
 use Illuminate\Support\Facades\Route;
 
+// Agent/Company CRM API (mobile app + the /crm web app) — /api/crm/*, see routes/crm.php.
+// Mounted here, not in bootstrap/app.php's `then:`, because those load after routes/web.php,
+// whose /{slug} landing-page catch-all would answer every /api/crm/* GET first.
+Route::prefix('crm')->name('crm.api.')->middleware([
+    \App\Http\Middleware\Crm\ForceJsonResponse::class,
+    // The /crm web app signs in with the browser's session; the app sends a Bearer token instead.
+    \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+    \App\Http\Middleware\EnforceAccountSecurity::class,
+    // Writes are all-or-nothing (DB + uploaded files) and audit-logged, as they were on the /portal routes.
+    \App\Http\Middleware\AtomicAdminChanges::class,
+])->group(base_path('routes/crm.php'));
+
 // Public, read-only — consumed by the frontend (home banner + listing page) search filter bar
 // AND the properties-dubai listing page, so it stays its own endpoint rather than folding
 // into /api/home below.

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Super Admin's Marketing Properties list — the one place it is read and changed.
  *  - Portal › Listings › Marketing Properties picks agencies / agents, adds their listings and
- *    orders them (PortalMarketingPropertyController).
+ *    orders them (Crm\Marketing\MarketingPropertyController).
  *  - Home "Realty Property" shows the first HOME_LIMIT (HomePageService::realtyProperty).
  *  - /marketing-properties shows all of them, in the same order (PropertiesPageService).
  * order_index is 1-based and gap-free; new listings go to the top.

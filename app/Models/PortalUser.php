@@ -5,13 +5,23 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 
 class PortalUser extends Authenticatable
 {
-    use Notifiable;
+    // API tokens = the CRM mobile app's sign-ins (see Crm\Auth\AuthController).
+    use HasApiTokens, Notifiable;
 
     protected static function booted(): void
     {
+        // A new password or a disabled account signs the CRM app out everywhere — the token
+        // counterpart of EnforceAccountSecurity's session check.
+        static::updated(function (PortalUser $portalUser) {
+            if ($portalUser->wasChanged('password') || ($portalUser->wasChanged('is_active') && !$portalUser->is_active)) {
+                $portalUser->tokens()->delete();
+            }
+        });
+
         // Every account starts on the default Free plan unless one was chosen (never "No Plan").
         static::creating(function (PortalUser $portalUser) {
             if (!$portalUser->plan_id) {

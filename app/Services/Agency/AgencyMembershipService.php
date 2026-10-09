@@ -146,7 +146,7 @@ class AgencyMembershipService
         ]);
 
         $this->tell($agency, 'Agent join request', $agent->name . ' asked to join your agency.',
-            route('portal.agents.index'), 'fa-user-plus');
+            route('crm.app', 'agents'), 'fa-user-plus');
 
         return $membership;
     }
@@ -166,7 +166,7 @@ class AgencyMembershipService
 
         $this->tell($membership->agency, $accept ? 'Invitation accepted' : 'Invitation declined',
             $agent->name . ($accept ? ' accepted your invitation — now awaiting admin approval.' : ' declined your invitation.'),
-            route('portal.agents.index'), $accept ? 'fa-user-check' : 'fa-user-xmark', $accept ? 'teal' : 'amber');
+            route('crm.app', 'agents'), $accept ? 'fa-user-check' : 'fa-user-xmark', $accept ? 'teal' : 'amber');
 
         if ($accept) {
             $this->notifyAdminsPending($membership);
@@ -264,7 +264,7 @@ class AgencyMembershipService
                 route('portal.agency.index'), 'fa-circle-check', 'green', mail: true, actionLabel: 'Open Portal');
         }
         $this->tell($membership->agency, 'Agent approved', $agent->name . ' is now an active agent in your agency. You can assign them listings and leads.',
-            route('portal.agents.index'), 'fa-circle-check', 'green', mail: true, actionLabel: 'View My Agents');
+            route('crm.app', 'agents'), 'fa-circle-check', 'green', mail: true, actionLabel: 'View My Agents');
 
         return $membership;
     }
@@ -284,7 +284,7 @@ class AgencyMembershipService
         ]);
 
         $message = $membership->agent->name . "'s membership was not approved" . ($reason ? ": {$reason}" : '.');
-        $this->tell($membership->agency, 'Agent not approved', $message, route('portal.agents.index'), 'fa-circle-xmark', 'red', mail: true, actionLabel: 'View My Agents');
+        $this->tell($membership->agency, 'Agent not approved', $message, route('crm.app', 'agents'), 'fa-circle-xmark', 'red', mail: true, actionLabel: 'View My Agents');
         if (!$membership->account_created_by_agency) {
             $this->tell($membership->agent, 'Agency membership not approved', $message, route('portal.agency.index'), 'fa-circle-xmark', 'red', mail: true, actionLabel: 'Open Portal');
         }
@@ -356,7 +356,7 @@ class AgencyMembershipService
         $membership->refresh();
         $this->moveOffAgencyPlan($membership->agent_id);
         if ($actor->type === AssignmentActor::AGENT) {
-            $this->tell($agency, 'Agent left your agency', $membership->agent->name . ' left your agency.', route('portal.agents.index'), 'fa-user-minus', 'amber');
+            $this->tell($agency, 'Agent left your agency', $membership->agent->name . ' left your agency.', route('crm.app', 'agents'), 'fa-user-minus', 'amber');
         } else {
             $this->tell($membership->agent, 'Removed from agency', 'You are no longer an agent of ' . $agency->displayName() . '. Your account and personal listings are unchanged.',
                 route('portal.agency.index'), 'fa-user-minus', 'amber', mail: true);

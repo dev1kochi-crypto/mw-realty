@@ -10,6 +10,12 @@ class EnforceAccountSecurity
 {
     public function handle(Request $request, Closure $next)
     {
+        // Stateless /api/crm calls (the app's Bearer token) — nothing session-based to check;
+        // AuthenticateCrm checks the token's account instead. Web routes always have a session.
+        if (!$request->hasSession()) {
+            return $next($request);
+        }
+
         foreach (['cms', 'portal'] as $guard) {
             $user = Auth::guard($guard)->user();
             if (!$user) {

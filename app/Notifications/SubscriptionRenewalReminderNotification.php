@@ -27,7 +27,7 @@ class SubscriptionRenewalReminderNotification extends Notification
         return [
             'title' => 'Your plan renews tomorrow',
             'message' => $this->planName . ' auto-renews on ' . $this->renewsOn . ' for AED ' . number_format($this->amount, 2) . '.',
-            'url' => route('portal.plans.index'),
+            'url' => route('crm.app', 'plans'),
             'icon' => 'fa-sync-alt',
             'tone' => 'amber',
         ];

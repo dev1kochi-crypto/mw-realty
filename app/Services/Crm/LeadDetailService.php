@@ -10,7 +10,7 @@ use App\Models\Property;
 use Illuminate\Support\Collection;
 
 /**
- * Everything the lead detail page (portal.crm.leads.show) shows, in one place: contacts,
+ * Everything the lead screen (CRM app, Crm\Leads\LeadController::show) shows, in one place: contacts,
  * the enquiry's captured details, the combined activity timeline and the source history.
  */
 class LeadDetailService

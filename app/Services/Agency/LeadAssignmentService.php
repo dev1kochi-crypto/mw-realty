@@ -177,6 +177,41 @@ class LeadAssignmentService
         ]);
     }
 
+    /**
+     * Saves how new agency leads are assigned: round robin for the given kinds of lead
+     * (AgencyLeadAssignmentSetting::SOURCES keys), or manual. Returns an error message when
+     * automatic mode has no kind ticked, else null. Used by the Agents screen and the CRM API.
+     */
+    public function updateSettings(PortalUser $agency, string $mode, array $sources): ?string
+    {
+        $sources = array_values(array_unique($sources));
+        if ($mode === \App\Models\AgencyLeadAssignmentSetting::MODE_AUTOMATIC && !$sources) {
+            return 'Choose at least one kind of lead for round robin, or switch to manual assignment.';
+        }
+
+        $this->ensureSettings($agency);
+        $agency->leadAssignmentSetting()->firstOrFail()->update([
+            'mode' => $mode,
+            // Every kind ticked is stored as null (= all), so kinds added later are covered too.
+            'round_robin_sources' => $mode === \App\Models\AgencyLeadAssignmentSetting::MODE_MANUAL || count($sources) === count(\App\Models\AgencyLeadAssignmentSetting::SOURCES) ? null : $sources,
+        ]);
+
+        return null;
+    }
+
+    /** The agency's assignment settings as the CRM API sends them (Leads toolbar, Agents screen). */
+    public function settingsSummary(PortalUser $agency): array
+    {
+        $setting = $agency->leadAssignmentSetting ?? new AgencyLeadAssignmentSetting(['mode' => AgencyLeadAssignmentSetting::MODE_AUTOMATIC]);
+
+        return [
+            'mode' => $setting->isManual() ? AgencyLeadAssignmentSetting::MODE_MANUAL : AgencyLeadAssignmentSetting::MODE_AUTOMATIC,
+            'sources' => $setting->roundRobinSources(),
+            'available_sources' => collect(AgencyLeadAssignmentSetting::SOURCES)->map(fn ($label, $key) => ['key' => $key, 'label' => $label])->values(),
+            'agent_count' => $agency->eligibleAgentsQuery()->count(),
+        ];
+    }
+
     /** Preview of whose turn is next, without advancing the pointer (dashboard display only). */
     public function peekNextAgent(PortalUser $agency): ?PortalUser
     {

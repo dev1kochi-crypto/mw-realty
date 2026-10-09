@@ -14,9 +14,8 @@ use Illuminate\Support\Facades\Auth;
 class EnsurePortalTwoFactor
 {
     private const ALLOWED_ROUTES = [
+        'crm.two-factor',
         'portal.two-factor.setup',
-        'portal.two-factor.confirm',
-        'portal.two-factor.skip',
         'portal.logout',
     ];
 
@@ -33,7 +32,8 @@ class EnsurePortalTwoFactor
             return $next($request);
         }
 
-        $setupUrl = route('portal.two-factor.setup', $required ? [] : ['onboarding' => 1]);
+        // The CRM app's set-up screen; its API (/api/crm/account/two-factor/*) sits outside this check.
+        $setupUrl = route('crm.two-factor', $required ? [] : ['onboarding' => 1]);
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => $required

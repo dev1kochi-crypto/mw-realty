@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Everything shown on a website lead's Insights panel — Super Admin's Website Leads page and the
- * CRM lead page's Insights tab (resources/views/visitor-insights/_panel.blade.php).
+ * CRM lead page's Insights tab (resources/js/crm/components/VisitorInsightsPanel.vue).
  */
 class VisitorInsights
 {
@@ -122,10 +122,10 @@ class VisitorInsights
     }
 
     /**
-     * The panel's load-on-scroll endpoint (CRM lead page and Super Admin's website lead page):
-     * the next page of one list as rendered rows (visitor-insights._rows) plus the next cursor.
+     * The panel's load-on-scroll endpoint (CRM lead page and Super Admin's website lead page — web
+     * app and mobile app): the next page of one list plus the next cursor.
      */
-    public function feed(VisitorLead $lead, \Illuminate\Http\Request $request): array
+    public function feedJson(VisitorLead $lead, \Illuminate\Http\Request $request): array
     {
         $params = $request->validate([
             'section' => 'required|in:' . implode(',', self::SECTIONS),
@@ -135,10 +135,112 @@ class VisitorInsights
         ]);
         $page = $this->page($lead, $params['section'], $params);
 
+        return ['items' => $this->itemsJson($params['section'], $page['items']), 'next' => $page['next']];
+    }
+
+    /**
+     * The whole Insights panel as data: stats (raw counts / seconds), engagement level, most
+     * interested properties, search interests, and the first page of each list (+ its cursor).
+     */
+    public function summaryJson(VisitorLead $lead): array
+    {
+        $data = $this->for($lead);
+        [$engagement, $tone] = self::engagement($data['stats']);
+        $page = fn (string $section, array $result) => ['items' => $this->itemsJson($section, $result['items']), 'next' => $result['next']];
+
         return [
-            'html' => view('visitor-insights._rows', ['section' => $params['section'], 'items' => $page['items'], 'lead' => $lead])->render(),
-            'next' => $page['next'],
+            'stats' => array_merge($data['stats'], [
+                'first_seen' => $data['stats']['first_seen'] ? \Illuminate\Support\Carbon::parse($data['stats']['first_seen'])->toIso8601String() : null,
+                'last_seen' => $data['stats']['last_seen'] ? \Illuminate\Support\Carbon::parse($data['stats']['last_seen'])->toIso8601String() : null,
+            ]),
+            'engagement' => ['label' => $engagement, 'tone' => $tone],
+            'came_in_via' => $lead->sourceLabel(),
+            'has_account' => (bool) $lead->user_id,
+            'top_properties' => $data['topProperties']->map(fn ($row) => [
+                'property' => $this->propertyJson($row['property']),
+                'owner' => $row['property']->owner?->displayName() ?? 'MW Realty',
+                'views' => $row['views'],
+                'seconds' => $row['seconds'],
+                'last_viewed_at' => $row['last_viewed_at']->toIso8601String(),
+            ])->values(),
+            'search_interests' => $data['searchInterests']->map(fn ($count, $label) => ['label' => $label, 'count' => $count])->values(),
+            'activity_counts' => $data['activityCounts'],
+            'timeline' => $page('timeline', $data['timeline']),
+            'favorites' => $page('favorites', $data['favorites']),
+            'searches' => $page('searches', $data['savedSearches']),
+            'chats' => $page('chats', $data['conversations']),
         ];
+    }
+
+    /** One page of a panel list as data — the fields the Insights panel renders. */
+    private function itemsJson(string $section, $items): array
+    {
+        $filterLabels = fn ($filters) => collect($filters ?? [])
+            ->filter(fn ($v, $k) => is_scalar($v) && $v !== '' && !in_array($k, ['page', 'sort', 'lang', 'view'], true))
+            ->map(fn ($v, $k) => ucfirst(str_replace(['_', '-'], ' ', $k)) . ': ' . $v)->values()->all();
+        $tones = [
+            'property_view' => 'accent', 'favorite_added' => 'accent', 'enquiry' => 'warning', 'saved_search' => 'warning',
+            'routed' => 'success', 'transferred' => 'success', 'identified' => 'success', 'chat_started' => 'primary', 'contact_click' => 'warning',
+        ];
+
+        return collect($items)->map(fn ($item) => match ($section) {
+            'timeline' => [
+                'id' => $item->id,
+                'type' => $item->type,
+                'label' => $item->label(),
+                'icon' => $item->icon(),
+                'tone' => $tones[$item->type] ?? 'muted',
+                'property' => $item->type !== 'transferred' ? $this->propertyJson($item->property) : null,
+                'detail' => match (true) {
+                    in_array($item->type, ['routed', 'transferred'], true) => trim((!empty($item->meta['from']) ? $item->meta['from'] . ' → ' : '') . ($item->meta['owner'] ?? $item->title) . (!empty($item->meta['agent']) ? ' · agent ' . $item->meta['agent'] : '')),
+                    in_array($item->type, ['search', 'saved_search'], true) => implode(' · ', $filterLabels($item->meta['filters'] ?? [])) ?: ($item->title ?: 'All listings'),
+                    $item->type === 'enquiry' => trim(($item->title ?: 'Form') . (!empty($item->meta['message']) ? ' — “' . \Illuminate\Support\Str::limit($item->meta['message'], 80) . '”' : '')),
+                    $item->type === 'page_view' => $item->title ?: $item->url,
+                    default => $item->property ? null : $item->title,
+                },
+                'hint' => $item->meta['reason'] ?? ($item->type === 'transferred' && !empty($item->meta['note']) ? 'Note: ' . $item->meta['note'] : null),
+                'duration_seconds' => (int) $item->duration_seconds,
+                'at' => $item->created_at->toIso8601String(),
+            ],
+            'favorites' => [
+                'id' => $item->pivot?->id,
+                'property' => $this->propertyJson($item),
+                'saved_at' => $item->pivot?->created_at?->toIso8601String(),
+            ],
+            'searches' => [
+                'id' => $item->id,
+                'title' => $item->title,
+                'criteria' => $filterLabels($item->criteria),
+                'url' => url('/properties') . ($item->criteria ? '?' . http_build_query($item->criteria) : ''),
+                'created_at' => $item->created_at?->toIso8601String(),
+            ],
+            'chats' => [
+                'id' => $item->id,
+                'message_count' => (int) $item->message_count,
+                'last_message_at' => ($item->last_message_at ?? $item->created_at)?->toIso8601String(),
+            ],
+            'messages' => [
+                'id' => $item->id,
+                'role' => $item->role,
+                'text' => $item->text,
+                'properties' => collect($item->properties ?? [])->take(6)->filter(fn ($card) => !empty($card['slug']))
+                    ->map(fn ($card) => ['name' => $card['name'] ?? $card['slug'], 'url' => url('/property-details/' . $card['slug'])])->values()->all(),
+            ],
+        })->values()->all();
+    }
+
+    private function propertyJson(?Property $property): ?array
+    {
+        return $property ? [
+            'id' => $property->id,
+            'title' => $property->getTranslation('title') ?: $property->reference_no,
+            'reference_no' => $property->reference_no,
+            'url' => url('/property-details/' . $property->slug),
+            'image' => $property->galleryImages()[0]['url'] ?? null,
+            'bedrooms' => $property->bedrooms,
+            'price' => $property->price,
+            'currency' => $property->currency,
+        ] : null;
     }
 
     /**

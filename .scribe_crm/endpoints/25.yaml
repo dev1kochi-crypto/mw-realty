@@ -1,0 +1,1049 @@
+name: 'CRM Master'
+description: |-
+
+  The stages, tags and sources used on leads — your own, plus MW Realty's shared ones
+  (`is_global: true`), which you can use but not change. A Super Admin manages the shared ones
+  (through the shared "Admin" owner, see OwnerContext::effectiveOwnerId()). Approved accounts only.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/master/stages
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: |-
+
+        The stages, tags and sources used on leads — your own, plus MW Realty's shared ones
+        (`is_global: true`), which you can use but not change. A Super Admin manages the shared ones
+        (through the shared "Admin" owner, see OwnerContext::effectiveOwnerId()). Approved accounts only.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List stages'
+      description: 'In pipeline order, each with how many of your leads are in it.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/master/stages
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: |-
+
+        The stages, tags and sources used on leads — your own, plus MW Realty's shared ones
+        (`is_global: true`), which you can use but not change. A Super Admin manages the shared ones
+        (through the shared "Admin" owner, see OwnerContext::effectiveOwnerId()). Approved accounts only.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Add a stage'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: ''
+        required: true
+        example: 'Viewing booked'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      color:
+        custom: []
+        name: color
+        description: 'Hex colour.'
+        required: false
+        example: '#0ea5e9'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      is_closed:
+        custom: []
+        name: is_closed
+        description: 'Leads in this stage count as closed.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      owner_id:
+        custom: []
+        name: owner_id
+        description: "Super Admin only — add it to this account's stages instead (quick-add from that account's lead)."
+        required: false
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      name: 'Viewing booked'
+      color: '#0ea5e9'
+      is_closed: false
+      owner_id: 12
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Stage added.", "stage": {"id": 90, "name": "Viewing booked", "color": "#0ea5e9"}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/master/stages/reorder
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: |-
+
+        The stages, tags and sources used on leads — your own, plus MW Realty's shared ones
+        (`is_global: true`), which you can use but not change. A Super Admin manages the shared ones
+        (through the shared "Admin" owner, see OwnerContext::effectiveOwnerId()). Approved accounts only.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reorder stages'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      order:
+        custom: []
+        name: order
+        description: 'Your stage ids, in the new order.'
+        required: true
+        example:
+          - 26
+          - 27
+          - 28
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      order:
+        - 26
+        - 27
+        - 28
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/crm/master/stages/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: |-
+
+        The stages, tags and sources used on leads — your own, plus MW Realty's shared ones
+        (`is_global: true`), which you can use but not change. A Super Admin manages the shared ones
+        (through the shared "Admin" owner, see OwnerContext::effectiveOwnerId()). Approved accounts only.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a stage'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the stage.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: ''
+        required: true
+        example: 'Viewing booked'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      color:
+        custom: []
+        name: color
+        description: ''
+        required: true
+        example: '#0ea5e9'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      is_closed:
+        custom: []
+        name: is_closed
+        description: ''
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      name: 'Viewing booked'
+      color: '#0ea5e9'
+      is_closed: false
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/crm/master/stages/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: |-
+
+        The stages, tags and sources used on leads — your own, plus MW Realty's shared ones
+        (`is_global: true`), which you can use but not change. A Super Admin manages the shared ones
+        (through the shared "Admin" owner, see OwnerContext::effectiveOwnerId()). Approved accounts only.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a stage'
+      description: |-
+        422 with `in_use: true` while leads are still in it — take it off them first
+        (`POST /api/crm/master/stages/{id}/leads/remove`). The default stage can't be deleted.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the stage.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Stage deleted."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/master/stages/{id}/default'
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: |-
+
+        The stages, tags and sources used on leads — your own, plus MW Realty's shared ones
+        (`is_global: true`), which you can use but not change. A Super Admin manages the shared ones
+        (through the shared "Admin" owner, see OwnerContext::effectiveOwnerId()). Approved accounts only.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Make default'
+      description: 'New leads start in this stage.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the stage.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Default stage updated."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/master/tags
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List tags'
+      description: 'Alphabetical, searched and paged on the server (50 per page).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: ''
+        required: false
+        example: vip
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: vip
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/master/tags
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Add a tag'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: ''
+        required: true
+        example: VIP
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      color:
+        custom: []
+        name: color
+        description: ''
+        required: true
+        example: '#ef4444'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: VIP
+      color: '#ef4444'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Tag added.", "tag": {"id": 40, "name": "VIP", "color": "#ef4444"}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/crm/master/tags/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a tag'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the tag.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: ''
+        required: true
+        example: VIP
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      color:
+        custom: []
+        name: color
+        description: ''
+        required: true
+        example: '#ef4444'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: VIP
+      color: '#ef4444'
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/crm/master/tags/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a tag'
+      description: '422 with `in_use: true` while leads still have it.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the tag.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Tag deleted."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/master/sources
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List sources'
+      description: 'In display order, each with how many of your leads came from it.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/master/sources
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Add a source'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: ''
+        required: true
+        example: Instagram
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: Instagram
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Source added.", "source": {"id": 95, "name": "Instagram"}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/master/sources/reorder
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reorder sources'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      order:
+        custom: []
+        name: order
+        description: 'Your source ids, in the new order.'
+        required: true
+        example:
+          - 22
+          - 23
+          - 24
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      order:
+        - 22
+        - 23
+        - 24
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/crm/master/sources/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a source'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the source.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: ''
+        required: true
+        example: Instagram
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: Instagram
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/crm/master/sources/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a source'
+      description: '422 with `in_use: true` while leads still came from it.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the source.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Source deleted."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/crm/master/{type}/{id}/leads'
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: |-
+
+        Which of your leads use a stage / tag / source, and taking it off them — so an item still in
+        use can then be deleted.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Leads using an item'
+      description: '20 per page (`more: true` = load the next page).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      type:
+        custom: []
+        name: type
+        description: 'stages, tags or sources.'
+        required: true
+        example: stages
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      id:
+        custom: []
+        name: id
+        description: ''
+        required: true
+        example: 26
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      type: stages
+      id: 26
+    queryParameters:
+      q:
+        custom: []
+        name: q
+        description: 'Name, email or phone.'
+        required: false
+        example: sara
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      q: sara
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"results": [{"id": 101, "name": "John Smith", "contact": "john@example.com", "owner": null, "created_at": "2026-10-01T09:30:00+00:00"}], "total": 1, "more": false}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/master/{type}/{id}/leads/remove'
+    metadata:
+      custom: []
+      groupName: 'CRM Master'
+      groupDescription: |-
+
+        Which of your leads use a stage / tag / source, and taking it off them — so an item still in
+        use can then be deleted.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Take an item off leads'
+      description: "Stage / source changes land in each lead's timeline."
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      type:
+        custom: []
+        name: type
+        description: 'stages, tags or sources.'
+        required: true
+        example: stages
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      id:
+        custom: []
+        name: id
+        description: ''
+        required: true
+        example: 26
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      type: stages
+      id: 26
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      all:
+        custom: []
+        name: all
+        description: 'Every one of your leads using it.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      ids:
+        custom: []
+        name: ids
+        description: 'Or just these leads.'
+        required: false
+        example:
+          - 101
+          - 102
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      all: true
+      ids:
+        - 101
+        - 102
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "removed": 2, "remaining": 0, "message": "Removed from 2 leads."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

@@ -1,0 +1,50 @@
+name: 'CRM Dashboard'
+description: |-
+
+  The signed-in account's dashboard — everything scoped to its own leads and listings; a Super
+  Admin (web app) sees every account's. Reachable before KYC approval.
+
+  Links (`alerts`, `shortcuts`) carry `route` (a CRM screen: name + query) or `url` (a page not
+  in the CRM app yet).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/dashboard
+    metadata:
+      custom: []
+      groupName: 'CRM Dashboard'
+      groupDescription: |-
+
+        The signed-in account's dashboard — everything scoped to its own leads and listings; a Super
+        Admin (web app) sees every account's. Reachable before KYC approval.
+
+        Links (`alerts`, `shortcuts`) carry `route` (a CRM screen: name + query) or `url` (a page not
+        in the CRM app yet).
+      subgroup: ''
+      subgroupDescription: ''
+      title: Dashboard
+      description: |-
+        KPIs with 30-day trends, 12-week activity, deal pipeline by stage, lead sources, busiest
+        weekday, latest enquiries, most-enquired listings, inventory breakdown, plan usage (Super
+        Admin: top partners), alerts and shortcuts.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

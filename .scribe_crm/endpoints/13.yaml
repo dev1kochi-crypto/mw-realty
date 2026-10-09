@@ -1,0 +1,229 @@
+name: 'CRM Premium'
+description: |-
+
+  The Premium menu: every premium (live or scheduled) listing across Properties and Commercial, plus
+  "Add Premium" to book several listings at once within the plan's quota. A single listing is booked,
+  re-dated or stopped through /properties/{id}/feature (PropertyFeatureController).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/premium
+    metadata:
+      custom: []
+      groupName: 'CRM Premium'
+      groupDescription: |-
+
+        The Premium menu: every premium (live or scheduled) listing across Properties and Commercial, plus
+        "Add Premium" to book several listings at once within the plan's quota. A single listing is booked,
+        re-dated or stopped through /properties/{id}/feature (PropertyFeatureController).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List premium listings'
+      description: 'Live first (ending soonest), then scheduled — 20 per page, with the counts and the plan quota.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      status:
+        custom: []
+        name: status
+        description: 'all | live | scheduled.'
+        required: false
+        example: live
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      status: live
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/premium
+    metadata:
+      custom: []
+      groupName: 'CRM Premium'
+      groupDescription: |-
+
+        The Premium menu: every premium (live or scheduled) listing across Properties and Commercial, plus
+        "Add Premium" to book several listings at once within the plan's quota. A single listing is booked,
+        re-dated or stopped through /properties/{id}/feature (PropertyFeatureController).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Add Premium (several listings)'
+      description: 'The same start / end dates for every ticked listing, all-or-nothing (FeaturedListingService::featureMany).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      property_ids:
+        custom: []
+        name: property_ids
+        description: ''
+        required: true
+        example:
+          - 12
+          - 14
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      start_date:
+        custom: []
+        name: start_date
+        description: Y-m-d.
+        required: true
+        example: '2026-10-10'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      end_date:
+        custom: []
+        name: end_date
+        description: 'Y-m-d — required except for Super Admin.'
+        required: false
+        example: '2026-11-08'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      property_ids:
+        - 12
+        - 14
+      start_date: '2026-10-10'
+      end_date: '2026-11-08'
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/premium/eligible
+    metadata:
+      custom: []
+      groupName: 'CRM Premium'
+      groupDescription: |-
+
+        The Premium menu: every premium (live or scheduled) listing across Properties and Commercial, plus
+        "Add Premium" to book several listings at once within the plan's quota. A single listing is booked,
+        re-dated or stopped through /properties/{id}/feature (PropertyFeatureController).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Listings that can be made premium'
+      description: |-
+        The "Add Premium" picker, searched and paged on the server (20 at a time). Owners only see
+        active listings that aren't premium or scheduled already.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      q:
+        custom: []
+        name: q
+        description: ''
+        required: false
+        example: marina
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      q: marina
+      page: 1
+    bodyParameters:
+      q:
+        custom: []
+        name: q
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: 'Must be at least 1.'
+        required: false
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      q: vmqeopfuudtdsufvyvddq
+      page: 2
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

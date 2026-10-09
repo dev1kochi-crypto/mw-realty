@@ -53,11 +53,11 @@ class AdsTest extends TestCase
         // Agents / agencies upload their profile photo / logo from the CRM profile.
         $agent = $this->independentAgent();
         $this->app['auth']->forgetGuards();
-        $this->signIn($agent)->get('/portal/profile')->assertOk()->assertSee('avatarInput', false);
-        $this->postJson('/portal/profile/avatar', ['avatar' => UploadedFile::fake()->image('me.png', 300, 300)])->assertOk()->assertJsonStructure(['avatar_url']);
+        $this->crmApi($agent)->getJson('/api/crm/profile')->assertOk()->assertJsonPath('account.avatar_url', null);
+        $this->postJson('/api/crm/profile/avatar', ['avatar' => UploadedFile::fake()->image('me.png', 300, 300)])->assertOk()->assertJsonStructure(['avatar_url']);
         $this->assertNotNull($agent->fresh()->avatar);
-        $this->postJson('/portal/profile/avatar', ['avatar' => UploadedFile::fake()->image('tiny.png', 40, 40)])->assertStatus(422);
-        $this->deleteJson('/portal/profile/avatar')->assertOk();
+        $this->postJson('/api/crm/profile/avatar', ['avatar' => UploadedFile::fake()->image('tiny.png', 40, 40)])->assertStatus(422);
+        $this->deleteJson('/api/crm/profile/avatar')->assertOk();
         $this->assertNull($agent->fresh()->avatar);
         $this->app['auth']->forgetGuards();
         $this->signIn($admin, 'cms');

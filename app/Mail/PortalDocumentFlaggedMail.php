@@ -35,7 +35,7 @@ class PortalDocumentFlaggedMail extends Mailable
                 'portalUser' => $this->portalUser,
                 'documentLabel' => PortalUser::documentLabel($this->field),
                 'note' => $this->note,
-                'profileUrl' => route('portal.profile.edit'),
+                'profileUrl' => route('crm.app', 'profile'),
             ],
         );
     }

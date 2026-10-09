@@ -11,7 +11,7 @@ use function Knuckles\Scribe\Config\removeStrategies;
 
 return [
     // The HTML <title> for the generated documentation.
-    'title' => 'MW Realty API',
+    'title' => 'MW Realty — Frontend API',
 
     // A short description of your API. Will be included in the docs webpage, Postman collection and OpenAPI spec.
     'description' => 'REST API for the MW Realty mobile app: property search, listings, agents, content, customer accounts, enquiries and the AI assistant.',
@@ -44,18 +44,25 @@ return [
             * `GET /api/static-translations?lang={code}` returns the UI copy (button labels etc.).
             * Every price is in **AED**. `GET /api/currencies` returns exchange `rate`s (units per 1 AED) for display conversion.
 
-            ## Pagination
+            ## Response format
 
-            Paginated lists return a `pagination` object: `current_page`, `last_page` and usually `total`. Request the next page with `?page=N` until `current_page == last_page`.
+            Every response (success and error) has the same shape:
 
-            ## Errors
+            ```json
+            { "success": true, "message": "Leads retrieved successfully.", "data": { } }
+            ```
 
-            | Status | Meaning | Body |
-            |---|---|---|
-            | `401` | Missing or invalid token | `{"message": "Unauthenticated."}` |
-            | `404` | Not found (e.g. unpublished listing) | `{"message": "Not found"}` |
-            | `422` | Validation failed | `{"message": "…", "errors": {"field": ["…"]}}`: show `errors` next to each field |
-            | `429` | Too many requests | Wait for the `Retry-After` header (seconds) |
+            * `success` — `true` / `false`. `message` — a sentence you can show the user.
+            * `data` — the payload: an object, a list, or `null`. **Paginated lists** are `data: { "items": [...], "meta": {...}, "links": {...} }`; request the next page with `?page=N`.
+            * **Errors** keep the same keys with `success: false` and `data: null`. A `422` adds `errors`: `{"field": ["message"]}` — show them beside each field.
+
+            | Status | Meaning |
+            |---|---|
+            | `401` | Missing, invalid or expired token — sign in again |
+            | `403` | Not allowed (wrong role, plan, or account not approved) |
+            | `404` | Not found |
+            | `422` | Validation failed — see `errors` |
+            | `429` | Too many requests — wait for the `Retry-After` header |
 
             ## Rate limits (per IP)
 
@@ -93,6 +100,8 @@ return [
 
             // Exclude these routes even if they matched the rules above.
             'exclude' => [
+                // The agent/company CRM has its own docs (config/scribe_crm.php).
+                'api/crm/*',
                 // Server-to-server webhooks, not for the app.
                 'POST /api/stripe/webhook', 'GET /api/webhooks/facebook', 'POST /api/webhooks/facebook',
             ],
@@ -111,7 +120,7 @@ return [
     'static' => [
         // HTML documentation, assets and Postman collection will be generated to this folder.
         // Source Markdown will still be in resources/docs.
-        'output_path' => 'public/docs',
+        'output_path' => 'public/docs/_scribe/frontend',
     ],
 
     'laravel' => [
@@ -295,16 +304,17 @@ return [
         'bodyParameters' => [
             ...Defaults::BODY_PARAMETERS_STRATEGIES,
         ],
-        'responses' => configureStrategy(
-            Defaults::RESPONSES_STRATEGIES,
-            Strategies\Responses\ResponseCalls::withSettings(
-                only: ['GET *'],
-                // Recommended: disable debug mode in response calls to avoid error stack traces in responses
-                config: [
-                    'app.debug' => false,
-                ]
+        // Response calls (hitting every GET endpoint against the database) are what makes generating
+        // slow, and unauthenticated they only record 401s. SCRIBE_RESPONSE_CALLS=true in .env turns them on.
+        'responses' => env('SCRIBE_RESPONSE_CALLS', false)
+            ? configureStrategy(
+                Defaults::RESPONSES_STRATEGIES,
+                Strategies\Responses\ResponseCalls::withSettings(
+                    only: ['GET *'],
+                    config: ['app.debug' => false]
+                )
             )
-        ),
+            : removeStrategies(Defaults::RESPONSES_STRATEGIES, [Strategies\Responses\ResponseCalls::class]),
         'responseFields' => [
             ...Defaults::RESPONSE_FIELDS_STRATEGIES,
         ],

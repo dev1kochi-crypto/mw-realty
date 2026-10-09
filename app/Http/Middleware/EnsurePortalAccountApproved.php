@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Auth;
 class EnsurePortalAccountApproved
 {
     /**
-     * Mirrors PortalPropertyController::isAdmin() exactly: a portal-guard login
+     * Mirrors OwnerContext::isAdmin() exactly: a portal-guard login
      * always wins even if a superadmin cms-guard session is also active in the same
      * browser, so a Super Admin browsing the portal (no portal-guard session) is
      * never blocked by this middleware.

@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 /**
  * Listing-photo watermark (Listings Settings → Watermark). Stamped into each gallery photo at
- * upload time (PortalPropertyController::storeGalleryImage()), so it's part of the image file
+ * upload time (Crm\Properties\PropertyController::storeGalleryImage()), so it's part of the image file
  * itself everywhere the photo is shown.
  *
  * Whose watermark a listing gets (activeSettings()):

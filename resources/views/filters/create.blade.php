@@ -1,7 +1,7 @@
 @extends('cms-kit::layouts.cms')
 
 @section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('portal.properties.index') }}">Properties</a></li>
+    <li class="breadcrumb-item"><a href="{{ route('crm.app', 'properties') }}">Properties</a></li>
     <li class="breadcrumb-item"><a href="{{ route('cms.filters.index') }}">Filters</a></li>
     <li class="breadcrumb-item active" aria-current="page">Add Filter</li>
 @endsection

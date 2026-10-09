@@ -56,8 +56,9 @@ class AgencyAgentPlanTest extends TestCase
         // Portal: no upgrade button, no buying.
         $this->app['auth']->forgetGuards();
         $this->signIn($john->fresh());
-        $this->get('/portal/plans')->assertOk()->assertSee('Covered by your agency')->assertSee('Agency Pro')->assertDontSee('btn-portal-upgrade-cta', false);
-        $this->post('/portal/plans/request', ['plan_id' => $agencyPlan->id])->assertSessionHasErrors('plan_id');
+        $this->crmApi($john->fresh())->getJson('/api/crm/plans')->assertOk()->assertJsonPath('agency_plan.plan', 'Agency Pro');
+        $this->getJson('/api/crm/auth/me')->assertOk()->assertJsonPath('data.can_upgrade', false);
+        $this->postJson('/api/crm/plans', ['plan_id' => $agencyPlan->id])->assertJsonValidationErrors('plan_id');
 
         // Leaves → independent on Free.
         $this->post('/portal/agency/leave')->assertRedirect();
@@ -75,7 +76,7 @@ class AgencyAgentPlanTest extends TestCase
 
         // Naming a brokerage in the profile is KYC text only — no link, no plan change.
         $maya = $this->independentAgent(['plan_id' => $ownPlan->id]);
-        $this->signIn($maya)->postJson('/portal/profile', ['section' => 'agent', 'affiliated_brokerage' => $agency->company_name])->assertOk();
+        $this->crmApi($maya)->postJson('/api/crm/profile', ['section' => 'compliance', 'affiliated_brokerage' => $agency->company_name])->assertOk();
         $maya->refresh();
         $this->assertSame($agency->company_name, $maya->affiliated_brokerage);
         $this->assertNull($maya->company_id);

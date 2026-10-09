@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\CmsKit;
 
-use App\Http\Controllers\Portal\PortalContactController;
 use App\Models\SupportTicket;
 use App\Services\SupportTicketService;
 use Illuminate\Http\Request;
@@ -88,6 +87,6 @@ class SupportTicketController extends Controller
 
     public function attachment(SupportTicket $ticket, int $message)
     {
-        return PortalContactController::downloadAttachment($ticket, $message);
+        return $this->tickets->downloadAttachment($ticket, $message);
     }
 }

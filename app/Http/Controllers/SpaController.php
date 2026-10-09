@@ -120,7 +120,7 @@ class SpaController extends Controller
     public function missing(Request $request)
     {
         if ($request->is('api/*') || $request->expectsJson()) {
-            return response()->json(['message' => 'Not found.'], 404);
+            return response()->json(['success' => false, 'message' => 'Not found.', 'data' => null], 404);
         }
         abort_if($request->is(config('cms-kit.common.auth.prefix', 'admin'), config('cms-kit.common.auth.prefix', 'admin') . '/*', 'portal', 'portal/*'), 404);
 

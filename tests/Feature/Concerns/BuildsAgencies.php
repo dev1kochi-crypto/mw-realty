@@ -89,6 +89,18 @@ trait BuildsAgencies
         return $this->actingAs($user, $guard)->withSession(['password_hash_' . $guard => $user->getAuthPassword()]);
     }
 
+    /** Calls /api/crm/* as this account, with a CRM app Bearer token. */
+    protected function crmApi(PortalUser $user): static
+    {
+        return $this->withToken($user->createToken('test')->plainTextToken);
+    }
+
+    /** Calls /api/crm/* as Super Admin — the CMS session, sent the way the /crm web app sends it (Sanctum stateful). */
+    protected function crmApiAsSuperAdmin(): static
+    {
+        return $this->signIn($this->superAdmin(), 'cms')->withHeader('Referer', config('app.url'));
+    }
+
     /**
      * Public enquiry exactly as the property page submits it. Each call is a different buyer unless
      * $email is given — the same email then merges into that buyer's existing lead (duplicate detection).

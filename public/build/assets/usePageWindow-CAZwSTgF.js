@@ -1,0 +1,1 @@
+import{c,m as r}from"./preload-helper-BF7F9GmD.js";function M(n,o,m=3){return c(()=>{const t=Math.max(0,Number(r(o))||0);if(!t)return[];const e=Math.min(Math.max(1,Number(r(n))||1),t),a=Math.min(m,t),u=Math.min(Math.max(1,e-Math.floor(a/2)),t-a+1);return Array.from({length:a},(h,s)=>u+s)})}export{M as u};

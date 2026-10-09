@@ -3,7 +3,7 @@
 REST API for the MW Realty mobile app: property search, listings, agents, content, customer accounts, enquiries and the AI assistant.
 
 <aside>
-    <strong>Base URL</strong>: <code>http://localhost</code>
+    <strong>Base URL</strong>: <code>http://127.0.0.1:8000</code>
 </aside>
 
     The same API the website uses. All responses are JSON. Example responses for `GET` endpoints were recorded from real data, so field names and nesting are exact.
@@ -16,7 +16,7 @@ REST API for the MW Realty mobile app: property search, listings, agents, conten
     |---|---|---|
     | `Accept` | `application/json` | Errors always come back as JSON. |
     | `X-Device-Id` | A random id (16–60 letters, digits or `-`, e.g. a UUID) the app creates on first launch and keeps | Identifies the device for the AI chat, enquiry history and listing stats, in place of the website's cookie. Without it the AI chat cannot continue a conversation and screen views are not recorded. |
-    | `Authorization` | `Bearer {token}` | Only when a customer is signed in. Required for the **Customer Account** endpoints; optional elsewhere (enquiries sent with it appear in the customer's account). |
+    | `Authorization` | `Bearer {token}` | Only when a user is signed in. Required for the **User Account** endpoints; optional elsewhere (enquiries sent with it appear in the user's account). |
     | `User-Agent` | Your app's name/version | Requests without one are treated as bots and not tracked. |
 
     ## Signing in
@@ -32,18 +32,25 @@ REST API for the MW Realty mobile app: property search, listings, agents, conten
     * `GET /api/static-translations?lang={code}` returns the UI copy (button labels etc.).
     * Every price is in **AED**. `GET /api/currencies` returns exchange `rate`s (units per 1 AED) for display conversion.
 
-    ## Pagination
+    ## Response format
 
-    Paginated lists return a `pagination` object: `current_page`, `last_page` and usually `total`. Request the next page with `?page=N` until `current_page == last_page`.
+    Every response (success and error) has the same shape:
 
-    ## Errors
+    ```json
+    { "success": true, "message": "Leads retrieved successfully.", "data": { } }
+    ```
 
-    | Status | Meaning | Body |
-    |---|---|---|
-    | `401` | Missing or invalid token | `{"message": "Unauthenticated."}` |
-    | `404` | Not found (e.g. unpublished listing) | `{"message": "Not found"}` |
-    | `422` | Validation failed | `{"message": "…", "errors": {"field": ["…"]}}`: show `errors` next to each field |
-    | `429` | Too many requests | Wait for the `Retry-After` header (seconds) |
+    * `success` — `true` / `false`. `message` — a sentence you can show the user.
+    * `data` — the payload: an object, a list, or `null`. **Paginated lists** are `data: { "items": [...], "meta": {...}, "links": {...} }`; request the next page with `?page=N`.
+    * **Errors** keep the same keys with `success: false` and `data: null`. A `422` adds `errors`: `{"field": ["message"]}` — show them beside each field.
+
+    | Status | Meaning |
+    |---|---|
+    | `401` | Missing, invalid or expired token — sign in again |
+    | `403` | Not allowed (wrong role, plan, or account not approved) |
+    | `404` | Not found |
+    | `422` | Validation failed — see `errors` |
+    | `429` | Too many requests — wait for the `Retry-After` header |
 
     ## Rate limits (per IP)
 
@@ -51,7 +58,7 @@ REST API for the MW Realty mobile app: property search, listings, agents, conten
 
     ## Forms and reCAPTCHA
 
-    The website protects forms (enquiries, viewings, downloads, contact, newsletter, careers, chat details) with Google reCAPTCHA v3 through the `recaptcha_token` field. **While reCAPTCHA is enabled on the server, these endpoints answer `422` with `errors.recaptcha_token` when the field is missing.** Sign-in, sign-up and the customer account endpoints don't use it. How the app will pass this check is still open; agree on it with the backend team before building the forms.
+    The website protects forms (enquiries, viewings, downloads, contact, newsletter, careers, chat details) with Google reCAPTCHA v3 through the `recaptcha_token` field. **While reCAPTCHA is enabled on the server, these endpoints answer `422` with `errors.recaptcha_token` when the field is missing.** Sign-in, sign-up and the user account endpoints don't use it. How the app will pass this check is still open; agree on it with the backend team before building the forms.
 
     ## Images and files
 

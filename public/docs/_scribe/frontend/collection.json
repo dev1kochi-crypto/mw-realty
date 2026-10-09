@@ -1,0 +1,3180 @@
+{
+    "variable": [
+        {
+            "id": "baseUrl",
+            "key": "baseUrl",
+            "type": "string",
+            "name": "string",
+            "value": "http:\/\/127.0.0.1:8000"
+        }
+    ],
+    "info": {
+        "name": "MW Realty \u2014 Frontend API",
+        "_postman_id": "bd6b2579-b95f-4a94-be19-b20fb5e76e96",
+        "description": "REST API for the MW Realty mobile app: property search, listings, agents, content, customer accounts, enquiries and the AI assistant.",
+        "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
+    },
+    "item": [
+        {
+            "name": "App Config",
+            "description": "",
+            "item": [
+                {
+                    "name": "Languages",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/languages",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/languages"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "The languages content is available in. Send the chosen `code` as `?lang=` on every request.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Currencies",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/currencies",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/currencies"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Prices from every endpoint are in AED; to display another currency, multiply by its `rate`\n(units per 1 AED).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "UI translations",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/static-translations",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "A code from `GET \/api\/languages`.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/static-translations?lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Static UI copy (labels, buttons\u2026) as a key \u2192 text map for one language. Cache it on the\ndevice per language.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Ad banner",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/ads",
+                            "query": [
+                                {
+                                    "key": "placement",
+                                    "value": "home",
+                                    "description": "home, property-details, \u2026",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/ads?placement=home&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "The active ad for a screen, or `false` when there is none (hide the slot).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Site information",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/site-information",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/site-information?lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Office address, phone, email, WhatsApp and social links (the website footer).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Home",
+            "description": "",
+            "item": [
+                {
+                    "name": "Home screen",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/home",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/home?lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Every home section in one request: banner, brands, ad, developments, premium properties,\nluxury, why-choose-us, communities, popular places, testimonials, contact. Property lists\ninside are shuffled on each call.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "New projects by city",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/home\/new-projects",
+                            "query": [
+                                {
+                                    "key": "city",
+                                    "value": "Dubai",
+                                    "description": "A city tab from the home response.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/home\/new-projects?city=Dubai&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "The home \"Browse New Projects\" section's listings for one city tab.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Search & Filters",
+            "description": "\nPublic read-only endpoint the frontend (home banner + \/properties listing)\nuses to render the search filter bar. Options come straight from the\nadmin-managed filters\/filter_values tables, so a new filter or option\nshows up here without a code change. Option counts and slider bounds use\nthe listings of the page asking: residential by default, or `?scope=commercial` for \/commercial.",
+            "item": [
+                {
+                    "name": "Search filter bar",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/property-filters",
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "listing",
+                                    "description": "Which screen's filter set: `home` (compact) or `listing` (full).",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "scope",
+                                    "value": "residential",
+                                    "description": "Whose listings the counts\/bounds come from: residential, commercial, premium, marketing.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/property-filters?page=listing&scope=residential&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"page\":\"home\",\"lang\":\"vmqeopfuu\",\"scope\":\"marketing\"}"
+                        },
+                        "description": "The filters to render (selects with their options and live listing counts, number sliders\nwith min\/max\/step), in admin order. Pass the chosen `value`s back to the listing endpoints\nunder each filter's `key`.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Location autocomplete",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/location-suggestions",
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "mar",
+                                    "description": "The typed text.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "scope",
+                                    "value": "all",
+                                    "description": "all (default) or commercial.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/location-suggestions?q=mar&scope=all&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"q\":\"vmqeopfuudtdsufvyvddq\",\"lang\":\"amniihfqc\",\"scope\":\"commercial\"}"
+                        },
+                        "description": "Cities, communities and addresses matching what the user typed (2+ characters; fewer\nreturns an empty list). Pass a picked suggestion back as `city=` \/ `community=` \/\n`location=` on the listing endpoints. Debounce on the client \u2014 limited to 120 calls\/minute.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Properties",
+            "description": "",
+            "item": [
+                {
+                    "name": "Search commercial properties",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/commercial",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "description": "Title, community or reference number.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "",
+                                    "description": "Purpose: sale, rent or off_plan. e.g. `rent`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "property_type",
+                                    "value": "",
+                                    "description": "e.g. `office`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "location",
+                                    "value": "",
+                                    "description": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "city",
+                                    "value": "",
+                                    "description": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "community",
+                                    "value": "",
+                                    "description": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "completion_status",
+                                    "value": "",
+                                    "description": "ready or off_plan.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "min_price",
+                                    "value": "",
+                                    "description": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "max_price",
+                                    "value": "",
+                                    "description": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "min_sqft",
+                                    "value": "",
+                                    "description": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "max_sqft",
+                                    "value": "",
+                                    "description": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "bathrooms",
+                                    "value": "",
+                                    "description": "1, 2, 3, 4 or 5+.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "amenities[]",
+                                    "value": "",
+                                    "description": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "",
+                                    "description": "recent, price_asc, price_desc or popular.",
+                                    "disabled": true
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/commercial?lang=en&page=1&search=&category=&property_type=&location=&city=&community=&completion_status=&min_price=&max_price=&min_sqft=&max_sqft=&bathrooms=&amenities%5B%5D=&sort="
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Commercial listings (16 per page) \u2014 same response shape as `GET \/api\/properties`.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Search properties",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/properties",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "listing_type",
+                                    "value": "",
+                                    "description": "Purpose: sale, rent or off_plan. e.g. `sale`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "property_type",
+                                    "value": "",
+                                    "description": "e.g. `apartment`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "location",
+                                    "value": "",
+                                    "description": "Free-text location. e.g. `Dubai Marina`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "city",
+                                    "value": "",
+                                    "description": "Exact city from a location suggestion. e.g. `Dubai`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "community",
+                                    "value": "",
+                                    "description": "Exact community from a location suggestion. e.g. `Dubai Marina`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "bedrooms",
+                                    "value": "",
+                                    "description": "e.g. `2`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "bathrooms",
+                                    "value": "",
+                                    "description": "e.g. `2`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "completion_status",
+                                    "value": "",
+                                    "description": "ready or off_plan. e.g. `ready`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "min_price",
+                                    "value": "",
+                                    "description": "AED. e.g. `1000000`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "max_price",
+                                    "value": "",
+                                    "description": "AED. e.g. `3000000`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "min_sqft",
+                                    "value": "",
+                                    "description": "e.g. `800`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "max_sqft",
+                                    "value": "",
+                                    "description": "e.g. `2000`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "amenities[]",
+                                    "value": "",
+                                    "description": "Amenity values from the filters endpoint.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "",
+                                    "description": "recent, price_asc, price_desc or popular. e.g. `recent`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "premium",
+                                    "value": "",
+                                    "description": "1 = featured (premium) listings only, residential + commercial. e.g. `0`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "marketing",
+                                    "value": "",
+                                    "description": "1 = Marketing Properties only. e.g. `0`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "agent",
+                                    "value": "",
+                                    "description": "An agent's slug \u2014 only their listings.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "agency",
+                                    "value": "",
+                                    "description": "An agency's slug \u2014 only its listings.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "floor_plans",
+                                    "value": "",
+                                    "description": "1 = only listings with floor plans.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "open_house",
+                                    "value": "",
+                                    "description": "1 = only listings with upcoming open house days.",
+                                    "disabled": true
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/properties?lang=en&page=1&listing_type=&property_type=&location=&city=&community=&bedrooms=&bathrooms=&completion_status=&min_price=&max_price=&min_sqft=&max_sqft=&amenities%5B%5D=&sort=&premium=&marketing=&agent=&agency=&floor_plans=&open_house="
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Residential listings (16 per page) with the result count, pagination and the card data for\neach listing. Filter keys and values come from `GET \/api\/property-filters`; any admin\nselect filter whose key is a property column also works as `?{key}=value`.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Map pins",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/properties\/map",
+                            "query": [
+                                {
+                                    "key": "segment",
+                                    "value": "residential",
+                                    "description": "residential (default), commercial, premium or marketing.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "south",
+                                    "value": "",
+                                    "description": "Viewport bounds \u2014 all four or none. e.g. `25.05`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "west",
+                                    "value": "",
+                                    "description": "e.g. `55.10`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "north",
+                                    "value": "",
+                                    "description": "e.g. `25.30`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "east",
+                                    "value": "",
+                                    "description": "e.g. `55.40`.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/properties\/map?segment=residential&south=&west=&north=&east=&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Pins for the map view. Takes every filter of `GET \/api\/properties` (or of\n`\/api\/commercial` with `segment=commercial`), plus the visible map area. Send the bounds\nof the current viewport after each pan\/zoom.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Property details",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/properties\/:slug",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/properties\/:slug?lang=en",
+                            "variable": [
+                                {
+                                    "id": "slug",
+                                    "key": "slug",
+                                    "value": "virella-2",
+                                    "description": "The listing slug from a property card."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "The full listing: gallery, price, specs, description, amenities, location, agent\/agency\ncontact, floor plans, open house days, similar listings and SEO. Use the property's `id`\nfrom here for wishlist and lead endpoints.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"Not found\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Agents & Agencies",
+            "description": "\nPublic, read-only endpoints for the \/agents listing page and \/agent-details\/{slug} page.",
+            "item": [
+                {
+                    "name": "List agents",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/agents",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "20",
+                                    "description": "Page size, max 50.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Used with per_page.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/agents?lang=en&per_page=20&page=1"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Without `per_page` every agent is returned (the website's behaviour); pass `per_page` to\npage through them and get a `pagination` block.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Agent details",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/agents\/:slug",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/agents\/:slug?lang=en",
+                            "variable": [
+                                {
+                                    "id": "slug",
+                                    "key": "slug",
+                                    "value": "sruthi-raveendran-m",
+                                    "description": "The agent's slug from the list."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"Not found\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "List agencies",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/agencies",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "20",
+                                    "description": "Page size, max 50.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Used with per_page.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/agencies?lang=en&per_page=20&page=1"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Without `per_page` every agency is returned (the website's behaviour); pass `per_page` to\npage through them and get a `pagination` block.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Agency details",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/agencies\/:slug",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/agencies\/:slug?lang=en",
+                            "variable": [
+                                {
+                                    "id": "slug",
+                                    "key": "slug",
+                                    "value": "test-company",
+                                    "description": "The agency's slug from the list."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"Not found\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "User Auth",
+            "description": "\nToken (Bearer) auth for the mobile app's **User** account (buyers\/visitors). Agents and\nagencies don't sign in through these endpoints.\n\nSame accounts, OTP and Google rules as the website's session login\n(Customer\\CustomerAuthController) \u2014 the only difference is that a successful sign-in returns\na Sanctum token instead of a cookie.\n\nSend the token on every authenticated request: `Authorization: Bearer {token}`.",
+            "item": [
+                {
+                    "name": "Sign up",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/auth\/register",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/auth\/register"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"password\":\"secret123\",\"password_confirmation\":\"secret123\"}"
+                        },
+                        "description": "Step 1 of sign-up. Creates the account and emails a 4-digit code \u2014 no token yet; call\n`POST \/api\/auth\/verify-otp` with the returned `user_id` and the code.\n`email_sent: false` means the email failed \u2014 offer \"Resend code\".",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"otp_required\": true, \"user_id\": 7, \"email_sent\": true}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\": \"The email has already been taken.\", \"errors\": {\"email\": [\"The email has already been taken.\"]}}",
+                            "name": "Validation error"
+                        }
+                    ]
+                },
+                {
+                    "name": "Verify sign-up code",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/auth\/verify-otp",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/auth\/verify-otp"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"user_id\":7,\"code\":\"1234\",\"device_name\":\"Pixel 8\"}"
+                        },
+                        "description": "Step 2 of sign-up: the 4-digit code emailed by `POST \/api\/auth\/register`. Marks the\nemail verified and returns a Bearer token.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"token\": \"12|9xQ...\", \"token_type\": \"Bearer\", \"user\": {\"id\": 7, \"name\": \"Sara Ahmed\", \"email\": \"buyer@example.com\", \"phone\": null, \"location\": null, \"avatar_url\": null, \"email_verified\": true}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\": \"Invalid or expired code.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Resend sign-up code",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/auth\/resend-otp",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/auth\/resend-otp"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"user_id\":7}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"A new code has been sent.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\": \"This account is already verified.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 503,
+                            "body": "{\"message\": \"Could not send the code right now \u2014 please try again in a moment.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Sign in",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/auth\/login",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/auth\/login"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"email\":\"buyer@example.com\",\"password\":\"secret123\",\"device_name\":\"iPhone 15 Pro\"}"
+                        },
+                        "description": "Email + password sign-in. Returns a Bearer token for the `Authorization` header.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"token\": \"12|9xQ...\", \"token_type\": \"Bearer\", \"user\": {\"id\": 7, \"name\": \"Sara Ahmed\", \"email\": \"buyer@example.com\", \"phone\": \"+971 50 123 4567\", \"location\": \"Dubai Marina\", \"avatar_url\": null, \"email_verified\": true}}",
+                            "name": "Signed in"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\": \"Invalid credentials.\"}",
+                            "name": "Wrong email or password"
+                        }
+                    ]
+                },
+                {
+                    "name": "Continue with Google",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/auth\/google",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/auth\/google"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"access_token\":\"ya29.a0Af...\",\"device_name\":\"iPhone 15 Pro\"}"
+                        },
+                        "description": "Exchange the access token from the native Google Sign-In SDK for an app token. Links to an\nexisting account with the same email, or creates one. For the **User** account only \u2014\nagents and agencies don't have Google sign-in (show the button only on the User tab).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"token\": \"12|9xQ...\", \"token_type\": \"Bearer\", \"user\": {\"id\": 7, \"name\": \"Sara Ahmed\", \"email\": \"sara@gmail.com\", \"phone\": null, \"location\": null, \"avatar_url\": null, \"email_verified\": true}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\": \"Google sign-in failed \u2014 please try again.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Forgot password",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/auth\/forgot-password",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/auth\/forgot-password"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"email\":\"buyer@example.com\"}"
+                        },
+                        "description": "Emails a reset link (opens the website's reset page). Always the same reply, whether or not\nthe email is registered.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"If an account exists for that email, a reset link has been sent.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Reset password",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/auth\/reset-password",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/auth\/reset-password"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"token\":\"3f9a...\",\"email\":\"buyer@example.com\",\"password\":\"newSecret123\",\"password_confirmation\":\"newSecret123\"}"
+                        },
+                        "description": "Only needed if the app handles the reset link itself (deep link\n`\/reset-password?token=...&email=...`); otherwise the website page does this.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Your password has been reset \u2014 you can now sign in.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\": \"This password reset token is invalid.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Sign out",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/auth\/logout",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/auth\/logout"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Revokes the token used for this request (other devices stay signed in)."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Signed out.\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "User Account",
+            "description": "\nThe logged-in customer's own dashboard data (Profile.vue \/ the app's account screens) \u2014\nwishlist, saved searches, enquiries, settings. Served twice: under \/customer\/* for the\nwebsite's session login and under \/api\/customer\/* for the app's Bearer token; the 'sanctum'\nguard resolves either.",
+            "item": [
+                {
+                    "name": "Session state",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/customer\/session",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/customer\/session"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Is someone signed in, and which property ids are in their wishlist (to draw the heart\nicons). Works without a token too \u2014 guests get `authenticated: false` instead of a 401.\n\nPublic \u2014 every page's shared session state (useWishlist.js) calls this once on load.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"authenticated\": true, \"wishlist_ids\": [12, 48], \"user\": {\"name\": \"Sara Ahmed\", \"avatar_url\": null}}",
+                            "name": "Signed in"
+                        },
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"authenticated\": false, \"wishlist_ids\": [], \"user\": null}",
+                            "name": "Guest"
+                        }
+                    ]
+                },
+                {
+                    "name": "Dashboard",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/customer\/me",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "Language code for translated titles.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/customer\/me?lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Everything for the account screen in one call: profile, counts, recent activity, the\nwishlist (property cards), saved searches and sent enquiries. For long wishlists, use the\npaginated `GET \/api\/customer\/wishlist` instead."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"profile\": {\"name\": \"Sara Ahmed\", \"email\": \"buyer@example.com\", \"phone\": \"+971 50 123 4567\", \"location\": \"Dubai Marina\", \"avatar_url\": null}, \"stats\": {\"wishlist\": 2, \"saved_searches\": 1, \"enquiries\": 1}, \"activity\": [{\"icon\": \"heart.svg\", \"text\": \"You saved \\\"Marina Gate 2BR\\\" to your wishlist.\", \"time\": \"2 hours ago\"}], \"wishlist\": [{\"id\": 12, \"slug\": \"marina-gate-2br\", \"image\": \"https:\/\/...\/photo.jpg\", \"...\": \"same card shape as GET \/api\/properties\"}], \"saved_searches\": [{\"id\": 3, \"title\": \"2BR in Marina\", \"meta\": \"Dubai Marina \u00b7 2 Bed \u00b7 For sale\", \"criteria\": {\"location\": \"Dubai Marina\", \"bedrooms\": \"2\", \"listing_type\": \"sale\"}}], \"enquiries\": [{\"id\": 91, \"property\": \"Marina Gate 2BR\", \"sent_to\": \"Ahmed Khan\", \"date\": \"Oct 08, 2026\", \"status\": \"New\"}]}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Update profile",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/customer\/settings",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/customer\/settings"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart\/form-data"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Sara Ahmed",
+                                    "type": "text",
+                                    "description": ""
+                                },
+                                {
+                                    "key": "email",
+                                    "value": "buyer@example.com",
+                                    "type": "text",
+                                    "description": ""
+                                },
+                                {
+                                    "key": "phone",
+                                    "value": "+971 50 123 4567",
+                                    "type": "text",
+                                    "description": ""
+                                },
+                                {
+                                    "key": "location",
+                                    "value": "Dubai Marina",
+                                    "type": "text",
+                                    "description": ""
+                                },
+                                {
+                                    "key": "password",
+                                    "value": "newSecret123",
+                                    "type": "text",
+                                    "description": "Leave out to keep the current password."
+                                },
+                                {
+                                    "key": "password_confirmation",
+                                    "value": "newSecret123",
+                                    "type": "text",
+                                    "description": "Required with password."
+                                },
+                                {
+                                    "key": "avatar",
+                                    "src": [],
+                                    "type": "file"
+                                },
+                                {
+                                    "key": "_method",
+                                    "value": "PUT",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "description": "Send as `multipart\/form-data` when uploading an avatar. Use `POST` from the app \u2014 PHP does\nnot parse file uploads on `PUT` (the `PUT` route is kept for the website)."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Settings updated.\", \"avatar_url\": \"https:\/\/res.cloudinary.com\/...\/avatar.jpg\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete account",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/customer\/account",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/customer\/account"
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"password\":\"secret123\"}"
+                        },
+                        "description": "Permanently deletes the account (required by the App Store \/ Play Store for apps with\nsign-up). Wishlist and saved searches are removed; enquiries already sent to agents stay\nwith them, unlinked from the account. Password accounts must confirm their password;\nGoogle-only accounts send nothing."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Your account has been deleted.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\": \"The password is incorrect.\", \"errors\": {\"password\": [\"The password is incorrect.\"]}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Wishlist (paginated)",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/customer\/wishlist",
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/customer\/wishlist?page=1&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "The saved properties as listing cards, newest first, 16 per page."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"properties\": [{\"id\": 12, \"slug\": \"marina-gate-2br\", \"title\": \"Marina Gate 2BR\", \"image\": \"https:\/\/...\/photo.jpg\", \"...\": \"same card shape as GET \/api\/properties\"}], \"pagination\": {\"current_page\": 1, \"last_page\": 1, \"per_page\": 16, \"total\": 2}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Toggle wishlist",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/customer\/wishlist\/:property_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/customer\/wishlist\/:property_id",
+                            "variable": [
+                                {
+                                    "id": "property_id",
+                                    "key": "property_id",
+                                    "value": 82,
+                                    "description": "The ID of the property."
+                                },
+                                {
+                                    "id": "property",
+                                    "key": "property",
+                                    "value": 12,
+                                    "description": "The property **id** (not slug)."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Adds the property to the wishlist, or removes it if it's already there."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"wishlisted\": true}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Save a search",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/customer\/saved-searches",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/customer\/saved-searches"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"title\":\"2BR in Marina\",\"criteria\":{\"location\":\"Dubai Marina\",\"bedrooms\":\"2\",\"listing_type\":\"sale\",\"min_price\":1500000}}"
+                        },
+                        "description": "Stores the listing filters so the user can reopen them later. `criteria` takes the same\nkeys as the `GET \/api\/properties` query string."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"id\": 3, \"title\": \"2BR in Marina\", \"meta\": \"Dubai Marina \u00b7 2 Bed \u00b7 For sale \u00b7 AED 1,500,000 \u2013 any\", \"criteria\": {\"location\": \"Dubai Marina\", \"bedrooms\": \"2\", \"listing_type\": \"sale\", \"min_price\": 1500000}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete a saved search",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/customer\/saved-searches\/:savedSearch_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/customer\/saved-searches\/:savedSearch_id",
+                            "variable": [
+                                {
+                                    "id": "savedSearch_id",
+                                    "key": "savedSearch_id",
+                                    "value": 3,
+                                    "description": "The ID of the savedSearch."
+                                },
+                                {
+                                    "id": "savedSearch",
+                                    "key": "savedSearch",
+                                    "value": 3,
+                                    "description": "The saved search id."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": ""
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Removed.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"message\": \"This action is unauthorized.\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Leads & Enquiries",
+            "description": "",
+            "item": [
+                {
+                    "name": "Property enquiry",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/capture",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/capture"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"property_id\":111,\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"company\":\"mniihfqcoynlazghdtqtq\",\"country\":\"xbajwbpilpmufinllwloa\",\"message\":\"Is this still available? I'd like to view it this week.\",\"page_source\":\"mobile-app\"}"
+                        },
+                        "description": "\"Contact agent\" form on a listing \u2014 goes to the listing's agent\/agency CRM. If a customer\ntoken is sent, the enquiry also appears under their account.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Thanks \u2014 your enquiry has been received and we'll be in touch soon.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Book a viewing",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/viewing",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/viewing"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"property_id\":111,\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"viewing_date\":\"2026-10-15\",\"viewing_time\":\"afternoon\",\"note\":\"Please call before coming.\"}"
+                        },
+                        "description": "A property lead (same routing as an enquiry) with the requested day + time slot. If the\nlisting has open house days (`available_dates` on the property details), only those days\nare accepted; otherwise any day from today up to 60 days ahead.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Thanks \u2014 your viewing request for Thursday, 15 Oct 2026, Afternoon (12 PM \u2013 4 PM) has been sent. The agent will confirm with you shortly.\", \"when\": \"Thursday, 15 Oct 2026, Afternoon (12 PM \u2013 4 PM)\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\": \"Please pick one of the open house days for this property.\", \"errors\": {\"viewing_date\": [\"Please pick one of the open house days for this property.\"]}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Download brochure",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/brochure-download",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/brochure-download"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"property_id\":150651,\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\"}"
+                        },
+                        "description": "Records the lead, then returns a 15-minute signed `download_url` for the listing's\nbrochure (open it in the browser \/ download manager \u2014 no token needed). 404 when the\nlisting has no brochure.\n\nRecord a lead before revealing the listing brochure URL.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Your brochure is ready to download.\", \"download_url\": \"https:\/\/example.com\/downloads\/property\/150651\/brochure?expires=1760000000&signature=...\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Download floor plan",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/floor-plan-download",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/floor-plan-download"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"property_id\":111,\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\"}"
+                        },
+                        "description": "Same as the brochure download, for the listing's floor plan file.\n\nRecord a lead before revealing the listing's downloadable floor plan file.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Your floor plan is ready to download.\", \"download_url\": \"https:\/\/example.com\/downloads\/property\/111\/floor-plan?expires=1760000000&signature=...\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Custom property request",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/custom-request",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/custom-request"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"first_name\":\"Sara\",\"last_name\":\"Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"property_category\":\"Apartment\",\"specification\":\"auydlsmsjuryvojcybzvr\",\"price_range\":\"AED 1M \u2013 2M\",\"area\":\"vazjrcnfbaqywuxhgjjmz\",\"preferred_location\":\"Dubai Marina\",\"additional_details\":\"Sea view, high floor.\",\"move_in_timeline\":\"sedyghenqcopwvownkbam\",\"furnishing_status\":\"lnfngefbeilfzsyuxoezb\"}"
+                        },
+                        "description": "\"Can't find what you're looking for?\" \u2014 the buyer describes the property they want; the\nteam picks it up.\n\nThere's no property to route this to, so it's always an unassigned Lead: superadmin gets\nnotified and picks it up from the Unassigned Leads screen.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Thanks \u2014 your request has been received and our team will reach out soon.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Request from an agent\/agency profile",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/leads\/profile-request",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/leads\/profile-request"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"profile_type\":\"agent\",\"profile_slug\":\"sruthi-raveendran-m\",\"first_name\":\"Sara\",\"last_name\":\"qxbajwbpilpmufinllwlo\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"property_category\":\"auydlsmsjuryvojcybzvr\",\"specification\":\"byickznkygloigmkwxphl\",\"price_range\":\"vazjrcnfbaqywuxhgjjmz\",\"area\":\"uxjubqouzswiwxtrkimfc\",\"preferred_location\":\"atbxspzmrazsroyjpxmqe\",\"additional_details\":\"sedyghenqcopwvownkbam\",\"move_in_timeline\":\"lnfngefbeilfzsyuxoezb\",\"furnishing_status\":\"dtabptcyyerevrljcbwkt\"}"
+                        },
+                        "description": "\"Find me a property\" form on an agent's or agency's profile \u2014 sent to that agent\/agency.\n\nCapture a property-search request from an agent or agency profile and route it to that CRM.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Thanks \u2014 your request has been sent to Sruthi Raveendran.\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "AI Chat",
+            "description": "",
+            "item": [
+                {
+                    "name": "Open chat",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/chatbot\/session",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/chatbot\/session"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Call when the chat screen opens: is this device's user known yet, and the latest\nconversation to continue. Needs the `X-Device-Id` header; a customer token makes the\nuser known automatically.\n\nWidget opened: is this visitor known yet, and the latest conversation to pick up from.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"identified\": false, \"details_required\": false, \"conversation_id\": null, \"messages\": []}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Share contact details",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/chatbot\/start",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/chatbot\/start"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\"}"
+                        },
+                        "description": "Shown when a reply has `details_required: true` (after the first free question, for\nguests). Identifies the user and continues the conversation they started.\n\nThe details form \u2014 identifies the visitor (switching this browser to them; their anonymous\nchat is attached by VisitorTracker).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"conversation_id\": 44, \"name\": \"Sara Ahmed\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "New conversation",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/chatbot\/reset",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/chatbot\/reset"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "\"Clear chat\" \u2014 the old transcript is kept on the server, the user just starts fresh.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"conversation_id\": 45}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Send a message",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/chatbot\/message",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/chatbot\/message"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"message\":\"Show me 2 bedroom apartments in Dubai Marina under 2M\",\"lang\":\"en\"}"
+                        },
+                        "description": "Ask the AI assistant. The reply may include matching property cards. Limited to 8\nmessages\/minute and 150\/day per IP.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"reply\": \"Here are some 2-bedroom apartments in Dubai Marina:\", \"properties\": [{\"id\": 111, \"slug\": \"virella-2\", \"image\": \"https:\/\/...\/photo.jpg\", \"...\": \"same card shape as GET \/api\/properties\"}], \"pagination\": {\"current_page\": 1, \"last_page\": 3, \"total\": 41}, \"error\": false, \"conversation_id\": 44, \"details_required\": false}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"details_required\": true, \"message\": \"Please share your details to keep chatting.\"}",
+                            "name": "Guest must share details first"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Contact & Newsletter",
+            "description": "",
+            "item": [
+                {
+                    "name": "Contact page",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/contact",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/contact?lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Office details, map embed, hero image and social links.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send a contact message",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/contact",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/contact"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"interest\":\"buy\",\"message\":\"I'd like a call about 2BR apartments in Marina.\",\"source\":\"contact\"}"
+                        },
+                        "description": "General enquiry (not about a specific property \u2014 for that use `POST \/api\/leads\/capture`).\nSaves to Enquiries and emails admin.\n\nPublic, unauthenticated \u2014 the \/contact page form and the home page's contact section\n(`source=home`, which also sends `interest`; its message is then optional).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Thanks \u2014 we've received your message and will be in touch soon.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Subscribe to the newsletter",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/newsletter\/subscribe",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/newsletter\/subscribe"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"email\":\"buyer@example.com\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"already_subscribed\": false, \"message\": \"Thanks for subscribing!\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Content",
+            "description": "",
+            "item": [
+                {
+                    "name": "About page",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/about",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/about?lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "List blog posts",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/blogs",
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "",
+                                    "description": "A category from the response's category list.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/blogs?page=1&category=&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "12 per page.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Blog post",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/blogs\/:slug",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/blogs\/:slug?lang=en",
+                            "variable": [
+                                {
+                                    "id": "slug",
+                                    "key": "slug",
+                                    "value": "5-reasons-to-invest-in-dubai-off-plan-properties",
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"Not found\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Landing page",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/landing-pages\/:slug",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/landing-pages\/:slug?lang=en",
+                            "variable": [
+                                {
+                                    "id": "slug",
+                                    "key": "slug",
+                                    "value": null,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "A marketing landing page (website URL `\/{slug}`), in the same shape as a blog post.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"Not found\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "List market insights",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/market-insights",
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "topic",
+                                    "value": "",
+                                    "description": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "region",
+                                    "value": "",
+                                    "description": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/market-insights?page=1&topic=&region=&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "9 per page.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Market insight",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/market-insights\/:slug",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/market-insights\/:slug?lang=en",
+                            "variable": [
+                                {
+                                    "id": "slug",
+                                    "key": "slug",
+                                    "value": "dubai-property-market-report-q3-2026",
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"Not found\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Legal page",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/legal\/:key",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/legal\/:key?lang=en",
+                            "variable": [
+                                {
+                                    "id": "key",
+                                    "key": "key",
+                                    "value": "privacy",
+                                    "description": "terms, privacy, security or cookie."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"Not found\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Careers",
+            "description": "",
+            "item": [
+                {
+                    "name": "List vacancies",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/careers",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/careers?lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Apply for a job",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/careers\/apply",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/careers\/apply"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart\/form-data"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "career",
+                                    "value": "senior-property-consultant",
+                                    "type": "text",
+                                    "description": "A vacancy slug."
+                                },
+                                {
+                                    "key": "name",
+                                    "value": "mqeopfuudtdsufvyvddqa",
+                                    "type": "text",
+                                    "description": "Must not be greater than 255 characters."
+                                },
+                                {
+                                    "key": "email",
+                                    "value": "eloisa.harber@example.com",
+                                    "type": "text",
+                                    "description": "Must be a valid email address. Must not be greater than 255 characters."
+                                },
+                                {
+                                    "key": "phone",
+                                    "value": "fqcoynlazghdtqtqxbajw",
+                                    "type": "text",
+                                    "description": "Must not be greater than 50 characters."
+                                },
+                                {
+                                    "key": "country",
+                                    "value": "bpilpmufinllwloauydls",
+                                    "type": "text",
+                                    "description": "Must not be greater than 100 characters."
+                                },
+                                {
+                                    "key": "experience",
+                                    "value": "msjuryvojcybzvrbyickz",
+                                    "type": "text",
+                                    "description": "Must not be greater than 50 characters."
+                                },
+                                {
+                                    "key": "designation",
+                                    "value": "nkygloigmkwxphlvazjrc",
+                                    "type": "text",
+                                    "description": "Must not be greater than 255 characters."
+                                },
+                                {
+                                    "key": "additional_information",
+                                    "value": "nfbaqywuxhgjjmzuxjubq",
+                                    "type": "text",
+                                    "description": "Must not be greater than 2000 characters."
+                                },
+                                {
+                                    "key": "privacy",
+                                    "value": "1",
+                                    "type": "text",
+                                    "description": "Must be accepted."
+                                },
+                                {
+                                    "key": "attachment",
+                                    "src": [],
+                                    "type": "file"
+                                }
+                            ]
+                        },
+                        "description": "Send as `multipart\/form-data` (the CV is a file). Leave out `career` for a general\napplication.\n\nPublic, unauthenticated \u2014 the application form on both careers pages (POST \/api\/careers\/apply).\nSaves to Careers > Candidates and emails admin.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\": \"Thanks for applying \u2014 our team will review your application and get back to you.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Vacancy details",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/careers\/:slug",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/careers\/:slug?lang=en",
+                            "variable": [
+                                {
+                                    "id": "slug",
+                                    "key": "slug",
+                                    "value": "senior-property-consultant",
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"Not found\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Tracking",
+            "description": "",
+            "item": [
+                {
+                    "name": "Screen view",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/track\/page",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/track\/page"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"path\":\"\\\/property-details\\\/virella-2\",\"title\":\"Virella 2\"}"
+                        },
+                        "description": "Call when a screen opens. Send the **website path** the screen corresponds to \u2014 that is\nhow views are classified: `\/property-details\/{slug}` = property view (counts towards the\nlisting's stats and routes the visitor to its agent), `\/properties?bedrooms=2&...` = a\nsearch, anything else = a page view. Keep the returned `id` to report time spent.\n\nRequires the `X-Device-Id` header (nothing is recorded without it).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"id\": 5821}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Time on screen",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/track\/page\/:event\/time",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/track\/page\/:event\/time",
+                            "variable": [
+                                {
+                                    "id": "event",
+                                    "key": "event",
+                                    "value": 5821,
+                                    "description": "The `id` returned by the screen view call."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"seconds\":42}"
+                        },
+                        "description": "Seconds the screen has been visible so far. Send whenever the screen is left or the app\ngoes to the background; the largest value wins, so re-sending is safe.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Recorded"
+                        }
+                    ]
+                },
+                {
+                    "name": "Listing impressions",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/track\/impressions",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/track\/impressions"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"ids\":[111,112,150651]}"
+                        },
+                        "description": "Property cards that were visible on screen. Batch them, and send each id at most once per\nday per device.\n\nListing cards that were on screen (ids, de-duplicated per day by the browser).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Recorded"
+                        }
+                    ]
+                },
+                {
+                    "name": "Contact click",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/track\/lead-click",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/track\/lead-click"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"property_id\":111,\"kind\":\"whatsapp\"}"
+                        },
+                        "description": "The user tapped a contact button on a listing (before the call\/WhatsApp\/email app opens).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Recorded"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "Authorization",
+                "type": "string"
+            }
+        ]
+    }
+}

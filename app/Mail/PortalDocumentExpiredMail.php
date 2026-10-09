@@ -35,7 +35,7 @@ class PortalDocumentExpiredMail extends Mailable
                 'portalUser' => $this->portalUser,
                 'documentLabel' => $this->documentLabel,
                 'expiryDate' => $this->expiryDate,
-                'profileUrl' => route('portal.profile.edit'),
+                'profileUrl' => route('crm.app', 'profile'),
             ],
         );
     }

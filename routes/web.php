@@ -27,17 +27,7 @@ use App\Http\Controllers\CmsKit\AdController;
 use App\Http\Controllers\CmsKit\LandingPageController;
 use App\Http\Controllers\CmsKit\NotificationController;
 use App\Http\Controllers\Portal\PortalAuthController;
-use App\Http\Controllers\Portal\PortalDashboardController;
-use App\Http\Controllers\Portal\PortalPropertyController;
-use App\Http\Controllers\Portal\PortalProfileController;
 use App\Http\Controllers\Portal\PortalNotificationController;
-use App\Http\Controllers\Portal\PortalPlanController;
-use App\Http\Controllers\Portal\Crm\LeadController;
-use App\Http\Controllers\Portal\Crm\LeadNoteController;
-use App\Http\Controllers\Portal\Crm\LeadStageController;
-use App\Http\Controllers\Portal\Crm\LeadTagController;
-use App\Http\Controllers\Portal\Crm\LeadSourceController;
-use App\Http\Controllers\Portal\Crm\PortalReportController;
 use App\Http\Controllers\Crm\LeadCaptureController;
 use App\Http\Controllers\Customer\CustomerAuthController;
 use App\Http\Controllers\Api\CustomerController;
@@ -545,7 +535,7 @@ Route::middleware(['web'])->group(function () {
                 Route::get('/payments/{id}/invoice.pdf', [\App\Http\Controllers\CmsKit\PaymentController::class, 'pdf'])->name('cms.payments.pdf');
             });
 
-            // Support Tickets — raised by Agents/Companies from portal Contact Us (see Portal\PortalContactController)
+            // Support Tickets — raised by Agents/Companies from CRM Contact Us (see Crm\Support\TicketController)
             Route::middleware(['cms.permission:support-tickets.view'])->controller(\App\Http\Controllers\CmsKit\SupportTicketController::class)->group(function () {
                 Route::get('/support-tickets', 'index')->name('cms.support-tickets.index');
                 Route::get('/support-tickets/{ticket}', 'show')->name('cms.support-tickets.show');
@@ -654,9 +644,19 @@ Route::middleware(['web'])->group(function () {
     });
 });
 
+// --- Agent/Company CRM web app (Vue, resources/js/crm) — replaces the /portal screens module by
+// module; its data comes from /api/crm/* (routes/crm.php). Same sign-in as the portal: an
+// agent/company portal session, or a Super Admin's CMS session for the global view.
+// The two-factor set-up screen is where portal.2fa sends an account that has to set it up (or skip
+// it, after sign-up) — so it's the one CRM page served without that check.
+Route::get('/crm/security/two-factor', \App\Http\Controllers\Crm\CrmAppController::class)
+    ->name('crm.two-factor')->middleware('portal.or.cms');
+Route::get('/crm/{any?}', \App\Http\Controllers\Crm\CrmAppController::class)
+    ->where('any', '.*')->name('crm.app')->middleware(['portal.or.cms', 'portal.2fa']);
+
 // --- Agent/Company self-service portal (separate credentials from the CMS admin) ---
 // Facebook Login comes back here (public — the one-time OAuth state identifies the Super Admin who started it).
-Route::get('/integrations/facebook/callback', [\App\Http\Controllers\Portal\Crm\IntegrationController::class, 'callback'])
+Route::get('/integrations/facebook/callback', [\App\Http\Controllers\Crm\Integrations\FacebookController::class, 'callback'])
     ->name('integrations.facebook.callback')->middleware('throttle:30,1');
 
 Route::prefix('portal')->name('portal.')->group(function () {
@@ -680,32 +680,15 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::middleware(['auth:portal', 'portal.2fa'])->group(function () {
         Route::post('/logout', [PortalAuthController::class, 'logout'])->name('logout');
 
-        // Two-factor authentication (authenticator app) — set-up page is also the step after sign-up.
-        Route::get('/security', [\App\Http\Controllers\Portal\PortalTwoFactorController::class, 'index'])->name('security');
-        Route::prefix('two-factor')->name('two-factor.')->controller(\App\Http\Controllers\Portal\PortalTwoFactorController::class)->group(function () {
-            Route::get('/setup', 'setup')->name('setup');
-            Route::post('/confirm', 'confirm')->name('confirm')->middleware('throttle:otp-verify');
-            Route::post('/skip', 'skip')->name('skip');
-            Route::post('/recovery-codes', 'regenerateRecoveryCodes')->name('recovery-codes')->middleware('throttle:otp-verify');
-            Route::post('/reconfigure', 'reconfigure')->name('reconfigure')->middleware('throttle:otp-verify');
-            Route::post('/disable', 'disable')->name('disable')->middleware('throttle:otp-verify');
-            Route::post('/enforce', 'enforce')->name('enforce');
-            Route::post('/forget-devices', 'forgetDevices')->name('forget-devices');
+        // My Profile, Security (two-factor) and Plans moved to the CRM app (/crm/profile, /crm/security,
+        // /crm/plans — data from routes/crm.php). These names stay as redirects for links already sent
+        // (KYC / document / renewal emails, notifications, invoice emails, Stripe return URLs).
+        Route::controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->group(function () {
+            Route::get('/security', 'security')->name('security');
+            // Reachable while portal.2fa holds the account back (EnsurePortalTwoFactor::ALLOWED_ROUTES).
+            Route::get('/two-factor/setup', 'twoFactorSetup')->name('two-factor.setup');
+            Route::get('/profile', 'profile')->name('profile.edit');
         });
-
-        Route::get('/profile/documents/{field}', [\App\Http\Controllers\DocumentController::class, 'own'])->name('profile.document');
-
-        // Self-service profile — available even while pending/rejected, since
-        // completing or fixing it is exactly what unblocks approval.
-        Route::get('/profile', [PortalProfileController::class, 'edit'])->name('profile.edit');
-        Route::post('/profile', [PortalProfileController::class, 'update'])->name('profile.update');
-        Route::post('/profile/avatar', [PortalProfileController::class, 'uploadAvatar'])->name('profile.avatar.upload');
-        Route::delete('/profile/avatar', [PortalProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
-        Route::post('/profile/documents/{field}', [PortalProfileController::class, 'uploadDocument'])->name('profile.upload-document');
-        Route::delete('/profile/documents/{field}', [PortalProfileController::class, 'removeDocument'])->name('profile.remove-document');
-        Route::post('/profile/resubmit', [PortalProfileController::class, 'submitForApproval'])->name('profile.resubmit');
-        Route::post('/profile/email/request', [PortalProfileController::class, 'requestEmailChange'])->name('profile.email.request')->middleware('throttle:otp-verify');
-        Route::post('/profile/email/verify', [PortalProfileController::class, 'verifyEmailChange'])->name('profile.email.verify')->middleware('throttle:otp-verify');
 
         // Bell-icon notifications
         Route::post('/notifications/{id}/read', [PortalNotificationController::class, 'markRead'])->name('notifications.read');
@@ -714,26 +697,15 @@ Route::prefix('portal')->name('portal.')->group(function () {
         // Module help guides (top bar "!" icon) — remember which ones opened by themselves already.
         Route::post('/help/{topic}/seen', [\App\Http\Controllers\Portal\PortalHelpController::class, 'seen'])->name('help.seen');
 
-        // Self-service plan upgrade — portal guard only, a Super Admin doesn't request plans for itself.
-        // Choosing/buying a plan unlocks only after KYC approval; payment history, invoices and
-        // managing an existing subscription stay reachable regardless.
-        Route::middleware('portal.approved')->group(function () {
-            Route::get('/plans', [PortalPlanController::class, 'index'])->name('plans.index');
-            Route::post('/plans/request', [PortalPlanController::class, 'request'])->name('plans.request');
-            Route::get('/plans/checkout', [PortalPlanController::class, 'checkout'])->name('plans.checkout');
-            Route::post('/plans/checkout/intent', [PortalPlanController::class, 'checkoutIntent'])->name('plans.checkout.intent')->middleware('throttle:10,1');
-            Route::post('/plans/checkout/complete', [PortalPlanController::class, 'checkoutComplete'])->name('plans.checkout.complete');
-            Route::post('/plans/change-preview',[PortalPlanController::class, 'previewChange'])->name('plans.change-preview');
-            Route::post('/plans/subscription/keep-plan', [PortalPlanController::class, 'keepCurrentPlan'])->name('plans.subscription.keep-plan');
-            Route::post('/plans/coupon-check',[PortalPlanController::class, 'checkCoupon'])->name('plans.coupon-check')->middleware('throttle:20,1');
+        Route::controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->group(function () {
+            Route::get('/plans', 'plans')->name('plans.index');
+            Route::get('/plans/checkout', 'planCheckout')->name('plans.checkout');
+            // Stripe-hosted checkouts started before the move still come back here with ?session_id=.
+            Route::get('/plans/checkout/success', 'plans')->name('plans.checkout.success');
+            Route::get('/plans/payments', 'planPayments')->name('plans.payments');
+            Route::get('/plans/payments/{id}/invoice', 'planInvoice')->name('plans.payments.show')->whereNumber('id');
+            Route::get('/plans/payments/{id}/invoice.pdf', 'planInvoice')->name('plans.payments.pdf')->whereNumber('id');
         });
-        Route::get('/plans/payments', [PortalPlanController::class, 'payments'])->name('plans.payments');
-        Route::get('/plans/payments/{id}/invoice', [PortalPlanController::class, 'invoice'])->name('plans.payments.show');
-        Route::get('/plans/payments/{id}/invoice.pdf', [PortalPlanController::class, 'invoicePdf'])->name('plans.payments.pdf');
-        Route::get('/plans/checkout/success',[PortalPlanController::class, 'checkoutSuccess'])->name('plans.checkout.success');
-        Route::post('/plans/subscription/cancel', [PortalPlanController::class, 'cancelSubscription'])->name('plans.subscription.cancel');
-        Route::post('/plans/subscription/resume', [PortalPlanController::class, 'resumeSubscription'])->name('plans.subscription.resume');
-        Route::post('/plans/billing-portal', [PortalPlanController::class, 'billingPortal'])->name('plans.billing-portal');
 
         // My Agency — an agent's own agency membership: invitations, join requests, leaving.
         Route::prefix('agency')->name('agency.')->controller(\App\Http\Controllers\Portal\AgencyController::class)->group(function () {
@@ -747,254 +719,91 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::post('/properties/{id}/transfer', 'transferProperty')->name('properties.transfer')->middleware('portal.approved');
         });
 
-        // Contact Us — support tickets to MW Realty (portal guard only; admin side is cms.support-tickets.*).
-        // Reachable before KYC approval too, since getting unstuck is often exactly what they need help with.
-        Route::prefix('contact')->name('contact.')->controller(\App\Http\Controllers\Portal\PortalContactController::class)->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/tickets/create', 'create')->name('create');
-            Route::post('/tickets', 'store')->name('store')->middleware('throttle:10,1');
-            Route::get('/tickets/{ticket}', 'show')->name('show');
-            Route::post('/tickets/{ticket}/reply', 'reply')->name('reply')->middleware('throttle:20,1');
-            Route::post('/tickets/{ticket}/resolve', 'resolve')->name('resolve');
-            Route::post('/tickets/{ticket}/reopen', 'reopen')->name('reopen');
-            Route::get('/tickets/{ticket}/attachments/{message}', 'attachment')->name('attachment')->whereNumber('message');
+        // Contact Us moved to the CRM app (/crm/contact — data from routes/crm.php, admin side is
+        // cms.support-tickets.*). These names stay as redirects for links already sent (ticket notifications).
+        Route::prefix('contact')->name('contact.')->controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->group(function () {
+            Route::get('/', 'contact')->name('index');
+            Route::get('/tickets/create', 'contactCreate')->name('create');
+            Route::get('/tickets/{ticket}', 'contactTicket')->name('show')->whereNumber('ticket');
         });
     });
 
     // Shared by Super Admin (global view) and Agent/Company (own-data view) —
     // either session is accepted; controllers scope data per guard.
     Route::middleware(['portal.or.cms', 'portal.2fa'])->group(function () {
-        Route::get('/dashboard', [PortalDashboardController::class, 'index'])->name('dashboard');
+        // Dashboard moved to the CRM app (/crm/dashboard); the name stays as a redirect for existing links.
+        Route::get('/dashboard', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'dashboard'])->name('dashboard');
 
-        // Listings Settings → Watermark stamped on uploaded listing photos — unlocks with KYC approval,
-        // like listings. Super Admin edits the default one (used where an account has none) and sees
-        // every agency / agent watermark. See PortalWatermarkController.
-        Route::middleware('portal.approved')->group(function () {
-            Route::get('/listing-settings/watermark', [\App\Http\Controllers\Portal\PortalWatermarkController::class, 'edit'])->name('watermark.edit');
-            Route::post('/listing-settings/watermark', [\App\Http\Controllers\Portal\PortalWatermarkController::class, 'update'])->name('watermark.update');
-            Route::get('/listing-settings/watermark/image', [\App\Http\Controllers\Portal\PortalWatermarkController::class, 'image'])->name('watermark.image');
+        // Properties / Commercial moved to the CRM app (/crm/properties, /crm/commercial — data from
+        // routes/crm.php). These names stay as redirects so existing links (emails, notifications,
+        // CMS dashboard, other portal screens) open the new screens; the query string is carried over.
+        Route::controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->group(function () {
+            Route::get('/properties', 'properties')->name('properties.index');
+            Route::get('/properties/create', 'propertyCreate')->name('properties.create');
+            Route::get('/properties/{id}', 'property')->name('properties.show')->whereNumber('id');
+            Route::get('/properties/{id}/edit', 'propertyEdit')->name('properties.edit')->whereNumber('id');
+            Route::get('/commercial', 'commercial')->name('commercial.index');
+            Route::get('/commercial/create', 'commercialCreate')->name('commercial.create');
+            Route::get('/commercial/{id}', 'property')->name('commercial.show')->whereNumber('id');
+            Route::get('/commercial/{id}/edit', 'propertyEdit')->name('commercial.edit')->whereNumber('id');
         });
 
-        // Real (server-side) gating on top of the create()/store()/toggleStatus() controller's own
-        // inline "approved only" checks — index/edit/update/destroy had none at all before this.
-        Route::get('/properties', [PortalPropertyController::class, 'index'])->name('properties.index')->middleware('portal.approved');
-        Route::get('/properties/create', [PortalPropertyController::class, 'create'])->name('properties.create');
-        Route::get('/properties/agent-options', [PortalPropertyController::class, 'agentOptions'])->name('properties.agent-options')->middleware('throttle:120,1');
-        Route::post('/properties', [PortalPropertyController::class, 'store'])->name('properties.store');
-        // Property form auto-fill: English text → the other site languages (Google Translate).
-        Route::post('/properties/translate', \App\Http\Controllers\Portal\PropertyTranslateController::class)->name('properties.translate')->middleware('throttle:60,1');
-        Route::post('/properties/bulk-action', [PortalPropertyController::class, 'bulkAction'])->name('properties.bulk-action')->middleware('portal.approved');
-        Route::post('/properties/{id}/feature', [PortalPropertyController::class, 'feature'])->name('properties.feature')->middleware('portal.approved');
-        Route::put('/properties/{id}/feature', [PortalPropertyController::class, 'updateFeature'])->name('properties.feature.update')->middleware('portal.approved');
-        Route::post('/properties/{id}/unfeature', [PortalPropertyController::class, 'unfeature'])->name('properties.unfeature')->middleware('portal.approved');
-        Route::post('/properties/reorder',[PortalPropertyController::class, 'reorder'])->name('properties.reorder')->middleware('portal.approved');
-        Route::get('/properties/{id}/edit', [PortalPropertyController::class, 'edit'])->name('properties.edit')->middleware('portal.approved');
-        Route::put('/properties/{id}', [PortalPropertyController::class, 'update'])->name('properties.update')->middleware('portal.approved');
-        Route::delete('/properties/{id}', [PortalPropertyController::class, 'destroy'])->name('properties.destroy')->middleware('portal.approved');
-        // Numeric only — otherwise it swallows later fixed paths like /properties/nearby-places-by-type.
-        Route::get('/properties/{id}', [PortalPropertyController::class, 'show'])->name('properties.show')->whereNumber('id');
-        // Listing Performance panel (cards' Insights button) — both menus' cards use this one.
-        Route::get('/properties/{id}/insights', [PortalPropertyController::class, 'insights'])->name('properties.insights')->whereNumber('id')->middleware(['portal.approved', 'throttle:120,1']);
-        Route::delete('/properties/{propertyId}/images/{imageId}', [PortalPropertyController::class, 'destroyImage'])->name('properties.images.destroy');
-        Route::delete('/properties/{propertyId}/images', [PortalPropertyController::class, 'destroyAllImages'])->name('properties.images.destroy-all');
-        Route::post('/properties/{propertyId}/images/reorder', [PortalPropertyController::class, 'reorderImages'])->name('properties.images.reorder');
-        Route::post('/properties/{id}/toggle-status', [PortalPropertyController::class, 'toggleStatus'])->name('properties.toggle-status');
-        Route::post('/properties/{id}/move', [PortalPropertyController::class, 'move'])->name('properties.move')->middleware('portal.approved');
-
-        // Mark as sold / rented (both menus' cards) + the Sold Listings menu.
-        Route::get('/properties/{id}/sale-leads', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'leadOptions'])->name('properties.sale-leads')->middleware('portal.approved');
-        Route::post('/properties/{id}/mark-sold', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'markSold'])->name('properties.mark-sold')->middleware('portal.approved');
-        Route::get('/properties/{id}/sale-document/{kind}', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'document'])->name('properties.sale-document')->whereIn('kind', ['ownership', 'contract']);
-        Route::post('/properties/{id}/revert-sold',[\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'revert'])->name('properties.revert-sold')->middleware('portal.approved');
-        Route::get('/sold-listings', [\App\Http\Controllers\Portal\PortalSoldPropertyController::class, 'soldIndex'])->name('sold.index')->middleware('portal.approved');
-
-        // Commercial — same table/form/screens as Properties, segment = commercial (see
-        // PortalCommercialController). Per-listing AJAX actions reuse the properties.* routes above.
-        Route::prefix('commercial')->name('commercial.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'index'])->name('index')->middleware('portal.approved');
-            Route::get('/create', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'create'])->name('create');
-            Route::post('/', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'store'])->name('store');
-            Route::post('/reorder', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'reorder'])->name('reorder')->middleware('portal.approved');
-            Route::post('/{id}/move', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'move'])->name('move')->middleware('portal.approved');
-            Route::get('/{id}/edit', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'edit'])->name('edit')->middleware('portal.approved');
-            Route::put('/{id}', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'update'])->name('update')->middleware('portal.approved');
-            Route::get('/{id}', [\App\Http\Controllers\Portal\PortalCommercialController::class, 'show'])->name('show');
+        // Sold Listings, Listing Permits and Premium moved to the CRM app (/crm/sold-listings,
+        // /crm/listing-permits, /crm/premium — data from routes/crm.php). These names stay as redirects
+        // for links already sent (listing-review emails and notifications) and other screens.
+        Route::controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->group(function () {
+            Route::get('/sold-listings', 'soldListings')->name('sold.index');
+            Route::get('/listing-approvals', 'listingPermits')->name('listing-approvals.index');
+            Route::get('/listing-approvals/{id}', 'listingPermit')->name('listing-approvals.show')->whereNumber('id');
+            Route::get('/featured', 'premium')->name('featured.index');
         });
 
-        // Listing Permits — which listings' permits are verified, approve the ones waiting for Super Admin
-        // (LISTING_SUPERADMIN_APPROVAL, DTCM / None permits) + take a listing down. Super Admin only
-        // (enforced in the controller). See ListingComplianceService.
-        Route::prefix('listing-approvals')->name('listing-approvals.')->controller(\App\Http\Controllers\Portal\PortalListingApprovalController::class)->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/{id}', 'show')->name('show')->whereNumber('id');
-            Route::post('/{id}/approve', 'approve')->name('approve')->whereNumber('id');
-            Route::post('/{id}/take-down', 'takeDown')->name('take-down')->whereNumber('id');
-        });
-
-        // Featured — every featured/scheduled listing (Properties + Commercial) and "Add Featured".
-        // Super Admin only (enforced in the controller): home "Realty Property" list.
-        Route::prefix('marketing-properties')->name('marketing.')->controller(\App\Http\Controllers\Portal\PortalMarketingPropertyController::class)->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/accounts', 'accounts')->name('accounts')->middleware('throttle:120,1');
-            Route::get('/properties', 'properties')->name('properties')->middleware('throttle:120,1');
-            Route::post('/', 'store')->name('store');
-            Route::post('/reorder', 'reorder')->name('reorder');
-            Route::delete('/{propertyId}', 'destroy')->name('destroy')->whereNumber('propertyId');
-        });
-
-        Route::get('/featured', [\App\Http\Controllers\Portal\PortalFeaturedController::class, 'index'])->name('featured.index')->middleware('portal.approved');
-        Route::post('/featured', [\App\Http\Controllers\Portal\PortalFeaturedController::class, 'store'])->name('featured.store')->middleware('portal.approved');
-        Route::get('/featured/eligible', [\App\Http\Controllers\Portal\PortalFeaturedController::class, 'eligible'])->name('featured.eligible')->middleware(['portal.approved', 'throttle:120,1']);
-        // Feeds the property form's Type -> Place cascading Nearby Places picker — reachable by
-        // both a portal agent/company and an admin browsing the portal.
-        Route::get('/properties/nearby-places-by-type', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'byType'])->name('properties.nearby-places-by-type');
-        // The property form's permit Validate / Refresh button (DLD / ADREC, see PermitVerifier).
-        Route::post('/properties/permit/validate', [PortalPropertyController::class, 'validatePermit'])->name('properties.permit.validate')->middleware('throttle:30,1');
-
-        // Agent roster — a Company manages its own agents; Super Admin sees every
-        // agent across every agency (see AgentController::isAdmin()/company()). Approved accounts only.
-        Route::middleware('portal.approved')->group(function () {
-        Route::get('/agents', [\App\Http\Controllers\Portal\AgentController::class, 'index'])->name('agents.index');
-        Route::get('/agents/create', [\App\Http\Controllers\Portal\AgentController::class, 'create'])->name('agents.create');
-        Route::post('/agents', [\App\Http\Controllers\Portal\AgentController::class, 'store'])->name('agents.store');
-        Route::controller(\App\Http\Controllers\Portal\AgentController::class)->prefix('agents')->name('agents.')->group(function () {
-            Route::post('/invite', 'invite')->name('invite');
-            Route::put('/lead-assignment', 'updateAssignment')->name('lead-assignment');
-            Route::get('/{id}', 'show')->name('show')->whereNumber('id');
-            Route::post('/{id}/accept-request', 'acceptRequest')->name('accept-request');
-            Route::post('/{id}/decline-request', 'declineRequest')->name('decline-request');
-            Route::post('/{id}/cancel', 'cancel')->name('cancel');
-            Route::post('/{id}/suspend', 'suspend')->name('suspend');
-            Route::post('/{id}/reactivate', 'reactivate')->name('reactivate');
-            Route::post('/{id}/remove', 'remove')->name('remove');
-        });
-        });
-
-        // Nearby Places — shared list managed by Super Admin, plus each Agent/Company's own places
-        // (scoping is done in NearbyPlaceController). Approved accounts only, like Properties.
-        Route::middleware('portal.approved')->group(function () {
-        Route::get('/nearby-places',[\App\Http\Controllers\Portal\NearbyPlaceController::class, 'index'])->name('nearby-places.index');
-        Route::get('/nearby-places/create', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'create'])->name('nearby-places.create');
-        Route::post('/nearby-places', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'store'])->name('nearby-places.store');
-        Route::get('/nearby-places/{id}/edit', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'edit'])->name('nearby-places.edit');
-        Route::put('/nearby-places/{id}', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'update'])->name('nearby-places.update');
-        Route::post('/nearby-places/{id}/toggle-status', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'toggleStatus'])->name('nearby-places.toggle-status');
-        Route::delete('/nearby-places/{id}', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'destroy'])->name('nearby-places.destroy');
+        // Marketing Properties, Agents, Nearby Places and Listing Settings (watermark) moved to the CRM
+        // app (/crm/marketing-properties, /crm/agents, /crm/nearby-places, /crm/listing-settings — data
+        // from routes/crm.php). These names stay as redirects for links already sent (agency membership
+        // emails and notifications) and other screens.
+        Route::controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->group(function () {
+            Route::get('/marketing-properties', 'marketingProperties')->name('marketing.index');
+            Route::get('/agents', 'agents')->name('agents.index');
+            Route::get('/agents/create', 'agentCreate')->name('agents.create');
+            Route::get('/agents/{id}', 'agent')->name('agents.show')->whereNumber('id');
+            Route::get('/nearby-places', 'nearbyPlaces')->name('nearby-places.index');
+            Route::get('/nearby-places/create', 'nearbyPlaceCreate')->name('nearby-places.create');
+            Route::get('/nearby-places/{id}/edit', 'nearbyPlaceEdit')->name('nearby-places.edit')->whereNumber('id');
+            Route::get('/listing-settings/watermark', 'watermark')->name('watermark.edit');
         });
 
         // Real (server-side) gating for Leads/Master/Reports — previously only cosmetically
         // "locked" in the sidebar with no enforcement at all.
         Route::prefix('crm')->name('crm.')->middleware('portal.approved')->group(function () {
-            Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
-            Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
-            Route::put('/leads/table-columns', [LeadController::class, 'updateTableColumns'])->name('leads.table-columns.update');
-            Route::delete('/leads/bulk-delete', [LeadController::class, 'bulkDestroy'])->name('leads.bulk-delete');
-            Route::post('/leads/bulk-stage', [LeadController::class, 'bulkStage'])->name('leads.bulk-stage');
-            Route::post('/leads/bulk-tags', [LeadController::class, 'bulkTags'])->name('leads.bulk-tags');
-            Route::get('/leads/options/{type}', [LeadController::class, 'masterOptions'])->name('leads.options')->whereIn('type', ['stages', 'tags']);
-            Route::match(['get', 'post'], '/leads/export', [LeadController::class, 'export'])->name('leads.export');
-            Route::get('/leads/import', [LeadController::class, 'importForm'])->name('leads.import.form');
-            Route::post('/leads/import', [LeadController::class, 'import'])->name('leads.import');
-            Route::get('/leads/import/template', [LeadController::class, 'downloadImportTemplate'])->name('leads.import.template');
-            Route::get('/leads/import/facebook-sample', [LeadController::class, 'downloadFacebookImportSample'])->name('leads.import.facebook-sample');
-            Route::get('/leads/imports/{leadImport}/status', [LeadController::class, 'importStatus'])->name('leads.import.status')->middleware('throttle:120,1');
-            Route::get('/leads/imports/{leadImport}/result', [LeadController::class, 'downloadImportResult'])->name('leads.import.result');
-            Route::get('/leads/trashed', [LeadController::class, 'trashed'])->name('leads.trashed');
-            Route::post('/leads/trashed/bulk', [LeadController::class, 'bulkTrashed'])->name('leads.bulk-trashed');
-            Route::post('/leads/{id}/restore', [LeadController::class, 'restore'])->name('leads.restore');
-            Route::delete('/leads/{id}/force', [LeadController::class, 'forceDestroy'])->name('leads.force-delete');
-            Route::patch('/leads/{id}/stage', [LeadController::class, 'updateStage'])->name('leads.stage.update');
-            Route::patch('/leads/{id}/tags', [LeadController::class, 'syncTags'])->name('leads.tags.update');
-            Route::patch('/leads/{id}/fields', [LeadController::class, 'updateFields'])->name('leads.fields.update');
-            Route::post('/leads/{id}/contacts', [LeadController::class, 'addContact'])->name('leads.contacts.store');
-            Route::patch('/leads/{id}/contacts/{contact}/primary', [LeadController::class, 'setPrimaryContact'])->name('leads.contacts.primary');
-            Route::delete('/leads/{id}/contacts/{contact}', [LeadController::class, 'removeContact'])->name('leads.contacts.destroy');
-            Route::get('/leads/{id}', [LeadController::class, 'show'])->name('leads.show');
-            Route::get('/leads/{id}/insights', [LeadController::class, 'insights'])->name('leads.insights')->middleware('throttle:120,1');
-            Route::put('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
-            Route::delete('/leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
-            Route::post('/leads/{id}/notes', [LeadNoteController::class, 'store'])->name('leads.notes.store');
-            Route::post('/leads/{id}/assign', [LeadController::class, 'assign'])->name('leads.assign');
-            Route::post('/leads-distribute', [LeadController::class, 'distributeUnassigned'])->name('leads.distribute');
+            // Leads moved to the CRM app (/crm/leads, data from routes/crm.php). These names stay as
+            // redirects so existing links (emails, notifications, other screens) open the new screens.
+            Route::get('/leads', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'leads'])->name('leads.index');
+            Route::get('/leads/trashed', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'trashedLeads'])->name('leads.trashed');
+            Route::get('/leads/{id}', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'lead'])->name('leads.show')->whereNumber('id');
 
-            // Website Leads — AI chat / form / customer-account visitors with their tracked activity;
-            // the pool not routed to an agency / agent yet, and transferring them. Super Admin only
-            // (enforced in the controller). See VisitorTracker.
-            Route::prefix('website-leads')->name('website-leads.')->controller(\App\Http\Controllers\Portal\Crm\WebsiteLeadController::class)->group(function () {
-                Route::get('/', 'index')->name('index');
-                Route::get('/transfer-targets', 'targets')->name('targets')->middleware('throttle:120,1');
-                Route::post('/transfer', 'transfer')->name('transfer');
-                Route::get('/{websiteLead}', 'show')->whereNumber('websiteLead')->name('show');
-                Route::get('/{websiteLead}/insights', 'insights')->whereNumber('websiteLead')->name('insights')->middleware('throttle:120,1');
-            });
+            // Website Leads moved to the CRM app (/crm/website-leads, data from routes/crm.php).
+            Route::get('/website-leads', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'websiteLeads'])->name('website-leads.index');
+            Route::get('/website-leads/{id}', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'websiteLead'])->name('website-leads.show')->whereNumber('id');
 
             // Lead Insights — website activity of the viewer's own leads (property views, time spent, AI chats…).
-            Route::get('/lead-insights', [\App\Http\Controllers\Portal\Crm\LeadInsightsController::class, 'index'])->name('lead-insights.index');
+            Route::get('/lead-insights', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'leadInsights'])->name('lead-insights.index');
 
-            // Integrations — hub of cards, Facebook Lead Ads (connect Pages; their leads arrive via
-            // /api/webhooks/facebook) and the Property Finder page (its actions are just below).
-            Route::prefix('integrations')->name('integrations.')->controller(\App\Http\Controllers\Portal\Crm\IntegrationController::class)->group(function () {
-                Route::get('/', 'index')->name('index'); // hub: one card per integration
-                Route::get('/facebook', 'facebook')->name('facebook');
+            // Integrations moved to the CRM app (/crm/integrations/*). These names stay as redirects for
+            // links already sent (Facebook reconnect emails, Property Finder notifications).
+            Route::controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->prefix('integrations')->name('integrations.')->group(function () {
+                Route::get('/', 'integrations')->name('index');
+                Route::get('/facebook', 'facebookIntegration')->name('facebook');
                 Route::get('/property-finder', 'propertyFinder')->name('property-finder.show');
-                Route::get('/accounts', 'accounts')->name('accounts')->middleware('throttle:120,1');
-                Route::get('/facebook/connect', 'connect')->name('facebook.connect');
-                Route::post('/facebook/pages', 'storePages')->name('facebook.pages.store');
-                Route::post('/facebook/pages/cancel', 'cancelPages')->name('facebook.pages.cancel');
-                Route::get('/facebook/import-status', 'importStatus')->name('facebook.import-status')->middleware('throttle:120,1');
-                Route::delete('/facebook/bulk', 'bulkDestroy')->name('facebook.bulk-destroy');
-                Route::post('/facebook/{id}/sync', 'sync')->name('facebook.sync')->whereNumber('id')->middleware('throttle:10,1');
-                Route::delete('/facebook/{id}', 'destroy')->name('facebook.destroy')->whereNumber('id');
-            });
-            // Integrations — Property Finder (API key → listings imported as properties, Super Admin reviews them).
-            Route::prefix('integrations/property-finder')->name('integrations.property-finder.')->controller(\App\Http\Controllers\Portal\Crm\PropertyFinderController::class)->group(function () {
-                Route::post('/', 'connect')->name('connect')->middleware('throttle:10,1');
-                Route::post('/sync', 'sync')->name('sync')->middleware('throttle:10,1');
-                Route::get('/status', 'status')->name('status')->middleware('throttle:120,1');
-                Route::delete('/', 'destroy')->name('destroy');
-                Route::get('/review', 'review')->name('review');
-                Route::post('/review', 'reviewAction')->name('review.action');
+                Route::get('/property-finder/review', 'propertyFinderReview')->name('property-finder.review');
             });
 
-            Route::prefix('master')->name('master.')->group(function () {
-                Route::get('/stages', [LeadStageController::class, 'index'])->name('stages.index');
-                Route::post('/stages', [LeadStageController::class, 'store'])->name('stages.store');
-                Route::put('/stages/{id}', [LeadStageController::class, 'update'])->name('stages.update');
-                Route::delete('/stages/{id}', [LeadStageController::class, 'destroy'])->name('stages.destroy');
-                Route::post('/stages/reorder', [LeadStageController::class, 'reorder'])->name('stages.reorder');
-                Route::post('/stages/{id}/set-default', [LeadStageController::class, 'setDefault'])->name('stages.set-default');
+            // Master (Stage / Tag / Source / Property Options) moved to the CRM app (routes/crm.php,
+            // /crm/master/*). This name stays as a redirect (?list=… carried over) for existing links.
+            Route::get('/master/property-options', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'propertyOptions'])->name('master.property-options.index');
 
-                Route::get('/tags', [LeadTagController::class, 'index'])->name('tags.index');
-                Route::post('/tags', [LeadTagController::class, 'store'])->name('tags.store');
-                Route::put('/tags/{id}', [LeadTagController::class, 'update'])->name('tags.update');
-                Route::delete('/tags/{id}', [LeadTagController::class, 'destroy'])->name('tags.destroy');
-
-                Route::get('/sources', [LeadSourceController::class, 'index'])->name('sources.index');
-                Route::post('/sources', [LeadSourceController::class, 'store'])->name('sources.store');
-                Route::put('/sources/{id}', [LeadSourceController::class, 'update'])->name('sources.update');
-                Route::delete('/sources/{id}', [LeadSourceController::class, 'destroy'])->name('sources.destroy');
-                Route::post('/sources/reorder', [LeadSourceController::class, 'reorder'])->name('sources.reorder');
-
-                // Leads using a Stage / Tag / Source — list them and take the item off them before deleting.
-                Route::get('/{type}/{id}/leads', [\App\Http\Controllers\Portal\Crm\MasterLinkedLeadsController::class, 'index'])
-                    ->name('linked-leads.index')->whereIn('type', ['stages', 'tags', 'sources'])->whereNumber('id');
-                Route::post('/{type}/{id}/leads/remove', [\App\Http\Controllers\Portal\Crm\MasterLinkedLeadsController::class, 'remove'])
-                    ->name('linked-leads.remove')->whereIn('type', ['stages', 'tags', 'sources'])->whereNumber('id');
-
-                // Property form dropdown options — Super Admin only (checked in the controller).
-                Route::controller(\App\Http\Controllers\Portal\Crm\PropertyOptionController::class)->prefix('property-options')->name('property-options.')
-                    ->group(function () {
-                        $lists = implode('|', array_keys(\App\Http\Controllers\Portal\Crm\PropertyOptionController::LISTS));
-                        Route::get('/', 'index')->name('index');
-                        Route::post('/{key}', 'store')->name('store')->where('key', $lists);
-                        Route::post('/{key}/reorder', 'reorder')->name('reorder')->where('key', $lists);
-                        Route::put('/{key}/{id}', 'update')->name('update')->where('key', $lists)->whereNumber('id');
-                        Route::post('/{key}/{id}/toggle', 'toggle')->name('toggle')->where('key', $lists)->whereNumber('id');
-                        Route::delete('/{key}/{id}', 'destroy')->name('destroy')->where('key', $lists)->whereNumber('id');
-                    });
-            });
-
-            Route::get('/reports/{report?}', [PortalReportController::class, 'index'])->name('reports.index')->whereIn('report', ['leads', 'properties', 'sales', 'revenue', 'agents']);
+            // Reports moved to the CRM app (/crm/reports/*); the name stays as a redirect for existing links.
+            Route::get('/reports/{report?}', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'reports'])->name('reports.index')->whereIn('report', ['leads', 'properties', 'sales', 'revenue', 'agents']);
         });
     });
 });
@@ -1062,7 +871,7 @@ Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryControll
 // must always get first chance to match. The (?!...) guard is a belt-and-braces exclusion of the
 // app's other top-level path segments, in case any of them is ever reached without a deeper segment.
 Route::get('/{slug}', [\App\Http\Controllers\LandingPageController::class, 'show'])
-    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|market-insights|careers|contact|login|signup|verify-email|forgot-password|reset-password|profile|properties|premium-properties|marketing-properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
+    ->where('slug', '^(?!(admin|portal|crm|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|market-insights|careers|contact|login|signup|verify-email|forgot-password|reset-password|profile|properties|premium-properties|marketing-properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
     ->name('landing-pages.show');
 
 // Anything no route above claims (e.g. /some/unknown/page) — the site's own 404 page, served with a

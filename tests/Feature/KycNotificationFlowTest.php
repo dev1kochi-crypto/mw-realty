@@ -24,12 +24,12 @@ class KycNotificationFlowTest extends TestCase
         $admin = $this->superAdmin();
 
         // Profile shows one KYC progress card (the layout's generic banner is hidden there).
-        $this->signIn($agent)->get('/portal/profile')->assertOk()
-            ->assertSee('Finish your KYC to unlock the CRM')->assertDontSee('portal-status-banner', false);
-        $this->get('/portal/agency')->assertOk()->assertSee('portal-status-banner', false);
+        $this->crmApi($agent)->getJson('/api/crm/profile')->assertOk()
+            ->assertJsonPath('kyc.title', 'Finish your KYC to unlock the CRM');
+        $this->signIn($agent)->get('/portal/agency')->assertOk()->assertSee('portal-status-banner', false);
 
         // 1. The agent submits → both admin recipients emailed; the agent gets an in-app notice.
-        $this->signIn($agent)->postJson('/portal/profile/resubmit')->assertOk();
+        $this->postJson('/api/crm/profile/submit')->assertOk();
         Mail::assertQueued(PortalAccountRegistered::class, fn ($m) => $m->hasTo('sales@example.test') && $m->hasTo('ops@example.test'));
         Mail::assertQueuedCount(1); // only the admin email — the agent gets no "we received it" email
         $this->assertSame(1, $agent->notifications()->where('type', \App\Notifications\PortalKycSubmittedNotification::class)->count());
@@ -43,7 +43,7 @@ class KycNotificationFlowTest extends TestCase
         $this->assertSame(1, $agent->notifications()->where('type', \App\Notifications\PortalInfoRequestedNotification::class)->count());
 
         // 3. The agent resubmits → admin again, the agent gets an in-app notice.
-        $this->signIn($agent->fresh())->postJson('/portal/profile/resubmit')->assertOk();
+        $this->crmApi($agent->fresh())->postJson('/api/crm/profile/submit')->assertOk();
         Mail::assertQueued(PortalAccountRegistered::class, fn ($m) => $m->isResubmission);
 
         // 4. Approved → email + bell.

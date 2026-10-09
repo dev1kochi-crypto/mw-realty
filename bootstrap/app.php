@@ -34,7 +34,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // (the CMS admin uses its own cms.auth/cms.permission middleware), so
         // these redirects only ever apply to /portal/* requests.
         $middleware->redirectGuestsTo(fn ($request) => route('portal.login'));
-        $middleware->redirectUsersTo(fn ($request) => route('portal.dashboard'));
+        $middleware->redirectUsersTo(fn ($request) => route('crm.app', 'dashboard'));
+
+        // Every /api/* JSON reply is {success, message, data} (see App\Support\ApiEnvelope).
+        $middleware->api(append: [\App\Http\Middleware\ApiEnvelopeResponse::class]);
 
         $middleware->web(append: [
             \App\Http\Middleware\EnforceAccountSecurity::class,
@@ -54,6 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'customer.auth' => \App\Http\Middleware\EnsureCustomerAuthenticated::class,
             'portal.approved' => \App\Http\Middleware\EnsurePortalAccountApproved::class,
             'portal.2fa' => \App\Http\Middleware\EnsurePortalTwoFactor::class,
+            'crm.auth' => \App\Http\Middleware\Crm\AuthenticateCrm::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -61,4 +65,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // app — doesn't send `Accept: application/json`; otherwise a validation error would
         // redirect and an unauthenticated request would bounce to the portal login page.
         $exceptions->shouldRenderJsonWhen(fn ($request) => $request->is('api/*') || $request->expectsJson());
+
+        // Errors (validation, 401/403/404/429, 500…) use the same {success, message, data} envelope
+        // as successful replies — including 404s for unknown routes, which no route middleware sees.
+        $exceptions->respond(function ($response, \Throwable $e, $request) {
+            if ($response instanceof \Illuminate\Http\JsonResponse && \App\Support\ApiEnvelope::applies($request)) {
+                return \App\Support\ApiEnvelope::wrap($response, $request);
+            }
+
+            return $response;
+        });
     })->create();

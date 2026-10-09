@@ -19,8 +19,15 @@ class PortalDeviceTrust
 
     public function isTrusted(Request $request, PortalUser $user): bool
     {
-        $token = $request->cookie($this->cookieName($user));
+        return $this->isTrustedToken($user, $request->cookie($this->cookieName($user)));
+    }
 
+    /**
+     * Same check for a client without cookies (the mobile app): it sends back the
+     * `device_token` it was given by remember() on its last successful sign-in.
+     */
+    public function isTrustedToken(PortalUser $user, mixed $token): bool
+    {
         return is_string($token) && $token !== '' && DB::table('portal_trusted_devices')
             ->where('portal_user_id', $user->id)
             ->where('token_hash', hash('sha256', $token))
@@ -31,7 +38,18 @@ class PortalDeviceTrust
     /** Remembers (or refreshes) the current browser for this user and queues its cookie. */
     public function trust(Request $request, PortalUser $user): void
     {
-        $token = $request->cookie($this->cookieName($user));
+        $token = $this->remember($request, $user, $request->cookie($this->cookieName($user)));
+
+        Cookie::queue(cookie($this->cookieName($user), $token, self::DAYS * 24 * 60, null, null, null, true, false, 'lax'));
+    }
+
+    /**
+     * Refreshes the device the given token belongs to, or registers a new one — returns the
+     * token to keep (unchanged when it was already known). trust() keeps it in a cookie; the
+     * CRM API hands it to the app as `device_token`.
+     */
+    public function remember(Request $request, PortalUser $user, mixed $token): string
+    {
         $row = is_string($token) && $token !== ''
             ? DB::table('portal_trusted_devices')->where('portal_user_id', $user->id)->where('token_hash', hash('sha256', $token))->first()
             : null;
@@ -42,20 +60,22 @@ class PortalDeviceTrust
                 'last_used_at' => now(),
                 'updated_at' => now(),
             ]);
-        } else {
-            $token = Str::random(64);
-            DB::table('portal_trusted_devices')->insert([
-                'portal_user_id' => $user->id,
-                'token_hash' => hash('sha256', $token),
-                'user_agent' => Str::limit((string) $request->userAgent(), 490, ''),
-                'ip_address' => $request->ip(),
-                'last_used_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+
+            return $token;
         }
 
-        Cookie::queue(cookie($this->cookieName($user), $token, self::DAYS * 24 * 60, null, null, null, true, false, 'lax'));
+        $token = Str::random(64);
+        DB::table('portal_trusted_devices')->insert([
+            'portal_user_id' => $user->id,
+            'token_hash' => hash('sha256', $token),
+            'user_agent' => Str::limit((string) $request->userAgent(), 490, ''),
+            'ip_address' => $request->ip(),
+            'last_used_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return $token;
     }
 
     /** Signs every browser out of "trusted" — the next login anywhere needs the email code again. */

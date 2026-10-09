@@ -1,0 +1,393 @@
+name: 'CRM Master — Property Options'
+description: |-
+
+  Super Admin only: the option lists behind the property form's Property Type, Listing Type,
+  Completion Status and Furnishing dropdowns, plus the Nearby Places "Type" dropdown — the same
+  Filter / FilterValue records the website filters use. Agents / agencies ask for new options via a ticket.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/master/property-options
+    metadata:
+      custom: []
+      groupName: 'CRM Master — Property Options'
+      groupDescription: |-
+
+        Super Admin only: the option lists behind the property form's Property Type, Listing Type,
+        Completion Status and Furnishing dropdowns, plus the Nearby Places "Type" dropdown — the same
+        Filter / FilterValue records the website filters use. Agents / agencies ask for new options via a ticket.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'One option list'
+      description: |-
+        The left menu (every list with its count, grouped), the chosen list's options in form order
+        with how many listings (or nearby places) use each, and the active languages (default first).
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      list:
+        custom: []
+        name: list
+        description: 'One of the list keys.'
+        required: false
+        example: property_type
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      list: property_type
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/master/property-options/{key}'
+    metadata:
+      custom: []
+      groupName: 'CRM Master — Property Options'
+      groupDescription: |-
+
+        Super Admin only: the option lists behind the property form's Property Type, Listing Type,
+        Completion Status and Furnishing dropdowns, plus the Nearby Places "Type" dropdown — the same
+        Filter / FilterValue records the website filters use. Agents / agencies ask for new options via a ticket.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Add an option'
+      description: 'Multipart when an icon is sent (amenities / easy access / attributes).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: multipart/form-data
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      key:
+        custom: []
+        name: key
+        description: ''
+        required: true
+        example: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      key: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      translations:
+        custom: []
+        name: translations
+        description: 'One label per language code; the default language is required.'
+        required: true
+        example:
+          en:
+            label: Duplex
+        type: object
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      value:
+        custom: []
+        name: value
+        description: 'The code saved on listings — made from the name when empty.'
+        required: false
+        example: duplex
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      icon:
+        custom: []
+        name: icon
+        description: 'SVG / PNG / JPG / WEBP, max 1 MB.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      translations:
+        en:
+          label: Duplex
+      value: duplex
+    fileParameters:
+      icon: null
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/master/property-options/{key}/reorder'
+    metadata:
+      custom: []
+      groupName: 'CRM Master — Property Options'
+      groupDescription: |-
+
+        Super Admin only: the option lists behind the property form's Property Type, Listing Type,
+        Completion Status and Furnishing dropdowns, plus the Nearby Places "Type" dropdown — the same
+        Filter / FilterValue records the website filters use. Agents / agencies ask for new options via a ticket.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reorder a list'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      key:
+        custom: []
+        name: key
+        description: ''
+        required: true
+        example: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      key: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      order:
+        custom: []
+        name: order
+        description: 'Option ids in the new order.'
+        required: true
+        example:
+          - 4
+          - 1
+          - 7
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      order:
+        - 4
+        - 1
+        - 7
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/crm/master/property-options/{key}/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Master — Property Options'
+      groupDescription: |-
+
+        Super Admin only: the option lists behind the property form's Property Type, Listing Type,
+        Completion Status and Furnishing dropdowns, plus the Nearby Places "Type" dropdown — the same
+        Filter / FilterValue records the website filters use. Agents / agencies ask for new options via a ticket.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Edit an option'
+      description: |-
+        Same fields as adding. The code can't change once listings use it. Send multipart with
+        `_method=PUT` (POST) when replacing the icon.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      key:
+        custom: []
+        name: key
+        description: ''
+        required: true
+        example: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the {key}.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      key: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/master/property-options/{key}/{id}/toggle'
+    metadata:
+      custom: []
+      groupName: 'CRM Master — Property Options'
+      groupDescription: |-
+
+        Super Admin only: the option lists behind the property form's Property Type, Listing Type,
+        Completion Status and Furnishing dropdowns, plus the Nearby Places "Type" dropdown — the same
+        Filter / FilterValue records the website filters use. Agents / agencies ask for new options via a ticket.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show / hide an option on the form'
+      description: 'Listings that already use a hidden option keep it.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      key:
+        custom: []
+        name: key
+        description: ''
+        required: true
+        example: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the {key}.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      key: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/crm/master/property-options/{key}/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Master — Property Options'
+      groupDescription: |-
+
+        Super Admin only: the option lists behind the property form's Property Type, Listing Type,
+        Completion Status and Furnishing dropdowns, plus the Nearby Places "Type" dropdown — the same
+        Filter / FilterValue records the website filters use. Agents / agencies ask for new options via a ticket.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete an option'
+      description: 'Only when nothing uses it (422 otherwise — switch it off instead).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      key:
+        custom: []
+        name: key
+        description: ''
+        required: true
+        example: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the {key}.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      key: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

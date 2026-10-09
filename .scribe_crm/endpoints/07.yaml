@@ -1,0 +1,2643 @@
+name: 'CRM Properties'
+description: |-
+
+  Properties and Commercial listings — the same table, form and screens, split only by `segment`
+  (residential | commercial); plan property limits count both. Super Admin sees every listing; an
+  Agent / Company sees and can only touch their own (an agency agent also the agency listings
+  assigned to them — view / edit only).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/properties
+    metadata:
+      custom: []
+      groupName: 'CRM Properties'
+      groupDescription: |-
+
+        Properties and Commercial listings — the same table, form and screens, split only by `segment`
+        (residential | commercial); plan property limits count both. Super Admin sees every listing; an
+        Agent / Company sees and can only touch their own (an agency agent also the agency listings
+        assigned to them — view / edit only).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List listings'
+      description: |-
+        One page (16) of a menu's listings in display order, with the search / filters, the DLD permit
+        review counts, plan usage and premium quota.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      segment:
+        custom: []
+        name: segment
+        description: 'residential | commercial.'
+        required: false
+        example: residential
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      q:
+        custom: []
+        name: q
+        description: 'Title, ref no, RERA, address, community or city (and agent / agency for Super Admin).'
+        required: false
+        example: marina
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      agent:
+        custom: []
+        name: agent
+        description: 'Agent id, or "none" = agency listings with no agent.'
+        required: false
+        example: '12'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      listing:
+        custom: []
+        name: listing
+        description: 'sale | rent.'
+        required: false
+        example: rent
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'active | inactive.'
+        required: false
+        example: active
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      premium:
+        custom: []
+        name: premium
+        description: ''
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      review:
+        custom: []
+        name: review
+        description: 'A permit review state (draft, pending, changes_requested, approved, expired).'
+        required: false
+        example: pending
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      segment: residential
+      q: marina
+      agent: '12'
+      listing: rent
+      status: active
+      premium: false
+      review: pending
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/properties/create
+    metadata:
+      custom: []
+      groupName: 'CRM Properties'
+      groupDescription: |-
+
+        Properties and Commercial listings — the same table, form and screens, split only by `segment`
+        (residential | commercial); plan property limits count both. Super Admin sees every listing; an
+        Agent / Company sees and can only touch their own (an agency agent also the agency listings
+        assigned to them — view / edit only).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Form options for a new listing'
+      description: |-
+        The form's option data (ListingFormData) plus the next reference number. 403 until the account
+        is approved; 422 once the plan's property limit is reached.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      segment:
+        custom: []
+        name: segment
+        description: 'residential | commercial.'
+        required: false
+        example: residential
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      segment: residential
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/properties
+    metadata:
+      custom: []
+      groupName: 'CRM Properties'
+      groupDescription: |-
+
+        Properties and Commercial listings — the same table, form and screens, split only by `segment`
+        (residential | commercial); plan property limits count both. Super Admin sees every listing; an
+        Agent / Company sees and can only touch their own (an agency agent also the agency listings
+        assigned to them — view / edit only).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Add a listing'
+      description: |-
+        Multipart (photos, floor plans, brochure, permit QR, OG image). Same fields as the web form —
+        see App\Http\Requests\PropertyRequest. Plan limits are enforced here.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: multipart/form-data
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      translations:
+        custom: []
+        name: translations
+        description: ''
+        required: true
+        example:
+          - []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      slug:
+        custom: []
+        name: slug
+        description: 'Must contain only letters, numbers, dashes and underscores. Must not be greater than 255 characters.'
+        required: true
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      reference_no:
+        custom: []
+        name: reference_no
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: amniihfqcoynlazghdtqt
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      rera_id:
+        custom: []
+        name: rera_id
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: qxbajwbpilpmufinllwlo
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_number:
+        custom: []
+        name: permit_number
+        description: 'Must match the regex /^[A-Za-z0-9\-\/]+$/. Must not be greater than 64 characters.'
+        required: false
+        example: auydlsmsjuryvojcybzvr
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_expires_at:
+        custom: []
+        name: permit_expires_at
+        description: 'Must be a valid date in the format <code>Y-m-d</code>.'
+        required: false
+        example: '2026-10-09'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_qr:
+        custom: []
+        name: permit_qr
+        description: 'Must be an image. Must not be greater than 2048 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_verification_url:
+        custom: []
+        name: permit_verification_url
+        description: 'Must be a valid URL. Must not be greater than 2048 characters.'
+        required: false
+        example: 'http://www.ward.com/'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      postal_code:
+        custom: []
+        name: postal_code
+        description: 'Must not be greater than 50 characters.'
+        required: false
+        example: ckznkygloigmkwxphlvaz
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      latitude:
+        custom: []
+        name: latitude
+        description: 'Must be between -90 and 90.'
+        required: true
+        example: -90
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      longitude:
+        custom: []
+        name: longitude
+        description: 'Must be between -180 and 180.'
+        required: true
+        example: -179
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      bedrooms:
+        custom: []
+        name: bedrooms
+        description: 'Must be at least 0. Must not be greater than 1000.'
+        required: false
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      bathrooms:
+        custom: []
+        name: bathrooms
+        description: 'Must be at least 0. Must not be greater than 1000.'
+        required: false
+        example: 14
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      sqft:
+        custom: []
+        name: sqft
+        description: 'Must be at least 0. Must not be greater than 4294967295.'
+        required: false
+        example: 6
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      price:
+        custom: []
+        name: price
+        description: 'Must be at least 0. Must not be greater than 9999999999999.99.'
+        required: true
+        example: 2
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      currency:
+        custom: []
+        name: currency
+        description: 'Must contain only letters. Must be 3 characters.'
+        required: false
+        example: aqy
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      image:
+        custom: []
+        name: image
+        description: 'Must be an image. Must not be greater than 4096 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      image_alt:
+        custom: []
+        name: image_alt
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: wuxhgjjmzuxjubqouzswi
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      brochure:
+        custom: []
+        name: brochure
+        description: 'Must be a file. Must not be greater than 20480 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      images:
+        custom: []
+        name: images
+        description: 'Must be an image. Must not be greater than 4096 kilobytes.'
+        required: true
+        example:
+          - null
+        type: 'file[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      amenities:
+        custom: []
+        name: amenities
+        description: 'Must match an existing stored value. Must not be greater than 100 characters.'
+        required: false
+        example:
+          - wxtrkimfcatbxspzmrazs
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      easy_access:
+        custom: []
+        name: easy_access
+        description: 'Must match an existing stored value. Must not be greater than 100 characters.'
+        required: false
+        example:
+          - royjpxmqesedyghenqcop
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      property_attributes:
+        custom: []
+        name: property_attributes
+        description: 'Must match an existing stored value. Must not be greater than 100 characters.'
+        required: false
+        example:
+          - wvownkbamlnfngefbeilf
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      rental_period:
+        custom: []
+        name: rental_period
+        description: 'Must match an existing stored value. Must not be greater than 100 characters.'
+        required: false
+        example: zsyuxoezbdtabptcyyere
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_type:
+        custom: []
+        name: permit_type
+        description: ''
+        required: false
+        example: dtcm
+        type: string
+        enumValues:
+          - rera
+          - dtcm
+          - none
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_city:
+        custom: []
+        name: permit_city
+        description: ''
+        required: false
+        example: al_ain
+        type: string
+        enumValues:
+          - al_ain
+          - other
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_token:
+        custom: []
+        name: permit_token
+        description: 'Must not be greater than 64 characters.'
+        required: false
+        example: vrljcbwkthjnescwsestc
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      availability:
+        custom: []
+        name: availability
+        description: ''
+        required: false
+        example: from_date
+        type: string
+        enumValues:
+          - immediately
+          - from_date
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      available_dates:
+        custom: []
+        name: available_dates
+        description: 'Must be a valid date in the format <code>Y-m-d</code>.'
+        required: false
+        example:
+          - '2026-10-09'
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      developer:
+        custom: []
+        name: developer
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: ouxpqsydkigioyoyprjkf
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      unit_number:
+        custom: []
+        name: unit_number
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: djsneawgaavuiwlezlcra
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      owner_name:
+        custom: []
+        name: owner_name
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: oooxrrjhbduowtbaqrrtg
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      upgraded:
+        custom: []
+        name: upgraded
+        description: ''
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      video_tour_url:
+        custom: []
+        name: video_tour_url
+        description: 'Must be a valid URL. Must not be greater than 2048 characters.'
+        required: false
+        example: 'http://harber.info/dolor-autem-omnis-doloribus-beatae-laboriosam-expedita-deserunt.html'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      cheques:
+        custom: []
+        name: cheques
+        description: 'Must be at least 1. Must not be greater than 12.'
+        required: false
+        example: 6
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      year_built:
+        custom: []
+        name: year_built
+        description: 'Must be at least 1800. Must not be greater than 2200.'
+        required: false
+        example: 14
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      floor:
+        custom: []
+        name: floor
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: fqsaymxpayeblqozckazp
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      parking:
+        custom: []
+        name: parking
+        description: 'Must be at least 0. Must not be greater than 10000.'
+        required: false
+        example: 11
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      garage:
+        custom: []
+        name: garage
+        description: 'Must be at least 0. Must not be greater than 1000.'
+        required: false
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      direct_from_owner:
+        custom: []
+        name: direct_from_owner
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: jijwkuzgpjfumffsmqnmb
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      security_deposit:
+        custom: []
+        name: security_deposit
+        description: 'Must be at least 0. Must not be greater than 9999999999999.99.'
+        required: false
+        example: 5
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      virtual_tour_url:
+        custom: []
+        name: virtual_tour_url
+        description: 'Must be a valid URL. Must not be greater than 2048 characters.'
+        required: false
+        example: 'https://www.grady.info/quasi-aut-unde-harum-sit-qui-aliquid'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      view:
+        custom: []
+        name: view
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: mbiuqxdnvttnwpjqkxxmu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      floor_plans:
+        custom: []
+        name: floor_plans
+        description: 'Must not have more than 50 items.'
+        required: false
+        example: null
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      floor_plan_file:
+        custom: []
+        name: floor_plan_file
+        description: 'Must be a file. Must not be greater than 10240 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      nearby_places:
+        custom: []
+        name: nearby_places
+        description: 'Must match an existing stored value.'
+        required: false
+        example:
+          - 17
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      published_at:
+        custom: []
+        name: published_at
+        description: 'Must be a valid date.'
+        required: false
+        example: '2026-10-09T11:12:50'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      order_index:
+        custom: []
+        name: order_index
+        description: 'Must be at least 0.'
+        required: false
+        example: 45
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata:
+        custom: []
+        name: metadata
+        description: ''
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.meta_title:
+        custom: []
+        name: metadata.meta_title
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: qeopfuudtdsufvyvddqam
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.meta_description:
+        custom: []
+        name: metadata.meta_description
+        description: 'Must not be greater than 500 characters.'
+        required: false
+        example: niihfqcoynlazghdtqtqx
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.meta_keywords:
+        custom: []
+        name: metadata.meta_keywords
+        description: 'Must not be greater than 500 characters.'
+        required: false
+        example: bajwbpilpmufinllwloau
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.canonical_url:
+        custom: []
+        name: metadata.canonical_url
+        description: 'Must be a valid URL. Must not be greater than 2048 characters.'
+        required: false
+        example: 'https://considine.com/laudantium-nihil-autem-omnis-cum-molestiae-vel-natus.html'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.og_title:
+        custom: []
+        name: metadata.og_title
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: jcybzvrbyickznkygloig
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.og_description:
+        custom: []
+        name: metadata.og_description
+        description: 'Must not be greater than 500 characters.'
+        required: false
+        example: mkwxphlvazjrcnfbaqywu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.other_meta_tags:
+        custom: []
+        name: metadata.other_meta_tags
+        description: ''
+        required: false
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata_og_image:
+        custom: []
+        name: metadata_og_image
+        description: 'Must be an image. Must not be greater than 4096 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      translations.en:
+        custom: []
+        name: translations.en
+        description: ''
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      translations.en.title:
+        custom: []
+        name: translations.en.title
+        description: 'Must not be greater than 255 characters.'
+        required: true
+        example: mqeopfuudtdsufvyvddqa
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      translations.ar:
+        custom: []
+        name: translations.ar
+        description: ''
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      translations.ar.title:
+        custom: []
+        name: translations.ar.title
+        description: 'Must not be greater than 255 characters.'
+        required: true
+        example: mniihfqcoynlazghdtqtq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      listing_type:
+        custom: []
+        name: listing_type
+        description: 'Must match an existing stored value. Must not be greater than 255 characters.'
+        required: true
+        example: xbajwbpilpmufinllwloa
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      completion_status:
+        custom: []
+        name: completion_status
+        description: 'Must match an existing stored value. Must not be greater than 255 characters.'
+        required: false
+        example: uydlsmsjuryvojcybzvrb
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      property_type:
+        custom: []
+        name: property_type
+        description: 'Must match an existing stored value. Must not be greater than 255 characters.'
+        required: true
+        example: yickznkygloigmkwxphlv
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      category:
+        custom: []
+        name: category
+        description: 'Must match an existing stored value. Must not be greater than 255 characters.'
+        required: true
+        example: azjrcnfbaqywuxhgjjmzu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      location:
+        custom: []
+        name: location
+        description: 'Must match an existing stored value. Must not be greater than 255 characters.'
+        required: true
+        example: xjubqouzswiwxtrkimfca
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      emirate:
+        custom: []
+        name: emirate
+        description: 'Must match an existing stored value. Must not be greater than 100 characters.'
+        required: true
+        example: tbxspzmrazsroyjpxmqes
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'translations[].title':
+        custom: []
+        name: 'translations[].title'
+        description: 'Must not be greater than 255 characters.'
+        required: true
+        example: edyghenqcopwvownkbaml
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'translations[].key_features':
+        custom: []
+        name: 'translations[].key_features'
+        description: 'Must not be greater than 5000 characters.'
+        required: false
+        example: nfngefbeilfzsyuxoezbd
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'translations[].description':
+        custom: []
+        name: 'translations[].description'
+        description: 'Must not be greater than 100000 characters.'
+        required: false
+        example: 'Doloremque illo deserunt placeat fugit non hic sequi.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'translations[].address':
+        custom: []
+        name: 'translations[].address'
+        description: 'Must not be greater than 1000 characters.'
+        required: true
+        example: revrljcbwkthjnescwses
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'translations[].community':
+        custom: []
+        name: 'translations[].community'
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: tcouxpqsydkigioyoyprj
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'translations[].city':
+        custom: []
+        name: 'translations[].city'
+        description: 'Must not be greater than 255 characters.'
+        required: true
+        example: kfdjsneawgaavuiwlezlc
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'translations[].country':
+        custom: []
+        name: 'translations[].country'
+        description: 'Must not be greater than 255 characters.'
+        required: true
+        example: raoooxrrjhbduowtbaqrr
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'floor_plans[].label':
+        custom: []
+        name: 'floor_plans[].label'
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: tgxiuvujtzcirplnfqsay
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'floor_plans[].size_from':
+        custom: []
+        name: 'floor_plans[].size_from'
+        description: 'Must be at least 0.'
+        required: false
+        example: 43
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'floor_plans[].size_to':
+        custom: []
+        name: 'floor_plans[].size_to'
+        description: 'Must be at least 0.'
+        required: false
+        example: 80
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'floor_plans[].image':
+        custom: []
+        name: 'floor_plans[].image'
+        description: 'Must be an image. Must not be greater than 4096 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'floor_plans[].existing_image':
+        custom: []
+        name: 'floor_plans[].existing_image'
+        description: ''
+        required: false
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      segment:
+        custom: []
+        name: segment
+        description: 'residential | commercial.'
+        required: false
+        example: residential
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      translations:
+        0:
+          title: edyghenqcopwvownkbaml
+          key_features: nfngefbeilfzsyuxoezbd
+          description: 'Doloremque illo deserunt placeat fugit non hic sequi.'
+          address: revrljcbwkthjnescwses
+          community: tcouxpqsydkigioyoyprj
+          city: kfdjsneawgaavuiwlezlc
+          country: raoooxrrjhbduowtbaqrr
+        en:
+          title: mqeopfuudtdsufvyvddqa
+        ar:
+          title: mniihfqcoynlazghdtqtq
+      slug: vmqeopfuudtdsufvyvddq
+      reference_no: amniihfqcoynlazghdtqt
+      rera_id: qxbajwbpilpmufinllwlo
+      permit_number: auydlsmsjuryvojcybzvr
+      permit_expires_at: '2026-10-09'
+      permit_verification_url: 'http://www.ward.com/'
+      postal_code: ckznkygloigmkwxphlvaz
+      latitude: -90
+      longitude: -179
+      bedrooms: 3
+      bathrooms: 14
+      sqft: 6
+      price: 2
+      currency: aqy
+      image_alt: wuxhgjjmzuxjubqouzswi
+      amenities:
+        - wxtrkimfcatbxspzmrazs
+      easy_access:
+        - royjpxmqesedyghenqcop
+      property_attributes:
+        - wvownkbamlnfngefbeilf
+      rental_period: zsyuxoezbdtabptcyyere
+      permit_type: dtcm
+      permit_city: al_ain
+      permit_token: vrljcbwkthjnescwsestc
+      availability: from_date
+      available_dates:
+        - '2026-10-09'
+      developer: ouxpqsydkigioyoyprjkf
+      unit_number: djsneawgaavuiwlezlcra
+      owner_name: oooxrrjhbduowtbaqrrtg
+      upgraded: true
+      video_tour_url: 'http://harber.info/dolor-autem-omnis-doloribus-beatae-laboriosam-expedita-deserunt.html'
+      cheques: 6
+      year_built: 14
+      floor: fqsaymxpayeblqozckazp
+      parking: 11
+      garage: 16
+      direct_from_owner: jijwkuzgpjfumffsmqnmb
+      security_deposit: 5
+      virtual_tour_url: 'https://www.grady.info/quasi-aut-unde-harum-sit-qui-aliquid'
+      view: mbiuqxdnvttnwpjqkxxmu
+      nearby_places:
+        - 17
+      published_at: '2026-10-09T11:12:50'
+      order_index: 45
+      metadata:
+        meta_title: qeopfuudtdsufvyvddqam
+        meta_description: niihfqcoynlazghdtqtqx
+        meta_keywords: bajwbpilpmufinllwloau
+        canonical_url: 'https://considine.com/laudantium-nihil-autem-omnis-cum-molestiae-vel-natus.html'
+        og_title: jcybzvrbyickznkygloig
+        og_description: mkwxphlvazjrcnfbaqywu
+        other_meta_tags: consequatur
+      listing_type: xbajwbpilpmufinllwloa
+      completion_status: uydlsmsjuryvojcybzvrb
+      property_type: yickznkygloigmkwxphlv
+      category: azjrcnfbaqywuxhgjjmzu
+      location: xjubqouzswiwxtrkimfca
+      emirate: tbxspzmrazsroyjpxmqes
+      floor_plans:
+        -
+          label: tgxiuvujtzcirplnfqsay
+          size_from: 43
+          size_to: 80
+          existing_image: consequatur
+      segment: residential
+    fileParameters:
+      permit_qr: null
+      image: null
+      brochure: null
+      images:
+        - null
+      floor_plan_file: null
+      metadata_og_image: null
+      floor_plans:
+        -
+          image: null
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/properties/bulk-action
+    metadata:
+      custom: []
+      groupName: 'CRM Properties'
+      groupDescription: |-
+
+        Properties and Commercial listings — the same table, form and screens, split only by `segment`
+        (residential | commercial); plan property limits count both. Super Admin sees every listing; an
+        Agent / Company sees and can only touch their own (an agency agent also the agency listings
+        assigned to them — view / edit only).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Bulk action'
+      description: |-
+        Mark Active / Mark Inactive / Delete Selected. Only listings that passed the permit review
+        (and whose permit is still valid) can be switched on; sold / rented ones are skipped.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      action:
+        custom: []
+        name: action
+        description: 'active | inactive | delete.'
+        required: true
+        example: inactive
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      ids:
+        custom: []
+        name: ids
+        description: ''
+        required: true
+        example:
+          - 12
+          - 13
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      action: inactive
+      ids:
+        - 12
+        - 13
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/properties/reorder
+    metadata:
+      custom: []
+      groupName: 'CRM Properties'
+      groupDescription: |-
+
+        Properties and Commercial listings — the same table, form and screens, split only by `segment`
+        (residential | commercial); plan property limits count both. Super Admin sees every listing; an
+        Agent / Company sees and can only touch their own (an agency agent also the agency listings
+        assigned to them — view / edit only).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reorder a page'
+      description: |-
+        Drag-and-drop on the card grid. `order` is the new id sequence of the current page only, so the
+        whole owner's list is renumbered with that page slice swapped in.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      order:
+        custom: []
+        name: order
+        description: ''
+        required: true
+        example:
+          - 14
+          - 12
+          - 13
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      segment:
+        custom: []
+        name: segment
+        description: 'residential | commercial.'
+        required: false
+        example: residential
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      order:
+        - 14
+        - 12
+        - 13
+      segment: residential
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/crm/properties/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Properties'
+      groupDescription: |-
+
+        Properties and Commercial listings — the same table, form and screens, split only by `segment`
+        (residential | commercial); plan property limits count both. Super Admin sees every listing; an
+        Agent / Company sees and can only touch their own (an agency agent also the agency listings
+        assigned to them — view / edit only).
+      subgroup: ''
+      subgroupDescription: ''
+      title: "A listing's detail page"
+      description: |-
+        Gallery, headline facts, description per language, details, amenities, floor plans, location
+        and nearby places, agent, listing info and SEO.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the property.'
+        required: true
+        example: 82
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 82
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/crm/properties/{id}/edit'
+    metadata:
+      custom: []
+      groupName: 'CRM Properties'
+      groupDescription: |-
+
+        Properties and Commercial listings — the same table, form and screens, split only by `segment`
+        (residential | commercial); plan property limits count both. Super Admin sees every listing; an
+        Agent / Company sees and can only touch their own (an agency agent also the agency listings
+        assigned to them — view / edit only).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'A listing for the edit form'
+      description: "Every saved value, plus the form's option data (ListingFormData) and why it isn't live yet."
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the property.'
+        required: true
+        example: 82
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 82
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/crm/properties/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Properties'
+      groupDescription: |-
+
+        Properties and Commercial listings — the same table, form and screens, split only by `segment`
+        (residential | commercial); plan property limits count both. Super Admin sees every listing; an
+        Agent / Company sees and can only touch their own (an agency agent also the agency listings
+        assigned to them — view / edit only).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a listing'
+      description: |-
+        Multipart — send POST with `_method=PUT` when files are included. Fields that must match a
+        verified / approved permit keep their saved values, whatever is posted.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: multipart/form-data
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the property.'
+        required: true
+        example: 82
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 82
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      translations:
+        custom: []
+        name: translations
+        description: ''
+        required: true
+        example:
+          - []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      slug:
+        custom: []
+        name: slug
+        description: 'Must contain only letters, numbers, dashes and underscores. Must not be greater than 255 characters.'
+        required: true
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      reference_no:
+        custom: []
+        name: reference_no
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: amniihfqcoynlazghdtqt
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      rera_id:
+        custom: []
+        name: rera_id
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: qxbajwbpilpmufinllwlo
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_number:
+        custom: []
+        name: permit_number
+        description: 'Must match the regex /^[A-Za-z0-9\-\/]+$/. Must not be greater than 64 characters.'
+        required: false
+        example: auydlsmsjuryvojcybzvr
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_expires_at:
+        custom: []
+        name: permit_expires_at
+        description: 'Must be a valid date in the format <code>Y-m-d</code>.'
+        required: false
+        example: '2026-10-09'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_qr:
+        custom: []
+        name: permit_qr
+        description: 'Must be an image. Must not be greater than 2048 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_verification_url:
+        custom: []
+        name: permit_verification_url
+        description: 'Must be a valid URL. Must not be greater than 2048 characters.'
+        required: false
+        example: 'http://www.ward.com/'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      postal_code:
+        custom: []
+        name: postal_code
+        description: 'Must not be greater than 50 characters.'
+        required: false
+        example: ckznkygloigmkwxphlvaz
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      latitude:
+        custom: []
+        name: latitude
+        description: 'Must be between -90 and 90.'
+        required: true
+        example: -90
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      longitude:
+        custom: []
+        name: longitude
+        description: 'Must be between -180 and 180.'
+        required: true
+        example: -179
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      bedrooms:
+        custom: []
+        name: bedrooms
+        description: 'Must be at least 0. Must not be greater than 1000.'
+        required: false
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      bathrooms:
+        custom: []
+        name: bathrooms
+        description: 'Must be at least 0. Must not be greater than 1000.'
+        required: false
+        example: 14
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      sqft:
+        custom: []
+        name: sqft
+        description: 'Must be at least 0. Must not be greater than 4294967295.'
+        required: false
+        example: 6
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      price:
+        custom: []
+        name: price
+        description: 'Must be at least 0. Must not be greater than 9999999999999.99.'
+        required: true
+        example: 2
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      currency:
+        custom: []
+        name: currency
+        description: 'Must contain only letters. Must be 3 characters.'
+        required: false
+        example: aqy
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      image:
+        custom: []
+        name: image
+        description: 'Must be an image. Must not be greater than 4096 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      image_alt:
+        custom: []
+        name: image_alt
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: wuxhgjjmzuxjubqouzswi
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      brochure:
+        custom: []
+        name: brochure
+        description: 'Must be a file. Must not be greater than 20480 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      images:
+        custom: []
+        name: images
+        description: 'Must be an image. Must not be greater than 4096 kilobytes.'
+        required: true
+        example:
+          - null
+        type: 'file[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      amenities:
+        custom: []
+        name: amenities
+        description: 'Must match an existing stored value. Must not be greater than 100 characters.'
+        required: false
+        example:
+          - wxtrkimfcatbxspzmrazs
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      easy_access:
+        custom: []
+        name: easy_access
+        description: 'Must match an existing stored value. Must not be greater than 100 characters.'
+        required: false
+        example:
+          - royjpxmqesedyghenqcop
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      property_attributes:
+        custom: []
+        name: property_attributes
+        description: 'Must match an existing stored value. Must not be greater than 100 characters.'
+        required: false
+        example:
+          - wvownkbamlnfngefbeilf
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      rental_period:
+        custom: []
+        name: rental_period
+        description: 'Must match an existing stored value. Must not be greater than 100 characters.'
+        required: false
+        example: zsyuxoezbdtabptcyyere
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_type:
+        custom: []
+        name: permit_type
+        description: ''
+        required: false
+        example: none
+        type: string
+        enumValues:
+          - rera
+          - dtcm
+          - none
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_city:
+        custom: []
+        name: permit_city
+        description: ''
+        required: false
+        example: other
+        type: string
+        enumValues:
+          - al_ain
+          - other
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      permit_token:
+        custom: []
+        name: permit_token
+        description: 'Must not be greater than 64 characters.'
+        required: false
+        example: vrljcbwkthjnescwsestc
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      availability:
+        custom: []
+        name: availability
+        description: ''
+        required: false
+        example: from_date
+        type: string
+        enumValues:
+          - immediately
+          - from_date
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      available_dates:
+        custom: []
+        name: available_dates
+        description: 'Must be a valid date in the format <code>Y-m-d</code>.'
+        required: false
+        example:
+          - '2026-10-09'
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      developer:
+        custom: []
+        name: developer
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: ouxpqsydkigioyoyprjkf
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      unit_number:
+        custom: []
+        name: unit_number
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: djsneawgaavuiwlezlcra
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      owner_name:
+        custom: []
+        name: owner_name
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: oooxrrjhbduowtbaqrrtg
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      upgraded:
+        custom: []
+        name: upgraded
+        description: ''
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      video_tour_url:
+        custom: []
+        name: video_tour_url
+        description: 'Must be a valid URL. Must not be greater than 2048 characters.'
+        required: false
+        example: 'http://harber.info/dolor-autem-omnis-doloribus-beatae-laboriosam-expedita-deserunt.html'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      cheques:
+        custom: []
+        name: cheques
+        description: 'Must be at least 1. Must not be greater than 12.'
+        required: false
+        example: 6
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      year_built:
+        custom: []
+        name: year_built
+        description: 'Must be at least 1800. Must not be greater than 2200.'
+        required: false
+        example: 14
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      floor:
+        custom: []
+        name: floor
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: fqsaymxpayeblqozckazp
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      parking:
+        custom: []
+        name: parking
+        description: 'Must be at least 0. Must not be greater than 10000.'
+        required: false
+        example: 11
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      garage:
+        custom: []
+        name: garage
+        description: 'Must be at least 0. Must not be greater than 1000.'
+        required: false
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      direct_from_owner:
+        custom: []
+        name: direct_from_owner
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: jijwkuzgpjfumffsmqnmb
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      security_deposit:
+        custom: []
+        name: security_deposit
+        description: 'Must be at least 0. Must not be greater than 9999999999999.99.'
+        required: false
+        example: 5
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      virtual_tour_url:
+        custom: []
+        name: virtual_tour_url
+        description: 'Must be a valid URL. Must not be greater than 2048 characters.'
+        required: false
+        example: 'https://www.grady.info/quasi-aut-unde-harum-sit-qui-aliquid'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      view:
+        custom: []
+        name: view
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: mbiuqxdnvttnwpjqkxxmu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      floor_plans:
+        custom: []
+        name: floor_plans
+        description: 'Must not have more than 50 items.'
+        required: false
+        example: null
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      floor_plan_file:
+        custom: []
+        name: floor_plan_file
+        description: 'Must be a file. Must not be greater than 10240 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      nearby_places:
+        custom: []
+        name: nearby_places
+        description: 'Must match an existing stored value.'
+        required: false
+        example:
+          - 17
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      published_at:
+        custom: []
+        name: published_at
+        description: 'Must be a valid date.'
+        required: false
+        example: '2026-10-09T11:12:50'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      order_index:
+        custom: []
+        name: order_index
+        description: 'Must be at least 0.'
+        required: false
+        example: 45
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata:
+        custom: []
+        name: metadata
+        description: ''
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.meta_title:
+        custom: []
+        name: metadata.meta_title
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: qeopfuudtdsufvyvddqam
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.meta_description:
+        custom: []
+        name: metadata.meta_description
+        description: 'Must not be greater than 500 characters.'
+        required: false
+        example: niihfqcoynlazghdtqtqx
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.meta_keywords:
+        custom: []
+        name: metadata.meta_keywords
+        description: 'Must not be greater than 500 characters.'
+        required: false
+        example: bajwbpilpmufinllwloau
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.canonical_url:
+        custom: []
+        name: metadata.canonical_url
+        description: 'Must be a valid URL. Must not be greater than 2048 characters.'
+        required: false
+        example: 'https://considine.com/laudantium-nihil-autem-omnis-cum-molestiae-vel-natus.html'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.og_title:
+        custom: []
+        name: metadata.og_title
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: jcybzvrbyickznkygloig
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.og_description:
+        custom: []
+        name: metadata.og_description
+        description: 'Must not be greater than 500 characters.'
+        required: false
+        example: mkwxphlvazjrcnfbaqywu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata.other_meta_tags:
+        custom: []
+        name: metadata.other_meta_tags
+        description: ''
+        required: false
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      metadata_og_image:
+        custom: []
+        name: metadata_og_image
+        description: 'Must be an image. Must not be greater than 4096 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      translations.en:
+        custom: []
+        name: translations.en
+        description: ''
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      translations.en.title:
+        custom: []
+        name: translations.en.title
+        description: 'Must not be greater than 255 characters.'
+        required: true
+        example: mqeopfuudtdsufvyvddqa
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      translations.ar:
+        custom: []
+        name: translations.ar
+        description: ''
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      translations.ar.title:
+        custom: []
+        name: translations.ar.title
+        description: 'Must not be greater than 255 characters.'
+        required: true
+        example: mniihfqcoynlazghdtqtq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      listing_type:
+        custom: []
+        name: listing_type
+        description: 'Must match an existing stored value. Must not be greater than 255 characters.'
+        required: true
+        example: xbajwbpilpmufinllwloa
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      completion_status:
+        custom: []
+        name: completion_status
+        description: 'Must match an existing stored value. Must not be greater than 255 characters.'
+        required: false
+        example: uydlsmsjuryvojcybzvrb
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      property_type:
+        custom: []
+        name: property_type
+        description: 'Must match an existing stored value. Must not be greater than 255 characters.'
+        required: true
+        example: yickznkygloigmkwxphlv
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      category:
+        custom: []
+        name: category
+        description: 'Must match an existing stored value. Must not be greater than 255 characters.'
+        required: true
+        example: azjrcnfbaqywuxhgjjmzu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      location:
+        custom: []
+        name: location
+        description: 'Must match an existing stored value. Must not be greater than 255 characters.'
+        required: true
+        example: xjubqouzswiwxtrkimfca
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      emirate:
+        custom: []
+        name: emirate
+        description: 'Must match an existing stored value. Must not be greater than 100 characters.'
+        required: true
+        example: tbxspzmrazsroyjpxmqes
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'translations[].title':
+        custom: []
+        name: 'translations[].title'
+        description: 'Must not be greater than 255 characters.'
+        required: true
+        example: edyghenqcopwvownkbaml
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'translations[].key_features':
+        custom: []
+        name: 'translations[].key_features'
+        description: 'Must not be greater than 5000 characters.'
+        required: false
+        example: nfngefbeilfzsyuxoezbd
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'translations[].description':
+        custom: []
+        name: 'translations[].description'
+        description: 'Must not be greater than 100000 characters.'
+        required: false
+        example: 'Doloremque illo deserunt placeat fugit non hic sequi.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'translations[].address':
+        custom: []
+        name: 'translations[].address'
+        description: 'Must not be greater than 1000 characters.'
+        required: true
+        example: revrljcbwkthjnescwses
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'translations[].community':
+        custom: []
+        name: 'translations[].community'
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: tcouxpqsydkigioyoyprj
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'translations[].city':
+        custom: []
+        name: 'translations[].city'
+        description: 'Must not be greater than 255 characters.'
+        required: true
+        example: kfdjsneawgaavuiwlezlc
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'translations[].country':
+        custom: []
+        name: 'translations[].country'
+        description: 'Must not be greater than 255 characters.'
+        required: true
+        example: raoooxrrjhbduowtbaqrr
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'floor_plans[].label':
+        custom: []
+        name: 'floor_plans[].label'
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: tgxiuvujtzcirplnfqsay
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'floor_plans[].size_from':
+        custom: []
+        name: 'floor_plans[].size_from'
+        description: 'Must be at least 0.'
+        required: false
+        example: 43
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'floor_plans[].size_to':
+        custom: []
+        name: 'floor_plans[].size_to'
+        description: 'Must be at least 0.'
+        required: false
+        example: 80
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'floor_plans[].image':
+        custom: []
+        name: 'floor_plans[].image'
+        description: 'Must be an image. Must not be greater than 4096 kilobytes.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'floor_plans[].existing_image':
+        custom: []
+        name: 'floor_plans[].existing_image'
+        description: ''
+        required: false
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      translations:
+        0:
+          title: edyghenqcopwvownkbaml
+          key_features: nfngefbeilfzsyuxoezbd
+          description: 'Doloremque illo deserunt placeat fugit non hic sequi.'
+          address: revrljcbwkthjnescwses
+          community: tcouxpqsydkigioyoyprj
+          city: kfdjsneawgaavuiwlezlc
+          country: raoooxrrjhbduowtbaqrr
+        en:
+          title: mqeopfuudtdsufvyvddqa
+        ar:
+          title: mniihfqcoynlazghdtqtq
+      slug: vmqeopfuudtdsufvyvddq
+      reference_no: amniihfqcoynlazghdtqt
+      rera_id: qxbajwbpilpmufinllwlo
+      permit_number: auydlsmsjuryvojcybzvr
+      permit_expires_at: '2026-10-09'
+      permit_verification_url: 'http://www.ward.com/'
+      postal_code: ckznkygloigmkwxphlvaz
+      latitude: -90
+      longitude: -179
+      bedrooms: 3
+      bathrooms: 14
+      sqft: 6
+      price: 2
+      currency: aqy
+      image_alt: wuxhgjjmzuxjubqouzswi
+      amenities:
+        - wxtrkimfcatbxspzmrazs
+      easy_access:
+        - royjpxmqesedyghenqcop
+      property_attributes:
+        - wvownkbamlnfngefbeilf
+      rental_period: zsyuxoezbdtabptcyyere
+      permit_type: none
+      permit_city: other
+      permit_token: vrljcbwkthjnescwsestc
+      availability: from_date
+      available_dates:
+        - '2026-10-09'
+      developer: ouxpqsydkigioyoyprjkf
+      unit_number: djsneawgaavuiwlezlcra
+      owner_name: oooxrrjhbduowtbaqrrtg
+      upgraded: false
+      video_tour_url: 'http://harber.info/dolor-autem-omnis-doloribus-beatae-laboriosam-expedita-deserunt.html'
+      cheques: 6
+      year_built: 14
+      floor: fqsaymxpayeblqozckazp
+      parking: 11
+      garage: 16
+      direct_from_owner: jijwkuzgpjfumffsmqnmb
+      security_deposit: 5
+      virtual_tour_url: 'https://www.grady.info/quasi-aut-unde-harum-sit-qui-aliquid'
+      view: mbiuqxdnvttnwpjqkxxmu
+      nearby_places:
+        - 17
+      published_at: '2026-10-09T11:12:50'
+      order_index: 45
+      metadata:
+        meta_title: qeopfuudtdsufvyvddqam
+        meta_description: niihfqcoynlazghdtqtqx
+        meta_keywords: bajwbpilpmufinllwloau
+        canonical_url: 'https://considine.com/laudantium-nihil-autem-omnis-cum-molestiae-vel-natus.html'
+        og_title: jcybzvrbyickznkygloig
+        og_description: mkwxphlvazjrcnfbaqywu
+        other_meta_tags: consequatur
+      listing_type: xbajwbpilpmufinllwloa
+      completion_status: uydlsmsjuryvojcybzvrb
+      property_type: yickznkygloigmkwxphlv
+      category: azjrcnfbaqywuxhgjjmzu
+      location: xjubqouzswiwxtrkimfca
+      emirate: tbxspzmrazsroyjpxmqes
+      floor_plans:
+        -
+          label: tgxiuvujtzcirplnfqsay
+          size_from: 43
+          size_to: 80
+          existing_image: consequatur
+    fileParameters:
+      permit_qr: null
+      image: null
+      brochure: null
+      images:
+        - null
+      floor_plan_file: null
+      metadata_og_image: null
+      floor_plans:
+        -
+          image: null
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/crm/properties/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Properties'
+      groupDescription: |-
+
+        Properties and Commercial listings — the same table, form and screens, split only by `segment`
+        (residential | commercial); plan property limits count both. Super Admin sees every listing; an
+        Agent / Company sees and can only touch their own (an agency agent also the agency listings
+        assigned to them — view / edit only).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a listing'
+      description: 'With all its photos and files.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the property.'
+        required: true
+        example: 82
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 82
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/properties/{id}/toggle-status'
+    metadata:
+      custom: []
+      groupName: 'CRM Properties'
+      groupDescription: |-
+
+        Properties and Commercial listings — the same table, form and screens, split only by `segment`
+        (residential | commercial); plan property limits count both. Super Admin sees every listing; an
+        Agent / Company sees and can only touch their own (an agency agent also the agency listings
+        assigned to them — view / edit only).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Switch a listing on / off'
+      description: "422 when it's sold / rented, or can't go live yet (permit not verified / not approved)."
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the property.'
+        required: true
+        example: 82
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 82
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/properties/{id}/move'
+    metadata:
+      custom: []
+      groupName: 'CRM Properties'
+      groupDescription: |-
+
+        Properties and Commercial listings — the same table, form and screens, split only by `segment`
+        (residential | commercial); plan property limits count both. Super Admin sees every listing; an
+        Agent / Company sees and can only touch their own (an agency agent also the agency listings
+        assigned to them — view / edit only).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Move to a position'
+      description: |-
+        "Move to top / bottom / position #N" — works across pages. `position` is 1-based over the
+        listing's whole menu. Returns the page the listing now sits on.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the property.'
+        required: true
+        example: 82
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 82
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      position:
+        custom: []
+        name: position
+        description: 'top | bottom | a number.'
+        required: true
+        example: '3'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      position: '3'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "position": 3, "page": 1}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

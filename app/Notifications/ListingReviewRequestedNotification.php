@@ -24,7 +24,7 @@ class ListingReviewRequestedNotification extends Notification
         return [
             'title' => $this->isResubmission ? 'Listing resubmitted for approval' : 'Listing waiting for approval',
             'message' => $account . ($this->isResubmission ? ' resubmitted ' : ' submitted ') . ($this->property->getTranslation('title') ?: $this->property->reference_no) . ($this->property->permit_number ? ' (permit ' . $this->property->permit_number . ')' : '') . ' for approval.',
-            'url' => route('portal.listing-approvals.show', $this->property->id),
+            'url' => route('crm.app', 'listing-permits/' . $this->property->id),
             'icon' => 'fa-file-shield',
             'tone' => $this->isResubmission ? 'amber' : 'teal',
         ];

@@ -1,0 +1,18 @@
+/* Moved from resources/views/portal/nearby-places/_form — the nearby place form. */
+.nearby-place-form .form-label { font-size: 0.85rem; color: var(--portal-text); margin-bottom: 0.4rem; }
+.nearby-place-form .form-control,
+.nearby-place-form .form-select {
+    border: 1.5px solid var(--portal-border);
+    border-radius: 10px;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.9rem;
+    background: var(--portal-surface);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.nearby-place-form .form-control:focus,
+.nearby-place-form .form-select:focus {
+    border-color: var(--portal-primary);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+}
+.nearby-place-form .form-check-input { width: 2.4em; height: 1.3em; cursor: pointer; }
+.nearby-place-form .form-check-input:checked { background-color: var(--portal-primary); border-color: var(--portal-primary); }

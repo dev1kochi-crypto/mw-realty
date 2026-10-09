@@ -41,16 +41,7 @@ endpoints:
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: '{"title":"Get in Touch","description":"Have questions about our properties or services? Our team is here to help you.","map_url":"https:\/\/maps.google.com\/maps?q=Churchill+Tower+Business+Bay+Dubai&output=embed","image":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253742\/MW\/contact-us\/CvTqtAY34I8uwjsLRGrweyqnf9XXWuMezXmO7xrq.png","image_alt":"Poolside villa at sunset","address":"Office No: 703 - Churchill Tower Business Bay - Dubai, UAE","phone":"+971 58 589 9990","email":"info@mightywarnersrealty.com","whatsapp_number":"971585899990","working_hours":"Mon - Sat: 9:00 AM - 6:00 PM","social":{"facebook":"https:\/\/facebook.com\/mightywarnerrealty","twitter":"https:\/\/twitter.com\/mightywarnerrealty","instagram":"https:\/\/instagram.com\/mightywarnerrealty","linkedin":"https:\/\/linkedin.com\/company\/mightywarnerrealty"},"seo":{"meta_title":"Contact Us | MW Realty","meta_description":"Get in touch with MW Realty \u2014 reach our team for property enquiries, viewings, or general questions about the UAE real estate market.","meta_keywords":null,"canonical_url":null,"og_title":"Contact Us | MW Realty","og_description":"Get in touch with MW Realty \u2014 reach our team for property enquiries, viewings, or general questions about the UAE real estate market.","og_image":null,"other_meta_tags":null}}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-        description: null
+    responses: []
     responseFields: []
     auth: []
     controller: null

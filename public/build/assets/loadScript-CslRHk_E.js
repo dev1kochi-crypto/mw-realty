@@ -1,0 +1,1 @@
+const n={};function r(e){return n[e]||(n[e]=new Promise((t,d)=>{const o=document.createElement("script");o.src=e,o.async=!0,o.onload=t,o.onerror=()=>{delete n[e],d(new Error(`Could not load ${e}`))},document.head.appendChild(o)})),n[e]}export{r as l};

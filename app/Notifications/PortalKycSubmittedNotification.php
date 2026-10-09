@@ -24,7 +24,7 @@ class PortalKycSubmittedNotification extends Notification
         return [
             'title' => $this->isResubmission ? 'Updated KYC received' : 'KYC submitted',
             'message' => 'Our team is reviewing your details. We will let you know once your account is approved.',
-            'url' => route('portal.profile.edit'),
+            'url' => route('crm.app', 'profile'),
             'icon' => 'fa-file-circle-check',
             'tone' => 'teal',
         ];
