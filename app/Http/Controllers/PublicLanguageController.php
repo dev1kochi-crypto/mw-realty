@@ -9,9 +9,16 @@ use Illuminate\Routing\Controller;
  * Public read-only endpoint the frontend's language dropdown uses — options
  * come straight from the admin-managed Languages screen, so a new language
  * (or a status/flag change there) shows up here without a code change.
+ *
+ * @group App Config
  */
 class PublicLanguageController extends Controller
 {
+    /**
+     * Languages
+     *
+     * The languages content is available in. Send the chosen `code` as `?lang=` on every request.
+     */
     public function index()
     {
         return Language::active()

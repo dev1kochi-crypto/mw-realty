@@ -139,7 +139,7 @@ class HomePageService
 
     /**
      * Listings for the Developments section — every city ("All" tab, part of /api/home) or one
-     * city tab (GET /api/home/developments?city=Ajman, fetched when the tab is clicked). The city
+     * city tab (GET /api/home/new-projects?city=Ajman, fetched when the tab is clicked). The city
      * is matched loosely (address/community/city contains it) so an admin tab label like "Sharja"
      * still finds "Sharjah" listings.
      */

@@ -1,0 +1,257 @@
+name: 'Search & Filters'
+description: |-
+
+  Public read-only endpoint the frontend (home banner + /properties listing)
+  uses to render the search filter bar. Options come straight from the
+  admin-managed filters/filter_values tables, so a new filter or option
+  shows up here without a code change. Option counts and slider bounds use
+  the listings of the page asking: residential by default, or `?scope=commercial` for /commercial.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/property-filters
+    metadata:
+      custom: []
+      groupName: 'Search & Filters'
+      groupDescription: |-
+
+        Public read-only endpoint the frontend (home banner + /properties listing)
+        uses to render the search filter bar. Options come straight from the
+        admin-managed filters/filter_values tables, so a new filter or option
+        shows up here without a code change. Option counts and slider bounds use
+        the listings of the page asking: residential by default, or `?scope=commercial` for /commercial.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Search filter bar'
+      description: |-
+        The filters to render (selects with their options and live listing counts, number sliders
+        with min/max/step), in admin order. Pass the chosen `value`s back to the listing endpoints
+        under each filter's `key`.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: "Which screen's filter set: `home` (compact) or `listing` (full)."
+        required: false
+        example: listing
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      scope:
+        custom: []
+        name: scope
+        description: 'Whose listings the counts/bounds come from: residential, commercial, premium, marketing.'
+        required: false
+        example: residential
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: listing
+      scope: residential
+      lang: en
+    bodyParameters:
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: listing
+        type: string
+        enumValues:
+          - home
+          - listing
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: 'Must not be greater than 10 characters.'
+        required: false
+        example: vmqeopfuu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      scope:
+        custom: []
+        name: scope
+        description: ''
+        required: false
+        example: residential
+        type: string
+        enumValues:
+          - residential
+          - commercial
+          - premium
+          - marketing
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      page: listing
+      lang: vmqeopfuu
+      scope: residential
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"filters":[{"key":"listing_type","label":"Listing Type","type":"select","options":[{"value":"sale","label":"Buy","count":351},{"value":"rent","label":"Rent","count":299}]},{"key":"completion_status","label":"Completion Status","type":"select","options":[{"value":"ready","label":"Ready","count":446},{"value":"off_plan","label":"Off-Plan","count":204}]},{"key":"property_type","label":"Property Type","type":"select","options":[{"value":"apartment","label":"Apartment","count":171},{"value":"villa","label":"Villa","count":162},{"value":"townhouse","label":"Townhouse","count":162},{"value":"penthouse","label":"Penthouse","count":155}]},{"key":"category","label":"Category","type":"select","options":[{"value":"residential","label":"Residential","count":614},{"value":"commercial","label":"Commercial","count":10}]},{"key":"location","label":"Location","type":"select","options":[{"value":"downtown-dubai","label":"Downtown Dubai","count":49},{"value":"dubai-marina","label":"Dubai Marina","count":46},{"value":"business-bay","label":"Business Bay","count":50},{"value":"palm-jumeirah","label":"Palm Jumeirah","count":49},{"value":"jumeirah-village-circle","label":"Jumeirah Village Circle","count":44},{"value":"dubai-hills-estate","label":"Dubai Hills Estate","count":49},{"value":"jumeirah-lake-towers","label":"Jumeirah Lake Towers","count":45},{"value":"arabian-ranches","label":"Arabian Ranches","count":50},{"value":"al-furjan","label":"Al Furjan","count":45}]},{"key":"bedrooms","label":"Bedrooms","type":"select","options":[{"value":"1","label":"1"},{"value":"2","label":"2"},{"value":"3","label":"3"},{"value":"4","label":"4"},{"value":"5+","label":"5+"}]},{"key":"bathrooms","label":"Bathrooms","type":"select","options":[{"value":"1","label":"1"},{"value":"2","label":"2"},{"value":"3","label":"3"},{"value":"4","label":"4"},{"value":"5+","label":"5+"}]},{"key":"price","label":"Price Range","type":"range","min":0,"max":30000000,"step":50000},{"key":"sqft","label":"Sqft","type":"range","min":0,"max":9000,"step":50}]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/location-suggestions
+    metadata:
+      custom: []
+      groupName: 'Search & Filters'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Location autocomplete'
+      description: |-
+        Cities, communities and addresses matching what the user typed (2+ characters; fewer
+        returns an empty list). Pass a picked suggestion back as `city=` / `community=` /
+        `location=` on the listing endpoints. Debounce on the client — limited to 120 calls/minute.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      q:
+        custom: []
+        name: q
+        description: 'The typed text.'
+        required: false
+        example: mar
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      scope:
+        custom: []
+        name: scope
+        description: 'all (default) or commercial.'
+        required: false
+        example: all
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      q: mar
+      scope: all
+      lang: en
+    bodyParameters:
+      q:
+        custom: []
+        name: q
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: 'Must not be greater than 10 characters.'
+        required: false
+        example: amniihfqc
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      scope:
+        custom: []
+        name: scope
+        description: ''
+        required: false
+        example: commercial
+        type: string
+        enumValues:
+          - all
+          - commercial
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      q: vmqeopfuudtdsufvyvddq
+      lang: amniihfqc
+      scope: commercial
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"suggestions":[]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          x-ratelimit-limit: '120'
+          x-ratelimit-remaining: '118'
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

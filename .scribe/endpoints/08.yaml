@@ -1,0 +1,686 @@
+name: 'User Auth'
+description: |-
+
+  Token (Bearer) auth for the mobile app's **User** account (buyers/visitors). Agents and
+  agencies don't sign in through these endpoints.
+
+  Same accounts, OTP and Google rules as the website's session login
+  (Customer\CustomerAuthController) — the only difference is that a successful sign-in returns
+  a Sanctum token instead of a cookie.
+
+  Send the token on every authenticated request: `Authorization: Bearer {token}`.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/auth/register
+    metadata:
+      custom: []
+      groupName: 'User Auth'
+      groupDescription: |-
+
+        Token (Bearer) auth for the mobile app's **User** account (buyers/visitors). Agents and
+        agencies don't sign in through these endpoints.
+
+        Same accounts, OTP and Google rules as the website's session login
+        (Customer\CustomerAuthController) — the only difference is that a successful sign-in returns
+        a Sanctum token instead of a cookie.
+
+        Send the token on every authenticated request: `Authorization: Bearer {token}`.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Sign up'
+      description: |-
+        Step 1 of sign-up. Creates the account and emails a 4-digit code — no token yet; call
+        `POST /api/auth/verify-otp` with the returned `user_id` and the code.
+        `email_sent: false` means the email failed — offer "Resend code".
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: ''
+        required: true
+        example: 'Sara Ahmed'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: 'Must not already be registered.'
+        required: true
+        example: buyer@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone:
+        custom: []
+        name: phone
+        description: 'Local number without the dial code.'
+        required: false
+        example: '501234567'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone_country_code:
+        custom: []
+        name: phone_country_code
+        description: 'Dial code, required with phone.'
+        required: false
+        example: '+971'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: 'At least 8 characters.'
+        required: true
+        example: secret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password_confirmation:
+        custom: []
+        name: password_confirmation
+        description: 'Must match password.'
+        required: true
+        example: secret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: 'Sara Ahmed'
+      email: buyer@example.com
+      phone: '501234567'
+      phone_country_code: '+971'
+      password: secret123
+      password_confirmation: secret123
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"otp_required": true, "user_id": 7, "email_sent": true}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"message": "The email has already been taken.", "errors": {"email": ["The email has already been taken."]}}'
+        headers: []
+        description: 'Validation error'
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/auth/verify-otp
+    metadata:
+      custom: []
+      groupName: 'User Auth'
+      groupDescription: |-
+
+        Token (Bearer) auth for the mobile app's **User** account (buyers/visitors). Agents and
+        agencies don't sign in through these endpoints.
+
+        Same accounts, OTP and Google rules as the website's session login
+        (Customer\CustomerAuthController) — the only difference is that a successful sign-in returns
+        a Sanctum token instead of a cookie.
+
+        Send the token on every authenticated request: `Authorization: Bearer {token}`.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Verify sign-up code'
+      description: |-
+        Step 2 of sign-up: the 4-digit code emailed by `POST /api/auth/register`. Marks the
+        email verified and returns a Bearer token.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      user_id:
+        custom: []
+        name: user_id
+        description: 'The `user_id` returned by register.'
+        required: true
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      code:
+        custom: []
+        name: code
+        description: 'The emailed code.'
+        required: true
+        example: '1234'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      device_name:
+        custom: []
+        name: device_name
+        description: "A label for this device's token."
+        required: false
+        example: 'Pixel 8'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      user_id: 7
+      code: '1234'
+      device_name: 'Pixel 8'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"token": "12|9xQ...", "token_type": "Bearer", "user": {"id": 7, "name": "Sara Ahmed", "email": "buyer@example.com", "phone": null, "location": null, "avatar_url": null, "email_verified": true}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"message": "Invalid or expired code."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/auth/resend-otp
+    metadata:
+      custom: []
+      groupName: 'User Auth'
+      groupDescription: |-
+
+        Token (Bearer) auth for the mobile app's **User** account (buyers/visitors). Agents and
+        agencies don't sign in through these endpoints.
+
+        Same accounts, OTP and Google rules as the website's session login
+        (Customer\CustomerAuthController) — the only difference is that a successful sign-in returns
+        a Sanctum token instead of a cookie.
+
+        Send the token on every authenticated request: `Authorization: Bearer {token}`.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Resend sign-up code'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      user_id:
+        custom: []
+        name: user_id
+        description: ''
+        required: true
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      user_id: 7
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"message": "A new code has been sent."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"message": "This account is already verified."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 503
+        content: '{"message": "Could not send the code right now — please try again in a moment."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/auth/login
+    metadata:
+      custom: []
+      groupName: 'User Auth'
+      groupDescription: |-
+
+        Token (Bearer) auth for the mobile app's **User** account (buyers/visitors). Agents and
+        agencies don't sign in through these endpoints.
+
+        Same accounts, OTP and Google rules as the website's session login
+        (Customer\CustomerAuthController) — the only difference is that a successful sign-in returns
+        a Sanctum token instead of a cookie.
+
+        Send the token on every authenticated request: `Authorization: Bearer {token}`.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Sign in'
+      description: 'Email + password sign-in. Returns a Bearer token for the `Authorization` header.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      email:
+        custom: []
+        name: email
+        description: ''
+        required: true
+        example: buyer@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: ''
+        required: true
+        example: secret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      device_name:
+        custom: []
+        name: device_name
+        description: "A label for this device's token (shown nowhere yet, useful for support)."
+        required: false
+        example: 'iPhone 15 Pro'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      email: buyer@example.com
+      password: secret123
+      device_name: 'iPhone 15 Pro'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"token": "12|9xQ...", "token_type": "Bearer", "user": {"id": 7, "name": "Sara Ahmed", "email": "buyer@example.com", "phone": "+971 50 123 4567", "location": "Dubai Marina", "avatar_url": null, "email_verified": true}}'
+        headers: []
+        description: 'Signed in'
+      -
+        custom: []
+        status: 422
+        content: '{"message": "Invalid credentials."}'
+        headers: []
+        description: 'Wrong email or password'
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/auth/google
+    metadata:
+      custom: []
+      groupName: 'User Auth'
+      groupDescription: |-
+
+        Token (Bearer) auth for the mobile app's **User** account (buyers/visitors). Agents and
+        agencies don't sign in through these endpoints.
+
+        Same accounts, OTP and Google rules as the website's session login
+        (Customer\CustomerAuthController) — the only difference is that a successful sign-in returns
+        a Sanctum token instead of a cookie.
+
+        Send the token on every authenticated request: `Authorization: Bearer {token}`.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Continue with Google'
+      description: |-
+        Exchange the access token from the native Google Sign-In SDK for an app token. Links to an
+        existing account with the same email, or creates one. For the **User** account only —
+        agents and agencies don't have Google sign-in (show the button only on the User tab).
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      access_token:
+        custom: []
+        name: access_token
+        description: 'The Google OAuth access token from the device SDK.'
+        required: true
+        example: ya29.a0Af...
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      device_name:
+        custom: []
+        name: device_name
+        description: "A label for this device's token."
+        required: false
+        example: 'iPhone 15 Pro'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      access_token: ya29.a0Af...
+      device_name: 'iPhone 15 Pro'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"token": "12|9xQ...", "token_type": "Bearer", "user": {"id": 7, "name": "Sara Ahmed", "email": "sara@gmail.com", "phone": null, "location": null, "avatar_url": null, "email_verified": true}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"message": "Google sign-in failed — please try again."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/auth/forgot-password
+    metadata:
+      custom: []
+      groupName: 'User Auth'
+      groupDescription: |-
+
+        Token (Bearer) auth for the mobile app's **User** account (buyers/visitors). Agents and
+        agencies don't sign in through these endpoints.
+
+        Same accounts, OTP and Google rules as the website's session login
+        (Customer\CustomerAuthController) — the only difference is that a successful sign-in returns
+        a Sanctum token instead of a cookie.
+
+        Send the token on every authenticated request: `Authorization: Bearer {token}`.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Forgot password'
+      description: |-
+        Emails a reset link (opens the website's reset page). Always the same reply, whether or not
+        the email is registered.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      email:
+        custom: []
+        name: email
+        description: ''
+        required: true
+        example: buyer@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      email: buyer@example.com
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"message": "If an account exists for that email, a reset link has been sent."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/auth/reset-password
+    metadata:
+      custom: []
+      groupName: 'User Auth'
+      groupDescription: |-
+
+        Token (Bearer) auth for the mobile app's **User** account (buyers/visitors). Agents and
+        agencies don't sign in through these endpoints.
+
+        Same accounts, OTP and Google rules as the website's session login
+        (Customer\CustomerAuthController) — the only difference is that a successful sign-in returns
+        a Sanctum token instead of a cookie.
+
+        Send the token on every authenticated request: `Authorization: Bearer {token}`.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reset password'
+      description: |-
+        Only needed if the app handles the reset link itself (deep link
+        `/reset-password?token=...&email=...`); otherwise the website page does this.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      token:
+        custom: []
+        name: token
+        description: 'The token from the reset link.'
+        required: true
+        example: 3f9a...
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: ''
+        required: true
+        example: buyer@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: ''
+        required: true
+        example: newSecret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password_confirmation:
+        custom: []
+        name: password_confirmation
+        description: ''
+        required: true
+        example: newSecret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      token: 3f9a...
+      email: buyer@example.com
+      password: newSecret123
+      password_confirmation: newSecret123
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"message": "Your password has been reset — you can now sign in."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"message": "This password reset token is invalid."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/auth/logout
+    metadata:
+      custom: []
+      groupName: 'User Auth'
+      groupDescription: |-
+
+        Token (Bearer) auth for the mobile app's **User** account (buyers/visitors). Agents and
+        agencies don't sign in through these endpoints.
+
+        Same accounts, OTP and Google rules as the website's session login
+        (Customer\CustomerAuthController) — the only difference is that a successful sign-in returns
+        a Sanctum token instead of a cookie.
+
+        Send the token on every authenticated request: `Authorization: Bearer {token}`.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Sign out'
+      description: 'Revokes the token used for this request (other devices stay signed in).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"message": "Signed out."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

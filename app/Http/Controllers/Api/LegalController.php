@@ -6,13 +6,25 @@ use App\Services\LegalPageService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
-/** Public, read-only endpoint shared by the 4 legal pages (terms/privacy/security/cookie). */
+/**
+ * Public, read-only endpoint shared by the 4 legal pages (terms/privacy/security/cookie).
+ *
+ * @group Content
+ */
 class LegalController extends Controller
 {
     public function __construct(private readonly LegalPageService $legalPage)
     {
     }
 
+    /**
+     * Legal page
+     *
+     * @urlParam key string required terms, privacy, security or cookie. Example: privacy
+     * @queryParam lang string Example: en
+     *
+     * @response 404 {"message": "Not found"}
+     */
     public function show(Request $request, string $key)
     {
         $lang = $request->input('lang', app()->getLocale());

@@ -11,9 +11,21 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
-/** Public, unauthenticated — the footer newsletter form (POST /api/newsletter/subscribe). */
+/**
+ * Public, unauthenticated — the footer newsletter form (POST /api/newsletter/subscribe).
+ *
+ * @group Contact & Newsletter
+ */
 class NewsletterController extends Controller
 {
+    /**
+     * Subscribe to the newsletter
+     *
+     * @bodyParam email string required Example: buyer@example.com
+     * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
+     *
+     * @response 200 {"already_subscribed": false, "message": "Thanks for subscribing!"}
+     */
     public function store(Request $request)
     {
         $request->validate([

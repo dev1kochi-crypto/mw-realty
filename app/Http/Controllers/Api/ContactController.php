@@ -11,7 +11,11 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Mail;
 
-/** Single aggregate endpoint for the standalone /contact page (GET /api/contact) plus its form submission. */
+/**
+ * Single aggregate endpoint for the standalone /contact page (GET /api/contact) plus its form submission.
+ *
+ * @group Contact & Newsletter
+ */
 class ContactController extends Controller
 {
     /** The home page contact form's "I'm interested in" options. */
@@ -26,6 +30,13 @@ class ContactController extends Controller
     {
     }
 
+    /**
+     * Contact page
+     *
+     * Office details, map embed, hero image and social links.
+     *
+     * @queryParam lang string Example: en
+     */
     public function index(Request $request)
     {
         $lang = $request->input('lang', app()->getLocale());
@@ -34,9 +45,24 @@ class ContactController extends Controller
     }
 
     /**
+     * Send a contact message
+     *
+     * General enquiry (not about a specific property — for that use `POST /api/leads/capture`).
+     * Saves to Enquiries and emails admin.
+     *
      * Public, unauthenticated — the /contact page form and the home page's contact section
-     * (POST /api/contact, `source=home`). Saves to Enquiries and emails admin. The home form also
-     * sends what the visitor is interested in (buy / rent / sell / management), and its message is optional.
+     * (`source=home`, which also sends `interest`; its message is then optional).
+     *
+     * @bodyParam name string required Example: Sara Ahmed
+     * @bodyParam email string required Example: buyer@example.com
+     * @bodyParam phone string Local number. Example: 501234567
+     * @bodyParam phone_country_code string Example: +971
+     * @bodyParam interest string buy, rent, sell or management. Example: buy
+     * @bodyParam message string Required unless `interest` is sent. Example: I'd like a call about 2BR apartments in Marina.
+     * @bodyParam source string contact or home. Example: contact
+     * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
+     *
+     * @response 200 {"message": "Thanks — we've received your message and will be in touch soon."}
      */
     public function store(Request $request)
     {

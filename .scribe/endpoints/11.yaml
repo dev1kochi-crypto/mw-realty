@@ -1,0 +1,278 @@
+name: 'AI Chat'
+description: ''
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/chatbot/session
+    metadata:
+      custom: []
+      groupName: 'AI Chat'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Open chat'
+      description: |-
+        Call when the chat screen opens: is this device's user known yet, and the latest
+        conversation to continue. Needs the `X-Device-Id` header; a customer token makes the
+        user known automatically.
+
+        Widget opened: is this visitor known yet, and the latest conversation to pick up from.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"identified": false, "details_required": false, "conversation_id": null, "messages": []}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/chatbot/start
+    metadata:
+      custom: []
+      groupName: 'AI Chat'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Share contact details'
+      description: |-
+        Shown when a reply has `details_required: true` (after the first free question, for
+        guests). Identifies the user and continues the conversation they started.
+
+        The details form — identifies the visitor (switching this browser to them; their anonymous
+        chat is attached by VisitorTracker).
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: ''
+        required: true
+        example: 'Sara Ahmed'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: ''
+        required: true
+        example: buyer@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone:
+        custom: []
+        name: phone
+        description: ''
+        required: true
+        example: '501234567'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone_country_code:
+        custom: []
+        name: phone_country_code
+        description: ''
+        required: false
+        example: '+971'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      conversation_id:
+        custom: []
+        name: conversation_id
+        description: 'The current conversation, if any.'
+        required: false
+        example: null
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      recaptcha_token:
+        custom: []
+        name: recaptcha_token
+        description: 'See "Forms & reCAPTCHA" in the introduction.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      name: 'Sara Ahmed'
+      email: buyer@example.com
+      phone: '501234567'
+      phone_country_code: '+971'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"conversation_id": 44, "name": "Sara Ahmed"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/chatbot/reset
+    metadata:
+      custom: []
+      groupName: 'AI Chat'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'New conversation'
+      description: '"Clear chat" — the old transcript is kept on the server, the user just starts fresh.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"conversation_id": 45}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/chatbot/message
+    metadata:
+      custom: []
+      groupName: 'AI Chat'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Send a message'
+      description: |-
+        Ask the AI assistant. The reply may include matching property cards. Limited to 8
+        messages/minute and 150/day per IP.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      message:
+        custom: []
+        name: message
+        description: ''
+        required: true
+        example: 'Show me 2 bedroom apartments in Dubai Marina under 2M'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      conversation_id:
+        custom: []
+        name: conversation_id
+        description: 'From open chat / share details.'
+        required: false
+        example: null
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: 'Reply language.'
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      message: 'Show me 2 bedroom apartments in Dubai Marina under 2M'
+      lang: en
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"reply": "Here are some 2-bedroom apartments in Dubai Marina:", "properties": [{"id": 111, "slug": "virella-2", "image": "https://.../photo.jpg", "...": "same card shape as GET /api/properties"}], "pagination": {"current_page": 1, "last_page": 3, "total": 41}, "error": false, "conversation_id": 44, "details_required": false}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"details_required": true, "message": "Please share your details to keep chatting."}'
+        headers: []
+        description: 'Guest must share details first'
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

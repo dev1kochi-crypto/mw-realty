@@ -22,6 +22,8 @@ use Illuminate\Support\Str;
  * and the anonymous part of the chat is attached to them. Every message is saved, so Super Admin /
  * the agency they're routed to can read the transcript. A signed-in customer is already known.
  * The history sent to the model comes from the database, not the browser. See ChatbotService.
+ *
+ * @group AI Chat
  */
 class ChatbotController extends Controller
 {
@@ -35,7 +37,17 @@ class ChatbotController extends Controller
     ) {
     }
 
-    /** Widget opened: is this visitor known yet, and the latest conversation to pick up from. */
+    /**
+     * Open chat
+     *
+     * Call when the chat screen opens: is this device's user known yet, and the latest
+     * conversation to continue. Needs the `X-Device-Id` header; a customer token makes the
+     * user known automatically.
+     *
+     * Widget opened: is this visitor known yet, and the latest conversation to pick up from.
+     *
+     * @response 200 {"identified": false, "details_required": false, "conversation_id": null, "messages": []}
+     */
     public function session(Request $request)
     {
         $lead = $this->tracker->currentLead($request);
@@ -55,8 +67,22 @@ class ChatbotController extends Controller
     }
 
     /**
+     * Share contact details
+     *
+     * Shown when a reply has `details_required: true` (after the first free question, for
+     * guests). Identifies the user and continues the conversation they started.
+     *
      * The details form — identifies the visitor (switching this browser to them; their anonymous
-     * chat is attached by VisitorTracker) and carries on the conversation they started.
+     * chat is attached by VisitorTracker).
+     *
+     * @bodyParam name string required Example: Sara Ahmed
+     * @bodyParam email string required Example: buyer@example.com
+     * @bodyParam phone string required Example: 501234567
+     * @bodyParam phone_country_code string Example: +971
+     * @bodyParam conversation_id integer The current conversation, if any. No-example
+     * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
+     *
+     * @response 200 {"conversation_id": 44, "name": "Sara Ahmed"}
      */
     public function start(Request $request)
     {
@@ -77,7 +103,13 @@ class ChatbotController extends Controller
         return response()->json(['conversation_id' => $conversation->id, 'name' => $data['name']]);
     }
 
-    /** "Clear conversation" — the old transcript is kept, the visitor just starts a fresh one. */
+    /**
+     * New conversation
+     *
+     * "Clear chat" — the old transcript is kept on the server, the user just starts fresh.
+     *
+     * @response 200 {"conversation_id": 45}
+     */
     public function reset(Request $request)
     {
         $lead = $this->tracker->currentLead($request);
@@ -85,6 +117,19 @@ class ChatbotController extends Controller
         return response()->json(['conversation_id' => $lead ? $this->newConversation($request, $lead)->id : null]);
     }
 
+    /**
+     * Send a message
+     *
+     * Ask the AI assistant. The reply may include matching property cards. Limited to 8
+     * messages/minute and 150/day per IP.
+     *
+     * @bodyParam message string required Example: Show me 2 bedroom apartments in Dubai Marina under 2M
+     * @bodyParam conversation_id integer From open chat / share details. No-example
+     * @bodyParam lang string Reply language. Example: en
+     *
+     * @response 200 {"reply": "Here are some 2-bedroom apartments in Dubai Marina:", "properties": [{"id": 111, "slug": "virella-2", "image": "https://.../photo.jpg", "...": "same card shape as GET /api/properties"}], "pagination": {"current_page": 1, "last_page": 3, "total": 41}, "error": false, "conversation_id": 44, "details_required": false}
+     * @response 422 scenario="Guest must share details first" {"details_required": true, "message": "Please share your details to keep chatting."}
+     */
     public function send(Request $request)
     {
         $data = $request->validate([

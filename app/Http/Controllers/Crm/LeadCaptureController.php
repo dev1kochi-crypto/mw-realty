@@ -12,7 +12,6 @@ use App\Services\Crm\LeadCreationService;
 use App\Services\Visitors\VisitorTracker;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * Public, unauthenticated endpoints the website's enquiry forms POST to. Each one only
@@ -20,6 +19,8 @@ use Illuminate\Support\Facades\Auth;
  * assignment and notifications all happen in LeadCreationService::create(). A property with
  * no assigned agent/company still captures the lead (no owner) rather than rejecting the
  * enquirer — admin gets notified instead, and can transfer it to an agent later.
+ *
+ * @group Leads & Enquiries
  */
 class LeadCaptureController extends Controller
 {
@@ -29,7 +30,23 @@ class LeadCaptureController extends Controller
     ) {
     }
 
-    /** Capture a property-search request from an agent or agency profile and route it to that CRM. */
+    /**
+     * Request from an agent/agency profile
+     *
+     * "Find me a property" form on an agent's or agency's profile — sent to that agent/agency.
+     *
+     * Capture a property-search request from an agent or agency profile and route it to that CRM.
+     *
+     * @bodyParam profile_type string required agent or agency. Example: agent
+     * @bodyParam profile_slug string required Example: sruthi-raveendran-m
+     * @bodyParam first_name string required Example: Sara
+     * @bodyParam email string required Example: buyer@example.com
+     * @bodyParam phone string Example: 501234567
+     * @bodyParam phone_country_code string Example: +971
+     * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
+     *
+     * @response 200 {"message": "Thanks — your request has been sent to Sruthi Raveendran."}
+     */
     public function storeProfileRequest(Request $request)
     {
         $data = $request->validate([
@@ -67,7 +84,7 @@ class LeadCaptureController extends Controller
         $lead = $this->leadCreation->create(
             [
                 'agent_id' => !$keepsOwner && $data['profile_type'] === 'agent' && !$agentIsAgencyMember ? $profile->id : null,
-                'user_id' => Auth::guard('web')->id(),
+                'user_id' => $request->user('sanctum')?->id, // website session or app Bearer token
                 'name' => trim($data['first_name'] . ' ' . ($data['last_name'] ?? '')),
                 'email' => $data['email'],
                 'phone' => $data['phone'] ?? null,
@@ -87,7 +104,24 @@ class LeadCaptureController extends Controller
         return response()->json(['message' => 'Thanks — your request has been sent to ' . $profile->displayName() . '.']);
     }
 
-    /** Record a lead before revealing the listing brochure URL. */
+    /**
+     * Download brochure
+     *
+     * Records the lead, then returns a 15-minute signed `download_url` for the listing's
+     * brochure (open it in the browser / download manager — no token needed). 404 when the
+     * listing has no brochure.
+     *
+     * Record a lead before revealing the listing brochure URL.
+     *
+     * @bodyParam property_id integer required Example: 150651
+     * @bodyParam name string required Example: Sara Ahmed
+     * @bodyParam email string required Example: buyer@example.com
+     * @bodyParam phone string required Example: 501234567
+     * @bodyParam phone_country_code string Example: +971
+     * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
+     *
+     * @response 200 {"message": "Your brochure is ready to download.", "download_url": "https://example.com/downloads/property/150651/brochure?expires=1760000000&signature=..."}
+     */
     public function downloadBrochure(Request $request)
     {
         $property = $this->validatedDownloadProperty($request);
@@ -100,7 +134,22 @@ class LeadCaptureController extends Controller
         ]);
     }
 
-    /** Record a lead before revealing the listing's downloadable floor plan file. */
+    /**
+     * Download floor plan
+     *
+     * Same as the brochure download, for the listing's floor plan file.
+     *
+     * Record a lead before revealing the listing's downloadable floor plan file.
+     *
+     * @bodyParam property_id integer required Example: 111
+     * @bodyParam name string required Example: Sara Ahmed
+     * @bodyParam email string required Example: buyer@example.com
+     * @bodyParam phone string required Example: 501234567
+     * @bodyParam phone_country_code string Example: +971
+     * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
+     *
+     * @response 200 {"message": "Your floor plan is ready to download.", "download_url": "https://example.com/downloads/property/111/floor-plan?expires=1760000000&signature=..."}
+     */
     public function downloadFloorPlan(Request $request)
     {
         $property = $this->validatedDownloadProperty($request);
@@ -148,6 +197,23 @@ class LeadCaptureController extends Controller
         $this->capturePropertyLead($request, $property);
     }
 
+    /**
+     * Property enquiry
+     *
+     * "Contact agent" form on a listing — goes to the listing's agent/agency CRM. If a customer
+     * token is sent, the enquiry also appears under their account.
+     *
+     * @bodyParam property_id integer required Example: 111
+     * @bodyParam name string required Example: Sara Ahmed
+     * @bodyParam email string Example: buyer@example.com
+     * @bodyParam phone string Example: 501234567
+     * @bodyParam phone_country_code string Example: +971
+     * @bodyParam message string required Example: Is this still available? I'd like to view it this week.
+     * @bodyParam page_source string Where in the app it was sent from. Example: mobile-app
+     * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
+     *
+     * @response 200 {"message": "Thanks — your enquiry has been received and we'll be in touch soon."}
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -168,7 +234,7 @@ class LeadCaptureController extends Controller
 
         $message = 'Thanks — your enquiry has been received and we\'ll be in touch soon.';
 
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() || $request->is('api/*')) {
             return response()->json(['message' => $message]);
         }
 
@@ -183,9 +249,24 @@ class LeadCaptureController extends Controller
     ];
 
     /**
-     * "Book a viewing" on the property page — a property lead (same routing as an enquiry) with the
-     * requested day + time slot. A listing with open house days only offers those days; otherwise
-     * any day in the next 60 days.
+     * Book a viewing
+     *
+     * A property lead (same routing as an enquiry) with the requested day + time slot. If the
+     * listing has open house days (`available_dates` on the property details), only those days
+     * are accepted; otherwise any day from today up to 60 days ahead.
+     *
+     * @bodyParam property_id integer required Example: 111
+     * @bodyParam name string required Example: Sara Ahmed
+     * @bodyParam email string Example: buyer@example.com
+     * @bodyParam phone string Example: 501234567
+     * @bodyParam phone_country_code string Example: +971
+     * @bodyParam viewing_date string required Y-m-d. Example: 2026-10-15
+     * @bodyParam viewing_time string required morning (9–12), afternoon (12–4) or evening (4–7). Example: afternoon
+     * @bodyParam note string Example: Please call before coming.
+     * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
+     *
+     * @response 200 {"message": "Thanks — your viewing request for Thursday, 15 Oct 2026, Afternoon (12 PM – 4 PM) has been sent. The agent will confirm with you shortly.", "when": "Thursday, 15 Oct 2026, Afternoon (12 PM – 4 PM)"}
+     * @response 422 {"message": "Please pick one of the open house days for this property.", "errors": {"viewing_date": ["Please pick one of the open house days for this property."]}}
      */
     public function storeViewing(Request $request)
     {
@@ -221,7 +302,7 @@ class LeadCaptureController extends Controller
 
         $message = "Thanks — your viewing request for {$when} has been sent. The agent will confirm with you shortly.";
 
-        return $request->wantsJson() ? response()->json(['message' => $message, 'when' => $when]) : back()->with('success', $message);
+        return $request->wantsJson() || $request->is('api/*') ? response()->json(['message' => $message, 'when' => $when]) : back()->with('success', $message);
     }
 
     /**
@@ -234,7 +315,7 @@ class LeadCaptureController extends Controller
 
         $lead = $this->leadCreation->create([
             'property_id' => $property->id,
-            'user_id' => Auth::guard('web')->id(),
+            'user_id' => $request->user('sanctum')?->id, // website session or app Bearer token
             'name' => $request->input('name'),
             'email' => $request->input('email'),
             'phone' => $request->input('phone'),
@@ -270,10 +351,26 @@ class LeadCaptureController extends Controller
     }
 
     /**
-     * "Custom Request" — a buyer describes a property they couldn't find in the listing
-     * (properties listing page toolbar). There's no property to route this to, so it's always
-     * an unassigned Lead: superadmin gets notified and picks it up from the Unassigned Leads
-     * screen, same as a property lead whose listing has no agent/company assigned.
+     * Custom property request
+     *
+     * "Can't find what you're looking for?" — the buyer describes the property they want; the
+     * team picks it up.
+     *
+     * There's no property to route this to, so it's always an unassigned Lead: superadmin gets
+     * notified and picks it up from the Unassigned Leads screen.
+     *
+     * @bodyParam first_name string required Example: Sara
+     * @bodyParam last_name string Example: Ahmed
+     * @bodyParam email string required Example: buyer@example.com
+     * @bodyParam phone string Example: 501234567
+     * @bodyParam phone_country_code string Example: +971
+     * @bodyParam property_category string Example: Apartment
+     * @bodyParam price_range string Example: AED 1M – 2M
+     * @bodyParam preferred_location string Example: Dubai Marina
+     * @bodyParam additional_details string Example: Sea view, high floor.
+     * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
+     *
+     * @response 200 {"message": "Thanks — your request has been received and our team will reach out soon."}
      */
     public function storeCustomRequest(Request $request)
     {
@@ -295,7 +392,7 @@ class LeadCaptureController extends Controller
         ]);
 
         $lead = $this->leadCreation->create([
-            'user_id' => Auth::guard('web')->id(),
+            'user_id' => $request->user('sanctum')?->id, // website session or app Bearer token
             'name' => trim($data['first_name'] . ' ' . ($data['last_name'] ?? '')),
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
@@ -311,7 +408,7 @@ class LeadCaptureController extends Controller
 
         $message = "Thanks — your request has been received and our team will reach out soon.";
 
-        if ($request->wantsJson()) {
+        if ($request->wantsJson() || $request->is('api/*')) {
             return response()->json(['message' => $message]);
         }
 

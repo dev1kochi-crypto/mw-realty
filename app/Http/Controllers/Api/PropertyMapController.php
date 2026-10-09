@@ -13,6 +13,8 @@ use Illuminate\Routing\Controller;
  * /api/commercial (see those controllers), plus:
  *   `segment`  residential (default) | commercial | premium
  *   `south`, `west`, `north`, `east`  the visible map area; omitted = every matching listing.
+ *
+ * @group Properties
  */
 class PropertyMapController extends Controller
 {
@@ -22,6 +24,20 @@ class PropertyMapController extends Controller
     {
     }
 
+    /**
+     * Map pins
+     *
+     * Pins for the map view. Takes every filter of `GET /api/properties` (or of
+     * `/api/commercial` with `segment=commercial`), plus the visible map area. Send the bounds
+     * of the current viewport after each pan/zoom.
+     *
+     * @queryParam segment string residential (default), commercial, premium or marketing. Example: residential
+     * @queryParam south number Viewport bounds — all four or none. e.g. `25.05`. No-example
+     * @queryParam west number e.g. `55.10`. No-example
+     * @queryParam north number e.g. `25.30`. No-example
+     * @queryParam east number e.g. `55.40`. No-example
+     * @queryParam lang string Example: en
+     */
     public function index(Request $request)
     {
         $segment = in_array($request->input('segment'), ['commercial', 'premium', 'marketing'], true) ? $request->input('segment') : 'residential';

@@ -16,6 +16,8 @@ use Illuminate\Routing\Controller;
  * `?min_{key}=…&max_{key}=…` (price, sqft). Location: `?city=` / `?community=` (exact, from an
  * autocomplete suggestion) or `?location=` (free text). Older links are still understood: `category=sale|rent|off_plan`
  * (purpose), `completion=` and `min_area/max_area=`.
+ *
+ * @group Properties
  */
 class PropertiesController extends Controller
 {
@@ -25,6 +27,36 @@ class PropertiesController extends Controller
     {
     }
 
+    /**
+     * Search properties
+     *
+     * Residential listings (16 per page) with the result count, pagination and the card data for
+     * each listing. Filter keys and values come from `GET /api/property-filters`; any admin
+     * select filter whose key is a property column also works as `?{key}=value`.
+     *
+     * @queryParam lang string Example: en
+     * @queryParam page integer Example: 1
+     * @queryParam listing_type string Purpose: sale, rent or off_plan. e.g. `sale`. No-example
+     * @queryParam property_type string e.g. `apartment`. No-example
+     * @queryParam location string Free-text location. e.g. `Dubai Marina`. No-example
+     * @queryParam city string Exact city from a location suggestion. e.g. `Dubai`. No-example
+     * @queryParam community string Exact community from a location suggestion. e.g. `Dubai Marina`. No-example
+     * @queryParam bedrooms string e.g. `2`. No-example
+     * @queryParam bathrooms string e.g. `2`. No-example
+     * @queryParam completion_status string ready or off_plan. e.g. `ready`. No-example
+     * @queryParam min_price number AED. e.g. `1000000`. No-example
+     * @queryParam max_price number AED. e.g. `3000000`. No-example
+     * @queryParam min_sqft number e.g. `800`. No-example
+     * @queryParam max_sqft number e.g. `2000`. No-example
+     * @queryParam amenities string[] Amenity values from the filters endpoint. No-example
+     * @queryParam sort string recent, price_asc, price_desc or popular. e.g. `recent`. No-example
+     * @queryParam premium boolean 1 = featured (premium) listings only, residential + commercial. e.g. `0`. No-example
+     * @queryParam marketing boolean 1 = Marketing Properties only. e.g. `0`. No-example
+     * @queryParam agent string An agent's slug — only their listings. No-example
+     * @queryParam agency string An agency's slug — only its listings. No-example
+     * @queryParam floor_plans boolean 1 = only listings with floor plans. No-example
+     * @queryParam open_house boolean 1 = only listings with upcoming open house days. No-example
+     */
     public function index(Request $request)
     {
         $lang = $request->input('lang', app()->getLocale());

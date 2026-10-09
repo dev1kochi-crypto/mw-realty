@@ -17,9 +17,22 @@ use Illuminate\Support\Facades\Cache;
  *
  * scope=commercial matches the /commercial page (Commercial-menu listings); the default scope
  * matches the Home search and /properties, which exclude those.
+ *
+ * @group Search & Filters
  */
 class LocationSuggestionController extends Controller
 {
+    /**
+     * Location autocomplete
+     *
+     * Cities, communities and addresses matching what the user typed (2+ characters; fewer
+     * returns an empty list). Pass a picked suggestion back as `city=` / `community=` /
+     * `location=` on the listing endpoints. Debounce on the client — limited to 120 calls/minute.
+     *
+     * @queryParam q string The typed text. Example: mar
+     * @queryParam scope string all (default) or commercial. Example: all
+     * @queryParam lang string Example: en
+     */
     public function index(Request $request)
     {
         $request->validate([

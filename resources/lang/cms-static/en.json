@@ -929,7 +929,7 @@
         "strength_medium": "Medium",
         "strength_strong": "Strong",
         "account_type_label": "Account Type",
-        "role_customer": "Customer",
+        "role_customer": "User",
         "role_agent": "Agent",
         "role_agency": "Agency",
         "full_name_label": "Full Name",

@@ -12,21 +12,34 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
-/** The logged-in customer's own dashboard data (Profile.vue) — wishlist, saved searches, enquiries, settings. */
+/**
+ * @group User Account
+ *
+ * The logged-in customer's own dashboard data (Profile.vue / the app's account screens) —
+ * wishlist, saved searches, enquiries, settings. Served twice: under /customer/* for the
+ * website's session login and under /api/customer/* for the app's Bearer token; the 'sanctum'
+ * guard resolves either.
+ */
 class CustomerController extends Controller
 {
     use MapsPropertyCards;
 
+    private const WISHLIST_PER_PAGE = 16;
+
     /**
-     * Public — every page's shared session state (useWishlist.js) calls this once on load to
-     * know whether a customer is logged in, which properties they've already saved, and (for
-     * SiteHeader.vue's account dropdown) their basic identity. Deliberately not behind
-     * customer.auth: guests get a cheap {authenticated: false} instead of a console-cluttering
-     * 401 on every single page.
+     * Session state
+     *
+     * Is someone signed in, and which property ids are in their wishlist (to draw the heart
+     * icons). Works without a token too — guests get `authenticated: false` instead of a 401.
+     *
+     * Public — every page's shared session state (useWishlist.js) calls this once on load.
+     *
+     * @response 200 scenario="Signed in" {"authenticated": true, "wishlist_ids": [12, 48], "user": {"name": "Sara Ahmed", "avatar_url": null}}
+     * @response 200 scenario="Guest" {"authenticated": false, "wishlist_ids": [], "user": null}
      */
     public function session(Request $request)
     {
-        $user = $request->user('web');
+        $user = $request->user('sanctum');
         if (!$user) {
             return response()->json(['authenticated' => false, 'wishlist_ids' => [], 'user' => null]);
         }
@@ -41,9 +54,22 @@ class CustomerController extends Controller
         ]);
     }
 
+    /**
+     * Dashboard
+     *
+     * Everything for the account screen in one call: profile, counts, recent activity, the
+     * wishlist (property cards), saved searches and sent enquiries. For long wishlists, use the
+     * paginated `GET /api/customer/wishlist` instead.
+     *
+     * @authenticated
+     *
+     * @queryParam lang string Language code for translated titles. Example: en
+     *
+     * @response 200 {"profile": {"name": "Sara Ahmed", "email": "buyer@example.com", "phone": "+971 50 123 4567", "location": "Dubai Marina", "avatar_url": null}, "stats": {"wishlist": 2, "saved_searches": 1, "enquiries": 1}, "activity": [{"icon": "heart.svg", "text": "You saved \"Marina Gate 2BR\" to your wishlist.", "time": "2 hours ago"}], "wishlist": [{"id": 12, "slug": "marina-gate-2br", "image": "https://.../photo.jpg", "...": "same card shape as GET /api/properties"}], "saved_searches": [{"id": 3, "title": "2BR in Marina", "meta": "Dubai Marina · 2 Bed · For sale", "criteria": {"location": "Dubai Marina", "bedrooms": "2", "listing_type": "sale"}}], "enquiries": [{"id": 91, "property": "Marina Gate 2BR", "sent_to": "Ahmed Khan", "date": "Oct 08, 2026", "status": "New"}]}
+     */
     public function me(Request $request)
     {
-        $user = $request->user('web');
+        $user = $request->user('sanctum');
         $lang = $request->input('lang', app()->getLocale());
 
         $wishlist = $user->wishlistProperties()->where('status', true)->latest('property_wishlists.created_at')->get();
@@ -107,9 +133,27 @@ class CustomerController extends Controller
         ]);
     }
 
+    /**
+     * Update profile
+     *
+     * Send as `multipart/form-data` when uploading an avatar. Use `POST` from the app — PHP does
+     * not parse file uploads on `PUT` (the `PUT` route is kept for the website).
+     *
+     * @authenticated
+     *
+     * @bodyParam name string required Example: Sara Ahmed
+     * @bodyParam email string required Example: buyer@example.com
+     * @bodyParam phone string Example: +971 50 123 4567
+     * @bodyParam location string Example: Dubai Marina
+     * @bodyParam password string Leave out to keep the current password. Example: newSecret123
+     * @bodyParam password_confirmation string Required with password. Example: newSecret123
+     * @bodyParam avatar file Image, max 2 MB.
+     *
+     * @response 200 {"message": "Settings updated.", "avatar_url": "https://res.cloudinary.com/.../avatar.jpg"}
+     */
     public function updateSettings(Request $request)
     {
-        $user = $request->user('web');
+        $user = $request->user('sanctum');
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -139,9 +183,88 @@ class CustomerController extends Controller
         ]);
     }
 
+    /**
+     * Wishlist (paginated)
+     *
+     * The saved properties as listing cards, newest first, 16 per page.
+     *
+     * @authenticated
+     *
+     * @queryParam page integer Example: 1
+     * @queryParam lang string Example: en
+     *
+     * @response 200 {"properties": [{"id": 12, "slug": "marina-gate-2br", "title": "Marina Gate 2BR", "image": "https://.../photo.jpg", "...": "same card shape as GET /api/properties"}], "pagination": {"current_page": 1, "last_page": 1, "per_page": 16, "total": 2}}
+     */
+    public function wishlist(Request $request)
+    {
+        $lang = $request->input('lang', app()->getLocale());
+        $paginator = $request->user('sanctum')->wishlistProperties()->where('status', true)
+            ->latest('property_wishlists.created_at')
+            ->paginate(self::WISHLIST_PER_PAGE);
+
+        return response()->json([
+            'properties' => collect($paginator->items())->map(fn ($p) => $this->mapProperty($p, $lang))->values(),
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * Delete account
+     *
+     * Permanently deletes the account (required by the App Store / Play Store for apps with
+     * sign-up). Wishlist and saved searches are removed; enquiries already sent to agents stay
+     * with them, unlinked from the account. Password accounts must confirm their password;
+     * Google-only accounts send nothing.
+     *
+     * @authenticated
+     *
+     * @bodyParam password string The current password (accounts created with email + password). Example: secret123
+     *
+     * @response 200 {"message": "Your account has been deleted."}
+     * @response 422 {"message": "The password is incorrect.", "errors": {"password": ["The password is incorrect."]}}
+     */
+    public function destroyAccount(Request $request)
+    {
+        $user = $request->user('sanctum');
+
+        // Google sign-ups get a random password they never knew — nothing to confirm there.
+        if (!$user->google_id && !Hash::check((string) $request->input('password'), $user->password)) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['password' => 'The password is incorrect.']);
+        }
+
+        app(\App\Services\Visitors\VisitorTracker::class)->forget($request);
+        app(\App\Services\ManagedFiles::class)->delete($user->avatar);
+        $user->tokens()->delete();
+        // FKs: wishlist + saved searches cascade; CRM leads and visitor leads are kept (user_id nulled).
+        $user->delete();
+
+        if ($request->hasSession()) {
+            \Illuminate\Support\Facades\Auth::guard('web')->logout();
+            $request->session()->invalidate();
+        }
+
+        return response()->json(['message' => 'Your account has been deleted.']);
+    }
+
+    /**
+     * Toggle wishlist
+     *
+     * Adds the property to the wishlist, or removes it if it's already there.
+     *
+     * @authenticated
+     *
+     * @urlParam property integer required The property **id** (not slug). Example: 12
+     *
+     * @response 200 {"wishlisted": true}
+     */
     public function toggleWishlist(Request $request, Property $property)
     {
-        $user = $request->user('web');
+        $user = $request->user('sanctum');
         $existing = $user->wishlistProperties()->where('properties.id', $property->id)->exists();
 
         if ($existing) {
@@ -159,6 +282,19 @@ class CustomerController extends Controller
         return response()->json(['wishlisted' => !$existing]);
     }
 
+    /**
+     * Save a search
+     *
+     * Stores the listing filters so the user can reopen them later. `criteria` takes the same
+     * keys as the `GET /api/properties` query string.
+     *
+     * @authenticated
+     *
+     * @bodyParam title string required Example: 2BR in Marina
+     * @bodyParam criteria object The listing filters. Example: {"location": "Dubai Marina", "bedrooms": "2", "listing_type": "sale", "min_price": 1500000}
+     *
+     * @response 200 {"id": 3, "title": "2BR in Marina", "meta": "Dubai Marina · 2 Bed · For sale · AED 1,500,000 – any", "criteria": {"location": "Dubai Marina", "bedrooms": "2", "listing_type": "sale", "min_price": 1500000}}
+     */
     public function storeSavedSearch(Request $request)
     {
         $request->validate([
@@ -166,7 +302,7 @@ class CustomerController extends Controller
             'criteria' => 'nullable|array',
         ]);
 
-        $savedSearch = $request->user('web')->savedSearches()->create([
+        $savedSearch = $request->user('sanctum')->savedSearches()->create([
             'title' => $request->input('title'),
             'criteria' => $request->input('criteria', []),
         ]);
@@ -185,9 +321,19 @@ class CustomerController extends Controller
         ]);
     }
 
+    /**
+     * Delete a saved search
+     *
+     * @authenticated
+     *
+     * @urlParam savedSearch integer required The saved search id. Example: 3
+     *
+     * @response 200 {"message": "Removed."}
+     * @response 403 {"message": "This action is unauthorized."}
+     */
     public function destroySavedSearch(Request $request, SavedSearch $savedSearch)
     {
-        abort_unless($savedSearch->user_id === $request->user('web')->id, 403);
+        abort_unless($savedSearch->user_id === $request->user('sanctum')->id, 403);
         $savedSearch->delete();
 
         return response()->json(['message' => 'Removed.']);

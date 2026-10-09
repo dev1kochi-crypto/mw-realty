@@ -1,0 +1,313 @@
+name: 'Agents & Agencies'
+description: |-
+
+  Public, read-only endpoints for the /agents listing page and /agent-details/{slug} page.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/agents
+    metadata:
+      custom: []
+      groupName: 'Agents & Agencies'
+      groupDescription: |-
+
+        Public, read-only endpoints for the /agents listing page and /agent-details/{slug} page.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List agents'
+      description: |-
+        Without `per_page` every agent is returned (the website's behaviour); pass `per_page` to
+        page through them and get a `pagination` block.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Page size, max 50.'
+        required: false
+        example: 20
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: 'Used with per_page.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+      per_page: 20
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"title":"Our Agent","agents":[{"slug":"abhishek-mohan","name":"Abhishek Mohan","avatar_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253934\/MW\/portal-users\/abhishek-mohan.jpg","years_of_experience":7,"preferred_areas":["Downtown Dubai","Dubai Marina","Business Bay"],"rent_count":4,"sell_count":10,"company":{"slug":"kaal-real-estate-agency","name":"Kaal Real Estate Agency"}},{"slug":"ahmed-hassan-al-mansoori","name":"Ahmed Hassan Al Mansoori","avatar_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253935\/MW\/portal-users\/ahmed-hassan-al-mansoori.png","years_of_experience":7,"preferred_areas":["Downtown Dubai","Dubai Marina","Business Bay"],"rent_count":5,"sell_count":11,"company":{"slug":"dxb-dubai-properties","name":"DXB Dubai Properties"}},{"slug":"aisha-rahman","name":"Aisha Rahman","avatar_url":null,"years_of_experience":7,"preferred_areas":["Palm Jumeirah","Dubai Hills Estate","Arabian Ranches"],"rent_count":6,"sell_count":9,"company":{"slug":"abc-real-estate","name":"ABC Real Estate"}},{"slug":"anila-paul-3","name":"Anila Paul","avatar_url":null,"years_of_experience":null,"preferred_areas":[],"rent_count":25,"sell_count":25,"company":null},{"slug":"anjali-das","name":"Anjali Das","avatar_url":null,"years_of_experience":6,"preferred_areas":["Jumeirah Village Circle","Al Furjan","Jumeirah Lake Towers"],"rent_count":6,"sell_count":9,"company":{"slug":"dalton-wade","name":"Dalton Wade"}},{"slug":"arjun-pillai","name":"Arjun Pillai","avatar_url":null,"years_of_experience":4,"preferred_areas":["Jumeirah Village Circle","Al Furjan","Jumeirah Lake Towers"],"rent_count":7,"sell_count":8,"company":{"slug":"violet-edwards","name":"Violet Edwards"}},{"slug":"arun","name":"Arun","avatar_url":null,"years_of_experience":null,"preferred_areas":[],"rent_count":5,"sell_count":2,"company":{"slug":"mighty-warners","name":"Mighty warners"}},{"slug":"aslam-ali-imran","name":"Aslam Ali Imran","avatar_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253937\/MW\/portal-users\/aslam-ali-imran.jpg","years_of_experience":6,"preferred_areas":["Downtown Dubai","Dubai Marina","Business Bay"],"rent_count":4,"sell_count":11,"company":{"slug":"abc-real-estate","name":"ABC Real Estate"}},{"slug":"chloe-martin","name":"Chloe Martin","avatar_url":null,"years_of_experience":11,"preferred_areas":["Dubai Marina","Abu Dhabi","Sharjah"],"rent_count":5,"sell_count":10,"company":{"slug":"blue-horizon-real-estate","name":"Blue Horizon Real Estate"}},{"slug":"daniel-brooks","name":"Daniel Brooks","avatar_url":null,"years_of_experience":4,"preferred_areas":["Jumeirah Village Circle","Al Furjan","Jumeirah Lake Towers"],"rent_count":7,"sell_count":7,"company":{"slug":"admin","name":"Admin"}},{"slug":"emma-clarke","name":"Emma Clarke","avatar_url":null,"years_of_experience":5,"preferred_areas":["Dubai Marina","Abu Dhabi","Sharjah"],"rent_count":5,"sell_count":10,"company":{"slug":"violet-edwards","name":"Violet Edwards"}},{"slug":"fatima-al-hashimi","name":"Fatima Al Hashimi","avatar_url":null,"years_of_experience":5,"preferred_areas":["Dubai Marina","Abu Dhabi","Sharjah"],"rent_count":4,"sell_count":11,"company":{"slug":"admin","name":"Admin"}},{"slug":"hamdan-al-falasi","name":"Hamdan Al Falasi","avatar_url":null,"years_of_experience":13,"preferred_areas":["Dubai Marina","Abu Dhabi","Sharjah"],"rent_count":4,"sell_count":11,"company":{"slug":"test-agency","name":"Test agency"}},{"slug":"hassan-qureshi","name":"Hassan Qureshi","avatar_url":null,"years_of_experience":15,"preferred_areas":["Dubai Marina","Abu Dhabi","Sharjah"],"rent_count":6,"sell_count":9,"company":{"slug":"skyline-properties","name":"Skyline Properties"}},{"slug":"huda-al-zaabi","name":"Huda Al Zaabi","avatar_url":null,"years_of_experience":null,"preferred_areas":[],"rent_count":2,"sell_count":3,"company":{"slug":"mighty-warners","name":"Mighty warners"}},{"slug":"isabella-cruz","name":"Isabella Cruz","avatar_url":null,"years_of_experience":null,"preferred_areas":[],"rent_count":0,"sell_count":0,"company":{"slug":"mighty-warners","name":"Mighty warners"}},{"slug":"james-thomas","name":"James Thomas","avatar_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253947\/MW\/portal-users\/james-thomas.jpg","years_of_experience":8,"preferred_areas":["Downtown Dubai","Dubai Marina","Business Bay"],"rent_count":6,"sell_count":9,"company":{"slug":"kaal-real-estate-agency","name":"Kaal Real Estate Agency"}},{"slug":"jayme-craig","name":"Jayme Craig","avatar_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253955\/MW\/portal-users\/jayme-craig.png","years_of_experience":5,"preferred_areas":["Jumeirah","Business Bay"],"rent_count":7,"sell_count":8,"company":{"slug":"dxb-dubai-properties","name":"DXB Dubai Properties"}},{"slug":"khalid-al-marri","name":"Khalid Al Marri","avatar_url":null,"years_of_experience":12,"preferred_areas":["Jumeirah Village Circle","Al Furjan","Jumeirah Lake Towers"],"rent_count":6,"sell_count":9,"company":{"slug":"elite-homes-realty","name":"Elite Homes Realty"}},{"slug":"layla-mansour","name":"Layla Mansour","avatar_url":null,"years_of_experience":9,"preferred_areas":["Palm Jumeirah","Dubai Hills Estate","Arabian Ranches"],"rent_count":6,"sell_count":9,"company":{"slug":"blue-horizon-real-estate","name":"Blue Horizon Real Estate"}}],"seo":{"meta_title":"Real Estate Agents in the UAE | MW Realty","meta_description":"Find experienced, verified real estate agents across the UAE on MW Realty to help you buy, rent, or sell with confidence.","meta_keywords":null,"canonical_url":null,"og_title":"Real Estate Agents in the UAE | MW Realty","og_description":"Find experienced, verified real estate agents across the UAE on MW Realty to help you buy, rent, or sell with confidence.","og_image":null,"other_meta_tags":null},"pagination":{"current_page":1,"last_page":2,"per_page":20,"total":39}}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/agents/{slug}'
+    metadata:
+      custom: []
+      groupName: 'Agents & Agencies'
+      groupDescription: |-
+
+        Public, read-only endpoints for the /agents listing page and /agent-details/{slug} page.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Agent details'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      slug:
+        custom: []
+        name: slug
+        description: "The agent's slug from the list."
+        required: true
+        example: sruthi-raveendran-m
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      slug: sruthi-raveendran-m
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"id":30,"slug":"sruthi-raveendran-m","name":"Sruthi Raveendran M","avatar_url":null,"years_of_experience":null,"preferred_areas":[],"badges":[],"bio":null,"email":"dev1.kochi2@mightywarner.ae","phone":"67867676767","whatsapp_number":null,"company":{"slug":"al-furat-river","name":"Al Furat River"},"rent_count":0,"sell_count":0,"properties":[],"seo":{"meta_title":"Sruthi Raveendran M | MW Realty Agent","meta_description":"Connect with Sruthi Raveendran M, a trusted agent on MW Realty.","meta_keywords":null,"canonical_url":null,"og_title":"Sruthi Raveendran M | MW Realty Agent","og_description":"Connect with Sruthi Raveendran M, a trusted agent on MW Realty.","og_image":null,"other_meta_tags":null}}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+      -
+        custom: []
+        status: 404
+        content: '{"message": "Not found"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/agencies
+    metadata:
+      custom: []
+      groupName: 'Agents & Agencies'
+      groupDescription: |-
+
+        Public, read-only endpoints for the /agencies listing page and /agency-details/{slug} page.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List agencies'
+      description: |-
+        Without `per_page` every agency is returned (the website's behaviour); pass `per_page` to
+        page through them and get a `pagination` block.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Page size, max 50.'
+        required: false
+        example: 20
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: 'Used with per_page.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+      per_page: 20
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"title":"Our Agencies","section_title":"Top Agencies","section_description":"Explore agency with a proven track record of high response rates and authentic listings.","agencies":[{"slug":"abc-real-estate","name":"ABC Real Estate","logo_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253932\/MW\/portal-users\/abc-real-estate.png","properties_count":64,"office_address":"Palm Jumeirah, Dubai, United Arab Emirates","email":"abc-real-estate@example.com","phone":"+971545183515"},{"slug":"admin","name":"Admin","logo_url":null,"properties_count":61,"office_address":null,"email":"admin@internal.mw-realty","phone":null},{"slug":"blue-horizon-real-estate","name":"Blue Horizon Real Estate","logo_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253939\/MW\/portal-users\/blue-horizon-real-estate.png","properties_count":62,"office_address":"Arabian Ranches, Dubai, United Arab Emirates","email":"blue-horizon-real-estate@example.com","phone":"+971574232620"},{"slug":"dalton-wade","name":"Dalton Wade","logo_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253940\/MW\/portal-users\/dalton-wade.png","properties_count":61,"office_address":"Al Furjan, Dubai, United Arab Emirates","email":"dalton-wade@example.com","phone":"+971573477358"},{"slug":"dxb-dubai-properties","name":"DXB Dubai Properties","logo_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253944\/MW\/portal-users\/dxb-dubai-properties.png","properties_count":61,"office_address":"Business Bay, Dubai, United Arab Emirates","email":"dxb-dubai-properties@example.com","phone":"+971597101968"},{"slug":"elite-homes-realty","name":"Elite Homes Realty","logo_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253945\/MW\/portal-users\/elite-homes-realty.png","properties_count":62,"office_address":"Dubai Marina, Dubai, United Arab Emirates","email":"elite-homes-realty@example.com","phone":"+971557771162"},{"slug":"kaal-real-estate-agency","name":"Kaal Real Estate Agency","logo_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253957\/MW\/portal-users\/kaal-real-estate-agency.png","properties_count":62,"office_address":"Downtown Dubai, Dubai, United Arab Emirates","email":"kaal-real-estate-agency@example.com","phone":"+971573758388"},{"slug":"mighty-warners","name":"Mighty warners","logo_url":null,"properties_count":42,"office_address":"Kochi,India","email":"dev2.kochi@mightywarner.com","phone":"7907655488"},{"slug":"skyline-properties","name":"Skyline Properties","logo_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253958\/MW\/portal-users\/skyline-properties.png","properties_count":63,"office_address":"Dubai Hills Estate, Dubai, United Arab Emirates","email":"skyline-properties@example.com","phone":"+971578677091"},{"slug":"test-agency","name":"Test agency","logo_url":null,"properties_count":60,"office_address":"testdde","email":"testagency@gmail.com","phone":"6346354534"},{"slug":"test-company","name":"Test Company","logo_url":null,"properties_count":95,"office_address":"Test","email":"dev1.kochi1@mightywarner.ae","phone":"54353454534"},{"slug":"violet-edwards","name":"Violet Edwards","logo_url":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/v1790253960\/MW\/portal-users\/violet-edwards.png","properties_count":64,"office_address":"Jumeirah Village Circle, Dubai, United Arab Emirates","email":"violet-edwards@example.com","phone":"+971567776076"}],"seo":{"meta_title":"Real Estate Agencies in the UAE | MW Realty","meta_description":"Browse verified real estate agencies across the UAE on MW Realty and connect with trusted teams for buying, renting, or investing.","meta_keywords":null,"canonical_url":null,"og_title":"Real Estate Agencies in the UAE | MW Realty","og_description":"Browse verified real estate agencies across the UAE on MW Realty and connect with trusted teams for buying, renting, or investing.","og_image":null,"other_meta_tags":null},"pagination":{"current_page":1,"last_page":1,"per_page":20,"total":12}}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/agencies/{slug}'
+    metadata:
+      custom: []
+      groupName: 'Agents & Agencies'
+      groupDescription: |-
+
+        Public, read-only endpoints for the /agencies listing page and /agency-details/{slug} page.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Agency details'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      slug:
+        custom: []
+        name: slug
+        description: "The agency's slug from the list."
+        required: true
+        example: test-company
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      slug: test-company
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"id":81,"slug":"test-company","name":"Test Company","logo_url":null,"founding_year":null,"office_address":"Test","website":null,"orn_number":"rews232","email":"dev1.kochi1@mightywarner.ae","phone":"54353454534","whatsapp_number":null,"bio":null,"agent_count":3,"total_properties_count":95,"for_sale_count":52,"for_rent_count":43,"agents":[{"slug":"omar-al-suwaidi","name":"Omar Al Suwaidi","avatar_url":null,"years_of_experience":15,"preferred_areas":["Palm Jumeirah","Dubai Hills Estate","Arabian Ranches"],"rent_count":5,"sell_count":10,"company":{"slug":"test-company","name":"Test Company"}},{"slug":"test-agency-agent-one","name":"Test Agency Agent One","avatar_url":null,"years_of_experience":null,"preferred_areas":[],"rent_count":11,"sell_count":14,"company":{"slug":"test-company","name":"Test Company"}},{"slug":"test-agency-agent-two","name":"Test Agency Agent Two","avatar_url":null,"years_of_experience":null,"preferred_areas":[],"rent_count":5,"sell_count":15,"company":{"slug":"test-company","name":"Test Company"}}],"properties":[{"id":150151,"slug":"demo-81-0-modern-1-bedroom-apartment-in-downtown-dubai","images":["https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/demo\/PROP049\/PROP049-1.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/demo\/PROP049\/PROP049-2.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/demo\/PROP049\/PROP049-3.jpeg"],"images_count":7,"image":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/demo\/PROP049\/PROP049-1.jpeg","name":"Modern 1 Bedroom Apartment in Downtown Dubai","location":"Downtown Dubai, Dubai","beds":"1 Bed","baths":"1 Bath","area":"553 sq.ft","type":"Apartment","price":"AED 420,000","price_value":420000,"purpose_badge":"Buy | Off-Plan","segment":"residential","furnished":false,"contact":{"phone":"+971500000811","whatsapp_number":null,"email":"test-agency-agent-one@example.test"}},{"id":150150,"slug":"test-company-sharjah-apartment-in-tilal-city","images":["https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP048\/PROP048-1.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP048\/PROP048-2.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP048\/PROP048-3.jpeg"],"images_count":3,"image":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP048\/PROP048-1.jpeg","name":"Apartment in Tilal City","location":"Tilal City, Sharjah","beds":"2 Bed","baths":"2 Bath","area":"1,400 sq.ft","type":"Apartment","price":"AED 110,000","price_value":110000,"purpose_badge":"Rent","segment":"residential","furnished":false,"contact":{"phone":"+971500000811","whatsapp_number":null,"email":"test-agency-agent-one@example.test"}},{"id":150149,"slug":"test-company-sharjah-townhouse-in-aljada","images":["https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP047\/PROP047-1.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP047\/PROP047-2.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP047\/PROP047-3.jpeg"],"images_count":3,"image":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP047\/PROP047-1.jpeg","name":"Townhouse in Aljada","location":"Aljada, Sharjah","beds":"3 Bed","baths":"3 Bath","area":"2,200 sq.ft","type":"Townhouse","price":"AED 2,100,000","price_value":2100000,"purpose_badge":"Buy","segment":"residential","furnished":false,"contact":{"phone":"54353454534","whatsapp_number":null,"email":"dev1.kochi1@mightywarner.ae"}},{"id":150148,"slug":"test-company-sharjah-villa-in-al-khan","images":["https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP046\/PROP046-1.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP046\/PROP046-2.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP046\/PROP046-3.jpeg"],"images_count":3,"image":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP046\/PROP046-1.jpeg","name":"Villa in Al Khan","location":"Al Khan, Sharjah","beds":"4 Bed","baths":"4 Bath","area":"3,100 sq.ft","type":"Villa","price":"AED 3,200,000","price_value":3200000,"purpose_badge":"Buy","segment":"residential","furnished":false,"contact":{"phone":"+971500000812","whatsapp_number":null,"email":"test-agency-agent-two@example.test"}},{"id":150147,"slug":"test-company-sharjah-apartment-in-muwaileh","images":["https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP045\/PROP045-1.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP045\/PROP045-2.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP045\/PROP045-3.jpeg"],"images_count":3,"image":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP045\/PROP045-1.jpeg","name":"Apartment in Muwaileh","location":"Muwaileh, Sharjah","beds":"1 Bed","baths":"1 Bath","area":"780 sq.ft","type":"Apartment","price":"AED 80,000","price_value":80000,"purpose_badge":"Rent","segment":"residential","furnished":false,"contact":{"phone":"54353454534","whatsapp_number":null,"email":"dev1.kochi1@mightywarner.ae"}},{"id":150146,"slug":"test-company-sharjah-apartment-in-al-majaz","images":["https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP044\/PROP044-1.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP044\/PROP044-2.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP044\/PROP044-3.jpeg"],"images_count":3,"image":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP044\/PROP044-1.jpeg","name":"Apartment in Al Majaz","location":"Al Majaz, Sharjah","beds":"2 Bed","baths":"2 Bath","area":"1,250 sq.ft","type":"Apartment","price":"AED 1,850,000","price_value":1850000,"purpose_badge":"Buy","segment":"residential","furnished":false,"contact":{"phone":"+971500000811","whatsapp_number":null,"email":"test-agency-agent-one@example.test"}},{"id":150145,"slug":"test-company-umm-al-quwain-apartment-in-king-faisal-street","images":["https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP043\/PROP043-1.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP043\/PROP043-2.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP043\/PROP043-3.jpeg"],"images_count":3,"image":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP043\/PROP043-1.jpeg","name":"Apartment in King Faisal Street","location":"King Faisal Street, Umm Al Quwain","beds":"2 Bed","baths":"2 Bath","area":"1,400 sq.ft","type":"Apartment","price":"AED 110,000","price_value":110000,"purpose_badge":"Rent","segment":"residential","furnished":false,"contact":{"phone":"+971500000811","whatsapp_number":null,"email":"test-agency-agent-one@example.test"}},{"id":150144,"slug":"test-company-umm-al-quwain-townhouse-in-al-humrah","images":["https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP042\/PROP042-1.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP042\/PROP042-2.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP042\/PROP042-3.jpeg"],"images_count":3,"image":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP042\/PROP042-1.jpeg","name":"Townhouse in Al Humrah","location":"Al Humrah, Umm Al Quwain","beds":"3 Bed","baths":"3 Bath","area":"2,200 sq.ft","type":"Townhouse","price":"AED 2,100,000","price_value":2100000,"purpose_badge":"Buy","segment":"residential","furnished":false,"contact":{"phone":"54353454534","whatsapp_number":null,"email":"dev1.kochi1@mightywarner.ae"}},{"id":150143,"slug":"test-company-umm-al-quwain-villa-in-old-town","images":["https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP041\/PROP041-1.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP041\/PROP041-2.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP041\/PROP041-3.jpeg"],"images_count":3,"image":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP041\/PROP041-1.jpeg","name":"Villa in Old Town","location":"Old Town, Umm Al Quwain","beds":"4 Bed","baths":"4 Bath","area":"3,100 sq.ft","type":"Villa","price":"AED 3,200,000","price_value":3200000,"purpose_badge":"Buy","segment":"residential","furnished":false,"contact":{"phone":"+971500000812","whatsapp_number":null,"email":"test-agency-agent-two@example.test"}},{"id":150142,"slug":"test-company-umm-al-quwain-apartment-in-al-raas","images":["https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP040\/PROP040-1.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP040\/PROP040-2.jpeg","https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP040\/PROP040-3.jpeg"],"images_count":3,"image":"https:\/\/res.cloudinary.com\/dvgxfjqjj\/image\/upload\/MW\/properties\/PROP040\/PROP040-1.jpeg","name":"Apartment in Al Raas","location":"Al Raas, Umm Al Quwain","beds":"1 Bed","baths":"1 Bath","area":"780 sq.ft","type":"Apartment","price":"AED 80,000","price_value":80000,"purpose_badge":"Rent","segment":"residential","furnished":false,"contact":{"phone":"54353454534","whatsapp_number":null,"email":"dev1.kochi1@mightywarner.ae"}}],"seo":{"meta_title":"Test Company | MW Realty Agency","meta_description":"Connect with Test Company, a trusted agency on MW Realty.","meta_keywords":null,"canonical_url":null,"og_title":"Test Company | MW Realty Agency","og_description":"Connect with Test Company, a trusted agency on MW Realty.","og_image":null,"other_meta_tags":null}}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+      -
+        custom: []
+        status: 404
+        content: '{"message": "Not found"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

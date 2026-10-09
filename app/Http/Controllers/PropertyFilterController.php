@@ -6,8 +6,11 @@ use App\Models\Filter;
 use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 
 /**
+ * @group Search & Filters
+ *
  * Public read-only endpoint the frontend (home banner + /properties listing)
  * uses to render the search filter bar. Options come straight from the
  * admin-managed filters/filter_values tables, so a new filter or option
@@ -16,6 +19,17 @@ use Illuminate\Routing\Controller;
  */
 class PropertyFilterController extends Controller
 {
+    /**
+     * Search filter bar
+     *
+     * The filters to render (selects with their options and live listing counts, number sliders
+     * with min/max/step), in admin order. Pass the chosen `value`s back to the listing endpoints
+     * under each filter's `key`.
+     *
+     * @queryParam page string Which screen's filter set: `home` (compact) or `listing` (full). Example: listing
+     * @queryParam scope string Whose listings the counts/bounds come from: residential, commercial, premium, marketing. Example: residential
+     * @queryParam lang string Example: en
+     */
     public function index(Request $request)
     {
         $request->validate(['page' => 'sometimes|in:home,listing', 'lang' => 'sometimes|string|max:10', 'scope' => 'sometimes|in:residential,commercial,premium,marketing']);
@@ -30,7 +44,10 @@ class PropertyFilterController extends Controller
             default => Property::active()->residential(),
         };
 
-        $filters = Filter::active()->whereIn('key', array_merge(Filter::SELECT_KEYS, Filter::NUMBER_KEYS))
+        // A grouped count per select filter plus a MAX() per slider on every call — cached briefly
+        // (same TTL as the listings themselves), keyed by everything that changes the answer.
+        $scope = $request->input('scope', 'residential');
+        $filters = Cache::remember("property-filters:{$page}:{$scope}:{$lang}", self::CACHE_TTL, fn () => Filter::active()->whereIn('key', array_merge(Filter::SELECT_KEYS, Filter::NUMBER_KEYS))
             ->shownOn($page)
             ->orderBy('order_index')
             ->with(['activeValues'])
@@ -56,10 +73,14 @@ class PropertyFilterController extends Controller
                 }
 
                 return $payload;
-            });
+            })
+            ->values()
+            ->all());
 
         return response()->json(['filters' => $filters]);
     }
+
+    private const CACHE_TTL = 180; // seconds — same as PropertiesPageService
 
     /** Filters whose options are a fixed admin list (every value is meaningful even with no listings yet). */
     private const ADMIN_LIST_KEYS = ['bedrooms', 'bathrooms'];

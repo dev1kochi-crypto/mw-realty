@@ -286,7 +286,6 @@ onMounted(() => playAuthEntrance(cardEl.value));
 
                         <p class="mw-login-form__signup">{{ config.loginText }} <a href="/login" @click="goToLogin">{{ t('signup.sign_in_link') }}</a></p>
 
-                        <!-- Google sign-in hidden for now — keep this markup, don't remove it.
                         <template v-if="accountType === 'user'">
                             <div class="mw-login-form__divider"><span>{{ t('signup.divider_or') }}</span></div>
 
@@ -295,7 +294,6 @@ onMounted(() => playAuthEntrance(cardEl.value));
                                 {{ t('signup.google_cta') }}
                             </a>
                         </template>
-                        -->
                     </form>
                     </div>
                 </div>

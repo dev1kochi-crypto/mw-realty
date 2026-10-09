@@ -57,5 +57,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // /api/* always answers in JSON (401/404/422/429…), even when the client — e.g. the mobile
+        // app — doesn't send `Accept: application/json`; otherwise a validation error would
+        // redirect and an unauthenticated request would bounce to the portal login page.
+        $exceptions->shouldRenderJsonWhen(fn ($request) => $request->is('api/*') || $request->expectsJson());
     })->create();

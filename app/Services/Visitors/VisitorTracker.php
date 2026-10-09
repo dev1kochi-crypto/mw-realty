@@ -14,7 +14,6 @@ use App\Services\Agency\AssignmentActor;
 use App\Services\Agency\LeadAssignmentService;
 use App\Services\Crm\LeadCreationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -43,6 +42,8 @@ use Illuminate\Support\Str;
 class VisitorTracker
 {
     public const COOKIE = 'mw_vid';
+    /** The mobile app's stand-in for the cookie: a random id it generates once and stores on the device. */
+    public const DEVICE_HEADER = 'X-Device-Id';
     private const COOKIE_MINUTES = 60 * 24 * 365 * 2;
     /** Visits (same listing / agent / agency) before a pool lead is routed — see routeIfInterested(). */
     private const ROUTE_AFTER_VISITS = 2;
@@ -64,7 +65,8 @@ class VisitorTracker
 
     /**
      * This request's browser. Created (and the cookie set) only on web routes, which can send
-     * cookies back; on API routes an unknown browser is simply null.
+     * cookies back, or for the mobile app's X-Device-Id header (which it keeps itself); on other
+     * API requests an unknown browser is simply null.
      */
     public function browser(Request $request): ?VisitorBrowser
     {
@@ -76,16 +78,22 @@ class VisitorTracker
         if (!$this->isBot($request)) {
             $token = $request->cookie(self::COOKIE);
             $token = is_string($token) && preg_match('/^[A-Za-z0-9]{40}$/', $token) ? $token : null;
+            // Prefixed so a device id can never collide with (or take over) a website cookie id.
+            $device = $token ? null : $request->header(self::DEVICE_HEADER);
+            $device = is_string($device) && preg_match('/^[A-Za-z0-9-]{16,60}$/', $device) ? 'app-' . $device : null;
+            $token ??= $device;
             $browser = $token ? VisitorBrowser::where('token', $token)->first() : null;
 
-            if (!$browser && $request->hasSession()) {
+            if (!$browser && ($request->hasSession() || $device)) {
                 $token ??= Str::random(40);
                 $browser = VisitorBrowser::firstOrCreate(['token' => $token], [
                     'ip_address' => $request->ip(),
                     'user_agent' => Str::limit((string) $request->userAgent(), 490, ''),
                     'last_seen_at' => now(),
                 ]);
-                Cookie::queue(Cookie::make(self::COOKIE, $token, self::COOKIE_MINUTES, '/', null, null, true, false, 'lax'));
+                if (!$device) {
+                    Cookie::queue(Cookie::make(self::COOKIE, $token, self::COOKIE_MINUTES, '/', null, null, true, false, 'lax'));
+                }
             }
 
             if ($browser && (!$browser->last_seen_at || $browser->last_seen_at->lt(now()->subMinute()))) {
@@ -102,7 +110,8 @@ class VisitorTracker
     public function currentLead(Request $request): ?VisitorLead
     {
         $browser = $this->browser($request);
-        $user = $request->hasSession() ? Auth::guard('web')->user() : null;
+        // The 'sanctum' guard covers both: the website's session login, then the app's Bearer token.
+        $user = $request->user('sanctum');
 
         if ($user && $browser?->visitorLead?->user_id !== $user->id) {
             return $this->identifyCustomer($request, $user);

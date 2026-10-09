@@ -10,9 +10,19 @@ use Illuminate\Routing\Controller;
  * Public read-only endpoint for a page's ad banner — returns the active ad for a given
  * placement (respecting its Active toggle and start/end date window), or null when
  * there isn't one, so the frontend section hides itself instead of showing anything stale.
+ *
+ * @group App Config
  */
 class PublicAdController extends Controller
 {
+    /**
+     * Ad banner
+     *
+     * The active ad for a screen, or `false` when there is none (hide the slot).
+     *
+     * @queryParam placement string home, property-details, … Example: home
+     * @queryParam lang string Example: en
+     */
     public function index(Request $request)
     {
         $placement = (string) $request->input('placement', 'home');

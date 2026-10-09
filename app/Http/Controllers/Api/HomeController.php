@@ -17,6 +17,8 @@ use Illuminate\Routing\Controller;
  * - /api/property-filters (home hero search bar AND the properties listing page)
  * - /api/ads?placement=X (any page can ask for its own ad slot; home's is still included
  *   in this bundle too, as a convenience, so the home page needs only this one request)
+ *
+ * @group Home
  */
 class HomeController extends Controller
 {
@@ -24,6 +26,15 @@ class HomeController extends Controller
     {
     }
 
+    /**
+     * Home screen
+     *
+     * Every home section in one request: banner, brands, ad, developments, premium properties,
+     * luxury, why-choose-us, communities, popular places, testimonials, contact. Property lists
+     * inside are shuffled on each call.
+     *
+     * @queryParam lang string Example: en
+     */
     public function index(Request $request)
     {
         $lang = $request->input('lang', app()->getLocale());
@@ -38,8 +49,15 @@ class HomeController extends Controller
         return response()->json($data);
     }
 
-    /** GET /api/home/developments?city=Ajman — the Developments section's listings for one city tab. */
-    public function developments(Request $request)
+    /**
+     * New projects by city
+     *
+     * The home "Browse New Projects" section's listings for one city tab.
+     *
+     * @queryParam city string A city tab from the home response. Example: Dubai
+     * @queryParam lang string Example: en
+     */
+    public function newProjects(Request $request)
     {
         $lang = $request->input('lang', app()->getLocale());
         $city = $request->input('city');

@@ -70,7 +70,7 @@ class CustomerAuthController extends Controller
      * moment a "Resend" click's send fails (e.g. hitting Mailtrap's per-second cap), leaving them
      * unable to verify with either the old code (overwritten) or the new one (never delivered).
      */
-    private function issueOtp(User $user): bool
+    protected function issueOtp(User $user): bool
     {
         // OTP_ENABLED=false (testing): skip the email and accept the static OTP_STATIC_CODE.
         if (!config('auth.otp.enabled')) {
@@ -96,27 +96,10 @@ class CustomerAuthController extends Controller
 
     public function verifyOtp(Request $request)
     {
-        $request->validate([
-            'user_id' => 'required|integer|exists:users,id',
-            'code' => 'required|string',
-        ]);
-
-        $user = User::findOrFail($request->input('user_id'));
-
-        if (
-            !$user->otp_code
-            || !$user->otp_expires_at
-            || $user->otp_expires_at->isPast()
-            || !Hash::check($request->input('code'), $user->otp_code)
-        ) {
+        $user = $this->consumeOtp($request);
+        if (!$user) {
             return response()->json(['message' => 'Invalid or expired code.'], 422);
         }
-
-        $user->forceFill([
-            'otp_code' => null,
-            'otp_expires_at' => null,
-            'email_verified_at' => now(),
-        ])->save();
 
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
@@ -236,6 +219,49 @@ class CustomerAuthController extends Controller
             return redirect('/login')->withErrors(['email' => 'Google sign-in failed — please try again.']);
         }
 
+        $user = $this->findOrCreateGoogleUser($googleUser);
+
+        Auth::guard('web')->login($user);
+        $request->session()->regenerate();
+        app(VisitorTracker::class)->customerSignedIn($request, $user);
+
+        return redirect('/profile');
+    }
+
+    /**
+     * Shared by verifyOtp() and the mobile token flow (Api\CustomerTokenAuthController) — checks
+     * the emailed code and marks the account verified. Null on a wrong or expired code.
+     */
+    protected function consumeOtp(Request $request): ?User
+    {
+        $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+            'code' => 'required|string',
+        ]);
+
+        $user = User::findOrFail($request->input('user_id'));
+
+        if (
+            !$user->otp_code
+            || !$user->otp_expires_at
+            || $user->otp_expires_at->isPast()
+            || !Hash::check($request->input('code'), $user->otp_code)
+        ) {
+            return null;
+        }
+
+        $user->forceFill([
+            'otp_code' => null,
+            'otp_expires_at' => null,
+            'email_verified_at' => now(),
+        ])->save();
+
+        return $user;
+    }
+
+    /** The account for this Google identity — matched by Google id, then by email, else created. */
+    protected function findOrCreateGoogleUser(\Laravel\Socialite\Contracts\User $googleUser): User
+    {
         $user = User::where('google_id', $googleUser->getId())->first()
             ?? User::where('email', $googleUser->getEmail())->first();
 
@@ -243,19 +269,15 @@ class CustomerAuthController extends Controller
             if (!$user->google_id) {
                 $user->update(['google_id' => $googleUser->getId()]);
             }
-        } else {
-            $user = User::create([
-                'name' => $googleUser->getName() ?: $googleUser->getNickname() ?: 'Google User',
-                'email' => $googleUser->getEmail(),
-                'google_id' => $googleUser->getId(),
-                'password' => Hash::make(Str::random(32)),
-            ]);
+
+            return $user;
         }
 
-        Auth::guard('web')->login($user);
-        $request->session()->regenerate();
-        app(VisitorTracker::class)->customerSignedIn($request, $user);
-
-        return redirect('/profile');
+        return User::create([
+            'name' => $googleUser->getName() ?: $googleUser->getNickname() ?: 'Google User',
+            'email' => $googleUser->getEmail(),
+            'google_id' => $googleUser->getId(),
+            'password' => Hash::make(Str::random(32)),
+        ]);
     }
 }

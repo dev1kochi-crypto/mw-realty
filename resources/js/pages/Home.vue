@@ -149,7 +149,7 @@ const projectsTitle = computed(() => developments.value?.title || 'Browse New Pr
 const projectsButtonLabel = computed(() => developments.value?.button_name || 'View All Properties');
 
 // City tabs: "All" uses the listings already in /api/home; clicking a city asks the API for that
-// city's listings (GET /api/home/developments?city=) instead of hiding cards from the first 8.
+// city's listings (GET /api/home/new-projects?city=) instead of hiding cards from the first 8.
 const activeCity = ref('');
 const cityProperties = ref(null);
 const cityLoading = ref(false);
@@ -173,7 +173,7 @@ function selectProjectCity(city) {
     const requestId = ++cityRequestId;
     cityLoading.value = true;
     const lang = selectedLanguage.value?.code;
-    window.axios.get('/api/home/developments', { params: { city, lang } }).then((res) => {
+    window.axios.get('/api/home/new-projects', { params: { city, lang } }).then((res) => {
         if (requestId === cityRequestId) cityProperties.value = res.data?.properties || [];
     }).catch(() => {
         if (requestId === cityRequestId) cityProperties.value = [];

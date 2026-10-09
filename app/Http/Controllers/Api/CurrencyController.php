@@ -9,9 +9,17 @@ use Illuminate\Support\Facades\Cache;
 /**
  * GET /api/currencies — the header currency switcher's options. Prices everywhere else stay in
  * AED; the frontend multiplies by `rate` (units per 1 AED) for display.
+ *
+ * @group App Config
  */
 class CurrencyController extends Controller
 {
+    /**
+     * Currencies
+     *
+     * Prices from every endpoint are in AED; to display another currency, multiply by its `rate`
+     * (units per 1 AED).
+     */
     public function index()
     {
         $currencies = Cache::remember(Currency::CACHE_KEY, 600, fn () => Currency::active()

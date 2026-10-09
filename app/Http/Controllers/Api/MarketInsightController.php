@@ -6,13 +6,27 @@ use App\Services\MarketInsightPageService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
-/** Public, read-only endpoints for the /market-insights listing page and /market-insights/{slug} page. */
+/**
+ * Public, read-only endpoints for the /market-insights listing page and /market-insights/{slug} page.
+ *
+ * @group Content
+ */
 class MarketInsightController extends Controller
 {
     public function __construct(private readonly MarketInsightPageService $insightsPage)
     {
     }
 
+    /**
+     * List market insights
+     *
+     * 9 per page.
+     *
+     * @queryParam page integer Example: 1
+     * @queryParam topic string No-example
+     * @queryParam region string No-example
+     * @queryParam lang string Example: en
+     */
     public function index(Request $request)
     {
         $lang = $request->input('lang', app()->getLocale());
@@ -27,6 +41,14 @@ class MarketInsightController extends Controller
         ));
     }
 
+    /**
+     * Market insight
+     *
+     * @urlParam slug string required Example: dubai-property-market-report-q3-2026
+     * @queryParam lang string Example: en
+     *
+     * @response 404 {"message": "Not found"}
+     */
     public function show(Request $request, string $slug)
     {
         $lang = $request->input('lang', app()->getLocale());

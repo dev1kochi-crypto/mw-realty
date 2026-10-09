@@ -14,6 +14,8 @@ use Illuminate\Routing\Controller;
  * SPA route visit, then the seconds the page was actually visible, sent as a beacon on leave.
  * Property detail pages become property views (and route an identified visitor to the listing's
  * agency / agent); listing pages with filters become searches.
+ *
+ * @group Tracking
  */
 class VisitorTrackingController extends Controller
 {
@@ -31,6 +33,22 @@ class VisitorTrackingController extends Controller
     {
     }
 
+    /**
+     * Screen view
+     *
+     * Call when a screen opens. Send the **website path** the screen corresponds to — that is
+     * how views are classified: `/property-details/{slug}` = property view (counts towards the
+     * listing's stats and routes the visitor to its agent), `/properties?bedrooms=2&...` = a
+     * search, anything else = a page view. Keep the returned `id` to report time spent.
+     *
+     * Requires the `X-Device-Id` header (nothing is recorded without it).
+     *
+     * @bodyParam path string required Example: /property-details/virella-2
+     * @bodyParam title string Screen title. Example: Virella 2
+     * @bodyParam referrer string No-example
+     *
+     * @response 200 {"id": 5821}
+     */
     public function page(Request $request)
     {
         $data = $request->validate([
@@ -71,7 +89,18 @@ class VisitorTrackingController extends Controller
         return response()->json(['id' => $event?->id]);
     }
 
-    /** Listing cards that were on screen (ids, de-duplicated per day by the browser). */
+    /**
+     * Listing impressions
+     *
+     * Property cards that were visible on screen. Batch them, and send each id at most once per
+     * day per device.
+     *
+     * Listing cards that were on screen (ids, de-duplicated per day by the browser).
+     *
+     * @bodyParam ids integer[] required Up to 60 property ids. Example: [111, 112, 150651]
+     *
+     * @response 204 scenario="Recorded" {}
+     */
     public function impressions(Request $request)
     {
         $data = $request->validate([
@@ -86,7 +115,16 @@ class VisitorTrackingController extends Controller
         return response()->noContent();
     }
 
-    /** A visitor clicked to contact about a listing — call, WhatsApp, email, enquiry, viewing, brochure. */
+    /**
+     * Contact click
+     *
+     * The user tapped a contact button on a listing (before the call/WhatsApp/email app opens).
+     *
+     * @bodyParam property_id integer required Example: 111
+     * @bodyParam kind string required call, whatsapp, email, enquiry, viewing, brochure or floor_plan. Example: whatsapp
+     *
+     * @response 204 scenario="Recorded" {}
+     */
     public function leadClick(Request $request)
     {
         $data = $request->validate([
@@ -108,7 +146,17 @@ class VisitorTrackingController extends Controller
         return response()->noContent();
     }
 
-    /** Visible seconds so far — sent on every hide, so the latest (largest) value wins. */
+    /**
+     * Time on screen
+     *
+     * Seconds the screen has been visible so far. Send whenever the screen is left or the app
+     * goes to the background; the largest value wins, so re-sending is safe.
+     *
+     * @urlParam event integer required The `id` returned by the screen view call. Example: 5821
+     * @bodyParam seconds integer required Example: 42
+     *
+     * @response 204 scenario="Recorded" {}
+     */
     public function time(Request $request, int $event)
     {
         $seconds = min(max($request->integer('seconds'), 0), self::MAX_SECONDS);

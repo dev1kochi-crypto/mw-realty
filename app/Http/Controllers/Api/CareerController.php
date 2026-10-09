@@ -13,13 +13,22 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Mail;
 
-/** Public endpoints for the /careers listing page, the /careers/{slug} vacancy page, and job applications. */
+/**
+ * Public endpoints for the /careers listing page, the /careers/{slug} vacancy page, and job applications.
+ *
+ * @group Careers
+ */
 class CareerController extends Controller
 {
     public function __construct(private readonly CareerPageService $careerPage)
     {
     }
 
+    /**
+     * List vacancies
+     *
+     * @queryParam lang string Example: en
+     */
     public function index(Request $request)
     {
         $lang = $request->input('lang', app()->getLocale());
@@ -27,6 +36,14 @@ class CareerController extends Controller
         return response()->json($this->careerPage->getListingData($lang, $request->only(CareerPageService::FILTERS)));
     }
 
+    /**
+     * Vacancy details
+     *
+     * @urlParam slug string required Example: senior-property-consultant
+     * @queryParam lang string Example: en
+     *
+     * @response 404 {"message": "Not found"}
+     */
     public function show(Request $request, string $slug)
     {
         $lang = $request->input('lang', app()->getLocale());
@@ -40,8 +57,20 @@ class CareerController extends Controller
     }
 
     /**
+     * Apply for a job
+     *
+     * Send as `multipart/form-data` (the CV is a file). Leave out `career` for a general
+     * application.
+     *
      * Public, unauthenticated — the application form on both careers pages (POST /api/careers/apply).
-     * Saves to Careers > Candidates and emails admin. No `career` = a general (open) application.
+     * Saves to Careers > Candidates and emails admin.
+     *
+     * @bodyParam career string A vacancy slug. Example: senior-property-consultant
+     * @bodyParam attachment file required The CV: PDF, DOC or DOCX, max 5 MB.
+     * @bodyParam privacy boolean required Must be accepted. Example: true
+     * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
+     *
+     * @response 200 {"message": "Thanks for applying — our team will review your application and get back to you."}
      */
     public function apply(Request $request, ManagedFiles $files)
     {
