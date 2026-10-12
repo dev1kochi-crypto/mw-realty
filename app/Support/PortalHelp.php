@@ -2,12 +2,13 @@
 
 namespace App\Support;
 
+use App\Models\HelpGuide;
 use Illuminate\Http\Request;
 
 /**
- * Portal help guides — one content file per module in resources/help/portal/{topic}.php
- * (title, icon, intro, features, steps, tips), shown from the top bar's "!" icon and opened
- * automatically the first time a user visits that module.
+ * Portal help guides — one HelpGuide row per module (title, icon, intro, features, steps, tips),
+ * managed in Admin › Help Desk. Shown from the top bar's "!" icon and opened automatically the
+ * first time a user visits. Inactive guides are treated as missing.
  */
 class PortalHelp
 {
@@ -32,16 +33,20 @@ class PortalHelp
 
     public static function exists(string $topic): bool
     {
-        return preg_match('/^[a-z0-9-]+$/', $topic) === 1 && is_file(self::path($topic));
+        return self::find($topic) !== null;
     }
 
     public static function load(string $topic): ?array
     {
-        return self::exists($topic) ? require self::path($topic) : null;
+        return self::find($topic)?->toGuide();
     }
 
-    private static function path(string $topic): string
+    private static function find(string $topic): ?HelpGuide
     {
-        return resource_path("help/portal/{$topic}.php");
+        if (preg_match('/^[a-z0-9-]+$/', $topic) !== 1) {
+            return null;
+        }
+
+        return HelpGuide::active()->where('topic', $topic)->first();
     }
 }

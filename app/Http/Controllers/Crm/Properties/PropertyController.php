@@ -10,6 +10,7 @@ use App\Models\FilterValue;
 use App\Models\PortalUser;
 use App\Models\Property;
 use App\Models\PropertyDetail;
+use App\Services\CreditService;
 use App\Services\FeaturedListingService;
 use App\Services\ListingComplianceService;
 use App\Services\ListingQualityService;
@@ -46,6 +47,31 @@ class PropertyController extends Controller
     }
 
     /** residential (default) | commercial, from the request. */
+    /**
+     * Why no more listings fit the plan; $upgrade adds how to get more (upgrade / wait / credits).
+     * An agency agent is on the agency's plan and credits, so they're told to ask the agency.
+     */
+    private function limitReachedMessage(PortalUser $listingOwner, bool $upgrade = true): string
+    {
+        $plan = $listingOwner->plan;
+        $viewer = $this->viewer();
+        if ($viewer && $listingOwner->id !== $viewer->id) {
+            return ($plan?->listingsPerMonth()
+                ? "{$listingOwner->displayName()} has added all {$plan->property_limit} listings its plan allows this month."
+                : "{$listingOwner->displayName()} has reached its plan's listing limit.")
+                . ($upgrade ? " Ask {$listingOwner->displayName()} to upgrade its plan or add credits"
+                    . ($plan?->listingsPerMonth() ? ', or add more from ' . now()->addMonthNoOverflow()->startOfMonth()->format('d M') : '') . '.' : '');
+        }
+        $credits = CreditService::usableBy($viewer) ? ', or add it as an extra listing with credits' : '';
+
+        if ($plan?->listingsPerMonth()) {
+            return "You've added all {$plan->property_limit} listings your plan allows this month."
+                . ($upgrade ? " Upgrade your plan{$credits}, or add more from " . now()->addMonthNoOverflow()->startOfMonth()->format('d M') . '.' : '');
+        }
+
+        return "You've reached your plan's property limit." . ($upgrade ? " Upgrade your plan{$credits} to add more listings." : '');
+    }
+
     private function segment(Request $request): string
     {
         return $request->input('segment') === Property::SEGMENT_COMMERCIAL ? Property::SEGMENT_COMMERCIAL : Property::SEGMENT_RESIDENTIAL;
@@ -114,8 +140,11 @@ class PropertyController extends Controller
             $planUsage = $owner->plan ? [
                 'plan' => $owner->plan->getTranslation('name'),
                 'limit' => $owner->plan->property_limit,
-                'used' => $owner->properties()->count(),
+                'used' => $owner->usedPropertySlots(),
+                'per_month' => $owner->plan->listingsPerMonth(),
                 'remaining' => $owner->remainingPropertySlots(),
+                // An agency agent works on the agency's plan (and credits): the agency to ask for more.
+                'agency' => $owner->id !== $viewer->id ? $owner->displayName() : null,
             ] : null;
         }
         $quota = $this->isAdmin() ? null : $featured->quota($viewer);
@@ -147,7 +176,8 @@ class PropertyController extends Controller
             'total_listings' => $this->orderedListings($segment)->count(),
             'is_admin' => $this->isAdmin(),
             'plan_usage' => $planUsage,
-            'featured_quota' => $quota ? $quota + ['resets' => now()->addMonthNoOverflow()->startOfMonth()->format('d M')] : null,
+            'insights_access' => $this->isAdmin() || $viewer->planAllows('property_insights'),
+            'featured_quota' => $quota ? $quota + ['resets' => now()->addMonthNoOverflow()->startOfMonth()->format('d M'), 'credits' => CreditService::usableBy($viewer)] : null,
             'feature_max_days' => FeaturedListingService::MAX_DAYS,
         ]);
     }
@@ -334,11 +364,19 @@ class PropertyController extends Controller
             abort(403, 'Your account needs to be approved by Super Admin before you can add properties. Complete your profile while you wait for review.');
         }
         $data = $this->form->for(null);
+        $creditListing = null;
         if ($data['remaining_slots'] === 0) {
-            abort(422, "You've reached your plan's property limit. Upgrade your plan to add more listings.");
+            $listingOwner = $this->viewer()->listingOwner();
+            // Plan allowance used up: with credits on, the form opens and says this one is an extra
+            // listing paid with credits (charged on save — the cost depends on its type and price).
+            abort_unless(CreditService::usableBy($this->viewer()), 422, $this->limitReachedMessage($listingOwner));
+            $creditListing = [
+                'message' => $this->limitReachedMessage($listingOwner, false) . ' This listing will be added as an extra listing paid with credits.',
+                'balance' => app(CreditService::class)->balance($listingOwner),
+            ];
         }
 
-        return response()->json($data + ['reference_no' => Property::nextReferenceNo(), 'segment' => $this->segment($request)]);
+        return response()->json($data + ['reference_no' => Property::nextReferenceNo(), 'segment' => $this->segment($request), 'credit_listing' => $creditListing]);
     }
 
     /**
@@ -427,6 +465,7 @@ class PropertyController extends Controller
         $segment = $this->segment($request);
 
         $listingOwner = null;
+        $payWithCredits = false;
         if (!$this->isAdmin()) {
             $owner = PortalUser::lockForUpdate()->findOrFail(Auth::guard('portal')->id());
             // Locked too, so two simultaneous adds can't both take the last slot of the plan.
@@ -436,7 +475,9 @@ class PropertyController extends Controller
                 abort(403, 'Your account needs to be approved by Super Admin before you can add properties.');
             }
             if ($listingOwner->remainingPropertySlots() === 0) {
-                abort(422, "You've reached your plan's property limit. Upgrade your plan to add more listings.");
+                // Beyond the plan's allowance only as an extra listing paid with credits (the form asks for it).
+                abort_unless($request->boolean('use_credits') && CreditService::usableBy($owner), 422, $this->limitReachedMessage($listingOwner));
+                $payWithCredits = true;
             }
         }
 
@@ -483,7 +524,17 @@ class PropertyController extends Controller
         }
         $data['metadata'] = $metadata;
 
+        $creditSpend = null;
+        if ($payWithCredits) {
+            $credits = app(CreditService::class);
+            $cost = $credits->rate($segment, $data['listing_type'] ?? null, $data['property_type'] ?? null, $data['price'] ?? null)->cost('listing');
+            $creditSpend = $credits->spend($this->viewer(), $cost, 'listing', 'Extra listing');
+        }
+
         $property = Property::create($data);
+        if ($creditSpend) {
+            app(CreditService::class)->attach($creditSpend, $property);
+        }
         if ($request->hasFile('brochure')) {
             $property->update(['brochure_path' => app(\App\Services\ManagedFiles::class)->store($request->file('brochure'), 'properties/brochures')]);
         }

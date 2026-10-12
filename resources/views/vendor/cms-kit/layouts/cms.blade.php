@@ -174,6 +174,12 @@
                     </a>
                     @endif
 
+                    @if(config('cms-kit.common.modules.plans', true) && $cmsUser->can('plans.view'))
+                    <a class="nav-link @if(Route::is('cms.credits.*')) active @endif" href="{{ route('cms.credits.index') }}">
+                        <i class="fas fa-coins"></i> Credits
+                    </a>
+                    @endif
+
                     @if(config('cms-kit.common.modules.coupons', true) && $cmsUser->can('coupons.view'))
                     <a class="nav-link @if(Route::is('cms.coupons.*')) active @endif" href="{{ route('cms.coupons.index') }}">
                         <i class="fas fa-ticket-alt"></i> Coupons
@@ -187,6 +193,13 @@
                         @if(($supportTicketsNeedingReply ?? 0) > 0)
                         <span class="badge bg-danger ms-auto">{{ $supportTicketsNeedingReply }}</span>
                         @endif
+                    </a>
+                    @endif
+
+                    {{-- The "!" quick-guide popups agents / companies see on each CRM screen. --}}
+                    @if($cmsUser->can('help-desk.view'))
+                    <a class="nav-link d-flex align-items-center @if(Route::is('cms.help-desk.*')) active @endif" href="{{ route('cms.help-desk.index') }}">
+                        <i class="fas fa-circle-question"></i> Help Desk
                     </a>
                     @endif
 

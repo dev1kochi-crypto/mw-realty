@@ -77,6 +77,7 @@
     <div class="col-md-3">
         <label class="form-label fw-bold">Property Limit</label>
         <input type="number" min="0" name="property_limit" class="form-control" value="{{ old('property_limit', $plan->property_limit ?? '') }}" placeholder="Leave blank for unlimited">
+        <small class="text-muted">Paid plans: new listings per month. Free: total.</small>
     </div>
     <div class="col-md-3">
         <label class="form-label">Sort Order</label>
@@ -118,6 +119,20 @@
             <label class="form-check-label fw-bold" for="reportsAccess">Leads Reports Access</label>
         </div>
     </div>
+</div>
+
+<h6 class="fw-bold mb-1 mt-4">Plan Features</h6>
+<p class="text-muted small mb-3">CRM sections this plan unlocks — locked (with an upgrade hint) for plans without them, and listed on the pricing cards automatically.</p>
+@php $planFeatures = old('plan_features', $plan->plan_features ?? []); @endphp
+<div class="row g-3">
+    @foreach(\App\Models\Plan::GATED_FEATURES as $key => $label)
+        <div class="col-md-4">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="plan_features[]" value="{{ $key }}" id="planFeature_{{ $key }}" @checked(in_array($key, $planFeatures, true))>
+                <label class="form-check-label fw-bold" for="planFeature_{{ $key }}">{{ $label }}</label>
+            </div>
+        </div>
+    @endforeach
 </div>
 
 <div class="row g-4 mt-1">

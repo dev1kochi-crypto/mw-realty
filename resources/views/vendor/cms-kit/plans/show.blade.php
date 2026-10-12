@@ -65,7 +65,7 @@
 @php
     $priceLabel = $plan->billing_cycle === 'free' ? 'Free' : 'AED ' . number_format($plan->price);
     $suffix = ['monthly' => '/mo', 'yearly' => '/yr', 'one_time' => ' one-time'][$plan->billing_cycle] ?? '';
-    $limitLabel = $plan->isUnlimited() ? 'Unlimited properties' : $plan->property_limit . ' properties';
+    $limitLabel = $plan->isUnlimited() ? 'Unlimited properties' : $plan->property_limit . ' properties' . ($plan->listingsPerMonth() ? ' / month' : '');
     $statusMap = ['pending' => 'bg-warning text-dark', 'approved' => 'bg-success', 'rejected' => 'bg-danger'];
 @endphp
 

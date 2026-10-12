@@ -88,7 +88,7 @@ class PremiumController extends Controller
                 'scheduled' => $owned()->where('featured', false)->whereNotNull('featured_from')->where('featured_from', '>', now())->count(),
             ],
             'is_admin' => $this->isAdmin(),
-            'featured_quota' => $quota ? $quota + ['resets' => now()->addMonthNoOverflow()->startOfMonth()->format('d M')] : null,
+            'featured_quota' => $quota ? $quota + ['resets' => now()->addMonthNoOverflow()->startOfMonth()->format('d M'), 'credits' => \App\Services\CreditService::usableBy($this->viewer())] : null,
             'feature_max_days' => FeaturedListingService::MAX_DAYS,
             'batch_limit' => self::BATCH_LIMIT,
         ]);
@@ -98,19 +98,25 @@ class PremiumController extends Controller
      * Add Premium (several listings)
      *
      * The same start / end dates for every ticked listing, all-or-nothing (FeaturedListingService::featureMany).
+     * With `pay_with=credits` each is bought with credits for `days` (7, 15 or 30) instead.
      *
+     * @bodyParam pay_with string plan | credits. Example: credits
+     * @bodyParam days integer 7, 15 or 30 — with credits. Example: 15
      * @bodyParam property_ids integer[] required Example: [12, 14]
      * @bodyParam start_date string required Y-m-d. Example: 2026-10-10
      * @bodyParam end_date string Y-m-d — required except for Super Admin. Example: 2026-11-08
      */
     public function store(Request $request)
     {
+        $withCredits = !$this->isAdmin() && $request->input('pay_with') === 'credits';
         $request->validate([
             'property_ids' => 'required|array|min:1|max:' . self::BATCH_LIMIT,
             'property_ids.*' => 'integer|distinct',
             'start_date' => 'required|date_format:Y-m-d',
-            'end_date' => ($this->isAdmin() ? 'nullable' : 'required') . '|date_format:Y-m-d',
+            'end_date' => ($this->isAdmin() || $withCredits ? 'nullable' : 'required') . '|date_format:Y-m-d',
+            'days' => ($withCredits ? 'required' : 'nullable') . '|integer|in:7,15,30',
         ]);
+        abort_if($withCredits && !\App\Services\CreditService::usableBy($this->viewer()), 403, 'Credits are managed by your agency.');
 
         $owner = $this->isAdmin() ? null : $this->viewer();
         abort_if($owner && !$owner->isApproved(), 403);
@@ -123,7 +129,9 @@ class PremiumController extends Controller
         // Keep the order the listings were ticked in, so a quota error names the right one.
         $properties = $ids->map(fn ($id) => $properties->firstWhere('id', $id))->values();
 
-        $count = $this->featured->featureMany($owner, $properties, $request->input('start_date'), $request->input('end_date'));
+        $count = $withCredits
+            ? $this->featured->featureManyWithCredits($owner, $properties, $request->input('start_date'), $request->integer('days'))
+            : $this->featured->featureMany($owner, $properties, $request->input('start_date'), $request->input('end_date'));
 
         return response()->json(['success' => true, 'featured' => $count]);
     }

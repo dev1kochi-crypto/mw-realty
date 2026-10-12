@@ -52,7 +52,8 @@ class PlanController extends Controller
                 'agency_plan' => [
                     'agency' => $agency->displayName(),
                     'plan' => $plan?->getTranslation('name'),
-                    'used' => $agency->properties()->count(),
+                    'used' => $agency->usedPropertySlots(),
+                    'per_month' => (bool) $plan?->listingsPerMonth(),
                     'limit' => $limit,
                     'entitlements' => $plan ? collect($plan->entitlementLines())->map(fn ($l) => ['text' => $l[0], 'included' => (bool) $l[1]])->values() : [],
                     'own_subscription_ends' => $owner->hasStripeSubscription() && $owner->subscription_cancel_at_period_end
@@ -75,7 +76,7 @@ class PlanController extends Controller
         $subscribed = $stripeEnabled && $owner->hasStripeSubscription();
         $currentInterval = $owner->billing_interval ?: 'monthly';
         $scheduled = $subscribed ? $owner->scheduledPlan : null;
-        $used = $owner->properties()->count();
+        $used = $owner->usedPropertySlots();
         $limit = $currentPlan && !$currentPlan->isUnlimited() ? (int) $currentPlan->property_limit : null;
 
         return response()->json([
@@ -99,6 +100,7 @@ class PlanController extends Controller
                 'pending_request' => $pendingRequest?->plan?->getTranslation('name'),
                 'used' => $used,
                 'limit' => $limit,
+                'per_month' => (bool) $currentPlan?->listingsPerMonth(),
                 'cancel_at_period_end' => (bool) $owner->subscription_cancel_at_period_end,
                 'renews_at' => $owner->subscription_renews_at?->toIso8601String(),
                 'scheduled' => $scheduled ? [

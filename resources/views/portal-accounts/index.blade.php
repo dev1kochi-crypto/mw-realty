@@ -376,8 +376,8 @@
                 @if($showAgentsColumn)
                 {data: 'agents_count', name: 'agents_count', orderable: false, searchable: false},
                 @endif
-                {data: 'properties_count', name: 'properties_count'},
-                {data: 'leads_count', name: 'leads_count'},
+                {data: 'properties_count', name: 'properties_count', searchable: false},
+                {data: 'leads_count', name: 'leads_count', searchable: false},
                 {data: 'plan', name: 'plan', orderable: false, searchable: false},
                 {data: 'payment_status', name: 'payment_status', orderable: false, searchable: false},
                 {data: 'status', name: 'status', orderable: false, searchable: false},

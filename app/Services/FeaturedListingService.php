@@ -45,7 +45,7 @@ class FeaturedListingService
             ? PortalUser::where('company_id', $account->id)->with('currentMembership')->get()
                 ->filter(fn (PortalUser $agent) => $agent->isOnAgencyPlan())->pluck('id')->push($account->id)
             : collect([$owner->id]);
-        $bookings = fn () => \App\Models\PropertyFeaturing::whereIn('portal_user_id', $bookers);
+        $bookings = fn () => \App\Models\PropertyFeaturing::whereIn('portal_user_id', $bookers)->planQuota();
 
         $used = $perMonth
             ? $bookings()->thisMonth()->count()
@@ -73,7 +73,7 @@ class FeaturedListingService
         [$start, $end] = $this->period($startDate, $endDate, true, $quota['max_days'] ?: self::MAX_DAYS);
 
         if ($quota['per_month']) {
-            $usedThatMonth = $owner->featurings()
+            $usedThatMonth = $owner->featurings()->planQuota()
                 ->whereBetween('starts_at', [$start->copy()->startOfMonth(), $start->copy()->endOfMonth()])
                 ->count();
             if ($usedThatMonth >= $quota['limit']) {
@@ -83,7 +83,7 @@ class FeaturedListingService
         } else {
             // Features that overlap the requested period — a conservative "at a time" check that
             // also counts ones scheduled to start later.
-            $overlapping = $owner->featurings()
+            $overlapping = $owner->featurings()->planQuota()
                 ->whereNull('stopped_at')
                 ->where('ends_at', '>', now())
                 ->where('starts_at', '<', $end)
@@ -139,6 +139,55 @@ class FeaturedListingService
         return $properties->count();
     }
 
+    /**
+     * Books Premium for 7 / 15 / 30 days paid with credits instead of the plan's quota (cost from
+     * CreditRate for the listing). The plan's max length doesn't apply.
+     */
+    public function featureWithCredits(PortalUser $owner, Property $property, ?string $startDate, int $days): PropertyFeaturing
+    {
+        if (!isset(\App\Models\CreditRate::PREMIUM_DAYS[$days])) {
+            throw ValidationException::withMessages(['days' => 'Premium with credits runs for 7, 15 or 30 days.']);
+        }
+        $this->assertCanFeature($property);
+        $start = $this->parseDate($startDate, 'start_date', 'Choose a start date.');
+        if ($start->lt(today())) {
+            throw ValidationException::withMessages(['start_date' => 'The start date can\'t be in the past.']);
+        }
+        [$start, $end] = $this->period($start->toDateString(), $start->copy()->addDays($days - 1)->toDateString(), true, $days);
+
+        $credits = app(CreditService::class);
+        $cost = $credits->rateFor($property)->cost('premium', $days);
+
+        return DB::transaction(function () use ($owner, $property, $start, $end, $credits, $cost, $days) {
+            $spend = $credits->spend($owner, $cost, 'premium', "Premium for {$days} days", $property);
+            $this->applyToProperty($property, $start, $end);
+
+            return $owner->featurings()->create([
+                'property_id' => $property->id,
+                'credit_transaction_id' => $spend->id,
+                'starts_at' => $start,
+                'ends_at' => $end,
+            ]);
+        });
+    }
+
+    /** featureWithCredits() for several listings, all-or-nothing; errors name the listing. */
+    public function featureManyWithCredits(PortalUser $owner, $properties, ?string $startDate, int $days): int
+    {
+        DB::transaction(function () use ($owner, $properties, $startDate, $days) {
+            foreach ($properties as $property) {
+                try {
+                    $this->featureWithCredits($owner, $property, $startDate, $days);
+                } catch (ValidationException $e) {
+                    $message = collect($e->errors())->flatten()->first();
+                    throw ValidationException::withMessages(['property_ids' => ($property->getTranslation('title') ?: $property->reference_no) . ': ' . $message . ' Nothing was made premium.']);
+                }
+            }
+        });
+
+        return $properties->count();
+    }
+
     /** Super Admin feature: no quota, and an empty end date means "until stopped". */
     public function featureAsAdmin(Property $property, ?string $startDate, ?string $endDate): void
     {
@@ -160,8 +209,10 @@ class FeaturedListingService
             return $ids->mapWithKeys(fn ($id) => [$id => true])->all();
         }
 
+        // Paid with credits: bought for a fixed length, so its dates stay as bought.
         return PropertyFeaturing::whereIn('property_id', $ids)
             ->where('portal_user_id', $owner->id)
+            ->planQuota()
             ->whereNull('stopped_at')
             ->where('ends_at', '>', now())
             ->pluck('property_id')
@@ -190,6 +241,9 @@ class FeaturedListingService
             if (!$booking || $booking->portal_user_id !== $owner->id) {
                 throw ValidationException::withMessages(['start_date' => 'This premium listing was set by MW Realty, so its dates can\'t be changed here.']);
             }
+            if ($booking->credit_transaction_id) {
+                throw ValidationException::withMessages(['start_date' => 'This premium was bought with credits for a fixed length, so its dates can\'t be changed. Stop it, or cancel it before it starts to get the credits back.']);
+            }
             $quota = $this->quota($owner);
             $maxDays = $quota['max_days'] ?: self::MAX_DAYS;
         } else {
@@ -215,7 +269,7 @@ class FeaturedListingService
         }
 
         if ($owner) {
-            $others = $owner->featurings()->where('id', '!=', $booking->id);
+            $others = $owner->featurings()->planQuota()->where('id', '!=', $booking->id);
             if ($quota['per_month']) {
                 $usedThatMonth = (clone $others)->whereBetween('starts_at', [$start->copy()->startOfMonth(), $start->copy()->endOfMonth()])->count();
                 if ($usedThatMonth >= $quota['limit']) {
@@ -241,14 +295,19 @@ class FeaturedListingService
     }
 
     /**
-     * Stops a live feature early (still counted for this month) or cancels a scheduled one (the
-     * booking is removed, so it gives the slot back).
+     * Stops a live feature early (still counted for this month; credits aren't refunded) or cancels
+     * a scheduled one (the booking is removed, so it gives the slot — or the credits — back).
      */
     public function stop(Property $property): void
     {
         DB::transaction(function () use ($property) {
             $open = PropertyFeaturing::where('property_id', $property->id)->whereNull('stopped_at')->where('ends_at', '>', now());
-            (clone $open)->where('starts_at', '>', now())->delete();
+            (clone $open)->where('starts_at', '>', now())->with('creditTransaction.account')->get()->each(function (PropertyFeaturing $booking) {
+                if ($booking->creditTransaction) {
+                    app(CreditService::class)->refund($booking->creditTransaction, 'Refund — premium cancelled before it started');
+                }
+                $booking->delete();
+            });
             $open->update(['stopped_at' => now()]);
             $property->update(['featured' => false, 'featured_from' => null, 'featured_until' => null]);
         });

@@ -75,7 +75,12 @@ class PropertyFinderImporter
 
                 $owner->unsetRelation('plan');
                 if ($owner->remainingPropertySlots() === 0) {
-                    $this->stoppedBecause = 'Your plan\'s listing limit is reached — upgrade your plan, then sync again to import the rest.';
+                    // Paid plans get a fresh monthly allowance: the rest import on a sync after an
+                    // upgrade or once the month rolls over (duplicates are skipped, so nothing doubles).
+                    $this->stoppedBecause = $owner->plan?->listingsPerMonth()
+                        ? "You've added all {$owner->plan->property_limit} listings your plan allows this month. Upgrade your plan, or sync again from "
+                            . now()->addMonthNoOverflow()->startOfMonth()->format('d M') . ' to import the rest.'
+                        : 'Your plan\'s listing limit is reached — upgrade your plan, then sync again to import the rest.';
 
                     return [$added, $skipped, $failed];
                 }

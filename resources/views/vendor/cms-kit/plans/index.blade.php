@@ -209,6 +209,15 @@
     $icons = ['fa-seedling', 'fa-paper-plane', 'fa-rocket', 'fa-crown', 'fa-gem'];
 @endphp
 
+@php
+    $featureIcons = [
+        'lead_insights' => 'fas fa-magnifying-glass-chart',
+        'property_insights' => 'fas fa-chart-column',
+        'listing_settings' => 'fas fa-stamp',
+        'facebook' => 'fab fa-facebook-f',
+        'property_finder' => 'fas fa-house-chimney',
+    ];
+@endphp
 <div id="plansGrid">
     @forelse($plans as $plan)
     @php
@@ -259,6 +268,11 @@
             <div class="pc-stats">
                 @foreach([['fa-building', $lines[0]], ['fa-star', $lines[1]], ['fa-users', $lines[2]], ['fa-chart-line', $lines[3]]] as [$icon, [$text, $included]])
                 <div class="pc-stat {{ $included ? '' : 'is-off' }}" title="{{ $text }}"><i class="fas {{ $icon }}"></i><span>{{ $text }}</span></div>
+                @endforeach
+                {{-- Plan Features (Plan::GATED_FEATURES) — the lines after the four limits above. --}}
+                @foreach(array_keys(\App\Models\Plan::GATED_FEATURES) as $i => $featureKey)
+                @php [$text, $included] = $lines[4 + $i]; @endphp
+                <div class="pc-stat {{ $included ? '' : 'is-off' }}" title="{{ $text }}"><i class="{{ $featureIcons[$featureKey] ?? 'fas fa-check' }}"></i><span>{{ $text }}</span></div>
                 @endforeach
             </div>
 

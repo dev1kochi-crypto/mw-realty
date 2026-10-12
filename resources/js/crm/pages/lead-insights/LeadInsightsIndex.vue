@@ -1,5 +1,7 @@
 <template>
-    <div>
+    <PlanLockedCard v-if="locked" title="Lead Insights" heading="Unlock lead insights" icon="fas fa-magnifying-glass-chart" feature="Lead insights" :locked="locked"
+                    description="See how your website leads behave on the site — listings they view, time spent, searches and AI chats." />
+    <div v-else>
         <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
             <div>
                 <div class="portal-section-title mb-0">Lead Insights</div>
@@ -118,8 +120,10 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import http, { errorMessage } from '../../api/http';
+import PlanLockedCard from '../../components/PlanLockedCard.vue';
 import { useToast } from '../../composables/useToast';
 import { duration, initials, number, plural, timeAgo } from '../../utils/format';
+import { planLocked } from '../../utils/planLocked';
 
 const router = useRouter();
 const { error: toastError } = useToast();
@@ -130,6 +134,7 @@ const totals = ref({ leads: 0, property_views: 0, seconds: 0, chats: 0, active_w
 const sorts = ref([{ key: 'active', label: 'Recently active' }]);
 const isAdmin = ref(false);
 const loading = ref(false);
+const locked = ref(null); // plan without lead insights → "Unlock lead insights" card
 const sort = ref('active');
 const search = ref('');
 const searchInput = ref('');
@@ -148,7 +153,10 @@ function load(p = 1) {
             sorts.value = res.data.sorts;
             isAdmin.value = res.data.is_admin;
         })
-        .catch((e) => toastError(errorMessage(e)))
+        .catch((e) => {
+            locked.value = planLocked(e);
+            if (!locked.value) toastError(errorMessage(e));
+        })
         .finally(() => {
             loading.value = false;
         });

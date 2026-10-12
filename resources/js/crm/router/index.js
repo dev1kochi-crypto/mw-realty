@@ -75,6 +75,12 @@ const routes = [
         meta: { title: 'Premium', nav: 'featured', help: 'premium' },
     },
     {
+        path: '/credits',
+        name: 'credits.index',
+        component: () => import('../pages/credits/CreditsIndex.vue'),
+        meta: { title: 'Credits', nav: 'plans', help: 'credits' },
+    },
+    {
         path: '/sold-listings',
         name: 'sold-listings.index',
         component: () => import('../pages/sold/SoldIndex.vue'),
@@ -159,6 +165,13 @@ const routes = [
         component: () => import('../pages/contact/TicketShow.vue'),
         props: (route) => ({ id: Number(route.params.id) }),
         meta: { title: 'Support Ticket', nav: 'contact', help: 'support' },
+    },
+    // Help Desk — every "!" quick guide in one place.
+    {
+        path: '/help-desk',
+        name: 'help-desk.index',
+        component: () => import('../pages/help-desk/HelpDeskIndex.vue'),
+        meta: { title: 'Help Desk', nav: 'help-desk' },
     },
     // Account menu — agent / company accounts (the API answers 403 for a Super Admin).
     {

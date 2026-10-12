@@ -127,11 +127,6 @@
             <label class="form-label fw-semibold">RERA ID</label>
             <input v-model="form.rera_id" type="text" class="form-control" placeholder="e.g. RERA70613">
         </div>
-        <div class="col-12">
-            <label class="form-label fw-semibold">Slug <span class="text-danger">*</span></label>
-            <input id="slugInput" v-model="form.slug" name="slug" type="text" class="form-control" :class="{ 'is-invalid': f.fieldError('slug') || f.state.invalid === 'slug' }" placeholder="Auto-generated from title" @input="f.state.slugTouched = true; f.state.invalid = null">
-            <div v-if="f.fieldError('slug')" class="invalid-feedback">{{ f.fieldError('slug') }}</div>
-        </div>
 
         <!-- Available: immediately, or on one or more dates (open house / viewing days). -->
         <div class="col-12">
@@ -179,7 +174,7 @@
 </template>
 
 <script setup>
-/** Property form › Core details: the advertising permit (_permit), category, offering, type, location, reference, slug, availability. */
+/** Property form › Core details: the advertising permit (_permit), category, offering, type, location, reference, availability (the slug is under Property Details, by the title). */
 import { computed, inject, ref } from 'vue';
 import OptionButtonsField from './OptionButtonsField.vue';
 import OptionSelectField from './OptionSelectField.vue';

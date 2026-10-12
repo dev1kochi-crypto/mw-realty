@@ -9,7 +9,7 @@
                 <div class="portal-section-title mb-1">Premium Listings</div>
                 <p class="portal-muted small mb-0">Live and scheduled premium listings across Properties and Commercial. Premium listings get a badge and appear in the Premium section on the website.</p>
             </div>
-            <button v-if="canAdd" type="button" class="btn btn-portal-primary btn-sm" :disabled="!page.is_admin && (quota?.remaining ?? 0) === 0 && !quota?.per_month" @click="openAdd">
+            <button v-if="canAdd" type="button" class="btn btn-portal-primary btn-sm" :disabled="!page.is_admin && (quota?.remaining ?? 0) === 0 && !quota?.per_month && !quota?.credits" @click="openAdd">
                 <i class="fas fa-plus me-1"></i> Add Premium
             </button>
         </div>
@@ -123,7 +123,7 @@ const featureMode = ref('create');
 const stopping = ref(null);
 
 const quota = computed(() => page.value?.featured_quota ?? null);
-const canAdd = computed(() => page.value.is_admin || (quota.value && quota.value.limit > 0));
+const canAdd = computed(() => page.value.is_admin || (quota.value && (quota.value.limit > 0 || quota.value.credits)));
 const tabs = computed(() => [
     { key: 'all', label: 'All', count: page.value.counts.live + page.value.counts.scheduled },
     { key: 'live', label: 'Live', count: page.value.counts.live },

@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Morning-before reminder for subscriptions that auto-renew tomorrow (UAE time).
         $schedule->command('portal:remind-subscription-renewals')->dailyAt('09:00')->timezone(\App\Console\Commands\RemindSubscriptionRenewals::TIMEZONE)->withoutOverlapping();
         $schedule->command('properties:expire-featured')->everyFifteenMinutes();
+        // Credits past their validity (balances also expire on the spot whenever a wallet is read or used).
+        $schedule->command('credits:expire')->hourly()->withoutOverlapping();
         $schedule->command('visitors:prune')->dailyAt('03:30')->withoutOverlapping();
         // DLD permits: unpublish listings whose permit expired, remind 7 days before (UAE midnight).
         $schedule->command('properties:expire-permits')->dailyAt('00:05')->timezone(\App\Console\Commands\RemindSubscriptionRenewals::TIMEZONE)->withoutOverlapping();
@@ -56,7 +58,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'portal.or.cms' => \App\Http\Middleware\PortalOrCmsAuth::class,
             'customer.auth' => \App\Http\Middleware\EnsureCustomerAuthenticated::class,
             'portal.approved' => \App\Http\Middleware\EnsurePortalAccountApproved::class,
-            'portal.2fa' => \App\Http\Middleware\EnsurePortalTwoFactor::class,
+            'plan.feature' => \App\Http\Middleware\EnsurePlanIncludesFeature::class,
+            'portal.2fa' =>\App\Http\Middleware\EnsurePortalTwoFactor::class,
             'crm.auth' => \App\Http\Middleware\Crm\AuthenticateCrm::class,
         ]);
     })

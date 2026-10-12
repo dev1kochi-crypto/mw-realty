@@ -42,9 +42,9 @@
                         <li><hr class="dropdown-divider"></li>
                         <li><button class="dropdown-item" type="button" :disabled="bulkBusy" @click="bulk('delete')"><i class="fas fa-trash text-danger me-2"></i>Delete Selected</button></li>
                     </CrmDropdown>
-                    <RouterLink :to="{ name: section.routes.create }" class="btn btn-portal-primary btn-sm text-nowrap">
+                    <button type="button" class="btn btn-portal-primary btn-sm text-nowrap" @click="addListing">
                         <i class="fas fa-plus me-1"></i> Add {{ section.itemLabel }}
-                    </RouterLink>
+                    </button>
                 </div>
             </div>
 
@@ -152,11 +152,11 @@
                             </td>
                             <td class="text-center">
                                 <button type="button" class="pq-ring pq-ring--inline listing-insights" :class="`is-${p.quality.tone}`" :style="{ '--pq': p.quality.score }" :aria-label="`Quality score ${p.quality.score} of 100`"
-                                        @click="insightsId = p.id" @mouseenter="showQuality(p, $event.currentTarget)" @mouseleave="hideQuality"><span>{{ p.quality.score }}%</span></button>
+                                        @click="openInsights(p)" @mouseenter="showQuality(p, $event.currentTarget)" @mouseleave="hideQuality"><span>{{ p.quality.score }}%</span></button>
                             </td>
                             <td><span class="pl-list__agent" :title="p.agent?.name">{{ p.agent?.name ?? 'Agency listing' }}</span></td>
                             <td class="text-center">
-                                <button type="button" class="pl-list__leads listing-insights" title="Listing performance & leads" @click="insightsId = p.id">{{ p.leads_count || '-' }}</button>
+                                <button type="button" class="pl-list__leads listing-insights" title="Listing performance & leads" @click="openInsights(p)">{{ p.leads_count || '-' }}</button>
                             </td>
                             <td class="pl-list__price">{{ p.price ? `${money(p.price)} ${p.currency}` : 'On request' }}</td>
                             <td>
@@ -167,7 +167,7 @@
                             </td>
                             <td class="pl-list__actions-col">
                                 <div class="pl-list__actions">
-                                    <button type="button" class="pl-list__icon listing-insights" title="Listing performance" aria-label="Listing performance" @click="insightsId = p.id"><i class="fas fa-chart-line"></i></button>
+                                    <button type="button" class="pl-list__icon listing-insights" title="Listing performance" aria-label="Listing performance" @click="openInsights(p)"><i class="fas fa-chart-line"></i></button>
                                     <CrmDropdown button-class="pl-list__icon" title="More actions" aria-label="More actions">
                                         <template #toggle><i class="fas fa-ellipsis"></i></template>
                                         <li><RouterLink class="dropdown-item" :to="{ name: section.routes.edit, params: { id: p.id } }"><i class="fas fa-edit me-2"></i>Edit</RouterLink></li>
@@ -190,7 +190,7 @@
                  :data-id="p.id" :draggable="armedId === p.id" @dragstart="onDragStart($event, p)" @dragend="onDragEnd">
                 <PropertyCard :p="p" :section="section" :is-admin="page.is_admin" :quota="page.featured_quota" :selected="selected.has(p.id)" :can-drag="canDrag"
                               :position="positionOffset !== null ? positionOffset + index + 1 : null" :total-listings="page.total_listings" :status-busy="statusBusy.has(p.id)"
-                              @select="toggleSelect(p, $event)" @arm-drag="armedId = p.id" @insights="insightsId = p.id"
+                              @select="toggleSelect(p, $event)" @arm-drag="armedId = p.id" @insights="openInsights(p)"
                               @quality-enter="showQuality(p, $event)" @quality-leave="hideQuality" @toggle-status="toggleStatus(p, $event)"
                               @feature="openFeature(p)" @edit-feature="(live) => openFeatureEdit(p, live)" @stop-feature="(scheduled) => stopFeature(p, scheduled)"
                               @sold="openSold(p)" @delete="destroy(p)" @move="(position) => move(p, position)" @move-to="openMoveTo(p, index)" />
@@ -202,7 +202,7 @@
                 Nothing matches{{ page.search !== '' ? ` “${page.search}”` : '' }}{{ page.filtered ? ' these filters' : '' }}. <RouterLink :to="{ query: {} }">Clear search &amp; filters</RouterLink>.
             </template>
             <template v-else>
-                No {{ section.title.toLowerCase() }} yet. <RouterLink :to="{ name: section.routes.create }">Add your first listing</RouterLink>.
+                No {{ section.title.toLowerCase() }} yet. <a href="#" @click.prevent="addListing">Add your first listing</a>.
             </template>
         </div>
 
@@ -211,6 +211,7 @@
             <div><CrmPagination :meta="page.meta" :on-each-side="1" @change="goToPage" /></div>
         </div>
 
+        <PlanLimitModal v-if="page.plan_usage" :open="limitOpen" :usage="page.plan_usage" :credits="navigation.credits" :create-route="section.routes.create" @close="limitOpen = false" />
         <FeatureModal :item="featureItem" :mode="featureMode" :is-admin="page.is_admin" :quota="page.featured_quota" :admin-max-days="page.feature_max_days" @close="featureItem = null" @saved="featureItem = null; load()" />
         <SoldModal :item="soldItem" @close="soldItem = null" @saved="afterSold" />
         <ListingPerformance :property-id="insightsId" @close="insightsId = null" />
@@ -262,11 +263,13 @@ import CrmModal from '../../components/CrmModal.vue';
 import CrmPagination from '../../components/CrmPagination.vue';
 import FeatureModal from './components/FeatureModal.vue';
 import ListingPerformance from './components/ListingPerformance.vue';
+import PlanLimitModal from './components/PlanLimitModal.vue';
 import PropertyCard from './components/PropertyCard.vue';
 import QualityBreakdown from './components/QualityBreakdown.vue';
 import SoldModal from './components/SoldModal.vue';
 import UsageChips from './components/UsageChips.vue';
 import { useConfirm } from '../../composables/useConfirm';
+import { useSession } from '../../composables/useSession';
 import { useToast } from '../../composables/useToast';
 import { number, ucfirst } from '../../utils/format';
 import { money, sectionFor } from './sections';
@@ -278,6 +281,17 @@ const { error: toastError, success } = useToast();
 
 const section = computed(() => sectionFor(route.meta.segment));
 const page = ref(null);
+const { navigation, refreshNavigation } = useSession();
+const limitOpen = ref(false);
+
+/** Plan allowance used up: offer credits / upgrade in a popup instead of opening the Add form. */
+function addListing() {
+    if (page.value?.plan_usage?.remaining !== 0) {
+        router.push({ name: section.value.routes.create });
+        return;
+    }
+    refreshNavigation().catch(() => {}).finally(() => { limitOpen.value = true; });
+}
 const items = ref([]);
 const loadError = ref('');
 const searchInput = ref('');
@@ -285,6 +299,14 @@ const selected = ref(new Set());
 const bulkBusy = ref(false);
 const statusBusy = ref(new Set());
 const insightsId = ref(null);
+// Listing performance is a paid-plan feature (Plan::GATED_FEATURES): explain instead of opening an empty panel.
+function openInsights(p) {
+    if (page.value.insights_access === false) {
+        toastError('Property insights are included in paid plans. Upgrade your plan to see listing performance.');
+        return;
+    }
+    insightsId.value = p.id;
+}
 const featureItem = ref(null);
 const featureMode = ref('create');
 const soldItem = ref(null);
@@ -341,6 +363,8 @@ function load() {
     return http.get('/properties', { params: { segment: section.value.segment, q: q.q, agent: q.agent, listing: q.listing, status: q.status, premium: q.premium, review: q.review, page: q.page } })
         .then((res) => {
             page.value = res.data;
+            // The plan allowance may have just run out (or come back): keep the sidebar credits card in step.
+            if (res.data.plan_usage) refreshNavigation().catch(() => {});
             items.value = res.data.data;
             searchInput.value = res.data.search;
             selected.value = new Set();

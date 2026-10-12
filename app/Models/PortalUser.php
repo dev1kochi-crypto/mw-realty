@@ -302,8 +302,8 @@ class PortalUser extends Authenticatable
     // ->where('type', 'agent') directly instead.
 
     /**
-     * How many more properties this owner can list under their current plan,
-     * or null if unlimited (no plan assigned = unlimited, matching legacy behavior).
+     * How many more properties this owner can list under their current plan, or null if
+     * unlimited. Paid plans: per calendar month (see Plan::listingsPerMonth()); free: in total.
      */
     public function remainingPropertySlots(): ?int
     {
@@ -312,8 +312,22 @@ class PortalUser extends Authenticatable
             return null;
         }
 
-        $used = $this->properties()->count();
-        return max(0, $this->plan->property_limit - $used);
+        return max(0, $this->plan->property_limit - $this->usedPropertySlots());
+    }
+
+    /**
+     * Listings counted against the plan: added this calendar month on a paid plan, all of them on free.
+     * Extra listings paid with credits don't count.
+     */
+    public function usedPropertySlots(): int
+    {
+        return $this->properties()
+            ->when($this->plan?->listingsPerMonth(), fn ($q) => $q->where('created_at', '>=', now()->startOfMonth()))
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('credit_transactions')
+                ->whereColumn('credit_transactions.property_id', 'properties.id')
+                ->where('credit_transactions.type', \App\Models\CreditTransaction::SPEND)
+                ->where('credit_transactions.kind', 'listing'))
+            ->count();
     }
 
     /** Downgrade waiting for the next renewal (see StripeBillingService::scheduleDowngrade()). */
@@ -489,6 +503,14 @@ class PortalUser extends Authenticatable
         $plan = $this->effectivePlan();
 
         return (bool) ($plan?->status && $plan->reports_access);
+    }
+
+    /** Whether the plan in effect unlocks one of Plan::GATED_FEATURES (an agency's agents use the agency's). */
+    public function planAllows(string $feature): bool
+    {
+        $plan = $this->effectivePlan();
+
+        return (bool) ($plan?->status && $plan->allows($feature));
     }
 
     public function featurings()

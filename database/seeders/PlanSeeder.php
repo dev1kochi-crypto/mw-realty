@@ -6,7 +6,7 @@ use App\Models\Plan;
 use Illuminate\Database\Seeder;
 
 /**
- * Pricing tiers. Listings / featured quota / team agents / reports are real, enforced limits
+ * Pricing tiers. Listings / featured quota / team agents / reports / plan_features are real, enforced limits
  * (see Plan::entitlementLines()) and are rendered on the pricing cards automatically, so
  * `features` only lists the extras that aren't enforced in code (CRM level, support, ...).
  */
@@ -14,6 +14,9 @@ class PlanSeeder extends Seeder
 {
     public function run(): void
     {
+        // Lead / property insights, listing settings, Facebook & Property Finder: paid plans only.
+        $paidFeatures = array_keys(Plan::GATED_FEATURES);
+
         $plans = [
             [
                 'name' => 'Free',
@@ -28,6 +31,7 @@ class PlanSeeder extends Seeder
                 'featured_period' => 'concurrent',
                 'agent_limit' => 0,
                 'reports_access' => false,
+                'plan_features' => [],
                 'is_popular' => false,
                 'order_index' => 1,
             ],
@@ -38,12 +42,13 @@ class PlanSeeder extends Seeder
                 'price' => 49,
                 'yearly_price' => 490,
                 'billing_cycle' => 'monthly',
-                'property_limit' => 15,
+                'property_limit' => 10,
                 'featured_per_month' => 1,
                 'featured_max_days' => 5,
-                'featured_period' => 'concurrent',
+                'featured_period' => 'month',
                 'agent_limit' => 0,
                 'reports_access' => true,
+                'plan_features' => $paidFeatures,
                 'is_popular' => false,
                 'order_index' => 2,
             ],
@@ -54,12 +59,13 @@ class PlanSeeder extends Seeder
                 'price' => 149,
                 'yearly_price' => 1490,
                 'billing_cycle' => 'monthly',
-                'property_limit' => 50,
+                'property_limit' => 25,
                 'featured_per_month' => 3,
                 'featured_max_days' => 15,
-                'featured_period' => 'concurrent',
+                'featured_period' => 'month',
                 'agent_limit' => 3,
                 'reports_access' => true,
+                'plan_features' => $paidFeatures,
                 'is_popular' => true,
                 'order_index' => 3,
             ],
@@ -70,12 +76,13 @@ class PlanSeeder extends Seeder
                 'price' => 299,
                 'yearly_price' => 2990,
                 'billing_cycle' => 'monthly',
-                'property_limit' => 100,
+                'property_limit' => 50,
                 'featured_per_month' => 5,
                 'featured_max_days' => 20,
-                'featured_period' => 'concurrent',
+                'featured_period' => 'month',
                 'agent_limit' => 10,
                 'reports_access' => true,
+                'plan_features' => $paidFeatures,
                 'is_popular' => false,
                 'order_index' => 4,
             ],
@@ -86,12 +93,13 @@ class PlanSeeder extends Seeder
                 'price' => 499,
                 'yearly_price' => 4990,
                 'billing_cycle' => 'monthly',
-                'property_limit' => null,
+                'property_limit' => 100,
                 'featured_per_month' => 10,
                 'featured_max_days' => null,
                 'featured_period' => 'month',
                 'agent_limit' => null,
                 'reports_access' => true,
+                'plan_features' => $paidFeatures,
                 'is_popular' => false,
                 'order_index' => 5,
             ],
@@ -120,6 +128,7 @@ class PlanSeeder extends Seeder
                     'featured_period' => $plan['featured_period'],
                     'agent_limit' => $plan['agent_limit'],
                     'reports_access' => $plan['reports_access'],
+                    'plan_features' => $plan['plan_features'],
                     'is_popular' => $plan['is_popular'],
                     'order_index' => $plan['order_index'],
                     'status' => true,

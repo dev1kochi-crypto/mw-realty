@@ -190,6 +190,9 @@
                     @if($ticketsAwaitingReply > 0)<span class="portal-nav-badge" title="Tickets with a reply from our team">{{ $ticketsAwaitingReply }}</span>@endif
                 </a>
                 @endif
+                <a href="{{ route('crm.app', 'help-desk') }}" class="nav-link">
+                    <i class="fas fa-circle-question"></i> Help Desk
+                </a>
                 {{-- My Profile and Plans live in the account (avatar) menu at the top right. --}}
             </nav>
         </aside>

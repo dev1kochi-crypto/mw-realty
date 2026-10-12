@@ -6,6 +6,7 @@ use App\Http\Controllers\Crm\Account\ProfileController;
 use App\Http\Controllers\Crm\Account\TwoFactorController;
 use App\Http\Controllers\Crm\Agents\AgentController;
 use App\Http\Controllers\Crm\Auth\AuthController;
+use App\Http\Controllers\Crm\Credits\CreditController;
 use App\Http\Controllers\Crm\Dashboard\DashboardController;
 use App\Http\Controllers\Crm\HelpController;
 use App\Http\Controllers\Crm\Integrations\FacebookController;
@@ -61,6 +62,7 @@ Route::middleware('crm.auth')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me'])->name('auth.me');
     Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
     Route::get('/navigation', NavigationController::class)->name('navigation');
+    Route::get('/help', [HelpController::class, 'index'])->name('help.index');
     Route::post('/help/seen', [HelpController::class, 'seen'])->name('help.seen');
     Route::get('/help/{topic}', HelpController::class)->name('help')->where('topic', '[a-z0-9-]+');
 
@@ -169,7 +171,7 @@ Route::middleware('crm.auth')->group(function () {
             });
         });
 
-        Route::get('/lead-insights', [LeadInsightsController::class, 'index'])->name('lead-insights.index')->middleware('portal.approved');
+        Route::get('/lead-insights', [LeadInsightsController::class, 'index'])->name('lead-insights.index')->middleware(['portal.approved', 'plan.feature:lead_insights']);
 
         // Website Leads — AI chat / form / customer-account visitors and the pool not routed to an
         // agency / agent yet. Super Admin only (checked in the controller).
@@ -204,7 +206,7 @@ Route::middleware('crm.auth')->group(function () {
                 Route::post('/translate', 'translate')->name('translate')->middleware('throttle:60,1');
                 Route::post('/permit/validate', 'validatePermit')->name('permit.validate')->middleware('throttle:30,1');
             });
-            Route::get('/{id}/insights', PropertyInsightsController::class)->name('insights')->whereNumber('id')->middleware('throttle:120,1');
+            Route::get('/{id}/insights', PropertyInsightsController::class)->name('insights')->whereNumber('id')->middleware(['throttle:120,1', 'plan.feature:property_insights']);
             Route::controller(PropertyFeatureController::class)->prefix('/{id}/feature')->name('feature.')->whereNumber('id')->group(function () {
                 Route::post('/', 'store')->name('store');
                 Route::put('/', 'update')->name('update');
@@ -226,6 +228,17 @@ Route::middleware('crm.auth')->group(function () {
             Route::get('/', 'index')->name('index');
             Route::post('/', 'store')->name('store');
             Route::get('/eligible', 'eligible')->name('eligible')->middleware('throttle:120,1');
+        });
+
+        // Credits — add-ons next to the plan (extra listings, Premium by credits): history, calculator, top up.
+        Route::prefix('credits')->name('credits.')->middleware('portal.approved')->controller(CreditController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/export', 'export')->name('export');
+            Route::get('/calculator', 'calculatorOptions')->name('calculator');
+            Route::post('/calculate', 'calculate')->name('calculate')->middleware('throttle:60,1');
+            Route::get('/quote', 'quote')->name('quote')->middleware('throttle:120,1');
+            Route::post('/top-up/intent', 'topUpIntent')->name('top-up.intent')->middleware('throttle:10,1');
+            Route::post('/top-up/complete', 'topUpComplete')->name('top-up.complete');
         });
 
         // Sold Listings — sold / rented listings, their proof documents, putting one back on the market.
@@ -272,7 +285,7 @@ Route::middleware('crm.auth')->group(function () {
         });
 
         // Listing Settings → Watermark stamped on uploaded listing photos.
-        Route::prefix('listing-settings/watermark')->name('watermark.')->middleware('portal.approved')->controller(WatermarkController::class)->group(function () {
+        Route::prefix('listing-settings/watermark')->name('watermark.')->middleware(['portal.approved', 'plan.feature:listing_settings'])->controller(WatermarkController::class)->group(function () {
             Route::get('/', 'show')->name('show');
             Route::post('/', 'update')->name('update');
             Route::get('/accounts', 'accounts')->name('accounts');
@@ -307,10 +320,10 @@ Route::middleware('crm.auth')->group(function () {
         });
 
         // Integrations — hub, Facebook Lead Ads (Pages' leads arrive via /api/webhooks/facebook) and Property Finder.
-        Route::prefix('integrations')->name('integrations.')->middleware('portal.approved')->group(function () {
+        Route::prefix('integrations')->name('integrations.')->middleware(['portal.approved', 'plan.feature:facebook,property_finder'])->group(function () {
             Route::get('/', [IntegrationController::class, 'index'])->name('index');
 
-            Route::controller(FacebookController::class)->prefix('facebook')->name('facebook.')->group(function () {
+            Route::controller(FacebookController::class)->prefix('facebook')->name('facebook.')->middleware('plan.feature:facebook')->group(function () {
                 Route::get('/', 'show')->name('show');
                 Route::get('/accounts', 'accounts')->name('accounts')->middleware('throttle:120,1');
                 Route::get('/connect-url', 'connectUrl')->name('connect-url');
@@ -322,7 +335,7 @@ Route::middleware('crm.auth')->group(function () {
                 Route::delete('/{id}', 'destroy')->name('destroy')->whereNumber('id');
             });
 
-            Route::controller(PropertyFinderController::class)->prefix('property-finder')->name('property-finder.')->group(function () {
+            Route::controller(PropertyFinderController::class)->prefix('property-finder')->name('property-finder.')->middleware('plan.feature:property_finder')->group(function () {
                 Route::get('/', 'show')->name('show');
                 Route::post('/', 'connect')->name('connect')->middleware('throttle:10,1');
                 Route::post('/sync', 'sync')->name('sync')->middleware('throttle:10,1');

@@ -1,0 +1,1 @@
+import{d as n}from"./preload-helper-BdbUUM26.js";const e=n({pending:null,reconfiguring:!1,recoveryCodes:null,enforcing:!1});function o(){Object.assign(e,{pending:null,reconfiguring:!1,recoveryCodes:null,enforcing:!1})}function l(){return{flow:e,reset:o}}export{l as u};

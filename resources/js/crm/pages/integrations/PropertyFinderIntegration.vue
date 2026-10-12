@@ -1,5 +1,7 @@
 <template>
-    <div>
+    <PlanLockedCard v-if="locked" title="Property Finder" heading="Unlock Property Finder" icon="fas fa-house-chimney" feature="The Property Finder integration" :locked="locked"
+                    description="Import your Property Finder listings as properties — all of them once, then just the new ones." />
+    <div v-else>
         <div class="mb-3">
             <RouterLink :to="{ name: 'integrations.index' }" class="portal-link-muted small"><i class="fas fa-arrow-left me-1"></i>All integrations</RouterLink>
             <div class="portal-section-title mb-0 mt-1">Property Finder</div>
@@ -209,6 +211,8 @@
  */
 import { computed, h, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import http, { errorMessage } from '../../api/http';
+import PlanLockedCard from '../../components/PlanLockedCard.vue';
+import { planLocked } from '../../utils/planLocked';
 import PfFlow from './PfFlow.vue';
 import { useToast } from '../../composables/useToast';
 import { useConfirm } from '../../composables/useConfirm';
@@ -243,6 +247,7 @@ const PfCount = {
 
 const data = ref(null);
 const loadError = ref('');
+const locked = ref(null); // plan without this integration → "Unlock" card
 const errorAlert = ref('');
 const syncing = ref(null); // the mode just clicked, while its overlay shows
 const menu = ref(null);
@@ -298,6 +303,7 @@ function load() {
             if (res.data.connection?.syncing) poll();
         })
         .catch((e) => {
+            locked.value = planLocked(e);
             loadError.value = errorMessage(e);
         });
 }

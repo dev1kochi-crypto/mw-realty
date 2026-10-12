@@ -1,5 +1,7 @@
 <template>
-    <div>
+    <PlanLockedCard v-if="locked" title="Facebook Lead Ads" heading="Unlock Facebook Lead Ads" icon="fab fa-facebook-f" feature="Facebook Lead Ads" :locked="locked"
+                    description="Leads from your Facebook & Instagram lead forms arrive in Leads automatically — no copying, no CSV exports." />
+    <div v-else>
         <div class="mb-3">
             <RouterLink :to="{ name: 'integrations.index' }" class="portal-link-muted small"><i class="fas fa-arrow-left me-1"></i>All integrations</RouterLink>
             <div class="portal-section-title mb-0 mt-1">Facebook Lead Ads</div>
@@ -282,6 +284,8 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import http, { errorMessage } from '../../api/http';
+import PlanLockedCard from '../../components/PlanLockedCard.vue';
+import { planLocked } from '../../utils/planLocked';
 import CrmPagination from '../../components/CrmPagination.vue';
 import RemoteSelect from '../../components/RemoteSelect.vue';
 import { useToast } from '../../composables/useToast';
@@ -295,6 +299,7 @@ const { confirm } = useConfirm();
 
 const data = ref(null);
 const loadError = ref('');
+const locked = ref(null); // plan without this integration → "Unlock" card
 const errorAlert = ref('');
 const searchInput = ref('');
 const working = ref(null);
@@ -345,6 +350,7 @@ function load() {
             schedulePoll();
         })
         .catch((e) => {
+            locked.value = planLocked(e);
             loadError.value = errorMessage(e);
         });
 }

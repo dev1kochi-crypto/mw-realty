@@ -83,7 +83,8 @@ class Watermark
      */
     public function activeSettings(?PortalUser $owner): ?array
     {
-        return ($owner ? $this->ready($this->settings($this->ownerFor($owner))) : null)
+        // A custom watermark is a paid-plan feature: without it the account's photos get the default.
+        return ($owner && $owner->planAllows('listing_settings') ? $this->ready($this->settings($this->ownerFor($owner))) : null)
             ?? $this->ready($this->settings(null));
     }
 

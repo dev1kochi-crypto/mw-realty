@@ -1,9 +1,10 @@
 <template>
     <span v-if="planUsage" class="portal-usage-chip" :class="{ 'is-danger': full }"
-          :title="`${planUsage.plan} plan — ${planUsage.remaining === null ? 'unlimited listings' : `${planUsage.used} of ${planUsage.limit} listings used`} (Properties and Commercial combined)${full ? '. Upgrade to add more.' : ''}`">
+          :title="usageTitle">
         <i class="fas fa-layer-group"></i>
         <span class="portal-usage-chip__label">{{ planUsage.plan }}</span>
         <strong>{{ planUsage.remaining === null ? `${planUsage.used} / ∞` : `${planUsage.used} / ${planUsage.limit}` }}</strong>
+        <span v-if="planUsage.per_month" class="portal-usage-chip__muted">added this month</span>
         <span v-if="planUsage.remaining !== null" class="portal-usage-chip__meter"><span :style="{ width: `${pct}%` }"></span></span>
         <a v-if="full" :href="links.plans">Upgrade</a>
     </span>
@@ -39,5 +40,16 @@ const props = defineProps({
 
 const links = { plans: '/portal/plans' };
 const full = computed(() => props.planUsage?.remaining === 0);
+// Paid plans: a monthly allowance of NEW listings (listings from earlier months don't count); free: a cap on listings held.
+const usageTitle = computed(() => {
+    const u = props.planUsage;
+    if (!u) return '';
+    if (u.remaining === null) return `${u.plan} plan — unlimited listings`;
+    const resets = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const text = u.per_month
+        ? `${u.plan} plan — you can add ${u.limit} new listings each month. ${u.used} added this month, ${u.remaining} left; resets on ${resets}. Listings from earlier months stay live and don't count.`
+        : `${u.plan} plan — up to ${u.limit} listings at a time; ${u.used} in use.`;
+    return `${text} (Properties and Commercial combined)${full.value ? ' Upgrade to add more.' : ''}`;
+});
 const pct = computed(() => (props.planUsage.remaining === null || !props.planUsage.limit ? 0 : Math.min(100, Math.round((props.planUsage.used / props.planUsage.limit) * 100))));
 </script>

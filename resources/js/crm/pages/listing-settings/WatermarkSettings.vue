@@ -1,5 +1,7 @@
 <template>
-    <div v-if="!data" class="text-center py-5">
+    <PlanLockedCard v-if="locked" title="Listing Settings" heading="Unlock listing settings" icon="fas fa-stamp" feature="Listing settings" plural :locked="locked"
+                    description="Brand every listing photo you upload with your own logo or text watermark — position, size and opacity your way." />
+    <div v-else-if="!data" class="text-center py-5">
         <span v-if="!loadError" class="spinner-border text-primary"></span>
         <div v-else class="text-muted">{{ loadError }} <button type="button" class="btn btn-link" @click="load">Try again</button></div>
     </div>
@@ -174,6 +176,8 @@ import { useRoute, useRouter } from 'vue-router';
 import http, { errorMessage } from '../../api/http';
 import AuthImage from '../../components/AuthImage.vue';
 import CrmPagination from '../../components/CrmPagination.vue';
+import PlanLockedCard from '../../components/PlanLockedCard.vue';
+import { planLocked } from '../../utils/planLocked';
 import { useToast } from '../../composables/useToast';
 import { number, timeAgo } from '../../utils/format';
 
@@ -186,6 +190,7 @@ const swatches = ['#ffffff', '#000000', '#244373', '#ca2844'];
 
 const data = ref(null);
 const loadError = ref('');
+const locked = ref(null); // plan without listing settings → "Unlock listing settings" card
 const s = reactive({ enabled: false, type: 'image', text: '', color: '#ffffff', opacity: 50, size: 25, position: 'br' });
 const savedImageUrl = ref(null); // the stored logo, as an object URL
 const imageSrc = ref(null); // what the form shows now (stored logo, a picked file, or nothing)
@@ -237,7 +242,10 @@ function load() {
             data.value = res.data;
             return applySettings(res.data.settings);
         })
-        .catch((e) => { loadError.value = errorMessage(e); });
+        .catch((e) => {
+            locked.value = planLocked(e);
+            loadError.value = errorMessage(e);
+        });
 }
 
 function reset() {

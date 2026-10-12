@@ -41,6 +41,7 @@ class IntegrationController extends Controller
                         ? 'Connect Facebook Pages and send each one\'s lead form leads to an agency or agent.'
                         : 'Leads from your Facebook & Instagram lead forms arrive in Leads automatically.',
                     'status' => $this->status(match (true) {
+                        !$isAdmin && !$this->owner()?->planAllows('facebook') => ['off', 'Paid plans only'],
                         !$facebook->configured() => ['off', 'Not set up'],
                         $facebookCount > 0 => ['ok', $facebookCount . ' page' . ($facebookCount === 1 ? '' : 's') . ' connected'],
                         default => ['off', 'Not connected'],
@@ -56,6 +57,7 @@ class IntegrationController extends Controller
                         ? 'Agencies and agents import their Property Finder listings — you review them before they go live.'
                         : 'Import your Property Finder listings as properties — all of them once, then just the new ones.',
                     'status' => $this->status(match (true) {
+                        !$isAdmin && !$this->owner()?->planAllows('property_finder') => ['off', 'Paid plans only'],
                         $isAdmin && $pf['pending'] > 0 => ['warn', $pf['pending'] . ' to review'],
                         $isAdmin => ['off', $pf['accounts'] . ' account' . ($pf['accounts'] === 1 ? '' : 's') . ' connected'],
                         $pf['connection']?->syncInProgress() => ['warn', 'Syncing…'],

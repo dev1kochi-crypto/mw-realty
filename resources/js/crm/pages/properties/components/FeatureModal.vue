@@ -18,6 +18,10 @@
                         <span class="fm__chip"><i class="fas fa-shield-alt"></i> Super Admin &middot; no plan limits</span>
                         <span class="fm__chip"><i class="far fa-clock"></i> Up to {{ maxDays }} days, or no end date</span>
                     </template>
+                    <template v-else-if="useCredits">
+                        <span class="fm__chip" :class="{ 'is-warn': shortBy > 0 }"><i class="fas fa-coins"></i> {{ num(credit.balance) }} credits available</span>
+                        <span class="fm__chip"><i class="far fa-clock"></i> 7, 15 or 30 days</span>
+                    </template>
                     <template v-else>
                         <span class="fm__chip" :class="{ 'is-warn': (quota?.remaining ?? 0) === 0 }">
                             <i class="fas fa-layer-group"></i>
@@ -26,6 +30,19 @@
                         <span class="fm__chip"><i class="far fa-clock"></i> {{ quota.max_days ? `Max ${quota.max_days} days each` : 'No limit on length' }}</span>
                         <span v-if="quota.per_month" class="fm__chip"><i class="fas fa-redo"></i> Resets {{ quota.resets }}</span>
                     </template>
+                </div>
+
+                <!-- Agents / companies: the plan's premium quota, or credits (an add-on for 7 / 15 / 30 days). -->
+                <div v-if="creditsOffered" class="fm__section">
+                    <div class="fm__label">Pay with</div>
+                    <div class="btn-group btn-group-sm w-100" role="group" aria-label="Pay with">
+                        <button type="button" class="btn" :class="payWith === 'plan' ? 'btn-portal-primary' : 'btn-portal-light'" @click="setPayWith('plan')">
+                            <i class="fas fa-layer-group me-1"></i> Plan premium ({{ quota?.remaining ?? 0 }} left)
+                        </button>
+                        <button type="button" class="btn" :class="payWith === 'credits' ? 'btn-portal-primary' : 'btn-portal-light'" @click="setPayWith('credits')">
+                            <i class="fas fa-coins me-1"></i> Credits
+                        </button>
+                    </div>
                 </div>
 
                 <div class="fm__section">
@@ -87,7 +104,7 @@
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label fm__field-label" for="featureEnd">End date</label>
-                            <input id="featureEnd" v-model="end" type="date" class="form-control" :min="endMin" :max="endMax" :disabled="noEnd" :required="!isAdmin" @change="render">
+                            <input id="featureEnd" v-model="end" type="date" class="form-control" :min="endMin" :max="endMax" :disabled="noEnd || useCredits" :required="!isAdmin" @change="render">
                         </div>
                     </div>
                     <div v-if="isAdmin" class="form-check mt-2">
@@ -99,11 +116,17 @@
                         <i class="far fa-calendar-check"></i>
                         <span>{{ summary }}</span>
                     </div>
+                    <div v-if="useCredits" class="fm__summary" :class="{ 'is-invalid': shortBy > 0 }">
+                        <i class="fas fa-coins"></i>
+                        <span v-if="creditCost === null">{{ picking && !picked.size ? 'Tick listings to see the cost in credits.' : (credit.loading ? 'Working out the cost…' : 'No credit price is set for one of these listings — contact MW Realty.') }}</span>
+                        <span v-else>Costs {{ num(creditCost) }} credits · {{ num(credit.balance) }} available<template v-if="shortBy > 0"> — {{ num(shortBy) }} short. <RouterLink :to="{ name: 'credits.index' }" @click="close">Top up</RouterLink></template></span>
+                    </div>
                 </div>
 
                 <p v-if="!isAdmin" class="fm__note">
                     <i class="fas fa-info-circle"></i>
-                    <template v-if="quota.per_month">Uses 1 premium from the start date's month, even if you stop it early. Cancelling before it starts gives it back.</template>
+                    <template v-if="useCredits">Paid with credits — your plan's premium quota isn't used. Cancelling before it starts gives the credits back; stopping it early doesn't.</template>
+                    <template v-else-if="quota.per_month">Uses 1 premium from the start date's month, even if you stop it early. Cancelling before it starts gives it back.</template>
                     <template v-else>Uses 1 premium slot for the whole period. The slot frees up when it ends or you stop it.</template>
                 </p>
 
@@ -125,9 +148,12 @@
  * { picker: true } for the Premium menu's listing picker (tick several, booked together with the same
  * dates — POST /premium). Plan quota is enforced server-side.
  */
-import { computed, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import http, { errorMessage } from '../../../api/http';
 import CrmModal from '../../../components/CrmModal.vue';
+import { useSession } from '../../../composables/useSession';
+
+const { refreshNavigation } = useSession();
 
 const props = defineProps({
     item: { type: Object, default: null },
@@ -140,8 +166,38 @@ const props = defineProps({
 });
 const emit = defineEmits(['close', 'saved']);
 
-const maxDays = computed(() => (props.isAdmin ? props.adminMaxDays : (props.quota?.max_days || props.adminMaxDays)));
+/* ---------- paying with credits (agents / companies, new bookings) ---------- */
+const CREDIT_DAYS = [7, 15, 30];
+const payWith = ref('plan'); // plan | credits
+const creditDays = ref(30);
+const credit = reactive({ enabled: false, balance: 0, listings: {}, totals: null, loading: false });
+const creditsOffered = computed(() => !props.isAdmin && props.mode === 'create' && credit.enabled);
+const useCredits = computed(() => creditsOffered.value && payWith.value === 'credits');
+const creditCost = computed(() => {
+    if (picking.value) return picked.value.size && credit.totals ? credit.totals[creditDays.value] : null;
+    return credit.listings[props.item?.id]?.premium?.[creditDays.value] ?? null;
+});
+const shortBy = computed(() => (creditCost.value === null ? 0 : Math.max(0, creditCost.value - credit.balance)));
+const num = (n) => Number(n || 0).toLocaleString('en-US');
+let quoteRequest = 0;
+
+function loadQuote(ids) {
+    const id = ++quoteRequest;
+    credit.loading = true;
+    return http.get('/credits/quote', { params: { property_ids: ids } })
+        .then((res) => { if (id === quoteRequest) Object.assign(credit, res.data); })
+        .catch(() => { if (id === quoteRequest) credit.enabled = false; })
+        .finally(() => { if (id === quoteRequest) credit.loading = false; });
+}
+
+function setPayWith(value) {
+    payWith.value = value;
+    setPreset(value === 'credits' ? creditDays.value : Math.min(30, maxDays.value));
+}
+
+const maxDays = computed(() => (useCredits.value ? 30 : (props.isAdmin ? props.adminMaxDays : (props.quota?.max_days || props.adminMaxDays))));
 const presets = computed(() => {
+    if (useCredits.value) return CREDIT_DAYS;
     const list = [7, 15, 30, 60, 90].filter((d) => d <= maxDays.value);
     if (!props.isAdmin && props.quota?.max_days && !list.includes(maxDays.value)) list.push(maxDays.value);
     return list;
@@ -193,7 +249,8 @@ const submitText = computed(() => {
 const picking = computed(() => !!props.item?.picker && props.mode === 'create');
 // How many listings the picker lets you tick at once: Super Admin up to the batch limit; an owner up to
 // the plan's free slots ("at a time" plans), or the monthly allowance. The server re-checks all of this.
-const pickLimit = computed(() => (props.isAdmin
+// With credits the plan's slots don't matter — the cost is checked against the balance instead.
+const pickLimit = computed(() => (props.isAdmin || useCredits.value
     ? props.batchLimit
     : Math.min(props.batchLimit, Number(props.quota?.per_month ? (props.quota?.limit ?? 0) : (props.quota?.remaining ?? 0)))));
 const pickPlaceholder = computed(() => `Search by title, reference or location${props.isAdmin ? ', agent / agency' : ''}`);
@@ -204,7 +261,7 @@ const pickLoading = ref(false);
 const pickStatus = ref('');
 const full = computed(() => picked.value.size >= pickLimit.value);
 const pickCount = computed(() => (pickLimit.value > 0
-    ? `${picked.value.size} of ${pickLimit.value} selected${props.isAdmin ? '' : ' · plan limit'}`
+    ? `${picked.value.size} of ${pickLimit.value} selected${props.isAdmin || useCredits.value ? '' : ' · plan limit'}`
     : (props.isAdmin ? '' : 'No premium slots free on your plan')));
 let pickTerm = '';
 let pickPage = 1;
@@ -267,7 +324,10 @@ function render() {
     } else if (start.value && start.value < todayIso.value) {
         start.value = todayIso.value;
     }
-    if (end.value && (end.value < endMin.value || end.value > endMax.value)) {
+    if (useCredits.value && start.value) {
+        // Bought for a fixed length: the end follows the start.
+        end.value = toIso(addDays(fromIso(start.value), creditDays.value - 1));
+    } else if (end.value && (end.value < endMin.value || end.value > endMax.value)) {
         end.value = end.value < endMin.value ? endMin.value : endMax.value;
     }
     tick.value++;
@@ -275,6 +335,7 @@ function render() {
 
 function setPreset(d) {
     if (!start.value) start.value = todayIso.value;
+    if (useCredits.value) creditDays.value = d;
     noEnd.value = false;
     end.value = toIso(addDays(fromIso(start.value), Math.min(d, maxDays.value) - 1));
     render();
@@ -295,13 +356,29 @@ watch(() => props.item, (item) => {
         noEnd.value = false;
         start.value = todayIso.value;
         end.value = '';
+        payWith.value = 'plan';
+        creditDays.value = 30;
         setPreset(Math.min(30, maxDays.value));
         if (item.picker) {
             pickSearch.value = '';
             picked.value = new Map();
             restartPicker();
         }
+        if (!props.isAdmin) {
+            Object.assign(credit, { enabled: false, balance: 0, listings: {}, totals: null });
+            // Plan premium used up → start on credits (when they're on).
+            const planFree = Number(props.quota?.remaining ?? 0) > 0;
+            loadQuote(item.picker ? [] : [item.id]).then(() => { if (credit.enabled && !planFree) setPayWith('credits'); });
+        }
     }
+});
+
+// Picker + credits: re-price whenever the ticked listings change.
+watch(picked, (map) => {
+    if (useCredits.value) loadQuote([...map.keys()]);
+});
+watch(payWith, (value) => {
+    if (value === 'credits' && picking.value && picked.value.size) loadQuote([...picked.value.keys()]);
 });
 
 function close() {
@@ -315,12 +392,15 @@ function submit() {
     else if (!start.value) problem = 'Choose a start date.';
     else if (!noEnd.value && !end.value) problem = props.isAdmin ? 'Choose an end date, or tick "No end date".' : 'Choose an end date.';
     else if (!noEnd.value && tooLong.value) problem = `Premium can run for at most ${maxDays.value} days.`;
+    else if (useCredits.value && shortBy.value > 0) problem = `You need ${num(shortBy.value)} more credits — top up first.`;
     if (problem) {
         error.value = problem;
         return;
     }
 
-    const body = { start_date: liveStart.value ? null : start.value, end_date: noEnd.value ? null : end.value };
+    const body = useCredits.value
+        ? { start_date: start.value, pay_with: 'credits', days: creditDays.value }
+        : { start_date: liveStart.value ? null : start.value, end_date: noEnd.value ? null : end.value };
     saving.value = true;
     // Picker: one batch request for every ticked listing, all-or-nothing. Otherwise book (POST) or re-date (PUT) the one listing.
     const request = picking.value
@@ -329,6 +409,7 @@ function submit() {
     request
         .then(() => {
             saving.value = false;
+            if (body.pay_with === 'credits') refreshNavigation().catch(() => {}); // sidebar credits meter
             emit('saved');
         })
         .catch((e) => {

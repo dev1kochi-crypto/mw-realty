@@ -2,7 +2,7 @@ import { ref } from 'vue';
 import http from '../api/http';
 
 const user = ref(null);
-const navigation = ref({ items: [], account: [] });
+const navigation = ref({ items: [], account: [], credits: null });
 const loaded = ref(false);
 
 /** Signed-in account + its menu, loaded once at start-up (GET /auth/me + /navigation). */

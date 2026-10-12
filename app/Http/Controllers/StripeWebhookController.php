@@ -33,6 +33,9 @@ class StripeWebhookController extends Controller
             match ($event->type) {
                 'checkout.session.completed', 'checkout.session.async_payment_succeeded' => $billing->fulfillCheckout($object->id),
                 'invoice.paid' => $billing->recordInvoice($object),
+                // Credit top-up paid (the page may have closed before it reported back).
+                'payment_intent.succeeded' => ($object->metadata->kind ?? null) === 'credit_topup'
+                    ? app(\App\Services\CreditService::class)->fulfillTopUp($object->id) : null,
                 'invoice.payment_failed' => $billing->markPaymentFailed($object),
                 'customer.subscription.created', 'customer.subscription.updated' => $this->subscriptionChanged($billing, $object),
                 'customer.subscription.deleted' => $this->subscriptionDeleted($billing, $object),

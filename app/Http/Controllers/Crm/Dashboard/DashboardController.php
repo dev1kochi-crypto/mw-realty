@@ -120,7 +120,7 @@ class DashboardController extends Controller
         $featuredExpiring = $propertyQuery()->where('featured', true)
             ->whereBetween('featured_until', [$now, $now->copy()->addDays(7)])->count();
 
-        $planUsage = $owner ? $this->planUsage($owner, $stats['total_properties']) : null;
+        $planUsage = $owner ? $this->planUsage($owner) : null;
 
         // Super Admin: which partners receive the most leads.
         $topOwners = $isAdmin ? $this->leadService->getLeadsByOwner()->sortByDesc('total')->take(5)->values() : collect();
@@ -205,12 +205,12 @@ class DashboardController extends Controller
     }
 
     /** Plan usage — an agent the agency brought in works on the agency's plan, so show the agency's. */
-    private function planUsage(PortalUser $owner, int $ownProperties): array
+    private function planUsage(PortalUser $owner): array
     {
         $account = ($owner->isOnAgencyPlan() ? $owner->company : $owner)->loadMissing('plan');
         $plan = $account->plan;
         $limit = ($plan && !$plan->isUnlimited()) ? (int) $plan->property_limit : null;
-        $used = $owner->isOnAgencyPlan() ? $account->properties()->count() : $ownProperties;
+        $used = $account->usedPropertySlots();
 
         return [
             'name' => ($plan?->getTranslation('name') ?? 'No plan') . ($owner->isOnAgencyPlan() ? ' · ' . $account->displayName() . "'s plan" : ''),
@@ -218,6 +218,7 @@ class DashboardController extends Controller
             'used' => $used,
             'remaining' => $account->remainingPropertySlots(),
             'pct' => $limit ? min(100, round($used / max($limit, 1) * 100)) : null,
+            'per_month' => (bool) $plan?->listingsPerMonth(),
             'agents' => $owner->type === 'company' ? $owner->agents()->count() : null,
             'agents_remaining' => $owner->type === 'company' ? $owner->remainingAgentSlots() : null,
             'reports' => $owner->hasReportsAccess(),
@@ -239,7 +240,7 @@ class DashboardController extends Controller
     {
         $alerts = [];
         if ($planUsage && $planUsage['limit'] !== null && $planUsage['remaining'] === 0) {
-            $alerts[] = ['count' => $planUsage['used'] . '/' . $planUsage['limit'], 'label' => 'listing limit reached', 'icon' => 'fa-gauge-high', 'tone' => 'amber', 'route' => ['name' => 'plans.index']];
+            $alerts[] = ['count' => $planUsage['used'] . '/' . $planUsage['limit'], 'label' => $planUsage['per_month'] ? 'monthly listing limit reached' : 'listing limit reached', 'icon' => 'fa-gauge-high', 'tone' => 'amber', 'route' => ['name' => 'plans.index']];
         }
         $candidates = [
             [$staleLeads, str('lead')->plural($staleLeads) . ' waiting 2+ days', 'fa-hourglass-half', 'red', ['route' => ['name' => 'leads.index']]],

@@ -24,6 +24,8 @@ class NavigationController extends Controller
         return response()->json([
             'items' => $navigation->items(),
             'account' => $navigation->accountItems(),
+            // Sidebar credits meter (null when it doesn't apply).
+            'credits' => $navigation->credits(),
         ]);
     }
 }

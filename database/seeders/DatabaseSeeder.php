@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             CrmAdminMasterDataSeeder::class,
             FilterSeeder::class,
             PropertyOptionsSeeder::class,
+            HelpGuideSeeder::class,
         ]);
     }
 }

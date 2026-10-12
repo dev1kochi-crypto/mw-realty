@@ -77,7 +77,7 @@
                         <button type="button" class="btn btn-link btn-sm p-0" @click="$emit('stop-feature', true)">Cancel</button>
                     </span>
                 </template>
-                <button v-else-if="isAdmin || (quota && quota.limit > 0)" type="button" class="btn btn-link btn-sm p-0" :disabled="!isAdmin && !p.status"
+                <button v-else-if="isAdmin || (quota && (quota.limit > 0 || quota.credits))" type="button" class="btn btn-link btn-sm p-0" :disabled="!isAdmin && !p.status"
                         :title="isAdmin || p.status ? '' : 'Activate the listing to make it premium'" @click="$emit('feature')"><i class="far fa-star me-1"></i>Make premium</button>
                 <a v-else href="/portal/plans" class="portal-muted text-decoration-none"><i class="fas fa-lock me-1"></i>Premium needs a paid plan</a>
             </div>

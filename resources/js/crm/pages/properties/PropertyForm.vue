@@ -17,6 +17,15 @@
             </div>
         </div>
 
+        <!-- Plan allowance used up: saving adds it as an extra listing paid with credits. -->
+        <div v-if="f.creditListing" class="alert alert-warning d-flex gap-3 align-items-start">
+            <i class="fas fa-coins mt-1"></i>
+            <div class="flex-grow-1 small">
+                {{ f.creditListing.message }} You have <strong>{{ Number(f.creditListing.balance).toLocaleString('en-US') }}</strong> credits — the cost depends on the category, type and price.
+            </div>
+            <RouterLink :to="{ name: 'credits.index' }" class="btn btn-sm btn-light flex-shrink-0">Credits &amp; calculator</RouterLink>
+        </div>
+
         <!-- Why this listing isn't live (permit not verified / expired / taken down) — the permit is in Core details. -->
         <div v-if="f.state.property?.review_alert" class="alert d-flex gap-3 align-items-start" :class="`alert-${f.state.property.review_alert[0]}`">
             <i class="fas mt-1" :class="f.state.property.review_alert[1]"></i>
@@ -106,6 +115,9 @@ import OptionListTab from './form/OptionListTab.vue';
 import PublishingTab from './form/PublishingTab.vue';
 import { tabOf, useListingForm } from './form/useListingForm';
 import { sectionFor } from './sections';
+import { useSession } from '../../composables/useSession';
+
+const { refreshNavigation } = useSession();
 
 const props = defineProps({
     id: { type: Number, default: null }, // null = add a new listing
@@ -230,6 +242,7 @@ function submit() {
     form.save()
         .then((data) => {
             success(data.message);
+            if (form.creditListing) refreshNavigation().catch(() => {}); // paid with credits: update the sidebar meter
             router.push({ name: sectionFor(data.segment).routes.index });
         })
         .catch((e) => {

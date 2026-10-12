@@ -1,5 +1,7 @@
 <template>
-    <div>
+    <PlanLockedCard v-if="locked" title="Integrations" heading="Unlock integrations" icon="fas fa-plug" feature="Integrations" plural :locked="locked"
+                    description="Facebook Lead Ads and Property Finder — leads from your Facebook & Instagram lead forms and your Property Finder listings flow into MW Realty automatically." />
+    <div v-else>
         <div class="mb-3">
             <div class="portal-section-title mb-0">Integrations</div>
             <p class="text-muted mb-0" style="font-size: .85rem;">Connect the tools you already use — leads and listings flow into MW Realty automatically.</p>
@@ -45,12 +47,15 @@
  */
 import { onMounted, ref } from 'vue';
 import http, { errorMessage } from '../../api/http';
+import PlanLockedCard from '../../components/PlanLockedCard.vue';
+import { planLocked } from '../../utils/planLocked';
 
 // Integration key (from the API) → its screen.
 const routes = { facebook: 'integrations.facebook', 'property-finder': 'integrations.property-finder' };
 
 const data = ref(null);
 const loadError = ref('');
+const locked = ref(null); // plan without integrations → "Unlock integrations" card
 
 function load() {
     loadError.value = '';
@@ -59,6 +64,7 @@ function load() {
             data.value = res.data;
         })
         .catch((e) => {
+            locked.value = planLocked(e);
             loadError.value = errorMessage(e);
         });
 }

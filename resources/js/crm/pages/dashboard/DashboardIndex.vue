@@ -30,7 +30,7 @@
                     <a :href="d.links.plans" class="dl-card-link">{{ d.plan_usage.remaining === 0 ? 'UPGRADE' : 'MANAGE' }}</a>
                     <div class="dl-card-plan serif">{{ d.plan_usage.name }}</div>
                     <div class="dl-card-sub">
-                        {{ d.plan_usage.limit !== null ? `${d.plan_usage.used} of ${d.plan_usage.limit} listings` : `${d.plan_usage.used} listings · unlimited` }}
+                        {{ d.plan_usage.limit !== null ? `${d.plan_usage.used} of ${d.plan_usage.limit} listings${d.plan_usage.per_month ? ' this month' : ''}` : `${d.plan_usage.used} listings · unlimited` }}
                         · Reports {{ d.plan_usage.reports ? 'on' : 'off' }}{{ d.plan_usage.agents !== null ? ` · ${d.plan_usage.agents} ${plural('agent', d.plan_usage.agents)}` : '' }}
                     </div>
                     <div class="dl-card-bar"><span :style="{ width: `${d.plan_usage.pct ?? 100}%` }"></span></div>

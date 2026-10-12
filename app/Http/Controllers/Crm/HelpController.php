@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Crm;
 
+use App\Models\HelpGuide;
 use App\Support\PortalHelp;
 use Illuminate\Routing\Controller;
 
@@ -11,10 +12,26 @@ use Illuminate\Routing\Controller;
 class HelpController extends Controller
 {
     /**
+     * Help desk
+     *
+     * Every active help guide, A–Z, with its full content — the CRM's Help Desk page lists them and
+     * opens one as the same slide tour as the "!" icon.
+     *
+     * @response 200 {"data": [{"topic": "leads", "title": "Leads", "icon": "fa-address-book", "intro": "…", "features": [], "steps": [], "tips": []}]}
+     */
+    public function index()
+    {
+        return response()->json([
+            'data' => HelpGuide::active()->orderBy('title')->get()
+                ->map(fn (HelpGuide $guide) => ['topic' => $guide->topic, ...$guide->toGuide()]),
+        ]);
+    }
+
+    /**
      * Help guide
      *
      * A module's "how it works" guide (the "!" icon): title, intro, features, steps and tips —
-     * content from resources/help/portal/{topic}.php.
+     * content managed in Admin › Help Desk (help_guides).
      *
      * @urlParam topic string required Example: stages
      *

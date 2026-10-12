@@ -37,7 +37,7 @@ export function tabOf(field) {
     if (field.startsWith('property_attributes')) return 'tab-attributes';
     if (['postal_code', 'latitude', 'longitude'].includes(field)) return 'tab-location';
     if (['bedrooms', 'bathrooms', 'sqft', 'developer', 'unit_number', 'parking', 'garage', 'furnished', 'upgraded', 'year_built', 'floor', 'view',
-        'owner_name', 'direct_from_owner', 'virtual_tour_url', 'video_tour_url', 'price', 'currency', 'cheques', 'security_deposit'].includes(field)) return 'tab-specifications';
+        'owner_name', 'direct_from_owner', 'virtual_tour_url', 'video_tour_url', 'price', 'currency', 'cheques', 'security_deposit', 'slug'].includes(field)) return 'tab-specifications';
     return 'tab-basic';
 }
 
@@ -216,6 +216,12 @@ export function useListingForm(options, property, segment) {
     function onTitleInput(code) {
         if (code === langs[0] && !state.slugTouched) form.slug = slugify(form.translations[code].title);
     }
+    /** "Use title": back to the slug made from the title, following it again. */
+    function resetSlug() {
+        state.slugTouched = false;
+        state.invalid = null;
+        form.slug = slugify(form.translations[langs[0]].title || '');
+    }
 
     /* ------------------------------------------------------------------ auto-translate */
 
@@ -304,7 +310,6 @@ export function useListingForm(options, property, segment) {
     // the tab (and language sub-tab) holding the first missing value.
     const GLOBAL_REQUIRED = [
         ['emirate', 'tab-basic', 'Emirate', 'select'],
-        ['slug', 'tab-basic', 'Slug'],
         ['property_type', 'tab-basic', 'Property Type', 'select'],
         ['category', 'tab-basic', 'Category', 'radio'],
         ['listing_type', 'tab-basic', 'Offering type', 'radio'],
@@ -318,6 +323,8 @@ export function useListingForm(options, property, segment) {
 
     function missingRequired() {
         const missing = [];
+        // The slug follows the title: fill it in if it's still empty, so it's only "missing" with no title either.
+        if (String(form.slug ?? '').trim() === '' && valueOf(langs[0], 'title') !== '') form.slug = slugify(valueOf(langs[0], 'title'));
         GLOBAL_REQUIRED.forEach(([name, tab, label, kind]) => {
             // A dropdown with no options configured is a free-text input in the Blade form; only check what's shown.
             if (String(form[name] ?? '').trim() === '') missing.push({ name, tab, label, kind });
@@ -325,6 +332,7 @@ export function useListingForm(options, property, segment) {
         langs.forEach((code) => LANG_REQUIRED.forEach(([field, tab, label]) => {
             if (valueOf(code, field) === '') missing.push({ name: `translations.${code}.${field}`, tab, label: `${label} (${code.toUpperCase()})`, lang: code });
         }));
+        if (String(form.slug ?? '').trim() === '') missing.push({ name: 'slug', tab: 'tab-specifications', label: 'Slug' });
         return missing;
     }
 
@@ -354,6 +362,8 @@ export function useListingForm(options, property, segment) {
             .forEach(([key, name]) => { if (state.files[key]) body.append(name, state.files[key]); });
         if (property) put('_method', 'PUT');
         else put('segment', segment);
+        // Plan allowance used up: this one is an extra listing paid with credits (the form says so).
+        if (!property && options.credit_listing) put('use_credits', 1);
         return body;
     }
 
@@ -374,9 +384,10 @@ export function useListingForm(options, property, segment) {
     }
 
     return {
+        creditListing: property ? null : (options.credit_listing ?? null),
         state, form, isLocked, lockTitle, isRent, fieldError,
         permitType, permitInfo, permitShow, license, licenseMissing, rentOnly, validatePermit, onPermitInputsChanged, resetVerification,
-        onTitleInput, onTranslatedInput, translate, schedule, langState, anyManualTargets,
+        onTitleInput, resetSlug, onTranslatedInput, translate, schedule, langState, anyManualTargets,
         missingRequired, save,
     };
 }

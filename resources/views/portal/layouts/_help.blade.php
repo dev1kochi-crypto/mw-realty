@@ -1,5 +1,5 @@
 {{--
-    Module help guide — content from resources/help/portal/{topic}.php (App\Support\PortalHelp).
+    Module help guide — content from Admin › Help Desk (App\Models\HelpGuide via App\Support\PortalHelp).
     A short slide tour: Welcome → What you can do → How it works → Good to know (empty ones skipped).
     Opens from the top bar's "!" button, and by itself ~2.5s into a portal account's first visit — once,
     saved on the account (seen_help_topics). A Super Admin viewing the portal only opens it from "!".

@@ -16,6 +16,7 @@ class Plan extends Model
         'featured_period',
         'agent_limit',
         'reports_access',
+        'plan_features',
         'is_popular',
         'order_index',
         'status',
@@ -37,7 +38,25 @@ class Plan extends Model
         'featured_max_days' => 'integer',
         'agent_limit' => 'integer',
         'reports_access' => 'boolean',
+        'plan_features' => 'array',
     ];
+
+    /**
+     * CRM sections a plan has to unlock (plans.plan_features), with their pricing-card line.
+     * Enforced by the `plan.feature` middleware and padlocked in CrmNavigation.
+     */
+    public const GATED_FEATURES = [
+        'lead_insights' => 'Lead insights',
+        'property_insights' => 'Property insights',
+        'listing_settings' => 'Listing settings (watermark)',
+        'facebook' => 'Facebook Lead Ads integration',
+        'property_finder' => 'Property Finder integration',
+    ];
+
+    public function allows(string $feature): bool
+    {
+        return in_array($feature, $this->plan_features ?? [], true);
+    }
 
     public function subscribers()
     {
@@ -76,6 +95,16 @@ class Plan extends Model
     public function isUnlimited(): bool
     {
         return $this->property_limit === null;
+    }
+
+    /**
+     * Paid plans grant property_limit new listings per calendar month (deleting one doesn't hand
+     * the slot back, and unused slots don't carry over); the free plan's property_limit is a cap
+     * on listings held at once.
+     */
+    public function listingsPerMonth(): bool
+    {
+        return $this->billing_cycle !== 'free';
     }
 
     public const INTERVALS = ['monthly', 'yearly'];
@@ -136,11 +165,14 @@ class Plan extends Model
             default => 'Team agent accounts',
         };
 
+        $gated = collect(self::GATED_FEATURES)->map(fn ($label, $key) => [$label, $this->allows($key)])->values()->all();
+
         return [
-            [$this->isUnlimited() ? 'Unlimited listings' : $this->property_limit . ' listings', true],
+            [$this->isUnlimited() ? 'Unlimited listings' : $this->property_limit . ' listings' . ($this->listingsPerMonth() ? ' / month' : ''), true],
             [$featured, $this->includesFeatured()],
             [$agents, $this->agentsUnlimited() || (int) $this->agent_limit > 0],
             ['Leads reports & analytics', (bool) $this->reports_access],
+            ...$gated,
         ];
     }
 

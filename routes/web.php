@@ -535,6 +535,17 @@ Route::middleware(['web'])->group(function () {
                 Route::get('/payments/{id}/invoice.pdf', [\App\Http\Controllers\CmsKit\PaymentController::class, 'pdf'])->name('cms.payments.pdf');
             });
 
+            // Credits — add-on pricing, granting credits, every account's credit ledger (see App\Services\CreditService), under plans.*
+            Route::middleware(['cms.permission:plans.view'])->controller(\App\Http\Controllers\CmsKit\CreditController::class)->group(function () {
+                Route::get('/credits', 'index')->name('cms.credits.index');
+                Route::get('/credits/lookup', 'lookup')->name('cms.credits.lookup')->middleware('throttle:60,1');
+                Route::middleware(['cms.permission:plans.edit'])->group(function () {
+                    Route::put('/credits/settings', 'updateSettings')->name('cms.credits.settings');
+                    Route::put('/credits/rates', 'updateRates')->name('cms.credits.rates');
+                    Route::post('/credits/grant', 'grant')->name('cms.credits.grant');
+                });
+            });
+
             // Support Tickets — raised by Agents/Companies from CRM Contact Us (see Crm\Support\TicketController)
             Route::middleware(['cms.permission:support-tickets.view'])->controller(\App\Http\Controllers\CmsKit\SupportTicketController::class)->group(function () {
                 Route::get('/support-tickets', 'index')->name('cms.support-tickets.index');
@@ -544,6 +555,21 @@ Route::middleware(['web'])->group(function () {
                     Route::post('/support-tickets/{ticket}/reply', 'reply')->name('cms.support-tickets.reply');
                     Route::put('/support-tickets/{ticket}', 'update')->name('cms.support-tickets.update');
                 });
+            });
+
+            // Help Desk — the "!" quick-guide popup on each CRM / portal screen (see App\Support\PortalHelp)
+            Route::middleware(['cms.permission:help-desk.view'])->controller(\App\Http\Controllers\CmsKit\HelpGuideController::class)->group(function () {
+                Route::get('/help-desk', 'index')->name('cms.help-desk.index');
+                Route::middleware(['cms.permission:help-desk.create'])->group(function () {
+                    Route::get('/help-desk/create', 'create')->name('cms.help-desk.create');
+                    Route::post('/help-desk', 'store')->name('cms.help-desk.store');
+                });
+                Route::middleware(['cms.permission:help-desk.edit'])->group(function () {
+                    Route::get('/help-desk/{id}/edit', 'edit')->name('cms.help-desk.edit')->whereNumber('id');
+                    Route::put('/help-desk/{id}', 'update')->name('cms.help-desk.update')->whereNumber('id');
+                    Route::post('/help-desk/{id}/toggle-status', 'toggleStatus')->name('cms.help-desk.toggle-status')->whereNumber('id');
+                });
+                Route::delete('/help-desk/{id}', 'destroy')->middleware('cms.permission:help-desk.delete')->name('cms.help-desk.destroy')->whereNumber('id');
             });
 
             // Coupons (discount codes Agents/Companies can apply when requesting a paid plan)

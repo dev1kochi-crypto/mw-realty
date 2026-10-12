@@ -29,7 +29,7 @@
                 <div class="mb-3">
                     <div class="d-flex justify-content-between small fw-semibold mb-1">
                         <span>Agency listings</span>
-                        <span>{{ ap.used }}{{ ap.limit ? ` / ${ap.limit}` : '' }}{{ ap.limit ? '' : ' · unlimited' }}</span>
+                        <span>{{ ap.used }}{{ ap.limit ? ` / ${ap.limit}` : '' }}{{ ap.limit ? (ap.per_month ? ' this month' : '') : ' · unlimited' }}</span>
                     </div>
                     <div class="progress" style="height: 6px;"><div class="progress-bar" :style="{ width: `${ap.limit ? Math.min(100, Math.round(ap.used / Math.max(1, ap.limit) * 100)) : 100}%`, background: 'var(--portal-primary)' }"></div></div>
                 </div>
@@ -59,7 +59,7 @@
                     <div class="pl-bar__meta">
                         <span class="pl-bar__usage" title="Properties and Commercial combined">
                             <span class="pl-bar__meter"><span :class="{ 'is-full': c.limit && c.used >= c.limit }" :style="{ width: `${c.limit ? Math.min(100, Math.round(c.used / Math.max(1, c.limit) * 100)) : 100}%` }"></span></span>
-                            {{ c.used }}{{ c.limit ? ` / ${c.limit}` : '' }} listings{{ c.limit ? '' : ' · unlimited' }}
+                            {{ c.used }}{{ c.limit ? ` / ${c.limit}` : '' }} listings{{ c.limit ? (c.per_month ? ' this month' : '') : ' · unlimited' }}
                         </span>
                         <template v-if="d.subscribed">
                             <span class="pl-bar__sep" aria-hidden="true">·</span>
@@ -85,6 +85,17 @@
                     <button v-else type="button" class="btn btn-portal-light btn-sm text-danger" :disabled="busy" @click="cancelRenewal"><i class="fas fa-ban me-1"></i>Cancel auto-renew</button>
                 </template>
             </div>
+        </div>
+
+        <!-- Credits: the pay-as-you-go add-on beyond the plan (only for accounts that use credits). -->
+        <div v-if="hasCredits" class="pl-credits">
+            <span class="pl-credits__icon"><i class="fas fa-coins"></i></span>
+            <div class="flex-grow-1 min-w-0">
+                <strong>{{ Number(navigation.credits?.balance ?? 0).toLocaleString('en-US') }} credits</strong>
+                <span class="text-muted small ms-1">for extra listings and Premium once your plan's allowance is used up</span>
+            </div>
+            <RouterLink :to="{ name: 'credits.index' }" class="btn btn-portal-light btn-sm">Usage history</RouterLink>
+            <RouterLink :to="{ name: 'credits.index', query: { buy: 1 } }" class="btn btn-portal-primary btn-sm"><i class="fas fa-plus me-1"></i>Buy credits</RouterLink>
         </div>
 
         <div v-if="route.query.checkout === 'cancelled'" class="alert alert-warning py-2"><i class="fas fa-info-circle me-2"></i>Checkout was cancelled — you haven't been charged.</div>
@@ -249,10 +260,14 @@ import { useRoute, useRouter } from 'vue-router';
 import http, { errorMessage } from '../../api/http';
 import CrmModal from '../../components/CrmModal.vue';
 import { useConfirm } from '../../composables/useConfirm';
+import { useSession } from '../../composables/useSession';
 import { useToast } from '../../composables/useToast';
 import { formatDate, ucfirst } from '../../utils/format';
 
 const route = useRoute();
+const { navigation } = useSession();
+// The account uses credits (the Credits item is in its account menu — not for agents inside an agency).
+const hasCredits = computed(() => navigation.value.account.some((item) => item.key === 'credits' && !item.locked));
 const router = useRouter();
 const { confirm } = useConfirm();
 const { success, error: toastError, info } = useToast();

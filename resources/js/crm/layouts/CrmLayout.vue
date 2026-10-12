@@ -25,6 +25,8 @@
                     <NavLink v-else :item="item" />
                 </template>
             </nav>
+
+            <CreditsMeter v-if="navigation.credits" :credits="navigation.credits" />
         </aside>
 
         <div class="portal-main">
@@ -111,6 +113,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
+import CreditsMeter from '../components/CreditsMeter.vue';
 import NavLink from '../components/NavLink.vue';
 import HelpButton from '../components/HelpButton.vue';
 import NotificationsPanel from '../components/NotificationsPanel.vue';

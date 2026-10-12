@@ -35,6 +35,20 @@
     </div>
     <div class="form-text mt-3">The language picked here also sets the language of the dropdown options in the other tabs.</div>
 
+    <!-- Slug: the listing's web address, filled from the (first language's) title until edited by hand. -->
+    <div class="row g-3 mt-1">
+        <div class="col-12">
+            <label class="form-label fw-semibold d-flex justify-content-between align-items-center" for="slugInput">
+                <span>Slug <span class="text-danger">*</span></span>
+                <button v-if="f.state.slugTouched" type="button" class="btn btn-link btn-sm p-0" @click="f.resetSlug()">Use title</button>
+            </label>
+            <input id="slugInput" v-model="form.slug" name="slug" type="text" class="form-control" :class="{ 'is-invalid': f.fieldError('slug') || f.state.invalid === 'slug' }"
+                   placeholder="Fills in from the title" @input="f.state.slugTouched = true; f.state.invalid = null">
+            <div v-if="f.fieldError('slug')" class="invalid-feedback">{{ f.fieldError('slug') }}</div>
+            <div v-else class="form-text">Web address: /property-details/<strong>{{ form.slug || 'your-title-here' }}</strong></div>
+        </div>
+    </div>
+
     <div id="section-specifications" class="property-subsection-title"><i class="fas fa-ruler-combined"></i> Specifications <span>Rooms, size, furnishing, building and media links</span></div>
     <div class="row g-3">
         <div class="col-md-4">
