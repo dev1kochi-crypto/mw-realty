@@ -56,6 +56,8 @@ Route::get('/static-translations', [StaticTranslationController::class, 'index']
 // Home's own ad is also included in /api/home for convenience, so the home page itself never
 // needs to call this separately.
 Route::get('/ads', [PublicAdController::class, 'index']);
+// Every ad running on a page, for its slider (MW Realty's own + clients' booked ads).
+Route::get('/ads/slides', [PublicAdController::class, 'slides']);
 
 // Public, read-only — the entire home page in one request (banner, brands, ad, developments,
 // premium properties, luxury, why-choose-us, realty, communities, find-properties,
@@ -177,6 +179,10 @@ Route::prefix('track')->controller(\App\Http\Controllers\VisitorTrackingControll
     Route::post('/page/{event}/time', 'time')->whereNumber('event')->middleware('throttle:240,1');
     Route::post('/impressions', 'impressions')->middleware('throttle:120,1');
     Route::post('/lead-click', 'leadClick')->middleware('throttle:60,1');
+});
+Route::prefix('track')->controller(PublicAdController::class)->group(function () {
+    Route::post('/ad-impressions', 'impressions')->middleware('throttle:120,1');
+    Route::post('/ad-click', 'click')->middleware('throttle:60,1');
 });
 
 // Stripe plan-subscription events (signature-verified inside the controller) — /api/stripe/webhook

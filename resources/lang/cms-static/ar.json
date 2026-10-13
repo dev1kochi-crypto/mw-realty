@@ -166,7 +166,8 @@
         "badges": {
             "verified": "موثّق",
             "premium": "مميز",
-            "advertisement": "إعلان"
+            "advertisement": "إعلان",
+            "sponsored": "إعلان ممول"
         },
         "aria": {
             "save_property": "حفظ العقار",

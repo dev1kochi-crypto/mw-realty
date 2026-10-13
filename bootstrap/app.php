@@ -21,6 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('properties:expire-featured')->everyFifteenMinutes();
         // Credits past their validity (balances also expire on the spot whenever a wallet is read or used).
         $schedule->command('credits:expire')->hourly()->withoutOverlapping();
+        // Client ads still unreviewed when their booked time ended: closed and refunded.
+        $schedule->command('ads:settle')->everyFifteenMinutes()->withoutOverlapping();
         $schedule->command('visitors:prune')->dailyAt('03:30')->withoutOverlapping();
         // DLD permits: unpublish listings whose permit expired, remind 7 days before (UAE midnight).
         $schedule->command('properties:expire-permits')->dailyAt('00:05')->timezone(\App\Console\Commands\RemindSubscriptionRenewals::TIMEZONE)->withoutOverlapping();

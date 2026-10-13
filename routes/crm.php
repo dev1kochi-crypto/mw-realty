@@ -4,6 +4,8 @@ use App\Http\Controllers\Crm\Account\NotificationController;
 use App\Http\Controllers\Crm\Account\PlanController;
 use App\Http\Controllers\Crm\Account\ProfileController;
 use App\Http\Controllers\Crm\Account\TwoFactorController;
+use App\Http\Controllers\Crm\Ads\AdController as CrmAdController;
+use App\Http\Controllers\Crm\Ads\ManageAdController;
 use App\Http\Controllers\Crm\Agents\AgentController;
 use App\Http\Controllers\Crm\Auth\AuthController;
 use App\Http\Controllers\Crm\Credits\CreditController;
@@ -228,6 +230,35 @@ Route::middleware('crm.auth')->group(function () {
             Route::get('/', 'index')->name('index');
             Route::post('/', 'store')->name('store');
             Route::get('/eligible', 'eligible')->name('eligible')->middleware('throttle:120,1');
+        });
+
+        // Advertisements — book a banner in a website page's ad slider (plan-based), its review and report.
+        Route::prefix('ads')->name('ads.')->middleware('portal.approved')->controller(CrmAdController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/form-options', 'formOptions')->name('form-options');
+            Route::get('/availability', 'availability')->name('availability')->middleware('throttle:120,1');
+            Route::get('/properties', 'properties')->name('properties')->middleware('throttle:120,1');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{id}', 'show')->name('show')->whereNumber('id');
+            Route::put('/{id}', 'update')->name('update')->whereNumber('id');
+            Route::delete('/{id}', 'destroy')->name('destroy')->whereNumber('id');
+        });
+
+        // Advertisements, Super Admin (replaced CMS › Ad Management): MW Realty's ads, client review, placements.
+        Route::prefix('ads/manage')->name('ads.manage.')->controller(ManageAdController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/form-options', 'formOptions')->name('form-options');
+            Route::get('/properties', 'properties')->name('properties')->middleware('throttle:120,1');
+            Route::get('/placements', 'placements')->name('placements');
+            Route::put('/placements', 'updatePlacements')->name('placements.update');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{id}', 'show')->name('show')->whereNumber('id');
+            Route::put('/{id}', 'update')->name('update')->whereNumber('id');
+            Route::delete('/{id}', 'destroy')->name('destroy')->whereNumber('id');
+            Route::post('/{id}/toggle', 'toggle')->name('toggle')->whereNumber('id');
+            Route::post('/{id}/move', 'move')->name('move')->whereNumber('id');
+            Route::post('/{id}/approve', 'approve')->name('approve')->whereNumber('id');
+            Route::post('/{id}/reject', 'reject')->name('reject')->whereNumber('id');
         });
 
         // Credits — add-ons next to the plan (extra listings, Premium by credits): history, calculator, top up.

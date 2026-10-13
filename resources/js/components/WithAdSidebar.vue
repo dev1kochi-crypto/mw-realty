@@ -16,7 +16,7 @@ const props = defineProps({
     variant: { type: String, default: 'card' },
 });
 
-const { ad } = useAd(props.placement);
+const { ad, slides, interval } = useAd(props.placement);
 const hasAd = computed(() => !!(ad.value && ad.value.image_url));
 
 // Small screens: the floating strip can be closed (for this visit).
@@ -32,11 +32,11 @@ const closeStrip = () => { stripClosed.value = true; try { sessionStorage.setIte
             <slot />
         </div>
         <aside v-if="hasAd" class="mw-with-ad__side">
-            <AdBlock variant="card" :preloaded="ad" />
+            <AdBlock variant="card" :preloaded="slides" :interval="interval" />
         </aside>
         <!-- Tower, small screens: a compact strip that floats at the bottom while the list is on screen. -->
         <div v-if="hasAd && variant === 'tower' && !stripClosed" class="mw-with-ad__float">
-            <AdBlock :preloaded="ad" bare />
+            <AdBlock :preloaded="slides" :interval="interval" bare />
             <button type="button" class="mw-with-ad__close" aria-label="Close advertisement" @click="closeStrip">&times;</button>
         </div>
     </div>
@@ -50,6 +50,9 @@ const closeStrip = () => { stripClosed.value = true; try { sessionStorage.setIte
    `clip` still hides sideways overflow without creating a scroll container. */
 body:has(.mw-with-ad),
 main:has(.mw-with-ad) { overflow-x: clip; }
+
+/* The ad slider (AdBlock) sits flush in the side column. */
+.mw-with-ad .mw-with-ad__side .mw-ad-slider--card { margin-top: 0; }
 
 /* --- card: agents, agencies, blogs, insights --- */
 @media (min-width: 992px) {
@@ -88,6 +91,11 @@ main:has(.mw-with-ad) { overflow-x: clip; }
 @media (max-width: 991.98px) {
     .mw-with-ad__float { position: sticky; bottom: 12px; z-index: 30; margin-top: 20px; }
     .mw-with-ad__float .mw-home-banner__card { height: 96px; min-height: 0; box-shadow: 0 10px 28px rgba(10, 15, 26, 0.28); }
+    /* Same compact strip when several ads rotate in it (the slider sizes its banners otherwise). */
+    .mw-with-ad__float .mw-ad-slider .mw-home-banner__card { height: 96px !important; min-height: 0 !important; aspect-ratio: auto !important; }
+    .mw-with-ad .mw-with-ad__float .mw-ad-slider__dots { bottom: 8px; right: 44px; padding: 4px 6px; gap: 4px; }
+    .mw-with-ad .mw-with-ad__float .mw-ad-slider__dot { width: 16px; height: 3px; }
+    .mw-with-ad .mw-with-ad__float .mw-ad-slider__dot.is-active { width: 24px; }
     .mw-with-ad__float .mw-home-banner__image { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; object-fit: cover; }
     .mw-with-ad__float .mw-ad-banner__content { min-height: 0; height: 100%; max-width: 78%; padding: 22px 16px 10px; gap: 2px; justify-content: center; }
     .mw-with-ad__float .mw-ad-banner__title { font-size: 17px; line-height: 1.2; }

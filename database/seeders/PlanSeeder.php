@@ -12,10 +12,14 @@ use Illuminate\Database\Seeder;
  */
 class PlanSeeder extends Seeder
 {
+    /** Website ads per plan: [included per month, longest booking in hours] — none on Basic, 1 day on Pro, 2–3 days on the top plans. */
+    private const ADS = ['Pro' => [4, 24], 'Business' => [6, 48], 'Enterprise' => [10, 72]];
+
     public function run(): void
     {
         // Lead / property insights, listing settings, Facebook & Property Finder: paid plans only.
-        $paidFeatures = array_keys(Plan::GATED_FEATURES);
+        // Gated CRM sections: Basic = watermark + Property Finder, Pro = + lead insights, Business and Enterprise = everything.
+        $allFeatures = array_keys(Plan::GATED_FEATURES);
 
         $plans = [
             [
@@ -48,7 +52,7 @@ class PlanSeeder extends Seeder
                 'featured_period' => 'month',
                 'agent_limit' => 0,
                 'reports_access' => true,
-                'plan_features' => $paidFeatures,
+                'plan_features' => ['listing_settings', 'property_finder'],
                 'is_popular' => false,
                 'order_index' => 2,
             ],
@@ -65,7 +69,7 @@ class PlanSeeder extends Seeder
                 'featured_period' => 'month',
                 'agent_limit' => 3,
                 'reports_access' => true,
-                'plan_features' => $paidFeatures,
+                'plan_features' => ['listing_settings', 'lead_insights', 'property_finder'],
                 'is_popular' => true,
                 'order_index' => 3,
             ],
@@ -82,7 +86,7 @@ class PlanSeeder extends Seeder
                 'featured_period' => 'month',
                 'agent_limit' => 10,
                 'reports_access' => true,
-                'plan_features' => $paidFeatures,
+                'plan_features' => $allFeatures,
                 'is_popular' => false,
                 'order_index' => 4,
             ],
@@ -99,7 +103,7 @@ class PlanSeeder extends Seeder
                 'featured_period' => 'month',
                 'agent_limit' => null,
                 'reports_access' => true,
-                'plan_features' => $paidFeatures,
+                'plan_features' => $allFeatures,
                 'is_popular' => false,
                 'order_index' => 5,
             ],
@@ -126,6 +130,8 @@ class PlanSeeder extends Seeder
                     'featured_per_month' => $plan['featured_per_month'],
                     'featured_max_days' => $plan['featured_max_days'],
                     'featured_period' => $plan['featured_period'],
+                    'ads_per_month' => self::ADS[$plan['name']][0] ?? 0,
+                    'ad_max_hours' => self::ADS[$plan['name']][1] ?? 0,
                     'agent_limit' => $plan['agent_limit'],
                     'reports_access' => $plan['reports_access'],
                     'plan_features' => $plan['plan_features'],

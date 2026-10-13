@@ -75,6 +75,32 @@ const routes = [
         meta: { title: 'Premium', nav: 'featured', help: 'premium' },
     },
     {
+        path: '/ads',
+        name: 'ads.index',
+        component: () => import('../pages/ads/AdsPage.vue'),
+        meta: { title: 'Advertisements', nav: 'ads', help: 'ads' },
+    },
+    {
+        path: '/ads/create',
+        name: 'ads.create',
+        component: () => import('../pages/ads/AdFormPage.vue'),
+        meta: { title: 'Book an Ad', nav: 'ads', help: 'ads' },
+    },
+    {
+        path: '/ads/:id(\\d+)',
+        name: 'ads.show',
+        component: () => import('../pages/ads/AdShow.vue'),
+        props: (route) => ({ id: Number(route.params.id) }),
+        meta: { title: 'Ad Report', nav: 'ads', help: 'ads' },
+    },
+    {
+        path: '/ads/:id(\\d+)/edit',
+        name: 'ads.edit',
+        component: () => import('../pages/ads/AdFormPage.vue'),
+        props: (route) => ({ id: Number(route.params.id) }),
+        meta: { title: 'Edit Ad', nav: 'ads', help: 'ads' },
+    },
+    {
         path: '/credits',
         name: 'credits.index',
         component: () => import('../pages/credits/CreditsIndex.vue'),
@@ -313,6 +339,19 @@ const router = createRouter({
 
 router.afterEach((to) => {
     document.title = `${to.meta.title ?? 'CRM'} - Partner Portal`;
+});
+
+// A tab opened before a new build was deployed asks for page files that no longer exist (404) —
+// load the page fresh instead of doing nothing. Once per page (sessionStorage) so it can't loop.
+router.onError((error, to) => {
+    const stale = /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(String(error?.message));
+    if (!stale) return;
+    try {
+        const key = `crm-reloaded:${to.fullPath}`;
+        if (sessionStorage.getItem(key)) return;
+        sessionStorage.setItem(key, '1');
+    } catch { /* storage blocked — still reload once */ }
+    window.location.assign(router.resolve(to).href);
 });
 
 export default router;

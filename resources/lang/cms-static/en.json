@@ -166,7 +166,8 @@
         "badges": {
             "verified": "Verified",
             "premium": "Premium",
-            "advertisement": "Advertisement"
+            "advertisement": "Advertisement",
+            "sponsored": "Sponsored"
         },
         "aria": {
             "save_property": "Save property",

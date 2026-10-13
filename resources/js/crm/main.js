@@ -25,5 +25,7 @@ import './styles/security.css';
 import './styles/plans.css';
 import './styles/checkout.css';
 import './styles/credits.css';
+import './styles/ads.css';
+import './styles/ads-admin.css';
 
 createApp(App).use(router).mount('#crm-app');

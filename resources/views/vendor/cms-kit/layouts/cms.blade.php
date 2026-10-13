@@ -129,7 +129,7 @@
                         </a>
                         <div class="collapse sidebar-submenu @if(request()->routeIs('cms.portal-accounts.*', 'cms.agency-agents.*')) show @endif" id="clientsMenu">
                             <nav class="nav flex-column">
-                                @foreach(['company' => 'Companies', 'agent' => 'Agents'] as $clientType => $clientLabel)
+                                @foreach(['company' => 'Agencies', 'agent' => 'Agents'] as $clientType => $clientLabel)
                                 <a class="nav-link py-2 d-flex align-items-center @if(request()->routeIs('cms.portal-accounts.*') && request()->query('type') === $clientType) active @endif"
                                    href="{{ route('cms.portal-accounts.index', ['type' => $clientType]) }}">
                                     {{ $clientLabel }}
@@ -565,7 +565,10 @@
 
                     @if(config('cms-kit.common.modules.ads', true) && $cmsUser->can('ads.view'))
                     <a class="nav-link @if(Route::is('cms.ads.*')) active @endif" href="{{ route('cms.ads.index') }}">
-                        <i class="fas fa-bullhorn"></i> Ad Management
+                        {{-- Managed in the CRM now (CRM › Advertisements): MW Realty's ads, client ad review, placements. --}}
+                        <i class="fas fa-bullhorn"></i> Advertisements <i class="fas fa-arrow-up-right-from-square ms-1 small opacity-50" title="Opens in the CRM"></i>
+                        @php $pendingClientAds = \App\Models\CmsKit\Ad::client()->where('review_status', 'pending')->whereNull('cancelled_at')->where('ends_at', '>', now())->count(); @endphp
+                        @if($pendingClientAds)<span class="badge bg-warning text-dark ms-auto" title="Client ads waiting for review">{{ $pendingClientAds }}</span>@endif
                     </a>
                     @endif
 

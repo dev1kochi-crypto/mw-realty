@@ -99,6 +99,12 @@ class LegacyRedirectController extends Controller
         return $this->to('premium', $request);
     }
 
+    /** CMS › Ad Management moved to CRM › Advertisements. */
+    public function ads(Request $request)
+    {
+        return $this->to('ads', $request);
+    }
+
     public function marketingProperties(Request $request)
     {
         return $this->to('marketing-properties', $request);

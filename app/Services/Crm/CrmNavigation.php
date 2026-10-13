@@ -55,6 +55,12 @@ class CrmNavigation
             $this->item('commercial', 'Commercial', 'fa-store', 'Listings', null, route: 'commercial.index', lock: $kycLock),
             $isSuperAdmin ? $this->item('listing-approvals', 'Listing Permits', 'fa-file-shield', 'Listings', null, route: 'listing-permits.index') : null,
             $this->item('featured', 'Premium', 'fa-star', 'Listings', null, route: 'premium.index', lock: $kycLock),
+            // Website ads belong to the account that owns the plan — not shown to an agency's agents.
+            // Super Admin manages MW Realty's own ads here and reviews clients' (badge = waiting for review).
+            $isSuperAdmin ? $this->item('ads', 'Advertisements', 'fa-rectangle-ad', 'Listings', null, route: 'ads.index',
+                badge: \App\Models\CmsKit\Ad::client()->where('review_status', \App\Models\CmsKit\Ad::PENDING)->whereNull('cancelled_at')->where('ends_at', '>', now())->count()) : null,
+            $owner && $owner->listingOwner()->id === $owner->id ? $this->item('ads', 'Advertisements', 'fa-rectangle-ad', 'Listings', null, route: 'ads.index',
+                lock: $kycLock ?? (!app(\App\Services\AdBookingService::class)->includesAds($owner) ? 'Upgrade your plan to advertise on the website' : null)) : null,
             $this->hasSoldListings($owner) ? $this->item('sold', 'Sold Listings', 'fa-handshake', 'Listings', null, route: 'sold-listings.index') : null,
             $isSuperAdmin ? $this->item('marketing', 'Marketing Properties', 'fa-bullhorn', 'Listings', null, route: 'marketing.index') : null,
             $owner?->type === 'agent' ? $this->item('agency', 'My Agency', 'fa-building-user', 'Listings', 'portal.agency.index',

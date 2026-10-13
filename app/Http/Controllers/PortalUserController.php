@@ -62,7 +62,7 @@ class PortalUserController extends Controller
                 ->addColumn('select_all', function ($row) {
                     return '<input type="checkbox" class="row-checkbox form-check-input" value="' . $row->id . '">';
                 })
-                ->addColumn('type', fn ($row) => ucfirst($row->type))
+                ->addColumn('type', fn ($row) => $row->type === 'company' ? 'Agency' : 'Agent')
                 ->addColumn('contact', function ($row) {
                     $label = $row->type === 'company' ? ($row->company_name ?: $row->name) : $row->name;
                     $initials = strtoupper(collect(preg_split('/\s+/', trim($label)))->filter()->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->implode('')) ?: '?';
@@ -89,7 +89,7 @@ class PortalUserController extends Controller
                         return '<span class="text-muted">-</span>';
                     }
                     if (!$row->company) {
-                        return '<span class="text-muted fst-italic">Unaffiliated</span>';
+                        return '<span class="text-muted fst-italic">Independent</span>';
                     }
                     $label = $row->company->company_name ?: $row->company->name;
                     return '<a href="' . route('cms.portal-accounts.show', ['id' => $row->company->id, 'type' => 'company']) . '" class="text-decoration-none">' . e($label) . '</a>';
@@ -207,7 +207,20 @@ class PortalUserController extends Controller
         $companiesForFilter = PortalUser::companies()->orderBy('company_name')->get(['id', 'company_name', 'name']);
         $plansForFilter = Plan::orderBy('order_index')->get();
 
-        return view('portal-accounts.index', compact('type', 'companiesForFilter', 'plansForFilter'));
+        // Header tiles / tabs: accounts of this type by approval, payment and active state.
+        $scoped = fn () => PortalUser::query()->when(in_array($type, ['agent', 'company']), fn ($q) => $q->where('type', $type));
+        $counts = [
+            'all' => $scoped()->count(),
+            'pending' => $scoped()->where('status', 'pending')->count(),
+            'approved' => $scoped()->where('status', 'approved')->count(),
+            'rejected' => $scoped()->where('status', 'rejected')->count(),
+            'paid' => $scoped()->where('payment_status', 'paid')->count(),
+            'inactive' => $scoped()->where('is_active', false)->count(),
+            'new_30' => $scoped()->where('created_at', '>=', now()->subDays(30))->count(),
+        ];
+        $typeCounts = PortalUser::selectRaw('type, COUNT(*) AS total')->groupBy('type')->pluck('total', 'type');
+
+        return view('portal-accounts.index', compact('type', 'companiesForFilter', 'plansForFilter', 'counts', 'typeCounts'));
     }
 
     public function export(Request $request)
@@ -233,18 +246,18 @@ class PortalUserController extends Controller
             ->withCount(['properties', 'leads'])
             ->orderBy('id');
 
-        $filename = 'agents-companies-' . now()->format('Y-m-d-His') . '.csv';
+        $filename = 'agents-agencies-' . now()->format('Y-m-d-His') . '.csv';
 
         return response()->streamDownload(function () use ($query) {
             $out = fopen('php://output', 'w');
-            \App\Support\Csv::row($out, ['Name', 'Type', 'Company', 'Email', 'Phone', 'Properties', 'Leads', 'Plan', 'Admin Approval', 'Active', 'Payment Status', 'Last Payment', 'Joined']);
+            \App\Support\Csv::row($out, ['Name', 'Type', 'Agency', 'Email', 'Phone', 'Properties', 'Leads', 'Plan', 'Admin Approval', 'Active', 'Payment Status', 'Last Payment', 'Joined']);
 
             // Chunked (not get()) so exporting 50,000+ accounts never holds them all in memory at once.
             $query->chunk(500, function ($rows) use ($out) {
                 foreach ($rows as $row) {
                     \App\Support\Csv::row($out, [
                         $row->type === 'company' ? ($row->company_name ?: $row->name) : $row->name,
-                        ucfirst($row->type),
+                        $row->type === 'company' ? 'Agency' : 'Agent',
                         $row->company ? ($row->company->company_name ?: $row->company->name) : '-',
                         $row->email,
                         $row->phone,

@@ -22,6 +22,32 @@ class HelpGuideSeeder extends Seeder
     private function guides(): array
     {
         return [
+            'ads' => [
+                'title' => 'Advertisements',
+                'icon' => 'fa-rectangle-ad',
+                'intro' => 'Put your own banner on the MW Realty website. Your ad joins the advertisement slider on the page you choose, for the hours or days you book, and you can see how many times it was shown and clicked.',
+                'features' => [
+                    ['icon' => 'fa-table-cells-large', 'title' => 'Choose a page', 'text' => 'Pick where your ad shows: the Home page, property listings, agents, blogs and more. Each page shows a few ads at a time, so busy hours can fill up.'],
+                    ['icon' => 'fa-clock', 'title' => 'Book hours or days', 'text' => 'Pick a start day and hour (Dubai time) and how long it runs. Your plan decides the longest booking, e.g. a few hours, 1 day, or 2 to 3 days on the top plans. The hour grid shows which hours still have free slots.'],
+                    ['icon' => 'fa-coins', 'title' => 'Plan allowance or credits', 'text' => 'Your plan includes some ads every month. When they are used up, you can pay with credits. The form shows the price before you book.'],
+                    ['icon' => 'fa-link', 'title' => 'Where it links', 'text' => 'Send visitors to one of your listings, to your profile page, or to your own website.'],
+                    ['icon' => 'fa-user-check', 'title' => 'Reviewed by MW Realty', 'text' => 'Every ad is checked before it goes live. You get a notification when it is approved, or the reason if it is not.'],
+                    ['icon' => 'fa-chart-line', 'title' => 'Report', 'text' => 'See impressions (how many times your ad was shown on screen), clicks and click rate, hour by hour and day by day, and your busiest hours.'],
+                ],
+                'steps' => [
+                    ['title' => 'Click Book an ad', 'text' => 'The button appears when your plan includes website ads.'],
+                    ['title' => 'Upload your banner', 'text' => 'Add a wide image (and optionally one for phones), and optional text to show over it. The preview shows how it looks.'],
+                    ['title' => 'Pick the page and time', 'text' => 'Choose the page, the day, a free hour and how long it should run.'],
+                    ['title' => 'Choose how to pay', 'text' => 'Use an ad from your plan, or credits once the plan\'s ads for that month are used.'],
+                    ['title' => 'Wait for approval', 'text' => 'MW Realty reviews it. Once approved it goes live by itself at the booked time.'],
+                ],
+                'tips' => [
+                    'Cancel an ad before it starts (or while it is still being reviewed) and you get your credits or plan ad back. Stopping a live ad ends it early without a refund.',
+                    'If your ad is not approved, or not reviewed before its time ends, your credits or plan ad come back automatically.',
+                    'You can change the banner, text or link until the ad starts. It is reviewed again after a change.',
+                    'Short, large text and one clear message work best on a banner that changes every few seconds.',
+                ],
+            ],
             'agency' => [
                 'title' => 'My Agency',
                 'icon' => 'fa-building-user',

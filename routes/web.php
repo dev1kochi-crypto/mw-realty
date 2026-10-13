@@ -75,6 +75,9 @@ Route::post('/track/page/{event}/time', [\App\Http\Controllers\VisitorTrackingCo
 // Listing performance: cards seen on screen (useListingImpressions.js) and contact clicks on a listing.
 Route::post('/track/impressions', [\App\Http\Controllers\VisitorTrackingController::class, 'impressions'])->name('track.impressions')->middleware('throttle:120,1');
 Route::post('/track/lead-click', [\App\Http\Controllers\VisitorTrackingController::class, 'leadClick'])->name('track.lead-click')->middleware('throttle:60,1');
+// Ad sliders (AdSlider.vue): slides seen on screen and clicks — CRM › Advertisements' reports.
+Route::post('/track/ad-impressions', [\App\Http\Controllers\PublicAdController::class, 'impressions'])->name('track.ad-impressions')->middleware('throttle:120,1');
+Route::post('/track/ad-click', [\App\Http\Controllers\PublicAdController::class, 'click'])->name('track.ad-click')->middleware('throttle:60,1');
 
 // The public-site "customer" (buyer/visitor) account — guard 'web', separate from the
 // agent/company portal above. Real <form> POSTs (CustomerLogin.vue / CustomerSignup.vue),
@@ -602,27 +605,9 @@ Route::middleware(['web'])->group(function () {
                 Route::get('/coupons/{id}', [\App\Http\Controllers\CmsKit\CouponController::class, 'show'])->name('cms.coupons.show');
             });
 
-            // Ad Management (image/GIF banners shown at a named placement — placement is free-text until the frontend design is final)
-            Route::middleware(['cms.permission:ads.view'])->group(function () {
-                Route::get('/ads', [AdController::class, 'index'])->name('cms.ads.index');
-
-                Route::middleware(['cms.permission:ads.create'])->group(function () {
-                    Route::get('/ads/create', [AdController::class, 'create'])->name('cms.ads.create');
-                    Route::post('/ads', [AdController::class, 'store'])->name('cms.ads.store');
-                });
-
-                Route::middleware(['cms.permission:ads.edit'])->group(function () {
-                    Route::get('/ads/{id}/edit', [AdController::class, 'edit'])->name('cms.ads.edit');
-                    Route::put('/ads/{id}', [AdController::class, 'update'])->name('cms.ads.update');
-                    Route::post('/ads/{id}/toggle-status', [AdController::class, 'toggleStatus'])->name('cms.ads.toggle-status');
-                    Route::post('/ads/reorder', [AdController::class, 'reorder'])->name('cms.ads.reorder');
-                });
-
-                Route::middleware(['cms.permission:ads.delete'])->group(function () {
-                    Route::delete('/ads/{id}', [AdController::class, 'destroy'])->name('cms.ads.destroy');
-                    Route::post('/ads/bulk-action', [AdController::class, 'bulkAction'])->name('cms.ads.bulk-action');
-                });
-            });
+            // Ad Management moved to the CRM (CRM › Advertisements — MW Realty ads, client ad review, placements).
+            // The old admin URL stays as a redirect for bookmarks and the sidebar link.
+            Route::get('/ads', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'ads'])->middleware('cms.permission:ads.view')->name('cms.ads.index');
 
             // Landing Pages (template pages sharing the Blog field shape, or fully custom HTML/CSS)
             Route::middleware(['cms.permission:landing-pages.view'])->group(function () {
