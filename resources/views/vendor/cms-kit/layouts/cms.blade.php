@@ -563,15 +563,6 @@
                     </div>
                     @endif
 
-                    @if(config('cms-kit.common.modules.ads', true) && $cmsUser->can('ads.view'))
-                    <a class="nav-link @if(Route::is('cms.ads.*')) active @endif" href="{{ route('cms.ads.index') }}">
-                        {{-- Managed in the CRM now (CRM › Advertisements): MW Realty's ads, client ad review, placements. --}}
-                        <i class="fas fa-bullhorn"></i> Advertisements <i class="fas fa-arrow-up-right-from-square ms-1 small opacity-50" title="Opens in the CRM"></i>
-                        @php $pendingClientAds = \App\Models\CmsKit\Ad::client()->where('review_status', 'pending')->whereNull('cancelled_at')->where('ends_at', '>', now())->count(); @endphp
-                        @if($pendingClientAds)<span class="badge bg-warning text-dark ms-auto" title="Client ads waiting for review">{{ $pendingClientAds }}</span>@endif
-                    </a>
-                    @endif
-
                     @if(config('cms-kit.common.modules.careers', true) && $cmsUser->can('careers.view'))
                     <div class="nav-item sidebar-group">
                         <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.careers.*')) active @endif" 
