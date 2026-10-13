@@ -159,3 +159,8 @@
 @media (prefers-reduced-motion: reduce) {
     .adp-banner img, .adp-banner__text > *, .adp-banner__dots span::after, .adp-chip.tone-green i { animation: none !important; }
 }
+
+/* Character counter under the banner text fields (AdBannerFields). */
+.adp-count { margin-top: .25rem; font-size: .7rem; font-weight: 600; color: var(--portal-muted, #6b7094); text-align: right; }
+.adp-count.is-near { color: #b45309; }
+.adp-count.is-full { color: #ca2844; }

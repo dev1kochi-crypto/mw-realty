@@ -167,7 +167,11 @@
             "verified": "موثّق",
             "premium": "مميز",
             "advertisement": "إعلان",
-            "sponsored": "إعلان ممول"
+            "sponsored": "إعلان ممول",
+            "ad_by": "إعلان من",
+            "view_property": "عرض العقار",
+            "view_profile": "عرض الملف",
+            "learn_more": "اعرف المزيد"
         },
         "aria": {
             "save_property": "حفظ العقار",

@@ -14,7 +14,7 @@ import { trackLeadClick } from '../composables/useListingImpressions';
 
 const route = useRoute();
 const router = useRouter();
-const { property, notFound, fetchProperty } = usePropertyDetail();
+const { property, notFound, loading, renderKey, fetchProperty } = usePropertyDetail();
 const { selectedLanguage } = useLanguages();
 const { getRecaptchaToken } = useRecaptcha();
 const { t } = useStaticText();
@@ -56,10 +56,20 @@ watch(
     },
 );
 
-// See Blogs.vue for why this re-run is needed after the async fetch populates the page.
+// Slick moves the slides into its own wrappers, so tear the page's sliders down before Vue swaps
+// in a new property (flush: 'pre' runs before the DOM update); the page then remounts (renderKey)
+// and refresh() builds them again on the fresh markup. See Blogs.vue for why refresh is needed.
+const SLIDERS = '[data-property-gallery-slider], [data-similar-properties-slider]';
+function destroySliders() {
+    const $ = window.jQuery;
+    if (!$ || typeof $.fn.slick !== 'function') return;
+    $(SLIDERS).filter('.slick-initialized').slick('unslick');
+}
+watch(property, destroySliders, { flush: 'pre' });
 watch(property, () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
+onBeforeUnmount(destroySliders);
 
 const enquiryForm = reactive({ name: '', email: '', phone: '', phone_country_code: '+971', message: '' });
 const enquirySubmitting = ref(false);
@@ -214,6 +224,17 @@ async function saveFile(url, fallbackName, onProgress) {
     link.remove();
     setTimeout(() => URL.revokeObjectURL(link.href), 10000);
 }
+
+// The hero slider shows 3 slides on desktop and slick only scrolls when it has
+// more slides than that, so repeat short galleries (even a single photo) until
+// there are at least 6 slides to keep it moving.
+const gallerySlides = computed(() => {
+    const images = (property.value && property.value.images) || [];
+    if (!images.length || images.length >= 6) return images;
+    const slides = [];
+    while (slides.length < 6) slides.push(...images);
+    return slides;
+});
 
 const pills = computed(() => {
     if (!property.value) return [];
@@ -394,7 +415,7 @@ function agentAria(template, name) {
 </script>
 
 <template>
-    <main v-if="property">
+    <main v-if="property" :key="renderKey">
         <div class="mw-about-progress" aria-hidden="true"><span></span></div>
 
         <section class="mw-about-hero">
@@ -414,9 +435,9 @@ function agentAria(template, name) {
             <div class="mw-property__gallery-bleed" data-reveal>
                 <div class="mw-property__gallery">
                     <div class="mw-agent-more__track" data-property-gallery-slider>
-                        <div v-for="(src, index) in property.images" :key="index" class="mw-agent-more__slide">
+                        <div v-for="(src, index) in gallerySlides" :key="index" class="mw-agent-more__slide">
                             <div class="mw-property__gallery-item">
-                                <img :src="src" :alt="`${property.name} — photo ${index + 1}`" loading="lazy">
+                                <img :src="src" :alt="`${property.name} — photo ${(index % property.images.length) + 1}`" loading="lazy">
                             </div>
                         </div>
                     </div>
@@ -824,6 +845,31 @@ function agentAria(template, name) {
         </section>
     </main>
 
+    <main v-else-if="loading" class="mw-property-loading" aria-busy="true">
+        <section class="mw-about-hero">
+            <div class="mw-about-hero__band">
+                <div class="container-ctn">
+                    <span class="mw-skel mw-skel--title"></span>
+                </div>
+            </div>
+        </section>
+        <section class="mw-property">
+            <div class="mw-property__gallery-bleed">
+                <div class="mw-property-loading__gallery">
+                    <span v-for="n in 3" :key="n" class="mw-skel mw-property__gallery-item"></span>
+                </div>
+            </div>
+            <div class="container-ctn">
+                <div class="mw-property-loading__meta">
+                    <span v-for="n in 4" :key="n" class="mw-skel mw-skel--pill"></span>
+                </div>
+                <span class="mw-skel mw-skel--line"></span>
+                <span class="mw-skel mw-skel--line"></span>
+                <span class="mw-skel mw-skel--line mw-skel--short"></span>
+            </div>
+        </section>
+    </main>
+
     <main v-else-if="notFound">
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
@@ -1110,4 +1156,41 @@ main:has(.mw-property__agent-wrap) { overflow-x: clip; }
 .mw-property__rich h2, .mw-property__rich h3, .mw-property__rich h4 { margin: 1em 0 0.5em; font-size: 1.05em; font-weight: 700; }
 .mw-property__rich a { color: inherit; text-decoration: underline; }
 .mw-property__rich img { max-width: 100%; height: auto; border-radius: 10px; }
+
+/* Before slick starts (script still loading, or slow images) the slides would stack full-width
+   down the page. Lay them out as the same row slick will show, so nothing jumps or breaks. */
+[data-property-gallery-slider]:not(.slick-initialized),
+[data-similar-properties-slider]:not(.slick-initialized) { display: flex; overflow: hidden; margin: 0 -14px; }
+[data-property-gallery-slider]:not(.slick-initialized) > *,
+[data-similar-properties-slider]:not(.slick-initialized) > * { flex: 0 0 33.3333%; min-width: 0; padding: 0 14px; }
+@media (min-width: 1561px) {
+    [data-similar-properties-slider]:not(.slick-initialized) > * { flex-basis: 25%; }
+}
+@media (max-width: 992px) {
+    [data-property-gallery-slider]:not(.slick-initialized) > *,
+    [data-similar-properties-slider]:not(.slick-initialized) > * { flex-basis: 50%; }
+}
+@media (max-width: 768px) {
+    [data-property-gallery-slider]:not(.slick-initialized) > *,
+    [data-similar-properties-slider]:not(.slick-initialized) > * { flex-basis: 100%; }
+}
+
+/* Loading state while the property is fetched. */
+.mw-skel {
+    display: block; border-radius: 8px;
+    background: linear-gradient(90deg, #eceef2 25%, #f6f7f9 37%, #eceef2 63%);
+    background-size: 400% 100%; animation: mwSkel 1.4s ease infinite;
+}
+.mw-skel::after { display: none; }
+.mw-skel--title { width: min(720px, 80%); height: clamp(36px, 4vw, 64px); margin: 0 auto; }
+.mw-skel--pill { width: 140px; height: 34px; border-radius: 999px; }
+.mw-skel--line { width: 100%; height: 16px; margin-bottom: 14px; }
+.mw-skel--short { width: 60%; }
+.mw-property-loading__gallery { display: flex; gap: 28px; overflow: hidden; }
+.mw-property-loading__gallery > * { flex: 1 1 0; min-width: 0; border-radius: 0; box-shadow: none; }
+.mw-property-loading__meta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 32px; }
+@media (max-width: 992px) { .mw-property-loading__gallery > :nth-child(3) { display: none; } }
+@media (max-width: 768px) { .mw-property-loading__gallery > :nth-child(2) { display: none; } }
+@keyframes mwSkel { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) { .mw-skel { animation: none; } }
 </style>

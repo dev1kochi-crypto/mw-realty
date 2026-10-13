@@ -35,6 +35,12 @@ class Ad extends Model
         'terms-and-conditions' => 'Terms and Conditions',
     ];
 
+    /**
+     * Longest text over a banner (characters) — what fits the website's ad slider without being cut:
+     * a short heading, a title of up to two lines and a description of up to two lines.
+     */
+    public const TEXT_LIMITS = ['eyebrow' => 30, 'title' => 60, 'text' => 120];
+
     public const PENDING = 'pending';
     public const APPROVED = 'approved';
     public const REJECTED = 'rejected';

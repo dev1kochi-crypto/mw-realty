@@ -94,6 +94,7 @@ class AdController extends Controller
             'max_days_ahead' => AdBookingService::MAX_DAYS_AHEAD,
             'timezone' => AdBookingService::TIMEZONE,
             'profile_url' => $account->slug ? url(($account->type === 'company' ? '/agency-details/' : '/agent-details/') . $account->slug) : null,
+            'text_limits' => Ad::TEXT_LIMITS,
             'images' => [
                 'image' => config('cms-kit.images.ads.image', []),
                 'mobile_image' => config('cms-kit.images.ads.mobile_image', []),
@@ -337,9 +338,9 @@ class AdController extends Controller
             'mobile_image' => 'nullable|image|max:' . (int) (config('cms-kit.images.ads.mobile_image.max_size') ?? 4096),
             'image_alt' => 'nullable|string|max:255',
             'translations' => 'nullable|array',
-            'translations.*.eyebrow' => 'nullable|string|max:60',
-            'translations.*.title' => 'nullable|string|max:120',
-            'translations.*.text' => 'nullable|string|max:300',
+            'translations.*.eyebrow' => 'nullable|string|max:' . Ad::TEXT_LIMITS['eyebrow'],
+            'translations.*.title' => 'nullable|string|max:' . Ad::TEXT_LIMITS['title'],
+            'translations.*.text' => 'nullable|string|max:' . Ad::TEXT_LIMITS['text'],
         ];
     }
 

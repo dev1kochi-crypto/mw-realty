@@ -22,7 +22,7 @@
                 <div>
                     <div class="portal-card p-4 mb-3">
                         <div class="adp-step"><span class="adp-step__num">1</span><div><div class="adp-step__title">Banner</div><div class="adp-step__hint">A wide image, with optional text over it per language.</div></div></div>
-                        <AdBannerFields v-model:active-lang="activeLang" :form="form" :errors="errors" :languages="options.languages" :images="options.images"
+                        <AdBannerFields v-model:active-lang="activeLang" :form="form" :errors="errors" :languages="options.languages" :images="options.images" :text-limits="options.text_limits"
                                         :image-url="imageUrl" :mobile-url="mobileUrl" :image-required="!id" name-hint="Names the ad in the list and reports — visitors don't see it."
                                         @pick="pick" @remove-mobile="removeMobile" />
                     </div>

@@ -160,11 +160,11 @@ class AdDemoSeeder extends Seeder
 
         $ad = Ad::create([
             'portal_user_id' => $owner->id,
-            'name' => str($title)->limit(60) . ' — ' . (\App\Models\CmsKit\Ad::PLACEMENTS[$spec['placement']] ?? $spec['placement']),
+            'name' => $this->short($title) . ' — ' . (\App\Models\CmsKit\Ad::PLACEMENTS[$spec['placement']] ?? $spec['placement']),
             'image' => $this->banner($property, 2400, 450),
             'mobile_image' => $this->banner($property, 800, 400),
             'image_alt' => $title,
-            'translations' => ['en' => array_filter(['eyebrow' => $spec['eyebrow'], 'title' => str($title)->limit(60)->toString(), 'text' => $spec['cta']])],
+            'translations' => ['en' => array_filter(['eyebrow' => $spec['eyebrow'], 'title' => $this->short($title), 'text' => $spec['cta']])],
             'link_type' => $link,
             'property_id' => $link === 'property' ? $property->id : null,
             'link_url' => $link === 'url' ? 'https://www.example.com/' . $property->slug : null,
@@ -218,6 +218,24 @@ class AdDemoSeeder extends Seeder
         } elseif (!$spec['status']) {
             $this->stats($ad, $this->hour->copy()->subDays(3), $this->hour->copy()->subDay(), 0.7);
         }
+    }
+
+    /**
+     * A banner title that fits Ad::TEXT_LIMITS['title'] without being cut mid-word: the listing title,
+     * or its part before " in …" ("Bright 1 Bedroom Apartment"), or whole words up to the limit.
+     */
+    private function short(string $title): string
+    {
+        $max = Ad::TEXT_LIMITS['title'];
+        if (mb_strlen($title) <= $max) {
+            return $title;
+        }
+        $head = trim(preg_split('/\s+in\s+/i', $title)[0]);
+        if (mb_strlen($head) <= $max) {
+            return $head;
+        }
+
+        return trim(preg_replace('/\s+\S*$/u', '', mb_substr($head, 0, $max + 1)));
     }
 
     /** An active listing of $owner with a slug and a photo ($i picks a different one per ad). */

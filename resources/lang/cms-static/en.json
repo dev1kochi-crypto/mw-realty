@@ -167,7 +167,11 @@
             "verified": "Verified",
             "premium": "Premium",
             "advertisement": "Advertisement",
-            "sponsored": "Sponsored"
+            "sponsored": "Sponsored",
+            "ad_by": "Ad by",
+            "view_property": "View property",
+            "view_profile": "View profile",
+            "learn_more": "Learn more"
         },
         "aria": {
             "save_property": "Save property",

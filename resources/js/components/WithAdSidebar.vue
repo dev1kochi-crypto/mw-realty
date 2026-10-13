@@ -96,6 +96,10 @@ main:has(.mw-with-ad) { overflow-x: clip; }
     .mw-with-ad .mw-with-ad__float .mw-ad-slider__dots { bottom: 8px; right: 44px; padding: 4px 6px; gap: 4px; }
     .mw-with-ad .mw-with-ad__float .mw-ad-slider__dot { width: 16px; height: 3px; }
     .mw-with-ad .mw-with-ad__float .mw-ad-slider__dot.is-active { width: 24px; }
+    .mw-with-ad .mw-with-ad__float .mw-ad-foot,
+    .mw-with-ad .mw-with-ad__float .mw-ad-cta,
+    .mw-with-ad .mw-with-ad__float .mw-ad-by,
+    .mw-with-ad .mw-with-ad__float .mw-ad-slider__count { display: none; }
     .mw-with-ad__float .mw-home-banner__image { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; object-fit: cover; }
     .mw-with-ad__float .mw-ad-banner__content { min-height: 0; height: 100%; max-width: 78%; padding: 22px 16px 10px; gap: 2px; justify-content: center; }
     .mw-with-ad__float .mw-ad-banner__title { font-size: 17px; line-height: 1.2; }
