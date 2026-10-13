@@ -59,7 +59,7 @@ class PropertyController extends Controller
             return ($plan?->listingsPerMonth()
                 ? "{$listingOwner->displayName()} has added all {$plan->property_limit} listings its plan allows this month."
                 : "{$listingOwner->displayName()} has reached its plan's listing limit.")
-                . ($upgrade ? " Ask {$listingOwner->displayName()} to upgrade its plan or add credits"
+                . ($upgrade ? " Ask {$listingOwner->displayName()} to upgrade its plan" . (CreditService::enabled() ? ' or add credits' : '')
                     . ($plan?->listingsPerMonth() ? ', or add more from ' . now()->addMonthNoOverflow()->startOfMonth()->format('d M') : '') . '.' : '');
         }
         $credits = CreditService::usableBy($viewer) ? ', or add it as an extra listing with credits' : '';
@@ -145,6 +145,8 @@ class PropertyController extends Controller
                 'remaining' => $owner->remainingPropertySlots(),
                 // An agency agent works on the agency's plan (and credits): the agency to ask for more.
                 'agency' => $owner->id !== $viewer->id ? $owner->displayName() : null,
+                // Credits switched on in Admin › Credits (otherwise the CRM doesn't mention them).
+                'credits' => CreditService::enabled(),
             ] : null;
         }
         $quota = $this->isAdmin() ? null : $featured->quota($viewer);

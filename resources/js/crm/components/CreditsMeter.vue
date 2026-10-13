@@ -19,7 +19,7 @@
                 <span>{{ num(credits.balance) }} left</span>
             </div>
         </template>
-        <RouterLink :to="button.to" class="crm-credits__btn">{{ button.label }}</RouterLink>
+        <RouterLink v-if="button" :to="button.to" class="crm-credits__btn">{{ button.label }}</RouterLink>
     </div>
 </template>
 
@@ -44,8 +44,9 @@ const hint = computed(() => {
     if (what) return `Your plan's ${what} are used up${props.credits.resets ? ` until ${props.credits.resets}` : ''}. Click to see plans, or use credits to keep going.`;
     return `Only ${props.credits.listings_left} listings left on your plan. Click to see plans.`;
 });
-// One action: use the credits you have when listings are full, otherwise buy.
-const button = computed(() => (props.credits.limits.listings && props.credits.balance > 0
-    ? { to: { name: 'properties.create' }, label: 'Add listing with credits' }
-    : { to: { name: 'credits.index', query: { buy: 1 } }, label: 'Buy credits' }));
+// One action: use the credits you have when listings are full, otherwise buy (none while buying is switched off).
+const button = computed(() => {
+    if (props.credits.limits.listings && props.credits.balance > 0) return { to: { name: 'properties.create' }, label: 'Add listing with credits' };
+    return props.credits.can_buy ? { to: { name: 'credits.index', query: { buy: 1 } }, label: 'Buy credits' } : null;
+});
 </script>

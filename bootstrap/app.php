@@ -59,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'customer.auth' => \App\Http\Middleware\EnsureCustomerAuthenticated::class,
             'portal.approved' => \App\Http\Middleware\EnsurePortalAccountApproved::class,
             'plan.feature' => \App\Http\Middleware\EnsurePlanIncludesFeature::class,
+            'credits.enabled' => \App\Http\Middleware\EnsureCreditsEnabled::class,
             'portal.2fa' =>\App\Http\Middleware\EnsurePortalTwoFactor::class,
             'crm.auth' => \App\Http\Middleware\Crm\AuthenticateCrm::class,
         ]);

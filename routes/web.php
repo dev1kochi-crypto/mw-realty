@@ -535,11 +535,19 @@ Route::middleware(['web'])->group(function () {
                 Route::get('/payments/{id}/invoice.pdf', [\App\Http\Controllers\CmsKit\PaymentController::class, 'pdf'])->name('cms.payments.pdf');
             });
 
-            // Credits — add-on pricing, granting credits, every account's credit ledger (see App\Services\CreditService), under plans.*
-            Route::middleware(['cms.permission:plans.view'])->controller(\App\Http\Controllers\CmsKit\CreditController::class)->group(function () {
+            // Credits — on/off, add-on pricing, granting credits (see App\Services\CreditService), under credits.*;
+            // Credit History — every account's credit ledger, under credit-history.view
+            Route::controller(\App\Http\Controllers\CmsKit\CreditController::class)->group(function () {
+                Route::middleware(['cms.permission:credit-history.view'])->group(function () {
+                    Route::get('/credits/history', 'history')->name('cms.credit-history.index');
+                    Route::get('/credits/history/export', 'export')->name('cms.credit-history.export');
+                });
+            });
+            Route::middleware(['cms.permission:credits.view'])->controller(\App\Http\Controllers\CmsKit\CreditController::class)->group(function () {
                 Route::get('/credits', 'index')->name('cms.credits.index');
                 Route::get('/credits/lookup', 'lookup')->name('cms.credits.lookup')->middleware('throttle:60,1');
-                Route::middleware(['cms.permission:plans.edit'])->group(function () {
+                Route::middleware(['cms.permission:credits.edit'])->group(function () {
+                    Route::put('/credits/toggle', 'toggle')->name('cms.credits.toggle');
                     Route::put('/credits/settings', 'updateSettings')->name('cms.credits.settings');
                     Route::put('/credits/rates', 'updateRates')->name('cms.credits.rates');
                     Route::post('/credits/grant', 'grant')->name('cms.credits.grant');

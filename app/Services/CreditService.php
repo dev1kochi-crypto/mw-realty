@@ -21,9 +21,28 @@ use Illuminate\Validation\ValidationException;
  */
 class CreditService
 {
+    /**
+     * The Admin › Credits on/off switch. Off only stops *adding* credits (buying them): an account
+     * that still holds credits keeps seeing them and spending them until they expire (usableBy()).
+     */
     public static function enabled(): bool
     {
         return CreditSetting::current()->enabled;
+    }
+
+    /** Whether $account has credits left to spend. */
+    public static function hasCredits(PortalUser $account): bool
+    {
+        return CreditTransaction::where('account_id', $account->id)->spendable()->exists();
+    }
+
+    /**
+     * Whether credits show in the CRM for this account (its wallet's): always while credits are on,
+     * and while they're off only if the wallet still holds credits. Super Admin (null) → only when on.
+     */
+    public static function shownTo(?PortalUser $user): bool
+    {
+        return static::enabled() || ($user && static::hasCredits($user->listingOwner()));
     }
 
     /** The account whose credits $user's listings draw on (the agency's for an agency agent). */
@@ -35,11 +54,19 @@ class CreditService
     /**
      * Whether $user buys and spends credits themselves. Like the plan, credits belong to the
      * account that owns the listings: an agent inside an agency has none of their own — the agency
-     * buys and uses them, and the agent asks the agency.
+     * buys and uses them, and the agent asks the agency. With credits switched off, only an account
+     * that still holds credits can use them (no buying — see canBuy()).
      */
     public static function usableBy(?PortalUser $user): bool
     {
-        return $user && $user->isApproved() && static::enabled() && $user->listingOwner()->id === $user->id;
+        return $user && $user->isApproved() && $user->listingOwner()->id === $user->id
+            && (static::enabled() || static::hasCredits($user));
+    }
+
+    /** Whether $user can add credits (buy them) — only while credits are switched on. */
+    public static function canBuy(?PortalUser $user): bool
+    {
+        return static::enabled() && static::usableBy($user);
     }
 
     public function balance(PortalUser $account): int
@@ -135,7 +162,7 @@ class CreditService
 
             $balance = $this->balance($account);
             if ($credits > $balance) {
-                throw ValidationException::withMessages(['credits' => "This needs {$credits} credits but you have " . number_format($balance) . '. Top up to continue.']);
+                throw ValidationException::withMessages(['credits' => "This needs {$credits} credits but you have " . number_format($balance) . '.' . (static::enabled() ? ' Top up to continue.' : '')]);
             }
 
             $left = $credits;

@@ -119,7 +119,7 @@
                     <div v-if="useCredits" class="fm__summary" :class="{ 'is-invalid': shortBy > 0 }">
                         <i class="fas fa-coins"></i>
                         <span v-if="creditCost === null">{{ picking && !picked.size ? 'Tick listings to see the cost in credits.' : (credit.loading ? 'Working out the cost…' : 'No credit price is set for one of these listings — contact MW Realty.') }}</span>
-                        <span v-else>Costs {{ num(creditCost) }} credits · {{ num(credit.balance) }} available<template v-if="shortBy > 0"> — {{ num(shortBy) }} short. <RouterLink :to="{ name: 'credits.index' }" @click="close">Top up</RouterLink></template></span>
+                        <span v-else>Costs {{ num(creditCost) }} credits · {{ num(credit.balance) }} available<template v-if="shortBy > 0"> — {{ num(shortBy) }} short.<template v-if="credit.can_buy"> <RouterLink :to="{ name: 'credits.index' }" @click="close">Top up</RouterLink></template></template></span>
                     </div>
                 </div>
 
@@ -170,7 +170,7 @@ const emit = defineEmits(['close', 'saved']);
 const CREDIT_DAYS = [7, 15, 30];
 const payWith = ref('plan'); // plan | credits
 const creditDays = ref(30);
-const credit = reactive({ enabled: false, balance: 0, listings: {}, totals: null, loading: false });
+const credit = reactive({ enabled: false, can_buy: false, balance: 0, listings: {}, totals: null, loading: false });
 const creditsOffered = computed(() => !props.isAdmin && props.mode === 'create' && credit.enabled);
 const useCredits = computed(() => creditsOffered.value && payWith.value === 'credits');
 const creditCost = computed(() => {
@@ -364,8 +364,9 @@ watch(() => props.item, (item) => {
             picked.value = new Map();
             restartPicker();
         }
-        if (!props.isAdmin) {
-            Object.assign(credit, { enabled: false, balance: 0, listings: {}, totals: null });
+        Object.assign(credit, { enabled: false, can_buy: false, balance: 0, listings: {}, totals: null });
+        // quota.credits = credits are on and this account can use them; otherwise no quote is fetched.
+        if (!props.isAdmin && props.quota?.credits) {
             // Plan premium used up → start on credits (when they're on).
             const planFree = Number(props.quota?.remaining ?? 0) > 0;
             loadQuote(item.picker ? [] : [item.id]).then(() => { if (credit.enabled && !planFree) setPayWith('credits'); });

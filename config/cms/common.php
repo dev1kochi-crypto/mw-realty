@@ -49,6 +49,8 @@ return [
         'properties' => true,
         'portal-accounts' => true,
         'plans' => true,
+        'credits' => true,
+        'credit-history' => true,
         'coupons' => true,
         'support-tickets' => true,
     ],

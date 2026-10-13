@@ -18,7 +18,7 @@
                 <div class="flex-grow-1 min-w-0">
                     <div class="plm__option-title">Ask {{ usage.agency }}</div>
                     <div class="plm__option-text">
-                        You work on your agency's plan, so your listings count towards it. To add more, ask {{ usage.agency }} to upgrade the plan or add credits.
+                        You work on your agency's plan, so your listings count towards it. To add more, ask {{ usage.agency }} to upgrade the plan{{ usage.credits ? ' or add credits' : '' }}.
                     </div>
                 </div>
             </div>
@@ -38,7 +38,7 @@
                     </div>
                     <div class="d-flex flex-wrap gap-2 mt-2">
                         <button v-if="credits.balance > 0" type="button" class="btn crx__submit btn-sm" @click="go({ name: createRoute })">Continue with credits <i class="fas fa-arrow-right ms-1"></i></button>
-                        <button type="button" class="btn btn-sm" :class="credits.balance > 0 ? 'btn-portal-light' : 'crx__submit'" @click="go({ name: 'credits.index', query: { buy: 1 } })">
+                        <button v-if="credits.can_buy" type="button" class="btn btn-sm" :class="credits.balance > 0 ? 'btn-portal-light' : 'crx__submit'" @click="go({ name: 'credits.index', query: { buy: 1 } })">
                             <i class="fas fa-plus me-1"></i> Buy credits
                         </button>
                         <button type="button" class="btn btn-link btn-sm px-1" @click="go({ name: 'credits.index' })">See costs</button>

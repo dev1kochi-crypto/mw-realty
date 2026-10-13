@@ -174,9 +174,15 @@
                     </a>
                     @endif
 
-                    @if(config('cms-kit.common.modules.plans', true) && $cmsUser->can('plans.view'))
+                    @if(config('cms-kit.common.modules.credits', true) && $cmsUser->can('credits.view'))
                     <a class="nav-link @if(Route::is('cms.credits.*')) active @endif" href="{{ route('cms.credits.index') }}">
                         <i class="fas fa-coins"></i> Credits
+                    </a>
+                    @endif
+
+                    @if(config('cms-kit.common.modules.credit-history', true) && $cmsUser->can('credit-history.view'))
+                    <a class="nav-link @if(Route::is('cms.credit-history.*')) active @endif" href="{{ route('cms.credit-history.index') }}">
+                        <i class="fas fa-history"></i> Credit History
                     </a>
                     @endif
 

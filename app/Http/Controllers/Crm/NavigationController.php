@@ -26,6 +26,8 @@ class NavigationController extends Controller
             'account' => $navigation->accountItems(),
             // Sidebar credits meter (null when it doesn't apply).
             'credits' => $navigation->credits(),
+            // Credits can be bought (switched on in Admin › Credits); off → credits held can still be used.
+            'credits_can_buy' => \App\Services\CreditService::canBuy(app(\App\Services\Crm\OwnerContext::class)->owner()),
         ]);
     }
 }

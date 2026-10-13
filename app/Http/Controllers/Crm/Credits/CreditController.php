@@ -83,8 +83,9 @@ class CreditController extends Controller
                 'shared' => $wallet->id !== $this->owner()->id,
             ] : null,
             'top_up' => [
-                // Only the account that owns the listings buys credits — never an agent inside an agency.
-                'allowed' => CreditService::usableBy($this->owner()),
+                // Only the account that owns the listings buys credits — never an agent inside an agency —
+                // and only while credits are switched on (off: the credits held can still be used).
+                'allowed' => CreditService::canBuy($this->owner()),
                 'online' => StripeBillingService::enabled(),
                 'price_per_credit' => (float) $settings->price_per_credit,
                 'vat_percent' => (float) $settings->vat_percent,
@@ -196,6 +197,8 @@ class CreditController extends Controller
 
         return response()->json([
             'enabled' => CreditService::usableBy($viewer),
+            // Buying more is possible (credits switched on) — otherwise no "Top up" link.
+            'can_buy' => CreditService::canBuy($viewer),
             'balance' => $this->credits->balance($this->credits->wallet($viewer)),
             'listings' => $costs,
             // Every listing priced? Then the total per premium length.

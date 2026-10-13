@@ -95,7 +95,7 @@
                 <span class="text-muted small ms-1">for extra listings and Premium once your plan's allowance is used up</span>
             </div>
             <RouterLink :to="{ name: 'credits.index' }" class="btn btn-portal-light btn-sm">Usage history</RouterLink>
-            <RouterLink :to="{ name: 'credits.index', query: { buy: 1 } }" class="btn btn-portal-primary btn-sm"><i class="fas fa-plus me-1"></i>Buy credits</RouterLink>
+            <RouterLink v-if="navigation.credits_can_buy" :to="{ name: 'credits.index', query: { buy: 1 } }" class="btn btn-portal-primary btn-sm"><i class="fas fa-plus me-1"></i>Buy credits</RouterLink>
         </div>
 
         <div v-if="route.query.checkout === 'cancelled'" class="alert alert-warning py-2"><i class="fas fa-info-circle me-2"></i>Checkout was cancelled — you haven't been charged.</div>

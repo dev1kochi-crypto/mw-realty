@@ -79,7 +79,7 @@ class CrmNavigation
      * The sidebar's credits card — only when credits matter: the plan's listing or premium
      * allowance is used up (`limits` says which, so the card can suggest credits), or the account
      * already holds credits. Null otherwise, and for Super Admin, accounts awaiting KYC, or when
-     * credits are off.
+     * credits are off and the account has none left.
      */
     public function credits(): ?array
     {
@@ -109,6 +109,8 @@ class CrmNavigation
             'account' => $wallet->id !== $owner->id ? $wallet->displayName() : null,
             'limits' => $limits,
             'listings_left' => $listingsLeft,
+            // Credits switched off: the card still shows what's left, but no "Buy credits".
+            'can_buy' => \App\Services\CreditService::canBuy($owner),
             // Paid plans' allowances are monthly: when they come back.
             'resets' => $owner->listingOwner()->plan?->listingsPerMonth() ? now()->addMonthNoOverflow()->startOfMonth()->format('d M') : null,
         ];

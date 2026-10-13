@@ -231,7 +231,8 @@ Route::middleware('crm.auth')->group(function () {
         });
 
         // Credits — add-ons next to the plan (extra listings, Premium by credits): history, calculator, top up.
-        Route::prefix('credits')->name('credits.')->middleware('portal.approved')->controller(CreditController::class)->group(function () {
+        // Credits switched off in Admin › Credits: 404 for accounts with no credits left; buying is refused for all.
+        Route::prefix('credits')->name('credits.')->middleware(['portal.approved', 'credits.enabled'])->controller(CreditController::class)->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/export', 'export')->name('export');
             Route::get('/calculator', 'calculatorOptions')->name('calculator');

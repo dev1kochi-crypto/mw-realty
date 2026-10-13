@@ -1,6 +1,7 @@
 <template>
     <div v-if="!page" class="text-center py-5">
         <span v-if="!loadError" class="spinner-border text-primary"></span>
+        <div v-else-if="unavailable" class="text-muted"><i class="fas fa-coins d-block fs-3 mb-2 opacity-50"></i>{{ loadError }}</div>
         <div v-else class="text-muted">{{ loadError }} <button type="button" class="btn btn-link" @click="load">Try again</button></div>
     </div>
     <div v-else class="crp">
@@ -11,7 +12,7 @@
             </div>
         </div>
 
-        <div v-if="!page.enabled" class="alert alert-warning small">Credits are switched off by MW Realty at the moment — your history stays here.</div>
+        <div v-if="!page.enabled && !page.is_admin" class="alert alert-warning small"><i class="fas fa-info-circle me-1"></i> Buying credits is paused by MW Realty for now — you can still use the credits you have until they expire.</div>
 
         <!-- Balance + period totals -->
         <div class="crp-top">
@@ -162,6 +163,7 @@ const { refreshNavigation } = useSession();
 
 const page = ref(null);
 const loadError = ref('');
+const unavailable = ref(false); // credits switched off by MW Realty (API answers 404)
 const filters = reactive({ q: '', from: '', to: '' });
 const calculatorOpen = ref(false);
 const topUpOpen = ref(false);
@@ -197,7 +199,7 @@ const planFull = computed(() => planRows.value.some((r) => r.full));
 const planNote = computed(() => {
     const resets = page.value?.plan?.resets ? formatDate(page.value.plan.resets) : null;
     const full = planRows.value.filter((r) => r.full).map((r) => r.label.toLowerCase());
-    if (full.length) return `${ucfirst(full.join(' and '))} used up${resets ? ` until ${resets}` : ''} — add more with credits${page.value.wallet?.balance ? '' : ' (buy some first)'}.`;
+    if (full.length) return `${ucfirst(full.join(' and '))} used up${resets ? ` until ${resets}` : ''} — add more with credits${page.value.wallet?.balance || !page.value.top_up.allowed ? '' : ' (buy some first)'}.`;
     if (planRows.value.some((r) => r.near)) return `Almost used up — once it is, credits let you keep going${resets ? ` until it resets on ${resets}` : ''}.`;
     return resets ? `Your allowance resets on ${resets}. Credits are only needed beyond it.` : 'Credits are only needed beyond your plan.';
 });
@@ -220,7 +222,10 @@ function load() {
             filters.to = res.data.range.to;
             refreshNavigation().catch(() => {}); // keep the sidebar meter in step
         })
-        .catch((e) => { loadError.value = errorMessage(e); });
+        .catch((e) => {
+            unavailable.value = e.response?.status === 404;
+            loadError.value = errorMessage(e);
+        });
 }
 
 function applyFilters() {

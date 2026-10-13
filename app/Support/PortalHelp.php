@@ -46,7 +46,6 @@ class PortalHelp
         if (preg_match('/^[a-z0-9-]+$/', $topic) !== 1) {
             return null;
         }
-
         return HelpGuide::active()->where('topic', $topic)->first();
     }
 }

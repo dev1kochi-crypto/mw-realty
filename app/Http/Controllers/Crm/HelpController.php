@@ -22,7 +22,10 @@ class HelpController extends Controller
     public function index()
     {
         return response()->json([
-            'data' => HelpGuide::active()->orderBy('title')->get()
+            'data' => HelpGuide::active()->orderBy('title')
+                // Credits switched off and none left → no credits guide.
+                ->when(!\App\Services\CreditService::shownTo(app(\App\Services\Crm\OwnerContext::class)->owner()), fn ($q) => $q->where('topic', '!=', 'credits'))
+                ->get()
                 ->map(fn (HelpGuide $guide) => ['topic' => $guide->topic, ...$guide->toGuide()]),
         ]);
     }
@@ -41,6 +44,7 @@ class HelpController extends Controller
     {
         $guide = PortalHelp::load($topic);
         abort_unless($guide, 404);
+        abort_if($topic === 'credits' && !\App\Services\CreditService::shownTo(app(\App\Services\Crm\OwnerContext::class)->owner()), 404);
 
         return response()->json($guide);
     }
