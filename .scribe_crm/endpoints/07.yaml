@@ -497,7 +497,7 @@ endpoints:
         name: permit_type
         description: ''
         required: false
-        example: dtcm
+        example: rera
         type: string
         enumValues:
           - rera
@@ -511,7 +511,7 @@ endpoints:
         name: permit_city
         description: ''
         required: false
-        example: al_ain
+        example: other
         type: string
         enumValues:
           - al_ain
@@ -535,7 +535,7 @@ endpoints:
         name: availability
         description: ''
         required: false
-        example: immediately
+        example: from_date
         type: string
         enumValues:
           - immediately
@@ -748,7 +748,7 @@ endpoints:
         name: published_at
         description: 'Must be a valid date.'
         required: false
-        example: '2026-10-14T04:27:42'
+        example: '2026-10-14T04:41:13'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -1153,10 +1153,10 @@ endpoints:
       property_attributes:
         - wvownkbamlnfngefbeilf
       rental_period: zsyuxoezbdtabptcyyere
-      permit_type: dtcm
-      permit_city: al_ain
+      permit_type: rera
+      permit_city: other
       permit_token: vrljcbwkthjnescwsestc
-      availability: immediately
+      availability: from_date
       available_dates:
         - '2026-10-14'
       developer: ouxpqsydkigioyoyprjkf
@@ -1175,7 +1175,7 @@ endpoints:
       view: mbiuqxdnvttnwpjqkxxmu
       nearby_places:
         - 17
-      published_at: '2026-10-14T04:27:42'
+      published_at: '2026-10-14T04:41:13'
       order_index: 45
       metadata:
         meta_title: qeopfuudtdsufvyvddqam
@@ -1768,7 +1768,7 @@ endpoints:
         name: permit_type
         description: ''
         required: false
-        example: none
+        example: dtcm
         type: string
         enumValues:
           - rera
@@ -2019,7 +2019,7 @@ endpoints:
         name: published_at
         description: 'Must be a valid date.'
         required: false
-        example: '2026-10-14T04:27:42'
+        example: '2026-10-14T04:41:13'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -2413,7 +2413,7 @@ endpoints:
       property_attributes:
         - wvownkbamlnfngefbeilf
       rental_period: zsyuxoezbdtabptcyyere
-      permit_type: none
+      permit_type: dtcm
       permit_city: al_ain
       permit_token: vrljcbwkthjnescwsestc
       availability: from_date
@@ -2435,7 +2435,7 @@ endpoints:
       view: mbiuqxdnvttnwpjqkxxmu
       nearby_places:
         - 17
-      published_at: '2026-10-14T04:27:42'
+      published_at: '2026-10-14T04:41:13'
       order_index: 45
       metadata:
         meta_title: qeopfuudtdsufvyvddqam

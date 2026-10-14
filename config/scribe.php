@@ -104,6 +104,8 @@ return [
                 'api/crm/*',
                 // Server-to-server webhooks, not for the app.
                 'POST /api/stripe/webhook', 'GET /api/webhooks/facebook', 'POST /api/webhooks/facebook',
+                // The website's copy of POST /api/customer/settings (same endpoint; the app uses POST).
+                'PUT /api/customer/settings',
             ],
         ],
     ],

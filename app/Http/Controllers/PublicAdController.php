@@ -23,7 +23,8 @@ class PublicAdController extends Controller
      * Ad banner
      *
      * One active ad for a screen (picked at random when several run), or `false` when there is
-     * none (hide the slot). Use **Ad slider** to show all of them.
+     * none (hide the slot). Kept for older clients — the website's ad slots are sliders that show
+     * every running ad: use **Ad slider** (`/api/ads/slides`).
      *
      * @queryParam placement string home, property-details, … Example: home
      * @queryParam lang string Example: en

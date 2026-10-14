@@ -33,6 +33,9 @@ class HomeController extends Controller
      * luxury, why-choose-us, communities, popular places, testimonials, contact. Property lists
      * inside are shuffled on each call.
      *
+     * `ad` is a single ad, kept for older clients. The home ad slider shows every running ad:
+     * load it from **Ad slider** (`/api/ads/slides?placement=home`).
+     *
      * @queryParam lang string Example: en
      */
     public function index(Request $request)

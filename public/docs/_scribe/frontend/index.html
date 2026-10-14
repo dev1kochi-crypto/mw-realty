@@ -213,8 +213,8 @@
                                                                                 <li class="tocify-item level-2" data-unique="user-account-GETapi-customer-me">
                                 <a href="#user-account-GETapi-customer-me">Dashboard</a>
                             </li>
-                                                                                <li class="tocify-item level-2" data-unique="user-account-PUTapi-customer-settings">
-                                <a href="#user-account-PUTapi-customer-settings">Update profile</a>
+                                                                                <li class="tocify-item level-2" data-unique="user-account-POSTapi-customer-settings">
+                                <a href="#user-account-POSTapi-customer-settings">Update profile</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="user-account-DELETEapi-customer-account">
                                 <a href="#user-account-DELETEapi-customer-account">Delete account</a>
@@ -996,6 +996,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Every home section in one request: banner, brands, ad, developments, premium properties,
 luxury, why-choose-us, communities, popular places, testimonials, contact. Property lists
 inside are shuffled on each call.</p>
+<p><code>ad</code> is a single ad, kept for older clients. The home ad slider shows every running ad:
+load it from <strong>Ad slider</strong> (<code>/api/ads/slides?placement=home</code>).</p>
 
 <span id="example-requests-GETapi-home">
 <blockquote>Example request:</blockquote>
@@ -1319,7 +1321,7 @@ under each filter's <code>key</code>.</p>
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
     --data "{
-    \"page\": \"listing\",
+    \"page\": \"home\",
     \"lang\": \"vmqeopfuu\",
     \"scope\": \"marketing\"
 }"
@@ -1346,7 +1348,7 @@ const headers = {
 };
 
 let body = {
-    "page": "listing",
+    "page": "home",
     "lang": "vmqeopfuu",
     "scope": "marketing"
 };
@@ -1489,10 +1491,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="page"                data-endpoint="GETapi-property-filters"
-               value="listing"
+               value="home"
                data-component="body">
     <br>
-<p>Example: <code>listing</code></p>
+<p>Example: <code>home</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>home</code></li> <li><code>listing</code></li></ul>
         </div>
@@ -1809,7 +1811,7 @@ returns an empty list). Pass a picked suggestion back as <code>city=</code> / <c
     --data "{
     \"q\": \"vmqeopfuudtdsufvyvddq\",
     \"lang\": \"amniihfqc\",
-    \"scope\": \"all\"
+    \"scope\": \"commercial\"
 }"
 </code></pre></div>
 
@@ -1836,7 +1838,7 @@ const headers = {
 let body = {
     "q": "vmqeopfuudtdsufvyvddq",
     "lang": "amniihfqc",
-    "scope": "all"
+    "scope": "commercial"
 };
 
 fetch(url, {
@@ -2001,10 +2003,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="scope"                data-endpoint="GETapi-location-suggestions"
-               value="all"
+               value="commercial"
                data-component="body">
     <br>
-<p>Example: <code>all</code></p>
+<p>Example: <code>commercial</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>all</code></li> <li><code>commercial</code></li></ul>
         </div>
@@ -3167,7 +3169,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </p>
 
 <p>One active ad for a screen (picked at random when several run), or <code>false</code> when there is
-none (hide the slot). Use <strong>Ad slider</strong> to show all of them.</p>
+none (hide the slot). Kept for older clients — the website's ad slots are sliders that show
+every running ad: use <strong>Ad slider</strong> (<code>/api/ads/slides</code>).</p>
 
 <span id="example-requests-GETapi-ads">
 <blockquote>Example request:</blockquote>
@@ -6404,7 +6407,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                 </form>
 
-                    <h2 id="user-account-PUTapi-customer-settings">Update profile</h2>
+                    <h2 id="user-account-POSTapi-customer-settings">Update profile</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
@@ -6413,12 +6416,12 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Send as <code>multipart/form-data</code> when uploading an avatar. Use <code>POST</code> from the app — PHP does
 not parse file uploads on <code>PUT</code> (the <code>PUT</code> route is kept for the website).</p>
 
-<span id="example-requests-PUTapi-customer-settings">
+<span id="example-requests-POSTapi-customer-settings">
 <blockquote>Example request:</blockquote>
 
 
 <div class="bash-example">
-    <pre><code class="language-bash">curl --request PUT \
+    <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/customer/settings" \
     --header "Authorization: Bearer {YOUR_TOKEN}" \
     --header "Content-Type: multipart/form-data" \
@@ -6430,7 +6433,7 @@ not parse file uploads on <code>PUT</code> (the <code>PUT</code> route is kept f
     --form "location=Dubai Marina"\
     --form "password=newSecret123"\
     --form "password_confirmation=newSecret123"\
-    --form "avatar=@C:\Users\User\AppData\Local\Temp\phpB171.tmp" </code></pre></div>
+    --form "avatar=@C:\Users\User\AppData\Local\Temp\php137C.tmp" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -6455,14 +6458,14 @@ body.append('password_confirmation', 'newSecret123');
 body.append('avatar', document.querySelector('input[name="avatar"]').files[0]);
 
 fetch(url, {
-    method: "PUT",
+    method: "POST",
     headers,
     body,
 }).then(response =&gt; response.json());</code></pre></div>
 
 </span>
 
-<span id="example-responses-PUTapi-customer-settings">
+<span id="example-responses-POSTapi-customer-settings">
             <blockquote>
             <p>Example response (200):</p>
         </blockquote>
@@ -6474,52 +6477,48 @@ fetch(url, {
 }</code>
  </pre>
     </span>
-<span id="execution-results-PUTapi-customer-settings" hidden>
+<span id="execution-results-POSTapi-customer-settings" hidden>
     <blockquote>Received response<span
-                id="execution-response-status-PUTapi-customer-settings"></span>:
+                id="execution-response-status-POSTapi-customer-settings"></span>:
     </blockquote>
-    <pre class="json"><code id="execution-response-content-PUTapi-customer-settings"
+    <pre class="json"><code id="execution-response-content-POSTapi-customer-settings"
       data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
 </span>
-<span id="execution-error-PUTapi-customer-settings" hidden>
+<span id="execution-error-POSTapi-customer-settings" hidden>
     <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-PUTapi-customer-settings">
+    <pre><code id="execution-error-message-POSTapi-customer-settings">
 
 Tip: Check that you&#039;re properly connected to the network.
 If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
 You can check the Dev Tools console for debugging information.</code></pre>
 </span>
-<form id="form-PUTapi-customer-settings" data-method="PUT"
+<form id="form-POSTapi-customer-settings" data-method="POST"
       data-path="api/customer/settings"
       data-authed="1"
       data-hasfiles="1"
       data-isarraybody="0"
       autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('PUTapi-customer-settings', this);">
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-customer-settings', this);">
     <h3>
         Request&nbsp;&nbsp;&nbsp;
                     <button type="button"
                     style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-PUTapi-customer-settings"
-                    onclick="tryItOut('PUTapi-customer-settings');">Try it out ⚡
+                    id="btn-tryout-POSTapi-customer-settings"
+                    onclick="tryItOut('POSTapi-customer-settings');">Try it out ⚡
             </button>
             <button type="button"
                     style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-PUTapi-customer-settings"
-                    onclick="cancelTryOut('PUTapi-customer-settings');" hidden>Cancel 🛑
+                    id="btn-canceltryout-POSTapi-customer-settings"
+                    onclick="cancelTryOut('POSTapi-customer-settings');" hidden>Cancel 🛑
             </button>&nbsp;&nbsp;
             <button type="submit"
                     style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-PUTapi-customer-settings"
+                    id="btn-executetryout-POSTapi-customer-settings"
                     data-initial-text="Send Request 💥"
                     data-loading-text="⏱ Sending..."
                     hidden>Send Request 💥
             </button>
             </h3>
-            <p>
-            <small class="badge badge-darkblue">PUT</small>
-            <b><code>api/customer/settings</code></b>
-        </p>
             <p>
             <small class="badge badge-black">POST</small>
             <b><code>api/customer/settings</code></b>
@@ -6531,7 +6530,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="Authorization" class="auth-value"               data-endpoint="PUTapi-customer-settings"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-customer-settings"
                value="Bearer {YOUR_TOKEN}"
                data-component="header">
     <br>
@@ -6543,7 +6542,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="PUTapi-customer-settings"
+                              name="Content-Type"                data-endpoint="POSTapi-customer-settings"
                value="multipart/form-data"
                data-component="header">
     <br>
@@ -6555,7 +6554,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="PUTapi-customer-settings"
+                              name="Accept"                data-endpoint="POSTapi-customer-settings"
                value="application/json"
                data-component="header">
     <br>
@@ -6567,7 +6566,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="X-Device-Id"                data-endpoint="PUTapi-customer-settings"
+                              name="X-Device-Id"                data-endpoint="POSTapi-customer-settings"
                value="{DEVICE_ID}"
                data-component="header">
     <br>
@@ -6580,7 +6579,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="name"                data-endpoint="PUTapi-customer-settings"
+                              name="name"                data-endpoint="POSTapi-customer-settings"
                value="Sara Ahmed"
                data-component="body">
     <br>
@@ -6592,7 +6591,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="email"                data-endpoint="PUTapi-customer-settings"
+                              name="email"                data-endpoint="POSTapi-customer-settings"
                value="buyer@example.com"
                data-component="body">
     <br>
@@ -6604,7 +6603,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="phone"                data-endpoint="PUTapi-customer-settings"
+                              name="phone"                data-endpoint="POSTapi-customer-settings"
                value="+971 50 123 4567"
                data-component="body">
     <br>
@@ -6616,7 +6615,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="location"                data-endpoint="PUTapi-customer-settings"
+                              name="location"                data-endpoint="POSTapi-customer-settings"
                value="Dubai Marina"
                data-component="body">
     <br>
@@ -6628,7 +6627,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="password"                data-endpoint="PUTapi-customer-settings"
+                              name="password"                data-endpoint="POSTapi-customer-settings"
                value="newSecret123"
                data-component="body">
     <br>
@@ -6640,11 +6639,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
  &nbsp;
                 <input type="file" style="display: none"
-                              name="avatar"                data-endpoint="PUTapi-customer-settings"
+                              name="avatar"                data-endpoint="POSTapi-customer-settings"
                value=""
                data-component="body">
     <br>
-<p>Image, max 2 MB. Example: <code>C:\Users\User\AppData\Local\Temp\phpB171.tmp</code></p>
+<p>Image, max 2 MB. Example: <code>C:\Users\User\AppData\Local\Temp\php137C.tmp</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>password_confirmation</code></b>&nbsp;&nbsp;
@@ -6652,7 +6651,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="password_confirmation"                data-endpoint="PUTapi-customer-settings"
+                              name="password_confirmation"                data-endpoint="POSTapi-customer-settings"
                value="newSecret123"
                data-component="body">
     <br>
@@ -11942,7 +11941,7 @@ Saves to Careers &gt; Candidates and emails admin.</p>
     --form "designation=nkygloigmkwxphlvazjrc"\
     --form "additional_information=nfbaqywuxhgjjmzuxjubq"\
     --form "privacy=1"\
-    --form "attachment=@C:\Users\User\AppData\Local\Temp\phpB0B3.tmp" </code></pre></div>
+    --form "attachment=@C:\Users\User\AppData\Local\Temp\php129F.tmp" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -12177,7 +12176,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The CV: PDF, DOC or DOCX, max 5 MB. Example: <code>C:\Users\User\AppData\Local\Temp\phpB0B3.tmp</code></p>
+<p>The CV: PDF, DOC or DOCX, max 5 MB. Example: <code>C:\Users\User\AppData\Local\Temp\php129F.tmp</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>privacy</code></b>&nbsp;&nbsp;

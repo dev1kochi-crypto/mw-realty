@@ -152,7 +152,9 @@ Route::get('/customer/session', [\App\Http\Controllers\Api\CustomerController::c
 Route::prefix('customer')->middleware('auth:sanctum')->controller(\App\Http\Controllers\Api\CustomerController::class)->group(function () {
     Route::get('/me', 'me');
     // POST as well as PUT: PHP only parses multipart file uploads (the avatar) on POST.
-    Route::match(['put', 'post'], '/settings', 'updateSettings');
+    // Two routes, not Route::match — the API docs only pick up a route's first method.
+    Route::put('/settings', 'updateSettings');
+    Route::post('/settings', 'updateSettings');
     Route::delete('/account', 'destroyAccount');
     Route::get('/wishlist', 'wishlist');
     Route::post('/wishlist/{property}', 'toggleWishlist');

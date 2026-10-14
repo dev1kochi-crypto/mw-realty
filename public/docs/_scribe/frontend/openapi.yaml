@@ -151,7 +151,7 @@ paths:
     get:
       summary: 'Home screen'
       operationId: homeScreen
-      description: "Every home section in one request: banner, brands, ad, developments, premium properties,\nluxury, why-choose-us, communities, popular places, testimonials, contact. Property lists\ninside are shuffled on each call."
+      description: "Every home section in one request: banner, brands, ad, developments, premium properties,\nluxury, why-choose-us, communities, popular places, testimonials, contact. Property lists\ninside are shuffled on each call.\n\n`ad` is a single ad, kept for older clients. The home ad slider shows every running ad:\nload it from **Ad slider** (`/api/ads/slides?placement=home`)."
       parameters:
         -
           in: query
@@ -267,7 +267,7 @@ paths:
                 page:
                   type: string
                   description: ''
-                  example: listing
+                  example: home
                   enum:
                     - home
                     - listing
@@ -645,7 +645,7 @@ paths:
                 scope:
                   type: string
                   description: ''
-                  example: all
+                  example: commercial
                   enum:
                     - all
                     - commercial
@@ -1198,7 +1198,7 @@ paths:
     get:
       summary: 'Ad banner'
       operationId: adBanner
-      description: "One active ad for a screen (picked at random when several run), or `false` when there is\nnone (hide the slot). Use **Ad slider** to show all of them."
+      description: "One active ad for a screen (picked at random when several run), or `false` when there is\nnone (hide the slot). Kept for older clients — the website's ad slots are sliders that show\nevery running ad: use **Ad slider** (`/api/ads/slides`)."
       parameters:
         -
           in: query
@@ -2494,7 +2494,7 @@ paths:
       tags:
         - 'User Account'
   /api/customer/settings:
-    put:
+    post:
       summary: 'Update profile'
       operationId: updateProfile
       description: "Send as `multipart/form-data` when uploading an avatar. Use `POST` from the app — PHP does\nnot parse file uploads on `PUT` (the `PUT` route is kept for the website)."

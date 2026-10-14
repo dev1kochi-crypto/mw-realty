@@ -17,7 +17,8 @@ endpoints:
       title: 'Ad banner'
       description: |-
         One active ad for a screen (picked at random when several run), or `false` when there is
-        none (hide the slot). Use **Ad slider** to show all of them.
+        none (hide the slot). Kept for older clients — the website's ad slots are sliders that show
+        every running ad: use **Ad slider** (`/api/ads/slides`).
       authenticated: false
       deprecated: false
     headers:

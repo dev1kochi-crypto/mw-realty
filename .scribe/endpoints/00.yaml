@@ -81,7 +81,7 @@ endpoints:
         name: page
         description: ''
         required: false
-        example: listing
+        example: home
         type: string
         enumValues:
           - home
@@ -116,7 +116,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      page: listing
+      page: home
       lang: vmqeopfuu
       scope: marketing
     fileParameters: []
@@ -311,7 +311,7 @@ endpoints:
         name: scope
         description: ''
         required: false
-        example: all
+        example: commercial
         type: string
         enumValues:
           - all
@@ -322,7 +322,7 @@ endpoints:
     cleanBodyParameters:
       q: vmqeopfuudtdsufvyvddq
       lang: amniihfqc
-      scope: all
+      scope: commercial
     fileParameters: []
     responses: []
     responseFields: []

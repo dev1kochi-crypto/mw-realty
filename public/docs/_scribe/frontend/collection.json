@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "MW Realty \u2014 Frontend API",
-        "_postman_id": "d62643de-bc86-44a7-af0e-cd7368265144",
+        "_postman_id": "0288c8ec-b680-489b-9f3e-eea56cb3b5d9",
         "description": "REST API for the MW Realty mobile app: property search, listings, agents, content, customer accounts, enquiries and the AI assistant.",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -199,7 +199,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Every home section in one request: banner, brands, ad, developments, premium properties,\nluxury, why-choose-us, communities, popular places, testimonials, contact. Property lists\ninside are shuffled on each call.",
+                        "description": "Every home section in one request: banner, brands, ad, developments, premium properties,\nluxury, why-choose-us, communities, popular places, testimonials, contact. Property lists\ninside are shuffled on each call.\n\n`ad` is a single ad, kept for older clients. The home ad slider shows every running ad:\nload it from **Ad slider** (`\/api\/ads\/slides?placement=home`).",
                         "auth": {
                             "type": "noauth"
                         }
@@ -302,7 +302,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"page\":\"listing\",\"lang\":\"vmqeopfuu\",\"scope\":\"marketing\"}"
+                            "raw": "{\"page\":\"home\",\"lang\":\"vmqeopfuu\",\"scope\":\"marketing\"}"
                         },
                         "description": "The filters to render (selects with their options and live listing counts, number sliders\nwith min\/max\/step), in admin order. Pass the chosen `value`s back to the listing endpoints\nunder each filter's `key`.",
                         "auth": {
@@ -413,7 +413,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"q\":\"vmqeopfuudtdsufvyvddq\",\"lang\":\"amniihfqc\",\"scope\":\"all\"}"
+                            "raw": "{\"q\":\"vmqeopfuudtdsufvyvddq\",\"lang\":\"amniihfqc\",\"scope\":\"commercial\"}"
                         },
                         "description": "Cities, communities and addresses matching what the user typed (2+ characters; fewer\nreturns an empty list). Pass a picked suggestion back as `city=` \/ `community=` \/\n`location=` on the listing endpoints. Debounce on the client \u2014 limited to 120 calls\/minute.",
                         "auth": {
@@ -889,7 +889,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "One active ad for a screen (picked at random when several run), or `false` when there is\nnone (hide the slot). Use **Ad slider** to show all of them.",
+                        "description": "One active ad for a screen (picked at random when several run), or `false` when there is\nnone (hide the slot). Kept for older clients \u2014 the website's ad slots are sliders that show\nevery running ad: use **Ad slider** (`\/api\/ads\/slides`).",
                         "auth": {
                             "type": "noauth"
                         }
@@ -1787,11 +1787,6 @@
                                     "key": "avatar",
                                     "src": [],
                                     "type": "file"
-                                },
-                                {
-                                    "key": "_method",
-                                    "value": "PUT",
-                                    "type": "text"
                                 }
                             ]
                         },

@@ -124,7 +124,6 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - PUT
       - POST
     uri: api/customer/settings
     metadata:
