@@ -107,7 +107,7 @@ endpoints:
         name: scope
         description: ''
         required: false
-        example: marketing
+        example: premium
         type: string
         enumValues:
           - residential
@@ -120,9 +120,104 @@ endpoints:
     cleanBodyParameters:
       page: home
       lang: vmqeopfuu
-      scope: marketing
+      scope: premium
     fileParameters: []
     responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/search-filters/{page}'
+    metadata:
+      custom: []
+      groupName: 'Search & Filters'
+      groupDescription: |-
+
+        The search filters of one listing page, as set in Admin › Filters › Search Filters. The home
+        banner search is fixed and keeps using `GET /api/property-filters?page=home`.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Page search filters'
+      description: |-
+        Key-value: `filters` is keyed by each filter's key, and every option list is `{ value: label }`.
+        Send the picked values back to the listing endpoint under the filter's `param` (or `params.min`
+        / `params.max` for a range). Checkbox filters (`multiple: true`) take several values,
+        comma-separated. `order` / `options_order` give the admin's order.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      page:
+        custom: []
+        name: page
+        description: 'properties, commercial, premium or offplan.'
+        required: false
+        example: properties
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      page: properties
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters:
+      lang:
+        custom: []
+        name: lang
+        description: 'Must not be greater than 10 characters.'
+        required: false
+        example: vmqeopfuu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      lang: vmqeopfuu
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "page": "properties",
+            "filters": {
+              "property_type": {"label": "Property Type", "type": "checkbox", "placeholder": null, "param": "property_type", "multiple": true,
+                "options": {"apartment": "Apartment", "villa": "Villa"}, "options_order": ["apartment", "villa"], "counts": {"apartment": 42, "villa": 17}},
+              "bedrooms": {"label": "Bedrooms", "type": "radio", "placeholder": null, "param": "bedrooms", "multiple": false,
+                "options": {"1": "1", "2": "2", "5+": "5+"}, "options_order": ["1", "2", "5+"]},
+              "price": {"label": "Price", "type": "range", "placeholder": null, "min": 0, "max": 19000000, "step": 50000,
+                "params": {"min": "min_price", "max": "max_price"}},
+              "parking": {"label": "Parking", "type": "number", "placeholder": "Min. spaces", "min": 0, "max": 5, "step": 1, "compare": "min", "param": "min_parking"},
+              "keyword": {"label": "Keyword", "type": "text", "placeholder": "Title or reference", "param": "keyword"}
+            },
+            "order": ["property_type", "bedrooms", "price", "parking", "keyword"]
+          }
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null

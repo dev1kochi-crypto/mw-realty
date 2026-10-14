@@ -1,262 +1,31 @@
-name: 'CRM Integrations — Property Finder'
-description: |2-
+name: 'CRM Listing Permits'
+description: |-
 
-    Agency / independent agent: connect with their API key + secret (verified with Property Finder
-    first), sync — "Import all listings" the first time, then "Sync new listings" — and disconnect.
-    Agency agent: sees the agency's connection (key masked) and may sync it; can't change it.
-    Super Admin: reviews every imported listing (approve / reject) before it can go live.
+  Super Admin only: which listings' advertising permits are verified. The agency / agent validates
+  the permit in the property form (DLD / ADREC). Where Super Admin approval applies
+  (LISTING_SUPERADMIN_APPROVAL on, or a DTCM / None permit) the listing waits here to be approved;
+  otherwise a verified listing goes live by itself. Super Admin can take any listing down.
+  Rules: ListingComplianceService.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/crm/integrations/property-finder
+    uri: api/crm/listing-permits
     metadata:
       custom: []
-      groupName: 'CRM Integrations — Property Finder'
-      groupDescription: |2-
+      groupName: 'CRM Listing Permits'
+      groupDescription: |-
 
-          Agency / independent agent: connect with their API key + secret (verified with Property Finder
-          first), sync — "Import all listings" the first time, then "Sync new listings" — and disconnect.
-          Agency agent: sees the agency's connection (key masked) and may sync it; can't change it.
-          Super Admin: reviews every imported listing (approve / reject) before it can go live.
+        Super Admin only: which listings' advertising permits are verified. The agency / agent validates
+        the permit in the property form (DLD / ADREC). Where Super Admin approval applies
+        (LISTING_SUPERADMIN_APPROVAL on, or a DTCM / None permit) the listing waits here to be approved;
+        otherwise a verified listing goes live by itself. Super Admin can take any listing down.
+        Rules: ListingComplianceService.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Property Finder screen'
-      description: |-
-        Super Admin: connected accounts + listings waiting for review. Otherwise the account's
-        connection (key masked) with its last / running sync, or null when not connected.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/crm/integrations/property-finder
-    metadata:
-      custom: []
-      groupName: 'CRM Integrations — Property Finder'
-      groupDescription: |2-
-
-          Agency / independent agent: connect with their API key + secret (verified with Property Finder
-          first), sync — "Import all listings" the first time, then "Sync new listings" — and disconnect.
-          Agency agent: sees the agency's connection (key masked) and may sync it; can't change it.
-          Super Admin: reviews every imported listing (approve / reject) before it can go live.
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Connect / replace API keys'
-      description: |-
-        Saves (or replaces) the account's API key + secret, after Property Finder accepts them.
-        Connecting only saves the keys — importing is always started by hand.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      api_key:
-        custom: []
-        name: api_key
-        description: ''
-        required: true
-        example: pf_live_abc123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      api_secret:
-        custom: []
-        name: api_secret
-        description: ''
-        required: true
-        example: s3cr3t
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      api_key: pf_live_abc123
-      api_secret: s3cr3t
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/crm/integrations/property-finder/sync
-    metadata:
-      custom: []
-      groupName: 'CRM Integrations — Property Finder'
-      groupDescription: |2-
-
-          Agency / independent agent: connect with their API key + secret (verified with Property Finder
-          first), sync — "Import all listings" the first time, then "Sync new listings" — and disconnect.
-          Agency agent: sees the agency's connection (key masked) and may sync it; can't change it.
-          Super Admin: reviews every imported listing (approve / reject) before it can go live.
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Sync listings'
-      description: |-
-        mode=all: every live listing (first import / full re-check). mode=new: just the ones added since.
-        Runs in the background — poll `/integrations/property-finder/status`.
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      mode:
-        custom: []
-        name: mode
-        description: 'all | new.'
-        required: false
-        example: new
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      mode: new
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: api/crm/integrations/property-finder/status
-    metadata:
-      custom: []
-      groupName: 'CRM Integrations — Property Finder'
-      groupDescription: |2-
-
-          Agency / independent agent: connect with their API key + secret (verified with Property Finder
-          first), sync — "Import all listings" the first time, then "Sync new listings" — and disconnect.
-          Agency agent: sees the agency's connection (key masked) and may sync it; can't change it.
-          Super Admin: reviews every imported listing (approve / reject) before it can go live.
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Sync progress'
-      description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: '{"status": "running", "added": 12, "skipped": 3, "failed": 0, "waiting": false}'
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - DELETE
-    uri: api/crm/integrations/property-finder
-    metadata:
-      custom: []
-      groupName: 'CRM Integrations — Property Finder'
-      groupDescription: |2-
-
-          Agency / independent agent: connect with their API key + secret (verified with Property Finder
-          first), sync — "Import all listings" the first time, then "Sync new listings" — and disconnect.
-          Agency agent: sees the agency's connection (key masked) and may sync it; can't change it.
-          Super Admin: reviews every imported listing (approve / reject) before it can go live.
-      subgroup: ''
-      subgroupDescription: ''
-      title: Disconnect
-      description: 'Forgets the key. Imported properties stay, and are still never imported twice.'
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: api/crm/integrations/property-finder/review
-    metadata:
-      custom: []
-      groupName: 'CRM Integrations — Property Finder'
-      groupDescription: |2-
-
-          Agency / independent agent: connect with their API key + secret (verified with Property Finder
-          first), sync — "Import all listings" the first time, then "Sync new listings" — and disconnect.
-          Agency agent: sees the agency's connection (key masked) and may sync it; can't change it.
-          Super Admin: reviews every imported listing (approve / reject) before it can go live.
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Review queue (Super Admin)'
-      description: 'Imported listings by review status, newest first, 20 per page.'
+      title: 'List listings by permit status'
+      description: '20 per page, the most recently submitted / saved first, with the count per status.'
       authenticated: false
       deprecated: false
     headers:
@@ -269,7 +38,7 @@ endpoints:
       tab:
         custom: []
         name: tab
-        description: 'pending | approved | rejected.'
+        description: 'draft | pending | changes_requested | approved | expired.'
         required: false
         example: pending
         type: string
@@ -280,7 +49,7 @@ endpoints:
       q:
         custom: []
         name: q
-        description: 'Title, reference or account.'
+        description: 'Title, ref, permit no, agency or agent.'
         required: false
         example: marina
         type: string
@@ -315,73 +84,148 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/crm/integrations/property-finder/review
+      - GET
+    uri: 'api/crm/listing-permits/{id}'
     metadata:
       custom: []
-      groupName: 'CRM Integrations — Property Finder'
-      groupDescription: |2-
+      groupName: 'CRM Listing Permits'
+      groupDescription: |-
 
-          Agency / independent agent: connect with their API key + secret (verified with Property Finder
-          first), sync — "Import all listings" the first time, then "Sync new listings" — and disconnect.
-          Agency agent: sees the agency's connection (key masked) and may sync it; can't change it.
-          Super Admin: reviews every imported listing (approve / reject) before it can go live.
+        Super Admin only: which listings' advertising permits are verified. The agency / agent validates
+        the permit in the property form (DLD / ADREC). Where Super Admin approval applies
+        (LISTING_SUPERADMIN_APPROVAL on, or a DTCM / None permit) the listing waits here to be approved;
+        otherwise a verified listing goes live by itself. Super Admin can take any listing down.
+        Rules: ListingComplianceService.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Approve / reject imports (Super Admin)'
-      description: 'Approve → the listing joins the normal permit flow; reject → the property is removed for good.'
+      title: "A listing's permit review"
+      description: |-
+        The permit, what the authority's record says next to the ad, the checklist, the review
+        history, and which action applies (approve / take down).
       authenticated: false
       deprecated: false
     headers:
       Content-Type: application/json
       Accept: application/json
       X-Device-Id: '{DEVICE_ID}'
-    urlParameters: []
-    cleanUrlParameters: []
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the listing permit.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters:
-      action:
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/listing-permits/{id}/approve'
+    metadata:
+      custom: []
+      groupName: 'CRM Listing Permits'
+      groupDescription: |-
+
+        Super Admin only: which listings' advertising permits are verified. The agency / agent validates
+        the permit in the property form (DLD / ADREC). Where Super Admin approval applies
+        (LISTING_SUPERADMIN_APPROVAL on, or a DTCM / None permit) the listing waits here to be approved;
+        otherwise a verified listing goes live by itself. Super Admin can take any listing down.
+        Rules: ListingComplianceService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Approve & publish'
+      description: 'A listing waiting for Super Admin (PermitRules::needsApproval) — it goes live.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
         custom: []
-        name: action
-        description: 'approve | reject.'
+        name: id
+        description: 'The ID of the listing permit.'
         required: true
-        example: approve
+        example: '1562'
         type: string
         enumValues: []
-        exampleWasSpecified: true
+        exampleWasSpecified: false
         nullable: false
         deprecated: false
-      ids:
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/listing-permits/{id}/take-down'
+    metadata:
+      custom: []
+      groupName: 'CRM Listing Permits'
+      groupDescription: |-
+
+        Super Admin only: which listings' advertising permits are verified. The agency / agent validates
+        the permit in the property form (DLD / ADREC). Where Super Admin approval applies
+        (LISTING_SUPERADMIN_APPROVAL on, or a DTCM / None permit) the listing waits here to be approved;
+        otherwise a verified listing goes live by itself. Super Admin can take any listing down.
+        Rules: ListingComplianceService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Take a listing down'
+      description: 'Off the website (wrong details, a DLD complaint …) until its permit details are changed.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
         custom: []
-        name: ids
-        description: ''
+        name: id
+        description: 'The ID of the listing permit.'
         required: true
-        example:
-          - 10
-          - 11
-        type: 'integer[]'
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      note:
-        custom: []
-        name: note
-        description: 'Sent with a rejection.'
-        required: false
-        example: 'Duplicate listing'
+        example: '1562'
         type: string
         enumValues: []
-        exampleWasSpecified: true
-        nullable: true
+        exampleWasSpecified: false
+        nullable: false
         deprecated: false
-    cleanBodyParameters:
-      action: approve
-      ids:
-        - 10
-        - 11
-      note: 'Duplicate listing'
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
     fileParameters: []
     responses: []
     responseFields: []

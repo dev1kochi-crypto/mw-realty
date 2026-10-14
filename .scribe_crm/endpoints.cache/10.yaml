@@ -23,7 +23,9 @@ endpoints:
       subgroup: ''
       subgroupDescription: ''
       title: 'Make premium'
-      description: ''
+      description: |-
+        With `pay_with=credits` (agents / companies) it's bought with credits for `days` (7, 15 or 30)
+        instead of using the plan's quota; no end date is sent.
       authenticated: false
       deprecated: false
     headers:
@@ -61,9 +63,31 @@ endpoints:
       end_date:
         custom: []
         name: end_date
-        description: 'Y-m-d — required except for Super Admin.'
+        description: 'Y-m-d — required except for Super Admin and credits.'
         required: false
         example: '2026-11-08'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      days:
+        custom: []
+        name: days
+        description: '7, 15 or 30 — with credits.'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      pay_with:
+        custom: []
+        name: pay_with
+        description: 'plan | credits.'
+        required: false
+        example: credits
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -72,6 +96,8 @@ endpoints:
     cleanBodyParameters:
       start_date: '2026-10-10'
       end_date: '2026-11-08'
+      days: 15
+      pay_with: credits
     fileParameters: []
     responses: []
     responseFields: []

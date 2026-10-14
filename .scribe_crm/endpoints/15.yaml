@@ -1,63 +1,31 @@
-name: 'CRM Marketing Properties'
+name: 'CRM Advertisements (Super Admin)'
 description: |-
 
-  Super Admin only: pick agencies / agents, add their listings to the home "Realty Property" list
-  and order it. The first `home_limit` show on the home page, all of them on /marketing-properties.
-  Logic: MarketingPropertyService.
+  Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+  (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+  book (approve, or reject with a reason — the client is refunded), and per page how many client
+  ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/crm/marketing-properties
+    uri: api/crm/ads/manage
     metadata:
       custom: []
-      groupName: 'CRM Marketing Properties'
+      groupName: 'CRM Advertisements (Super Admin)'
       groupDescription: |-
 
-        Super Admin only: pick agencies / agents, add their listings to the home "Realty Property" list
-        and order it. The first `home_limit` show on the home page, all of them on /marketing-properties.
-        Logic: MarketingPropertyService.
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
       subgroup: ''
       subgroupDescription: ''
-      title: 'The marketing list'
-      description: 'In order, with how many of them show on the home page.'
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: api/crm/marketing-properties/accounts
-    metadata:
-      custom: []
-      groupName: 'CRM Marketing Properties'
-      groupDescription: |-
-
-        Super Admin only: pick agencies / agents, add their listings to the home "Realty Property" list
-        and order it. The first `home_limit` show on the home page, all of them on /marketing-properties.
-        Logic: MarketingPropertyService.
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Agencies & agents to pick from'
-      description: 'Searched and paged on the server, 20 per page (`next_page` null on the last one).'
+      title: "Overview + one tab's list"
+      description: |-
+        `tab=house` (MW Realty's ads, 15 per page, slide order) or `tab=client` (bookings, 20 per page).
+        Always includes the 30-day totals and the counts for both tabs.
       authenticated: false
       deprecated: false
     headers:
@@ -67,10 +35,43 @@ endpoints:
     urlParameters: []
     cleanUrlParameters: []
     queryParameters:
-      search:
+      tab:
         custom: []
-        name: search
-        description: ''
+        name: tab
+        description: 'house | client.'
+        required: false
+        example: client
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      state:
+        custom: []
+        name: state
+        description: 'house: all | live | scheduled | ended | off; client: pending | upcoming | live | past | all.'
+        required: false
+        example: pending
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      placement:
+        custom: []
+        name: placement
+        description: 'A page key.'
+        required: false
+        example: home
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      q:
+        custom: []
+        name: q
+        description: 'Name or client.'
         required: false
         example: marina
         type: string
@@ -90,7 +91,10 @@ endpoints:
         nullable: false
         deprecated: false
     cleanQueryParameters:
-      search: marina
+      tab: client
+      state: pending
+      placement: home
+      q: marina
       page: 1
     bodyParameters: []
     cleanBodyParameters: []
@@ -105,18 +109,19 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/crm/marketing-properties/properties
+    uri: api/crm/ads/manage/form-options
     metadata:
       custom: []
-      groupName: 'CRM Marketing Properties'
+      groupName: 'CRM Advertisements (Super Admin)'
       groupDescription: |-
 
-        Super Admin only: pick agencies / agents, add their listings to the home "Realty Property" list
-        and order it. The first `home_limit` show on the home page, all of them on /marketing-properties.
-        Logic: MarketingPropertyService.
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Listings of the chosen accounts'
+      title: 'Form options for an MW Realty ad: every page, the languages, image limits.'
       description: ''
       authenticated: false
       deprecated: false
@@ -126,64 +131,206 @@ endpoints:
       X-Device-Id: '{DEVICE_ID}'
     urlParameters: []
     cleanUrlParameters: []
-    queryParameters:
-      accounts:
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/ads/manage/properties
+    metadata:
+      custom: []
+      groupName: 'CRM Advertisements (Super Admin)'
+      groupDescription: |-
+
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Any active listing, for an ad that links to one — RemoteSelect's `{data, next_page}`."
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      q:
         custom: []
-        name: accounts
-        description: 'The agency / agent ids.'
-        required: true
-        example:
-          - 12
-          - 40
-        type: 'integer[]'
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      search:
-        custom: []
-        name: search
-        description: 'Title or reference.'
+        name: q
+        description: 'Must not be greater than 100 characters.'
         required: false
-        example: villa
+        example: vmqeopfuudtdsufvyvddq
         type: string
         enumValues: []
-        exampleWasSpecified: true
-        nullable: false
+        exampleWasSpecified: false
+        nullable: true
         deprecated: false
       page:
         custom: []
         name: page
-        description: ''
+        description: 'Must be at least 1.'
         required: false
-        example: 1
+        example: 2
         type: integer
         enumValues: []
-        exampleWasSpecified: true
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      q: vmqeopfuudtdsufvyvddq
+      page: 2
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/ads/manage/placements
+    metadata:
+      custom: []
+      groupName: 'CRM Advertisements (Super Admin)'
+      groupDescription: |-
+
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Per page: open to clients, client ads at once, credits per hour / day.'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: api/crm/ads/manage/placements
+    metadata:
+      custom: []
+      groupName: 'CRM Advertisements (Super Admin)'
+      groupDescription: |-
+
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      placements:
+        custom: []
+        name: placements
+        description: '{page key: {client_bookable, max_slots, credits_per_hour, credits_per_day}}.'
+        required: true
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
         nullable: false
         deprecated: false
-    cleanQueryParameters:
-      accounts:
-        - 12
-        - 40
-      search: villa
-      page: 1
-    bodyParameters:
-      accounts:
+      'placements[].client_bookable':
         custom: []
-        name: accounts
+        name: 'placements[].client_bookable'
         description: ''
         required: false
-        example:
-          - 17
-        type: 'integer[]'
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'placements[].max_slots':
+        custom: []
+        name: 'placements[].max_slots'
+        description: 'Must be at least 0. Must not be greater than 50.'
+        required: true
+        example: 21
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'placements[].credits_per_hour':
+        custom: []
+        name: 'placements[].credits_per_hour'
+        description: 'Must be at least 0. Must not be greater than 1000000.'
+        required: true
+        example: 13
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'placements[].credits_per_day':
+        custom: []
+        name: 'placements[].credits_per_day'
+        description: 'Must be at least 0. Must not be greater than 1000000.'
+        required: true
+        example: 16
+        type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      accounts:
-        - 17
+      placements:
+        -
+          client_bookable: true
+          max_slots: 21
+          credits_per_hour: 13
+          credits_per_day: 16
     fileParameters: []
     responses: []
     responseFields: []
@@ -195,19 +342,22 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/crm/marketing-properties
+    uri: api/crm/ads/manage
     metadata:
       custom: []
-      groupName: 'CRM Marketing Properties'
+      groupName: 'CRM Advertisements (Super Admin)'
       groupDescription: |-
 
-        Super Admin only: pick agencies / agents, add their listings to the home "Realty Property" list
-        and order it. The first `home_limit` show on the home page, all of them on /marketing-properties.
-        Logic: MarketingPropertyService.
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Add listings'
-      description: 'They land at the top of the list. Returns the whole list again.'
+      title: 'Add an MW Realty ad'
+      description: |-
+        Multipart. Runs on its page from `start_date` to the end of `end_date` (Dubai days; both
+        optional = always on) while `status` is on. New ads go first in their page's slide order.
       authenticated: false
       deprecated: false
     headers:
@@ -218,24 +368,8 @@ endpoints:
     cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters:
-      property_ids:
-        custom: []
-        name: property_ids
-        description: ''
-        required: true
-        example:
-          - 101
-          - 102
-        type: 'integer[]'
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      property_ids:
-        - 101
-        - 102
+    bodyParameters: []
+    cleanBodyParameters: []
     fileParameters: []
     responses: []
     responseFields: []
@@ -246,19 +380,20 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/crm/marketing-properties/reorder
+      - GET
+    uri: 'api/crm/ads/manage/{id}'
     metadata:
       custom: []
-      groupName: 'CRM Marketing Properties'
+      groupName: 'CRM Advertisements (Super Admin)'
       groupDescription: |-
 
-        Super Admin only: pick agencies / agents, add their listings to the home "Realty Property" list
-        and order it. The first `home_limit` show on the home page, all of them on /marketing-properties.
-        Logic: MarketingPropertyService.
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Save the order'
+      title: "One ad (MW Realty's or a client's) with its report."
       description: ''
       authenticated: false
       deprecated: false
@@ -266,28 +401,73 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
       X-Device-Id: '{DEVICE_ID}'
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      property_ids:
+    urlParameters:
+      id:
         custom: []
-        name: property_ids
-        description: 'Every listing on the list, in the new order.'
+        name: id
+        description: ''
         required: true
-        example:
-          - 102
-          - 101
-        type: 'integer[]'
+        example: 12
+        type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-    cleanBodyParameters:
-      property_ids:
-        - 102
-        - 101
+    cleanUrlParameters:
+      id: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/crm/ads/manage/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM Advertisements (Super Admin)'
+      groupDescription: |-
+
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Change an MW Realty ad (multipart POST with `_method=PUT`).'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the manage.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
     fileParameters: []
     responses: []
     responseFields: []
@@ -299,18 +479,19 @@ endpoints:
     custom: []
     httpMethods:
       - DELETE
-    uri: 'api/crm/marketing-properties/{propertyId}'
+    uri: 'api/crm/ads/manage/{id}'
     metadata:
       custom: []
-      groupName: 'CRM Marketing Properties'
+      groupName: 'CRM Advertisements (Super Admin)'
       groupDescription: |-
 
-        Super Admin only: pick agencies / agents, add their listings to the home "Realty Property" list
-        and order it. The first `home_limit` show on the home page, all of them on /marketing-properties.
-        Logic: MarketingPropertyService.
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Remove a listing from the list'
+      title: 'Delete an MW Realty ad (client ads are rejected instead, so they get refunded).'
       description: ''
       authenticated: false
       deprecated: false
@@ -319,10 +500,10 @@ endpoints:
       Accept: application/json
       X-Device-Id: '{DEVICE_ID}'
     urlParameters:
-      propertyId:
+      id:
         custom: []
-        name: propertyId
-        description: ''
+        name: id
+        description: 'The ID of the manage.'
         required: true
         example: '1562'
         type: string
@@ -331,11 +512,235 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      propertyId: '1562'
+      id: '1562'
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
     cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/ads/manage/{id}/toggle'
+    metadata:
+      custom: []
+      groupName: 'CRM Advertisements (Super Admin)'
+      groupDescription: |-
+
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Switch an MW Realty ad on / off.'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the manage.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/ads/manage/{id}/move'
+    metadata:
+      custom: []
+      groupName: 'CRM Advertisements (Super Admin)'
+      groupDescription: |-
+
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Move in the slide order'
+      description: |-
+        Swaps the ad with the one before / after it on the same page (the slider shows them in this
+        order, after any client ads).
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the manage.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      direction:
+        custom: []
+        name: direction
+        description: 'up | down.'
+        required: true
+        example: up
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      direction: up
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/ads/manage/{id}/approve'
+    metadata:
+      custom: []
+      groupName: 'CRM Advertisements (Super Admin)'
+      groupDescription: |-
+
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Approve a client's ad — it runs in its booked hours."
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the manage.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/ads/manage/{id}/reject'
+    metadata:
+      custom: []
+      groupName: 'CRM Advertisements (Super Admin)'
+      groupDescription: |-
+
+        Super Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads
+        (any page, an optional date window, on/off, slide order), the review of the ads agencies / agents
+        book (approve, or reject with a reason — the client is refunded), and per page how many client
+        ads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Reject / take down a client's ad"
+      description: |-
+        The client sees the reason. Not run yet → their credits / plan ad come back; live → it comes
+        off the website now, and the time used isn't refunded.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the manage.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      note:
+        custom: []
+        name: note
+        description: ''
+        required: true
+        example: 'The banner text is too small to read.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      note: 'The banner text is too small to read.'
     fileParameters: []
     responses: []
     responseFields: []

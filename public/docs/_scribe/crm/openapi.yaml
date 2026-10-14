@@ -11,6 +11,12 @@ tags:
     name: 'CRM Account'
     description: "\nThe bell icon — the signed-in account's notifications (new leads, imports finished, KYC\napproved…). For an agent / company their own; for a Super Admin (web app) the CMS admin's."
   -
+    name: 'CRM Advertisements'
+    description: "\nWebsite advertising for agencies / independent agents whose plan includes it: book a banner on a\npage of the website (it runs in that page's ad slider) for some hours or days, follow it through\nMW Realty's review, and see how often it was shown and clicked. Rules: App\\Services\\AdBookingService.\nTimes are sent and shown in Dubai time."
+  -
+    name: 'CRM Advertisements (Super Admin)'
+    description: "\nSuper Admin's side of CRM › Advertisements (it replaced CMS › Ad Management): MW Realty's own ads\n(any page, an optional date window, on/off, slide order), the review of the ads agencies / agents\nbook (approve, or reject with a reason — the client is refunded), and per page how many client\nads run at once and their credit prices. Client bookings themselves: AdController / AdBookingService."
+  -
     name: 'CRM Agents'
     description: "\nAgent roster: Super Admin sees every agent across every agency; a Company manages only its own —\nevery membership is looked up already scoped to that agency (findMembership()) and then checked\nby AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here\n(its side is My Agency).\n\nAdding a brand-new agent or inviting an existing one both need Super Admin approval before the\nagent becomes active; all state changes go through AgencyMembershipService. Lead assignment\nsettings and \"distribute unassigned\" are the Leads endpoints (/leads/assignment-settings, /leads/distribute)."
   -
@@ -19,6 +25,9 @@ tags:
   -
     name: 'CRM Contact Us'
     description: "\nContact Us for agents/companies — a support-ticket desk: raise a ticket with an issue type,\nfollow its status, and keep the conversation with MW Realty support in one thread.\nAgent / company accounts only (Super Admin answers tickets in the CMS); every query is scoped\nto the signed-in account's own tickets, so another account's ticket id is a 404."
+  -
+    name: 'CRM Credits'
+    description: "\nCredits — add-ons next to the plan: an extra listing once the plan's allowance is used up, or\nPremium for 7 / 15 / 30 days without using the plan's premium quota. Bought with Top Up (card, via\nStripe: POST /credits/top-up/intent → confirm the card with Stripe → POST /credits/top-up/complete),\nvalid for a set number of days. An agency's agents spend the agency's credits. See CreditService."
   -
     name: 'CRM Dashboard'
     description: "\nThe signed-in account's dashboard — everything scoped to its own leads and listings; a Super\nAdmin (web app) sees every account's. Reachable before KYC approval.\n\nLinks (`alerts`, `shortcuts`) carry `route` (a CRM screen: name + query) or `url` (a page not\nin the CRM app yet)."
@@ -51,7 +60,7 @@ tags:
     description: "\nThe stages, tags and sources used on leads — your own, plus MW Realty's shared ones\n(`is_global: true`), which you can use but not change. A Super Admin manages the shared ones\n(through the shared \"Admin\" owner, see OwnerContext::effectiveOwnerId()). Approved accounts only."
   -
     name: 'CRM Master — Property Options'
-    description: "\nSuper Admin only: the option lists behind the property form's Property Type, Listing Type,\nCompletion Status and Furnishing dropdowns, plus the Nearby Places \"Type\" dropdown — the same\nFilter / FilterValue records the website filters use. Agents / agencies ask for new options via a ticket."
+    description: "\nSuper Admin only: the option lists behind the property form's dropdowns (Property Type, Listing\nType, Category, Location, Furnishing, …), the bedroom / bathroom choices and the Nearby Places\n\"Type\" dropdown — the Filter / FilterValue records the website's Search Filters take their\n\"From the database\" values from. Agents / agencies ask for new options via a ticket."
   -
     name: 'CRM Nearby Places'
     description: "\nNearby landmarks (schools, hospitals, restaurants, attractions, ...) that properties can be\ntagged with — see Property::nearbyPlaces() / the property form's \"Nearby Places\" tab.\n\nSuper Admin (portal_user_id NULL, \"Shared\") and Agents/Companies can all add places, and every\nplace is visible to and usable by everyone. Editing/toggling/deleting is limited to whoever added\nit (Super Admin can manage any), and a place still tagged on a property can't be deleted.\nownerId() null means Super Admin, same as the properties side."
@@ -716,12 +725,12 @@ paths:
                 orn_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-09T11:12:49'
+                  example: '2026-10-14T04:24:18'
                   nullable: true
                 adrec_license_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-09T11:12:49'
+                  example: '2026-10-14T04:24:18'
                   nullable: true
                 other_license:
                   type: string
@@ -731,7 +740,7 @@ paths:
                 other_license_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-09T11:12:49'
+                  example: '2026-10-14T04:24:18'
                   nullable: true
                 position:
                   type: string
@@ -794,7 +803,7 @@ paths:
                 passport_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-09T11:12:49'
+                  example: '2026-10-14T04:24:18'
                   nullable: true
                 brn_number:
                   type: string
@@ -814,7 +823,7 @@ paths:
                 trade_license_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-09T11:12:49'
+                  example: '2026-10-14T04:24:18'
                   nullable: true
                 orn_number:
                   type: string
@@ -834,7 +843,7 @@ paths:
                 trn_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-09T11:12:49'
+                  example: '2026-10-14T04:24:18'
                   nullable: true
                 authorized_signatory_name:
                   type: string
@@ -924,7 +933,7 @@ paths:
                 remove_metadata_og_image:
                   type: boolean
                   description: ''
-                  example: true
+                  example: false
                   nullable: true
               required:
                 - section
@@ -1160,6 +1169,707 @@ paths:
               required:
                 - code
       security: []
+  /api/crm/ads:
+    get:
+      summary: 'List ads'
+      operationId: listAds
+      description: "The account's ads, newest booking first (20 per page), with impressions / clicks per ad, the\nlast 30 days' totals and the plan allowance. `quota.included` false = the plan has no\nadvertising (show the upgrade card)."
+      parameters:
+        -
+          in: query
+          name: status
+          description: 'all | live | upcoming | past.'
+          example: live
+          required: false
+          schema:
+            type: string
+            description: 'all | live | upcoming | past.'
+            example: live
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements'
+      security: []
+    post:
+      summary: 'Book an ad'
+      operationId: bookAnAd
+      description: "Multipart form. The ad waits for MW Realty's review and runs, once approved, from `start` for\n`hours`. `pay_with=plan` uses the monthly allowance; `credits` spends credits (refunded if it's\nrejected or cancelled before it runs)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 'Only you see it.'
+                  example: 'Marina Heights launch'
+                placement:
+                  type: string
+                  description: 'A page from the booking options.'
+                  example: home
+                start:
+                  type: string
+                  description: 'Y-m-d H:i, Dubai time, on the hour.'
+                  example: '2026-10-14 18:00'
+                hours:
+                  type: integer
+                  description: "One of the plan's lengths."
+                  example: 6
+                pay_with:
+                  type: string
+                  description: 'plan | credits.'
+                  example: plan
+                link_type:
+                  type: string
+                  description: 'property | profile | url.'
+                  example: property
+                property_id:
+                  type: integer
+                  description: 'With link_type=property.'
+                  example: 111
+                link_url:
+                  type: string
+                  description: 'With link_type=url, https://…'
+                  example: null
+                image:
+                  type: string
+                  format: binary
+                  description: 'The banner (wide image).'
+                mobile_image:
+                  type: string
+                  format: binary
+                  description: 'Optional banner for phones.'
+                image_alt:
+                  type: string
+                  description: ''
+                  example: 'Marina Heights tower at sunset'
+                translations:
+                  type: object
+                  description: 'Optional text over the image per language: {code: {eyebrow, title, text}}.'
+                  example: null
+                  properties: {  }
+              required:
+                - name
+                - placement
+                - start
+                - hours
+                - pay_with
+                - link_type
+                - image
+      security: []
+  /api/crm/ads/form-options:
+    get:
+      summary: 'Booking options'
+      operationId: bookingOptions
+      description: "Everything the \"Book an ad\" form needs: the pages ads can run on (with their credit prices and\nhow many run at once), the lengths the plan allows, the allowance and credit balance, the\nactive languages for the banner text, and the earliest start."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements'
+      security: []
+  /api/crm/ads/availability:
+    get:
+      summary: 'Free slots'
+      operationId: freeSlots
+      description: "For each hour of a day (Dubai time) on a page: how many client ads are booked and how many\nslots are still free. `past` hours can't be booked any more."
+      parameters:
+        -
+          in: query
+          name: placement
+          description: ''
+          example: home
+          required: true
+          schema:
+            type: string
+            description: ''
+            example: home
+        -
+          in: query
+          name: date
+          description: Y-m-d.
+          example: '2026-10-14'
+          required: true
+          schema:
+            type: string
+            description: Y-m-d.
+            example: '2026-10-14'
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                placement:
+                  type: string
+                  description: ''
+                  example: consequatur
+                date:
+                  type: string
+                  description: 'Must be a valid date in the format <code>Y-m-d</code>.'
+                  example: '2026-10-14'
+              required:
+                - placement
+                - date
+      security: []
+  /api/crm/ads/properties:
+    get:
+      summary: 'Listings an ad can link to'
+      operationId: listingsAnAdCanLinkTo
+      description: "The account's active listings, searched and paged on the server (20 at a time) — RemoteSelect's\n`{data: [{id, name}], next_page}`."
+      parameters:
+        -
+          in: query
+          name: q
+          description: ''
+          example: marina
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: marina
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                q:
+                  type: string
+                  description: 'Must not be greater than 100 characters.'
+                  example: vmqeopfuudtdsufvyvddq
+                  nullable: true
+                page:
+                  type: integer
+                  description: 'Must be at least 1.'
+                  example: 2
+                  nullable: true
+      security: []
+  '/api/crm/ads/{id}':
+    get:
+      summary: 'One ad'
+      operationId: oneAd
+      description: "The ad with its booking, review state and full report: totals, an hourly series over its run,\ntotals per day and its busiest hours."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements'
+      security: []
+    put:
+      summary: 'Change an ad'
+      operationId: changeAnAd
+      description: "Banner, text and link only, before the ad starts (send as multipart POST with `_method=PUT`).\nThe page, time and payment stay; it goes back to MW Realty's review."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                remove_mobile_image:
+                  type: boolean
+                  description: 'Drop the phone banner.'
+                  example: false
+      security: []
+    delete:
+      summary: 'Cancel / stop an ad'
+      operationId: cancelStopAnAd
+      description: "Not started yet (or still in review): cancelled, with its credits / allowance given back.\nLive: stops now — the time already used isn't refunded."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: ''
+        example: 12
+        required: true
+        schema:
+          type: integer
+  /api/crm/ads/manage:
+    get:
+      summary: "Overview + one tab's list"
+      operationId: overview+OneTabsList
+      description: "`tab=house` (MW Realty's ads, 15 per page, slide order) or `tab=client` (bookings, 20 per page).\nAlways includes the 30-day totals and the counts for both tabs."
+      parameters:
+        -
+          in: query
+          name: tab
+          description: 'house | client.'
+          example: client
+          required: false
+          schema:
+            type: string
+            description: 'house | client.'
+            example: client
+        -
+          in: query
+          name: state
+          description: 'house: all | live | scheduled | ended | off; client: pending | upcoming | live | past | all.'
+          example: pending
+          required: false
+          schema:
+            type: string
+            description: 'house: all | live | scheduled | ended | off; client: pending | upcoming | live | past | all.'
+            example: pending
+        -
+          in: query
+          name: placement
+          description: 'A page key.'
+          example: home
+          required: false
+          schema:
+            type: string
+            description: 'A page key.'
+            example: home
+        -
+          in: query
+          name: q
+          description: 'Name or client.'
+          example: marina
+          required: false
+          schema:
+            type: string
+            description: 'Name or client.'
+            example: marina
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      security: []
+    post:
+      summary: 'Add an MW Realty ad'
+      operationId: addAnMWRealtyAd
+      description: "Multipart. Runs on its page from `start_date` to the end of `end_date` (Dubai days; both\noptional = always on) while `status` is on. New ads go first in their page's slide order."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      security: []
+  /api/crm/ads/manage/form-options:
+    get:
+      summary: 'Form options for an MW Realty ad: every page, the languages, image limits.'
+      operationId: formOptionsForAnMWRealtyAdEveryPageTheLanguagesImageLimits
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      security: []
+  /api/crm/ads/manage/properties:
+    get:
+      summary: "Any active listing, for an ad that links to one — RemoteSelect's `{data, next_page}`."
+      operationId: anyActiveListingForAnAdThatLinksToOneRemoteSelectsdataNextPage
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                q:
+                  type: string
+                  description: 'Must not be greater than 100 characters.'
+                  example: vmqeopfuudtdsufvyvddq
+                  nullable: true
+                page:
+                  type: integer
+                  description: 'Must be at least 1.'
+                  example: 2
+                  nullable: true
+      security: []
+  /api/crm/ads/manage/placements:
+    get:
+      summary: 'Per page: open to clients, client ads at once, credits per hour / day.'
+      operationId: perPageOpenToClientsClientAdsAtOnceCreditsPerHourDay
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      security: []
+    put:
+      summary: ''
+      operationId: putApiCrmAdsManagePlacements
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                placements:
+                  type: object
+                  description: '{page key: {client_bookable, max_slots, credits_per_hour, credits_per_day}}.'
+                  example: null
+                  properties:
+                    client_bookable:
+                      type: boolean
+                      description: ''
+                      example: true
+                    max_slots:
+                      type: integer
+                      description: 'Must be at least 0. Must not be greater than 50.'
+                      example: 21
+                    credits_per_hour:
+                      type: integer
+                      description: 'Must be at least 0. Must not be greater than 1000000.'
+                      example: 13
+                    credits_per_day:
+                      type: integer
+                      description: 'Must be at least 0. Must not be greater than 1000000.'
+                      example: 16
+                  required:
+                    - max_slots
+                    - credits_per_hour
+                    - credits_per_day
+              required:
+                - placements
+      security: []
+  '/api/crm/ads/manage/{id}':
+    get:
+      summary: "One ad (MW Realty's or a client's) with its report."
+      operationId: oneAdMWRealtysOrAClientsWithItsReport
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      security: []
+    put:
+      summary: 'Change an MW Realty ad (multipart POST with `_method=PUT`).'
+      operationId: changeAnMWRealtyAdmultipartPOSTWithMethodPUT
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      security: []
+    delete:
+      summary: 'Delete an MW Realty ad (client ads are rejected instead, so they get refunded).'
+      operationId: deleteAnMWRealtyAdclientAdsAreRejectedInsteadSoTheyGetRefunded
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: ''
+        example: 12
+        required: true
+        schema:
+          type: integer
+  '/api/crm/ads/manage/{id}/toggle':
+    post:
+      summary: 'Switch an MW Realty ad on / off.'
+      operationId: switchAnMWRealtyAdOnOff
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the manage.'
+        example: '1562'
+        required: true
+        schema:
+          type: string
+  '/api/crm/ads/manage/{id}/move':
+    post:
+      summary: 'Move in the slide order'
+      operationId: moveInTheSlideOrder
+      description: "Swaps the ad with the one before / after it on the same page (the slider shows them in this\norder, after any client ads)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                direction:
+                  type: string
+                  description: 'up | down.'
+                  example: up
+              required:
+                - direction
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the manage.'
+        example: '1562'
+        required: true
+        schema:
+          type: string
+  '/api/crm/ads/manage/{id}/approve':
+    post:
+      summary: "Approve a client's ad — it runs in its booked hours."
+      operationId: approveAClientsAdItRunsInItsBookedHours
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the manage.'
+        example: '1562'
+        required: true
+        schema:
+          type: string
+  '/api/crm/ads/manage/{id}/reject':
+    post:
+      summary: "Reject / take down a client's ad"
+      operationId: rejectTakeDownAClientsAd
+      description: "The client sees the reason. Not run yet → their credits / plan ad come back; live → it comes\noff the website now, and the time used isn't refunded."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Advertisements (Super Admin)'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                note:
+                  type: string
+                  description: ''
+                  example: 'The banner text is too small to read.'
+              required:
+                - note
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the manage.'
+        example: '1562'
+        required: true
+        schema:
+          type: string
   /api/crm/agents:
     get:
       summary: 'The roster'
@@ -1285,7 +1995,7 @@ paths:
                 passport_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-09T11:12:50'
+                  example: '2026-10-14T04:24:21'
                   nullable: true
                 brn_number:
                   type: string
@@ -1315,7 +2025,7 @@ paths:
                 trade_license_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-09T11:12:50'
+                  example: '2026-10-14T04:24:21'
                   nullable: true
                 trn_number:
                   type: string
@@ -1325,7 +2035,7 @@ paths:
                 trn_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-09T11:12:50'
+                  example: '2026-10-14T04:24:21'
                   nullable: true
               required:
                 - name
@@ -2068,6 +2778,75 @@ paths:
       tags:
         - 'CRM Auth'
       security: []
+  /api/crm/help:
+    get:
+      summary: 'Help desk'
+      operationId: helpDesk
+      description: "Every active help guide, A–Z, with its full content — the CRM's Help Desk page lists them and\nopens one as the same slide tour as the \"!\" icon."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      topic: leads
+                      title: Leads
+                      icon: fa-address-book
+                      intro: …
+                      features: []
+                      steps: []
+                      tips: []
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        topic: leads
+                        title: Leads
+                        icon: fa-address-book
+                        intro: …
+                        features: []
+                        steps: []
+                        tips: []
+                    items:
+                      type: object
+                      properties:
+                        topic:
+                          type: string
+                          example: leads
+                        title:
+                          type: string
+                          example: Leads
+                        icon:
+                          type: string
+                          example: fa-address-book
+                        intro:
+                          type: string
+                          example: …
+                        features:
+                          type: array
+                          example: []
+                        steps:
+                          type: array
+                          example: []
+                        tips:
+                          type: array
+                          example: []
+      tags:
+        - 'CRM Auth'
+      security: []
   /api/crm/help/seen:
     post:
       summary: 'Help guides seen'
@@ -2101,7 +2880,7 @@ paths:
     get:
       summary: 'Help guide'
       operationId: helpGuide
-      description: "A module's \"how it works\" guide (the \"!\" icon): title, intro, features, steps and tips —\ncontent from resources/help/portal/{topic}.php."
+      description: "A module's \"how it works\" guide (the \"!\" icon): title, intro, features, steps and tips —\ncontent managed in Admin › Help Desk (help_guides)."
       parameters:
         -
           in: header
@@ -2434,6 +3213,249 @@ paths:
         required: true
         schema:
           type: string
+  /api/crm/credits:
+    get:
+      summary: 'Credit usage history'
+      operationId: creditUsageHistory
+      description: "The wallet (balance, next expiry, top-up pricing) and its transactions, newest first, 20 per page.\nSuper Admin sees every account's."
+      parameters:
+        -
+          in: query
+          name: q
+          description: 'Reference search.'
+          example: RERA1024
+          required: false
+          schema:
+            type: string
+            description: 'Reference search.'
+            example: RERA1024
+        -
+          in: query
+          name: from
+          description: 'Y-m-d, default a month ago.'
+          example: '2026-09-12'
+          required: false
+          schema:
+            type: string
+            description: 'Y-m-d, default a month ago.'
+            example: '2026-09-12'
+        -
+          in: query
+          name: to
+          description: 'Y-m-d, default today.'
+          example: '2026-10-12'
+          required: false
+          schema:
+            type: string
+            description: 'Y-m-d, default today.'
+            example: '2026-10-12'
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Credits'
+      security: []
+  /api/crm/credits/export:
+    get:
+      summary: 'Export the history (same filters) as CSV'
+      operationId: exportTheHistorysameFiltersAsCSV
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Credits'
+      security: []
+  /api/crm/credits/calculator:
+    get:
+      summary: 'Calculator options'
+      operationId: calculatorOptions
+      description: 'The choices for the credit calculator: categories, offering types and property types.'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Credits'
+      security: []
+  /api/crm/credits/calculate:
+    post:
+      summary: 'Calculate credits'
+      operationId: calculateCredits
+      description: 'What an extra listing and Premium (7 / 15 / 30 days) cost for a listing like this.'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Credits'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                segment:
+                  type: string
+                  description: 'residential | commercial.'
+                  example: residential
+                listing_type:
+                  type: string
+                  description: ''
+                  example: rent
+                property_type:
+                  type: string
+                  description: ''
+                  example: apartment
+                price:
+                  type: number
+                  description: ''
+                  example: 85000.0
+                  nullable: true
+              required:
+                - segment
+                - listing_type
+                - property_type
+      security: []
+  /api/crm/credits/quote:
+    get:
+      summary: 'Quote for listings'
+      operationId: quoteForListings
+      description: 'Credit costs for these listings (the "pay with credits" option when making them premium), plus the balance.'
+      parameters:
+        -
+          in: query
+          name: property_ids
+          description: ''
+          example:
+            - 12
+            - 14
+          required: false
+          schema:
+            type: array
+            description: ''
+            example:
+              - 12
+              - 14
+            items:
+              type: integer
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Credits'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                property_ids:
+                  type: array
+                  description: ''
+                  example:
+                    - 17
+                  items:
+                    type: integer
+      security: []
+  /api/crm/credits/top-up/intent:
+    post:
+      summary: 'Top up: start the card payment'
+      operationId: topUpStartTheCardPayment
+      description: 'Returns the Stripe client secret to confirm the card with, and the total charged.'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Credits'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credits:
+                  type: integer
+                  description: ''
+                  example: 1000
+              required:
+                - credits
+      security: []
+  /api/crm/credits/top-up/complete:
+    post:
+      summary: 'Top up: finish'
+      operationId: topUpFinish
+      description: 'After the card payment is confirmed: adds the credits (the payment_intent.succeeded webhook does the same).'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - 'CRM Credits'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_intent_id:
+                  type: string
+                  description: ''
+                  example: pi_123
+              required:
+                - payment_intent_id
+      security: []
   /api/crm/dashboard:
     get:
       summary: Dashboard
@@ -5190,7 +6212,7 @@ paths:
         in: path
         name: leadImport_id
         description: 'The ID of the leadImport.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -5216,7 +6238,7 @@ paths:
         in: path
         name: leadImport_id
         description: 'The ID of the leadImport.'
-        example: 17
+        example: 1
         required: true
         schema:
           type: integer
@@ -6618,7 +7640,7 @@ paths:
         in: path
         name: key
         description: ''
-        example: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+        example: property_type|listing_type|completion_status|category|location|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type|bedrooms|bathrooms
         required: true
         schema:
           type: string
@@ -6662,7 +7684,7 @@ paths:
         in: path
         name: key
         description: ''
-        example: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+        example: property_type|listing_type|completion_status|category|location|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type|bedrooms|bathrooms
         required: true
         schema:
           type: string
@@ -6704,7 +7726,7 @@ paths:
         in: path
         name: key
         description: ''
-        example: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+        example: property_type|listing_type|completion_status|category|location|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type|bedrooms|bathrooms
         required: true
         schema:
           type: string
@@ -6738,7 +7760,7 @@ paths:
         in: path
         name: key
         description: ''
-        example: property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type
+        example: property_type|listing_type|completion_status|category|location|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type|bedrooms|bathrooms
         required: true
         schema:
           type: string
@@ -7367,7 +8389,7 @@ paths:
     post:
       summary: 'Add Premium (several listings)'
       operationId: addPremiumseveralListings
-      description: 'The same start / end dates for every ticked listing, all-or-nothing (FeaturedListingService::featureMany).'
+      description: "The same start / end dates for every ticked listing, all-or-nothing (FeaturedListingService::featureMany).\nWith `pay_with=credits` each is bought with credits for `days` (7, 15 or 30) instead."
       parameters:
         -
           in: header
@@ -7402,6 +8424,14 @@ paths:
                   type: string
                   description: 'Y-m-d — required except for Super Admin.'
                   example: '2026-11-08'
+                days:
+                  type: integer
+                  description: '7, 15 or 30 — with credits.'
+                  example: 15
+                pay_with:
+                  type: string
+                  description: 'plan | credits.'
+                  example: credits
               required:
                 - property_ids
                 - start_date
@@ -7667,7 +8697,7 @@ paths:
                 permit_expires_at:
                   type: string
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
-                  example: '2026-10-09'
+                  example: '2026-10-14'
                   nullable: true
                 permit_qr:
                   type: string
@@ -7768,7 +8798,7 @@ paths:
                 permit_type:
                   type: string
                   description: ''
-                  example: dtcm
+                  example: none
                   enum:
                     - rera
                     - dtcm
@@ -7790,7 +8820,7 @@ paths:
                 availability:
                   type: string
                   description: ''
-                  example: from_date
+                  example: immediately
                   enum:
                     - immediately
                     - from_date
@@ -7799,7 +8829,7 @@ paths:
                   type: array
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
                   example:
-                    - '2026-10-09'
+                    - '2026-10-14'
                   items:
                     type: string
                 developer:
@@ -7820,7 +8850,7 @@ paths:
                 upgraded:
                   type: boolean
                   description: ''
-                  example: true
+                  example: false
                   nullable: true
                 video_tour_url:
                   type: string
@@ -7920,7 +8950,7 @@ paths:
                 published_at:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-09T11:12:50'
+                  example: '2026-10-14T04:24:20'
                   nullable: true
                 order_index:
                   type: integer
@@ -8247,7 +9277,7 @@ paths:
                 permit_expires_at:
                   type: string
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
-                  example: '2026-10-09'
+                  example: '2026-10-14'
                   nullable: true
                 permit_qr:
                   type: string
@@ -8379,7 +9409,7 @@ paths:
                   type: array
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
                   example:
-                    - '2026-10-09'
+                    - '2026-10-14'
                   items:
                     type: string
                 developer:
@@ -8400,7 +9430,7 @@ paths:
                 upgraded:
                   type: boolean
                   description: ''
-                  example: false
+                  example: true
                   nullable: true
                 video_tour_url:
                   type: string
@@ -8500,7 +9530,7 @@ paths:
                 published_at:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-09T11:12:50'
+                  example: '2026-10-14T04:24:20'
                   nullable: true
                 order_index:
                   type: integer
@@ -9021,7 +10051,7 @@ paths:
     post:
       summary: 'Make premium'
       operationId: makePremium
-      description: ''
+      description: "With `pay_with=credits` (agents / companies) it's bought with credits for `days` (7, 15 or 30)\ninstead of using the plan's quota; no end date is sent."
       parameters:
         -
           in: header
@@ -9046,8 +10076,16 @@ paths:
                   example: '2026-10-10'
                 end_date:
                   type: string
-                  description: 'Y-m-d — required except for Super Admin.'
+                  description: 'Y-m-d — required except for Super Admin and credits.'
                   example: '2026-11-08'
+                days:
+                  type: integer
+                  description: '7, 15 or 30 — with credits.'
+                  example: 15
+                pay_with:
+                  type: string
+                  description: 'plan | credits.'
+                  example: credits
               required:
                 - start_date
       security: []
@@ -9192,7 +10230,7 @@ paths:
                 rented_until:
                   type: string
                   description: 'Must be a valid date. Must be a date after <code>sold_at</code>.'
-                  example: '2107-11-07'
+                  example: '2107-11-12'
                   nullable: true
                 commission:
                   type: number

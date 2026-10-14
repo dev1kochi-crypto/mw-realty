@@ -152,7 +152,7 @@ endpoints:
         name: rented_until
         description: 'Must be a valid date. Must be a date after <code>sold_at</code>.'
         required: false
-        example: '2107-11-07'
+        example: '2107-11-12'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -294,7 +294,7 @@ endpoints:
       type: sold
       price: 1850000.0
       sold_at: '2026-10-09'
-      rented_until: '2107-11-07'
+      rented_until: '2107-11-12'
       commission: 13
       notes: qeopfuudtdsufvyvddqam
       buyer_mode: existing

@@ -2767,14 +2767,14 @@ endpoints:
         name: leadImport_id
         description: 'The ID of the leadImport.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      leadImport_id: 17
+      leadImport_id: 1
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -2821,14 +2821,14 @@ endpoints:
         name: leadImport_id
         description: 'The ID of the leadImport.'
         required: true
-        example: 17
+        example: 1
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      leadImport_id: 17
+      leadImport_id: 1
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []

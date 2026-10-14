@@ -81,7 +81,9 @@ endpoints:
       subgroup: ''
       subgroupDescription: ''
       title: 'Add Premium (several listings)'
-      description: 'The same start / end dates for every ticked listing, all-or-nothing (FeaturedListingService::featureMany).'
+      description: |-
+        The same start / end dates for every ticked listing, all-or-nothing (FeaturedListingService::featureMany).
+        With `pay_with=credits` each is bought with credits for `days` (7, 15 or 30) instead.
       authenticated: false
       deprecated: false
     headers:
@@ -128,12 +130,36 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
+      days:
+        custom: []
+        name: days
+        description: '7, 15 or 30 — with credits.'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      pay_with:
+        custom: []
+        name: pay_with
+        description: 'plan | credits.'
+        required: false
+        example: credits
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
     cleanBodyParameters:
       property_ids:
         - 12
         - 14
       start_date: '2026-10-10'
       end_date: '2026-11-08'
+      days: 15
+      pay_with: credits
     fileParameters: []
     responses: []
     responseFields: []

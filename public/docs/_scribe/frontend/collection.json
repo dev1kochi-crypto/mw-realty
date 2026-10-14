@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "MW Realty \u2014 Frontend API",
-        "_postman_id": "bd6b2579-b95f-4a94-be19-b20fb5e76e96",
+        "_postman_id": "f8fe0742-799a-4893-8cbd-5b749dd96ccb",
         "description": "REST API for the MW Realty mobile app: property search, listings, agents, content, customer accounts, enquiries and the AI assistant.",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -160,12 +160,64 @@
                             }
                         ],
                         "body": null,
-                        "description": "The active ad for a screen, or `false` when there is none (hide the slot).",
+                        "description": "One active ad for a screen (picked at random when several run), or `false` when there is\nnone (hide the slot). Use **Ad slider** to show all of them.",
                         "auth": {
                             "type": "noauth"
                         }
                     },
                     "response": []
+                },
+                {
+                    "name": "Ad slider",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/ads\/slides",
+                            "query": [
+                                {
+                                    "key": "placement",
+                                    "value": "home",
+                                    "description": "home, property-details, \u2026",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/ads\/slides?placement=home&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Every ad running on a screen right now, in slide order (sponsored client ads first, in a\ndifferent order each time). Show them as a slider that moves on every `interval` seconds;\nan empty list means hide the slot. Report each slide once it has been on screen\n(**Ad impressions**) and taps on it (**Ad click**).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"slides\": [{\"id\": 12, \"name\": \"Marina launch\", \"image_url\": \"https:\/\/\u2026\", \"mobile_image_url\": null, \"image_alt\": null, \"link_url\": \"\/property-details\/marina-heights\", \"eyebrow\": \"New launch\", \"title\": \"Marina Heights\", \"text\": \"1\u20133 bed apartments from AED 1.2M\", \"sponsor\": \"Prime Homes\"}], \"interval\": 6}",
+                            "name": ""
+                        }
+                    ]
                 },
                 {
                     "name": "Site information",
@@ -205,6 +257,90 @@
                         }
                     },
                     "response": []
+                },
+                {
+                    "name": "Ad impressions",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/track\/ad-impressions",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/track\/ad-impressions"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"ids\":[12,15]}"
+                        },
+                        "description": "Slides that were on screen (at least half visible for a second). Send each slide once per\nscreen visit \u2014 not again every time the slider comes back round to it.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Recorded"
+                        }
+                    ]
+                },
+                {
+                    "name": "Ad click",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/track\/ad-click",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/track\/ad-click"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"id\":12}"
+                        },
+                        "description": "The user tapped an ad (send it before opening its link).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Recorded"
+                        }
+                    ]
                 }
             ]
         },
@@ -347,7 +483,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"page\":\"home\",\"lang\":\"vmqeopfuu\",\"scope\":\"marketing\"}"
+                            "raw": "{\"page\":\"home\",\"lang\":\"vmqeopfuu\",\"scope\":\"premium\"}"
                         },
                         "description": "The filters to render (selects with their options and live listing counts, number sliders\nwith min\/max\/step), in admin order. Pass the chosen `value`s back to the listing endpoints\nunder each filter's `key`.",
                         "auth": {
@@ -355,6 +491,63 @@
                         }
                     },
                     "response": []
+                },
+                {
+                    "name": "Page search filters",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/search-filters\/:page",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/search-filters\/:page?lang=en",
+                            "variable": [
+                                {
+                                    "id": "page",
+                                    "key": "page",
+                                    "value": "properties",
+                                    "description": "properties, commercial, premium or offplan."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"lang\":\"vmqeopfuu\"}"
+                        },
+                        "description": "Key-value: `filters` is keyed by each filter's key, and every option list is `{ value: label }`.\nSend the picked values back to the listing endpoint under the filter's `param` (or `params.min`\n\/ `params.max` for a range). Checkbox filters (`multiple: true`) take several values,\ncomma-separated. `order` \/ `options_order` give the admin's order.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"page\": \"properties\",\n  \"filters\": {\n    \"property_type\": {\"label\": \"Property Type\", \"type\": \"checkbox\", \"placeholder\": null, \"param\": \"property_type\", \"multiple\": true,\n      \"options\": {\"apartment\": \"Apartment\", \"villa\": \"Villa\"}, \"options_order\": [\"apartment\", \"villa\"], \"counts\": {\"apartment\": 42, \"villa\": 17}},\n    \"bedrooms\": {\"label\": \"Bedrooms\", \"type\": \"radio\", \"placeholder\": null, \"param\": \"bedrooms\", \"multiple\": false,\n      \"options\": {\"1\": \"1\", \"2\": \"2\", \"5+\": \"5+\"}, \"options_order\": [\"1\", \"2\", \"5+\"]},\n    \"price\": {\"label\": \"Price\", \"type\": \"range\", \"placeholder\": null, \"min\": 0, \"max\": 19000000, \"step\": 50000,\n      \"params\": {\"min\": \"min_price\", \"max\": \"max_price\"}},\n    \"parking\": {\"label\": \"Parking\", \"type\": \"number\", \"placeholder\": \"Min. spaces\", \"min\": 0, \"max\": 5, \"step\": 1, \"compare\": \"min\", \"param\": \"min_parking\"},\n    \"keyword\": {\"label\": \"Keyword\", \"type\": \"text\", \"placeholder\": \"Title or reference\", \"param\": \"keyword\"}\n  },\n  \"order\": [\"property_type\", \"bedrooms\", \"price\", \"parking\", \"keyword\"]\n}",
+                            "name": ""
+                        }
+                    ]
                 },
                 {
                     "name": "Location autocomplete",

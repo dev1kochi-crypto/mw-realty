@@ -497,6 +497,46 @@ endpoints:
   -
     custom: []
     httpMethods:
+      - GET
+    uri: api/crm/help
+    metadata:
+      custom: []
+      groupName: 'CRM Auth'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Help desk'
+      description: |-
+        Every active help guide, A–Z, with its full content — the CRM's Help Desk page lists them and
+        opens one as the same slide tour as the "!" icon.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data": [{"topic": "leads", "title": "Leads", "icon": "fa-address-book", "intro": "…", "features": [], "steps": [], "tips": []}]}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
       - POST
     uri: api/crm/help/seen
     metadata:
@@ -548,7 +588,7 @@ endpoints:
       title: 'Help guide'
       description: |-
         A module's "how it works" guide (the "!" icon): title, intro, features, steps and tips —
-        content from resources/help/portal/{topic}.php.
+        content managed in Admin › Help Desk (help_guides).
       authenticated: false
       deprecated: false
     headers:

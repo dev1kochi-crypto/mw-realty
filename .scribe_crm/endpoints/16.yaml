@@ -1,39 +1,31 @@
-name: 'CRM Agents'
+name: 'CRM Credits'
 description: |-
 
-  Agent roster: Super Admin sees every agent across every agency; a Company manages only its own —
-  every membership is looked up already scoped to that agency (findMembership()) and then checked
-  by AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here
-  (its side is My Agency).
-
-  Adding a brand-new agent or inviting an existing one both need Super Admin approval before the
-  agent becomes active; all state changes go through AgencyMembershipService. Lead assignment
-  settings and "distribute unassigned" are the Leads endpoints (/leads/assignment-settings, /leads/distribute).
+  Credits — add-ons next to the plan: an extra listing once the plan's allowance is used up, or
+  Premium for 7 / 15 / 30 days without using the plan's premium quota. Bought with Top Up (card, via
+  Stripe: POST /credits/top-up/intent → confirm the card with Stripe → POST /credits/top-up/complete),
+  valid for a set number of days. An agency's agents spend the agency's credits. See CreditService.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/crm/agents
+    uri: api/crm/credits
     metadata:
       custom: []
-      groupName: 'CRM Agents'
+      groupName: 'CRM Credits'
       groupDescription: |-
 
-        Agent roster: Super Admin sees every agent across every agency; a Company manages only its own —
-        every membership is looked up already scoped to that agency (findMembership()) and then checked
-        by AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here
-        (its side is My Agency).
-
-        Adding a brand-new agent or inviting an existing one both need Super Admin approval before the
-        agent becomes active; all state changes go through AgencyMembershipService. Lead assignment
-        settings and "distribute unassigned" are the Leads endpoints (/leads/assignment-settings, /leads/distribute).
+        Credits — add-ons next to the plan: an extra listing once the plan's allowance is used up, or
+        Premium for 7 / 15 / 30 days without using the plan's premium quota. Bought with Top Up (card, via
+        Stripe: POST /credits/top-up/intent → confirm the card with Stripe → POST /credits/top-up/complete),
+        valid for a set number of days. An agency's agents spend the agency's credits. See CreditService.
       subgroup: ''
       subgroupDescription: ''
-      title: 'The roster'
+      title: 'Credit usage history'
       description: |-
-        Super Admin: every agent, 15 per page (`is_admin` true). Agency: the memberships of one tab,
-        15 per page, with tab counts, round-robin state, lead assignment settings and agent slots.
+        The wallet (balance, next expiry, top-up pricing) and its transactions, newest first, 20 per page.
+        Super Admin sees every account's.
       authenticated: false
       deprecated: false
     headers:
@@ -43,12 +35,34 @@ endpoints:
     urlParameters: []
     cleanUrlParameters: []
     queryParameters:
-      tab:
+      q:
         custom: []
-        name: tab
-        description: 'active | pending | requests | history.'
+        name: q
+        description: 'Reference search.'
         required: false
-        example: active
+        example: RERA1024
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      from:
+        custom: []
+        name: from
+        description: 'Y-m-d, default a month ago.'
+        required: false
+        example: '2026-09-12'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      to:
+        custom: []
+        name: to
+        description: 'Y-m-d, default today.'
+        required: false
+        example: '2026-10-12'
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -66,7 +80,9 @@ endpoints:
         nullable: false
         deprecated: false
     cleanQueryParameters:
-      tab: active
+      q: RERA1024
+      from: '2026-09-12'
+      to: '2026-10-12'
       page: 1
     bodyParameters: []
     cleanBodyParameters: []
@@ -81,24 +97,57 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/crm/agents/create
+    uri: api/crm/credits/export
     metadata:
       custom: []
-      groupName: 'CRM Agents'
+      groupName: 'CRM Credits'
       groupDescription: |-
 
-        Agent roster: Super Admin sees every agent across every agency; a Company manages only its own —
-        every membership is looked up already scoped to that agency (findMembership()) and then checked
-        by AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here
-        (its side is My Agency).
-
-        Adding a brand-new agent or inviting an existing one both need Super Admin approval before the
-        agent becomes active; all state changes go through AgencyMembershipService. Lead assignment
-        settings and "distribute unassigned" are the Leads endpoints (/leads/assignment-settings, /leads/distribute).
+        Credits — add-ons next to the plan: an extra listing once the plan's allowance is used up, or
+        Premium for 7 / 15 / 30 days without using the plan's premium quota. Bought with Top Up (card, via
+        Stripe: POST /credits/top-up/intent → confirm the card with Stripe → POST /credits/top-up/complete),
+        valid for a set number of days. An agency's agents spend the agency's credits. See CreditService.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Can another agent be added?'
-      description: "For the Add / Invite screen: `can_add` false (with the reason) once the plan's agent slots are used up."
+      title: 'Export the history (same filters) as CSV'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/credits/calculator
+    metadata:
+      custom: []
+      groupName: 'CRM Credits'
+      groupDescription: |-
+
+        Credits — add-ons next to the plan: an extra listing once the plan's allowance is used up, or
+        Premium for 7 / 15 / 30 days without using the plan's premium quota. Bought with Top Up (card, via
+        Stripe: POST /credits/top-up/intent → confirm the card with Stripe → POST /credits/top-up/complete),
+        valid for a set number of days. An agency's agents spend the agency's credits. See CreditService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Calculator options'
+      description: 'The choices for the credit calculator: categories, offering types and property types.'
       authenticated: false
       deprecated: false
     headers:
@@ -122,323 +171,20 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/crm/agents
+    uri: api/crm/credits/calculate
     metadata:
       custom: []
-      groupName: 'CRM Agents'
+      groupName: 'CRM Credits'
       groupDescription: |-
 
-        Agent roster: Super Admin sees every agent across every agency; a Company manages only its own —
-        every membership is looked up already scoped to that agency (findMembership()) and then checked
-        by AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here
-        (its side is My Agency).
-
-        Adding a brand-new agent or inviting an existing one both need Super Admin approval before the
-        agent becomes active; all state changes go through AgencyMembershipService. Lead assignment
-        settings and "distribute unassigned" are the Leads endpoints (/leads/assignment-settings, /leads/distribute).
+        Credits — add-ons next to the plan: an extra listing once the plan's allowance is used up, or
+        Premium for 7 / 15 / 30 days without using the plan's premium quota. Bought with Top Up (card, via
+        Stripe: POST /credits/top-up/intent → confirm the card with Stripe → POST /credits/top-up/complete),
+        valid for a set number of days. An agency's agents spend the agency's credits. See CreditService.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Add a brand-new agent'
-      description: |-
-        Multipart. Pending Super Admin approval; the agent gets a set-password link once approved.
-        An email / mobile that already exists answers 409 with `duplicate` (and whether they can be invited instead).
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: multipart/form-data
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      name:
-        custom: []
-        name: name
-        description: 'Must not be greater than 255 characters.'
-        required: true
-        example: vmqeopfuudtdsufvyvddq
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      email:
-        custom: []
-        name: email
-        description: 'Must be a valid email address. Must not be greater than 255 characters.'
-        required: true
-        example: kunde.eloisa@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      phone:
-        custom: []
-        name: phone
-        description: 'Must not be greater than 50 characters.'
-        required: true
-        example: hfqcoynlazghdtqtqxbaj
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      whatsapp_number:
-        custom: []
-        name: whatsapp_number
-        description: 'Must not be greater than 50 characters.'
-        required: false
-        example: wbpilpmufinllwloauydl
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      years_of_experience:
-        custom: []
-        name: years_of_experience
-        description: 'Must be at least 0. Must not be greater than 80.'
-        required: false
-        example: 18
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      preferred_areas:
-        custom: []
-        name: preferred_areas
-        description: 'Must not be greater than 100 characters.'
-        required: false
-        example:
-          - msjuryvojcybzvrbyickz
-        type: 'string[]'
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      features:
-        custom: []
-        name: features
-        description: 'Must not be greater than 100 characters.'
-        required: false
-        example:
-          - nkygloigmkwxphlvazjrc
-        type: 'string[]'
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      nationality:
-        custom: []
-        name: nationality
-        description: 'Must not be greater than 100 characters.'
-        required: false
-        example: nfbaqywuxhgjjmzuxjubq
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      emirates_id_no:
-        custom: []
-        name: emirates_id_no
-        description: 'Must not be greater than 50 characters.'
-        required: false
-        example: ouzswiwxtrkimfcatbxsp
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      emirates_id_document:
-        custom: []
-        name: emirates_id_document
-        description: 'Must be a file. Must not be greater than 4096 kilobytes.'
-        required: false
-        example: null
-        type: file
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      passport_no:
-        custom: []
-        name: passport_no
-        description: 'Must not be greater than 50 characters.'
-        required: false
-        example: zmrazsroyjpxmqesedygh
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      passport_document:
-        custom: []
-        name: passport_document
-        description: 'Must be a file. Must not be greater than 4096 kilobytes.'
-        required: false
-        example: null
-        type: file
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      passport_expiry:
-        custom: []
-        name: passport_expiry
-        description: 'Must be a valid date.'
-        required: false
-        example: '2026-10-09T11:12:50'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      brn_number:
-        custom: []
-        name: brn_number
-        description: 'Must not be greater than 50 characters.'
-        required: false
-        example: enqcopwvownkbamlnfnge
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      rera_card_document:
-        custom: []
-        name: rera_card_document
-        description: 'Must be a file. Must not be greater than 4096 kilobytes.'
-        required: false
-        example: null
-        type: file
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      rera_certificate_document:
-        custom: []
-        name: rera_certificate_document
-        description: 'Must be a file. Must not be greater than 4096 kilobytes.'
-        required: false
-        example: null
-        type: file
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      trade_license_no:
-        custom: []
-        name: trade_license_no
-        description: 'Must not be greater than 50 characters.'
-        required: false
-        example: fbeilfzsyuxoezbdtabpt
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      trade_license_document:
-        custom: []
-        name: trade_license_document
-        description: 'Must be a file. Must not be greater than 4096 kilobytes.'
-        required: false
-        example: null
-        type: file
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      trade_license_expiry:
-        custom: []
-        name: trade_license_expiry
-        description: 'Must be a valid date.'
-        required: false
-        example: '2026-10-09T11:12:50'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      trn_number:
-        custom: []
-        name: trn_number
-        description: 'Must not be greater than 50 characters.'
-        required: false
-        example: cyyerevrljcbwkthjnesc
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      trn_expiry:
-        custom: []
-        name: trn_expiry
-        description: 'Must be a valid date.'
-        required: false
-        example: '2026-10-09T11:12:50'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-    cleanBodyParameters:
-      name: vmqeopfuudtdsufvyvddq
-      email: kunde.eloisa@example.com
-      phone: hfqcoynlazghdtqtqxbaj
-      whatsapp_number: wbpilpmufinllwloauydl
-      years_of_experience: 18
-      preferred_areas:
-        - msjuryvojcybzvrbyickz
-      features:
-        - nkygloigmkwxphlvazjrc
-      nationality: nfbaqywuxhgjjmzuxjubq
-      emirates_id_no: ouzswiwxtrkimfcatbxsp
-      passport_no: zmrazsroyjpxmqesedygh
-      passport_expiry: '2026-10-09T11:12:50'
-      brn_number: enqcopwvownkbamlnfnge
-      trade_license_no: fbeilfzsyuxoezbdtabpt
-      trade_license_expiry: '2026-10-09T11:12:50'
-      trn_number: cyyerevrljcbwkthjnesc
-      trn_expiry: '2026-10-09T11:12:50'
-    fileParameters:
-      emirates_id_document: null
-      passport_document: null
-      rera_card_document: null
-      rera_certificate_document: null
-      trade_license_document: null
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/crm/agents/invite
-    metadata:
-      custom: []
-      groupName: 'CRM Agents'
-      groupDescription: |-
-
-        Agent roster: Super Admin sees every agent across every agency; a Company manages only its own —
-        every membership is looked up already scoped to that agency (findMembership()) and then checked
-        by AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here
-        (its side is My Agency).
-
-        Adding a brand-new agent or inviting an existing one both need Super Admin approval before the
-        agent becomes active; all state changes go through AgencyMembershipService. Lead assignment
-        settings and "distribute unassigned" are the Leads endpoints (/leads/assignment-settings, /leads/distribute).
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Invite an existing agent'
-      description: 'Found by exact email, mobile or agent ID. Once they accept, Super Admin approves the move.'
+      title: 'Calculate credits'
+      description: 'What an extra listing and Premium (7 / 15 / 30 days) cost for a listing like this.'
       authenticated: false
       deprecated: false
     headers:
@@ -450,19 +196,55 @@ endpoints:
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      identifier:
+      segment:
         custom: []
-        name: identifier
-        description: ''
+        name: segment
+        description: 'residential | commercial.'
         required: true
-        example: sara@example.com
+        example: residential
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
+      listing_type:
+        custom: []
+        name: listing_type
+        description: ''
+        required: true
+        example: rent
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      property_type:
+        custom: []
+        name: property_type
+        description: ''
+        required: true
+        example: apartment
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      price:
+        custom: []
+        name: price
+        description: ''
+        required: false
+        example: 85000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
     cleanBodyParameters:
-      identifier: sara@example.com
+      segment: residential
+      listing_type: rent
+      property_type: apartment
+      price: 85000.0
     fileParameters: []
     responses: []
     responseFields: []
@@ -474,60 +256,62 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/crm/agents/{id}'
+    uri: api/crm/credits/quote
     metadata:
       custom: []
-      groupName: 'CRM Agents'
+      groupName: 'CRM Credits'
       groupDescription: |-
 
-        Agent roster: Super Admin sees every agent across every agency; a Company manages only its own —
-        every membership is looked up already scoped to that agency (findMembership()) and then checked
-        by AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here
-        (its side is My Agency).
-
-        Adding a brand-new agent or inviting an existing one both need Super Admin approval before the
-        agent becomes active; all state changes go through AgencyMembershipService. Lead assignment
-        settings and "distribute unassigned" are the Leads endpoints (/leads/assignment-settings, /leads/distribute).
+        Credits — add-ons next to the plan: an extra listing once the plan's allowance is used up, or
+        Premium for 7 / 15 / 30 days without using the plan's premium quota. Bought with Top Up (card, via
+        Stripe: POST /credits/top-up/intent → confirm the card with Stripe → POST /credits/top-up/complete),
+        valid for a set number of days. An agency's agents spend the agency's credits. See CreditService.
       subgroup: ''
       subgroupDescription: ''
-      title: 'One agent of this agency'
-      description: 'Profile, membership history with this agency, their agency listings (10 per page) and lead count.'
+      title: 'Quote for listings'
+      description: 'Credit costs for these listings (the "pay with credits" option when making them premium), plus the balance.'
       authenticated: false
       deprecated: false
     headers:
       Content-Type: application/json
       Accept: application/json
       X-Device-Id: '{DEVICE_ID}'
-    urlParameters:
-      id:
-        custom: []
-        name: id
-        description: 'The ID of the agent.'
-        required: true
-        example: '1562'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      id: '1562'
+    urlParameters: []
+    cleanUrlParameters: []
     queryParameters:
-      page:
+      property_ids:
         custom: []
-        name: page
-        description: 'Listings page.'
+        name: property_ids
+        description: ''
         required: false
-        example: 1
-        type: integer
+        example:
+          - 12
+          - 14
+        type: 'integer[]'
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanQueryParameters:
-      page: 1
-    bodyParameters: []
-    cleanBodyParameters: []
+      property_ids:
+        - 12
+        - 14
+    bodyParameters:
+      property_ids:
+        custom: []
+        name: property_ids
+        description: ''
+        required: false
+        example:
+          - 17
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      property_ids:
+        - 17
     fileParameters: []
     responses: []
     responseFields: []
@@ -539,325 +323,93 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: 'api/crm/agents/{id}/accept-request'
+    uri: api/crm/credits/top-up/intent
     metadata:
       custom: []
-      groupName: 'CRM Agents'
+      groupName: 'CRM Credits'
       groupDescription: |-
 
-        Agent roster: Super Admin sees every agent across every agency; a Company manages only its own —
-        every membership is looked up already scoped to that agency (findMembership()) and then checked
-        by AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here
-        (its side is My Agency).
-
-        Adding a brand-new agent or inviting an existing one both need Super Admin approval before the
-        agent becomes active; all state changes go through AgencyMembershipService. Lead assignment
-        settings and "distribute unassigned" are the Leads endpoints (/leads/assignment-settings, /leads/distribute).
+        Credits — add-ons next to the plan: an extra listing once the plan's allowance is used up, or
+        Premium for 7 / 15 / 30 days without using the plan's premium quota. Bought with Top Up (card, via
+        Stripe: POST /credits/top-up/intent → confirm the card with Stripe → POST /credits/top-up/complete),
+        valid for a set number of days. An agency's agents spend the agency's credits. See CreditService.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Accept a join request (then awaits Super Admin approval)'
-      description: ''
+      title: 'Top up: start the card payment'
+      description: 'Returns the Stripe client secret to confirm the card with, and the total charged.'
       authenticated: false
       deprecated: false
     headers:
       Content-Type: application/json
       Accept: application/json
       X-Device-Id: '{DEVICE_ID}'
-    urlParameters:
-      id:
-        custom: []
-        name: id
-        description: 'The ID of the agent.'
-        required: true
-        example: '1562'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      id: '1562'
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: 'api/crm/agents/{id}/decline-request'
-    metadata:
-      custom: []
-      groupName: 'CRM Agents'
-      groupDescription: |-
-
-        Agent roster: Super Admin sees every agent across every agency; a Company manages only its own —
-        every membership is looked up already scoped to that agency (findMembership()) and then checked
-        by AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here
-        (its side is My Agency).
-
-        Adding a brand-new agent or inviting an existing one both need Super Admin approval before the
-        agent becomes active; all state changes go through AgencyMembershipService. Lead assignment
-        settings and "distribute unassigned" are the Leads endpoints (/leads/assignment-settings, /leads/distribute).
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Decline a join request'
-      description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters:
-      id:
-        custom: []
-        name: id
-        description: 'The ID of the agent.'
-        required: true
-        example: '1562'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      id: '1562'
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: 'api/crm/agents/{id}/cancel'
-    metadata:
-      custom: []
-      groupName: 'CRM Agents'
-      groupDescription: |-
-
-        Agent roster: Super Admin sees every agent across every agency; a Company manages only its own —
-        every membership is looked up already scoped to that agency (findMembership()) and then checked
-        by AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here
-        (its side is My Agency).
-
-        Adding a brand-new agent or inviting an existing one both need Super Admin approval before the
-        agent becomes active; all state changes go through AgencyMembershipService. Lead assignment
-        settings and "distribute unassigned" are the Leads endpoints (/leads/assignment-settings, /leads/distribute).
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Withdraw an invitation or a pending add'
-      description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters:
-      id:
-        custom: []
-        name: id
-        description: 'The ID of the agent.'
-        required: true
-        example: '1562'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      id: '1562'
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: 'api/crm/agents/{id}/suspend'
-    metadata:
-      custom: []
-      groupName: 'CRM Agents'
-      groupDescription: |-
-
-        Agent roster: Super Admin sees every agent across every agency; a Company manages only its own —
-        every membership is looked up already scoped to that agency (findMembership()) and then checked
-        by AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here
-        (its side is My Agency).
-
-        Adding a brand-new agent or inviting an existing one both need Super Admin approval before the
-        agent becomes active; all state changes go through AgencyMembershipService. Lead assignment
-        settings and "distribute unassigned" are the Leads endpoints (/leads/assignment-settings, /leads/distribute).
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Suspend — no new leads until reactivated'
-      description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters:
-      id:
-        custom: []
-        name: id
-        description: 'The ID of the agent.'
-        required: true
-        example: '1562'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      id: '1562'
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: 'api/crm/agents/{id}/reactivate'
-    metadata:
-      custom: []
-      groupName: 'CRM Agents'
-      groupDescription: |-
-
-        Agent roster: Super Admin sees every agent across every agency; a Company manages only its own —
-        every membership is looked up already scoped to that agency (findMembership()) and then checked
-        by AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here
-        (its side is My Agency).
-
-        Adding a brand-new agent or inviting an existing one both need Super Admin approval before the
-        agent becomes active; all state changes go through AgencyMembershipService. Lead assignment
-        settings and "distribute unassigned" are the Leads endpoints (/leads/assignment-settings, /leads/distribute).
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Reactivate a suspended agent'
-      description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters:
-      id:
-        custom: []
-        name: id
-        description: 'The ID of the agent.'
-        required: true
-        example: '1562'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      id: '1562'
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: 'api/crm/agents/{id}/remove'
-    metadata:
-      custom: []
-      groupName: 'CRM Agents'
-      groupDescription: |-
-
-        Agent roster: Super Admin sees every agent across every agency; a Company manages only its own —
-        every membership is looked up already scoped to that agency (findMembership()) and then checked
-        by AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here
-        (its side is My Agency).
-
-        Adding a brand-new agent or inviting an existing one both need Super Admin approval before the
-        agent becomes active; all state changes go through AgencyMembershipService. Lead assignment
-        settings and "distribute unassigned" are the Leads endpoints (/leads/assignment-settings, /leads/distribute).
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Remove from the agency'
-      description: 'Account and history stay; agency listings go to `reassign_to` or become unassigned.'
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters:
-      id:
-        custom: []
-        name: id
-        description: 'The ID of the agent.'
-        required: true
-        example: '1562'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      id: '1562'
+    urlParameters: []
+    cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      reassign_to:
+      credits:
         custom: []
-        name: reassign_to
-        description: 'Another active agent of this agency.'
-        required: false
-        example: 42
+        name: credits
+        description: ''
+        required: true
+        example: 1000
         type: integer
         enumValues: []
         exampleWasSpecified: true
-        nullable: true
+        nullable: false
         deprecated: false
     cleanBodyParameters:
-      reassign_to: 42
+      credits: 1000
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/credits/top-up/complete
+    metadata:
+      custom: []
+      groupName: 'CRM Credits'
+      groupDescription: |-
+
+        Credits — add-ons next to the plan: an extra listing once the plan's allowance is used up, or
+        Premium for 7 / 15 / 30 days without using the plan's premium quota. Bought with Top Up (card, via
+        Stripe: POST /credits/top-up/intent → confirm the card with Stripe → POST /credits/top-up/complete),
+        valid for a set number of days. An agency's agents spend the agency's credits. See CreditService.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Top up: finish'
+      description: 'After the card payment is confirmed: adds the credits (the payment_intent.succeeded webhook does the same).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      payment_intent_id:
+        custom: []
+        name: payment_intent_id
+        description: ''
+        required: true
+        example: pi_123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      payment_intent_id: pi_123
     fileParameters: []
     responses: []
     responseFields: []

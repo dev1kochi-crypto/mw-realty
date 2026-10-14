@@ -121,7 +121,7 @@ paths:
     get:
       summary: 'Ad banner'
       operationId: adBanner
-      description: 'The active ad for a screen, or `false` when there is none (hide the slot).'
+      description: "One active ad for a screen (picked at random when several run), or `false` when there is\nnone (hide the slot). Use **Ad slider** to show all of them."
       parameters:
         -
           in: query
@@ -154,6 +154,116 @@ paths:
       tags:
         - 'App Config'
       security: []
+  /api/ads/slides:
+    get:
+      summary: 'Ad slider'
+      operationId: adSlider
+      description: "Every ad running on a screen right now, in slide order (sponsored client ads first, in a\ndifferent order each time). Show them as a slider that moves on every `interval` seconds;\nan empty list means hide the slot. Report each slide once it has been on screen\n(**Ad impressions**) and taps on it (**Ad click**)."
+      parameters:
+        -
+          in: query
+          name: placement
+          description: 'home, property-details, …'
+          example: home
+          required: false
+          schema:
+            type: string
+            description: 'home, property-details, …'
+            example: home
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  slides:
+                    -
+                      id: 12
+                      name: 'Marina launch'
+                      image_url: 'https://…'
+                      mobile_image_url: null
+                      image_alt: null
+                      link_url: /property-details/marina-heights
+                      eyebrow: 'New launch'
+                      title: 'Marina Heights'
+                      text: '1–3 bed apartments from AED 1.2M'
+                      sponsor: 'Prime Homes'
+                  interval: 6
+                properties:
+                  slides:
+                    type: array
+                    example:
+                      -
+                        id: 12
+                        name: 'Marina launch'
+                        image_url: 'https://…'
+                        mobile_image_url: null
+                        image_alt: null
+                        link_url: /property-details/marina-heights
+                        eyebrow: 'New launch'
+                        title: 'Marina Heights'
+                        text: '1–3 bed apartments from AED 1.2M'
+                        sponsor: 'Prime Homes'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 12
+                        name:
+                          type: string
+                          example: 'Marina launch'
+                        image_url:
+                          type: string
+                          example: 'https://…'
+                        mobile_image_url:
+                          type: string
+                          example: null
+                          nullable: true
+                        image_alt:
+                          type: string
+                          example: null
+                          nullable: true
+                        link_url:
+                          type: string
+                          example: /property-details/marina-heights
+                        eyebrow:
+                          type: string
+                          example: 'New launch'
+                        title:
+                          type: string
+                          example: 'Marina Heights'
+                        text:
+                          type: string
+                          example: '1–3 bed apartments from AED 1.2M'
+                        sponsor:
+                          type: string
+                          example: 'Prime Homes'
+                  interval:
+                    type: integer
+                    example: 6
+      tags:
+        - 'App Config'
+      security: []
   /api/site-information:
     get:
       summary: 'Site information'
@@ -180,6 +290,86 @@ paths:
       responses: {  }
       tags:
         - 'App Config'
+      security: []
+  /api/track/ad-impressions:
+    post:
+      summary: 'Ad impressions'
+      operationId: adImpressions
+      description: "Slides that were on screen (at least half visible for a second). Send each slide once per\nscreen visit — not again every time the slider comes back round to it."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        204:
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {  }
+                properties: {  }
+      tags:
+        - 'App Config'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  description: 'Up to 30 ad ids.'
+                  example:
+                    - 12
+                    - 15
+                  items:
+                    type: integer
+              required:
+                - ids
+      security: []
+  /api/track/ad-click:
+    post:
+      summary: 'Ad click'
+      operationId: adClick
+      description: 'The user tapped an ad (send it before opening its link).'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        204:
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {  }
+                properties: {  }
+      tags:
+        - 'App Config'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: ''
+                  example: 12
+              required:
+                - id
       security: []
   /api/home:
     get:
@@ -312,13 +502,307 @@ paths:
                 scope:
                   type: string
                   description: ''
-                  example: marketing
+                  example: premium
                   enum:
                     - residential
                     - commercial
                     - premium
                     - marketing
       security: []
+  '/api/search-filters/{page}':
+    get:
+      summary: 'Page search filters'
+      operationId: pageSearchFilters
+      description: "Key-value: `filters` is keyed by each filter's key, and every option list is `{ value: label }`.\nSend the picked values back to the listing endpoint under the filter's `param` (or `params.min`\n/ `params.max` for a range). Checkbox filters (`multiple: true`) take several values,\ncomma-separated. `order` / `options_order` give the admin's order."
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  page: properties
+                  filters:
+                    property_type:
+                      label: 'Property Type'
+                      type: checkbox
+                      placeholder: null
+                      param: property_type
+                      multiple: true
+                      options:
+                        apartment: Apartment
+                        villa: Villa
+                      options_order:
+                        - apartment
+                        - villa
+                      counts:
+                        apartment: 42
+                        villa: 17
+                    bedrooms:
+                      label: Bedrooms
+                      type: radio
+                      placeholder: null
+                      param: bedrooms
+                      multiple: false
+                      options:
+                        '1': '1'
+                        '2': '2'
+                        5+: 5+
+                      options_order:
+                        - '1'
+                        - '2'
+                        - 5+
+                    price:
+                      label: Price
+                      type: range
+                      placeholder: null
+                      min: 0
+                      max: 19000000
+                      step: 50000
+                      params:
+                        min: min_price
+                        max: max_price
+                    parking:
+                      label: Parking
+                      type: number
+                      placeholder: 'Min. spaces'
+                      min: 0
+                      max: 5
+                      step: 1
+                      compare: min
+                      param: min_parking
+                    keyword:
+                      label: Keyword
+                      type: text
+                      placeholder: 'Title or reference'
+                      param: keyword
+                  order:
+                    - property_type
+                    - bedrooms
+                    - price
+                    - parking
+                    - keyword
+                properties:
+                  page:
+                    type: string
+                    example: properties
+                  filters:
+                    type: object
+                    properties:
+                      property_type:
+                        type: object
+                        properties:
+                          label:
+                            type: string
+                            example: 'Property Type'
+                          type:
+                            type: string
+                            example: checkbox
+                          placeholder:
+                            type: string
+                            example: null
+                            nullable: true
+                          param:
+                            type: string
+                            example: property_type
+                          multiple:
+                            type: boolean
+                            example: true
+                          options:
+                            type: object
+                            properties:
+                              apartment:
+                                type: string
+                                example: Apartment
+                              villa:
+                                type: string
+                                example: Villa
+                          options_order:
+                            type: array
+                            example:
+                              - apartment
+                              - villa
+                            items:
+                              type: string
+                          counts:
+                            type: object
+                            properties:
+                              apartment:
+                                type: integer
+                                example: 42
+                              villa:
+                                type: integer
+                                example: 17
+                      bedrooms:
+                        type: object
+                        properties:
+                          label:
+                            type: string
+                            example: Bedrooms
+                          type:
+                            type: string
+                            example: radio
+                          placeholder:
+                            type: string
+                            example: null
+                            nullable: true
+                          param:
+                            type: string
+                            example: bedrooms
+                          multiple:
+                            type: boolean
+                            example: false
+                          options:
+                            type: object
+                            properties:
+                              1:
+                                type: string
+                                example: '1'
+                              2:
+                                type: string
+                                example: '2'
+                              5+:
+                                type: string
+                                example: 5+
+                          options_order:
+                            type: array
+                            example:
+                              - '1'
+                              - '2'
+                              - 5+
+                            items:
+                              type: string
+                      price:
+                        type: object
+                        properties:
+                          label:
+                            type: string
+                            example: Price
+                          type:
+                            type: string
+                            example: range
+                          placeholder:
+                            type: string
+                            example: null
+                            nullable: true
+                          min:
+                            type: integer
+                            example: 0
+                          max:
+                            type: integer
+                            example: 19000000
+                          step:
+                            type: integer
+                            example: 50000
+                          params:
+                            type: object
+                            properties:
+                              min:
+                                type: string
+                                example: min_price
+                              max:
+                                type: string
+                                example: max_price
+                      parking:
+                        type: object
+                        properties:
+                          label:
+                            type: string
+                            example: Parking
+                          type:
+                            type: string
+                            example: number
+                          placeholder:
+                            type: string
+                            example: 'Min. spaces'
+                          min:
+                            type: integer
+                            example: 0
+                          max:
+                            type: integer
+                            example: 5
+                          step:
+                            type: integer
+                            example: 1
+                          compare:
+                            type: string
+                            example: min
+                          param:
+                            type: string
+                            example: min_parking
+                      keyword:
+                        type: object
+                        properties:
+                          label:
+                            type: string
+                            example: Keyword
+                          type:
+                            type: string
+                            example: text
+                          placeholder:
+                            type: string
+                            example: 'Title or reference'
+                          param:
+                            type: string
+                            example: keyword
+                  order:
+                    type: array
+                    example:
+                      - property_type
+                      - bedrooms
+                      - price
+                      - parking
+                      - keyword
+                    items:
+                      type: string
+      tags:
+        - 'Search & Filters'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lang:
+                  type: string
+                  description: 'Must not be greater than 10 characters.'
+                  example: vmqeopfuu
+      security: []
+    parameters:
+      -
+        in: path
+        name: page
+        description: 'Optional parameter. properties, commercial, premium or offplan.'
+        required: true
+        schema:
+          type: string
+        examples:
+          omitted:
+            summary: 'When the value is omitted'
+            value: ''
+          present:
+            summary: 'When the value is present'
+            value: properties
   /api/location-suggestions:
     get:
       summary: 'Location autocomplete'

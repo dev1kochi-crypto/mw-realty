@@ -284,7 +284,7 @@ endpoints:
         name: permit_expires_at
         description: 'Must be a valid date in the format <code>Y-m-d</code>.'
         required: false
-        example: '2026-10-09'
+        example: '2026-10-14'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -497,7 +497,7 @@ endpoints:
         name: permit_type
         description: ''
         required: false
-        example: dtcm
+        example: none
         type: string
         enumValues:
           - rera
@@ -535,7 +535,7 @@ endpoints:
         name: availability
         description: ''
         required: false
-        example: from_date
+        example: immediately
         type: string
         enumValues:
           - immediately
@@ -549,7 +549,7 @@ endpoints:
         description: 'Must be a valid date in the format <code>Y-m-d</code>.'
         required: false
         example:
-          - '2026-10-09'
+          - '2026-10-14'
         type: 'string[]'
         enumValues: []
         exampleWasSpecified: false
@@ -593,7 +593,7 @@ endpoints:
         name: upgraded
         description: ''
         required: false
-        example: true
+        example: false
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -748,7 +748,7 @@ endpoints:
         name: published_at
         description: 'Must be a valid date.'
         required: false
-        example: '2026-10-09T11:12:50'
+        example: '2026-10-14T04:24:20'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -1135,7 +1135,7 @@ endpoints:
       reference_no: amniihfqcoynlazghdtqt
       rera_id: qxbajwbpilpmufinllwlo
       permit_number: auydlsmsjuryvojcybzvr
-      permit_expires_at: '2026-10-09'
+      permit_expires_at: '2026-10-14'
       permit_verification_url: 'http://www.ward.com/'
       postal_code: ckznkygloigmkwxphlvaz
       latitude: -90
@@ -1153,16 +1153,16 @@ endpoints:
       property_attributes:
         - wvownkbamlnfngefbeilf
       rental_period: zsyuxoezbdtabptcyyere
-      permit_type: dtcm
+      permit_type: none
       permit_city: al_ain
       permit_token: vrljcbwkthjnescwsestc
-      availability: from_date
+      availability: immediately
       available_dates:
-        - '2026-10-09'
+        - '2026-10-14'
       developer: ouxpqsydkigioyoyprjkf
       unit_number: djsneawgaavuiwlezlcra
       owner_name: oooxrrjhbduowtbaqrrtg
-      upgraded: true
+      upgraded: false
       video_tour_url: 'http://harber.info/dolor-autem-omnis-doloribus-beatae-laboriosam-expedita-deserunt.html'
       cheques: 6
       year_built: 14
@@ -1175,7 +1175,7 @@ endpoints:
       view: mbiuqxdnvttnwpjqkxxmu
       nearby_places:
         - 17
-      published_at: '2026-10-09T11:12:50'
+      published_at: '2026-10-14T04:24:20'
       order_index: 45
       metadata:
         meta_title: qeopfuudtdsufvyvddqam
@@ -1555,7 +1555,7 @@ endpoints:
         name: permit_expires_at
         description: 'Must be a valid date in the format <code>Y-m-d</code>.'
         required: false
-        example: '2026-10-09'
+        example: '2026-10-14'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -1820,7 +1820,7 @@ endpoints:
         description: 'Must be a valid date in the format <code>Y-m-d</code>.'
         required: false
         example:
-          - '2026-10-09'
+          - '2026-10-14'
         type: 'string[]'
         enumValues: []
         exampleWasSpecified: false
@@ -1864,7 +1864,7 @@ endpoints:
         name: upgraded
         description: ''
         required: false
-        example: false
+        example: true
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -2019,7 +2019,7 @@ endpoints:
         name: published_at
         description: 'Must be a valid date.'
         required: false
-        example: '2026-10-09T11:12:50'
+        example: '2026-10-14T04:24:20'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -2395,7 +2395,7 @@ endpoints:
       reference_no: amniihfqcoynlazghdtqt
       rera_id: qxbajwbpilpmufinllwlo
       permit_number: auydlsmsjuryvojcybzvr
-      permit_expires_at: '2026-10-09'
+      permit_expires_at: '2026-10-14'
       permit_verification_url: 'http://www.ward.com/'
       postal_code: ckznkygloigmkwxphlvaz
       latitude: -90
@@ -2418,11 +2418,11 @@ endpoints:
       permit_token: vrljcbwkthjnescwsestc
       availability: from_date
       available_dates:
-        - '2026-10-09'
+        - '2026-10-14'
       developer: ouxpqsydkigioyoyprjkf
       unit_number: djsneawgaavuiwlezlcra
       owner_name: oooxrrjhbduowtbaqrrtg
-      upgraded: false
+      upgraded: true
       video_tour_url: 'http://harber.info/dolor-autem-omnis-doloribus-beatae-laboriosam-expedita-deserunt.html'
       cheques: 6
       year_built: 14
@@ -2435,7 +2435,7 @@ endpoints:
       view: mbiuqxdnvttnwpjqkxxmu
       nearby_places:
         - 17
-      published_at: '2026-10-09T11:12:50'
+      published_at: '2026-10-14T04:24:20'
       order_index: 45
       metadata:
         meta_title: qeopfuudtdsufvyvddqam

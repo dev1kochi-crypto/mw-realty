@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "MW Realty \u2014 CRM API",
-        "_postman_id": "875a4670-4906-4f2e-8573-dc56288f095e",
+        "_postman_id": "7069fca5-6dfd-450d-981b-b302854c9619",
         "description": "REST API for the agent \/ company CRM (web app and mobile app).",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -575,13 +575,13 @@
                                 },
                                 {
                                     "key": "orn_expiry",
-                                    "value": "2026-10-09T11:12:49",
+                                    "value": "2026-10-14T04:24:18",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
                                 {
                                     "key": "adrec_license_expiry",
-                                    "value": "2026-10-09T11:12:49",
+                                    "value": "2026-10-14T04:24:18",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -593,7 +593,7 @@
                                 },
                                 {
                                     "key": "other_license_expiry",
-                                    "value": "2026-10-09T11:12:49",
+                                    "value": "2026-10-14T04:24:18",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -653,7 +653,7 @@
                                 },
                                 {
                                     "key": "passport_expiry",
-                                    "value": "2026-10-09T11:12:49",
+                                    "value": "2026-10-14T04:24:18",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -677,7 +677,7 @@
                                 },
                                 {
                                     "key": "trade_license_expiry",
-                                    "value": "2026-10-09T11:12:49",
+                                    "value": "2026-10-14T04:24:18",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -701,7 +701,7 @@
                                 },
                                 {
                                     "key": "trn_expiry",
-                                    "value": "2026-10-09T11:12:49",
+                                    "value": "2026-10-14T04:24:18",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -791,7 +791,7 @@
                                 },
                                 {
                                     "key": "remove_metadata_og_image",
-                                    "value": "1",
+                                    "value": "",
                                     "type": "text",
                                     "description": ""
                                 },
@@ -1161,6 +1161,923 @@
             ]
         },
         {
+            "name": "CRM Advertisements",
+            "description": "\nWebsite advertising for agencies \/ independent agents whose plan includes it: book a banner on a\npage of the website (it runs in that page's ad slider) for some hours or days, follow it through\nMW Realty's review, and see how often it was shown and clicked. Rules: App\\Services\\AdBookingService.\nTimes are sent and shown in Dubai time.",
+            "item": [
+                {
+                    "name": "List ads",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads",
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "live",
+                                    "description": "all | live | upcoming | past.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads?status=live&page=1"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "The account's ads, newest booking first (20 per page), with impressions \/ clicks per ad, the\nlast 30 days' totals and the plan allowance. `quota.included` false = the plan has no\nadvertising (show the upgrade card).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Booking options",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/form-options",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/form-options"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Everything the \"Book an ad\" form needs: the pages ads can run on (with their credit prices and\nhow many run at once), the lengths the plan allows, the allowance and credit balance, the\nactive languages for the banner text, and the earliest start.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Free slots",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/availability",
+                            "query": [
+                                {
+                                    "key": "placement",
+                                    "value": "home",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "date",
+                                    "value": "2026-10-14",
+                                    "description": "Y-m-d.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/availability?placement=home&date=2026-10-14"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"placement\":\"consequatur\",\"date\":\"2026-10-14\"}"
+                        },
+                        "description": "For each hour of a day (Dubai time) on a page: how many client ads are booked and how many\nslots are still free. `past` hours can't be booked any more.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Listings an ad can link to",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/properties",
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "marina",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/properties?q=marina&page=1"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"q\":\"vmqeopfuudtdsufvyvddq\",\"page\":2}"
+                        },
+                        "description": "The account's active listings, searched and paged on the server (20 at a time) \u2014 RemoteSelect's\n`{data: [{id, name}], next_page}`.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Book an ad",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart\/form-data"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Marina Heights launch",
+                                    "type": "text",
+                                    "description": "Only you see it."
+                                },
+                                {
+                                    "key": "placement",
+                                    "value": "home",
+                                    "type": "text",
+                                    "description": "A page from the booking options."
+                                },
+                                {
+                                    "key": "start",
+                                    "value": "2026-10-14 18:00",
+                                    "type": "text",
+                                    "description": "Y-m-d H:i, Dubai time, on the hour."
+                                },
+                                {
+                                    "key": "hours",
+                                    "value": "6",
+                                    "type": "text",
+                                    "description": "One of the plan's lengths."
+                                },
+                                {
+                                    "key": "pay_with",
+                                    "value": "plan",
+                                    "type": "text",
+                                    "description": "plan | credits."
+                                },
+                                {
+                                    "key": "link_type",
+                                    "value": "property",
+                                    "type": "text",
+                                    "description": "property | profile | url."
+                                },
+                                {
+                                    "key": "property_id",
+                                    "value": "111",
+                                    "type": "text",
+                                    "description": "With link_type=property."
+                                },
+                                {
+                                    "key": "image_alt",
+                                    "value": "Marina Heights tower at sunset",
+                                    "type": "text",
+                                    "description": ""
+                                },
+                                {
+                                    "key": "image",
+                                    "src": [],
+                                    "type": "file"
+                                },
+                                {
+                                    "key": "mobile_image",
+                                    "src": [],
+                                    "type": "file"
+                                }
+                            ]
+                        },
+                        "description": "Multipart form. The ad waits for MW Realty's review and runs, once approved, from `start` for\n`hours`. `pay_with=plan` uses the monthly allowance; `credits` spends credits (refunded if it's\nrejected or cancelled before it runs).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "One ad",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 12,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "The ad with its booking, review state and full report: totals, an hourly series over its run,\ntotals per day and its busiest hours.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Change an ad",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 12,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"remove_mobile_image\":false}"
+                        },
+                        "description": "Banner, text and link only, before the ad starts (send as multipart POST with `_method=PUT`).\nThe page, time and payment stay; it goes back to MW Realty's review.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Cancel \/ stop an ad",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 12,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Not started yet (or still in review): cancelled, with its credits \/ allowance given back.\nLive: stops now \u2014 the time already used isn't refunded.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "CRM Advertisements (Super Admin)",
+            "description": "\nSuper Admin's side of CRM \u203a Advertisements (it replaced CMS \u203a Ad Management): MW Realty's own ads\n(any page, an optional date window, on\/off, slide order), the review of the ads agencies \/ agents\nbook (approve, or reject with a reason \u2014 the client is refunded), and per page how many client\nads run at once and their credit prices. Client bookings themselves: AdController \/ AdBookingService.",
+            "item": [
+                {
+                    "name": "Overview + one tab's list",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage",
+                            "query": [
+                                {
+                                    "key": "tab",
+                                    "value": "client",
+                                    "description": "house | client.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "state",
+                                    "value": "pending",
+                                    "description": "house: all | live | scheduled | ended | off; client: pending | upcoming | live | past | all.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "placement",
+                                    "value": "home",
+                                    "description": "A page key.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "q",
+                                    "value": "marina",
+                                    "description": "Name or client.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage?tab=client&state=pending&placement=home&q=marina&page=1"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "`tab=house` (MW Realty's ads, 15 per page, slide order) or `tab=client` (bookings, 20 per page).\nAlways includes the 30-day totals and the counts for both tabs.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Form options for an MW Realty ad: every page, the languages, image limits.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage\/form-options",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage\/form-options"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Any active listing, for an ad that links to one \u2014 RemoteSelect's `{data, next_page}`.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage\/properties",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage\/properties"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"q\":\"vmqeopfuudtdsufvyvddq\",\"page\":2}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Per page: open to clients, client ads at once, credits per hour \/ day.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage\/placements",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage\/placements"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT api\/crm\/ads\/manage\/placements",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage\/placements",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage\/placements"
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"placements\":[{\"client_bookable\":true,\"max_slots\":21,\"credits_per_hour\":13,\"credits_per_day\":16}]}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add an MW Realty ad",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Multipart. Runs on its page from `start_date` to the end of `end_date` (Dubai days; both\noptional = always on) while `status` is on. New ads go first in their page's slide order.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "One ad (MW Realty's or a client's) with its report.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": 12,
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Change an MW Realty ad (multipart POST with `_method=PUT`).",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "1562",
+                                    "description": "The ID of the manage."
+                                }
+                            ]
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete an MW Realty ad (client ads are rejected instead, so they get refunded).",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage\/:id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage\/:id",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "1562",
+                                    "description": "The ID of the manage."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Switch an MW Realty ad on \/ off.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage\/:id\/toggle",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage\/:id\/toggle",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "1562",
+                                    "description": "The ID of the manage."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Move in the slide order",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage\/:id\/move",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage\/:id\/move",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "1562",
+                                    "description": "The ID of the manage."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"direction\":\"up\"}"
+                        },
+                        "description": "Swaps the ad with the one before \/ after it on the same page (the slider shows them in this\norder, after any client ads).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Approve a client's ad \u2014 it runs in its booked hours.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage\/:id\/approve",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage\/:id\/approve",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "1562",
+                                    "description": "The ID of the manage."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Reject \/ take down a client's ad",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/ads\/manage\/:id\/reject",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/ads\/manage\/:id\/reject",
+                            "variable": [
+                                {
+                                    "id": "id",
+                                    "key": "id",
+                                    "value": "1562",
+                                    "description": "The ID of the manage."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"note\":\"The banner text is too small to read.\"}"
+                        },
+                        "description": "The client sees the reason. Not run yet \u2192 their credits \/ plan ad come back; live \u2192 it comes\noff the website now, and the time used isn't refunded.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
             "name": "CRM Agents",
             "description": "\nAgent roster: Super Admin sees every agent across every agency; a Company manages only its own \u2014\nevery membership is looked up already scoped to that agency (findMembership()) and then checked\nby AgencyAgentPolicy, so another agency's agent id 404s. An Agent-type login has no access here\n(its side is My Agency).\n\nAdding a brand-new agent or inviting an existing one both need Super Admin approval before the\nagent becomes active; all state changes go through AgencyMembershipService. Lead assignment\nsettings and \"distribute unassigned\" are the Leads endpoints (\/leads\/assignment-settings, \/leads\/distribute).",
             "item": [
@@ -1330,7 +2247,7 @@
                                 },
                                 {
                                     "key": "passport_expiry",
-                                    "value": "2026-10-09T11:12:50",
+                                    "value": "2026-10-14T04:24:21",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -1348,7 +2265,7 @@
                                 },
                                 {
                                     "key": "trade_license_expiry",
-                                    "value": "2026-10-09T11:12:50",
+                                    "value": "2026-10-14T04:24:21",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -1360,7 +2277,7 @@
                                 },
                                 {
                                     "key": "trn_expiry",
-                                    "value": "2026-10-09T11:12:50",
+                                    "value": "2026-10-14T04:24:21",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -2045,6 +2962,45 @@
                     ]
                 },
                 {
+                    "name": "Help desk",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/help",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/help"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Every active help guide, A\u2013Z, with its full content \u2014 the CRM's Help Desk page lists them and\nopens one as the same slide tour as the \"!\" icon.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\": [{\"topic\": \"leads\", \"title\": \"Leads\", \"icon\": \"fa-address-book\", \"intro\": \"\u2026\", \"features\": [], \"steps\": [], \"tips\": []}]}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
                     "name": "Help guides seen",
                     "request": {
                         "url": {
@@ -2116,7 +3072,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "A module's \"how it works\" guide (the \"!\" icon): title, intro, features, steps and tips \u2014\ncontent from resources\/help\/portal\/{topic}.php.",
+                        "description": "A module's \"how it works\" guide (the \"!\" icon): title, intro, features, steps and tips \u2014\ncontent managed in Admin \u203a Help Desk (help_guides).",
                         "auth": {
                             "type": "noauth"
                         }
@@ -2505,6 +3461,286 @@
                         ],
                         "body": null,
                         "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "CRM Credits",
+            "description": "\nCredits \u2014 add-ons next to the plan: an extra listing once the plan's allowance is used up, or\nPremium for 7 \/ 15 \/ 30 days without using the plan's premium quota. Bought with Top Up (card, via\nStripe: POST \/credits\/top-up\/intent \u2192 confirm the card with Stripe \u2192 POST \/credits\/top-up\/complete),\nvalid for a set number of days. An agency's agents spend the agency's credits. See CreditService.",
+            "item": [
+                {
+                    "name": "Credit usage history",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/credits",
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "RERA1024",
+                                    "description": "Reference search.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "from",
+                                    "value": "2026-09-12",
+                                    "description": "Y-m-d, default a month ago.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "to",
+                                    "value": "2026-10-12",
+                                    "description": "Y-m-d, default today.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/crm\/credits?q=RERA1024&from=2026-09-12&to=2026-10-12&page=1"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "The wallet (balance, next expiry, top-up pricing) and its transactions, newest first, 20 per page.\nSuper Admin sees every account's.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Export the history (same filters) as CSV",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/credits\/export",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/credits\/export"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Calculator options",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/credits\/calculator",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/credits\/calculator"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "The choices for the credit calculator: categories, offering types and property types.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Calculate credits",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/credits\/calculate",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/credits\/calculate"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"segment\":\"residential\",\"listing_type\":\"rent\",\"property_type\":\"apartment\",\"price\":85000}"
+                        },
+                        "description": "What an extra listing and Premium (7 \/ 15 \/ 30 days) cost for a listing like this.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Quote for listings",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/credits\/quote",
+                            "query": [
+                                {
+                                    "key": "property_ids[0]",
+                                    "value": "12",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "property_ids[1]",
+                                    "value": "14",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/crm\/credits\/quote?property_ids%5B0%5D=12&property_ids%5B1%5D=14"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"property_ids\":[17]}"
+                        },
+                        "description": "Credit costs for these listings (the \"pay with credits\" option when making them premium), plus the balance.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Top up: start the card payment",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/credits\/top-up\/intent",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/credits\/top-up\/intent"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"credits\":1000}"
+                        },
+                        "description": "Returns the Stripe client secret to confirm the card with, and the total charged.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Top up: finish",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/crm\/credits\/top-up\/complete",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/crm\/credits\/top-up\/complete"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"payment_intent_id\":\"pi_123\"}"
+                        },
+                        "description": "After the card payment is confirmed: adds the credits (the payment_intent.succeeded webhook does the same).",
                         "auth": {
                             "type": "noauth"
                         }
@@ -4872,7 +6108,7 @@
                                 {
                                     "id": "leadImport_id",
                                     "key": "leadImport_id",
-                                    "value": 17,
+                                    "value": 1,
                                     "description": "The ID of the leadImport."
                                 }
                             ]
@@ -4919,7 +6155,7 @@
                                 {
                                     "id": "leadImport_id",
                                     "key": "leadImport_id",
-                                    "value": 17,
+                                    "value": 1,
                                     "description": "The ID of the leadImport."
                                 }
                             ]
@@ -6368,7 +7604,7 @@
         },
         {
             "name": "CRM Master \u2014 Property Options",
-            "description": "\nSuper Admin only: the option lists behind the property form's Property Type, Listing Type,\nCompletion Status and Furnishing dropdowns, plus the Nearby Places \"Type\" dropdown \u2014 the same\nFilter \/ FilterValue records the website filters use. Agents \/ agencies ask for new options via a ticket.",
+            "description": "\nSuper Admin only: the option lists behind the property form's dropdowns (Property Type, Listing\nType, Category, Location, Furnishing, \u2026), the bedroom \/ bathroom choices and the Nearby Places\n\"Type\" dropdown \u2014 the Filter \/ FilterValue records the website's Search Filters take their\n\"From the database\" values from. Agents \/ agencies ask for new options via a ticket.",
             "item": [
                 {
                     "name": "One option list",
@@ -6421,7 +7657,7 @@
                                 {
                                     "id": "key",
                                     "key": "key",
-                                    "value": "property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type",
+                                    "value": "property_type|listing_type|completion_status|category|location|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type|bedrooms|bathrooms",
                                     "description": ""
                                 }
                             ]
@@ -6482,7 +7718,7 @@
                                 {
                                     "id": "key",
                                     "key": "key",
-                                    "value": "property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type",
+                                    "value": "property_type|listing_type|completion_status|category|location|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type|bedrooms|bathrooms",
                                     "description": ""
                                 }
                             ]
@@ -6525,7 +7761,7 @@
                                 {
                                     "id": "key",
                                     "key": "key",
-                                    "value": "property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type",
+                                    "value": "property_type|listing_type|completion_status|category|location|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type|bedrooms|bathrooms",
                                     "description": ""
                                 },
                                 {
@@ -6571,7 +7807,7 @@
                                 {
                                     "id": "key",
                                     "key": "key",
-                                    "value": "property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type",
+                                    "value": "property_type|listing_type|completion_status|category|location|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type|bedrooms|bathrooms",
                                     "description": ""
                                 },
                                 {
@@ -6617,7 +7853,7 @@
                                 {
                                     "id": "key",
                                     "key": "key",
-                                    "value": "property_type|listing_type|completion_status|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type",
+                                    "value": "property_type|listing_type|completion_status|category|location|furnishing|emirate|rental_period|amenity|easy_access|property_attribute|nearby_place_type|bedrooms|bathrooms",
                                     "description": ""
                                 },
                                 {
@@ -7542,9 +8778,9 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"property_ids\":[12,14],\"start_date\":\"2026-10-10\",\"end_date\":\"2026-11-08\"}"
+                            "raw": "{\"property_ids\":[12,14],\"start_date\":\"2026-10-10\",\"end_date\":\"2026-11-08\",\"days\":15,\"pay_with\":\"credits\"}"
                         },
-                        "description": "The same start \/ end dates for every ticked listing, all-or-nothing (FeaturedListingService::featureMany).",
+                        "description": "The same start \/ end dates for every ticked listing, all-or-nothing (FeaturedListingService::featureMany).\nWith `pay_with=credits` each is bought with credits for `days` (7, 15 or 30) instead.",
                         "auth": {
                             "type": "noauth"
                         }
@@ -7832,7 +9068,7 @@
                                 },
                                 {
                                     "key": "permit_expires_at",
-                                    "value": "2026-10-09",
+                                    "value": "2026-10-14",
                                     "type": "text",
                                     "description": "Must be a valid date in the format <code>Y-m-d<\/code>."
                                 },
@@ -7922,7 +9158,7 @@
                                 },
                                 {
                                     "key": "permit_type",
-                                    "value": "dtcm",
+                                    "value": "none",
                                     "type": "text",
                                     "description": ""
                                 },
@@ -7940,13 +9176,13 @@
                                 },
                                 {
                                     "key": "availability",
-                                    "value": "from_date",
+                                    "value": "immediately",
                                     "type": "text",
                                     "description": ""
                                 },
                                 {
                                     "key": "available_dates[0]",
-                                    "value": "2026-10-09",
+                                    "value": "2026-10-14",
                                     "type": "text",
                                     "description": ""
                                 },
@@ -7970,7 +9206,7 @@
                                 },
                                 {
                                     "key": "upgraded",
-                                    "value": "1",
+                                    "value": "",
                                     "type": "text",
                                     "description": ""
                                 },
@@ -8042,7 +9278,7 @@
                                 },
                                 {
                                     "key": "published_at",
-                                    "value": "2026-10-09T11:12:50",
+                                    "value": "2026-10-14T04:24:20",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -8469,7 +9705,7 @@
                                 },
                                 {
                                     "key": "permit_expires_at",
-                                    "value": "2026-10-09",
+                                    "value": "2026-10-14",
                                     "type": "text",
                                     "description": "Must be a valid date in the format <code>Y-m-d<\/code>."
                                 },
@@ -8583,7 +9819,7 @@
                                 },
                                 {
                                     "key": "available_dates[0]",
-                                    "value": "2026-10-09",
+                                    "value": "2026-10-14",
                                     "type": "text",
                                     "description": ""
                                 },
@@ -8607,7 +9843,7 @@
                                 },
                                 {
                                     "key": "upgraded",
-                                    "value": "",
+                                    "value": "1",
                                     "type": "text",
                                     "description": ""
                                 },
@@ -8679,7 +9915,7 @@
                                 },
                                 {
                                     "key": "published_at",
-                                    "value": "2026-10-09T11:12:50",
+                                    "value": "2026-10-14T04:24:20",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -9351,9 +10587,9 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"start_date\":\"2026-10-10\",\"end_date\":\"2026-11-08\"}"
+                            "raw": "{\"start_date\":\"2026-10-10\",\"end_date\":\"2026-11-08\",\"days\":15,\"pay_with\":\"credits\"}"
                         },
-                        "description": "",
+                        "description": "With `pay_with=credits` (agents \/ companies) it's bought with credits for `days` (7, 15 or 30)\ninstead of using the plan's quota; no end date is sent.",
                         "auth": {
                             "type": "noauth"
                         }
@@ -9557,7 +10793,7 @@
                                 },
                                 {
                                     "key": "rented_until",
-                                    "value": "2107-11-07",
+                                    "value": "2107-11-12",
                                     "type": "text",
                                     "description": "Must be a valid date. Must be a date after <code>sold_at<\/code>."
                                 },
