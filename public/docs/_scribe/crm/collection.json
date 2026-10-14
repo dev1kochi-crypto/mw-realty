@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "MW Realty \u2014 CRM API",
-        "_postman_id": "7069fca5-6dfd-450d-981b-b302854c9619",
+        "_postman_id": "84e03649-cafd-4f0a-a6b7-70016adf458e",
         "description": "REST API for the agent \/ company CRM (web app and mobile app).",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -575,13 +575,13 @@
                                 },
                                 {
                                     "key": "orn_expiry",
-                                    "value": "2026-10-14T04:24:18",
+                                    "value": "2026-10-14T04:27:40",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
                                 {
                                     "key": "adrec_license_expiry",
-                                    "value": "2026-10-14T04:24:18",
+                                    "value": "2026-10-14T04:27:40",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -593,7 +593,7 @@
                                 },
                                 {
                                     "key": "other_license_expiry",
-                                    "value": "2026-10-14T04:24:18",
+                                    "value": "2026-10-14T04:27:40",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -653,7 +653,7 @@
                                 },
                                 {
                                     "key": "passport_expiry",
-                                    "value": "2026-10-14T04:24:18",
+                                    "value": "2026-10-14T04:27:40",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -677,7 +677,7 @@
                                 },
                                 {
                                     "key": "trade_license_expiry",
-                                    "value": "2026-10-14T04:24:18",
+                                    "value": "2026-10-14T04:27:40",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -701,7 +701,7 @@
                                 },
                                 {
                                     "key": "trn_expiry",
-                                    "value": "2026-10-14T04:24:18",
+                                    "value": "2026-10-14T04:27:40",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -791,7 +791,7 @@
                                 },
                                 {
                                     "key": "remove_metadata_og_image",
-                                    "value": "",
+                                    "value": "1",
                                     "type": "text",
                                     "description": ""
                                 },
@@ -1748,7 +1748,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"placements\":[{\"client_bookable\":true,\"max_slots\":21,\"credits_per_hour\":13,\"credits_per_day\":16}]}"
+                            "raw": "{\"placements\":[{\"client_bookable\":false,\"max_slots\":21,\"credits_per_hour\":13,\"credits_per_day\":16}]}"
                         },
                         "description": "",
                         "auth": {
@@ -2247,7 +2247,7 @@
                                 },
                                 {
                                     "key": "passport_expiry",
-                                    "value": "2026-10-14T04:24:21",
+                                    "value": "2026-10-14T04:27:42",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -2265,7 +2265,7 @@
                                 },
                                 {
                                     "key": "trade_license_expiry",
-                                    "value": "2026-10-14T04:24:21",
+                                    "value": "2026-10-14T04:27:42",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -2277,7 +2277,7 @@
                                 },
                                 {
                                     "key": "trn_expiry",
-                                    "value": "2026-10-14T04:24:21",
+                                    "value": "2026-10-14T04:27:42",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -9158,7 +9158,7 @@
                                 },
                                 {
                                     "key": "permit_type",
-                                    "value": "none",
+                                    "value": "dtcm",
                                     "type": "text",
                                     "description": ""
                                 },
@@ -9278,7 +9278,7 @@
                                 },
                                 {
                                     "key": "published_at",
-                                    "value": "2026-10-14T04:24:20",
+                                    "value": "2026-10-14T04:27:42",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },
@@ -9801,7 +9801,7 @@
                                 },
                                 {
                                     "key": "permit_city",
-                                    "value": "other",
+                                    "value": "al_ain",
                                     "type": "text",
                                     "description": ""
                                 },
@@ -9915,7 +9915,7 @@
                                 },
                                 {
                                     "key": "published_at",
-                                    "value": "2026-10-14T04:24:20",
+                                    "value": "2026-10-14T04:27:42",
                                     "type": "text",
                                     "description": "Must be a valid date."
                                 },

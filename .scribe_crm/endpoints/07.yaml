@@ -497,7 +497,7 @@ endpoints:
         name: permit_type
         description: ''
         required: false
-        example: none
+        example: dtcm
         type: string
         enumValues:
           - rera
@@ -748,7 +748,7 @@ endpoints:
         name: published_at
         description: 'Must be a valid date.'
         required: false
-        example: '2026-10-14T04:24:20'
+        example: '2026-10-14T04:27:42'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -1153,7 +1153,7 @@ endpoints:
       property_attributes:
         - wvownkbamlnfngefbeilf
       rental_period: zsyuxoezbdtabptcyyere
-      permit_type: none
+      permit_type: dtcm
       permit_city: al_ain
       permit_token: vrljcbwkthjnescwsestc
       availability: immediately
@@ -1175,7 +1175,7 @@ endpoints:
       view: mbiuqxdnvttnwpjqkxxmu
       nearby_places:
         - 17
-      published_at: '2026-10-14T04:24:20'
+      published_at: '2026-10-14T04:27:42'
       order_index: 45
       metadata:
         meta_title: qeopfuudtdsufvyvddqam
@@ -1782,7 +1782,7 @@ endpoints:
         name: permit_city
         description: ''
         required: false
-        example: other
+        example: al_ain
         type: string
         enumValues:
           - al_ain
@@ -2019,7 +2019,7 @@ endpoints:
         name: published_at
         description: 'Must be a valid date.'
         required: false
-        example: '2026-10-14T04:24:20'
+        example: '2026-10-14T04:27:42'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -2414,7 +2414,7 @@ endpoints:
         - wvownkbamlnfngefbeilf
       rental_period: zsyuxoezbdtabptcyyere
       permit_type: none
-      permit_city: other
+      permit_city: al_ain
       permit_token: vrljcbwkthjnescwsestc
       availability: from_date
       available_dates:
@@ -2435,7 +2435,7 @@ endpoints:
       view: mbiuqxdnvttnwpjqkxxmu
       nearby_places:
         - 17
-      published_at: '2026-10-14T04:24:20'
+      published_at: '2026-10-14T04:27:42'
       order_index: 45
       metadata:
         meta_title: qeopfuudtdsufvyvddqam

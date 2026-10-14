@@ -1,19 +1,22 @@
-name: 'Contact & Newsletter'
+name: Home
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/contact
+    uri: api/home
     metadata:
       custom: []
-      groupName: 'Contact & Newsletter'
+      groupName: Home
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Contact page'
-      description: 'Office details, map embed, hero image and social links.'
+      title: 'Home screen'
+      description: |-
+        Every home section in one request: banner, brands, ad, developments, premium properties,
+        luxury, why-choose-us, communities, popular places, testimonials, contact. Property lists
+        inside are shuffled on each call.
       authenticated: false
       deprecated: false
     headers:
@@ -48,21 +51,16 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/contact
+      - GET
+    uri: api/home/new-projects
     metadata:
       custom: []
-      groupName: 'Contact & Newsletter'
+      groupName: Home
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Send a contact message'
-      description: |-
-        General enquiry (not about a specific property — for that use `POST /api/leads/capture`).
-        Saves to Enquiries and emails admin.
-
-        Public, unauthenticated — the /contact page form and the home page's contact section
-        (`source=home`, which also sends `interest`; its message is then optional).
+      title: 'New projects by city'
+      description: 'The home "Browse New Projects" section''s listings for one city tab.'
       authenticated: false
       deprecated: false
     headers:
@@ -71,174 +69,36 @@ endpoints:
       X-Device-Id: '{DEVICE_ID}'
     urlParameters: []
     cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      name:
+    queryParameters:
+      city:
         custom: []
-        name: name
-        description: ''
-        required: true
-        example: 'Sara Ahmed'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      email:
-        custom: []
-        name: email
-        description: ''
-        required: true
-        example: buyer@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      phone:
-        custom: []
-        name: phone
-        description: 'Local number.'
+        name: city
+        description: 'A city tab from the home response.'
         required: false
-        example: '501234567'
+        example: Dubai
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      phone_country_code:
+      lang:
         custom: []
-        name: phone_country_code
+        name: lang
         description: ''
         required: false
-        example: '+971'
+        example: en
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      interest:
-        custom: []
-        name: interest
-        description: 'buy, rent, sell or management.'
-        required: false
-        example: buy
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      message:
-        custom: []
-        name: message
-        description: 'Required unless `interest` is sent.'
-        required: false
-        example: "I'd like a call about 2BR apartments in Marina."
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      source:
-        custom: []
-        name: source
-        description: 'contact or home.'
-        required: false
-        example: contact
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      recaptcha_token:
-        custom: []
-        name: recaptcha_token
-        description: 'See "Forms & reCAPTCHA" in the introduction.'
-        required: false
-        example: null
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-    cleanBodyParameters:
-      name: 'Sara Ahmed'
-      email: buyer@example.com
-      phone: '501234567'
-      phone_country_code: '+971'
-      interest: buy
-      message: "I'd like a call about 2BR apartments in Marina."
-      source: contact
+    cleanQueryParameters:
+      city: Dubai
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
     fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: '{"message": "Thanks — we''ve received your message and will be in touch soon."}'
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/newsletter/subscribe
-    metadata:
-      custom: []
-      groupName: 'Contact & Newsletter'
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Subscribe to the newsletter'
-      description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      email:
-        custom: []
-        name: email
-        description: ''
-        required: true
-        example: buyer@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      recaptcha_token:
-        custom: []
-        name: recaptcha_token
-        description: 'See "Forms & reCAPTCHA" in the introduction.'
-        required: false
-        example: null
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-    cleanBodyParameters:
-      email: buyer@example.com
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: '{"already_subscribed": false, "message": "Thanks for subscribing!"}'
-        headers: []
-        description: ''
+    responses: []
     responseFields: []
     auth: []
     controller: null

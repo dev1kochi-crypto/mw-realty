@@ -81,7 +81,7 @@ endpoints:
         name: page
         description: ''
         required: false
-        example: home
+        example: listing
         type: string
         enumValues:
           - home
@@ -105,7 +105,7 @@ endpoints:
         name: scope
         description: ''
         required: false
-        example: premium
+        example: marketing
         type: string
         enumValues:
           - residential
@@ -116,9 +116,9 @@ endpoints:
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      page: home
+      page: listing
       lang: vmqeopfuu
-      scope: premium
+      scope: marketing
     fileParameters: []
     responses: []
     responseFields: []
@@ -311,7 +311,7 @@ endpoints:
         name: scope
         description: ''
         required: false
-        example: commercial
+        example: all
         type: string
         enumValues:
           - all
@@ -322,7 +322,7 @@ endpoints:
     cleanBodyParameters:
       q: vmqeopfuudtdsufvyvddq
       lang: amniihfqc
-      scope: commercial
+      scope: all
     fileParameters: []
     responses: []
     responseFields: []

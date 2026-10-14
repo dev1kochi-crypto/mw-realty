@@ -241,6 +241,7 @@ return [
             'Home',
             'Search & Filters',
             'Properties',
+            'Advertisements',
             'Agents & Agencies',
             'User Auth',
             'User Account',

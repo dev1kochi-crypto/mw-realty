@@ -12,7 +12,7 @@ use Illuminate\Routing\Controller;
  * Public ad endpoints: the ads running on a page (MW Realty's own, plus clients' approved ads in
  * their booked hours), and the impression / click counters behind CRM › Advertisements' reports.
  *
- * @group App Config
+ * @group Advertisements
  */
 class PublicAdController extends Controller
 {

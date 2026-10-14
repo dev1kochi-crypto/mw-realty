@@ -285,7 +285,7 @@ endpoints:
         name: 'placements[].client_bookable'
         description: ''
         required: false
-        example: true
+        example: false
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -327,7 +327,7 @@ endpoints:
     cleanBodyParameters:
       placements:
         -
-          client_bookable: true
+          client_bookable: false
           max_slots: 21
           credits_per_hour: 13
           credits_per_day: 16

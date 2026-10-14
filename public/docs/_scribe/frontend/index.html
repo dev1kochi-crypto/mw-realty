@@ -80,20 +80,8 @@
                                                                                 <li class="tocify-item level-2" data-unique="app-config-GETapi-static-translations">
                                 <a href="#app-config-GETapi-static-translations">UI translations</a>
                             </li>
-                                                                                <li class="tocify-item level-2" data-unique="app-config-GETapi-ads">
-                                <a href="#app-config-GETapi-ads">Ad banner</a>
-                            </li>
-                                                                                <li class="tocify-item level-2" data-unique="app-config-GETapi-ads-slides">
-                                <a href="#app-config-GETapi-ads-slides">Ad slider</a>
-                            </li>
                                                                                 <li class="tocify-item level-2" data-unique="app-config-GETapi-site-information">
                                 <a href="#app-config-GETapi-site-information">Site information</a>
-                            </li>
-                                                                                <li class="tocify-item level-2" data-unique="app-config-POSTapi-track-ad-impressions">
-                                <a href="#app-config-POSTapi-track-ad-impressions">Ad impressions</a>
-                            </li>
-                                                                                <li class="tocify-item level-2" data-unique="app-config-POSTapi-track-ad-click">
-                                <a href="#app-config-POSTapi-track-ad-click">Ad click</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -142,6 +130,25 @@
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="properties-GETapi-properties--slug-">
                                 <a href="#properties-GETapi-properties--slug-">Property details</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
+                    <ul id="tocify-header-advertisements" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="advertisements">
+                    <a href="#advertisements">Advertisements</a>
+                </li>
+                                    <ul id="tocify-subheader-advertisements" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="advertisements-GETapi-ads">
+                                <a href="#advertisements-GETapi-ads">Ad banner</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="advertisements-GETapi-ads-slides">
+                                <a href="#advertisements-GETapi-ads-slides">Ad slider</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="advertisements-POSTapi-track-ad-impressions">
+                                <a href="#advertisements-POSTapi-track-ad-impressions">Ad impressions</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="advertisements-POSTapi-track-ad-click">
+                                <a href="#advertisements-POSTapi-track-ad-click">Ad click</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -833,347 +840,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                 </form>
 
-                    <h2 id="app-config-GETapi-ads">Ad banner</h2>
-
-<p>
-</p>
-
-<p>One active ad for a screen (picked at random when several run), or <code>false</code> when there is
-none (hide the slot). Use <strong>Ad slider</strong> to show all of them.</p>
-
-<span id="example-requests-GETapi-ads">
-<blockquote>Example request:</blockquote>
-
-
-<div class="bash-example">
-    <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/ads?placement=home&amp;lang=en" \
-    --header "Content-Type: application/json" \
-    --header "Accept: application/json" \
-    --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
-
-
-<div class="javascript-example">
-    <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/ads"
-);
-
-const params = {
-    "placement": "home",
-    "lang": "en",
-};
-Object.keys(params)
-    .forEach(key =&gt; url.searchParams.append(key, params[key]));
-
-const headers = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "X-Device-Id": "{DEVICE_ID}",
-};
-
-
-fetch(url, {
-    method: "GET",
-    headers,
-}).then(response =&gt; response.json());</code></pre></div>
-
-</span>
-
-<span id="example-responses-GETapi-ads">
-    </span>
-<span id="execution-results-GETapi-ads" hidden>
-    <blockquote>Received response<span
-                id="execution-response-status-GETapi-ads"></span>:
-    </blockquote>
-    <pre class="json"><code id="execution-response-content-GETapi-ads"
-      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
-</span>
-<span id="execution-error-GETapi-ads" hidden>
-    <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-GETapi-ads">
-
-Tip: Check that you&#039;re properly connected to the network.
-If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
-You can check the Dev Tools console for debugging information.</code></pre>
-</span>
-<form id="form-GETapi-ads" data-method="GET"
-      data-path="api/ads"
-      data-authed="0"
-      data-hasfiles="0"
-      data-isarraybody="0"
-      autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('GETapi-ads', this);">
-    <h3>
-        Request&nbsp;&nbsp;&nbsp;
-                    <button type="button"
-                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-GETapi-ads"
-                    onclick="tryItOut('GETapi-ads');">Try it out ⚡
-            </button>
-            <button type="button"
-                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-GETapi-ads"
-                    onclick="cancelTryOut('GETapi-ads');" hidden>Cancel 🛑
-            </button>&nbsp;&nbsp;
-            <button type="submit"
-                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-GETapi-ads"
-                    data-initial-text="Send Request 💥"
-                    data-loading-text="⏱ Sending..."
-                    hidden>Send Request 💥
-            </button>
-            </h3>
-            <p>
-            <small class="badge badge-green">GET</small>
-            <b><code>api/ads</code></b>
-        </p>
-                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="GETapi-ads"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="GETapi-ads"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="X-Device-Id"                data-endpoint="GETapi-ads"
-               value="{DEVICE_ID}"
-               data-component="header">
-    <br>
-<p>Example: <code>{DEVICE_ID}</code></p>
-            </div>
-                            <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
-                                    <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>placement</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
-<i>optional</i> &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="placement"                data-endpoint="GETapi-ads"
-               value="home"
-               data-component="query">
-    <br>
-<p>home, property-details, … Example: <code>home</code></p>
-            </div>
-                                    <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>lang</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
-<i>optional</i> &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="lang"                data-endpoint="GETapi-ads"
-               value="en"
-               data-component="query">
-    <br>
-<p>Example: <code>en</code></p>
-            </div>
-                </form>
-
-                    <h2 id="app-config-GETapi-ads-slides">Ad slider</h2>
-
-<p>
-</p>
-
-<p>Every ad running on a screen right now, in slide order (sponsored client ads first, in a
-different order each time). Show them as a slider that moves on every <code>interval</code> seconds;
-an empty list means hide the slot. Report each slide once it has been on screen
-(<strong>Ad impressions</strong>) and taps on it (<strong>Ad click</strong>).</p>
-
-<span id="example-requests-GETapi-ads-slides">
-<blockquote>Example request:</blockquote>
-
-
-<div class="bash-example">
-    <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/ads/slides?placement=home&amp;lang=en" \
-    --header "Content-Type: application/json" \
-    --header "Accept: application/json" \
-    --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
-
-
-<div class="javascript-example">
-    <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/ads/slides"
-);
-
-const params = {
-    "placement": "home",
-    "lang": "en",
-};
-Object.keys(params)
-    .forEach(key =&gt; url.searchParams.append(key, params[key]));
-
-const headers = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "X-Device-Id": "{DEVICE_ID}",
-};
-
-
-fetch(url, {
-    method: "GET",
-    headers,
-}).then(response =&gt; response.json());</code></pre></div>
-
-</span>
-
-<span id="example-responses-GETapi-ads-slides">
-            <blockquote>
-            <p>Example response (200):</p>
-        </blockquote>
-                <pre>
-
-<code class="language-json" style="max-height: 300px;">{
-    &quot;slides&quot;: [
-        {
-            &quot;id&quot;: 12,
-            &quot;name&quot;: &quot;Marina launch&quot;,
-            &quot;image_url&quot;: &quot;https://&hellip;&quot;,
-            &quot;mobile_image_url&quot;: null,
-            &quot;image_alt&quot;: null,
-            &quot;link_url&quot;: &quot;/property-details/marina-heights&quot;,
-            &quot;eyebrow&quot;: &quot;New launch&quot;,
-            &quot;title&quot;: &quot;Marina Heights&quot;,
-            &quot;text&quot;: &quot;1&ndash;3 bed apartments from AED 1.2M&quot;,
-            &quot;sponsor&quot;: &quot;Prime Homes&quot;
-        }
-    ],
-    &quot;interval&quot;: 6
-}</code>
- </pre>
-    </span>
-<span id="execution-results-GETapi-ads-slides" hidden>
-    <blockquote>Received response<span
-                id="execution-response-status-GETapi-ads-slides"></span>:
-    </blockquote>
-    <pre class="json"><code id="execution-response-content-GETapi-ads-slides"
-      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
-</span>
-<span id="execution-error-GETapi-ads-slides" hidden>
-    <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-GETapi-ads-slides">
-
-Tip: Check that you&#039;re properly connected to the network.
-If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
-You can check the Dev Tools console for debugging information.</code></pre>
-</span>
-<form id="form-GETapi-ads-slides" data-method="GET"
-      data-path="api/ads/slides"
-      data-authed="0"
-      data-hasfiles="0"
-      data-isarraybody="0"
-      autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('GETapi-ads-slides', this);">
-    <h3>
-        Request&nbsp;&nbsp;&nbsp;
-                    <button type="button"
-                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-GETapi-ads-slides"
-                    onclick="tryItOut('GETapi-ads-slides');">Try it out ⚡
-            </button>
-            <button type="button"
-                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-GETapi-ads-slides"
-                    onclick="cancelTryOut('GETapi-ads-slides');" hidden>Cancel 🛑
-            </button>&nbsp;&nbsp;
-            <button type="submit"
-                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-GETapi-ads-slides"
-                    data-initial-text="Send Request 💥"
-                    data-loading-text="⏱ Sending..."
-                    hidden>Send Request 💥
-            </button>
-            </h3>
-            <p>
-            <small class="badge badge-green">GET</small>
-            <b><code>api/ads/slides</code></b>
-        </p>
-                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="GETapi-ads-slides"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="GETapi-ads-slides"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="X-Device-Id"                data-endpoint="GETapi-ads-slides"
-               value="{DEVICE_ID}"
-               data-component="header">
-    <br>
-<p>Example: <code>{DEVICE_ID}</code></p>
-            </div>
-                            <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
-                                    <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>placement</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
-<i>optional</i> &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="placement"                data-endpoint="GETapi-ads-slides"
-               value="home"
-               data-component="query">
-    <br>
-<p>home, property-details, … Example: <code>home</code></p>
-            </div>
-                                    <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>lang</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
-<i>optional</i> &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="lang"                data-endpoint="GETapi-ads-slides"
-               value="en"
-               data-component="query">
-    <br>
-<p>Example: <code>en</code></p>
-            </div>
-                </form>
-
                     <h2 id="app-config-GETapi-site-information">Site information</h2>
 
 <p>
@@ -1317,319 +983,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Example: <code>en</code></p>
             </div>
                 </form>
-
-                    <h2 id="app-config-POSTapi-track-ad-impressions">Ad impressions</h2>
-
-<p>
-</p>
-
-<p>Slides that were on screen (at least half visible for a second). Send each slide once per
-screen visit — not again every time the slider comes back round to it.</p>
-
-<span id="example-requests-POSTapi-track-ad-impressions">
-<blockquote>Example request:</blockquote>
-
-
-<div class="bash-example">
-    <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/track/ad-impressions" \
-    --header "Content-Type: application/json" \
-    --header "Accept: application/json" \
-    --header "X-Device-Id: {DEVICE_ID}" \
-    --data "{
-    \"ids\": [
-        12,
-        15
-    ]
-}"
-</code></pre></div>
-
-
-<div class="javascript-example">
-    <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/track/ad-impressions"
-);
-
-const headers = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "X-Device-Id": "{DEVICE_ID}",
-};
-
-let body = {
-    "ids": [
-        12,
-        15
-    ]
-};
-
-fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-}).then(response =&gt; response.json());</code></pre></div>
-
-</span>
-
-<span id="example-responses-POSTapi-track-ad-impressions">
-            <blockquote>
-            <p>Example response (204, Recorded):</p>
-        </blockquote>
-                <pre>
-<code>Empty response</code>
- </pre>
-    </span>
-<span id="execution-results-POSTapi-track-ad-impressions" hidden>
-    <blockquote>Received response<span
-                id="execution-response-status-POSTapi-track-ad-impressions"></span>:
-    </blockquote>
-    <pre class="json"><code id="execution-response-content-POSTapi-track-ad-impressions"
-      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
-</span>
-<span id="execution-error-POSTapi-track-ad-impressions" hidden>
-    <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-POSTapi-track-ad-impressions">
-
-Tip: Check that you&#039;re properly connected to the network.
-If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
-You can check the Dev Tools console for debugging information.</code></pre>
-</span>
-<form id="form-POSTapi-track-ad-impressions" data-method="POST"
-      data-path="api/track/ad-impressions"
-      data-authed="0"
-      data-hasfiles="0"
-      data-isarraybody="0"
-      autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('POSTapi-track-ad-impressions', this);">
-    <h3>
-        Request&nbsp;&nbsp;&nbsp;
-                    <button type="button"
-                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-POSTapi-track-ad-impressions"
-                    onclick="tryItOut('POSTapi-track-ad-impressions');">Try it out ⚡
-            </button>
-            <button type="button"
-                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-POSTapi-track-ad-impressions"
-                    onclick="cancelTryOut('POSTapi-track-ad-impressions');" hidden>Cancel 🛑
-            </button>&nbsp;&nbsp;
-            <button type="submit"
-                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-POSTapi-track-ad-impressions"
-                    data-initial-text="Send Request 💥"
-                    data-loading-text="⏱ Sending..."
-                    hidden>Send Request 💥
-            </button>
-            </h3>
-            <p>
-            <small class="badge badge-black">POST</small>
-            <b><code>api/track/ad-impressions</code></b>
-        </p>
-                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="POSTapi-track-ad-impressions"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="POSTapi-track-ad-impressions"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="X-Device-Id"                data-endpoint="POSTapi-track-ad-impressions"
-               value="{DEVICE_ID}"
-               data-component="header">
-    <br>
-<p>Example: <code>{DEVICE_ID}</code></p>
-            </div>
-                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
-        <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>ids</code></b>&nbsp;&nbsp;
-<small>integer[]</small>&nbsp;
- &nbsp;
- &nbsp;
-                <input type="number" style="display: none"
-               step="any"               name="ids[0]"                data-endpoint="POSTapi-track-ad-impressions"
-               data-component="body">
-        <input type="number" style="display: none"
-               name="ids[1]"                data-endpoint="POSTapi-track-ad-impressions"
-               data-component="body">
-    <br>
-<p>Up to 30 ad ids.</p>
-        </div>
-        </form>
-
-                    <h2 id="app-config-POSTapi-track-ad-click">Ad click</h2>
-
-<p>
-</p>
-
-<p>The user tapped an ad (send it before opening its link).</p>
-
-<span id="example-requests-POSTapi-track-ad-click">
-<blockquote>Example request:</blockquote>
-
-
-<div class="bash-example">
-    <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/track/ad-click" \
-    --header "Content-Type: application/json" \
-    --header "Accept: application/json" \
-    --header "X-Device-Id: {DEVICE_ID}" \
-    --data "{
-    \"id\": 12
-}"
-</code></pre></div>
-
-
-<div class="javascript-example">
-    <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/track/ad-click"
-);
-
-const headers = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "X-Device-Id": "{DEVICE_ID}",
-};
-
-let body = {
-    "id": 12
-};
-
-fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-}).then(response =&gt; response.json());</code></pre></div>
-
-</span>
-
-<span id="example-responses-POSTapi-track-ad-click">
-            <blockquote>
-            <p>Example response (204, Recorded):</p>
-        </blockquote>
-                <pre>
-<code>Empty response</code>
- </pre>
-    </span>
-<span id="execution-results-POSTapi-track-ad-click" hidden>
-    <blockquote>Received response<span
-                id="execution-response-status-POSTapi-track-ad-click"></span>:
-    </blockquote>
-    <pre class="json"><code id="execution-response-content-POSTapi-track-ad-click"
-      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
-</span>
-<span id="execution-error-POSTapi-track-ad-click" hidden>
-    <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-POSTapi-track-ad-click">
-
-Tip: Check that you&#039;re properly connected to the network.
-If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
-You can check the Dev Tools console for debugging information.</code></pre>
-</span>
-<form id="form-POSTapi-track-ad-click" data-method="POST"
-      data-path="api/track/ad-click"
-      data-authed="0"
-      data-hasfiles="0"
-      data-isarraybody="0"
-      autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('POSTapi-track-ad-click', this);">
-    <h3>
-        Request&nbsp;&nbsp;&nbsp;
-                    <button type="button"
-                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-POSTapi-track-ad-click"
-                    onclick="tryItOut('POSTapi-track-ad-click');">Try it out ⚡
-            </button>
-            <button type="button"
-                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-POSTapi-track-ad-click"
-                    onclick="cancelTryOut('POSTapi-track-ad-click');" hidden>Cancel 🛑
-            </button>&nbsp;&nbsp;
-            <button type="submit"
-                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-POSTapi-track-ad-click"
-                    data-initial-text="Send Request 💥"
-                    data-loading-text="⏱ Sending..."
-                    hidden>Send Request 💥
-            </button>
-            </h3>
-            <p>
-            <small class="badge badge-black">POST</small>
-            <b><code>api/track/ad-click</code></b>
-        </p>
-                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="POSTapi-track-ad-click"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="POSTapi-track-ad-click"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="X-Device-Id"                data-endpoint="POSTapi-track-ad-click"
-               value="{DEVICE_ID}"
-               data-component="header">
-    <br>
-<p>Example: <code>{DEVICE_ID}</code></p>
-            </div>
-                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
-        <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
-<small>integer</small>&nbsp;
- &nbsp;
- &nbsp;
-                <input type="number" style="display: none"
-               step="any"               name="id"                data-endpoint="POSTapi-track-ad-click"
-               value="12"
-               data-component="body">
-    <br>
-<p>Example: <code>12</code></p>
-        </div>
-        </form>
 
                 <h1 id="home">Home</h1>
 
@@ -1966,9 +1319,9 @@ under each filter's <code>key</code>.</p>
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
     --data "{
-    \"page\": \"home\",
+    \"page\": \"listing\",
     \"lang\": \"vmqeopfuu\",
-    \"scope\": \"premium\"
+    \"scope\": \"marketing\"
 }"
 </code></pre></div>
 
@@ -1993,9 +1346,9 @@ const headers = {
 };
 
 let body = {
-    "page": "home",
+    "page": "listing",
     "lang": "vmqeopfuu",
-    "scope": "premium"
+    "scope": "marketing"
 };
 
 fetch(url, {
@@ -2136,10 +1489,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="page"                data-endpoint="GETapi-property-filters"
-               value="home"
+               value="listing"
                data-component="body">
     <br>
-<p>Example: <code>home</code></p>
+<p>Example: <code>listing</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>home</code></li> <li><code>listing</code></li></ul>
         </div>
@@ -2162,10 +1515,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="scope"                data-endpoint="GETapi-property-filters"
-               value="premium"
+               value="marketing"
                data-component="body">
     <br>
-<p>Example: <code>premium</code></p>
+<p>Example: <code>marketing</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>residential</code></li> <li><code>commercial</code></li> <li><code>premium</code></li> <li><code>marketing</code></li></ul>
         </div>
@@ -2456,7 +1809,7 @@ returns an empty list). Pass a picked suggestion back as <code>city=</code> / <c
     --data "{
     \"q\": \"vmqeopfuudtdsufvyvddq\",
     \"lang\": \"amniihfqc\",
-    \"scope\": \"commercial\"
+    \"scope\": \"all\"
 }"
 </code></pre></div>
 
@@ -2483,7 +1836,7 @@ const headers = {
 let body = {
     "q": "vmqeopfuudtdsufvyvddq",
     "lang": "amniihfqc",
-    "scope": "commercial"
+    "scope": "all"
 };
 
 fetch(url, {
@@ -2648,10 +2001,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="scope"                data-endpoint="GETapi-location-suggestions"
-               value="commercial"
+               value="all"
                data-component="body">
     <br>
-<p>Example: <code>commercial</code></p>
+<p>Example: <code>all</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>all</code></li> <li><code>commercial</code></li></ul>
         </div>
@@ -3803,6 +3156,664 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Example: <code>en</code></p>
             </div>
                 </form>
+
+                <h1 id="advertisements">Advertisements</h1>
+
+    
+
+                                <h2 id="advertisements-GETapi-ads">Ad banner</h2>
+
+<p>
+</p>
+
+<p>One active ad for a screen (picked at random when several run), or <code>false</code> when there is
+none (hide the slot). Use <strong>Ad slider</strong> to show all of them.</p>
+
+<span id="example-requests-GETapi-ads">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://127.0.0.1:8000/api/ads?placement=home&amp;lang=en" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://127.0.0.1:8000/api/ads"
+);
+
+const params = {
+    "placement": "home",
+    "lang": "en",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-Device-Id": "{DEVICE_ID}",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-ads">
+    </span>
+<span id="execution-results-GETapi-ads" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-ads"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-ads"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-ads" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-ads">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-ads" data-method="GET"
+      data-path="api/ads"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-ads', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-ads"
+                    onclick="tryItOut('GETapi-ads');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-ads"
+                    onclick="cancelTryOut('GETapi-ads');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-ads"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/ads</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-ads"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-ads"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-Device-Id"                data-endpoint="GETapi-ads"
+               value="{DEVICE_ID}"
+               data-component="header">
+    <br>
+<p>Example: <code>{DEVICE_ID}</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>placement</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="placement"                data-endpoint="GETapi-ads"
+               value="home"
+               data-component="query">
+    <br>
+<p>home, property-details, … Example: <code>home</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>lang</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="lang"                data-endpoint="GETapi-ads"
+               value="en"
+               data-component="query">
+    <br>
+<p>Example: <code>en</code></p>
+            </div>
+                </form>
+
+                    <h2 id="advertisements-GETapi-ads-slides">Ad slider</h2>
+
+<p>
+</p>
+
+<p>Every ad running on a screen right now, in slide order (sponsored client ads first, in a
+different order each time). Show them as a slider that moves on every <code>interval</code> seconds;
+an empty list means hide the slot. Report each slide once it has been on screen
+(<strong>Ad impressions</strong>) and taps on it (<strong>Ad click</strong>).</p>
+
+<span id="example-requests-GETapi-ads-slides">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://127.0.0.1:8000/api/ads/slides?placement=home&amp;lang=en" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://127.0.0.1:8000/api/ads/slides"
+);
+
+const params = {
+    "placement": "home",
+    "lang": "en",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-Device-Id": "{DEVICE_ID}",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-ads-slides">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;slides&quot;: [
+        {
+            &quot;id&quot;: 12,
+            &quot;name&quot;: &quot;Marina launch&quot;,
+            &quot;image_url&quot;: &quot;https://&hellip;&quot;,
+            &quot;mobile_image_url&quot;: null,
+            &quot;image_alt&quot;: null,
+            &quot;link_url&quot;: &quot;/property-details/marina-heights&quot;,
+            &quot;eyebrow&quot;: &quot;New launch&quot;,
+            &quot;title&quot;: &quot;Marina Heights&quot;,
+            &quot;text&quot;: &quot;1&ndash;3 bed apartments from AED 1.2M&quot;,
+            &quot;sponsor&quot;: &quot;Prime Homes&quot;
+        }
+    ],
+    &quot;interval&quot;: 6
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-ads-slides" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-ads-slides"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-ads-slides"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-ads-slides" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-ads-slides">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-ads-slides" data-method="GET"
+      data-path="api/ads/slides"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-ads-slides', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-ads-slides"
+                    onclick="tryItOut('GETapi-ads-slides');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-ads-slides"
+                    onclick="cancelTryOut('GETapi-ads-slides');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-ads-slides"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/ads/slides</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-ads-slides"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-ads-slides"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-Device-Id"                data-endpoint="GETapi-ads-slides"
+               value="{DEVICE_ID}"
+               data-component="header">
+    <br>
+<p>Example: <code>{DEVICE_ID}</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>placement</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="placement"                data-endpoint="GETapi-ads-slides"
+               value="home"
+               data-component="query">
+    <br>
+<p>home, property-details, … Example: <code>home</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>lang</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="lang"                data-endpoint="GETapi-ads-slides"
+               value="en"
+               data-component="query">
+    <br>
+<p>Example: <code>en</code></p>
+            </div>
+                </form>
+
+                    <h2 id="advertisements-POSTapi-track-ad-impressions">Ad impressions</h2>
+
+<p>
+</p>
+
+<p>Slides that were on screen (at least half visible for a second). Send each slide once per
+screen visit — not again every time the slider comes back round to it.</p>
+
+<span id="example-requests-POSTapi-track-ad-impressions">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://127.0.0.1:8000/api/track/ad-impressions" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --header "X-Device-Id: {DEVICE_ID}" \
+    --data "{
+    \"ids\": [
+        12,
+        15
+    ]
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://127.0.0.1:8000/api/track/ad-impressions"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-Device-Id": "{DEVICE_ID}",
+};
+
+let body = {
+    "ids": [
+        12,
+        15
+    ]
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-track-ad-impressions">
+            <blockquote>
+            <p>Example response (204, Recorded):</p>
+        </blockquote>
+                <pre>
+<code>Empty response</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-track-ad-impressions" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-track-ad-impressions"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-track-ad-impressions"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-track-ad-impressions" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-track-ad-impressions">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-track-ad-impressions" data-method="POST"
+      data-path="api/track/ad-impressions"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-track-ad-impressions', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-track-ad-impressions"
+                    onclick="tryItOut('POSTapi-track-ad-impressions');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-track-ad-impressions"
+                    onclick="cancelTryOut('POSTapi-track-ad-impressions');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-track-ad-impressions"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/track/ad-impressions</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-track-ad-impressions"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-track-ad-impressions"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-Device-Id"                data-endpoint="POSTapi-track-ad-impressions"
+               value="{DEVICE_ID}"
+               data-component="header">
+    <br>
+<p>Example: <code>{DEVICE_ID}</code></p>
+            </div>
+                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>ids</code></b>&nbsp;&nbsp;
+<small>integer[]</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="ids[0]"                data-endpoint="POSTapi-track-ad-impressions"
+               data-component="body">
+        <input type="number" style="display: none"
+               name="ids[1]"                data-endpoint="POSTapi-track-ad-impressions"
+               data-component="body">
+    <br>
+<p>Up to 30 ad ids.</p>
+        </div>
+        </form>
+
+                    <h2 id="advertisements-POSTapi-track-ad-click">Ad click</h2>
+
+<p>
+</p>
+
+<p>The user tapped an ad (send it before opening its link).</p>
+
+<span id="example-requests-POSTapi-track-ad-click">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://127.0.0.1:8000/api/track/ad-click" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --header "X-Device-Id: {DEVICE_ID}" \
+    --data "{
+    \"id\": 12
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://127.0.0.1:8000/api/track/ad-click"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-Device-Id": "{DEVICE_ID}",
+};
+
+let body = {
+    "id": 12
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-track-ad-click">
+            <blockquote>
+            <p>Example response (204, Recorded):</p>
+        </blockquote>
+                <pre>
+<code>Empty response</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-track-ad-click" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-track-ad-click"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-track-ad-click"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-track-ad-click" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-track-ad-click">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-track-ad-click" data-method="POST"
+      data-path="api/track/ad-click"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-track-ad-click', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-track-ad-click"
+                    onclick="tryItOut('POSTapi-track-ad-click');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-track-ad-click"
+                    onclick="cancelTryOut('POSTapi-track-ad-click');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-track-ad-click"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/track/ad-click</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-track-ad-click"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-track-ad-click"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-Device-Id"                data-endpoint="POSTapi-track-ad-click"
+               value="{DEVICE_ID}"
+               data-component="header">
+    <br>
+<p>Example: <code>{DEVICE_ID}</code></p>
+            </div>
+                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="id"                data-endpoint="POSTapi-track-ad-click"
+               value="12"
+               data-component="body">
+    <br>
+<p>Example: <code>12</code></p>
+        </div>
+        </form>
 
                 <h1 id="agents-agencies">Agents & Agencies</h1>
 
@@ -6419,7 +6430,7 @@ not parse file uploads on <code>PUT</code> (the <code>PUT</code> route is kept f
     --form "location=Dubai Marina"\
     --form "password=newSecret123"\
     --form "password_confirmation=newSecret123"\
-    --form "avatar=@C:\Users\User\AppData\Local\Temp\php85EB.tmp" </code></pre></div>
+    --form "avatar=@C:\Users\User\AppData\Local\Temp\phpB171.tmp" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -6633,7 +6644,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Image, max 2 MB. Example: <code>C:\Users\User\AppData\Local\Temp\php85EB.tmp</code></p>
+<p>Image, max 2 MB. Example: <code>C:\Users\User\AppData\Local\Temp\phpB171.tmp</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>password_confirmation</code></b>&nbsp;&nbsp;
@@ -11931,7 +11942,7 @@ Saves to Careers &gt; Candidates and emails admin.</p>
     --form "designation=nkygloigmkwxphlvazjrc"\
     --form "additional_information=nfbaqywuxhgjjmzuxjubq"\
     --form "privacy=1"\
-    --form "attachment=@C:\Users\User\AppData\Local\Temp\php82DB.tmp" </code></pre></div>
+    --form "attachment=@C:\Users\User\AppData\Local\Temp\phpB0B3.tmp" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -12166,7 +12177,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The CV: PDF, DOC or DOCX, max 5 MB. Example: <code>C:\Users\User\AppData\Local\Temp\php82DB.tmp</code></p>
+<p>The CV: PDF, DOC or DOCX, max 5 MB. Example: <code>C:\Users\User\AppData\Local\Temp\phpB0B3.tmp</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>privacy</code></b>&nbsp;&nbsp;

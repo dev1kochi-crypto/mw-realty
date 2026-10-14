@@ -1,18 +1,18 @@
-name: Careers
+name: Content
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/careers
+    uri: api/about
     metadata:
       custom: []
-      groupName: Careers
+      groupName: Content
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'List vacancies'
+      title: 'About page'
       description: ''
       authenticated: false
       deprecated: false
@@ -48,172 +48,65 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/careers/apply
+      - GET
+    uri: api/blogs
     metadata:
       custom: []
-      groupName: Careers
+      groupName: Content
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Apply for a job'
-      description: |-
-        Send as `multipart/form-data` (the CV is a file). Leave out `career` for a general
-        application.
-
-        Public, unauthenticated — the application form on both careers pages (POST /api/careers/apply).
-        Saves to Careers > Candidates and emails admin.
+      title: 'List blog posts'
+      description: '12 per page.'
       authenticated: false
       deprecated: false
     headers:
-      Content-Type: multipart/form-data
+      Content-Type: application/json
       Accept: application/json
       X-Device-Id: '{DEVICE_ID}'
     urlParameters: []
     cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      career:
+    queryParameters:
+      page:
         custom: []
-        name: career
-        description: 'A vacancy slug.'
-        required: false
-        example: senior-property-consultant
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      name:
-        custom: []
-        name: name
-        description: 'Must not be greater than 255 characters.'
-        required: true
-        example: mqeopfuudtdsufvyvddqa
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      email:
-        custom: []
-        name: email
-        description: 'Must be a valid email address. Must not be greater than 255 characters.'
-        required: true
-        example: eloisa.harber@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      phone:
-        custom: []
-        name: phone
-        description: 'Must not be greater than 50 characters.'
-        required: true
-        example: fqcoynlazghdtqtqxbajw
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      country:
-        custom: []
-        name: country
-        description: 'Must not be greater than 100 characters.'
-        required: false
-        example: bpilpmufinllwloauydls
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      experience:
-        custom: []
-        name: experience
-        description: 'Must not be greater than 50 characters.'
-        required: false
-        example: msjuryvojcybzvrbyickz
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      designation:
-        custom: []
-        name: designation
-        description: 'Must not be greater than 255 characters.'
-        required: false
-        example: nkygloigmkwxphlvazjrc
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      additional_information:
-        custom: []
-        name: additional_information
-        description: 'Must not be greater than 2000 characters.'
-        required: false
-        example: nfbaqywuxhgjjmzuxjubq
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      attachment:
-        custom: []
-        name: attachment
-        description: 'The CV: PDF, DOC or DOCX, max 5 MB.'
-        required: true
-        example: null
-        type: file
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      privacy:
-        custom: []
-        name: privacy
-        description: 'Must be accepted.'
-        required: true
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      recaptcha_token:
-        custom: []
-        name: recaptcha_token
-        description: 'See "Forms & reCAPTCHA" in the introduction.'
-        required: false
-        example: null
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-    cleanBodyParameters:
-      career: senior-property-consultant
-      name: mqeopfuudtdsufvyvddqa
-      email: eloisa.harber@example.com
-      phone: fqcoynlazghdtqtqxbajw
-      country: bpilpmufinllwloauydls
-      experience: msjuryvojcybzvrbyickz
-      designation: nkygloigmkwxphlvazjrc
-      additional_information: nfbaqywuxhgjjmzuxjubq
-      privacy: true
-    fileParameters:
-      attachment: null
-    responses:
-      -
-        custom: []
-        status: 200
-        content: '{"message": "Thanks for applying — our team will review your application and get back to you."}'
-        headers: []
+        name: page
         description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      category:
+        custom: []
+        name: category
+        description: "A category from the response's category list."
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
     responseFields: []
     auth: []
     controller: null
@@ -223,14 +116,14 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/careers/{slug}'
+    uri: 'api/blogs/{slug}'
     metadata:
       custom: []
-      groupName: Careers
+      groupName: Content
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Vacancy details'
+      title: 'Blog post'
       description: ''
       authenticated: false
       deprecated: false
@@ -244,14 +137,278 @@ endpoints:
         name: slug
         description: ''
         required: true
-        example: senior-property-consultant
+        example: 5-reasons-to-invest-in-dubai-off-plan-properties
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      slug: senior-property-consultant
+      slug: 5-reasons-to-invest-in-dubai-off-plan-properties
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 404
+        content: '{"message": "Not found"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/landing-pages/{slug}'
+    metadata:
+      custom: []
+      groupName: Content
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Landing page'
+      description: 'A marketing landing page (website URL `/{slug}`), in the same shape as a blog post.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      slug:
+        custom: []
+        name: slug
+        description: ''
+        required: true
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      slug: null
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 404
+        content: '{"message": "Not found"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/market-insights
+    metadata:
+      custom: []
+      groupName: Content
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List market insights'
+      description: '9 per page.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      topic:
+        custom: []
+        name: topic
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      region:
+        custom: []
+        name: region
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/market-insights/{slug}'
+    metadata:
+      custom: []
+      groupName: Content
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Market insight'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      slug:
+        custom: []
+        name: slug
+        description: ''
+        required: true
+        example: dubai-property-market-report-q3-2026
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      slug: dubai-property-market-report-q3-2026
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 404
+        content: '{"message": "Not found"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/legal/{key}'
+    metadata:
+      custom: []
+      groupName: Content
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Legal page'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      key:
+        custom: []
+        name: key
+        description: 'terms, privacy, security or cookie.'
+        required: true
+        example: privacy
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      key: privacy
     queryParameters:
       lang:
         custom: []

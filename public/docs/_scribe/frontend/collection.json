@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "MW Realty \u2014 Frontend API",
-        "_postman_id": "f8fe0742-799a-4893-8cbd-5b749dd96ccb",
+        "_postman_id": "d62643de-bc86-44a7-af0e-cd7368265144",
         "description": "REST API for the MW Realty mobile app: property search, listings, agents, content, customer accounts, enquiries and the AI assistant.",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -123,103 +123,6 @@
                     "response": []
                 },
                 {
-                    "name": "Ad banner",
-                    "request": {
-                        "url": {
-                            "host": "{{baseUrl}}",
-                            "path": "api\/ads",
-                            "query": [
-                                {
-                                    "key": "placement",
-                                    "value": "home",
-                                    "description": "home, property-details, \u2026",
-                                    "disabled": false
-                                },
-                                {
-                                    "key": "lang",
-                                    "value": "en",
-                                    "description": "",
-                                    "disabled": false
-                                }
-                            ],
-                            "raw": "{{baseUrl}}\/api\/ads?placement=home&lang=en"
-                        },
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "X-Device-Id",
-                                "value": "{DEVICE_ID}"
-                            }
-                        ],
-                        "body": null,
-                        "description": "One active ad for a screen (picked at random when several run), or `false` when there is\nnone (hide the slot). Use **Ad slider** to show all of them.",
-                        "auth": {
-                            "type": "noauth"
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Ad slider",
-                    "request": {
-                        "url": {
-                            "host": "{{baseUrl}}",
-                            "path": "api\/ads\/slides",
-                            "query": [
-                                {
-                                    "key": "placement",
-                                    "value": "home",
-                                    "description": "home, property-details, \u2026",
-                                    "disabled": false
-                                },
-                                {
-                                    "key": "lang",
-                                    "value": "en",
-                                    "description": "",
-                                    "disabled": false
-                                }
-                            ],
-                            "raw": "{{baseUrl}}\/api\/ads\/slides?placement=home&lang=en"
-                        },
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "X-Device-Id",
-                                "value": "{DEVICE_ID}"
-                            }
-                        ],
-                        "body": null,
-                        "description": "Every ad running on a screen right now, in slide order (sponsored client ads first, in a\ndifferent order each time). Show them as a slider that moves on every `interval` seconds;\nan empty list means hide the slot. Report each slide once it has been on screen\n(**Ad impressions**) and taps on it (**Ad click**).",
-                        "auth": {
-                            "type": "noauth"
-                        }
-                    },
-                    "response": [
-                        {
-                            "header": [],
-                            "code": 200,
-                            "body": "{\"slides\": [{\"id\": 12, \"name\": \"Marina launch\", \"image_url\": \"https:\/\/\u2026\", \"mobile_image_url\": null, \"image_alt\": null, \"link_url\": \"\/property-details\/marina-heights\", \"eyebrow\": \"New launch\", \"title\": \"Marina Heights\", \"text\": \"1\u20133 bed apartments from AED 1.2M\", \"sponsor\": \"Prime Homes\"}], \"interval\": 6}",
-                            "name": ""
-                        }
-                    ]
-                },
-                {
                     "name": "Site information",
                     "request": {
                         "url": {
@@ -257,90 +160,6 @@
                         }
                     },
                     "response": []
-                },
-                {
-                    "name": "Ad impressions",
-                    "request": {
-                        "url": {
-                            "host": "{{baseUrl}}",
-                            "path": "api\/track\/ad-impressions",
-                            "query": [],
-                            "raw": "{{baseUrl}}\/api\/track\/ad-impressions"
-                        },
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "X-Device-Id",
-                                "value": "{DEVICE_ID}"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\"ids\":[12,15]}"
-                        },
-                        "description": "Slides that were on screen (at least half visible for a second). Send each slide once per\nscreen visit \u2014 not again every time the slider comes back round to it.",
-                        "auth": {
-                            "type": "noauth"
-                        }
-                    },
-                    "response": [
-                        {
-                            "header": [],
-                            "code": 204,
-                            "body": "{}",
-                            "name": "Recorded"
-                        }
-                    ]
-                },
-                {
-                    "name": "Ad click",
-                    "request": {
-                        "url": {
-                            "host": "{{baseUrl}}",
-                            "path": "api\/track\/ad-click",
-                            "query": [],
-                            "raw": "{{baseUrl}}\/api\/track\/ad-click"
-                        },
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "X-Device-Id",
-                                "value": "{DEVICE_ID}"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\"id\":12}"
-                        },
-                        "description": "The user tapped an ad (send it before opening its link).",
-                        "auth": {
-                            "type": "noauth"
-                        }
-                    },
-                    "response": [
-                        {
-                            "header": [],
-                            "code": 204,
-                            "body": "{}",
-                            "name": "Recorded"
-                        }
-                    ]
                 }
             ]
         },
@@ -483,7 +302,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"page\":\"home\",\"lang\":\"vmqeopfuu\",\"scope\":\"premium\"}"
+                            "raw": "{\"page\":\"listing\",\"lang\":\"vmqeopfuu\",\"scope\":\"marketing\"}"
                         },
                         "description": "The filters to render (selects with their options and live listing counts, number sliders\nwith min\/max\/step), in admin order. Pass the chosen `value`s back to the listing endpoints\nunder each filter's `key`.",
                         "auth": {
@@ -594,7 +413,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"q\":\"vmqeopfuudtdsufvyvddq\",\"lang\":\"amniihfqc\",\"scope\":\"commercial\"}"
+                            "raw": "{\"q\":\"vmqeopfuudtdsufvyvddq\",\"lang\":\"amniihfqc\",\"scope\":\"all\"}"
                         },
                         "description": "Cities, communities and addresses matching what the user typed (2+ characters; fewer\nreturns an empty list). Pass a picked suggestion back as `city=` \/ `community=` \/\n`location=` on the listing endpoints. Debounce on the client \u2014 limited to 120 calls\/minute.",
                         "auth": {
@@ -1023,6 +842,193 @@
                             "code": 404,
                             "body": "{\"message\": \"Not found\"}",
                             "name": ""
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Advertisements",
+            "description": "",
+            "item": [
+                {
+                    "name": "Ad banner",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/ads",
+                            "query": [
+                                {
+                                    "key": "placement",
+                                    "value": "home",
+                                    "description": "home, property-details, \u2026",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/ads?placement=home&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "One active ad for a screen (picked at random when several run), or `false` when there is\nnone (hide the slot). Use **Ad slider** to show all of them.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Ad slider",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/ads\/slides",
+                            "query": [
+                                {
+                                    "key": "placement",
+                                    "value": "home",
+                                    "description": "home, property-details, \u2026",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/ads\/slides?placement=home&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Every ad running on a screen right now, in slide order (sponsored client ads first, in a\ndifferent order each time). Show them as a slider that moves on every `interval` seconds;\nan empty list means hide the slot. Report each slide once it has been on screen\n(**Ad impressions**) and taps on it (**Ad click**).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"slides\": [{\"id\": 12, \"name\": \"Marina launch\", \"image_url\": \"https:\/\/\u2026\", \"mobile_image_url\": null, \"image_alt\": null, \"link_url\": \"\/property-details\/marina-heights\", \"eyebrow\": \"New launch\", \"title\": \"Marina Heights\", \"text\": \"1\u20133 bed apartments from AED 1.2M\", \"sponsor\": \"Prime Homes\"}], \"interval\": 6}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Ad impressions",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/track\/ad-impressions",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/track\/ad-impressions"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"ids\":[12,15]}"
+                        },
+                        "description": "Slides that were on screen (at least half visible for a second). Send each slide once per\nscreen visit \u2014 not again every time the slider comes back round to it.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Recorded"
+                        }
+                    ]
+                },
+                {
+                    "name": "Ad click",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/track\/ad-click",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/track\/ad-click"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"id\":12}"
+                        },
+                        "description": "The user tapped an ad (send it before opening its link).",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 204,
+                            "body": "{}",
+                            "name": "Recorded"
                         }
                     ]
                 }

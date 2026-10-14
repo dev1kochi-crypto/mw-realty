@@ -1,19 +1,19 @@
-name: Content
+name: 'Contact & Newsletter'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/about
+    uri: api/contact
     metadata:
       custom: []
-      groupName: Content
+      groupName: 'Contact & Newsletter'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'About page'
-      description: ''
+      title: 'Contact page'
+      description: 'Office details, map embed, hero image and social links.'
       authenticated: false
       deprecated: false
     headers:
@@ -48,16 +48,21 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - GET
-    uri: api/blogs
+      - POST
+    uri: api/contact
     metadata:
       custom: []
-      groupName: Content
+      groupName: 'Contact & Newsletter'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'List blog posts'
-      description: '12 per page.'
+      title: 'Send a contact message'
+      description: |-
+        General enquiry (not about a specific property — for that use `POST /api/leads/capture`).
+        Saves to Enquiries and emails admin.
+
+        Public, unauthenticated — the /contact page form and the home page's contact section
+        (`source=home`, which also sends `interest`; its message is then optional).
       authenticated: false
       deprecated: false
     headers:
@@ -66,47 +71,113 @@ endpoints:
       X-Device-Id: '{DEVICE_ID}'
     urlParameters: []
     cleanUrlParameters: []
-    queryParameters:
-      page:
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
         custom: []
-        name: page
+        name: name
         description: ''
-        required: false
-        example: 1
-        type: integer
+        required: true
+        example: 'Sara Ahmed'
+        type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      category:
+      email:
         custom: []
-        name: category
-        description: "A category from the response's category list."
+        name: email
+        description: ''
+        required: true
+        example: buyer@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone:
+        custom: []
+        name: phone
+        description: 'Local number.'
+        required: false
+        example: '501234567'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone_country_code:
+        custom: []
+        name: phone_country_code
+        description: ''
+        required: false
+        example: '+971'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      interest:
+        custom: []
+        name: interest
+        description: 'buy, rent, sell or management.'
+        required: false
+        example: buy
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      message:
+        custom: []
+        name: message
+        description: 'Required unless `interest` is sent.'
+        required: false
+        example: "I'd like a call about 2BR apartments in Marina."
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      source:
+        custom: []
+        name: source
+        description: 'contact or home.'
+        required: false
+        example: contact
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      recaptcha_token:
+        custom: []
+        name: recaptcha_token
+        description: 'See "Forms & reCAPTCHA" in the introduction.'
         required: false
         example: null
         type: string
         enumValues: []
         exampleWasSpecified: false
-        nullable: false
+        nullable: true
         deprecated: false
-      lang:
-        custom: []
-        name: lang
-        description: ''
-        required: false
-        example: en
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanQueryParameters:
-      page: 1
-      lang: en
-    bodyParameters: []
-    cleanBodyParameters: []
+    cleanBodyParameters:
+      name: 'Sara Ahmed'
+      email: buyer@example.com
+      phone: '501234567'
+      phone_country_code: '+971'
+      interest: buy
+      message: "I'd like a call about 2BR apartments in Marina."
+      source: contact
     fileParameters: []
-    responses: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"message": "Thanks — we''ve received your message and will be in touch soon."}'
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null
@@ -115,140 +186,16 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - GET
-    uri: 'api/blogs/{slug}'
+      - POST
+    uri: api/newsletter/subscribe
     metadata:
       custom: []
-      groupName: Content
+      groupName: 'Contact & Newsletter'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Blog post'
+      title: 'Subscribe to the newsletter'
       description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters:
-      slug:
-        custom: []
-        name: slug
-        description: ''
-        required: true
-        example: 5-reasons-to-invest-in-dubai-off-plan-properties
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      slug: 5-reasons-to-invest-in-dubai-off-plan-properties
-    queryParameters:
-      lang:
-        custom: []
-        name: lang
-        description: ''
-        required: false
-        example: en
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanQueryParameters:
-      lang: en
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 404
-        content: '{"message": "Not found"}'
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: 'api/landing-pages/{slug}'
-    metadata:
-      custom: []
-      groupName: Content
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Landing page'
-      description: 'A marketing landing page (website URL `/{slug}`), in the same shape as a blog post.'
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters:
-      slug:
-        custom: []
-        name: slug
-        description: ''
-        required: true
-        example: null
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      slug: null
-    queryParameters:
-      lang:
-        custom: []
-        name: lang
-        description: ''
-        required: false
-        example: en
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanQueryParameters:
-      lang: en
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 404
-        content: '{"message": "Not found"}'
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: api/market-insights
-    metadata:
-      custom: []
-      groupName: Content
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'List market insights'
-      description: '9 per page.'
       authenticated: false
       deprecated: false
     headers:
@@ -257,180 +204,39 @@ endpoints:
       X-Device-Id: '{DEVICE_ID}'
     urlParameters: []
     cleanUrlParameters: []
-    queryParameters:
-      page:
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      email:
         custom: []
-        name: page
+        name: email
         description: ''
-        required: false
-        example: 1
-        type: integer
+        required: true
+        example: buyer@example.com
+        type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      topic:
+      recaptcha_token:
         custom: []
-        name: topic
-        description: ''
+        name: recaptcha_token
+        description: 'See "Forms & reCAPTCHA" in the introduction.'
         required: false
         example: null
         type: string
         enumValues: []
         exampleWasSpecified: false
-        nullable: false
+        nullable: true
         deprecated: false
-      region:
-        custom: []
-        name: region
-        description: ''
-        required: false
-        example: null
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      lang:
-        custom: []
-        name: lang
-        description: ''
-        required: false
-        example: en
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanQueryParameters:
-      page: 1
-      lang: en
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: 'api/market-insights/{slug}'
-    metadata:
-      custom: []
-      groupName: Content
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Market insight'
-      description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters:
-      slug:
-        custom: []
-        name: slug
-        description: ''
-        required: true
-        example: dubai-property-market-report-q3-2026
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      slug: dubai-property-market-report-q3-2026
-    queryParameters:
-      lang:
-        custom: []
-        name: lang
-        description: ''
-        required: false
-        example: en
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanQueryParameters:
-      lang: en
-    bodyParameters: []
-    cleanBodyParameters: []
+    cleanBodyParameters:
+      email: buyer@example.com
     fileParameters: []
     responses:
       -
         custom: []
-        status: 404
-        content: '{"message": "Not found"}'
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: 'api/legal/{key}'
-    metadata:
-      custom: []
-      groupName: Content
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Legal page'
-      description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters:
-      key:
-        custom: []
-        name: key
-        description: 'terms, privacy, security or cookie.'
-        required: true
-        example: privacy
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      key: privacy
-    queryParameters:
-      lang:
-        custom: []
-        name: lang
-        description: ''
-        required: false
-        example: en
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanQueryParameters:
-      lang: en
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 404
-        content: '{"message": "Not found"}'
+        status: 200
+        content: '{"already_subscribed": false, "message": "Thanks for subscribing!"}'
         headers: []
         description: ''
     responseFields: []
