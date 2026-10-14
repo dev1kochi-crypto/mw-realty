@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\FilterController;
+use App\Http\Controllers\SearchFilterController;
 use App\Http\Controllers\PortalUserController;
 use App\Http\Controllers\CmsKit\PostPropertyStepController;
 use App\Http\Controllers\CmsKit\PopularPlaceController;
@@ -125,27 +125,27 @@ Route::middleware(['web'])->group(function () {
 
             // Filters
             Route::middleware(['cms.permission:filters.view'])->group(function () {
-                Route::get('/filters', [FilterController::class, 'index'])->name('cms.filters.index');
+                // Search Filters: one filter set per listing page (Properties, Commercial, Premium, Off-plan).
+                Route::get('/filters', [SearchFilterController::class, 'index'])->name('cms.filters.index');
+                Route::get('/filters/field-options', [SearchFilterController::class, 'fieldOptions'])->name('cms.filters.field-options');
 
                 Route::middleware(['cms.permission:filters.create'])->group(function () {
-                    Route::get('/filters/create', [FilterController::class, 'create'])->name('cms.filters.create');
-                    Route::post('/filters', [FilterController::class, 'store'])->name('cms.filters.store');
-                    Route::post('/filters/{filter}/values', [FilterController::class, 'storeValue'])->name('cms.filters.values.store');
+                    Route::get('/filters/create', [SearchFilterController::class, 'create'])->name('cms.filters.create');
+                    Route::post('/filters', [SearchFilterController::class, 'store'])->name('cms.filters.store');
+                    Route::post('/filters/copy', [SearchFilterController::class, 'copy'])->name('cms.filters.copy');
                 });
 
                 Route::middleware(['cms.permission:filters.edit'])->group(function () {
-                    Route::get('/filters/{id}/edit', [FilterController::class, 'edit'])->name('cms.filters.edit');
-                    Route::put('/filters/{id}', [FilterController::class, 'update'])->name('cms.filters.update');
-                    Route::post('/filters/{id}/toggle-status', [FilterController::class, 'toggleStatus'])->name('cms.filters.toggle-status');
-                    Route::post('/filters/reorder', [FilterController::class, 'reorder'])->name('cms.filters.reorder');
-                    Route::put('/filters/{filter}/values/{value}', [FilterController::class, 'updateValue'])->name('cms.filters.values.update');
-                    Route::post('/filters/{filter}/values/{value}/toggle-status', [FilterController::class, 'toggleValueStatus'])->name('cms.filters.values.toggle-status');
+                    Route::get('/filters/{filter}/edit', [SearchFilterController::class, 'edit'])->name('cms.filters.edit');
+                    Route::put('/filters/{filter}', [SearchFilterController::class, 'update'])->name('cms.filters.update');
+                    Route::post('/filters/{filter}/toggle-status', [SearchFilterController::class, 'toggleStatus'])->name('cms.filters.toggle-status');
+                    Route::post('/filters/reorder', [SearchFilterController::class, 'reorder'])->name('cms.filters.reorder');
                 });
 
-                Route::middleware(['cms.permission:filters.delete'])->group(function () {
-                    Route::delete('/filters/{id}', [FilterController::class, 'destroy'])->name('cms.filters.destroy');
-                    Route::delete('/filters/{filter}/values/{value}', [FilterController::class, 'destroyValue'])->name('cms.filters.values.destroy');
-                });
+                Route::delete('/filters/{filter}', [SearchFilterController::class, 'destroy'])->middleware('cms.permission:filters.delete')->name('cms.filters.destroy');
+
+                // The old Option Lists screen: its lists are edited in CRM › Master › Property Options now.
+                Route::get('/filter-lists/{any?}', fn () => redirect()->route('crm.app', 'master/property-options'))->where('any', '.*');
             });
 
             // Communities (under Filters — section + items, each linked to a "location" filter value)

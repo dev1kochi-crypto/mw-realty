@@ -20,7 +20,7 @@
                 <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                     <i class="fas fa-info-circle text-primary me-2"></i>
                     Each community card below links to a value of the <strong>Location</strong> filter, so make sure the
-                    communities you want here already exist as options under <a href="{{ route('cms.filters.index') }}">Filters &raquo; Location</a>.
+                    communities you want here already exist as options under <a href="{{ route('crm.app', 'master/property-options') }}?list=location">CRM &raquo; Master &raquo; Property Options &raquo; Location</a>.
                 </div>
                 <form action="{{ route('cms.communities.update-section') }}" method="POST">
                     @csrf

@@ -2,7 +2,7 @@
 import { computed, nextTick, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useHomePage } from '../composables/useHomePage';
-import { usePropertyFilters } from '../composables/usePropertyFilters';
+import { useSearchFilters, quickSelect } from '../composables/useSearchFilters';
 import LocationAutocomplete from '../components/LocationAutocomplete.vue';
 import { useWishlist } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
@@ -74,10 +74,10 @@ const heroGuideText = computed(() => banner.value?.note_link_text || t('home.her
 const heroGuideUrl = computed(() => banner.value?.note_link_url || '#');
 
 // --- Hero search ---
-// The banner search has a fixed layout (4 tabs, 4 fields). Only the option VALUES come from
-// Admin > Filters ("Show on: Home"): dropdown options, tab labels and the price slider's range.
-// If a filter is switched off in the admin, its field keeps working on the defaults below.
-const { byKey: heroFilter, options: heroOptions } = usePropertyFilters('home');
+// The banner search has a fixed layout (4 tabs, 4 fields). Only labels and option VALUES come from
+// Admin › Filters › Search Filters › Home: dropdown options, tab labels and the price slider's range.
+// Until they load (or if a list is empty), each field works on the defaults below.
+const { byKey: heroFilter, options: heroOptions } = useSearchFilters('home');
 const adminLabel = (key, value, fallback) => heroOptions(key).find((o) => o.value === value)?.label || fallback;
 const heroTabs = computed(() => [
     { key: 'listing_type', value: 'sale', label: adminLabel('listing_type', 'sale', t('home.hero.tabs.buy')) },
@@ -91,15 +91,15 @@ const bedroomOptions = computed(() => (heroOptions('bedrooms').length ? heroOpti
 const propertyTypeOptions = computed(() => (heroOptions('property_type').length ? heroOptions('property_type') : DEFAULT_TYPES));
 const priceFilter = computed(() => heroFilter('price') || { max: 30000000, step: 50000 });
 const priceMax = computed(() => priceFilter.value.max || 30000000);
-const pricePresets = computed(() => [
+// Quick-select buttons: the admin's (Search Filters › Home › Price), else the built-in ones.
+const pricePresets = computed(() => quickSelect(heroFilter('price'), priceMax.value, [
     [0, 500000, 'under_500k'], [500000, 1000000, '500k_1m'], [1000000, 2000000, '1m_2m'],
     [2000000, 5000000, '2m_5m'], [5000000, 10000000, '5m_10m'], [10000000, Infinity, '10m_plus'],
-]
-    .filter(([min]) => min < priceMax.value)
-    .map(([min, max, key]) => ({
+].map(([min, max, key]) => [min, max, t(`home.price_presets.${key}`)]))
+    .map(([min, max, baseLabel, top]) => ({
         min,
-        max: Math.min(max, priceMax.value),
-        label: presetLabel(min, Math.min(max, priceMax.value), { top: max === Infinity, baseLabel: t(`home.price_presets.${key}`), under: t('home.price_presets.under_word', 'Under') }),
+        max,
+        label: presetLabel(min, max, { top, baseLabel, under: t('home.price_presets.under_word', 'Under') }),
     })));
 
 // The selected tab is stored as "key:value" (not the tab object), so it survives heroTabs being
@@ -114,8 +114,9 @@ const heroPriceMax = ref(null);
 watch(priceFilter, () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
-const heroBedroomLabel = computed(() => bedroomOptions.value.find((o) => o.value === heroSearch.bedrooms)?.label || t('home.hero.search.bedroom_label'));
-const heroTypeLabel = computed(() => propertyTypeOptions.value.find((o) => o.value === heroSearch.propertyType)?.label || t('home.hero.search.property_type_label'));
+// Nothing picked: the admin's hint text for that filter, else the default wording.
+const heroBedroomLabel = computed(() => bedroomOptions.value.find((o) => o.value === heroSearch.bedrooms)?.label || heroFilter('bedrooms')?.placeholder || t('home.hero.search.bedroom_label'));
+const heroTypeLabel = computed(() => propertyTypeOptions.value.find((o) => o.value === heroSearch.propertyType)?.label || heroFilter('property_type')?.placeholder || t('home.hero.search.property_type_label'));
 
 /**
  * A picked address opens that property; otherwise opens /properties with the hero's choices as

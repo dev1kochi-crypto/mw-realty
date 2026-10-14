@@ -36,6 +36,8 @@ Route::prefix('crm')->name('crm.api.')->middleware([
 // AND the properties-dubai listing page, so it stays its own endpoint rather than folding
 // into /api/home below.
 Route::get('/property-filters', [PropertyFilterController::class, 'index']);
+// Public, read-only — each listing page's own search filters (Admin › Filters › Search Filters), key-value.
+Route::get('/search-filters/{page}', [\App\Http\Controllers\Api\SearchFilterController::class, 'show']);
 
 // Public, read-only — location autocomplete (cities, communities, addresses) for the Home search,
 // the Properties listing and the Commercial page. Throttled: it runs on every few keystrokes.

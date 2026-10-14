@@ -99,11 +99,12 @@ class PropertiesPageService
         // city/community come from a picked autocomplete suggestion; $location is free text.
         LocationFilter::apply($query, $refine['city'], $refine['community'], $location);
         $query
-            ->when($propertyType, fn ($q) => $q->where('property_type', $propertyType))
+            // Checkbox filters send several values comma-separated ("villa,townhouse"): any of them.
+            ->when($propertyType, fn ($q) => $q->whereIn('property_type', $this->list($propertyType)))
             ->when($category === 'off_plan', fn ($q) => $q->where('completion_status', 'off_plan'))
             ->when(in_array($category, ['sale', 'rent'], true), fn ($q) => $q->where('listing_type', $category))
-            ->when($bedrooms, fn ($q) => $q->where(...$this->roomFilter('bedrooms', $bedrooms)))
-            ->when($bathrooms, fn ($q) => $q->where(...$this->roomFilter('bathrooms', $bathrooms)))
+            ->when($bedrooms, fn ($q) => $this->rooms($q, 'bedrooms', $bedrooms))
+            ->when($bathrooms, fn ($q) => $this->rooms($q, 'bathrooms', $bathrooms))
             ->when($refine['completion'] === 'off_plan', fn ($q) => $q->where('completion_status', 'off_plan'))
             ->when($refine['completion'] === 'ready', fn ($q) => $q->where(fn ($q) => $q->where('completion_status', '!=', 'off_plan')->orWhereNull('completion_status')))
             ->when($refine['min_price'] !== null, fn ($q) => $q->where('price', '>=', $refine['min_price']))
@@ -127,8 +128,12 @@ class PropertiesPageService
 
         // Other admin select filters (Filter::SELECT_KEYS are property columns), e.g. category=commercial.
         foreach ($refine['attributes'] as $column => $value) {
-            $query->where($column, $value);
+            $query->whereIn($column, $this->list($value));
         }
+
+        // Every other website search filter (Admin › Filters › Search Filters): furnishing, amenities,
+        // view, developer, parking, ranges on bedrooms, keyword, …
+        \App\Support\SearchFilterQuery::apply($query, $refine['dynamic']);
 
         foreach ($refine['amenities'] as $amenity) {
             $this->applyAmenity($query, $amenity);
@@ -211,6 +216,7 @@ class PropertiesPageService
             'agent' => is_string($refine['agent'] ?? null) && $refine['agent'] !== '' ? mb_substr($refine['agent'], 0, 255) : null,
             'agency' => is_string($refine['agency'] ?? null) && $refine['agency'] !== '' ? mb_substr($refine['agency'], 0, 255) : null,
             // Only whitelisted column names ever reach where(); values are bound parameters.
+            'dynamic' => \App\Support\SearchFilterQuery::normalise((array) ($refine['dynamic'] ?? [])),
             'attributes' => collect((array) ($refine['attributes'] ?? []))
                 ->only(\App\Models\Filter::SELECT_KEYS)
                 ->filter(fn ($v) => is_scalar($v) && $v !== '')
@@ -237,14 +243,29 @@ class PropertiesPageService
         };
     }
 
+    /** "a, b" -> ['a', 'b'] */
+    private function list(string $value): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', $value)), fn ($v) => $v !== ''));
+    }
+
+    /** One or several (comma-separated) room values — any of them. */
+    private function rooms($query, string $column, string $value): void
+    {
+        $query->where(function ($q) use ($column, $value) {
+            foreach ($this->list($value) as $room) $q->orWhere(...$this->roomFilter($column, $room));
+        });
+    }
+
     /** 'studio' -> bedrooms=0, '5+' -> >=5, otherwise an exact match. Returns a [column, operator, value] where-tuple. */
     private function roomFilter(string $column, string $value): array
     {
         if ($value === 'studio') {
             return [$column, '=', 0];
         }
-        if ($value === '5+') {
-            return [$column, '>=', 5];
+        // "5+", "6+", … — that many or more (any bucket the admin adds to the Bedrooms / Bathrooms list).
+        if (preg_match('/^(\d+)\+$/', $value, $m)) {
+            return [$column, '>=', (int) $m[1]];
         }
 
         return [$column, '=', (int) $value];

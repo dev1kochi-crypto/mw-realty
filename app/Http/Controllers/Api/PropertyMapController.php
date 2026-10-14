@@ -64,7 +64,7 @@ class PropertyMapController extends Controller
             'property_type' => $this->text($request->input('property_type')),
             'purpose' => $this->text($purpose),
             'bedrooms' => $this->text($request->input('bedrooms')),
-            'bathrooms' => $segment === 'commercial' && !in_array($bathrooms, ['1', '2', '3', '4', '5+'], true) ? null : $this->text($bathrooms),
+            'bathrooms' => $segment === 'commercial' && !$this->roomList($bathrooms) ? null : $this->text($bathrooms),
             'search' => $this->text($request->input('search')),
             'refine' => [
                 'completion' => $request->input('completion_status', $request->input('completion')),
@@ -81,6 +81,7 @@ class PropertyMapController extends Controller
                 'agent' => $request->input('agent'),
                 'agency' => $request->input('agency'),
                 'attributes' => $attributes,
+                'dynamic' => \App\Support\SearchFilterQuery::fromRequest($request->all(), \App\Services\SearchFilterService::pageFor($segment)),
             ],
         ];
 
@@ -90,6 +91,12 @@ class PropertyMapController extends Controller
             $filters,
             $this->bbox($request),
         ));
+    }
+
+    /** '1' / '2,3' / '5+' — a commercial bathrooms value, or a comma list of them (checkbox filter). */
+    private function roomList($value): bool
+    {
+        return is_string($value) && preg_match('/^(studio|\d+\+?)(,(studio|\d+\+?))*$/', $value) === 1;
     }
 
     private function text($value): ?string

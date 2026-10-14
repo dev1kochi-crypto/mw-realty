@@ -55,7 +55,7 @@ class CommercialController extends Controller
             $lang,
             $request->input('location'),
             $request->input('property_type'),
-            $request->input('search'),
+            $request->input('search', $request->input('keyword')), // the "Properties" box = the Commercial set's Keyword filter
             $request->input('category', $request->input('listing_type')),
             $page,
             // Same page size as /properties.
@@ -71,6 +71,8 @@ class CommercialController extends Controller
                 'max_area' => $request->input('max_sqft'),
                 'bathrooms' => $request->input('bathrooms'),
                 'amenities' => $request->input('amenities'),
+                // Admin › Filters › Search Filters › Commercial (furnishing, amenities, view, …).
+                'dynamic' => \App\Support\SearchFilterQuery::fromRequest($request->except('keyword'), 'commercial'),
             ],
         ));
     }

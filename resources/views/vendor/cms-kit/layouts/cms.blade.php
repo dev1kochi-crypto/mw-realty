@@ -411,7 +411,7 @@
                             <nav class="nav flex-column">
                                 @if(config('cms-kit.common.modules.filters', true) && $cmsUser->can('filters.view'))
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.filters.*')) active @endif" href="{{ route('cms.filters.index') }}">
-                                    Manage Filters
+                                    Search Filters
                                 </a>
                                 @endif
                                 @if(config('cms-kit.common.modules.communities', true) && $cmsUser->can('communities.view'))

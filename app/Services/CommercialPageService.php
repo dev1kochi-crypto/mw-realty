@@ -38,7 +38,9 @@ class CommercialPageService
         // whatever filters are applied. The filters themselves are the /properties ones
         // (PropertiesPageService::applyFilters): price, area, bathrooms, completion, amenities, sort.
         $listingPage = app(PropertiesPageService::class);
-        $bathrooms = in_array($refine['bathrooms'] ?? null, ['1', '2', '3', '4', '5+'], true) ? $refine['bathrooms'] : null;
+        // One value or a comma list of them (checkbox filter).
+        $bathrooms = is_string($refine['bathrooms'] ?? null)
+            && preg_match('/^(studio|\d+\+?)(,(studio|\d+\+?))*$/', $refine['bathrooms']) === 1 ? $refine['bathrooms'] : null;
         $refine = $listingPage->normaliseRefine(array_merge($refine, ['city' => $city, 'community' => $community]));
         $search = trim((string) $search) !== '' ? mb_substr(trim($search), 0, 100) : null;
         $cacheKey = "commercial-listing:{$lang}:{$page}:{$perPage}:"

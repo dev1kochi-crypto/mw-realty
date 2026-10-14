@@ -8,8 +8,9 @@ import { useLanguages } from '../composables/useLanguages';
 import { useWishlist } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
-import { usePropertyFilters } from '../composables/usePropertyFilters';
+import { useSearchFilters, filterParams, quickSelect, PAGE_CONTROLS } from '../composables/useSearchFilters';
 import EmptyState from '../components/EmptyState.vue';
+import SearchFilterField from '../components/SearchFilterField.vue';
 import LocationAutocomplete from '../components/LocationAutocomplete.vue';
 import { carryFilters, takeCarriedFilters } from '../composables/useListingCarry';
 // Leaflet only loads when the map view is actually opened.
@@ -25,9 +26,9 @@ const { t } = useStaticText();
 const { formatPrice, formatCompact, presetLabel } = useCurrency();
 
 // --- Filters -------------------------------------------------------------------------------------
-// Options, labels and which filters exist all come from Admin > Filters ("Show on: Listing") via
-// /api/property-filters. URL/API parameters use each filter's key: select filters as ?{key}=value,
-// range filters as ?min_{key}=&max_{key}= (see Api\PropertiesController).
+// Which filters exist, how each looks and its options all come from Admin › Filters › Search Filters
+// (this page's own set) via /api/search-filters/{page}. URL/API parameters use each filter's key:
+// ?{key}=value (checkboxes: ?{key}=a,b), ranges as ?min_{key}=&max_{key}= (see Api\PropertiesController).
 // /premium-properties reuses this page for every premium (CRM-featured) listing — residential and
 // commercial together (API ?premium=1); the filter options follow that same set of listings.
 const premium = !!route.meta.premium;
@@ -50,9 +51,19 @@ function carryToOtherView() {
 }
 // Set while we clear an incoming ?query ourselves, so the route.query watcher ignores that change.
 let clearingUrl = false;
-const { filters: adminFilters, loaded: filtersLoaded, byKey: adminFilter, options: adminOptions } = usePropertyFilters('listing', segment);
+// /premium-properties has its own filter set; /properties, /marketing-properties and agent / agency
+// "View all" lists use the Properties set.
+const { filters: adminFilters, loaded: filtersLoaded, byKey: adminFilter, options: adminOptions } = useSearchFilters(premium ? 'premium' : 'properties');
+// The top bar / toolbar controls pick one value, so a field is there only while the admin shows it as
+// a dropdown or radio buttons; as checkboxes, a text box or numbers it moves to the "More filters" panel.
+const SINGLE_CHOICE = ['select', 'radio'];
+const inTopBar = (key) => SINGLE_CHOICE.includes(adminFilter(key)?.type);
 // A top-bar field shows while the filters load, then only if the admin has that filter enabled.
-const showFilter = (key) => !filtersLoaded.value || !!adminFilter(key);
+const showFilter = (key) => !filtersLoaded.value || inTopBar(key);
+// Page controls (Location box, Sort, Features, Amenity shortcuts) show while the admin keeps them.
+const hasFilter = (key) => !filtersLoaded.value || !!adminFilter(key);
+// An admin label / hint text, else the page's built-in wording.
+const adminText = (key, field, fallback) => adminFilter(key)?.[field] || fallback;
 
 // Filters with their own control in the top bar / toolbar get a named ref…
 const listingType = ref('');
@@ -67,13 +78,23 @@ const SELECT_BINDINGS = {
     listing_type: listingType, location: locationQuery, property_type: propertyType,
     bedrooms: bedroomsFilter, bathrooms: bathroomsFilter, completion_status: completion,
 };
-const selectRef = (key) => SELECT_BINDINGS[key] || toRef(extraSelect, key);
-// Register extra admin select filters up front (not during render) so they're part of the state.
+const minPrice = ref('');
+const maxPrice = ref('');
+const minSqft = ref('');
+const maxSqft = ref('');
+const RANGE_BINDINGS = { min_price: minPrice, max_price: maxPrice, min_sqft: minSqft, max_sqft: maxSqft };
+const selectRef = (key) => SELECT_BINDINGS[key] || RANGE_BINDINGS[key] || toRef(extraSelect, key);
+// Register every other admin filter's query keys up front (not during render) so they're part of the state.
 watch(adminFilters, (list) => {
-    list.forEach((f) => {
-        if (f.type === 'select' && !SELECT_BINDINGS[f.key] && !(f.key in extraSelect)) extraSelect[f.key] = '';
+    list.filter((f) => !PAGE_CONTROLS.includes(f.key)).forEach((f) => {
+        filterParams(f).forEach((key) => {
+            if (!SELECT_BINDINGS[key] && !RANGE_BINDINGS[key] && !(key in extraSelect)) extraSelect[key] = '';
+        });
     });
 }, { immediate: true });
+// The panel's filter fields read / write the page state by query key.
+const getParam = (key) => selectRef(key).value;
+const setParam = (key, value) => { selectRef(key).value = value; };
 
 // Location box: free text searches `location`; a picked suggestion filters exactly by `city` or
 // `community`, and a picked address opens that property. `locationInput` is what the box shows.
@@ -100,10 +121,6 @@ function submitSearch() {
 const agentFilter = ref('');
 const agencyFilter = ref('');
 
-const minPrice = ref('');
-const maxPrice = ref('');
-const minSqft = ref('');
-const maxSqft = ref('');
 // Not admin filters: sorting, amenities (free-text on each property) and the floor-plan toggle.
 const sort = ref('default');
 const amenities = ref([]);
@@ -215,6 +232,8 @@ const completionPillsKey = computed(() => completionOptions.value.map((o) => `${
 watch(completionPillsKey, () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
+// The admin filters render the panel's pill rows / dropdowns — wire them once they're in.
+watch(adminFilters, () => nextTick(() => window.MWRealty && window.MWRealty.refresh()));
 const propertyTypeOptions = computed(() => optionsFor('property_type', t('properties_listing.filter_bar.all_type'), propertyType.value));
 const bedroomOptions = computed(() => optionsFor('bedrooms', t('properties_listing.filter_bar.select_bedrooms'), bedroomsFilter.value));
 const bathroomOptions = computed(() => optionsFor('bathrooms', t('properties_listing.filter_bar.select_bathrooms'), bathroomsFilter.value));
@@ -224,20 +243,15 @@ const propertyTypeLabel = computed(() => labelFor(propertyTypeOptions, propertyT
 const bedroomsLabel = computed(() => labelFor(bedroomOptions, bedroomsFilter.value));
 const bathroomsLabel = computed(() => labelFor(bathroomOptions, bathroomsFilter.value));
 
-// "More filters" panel: every select filter the admin shows on the listing page, in admin order.
-const panelSelectFilters = computed(() => adminFilters.value.filter((f) => f.type === 'select' && f.options?.length));
-
-// How each admin select filter appears in the "More filters" panel:
+// How each admin filter appears in the "More filters" panel (drawn in the admin's chosen style):
 // - already in the top bar → shown in the panel on phones only (the bar hides its fields ≤767px);
-// - covered at every size (Location box, toolbar Completion tabs) → never repeated in the panel;
-// - short fixed choices → compact buttons; longer lists (Property Type, Category, …) → a dropdown.
+// - covered at every size by the toolbar Completion tabs → not repeated in the panel;
+// - a list with no options yet → hidden.
 const TOP_BAR_KEYS = ['listing_type', 'property_type', 'bedrooms', 'bathrooms'];
-const PANEL_SKIP_KEYS = ['location', 'completion_status'];
-const PANEL_PILL_KEYS = ['listing_type', 'bedrooms', 'bathrooms'];
 const panelFilter = (f) => ({
-    show: f.type === 'select' && f.options?.length > 0 && !PANEL_SKIP_KEYS.includes(f.key),
-    mobileOnly: TOP_BAR_KEYS.includes(f.key),
-    pills: PANEL_PILL_KEYS.includes(f.key),
+    show: !PAGE_CONTROLS.includes(f.key) && !(f.options && !f.options.length) && !(f.key === 'completion_status' && inTopBar(f.key)),
+    mobileOnly: TOP_BAR_KEYS.includes(f.key) && inTopBar(f.key),
+    priceSlider: f.key === 'price' && f.type === 'range',
 });
 // Panel order (the original panel design): Purpose, Property Type (phones), Price, Bedrooms,
 // Bathrooms (phones), Area, then any other admin filter in the admin's order (e.g. Category).
@@ -246,13 +260,22 @@ const panelFilters = computed(() => {
     const rank = (f) => { const i = PANEL_ORDER.indexOf(f.key); return i === -1 ? PANEL_ORDER.length : i; };
     return adminFilters.value.map((f, i) => ({ f, i })).sort((a, b) => rank(a.f) - rank(b.f) || a.i - b.i).map(({ f }) => f);
 });
-const sortOptions = computed(() => [
+// Sort choices, Features and Amenity shortcuts: the admin's lists (which, order, wording), else the built-in ones.
+const sortOptions = computed(() => (adminOptions('sort').length ? adminOptions('sort') : [
     { value: 'default', label: t('properties_listing.toolbar.sort_recommended', 'Recommended') },
     { value: 'recent', label: t('properties_listing.toolbar.sort_most_recent') },
     { value: 'price_asc', label: t('properties_listing.toolbar.sort_price_low_high') },
     { value: 'price_desc', label: t('properties_listing.toolbar.sort_price_high_low') },
     { value: 'popular', label: t('properties_listing.toolbar.sort_most_popular') },
-]);
+]));
+const featureOptions = computed(() => (adminOptions('features').length ? adminOptions('features') : [
+    { value: 'floor_plans', label: t('properties_listing.filter_panel.feature_floor_plans') },
+    { value: 'open_house', label: t('properties_listing.filter_panel.feature_open_house_properties', 'Open house properties') },
+]));
+const FEATURE_REFS = { floor_plans: floorPlans, open_house: openHouse };
+const amenityOptions = computed(() => (adminOptions('amenities').length
+    ? adminOptions('amenities')
+    : AMENITY_OPTIONS.map((a) => ({ value: a, label: amenityLabel(a) }))));
 const sortLabel = computed(() => labelFor(sortOptions, sort.value));
 const AMENITY_OPTIONS = ['furnished', 'community-pool', 'parking', 'gym', 'security', 'balcony', 'concierge', 'private-pool'];
 const amenityLabel = (key) => t(`properties_listing.filter_panel.amenity_${key.replace(/-/g, '_')}`, humanize(key));
@@ -265,12 +288,11 @@ const priceStep = computed(() => priceFilter.value?.step || 50000);
 // Panel slider draft (applied on "Apply"); the thumbs can't cross each other.
 const priceLo = ref(0);
 const priceHi = ref(30000000);
-const pricePresets = computed(() => [
+// Quick-select buttons: the admin's (Search Filters › Price), else the built-in ones.
+const pricePresets = computed(() => quickSelect(priceFilter.value, priceCeiling.value, [
     [0, 500000, 'under_500k'], [500000, 1000000, '500k_1m'], [1000000, 2000000, '1m_2m'],
     [2000000, 5000000, '2m_5m'], [5000000, 10000000, '5m_10m'], [10000000, Infinity, '10m_plus'],
-]
-    .filter(([lo]) => lo < priceCeiling.value)
-    .map(([lo, hi, key]) => [lo, Math.min(hi, priceCeiling.value), key, hi === Infinity]));
+].map(([lo, hi, key]) => [lo, hi, t(`properties_listing.price_presets.${key}`)])));
 
 /** Puts the panel's price slider back in line with the applied price filter. */
 function syncPriceSlider() {
@@ -308,13 +330,25 @@ function applyPanel() {
 const activeFilters = computed(() => {
     const chips = [];
     const add = (key, label, text) => chips.push({ key, label, text });
-    adminFilters.value.filter((f) => f.type === 'select').forEach((f) => {
-        const value = applied[f.key];
-        if (value) add(f.key, f.label, (f.options || []).find((o) => o.value === value)?.label ?? humanize(value));
+    const optionLabel = (f, v) => (f.options || []).find((o) => o.value === v)?.label ?? humanize(v);
+    const covered = new Set(['min_price', 'max_price', 'min_sqft', 'max_sqft']);
+    // Price / area keep their own chips below.
+    adminFilters.value.filter((f) => !['price', 'sqft', ...PAGE_CONTROLS].includes(f.key)).forEach((f) => {
+        const [first, second] = filterParams(f);
+        covered.add(first);
+        if (second) covered.add(second);
+        if (f.type === 'range') {
+            const lo = applied[first], hi = applied[second];
+            if (lo || hi) add(first, f.label, lo && hi ? `${lo} – ${hi}` : lo ? `${lo}+` : `≤ ${hi}`);
+        } else if (applied[first]) {
+            const text = f.options ? String(applied[first]).split(',').map((v) => optionLabel(f, v)).join(', ')
+                : (f.type === 'number' ? `${{ min: '≥ ', max: '≤ ' }[f.compare] ?? ''}${applied[first]}` : applied[first]);
+            add(first, f.label, text);
+        }
     });
     // Free-text location (or a filter the admin has since switched off) still counts.
     [...Object.keys(SELECT_BINDINGS), 'city', 'community', ...Object.keys(extraSelect)].forEach((key) => {
-        if (applied[key] && !chips.some((c) => c.key === key)) add(key, humanize(key), applied[key]);
+        if (applied[key] && !covered.has(key) && !chips.some((c) => c.key === key)) add(key, humanize(key), applied[key]);
     });
     if (applied.min_price || applied.max_price) {
         add('price', priceFilter.value?.label || t('properties_listing.filter_panel.price_title'), applied.min_price && applied.max_price
@@ -325,9 +359,12 @@ const activeFilters = computed(() => {
         add('sqft', sqftFilter.value?.label || 'Area', applied.min_sqft && applied.max_sqft
             ? `${applied.min_sqft} – ${applied.max_sqft} sq.ft` : applied.min_sqft ? `${applied.min_sqft}+ sq.ft` : `≤ ${applied.max_sqft} sq.ft`);
     }
-    (applied.amenities || []).forEach((a) => add(`amenity:${a}`, t('properties_listing.filter_panel.amenities_title', 'Amenity'), amenityLabel(a)));
-    if (applied.open_house) add('open_house', t('properties_listing.filter_panel.features_title', 'Feature'), t('properties_listing.filter_panel.feature_open_house', 'Open house'));
-    if (applied.floor_plans) add('floor_plans', t('properties_listing.filter_panel.features_title', 'Feature'), t('properties_listing.filter_panel.feature_floor_plans', 'Floor plans'));
+    const amenityTitle = adminText('amenities', 'label', t('properties_listing.filter_panel.amenities_title', 'Amenity'));
+    (applied.amenities || []).forEach((a) => add(`amenity:${a}`, amenityTitle, amenityOptions.value.find((o) => o.value === a)?.label || amenityLabel(a)));
+    const featureTitle = adminText('features', 'label', t('properties_listing.filter_panel.features_title', 'Feature'));
+    const featureText = (v) => featureOptions.value.find((o) => o.value === v)?.label || humanize(v);
+    if (applied.open_house) add('open_house', featureTitle, featureText('open_house'));
+    if (applied.floor_plans) add('floor_plans', featureTitle, featureText('floor_plans'));
     if (applied.agent) add('agent', t('properties_listing.listing.agent_label', 'Agent'), ownerName.value || humanize(applied.agent));
     if (applied.agency) add('agency', t('properties_listing.listing.agency_label', 'Agency'), ownerName.value || humanize(applied.agency));
     return chips;
@@ -354,7 +391,8 @@ const pageTitle = computed(() => (premium
 
 // "Penthouse Properties for Rent in Dubai" — the heading says what is actually being shown.
 const listingTitle = computed(() => {
-    const type = applied.property_type ? `${labelFor(propertyTypeOptions, applied.property_type)} ` : '';
+    // Several ticked types (checkbox filter) don't fit a heading — it then just says "Properties".
+    const type = applied.property_type && !applied.property_type.includes(',') ? `${labelFor(propertyTypeOptions, applied.property_type)} ` : '';
     const purpose = { sale: ' for Sale', rent: ' for Rent' }[applied.listing_type] ?? '';
     const offPlan = applied.completion_status === 'off_plan' ? 'Off-Plan ' : '';
     if (marketing) {
@@ -489,31 +527,19 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
         <div class="offcanvas-body mw-filter-panel__body">
 
             <!-- The top bar has its own Location box; on phones (where the bar's fields are hidden) it lives here. -->
-            <section class="mw-filter-panel__section mw-filter-panel__section--mobile-only">
+            <section v-if="hasFilter('location')" class="mw-filter-panel__section mw-filter-panel__section--mobile-only">
                 <label class="mw-filter-panel__field">
-                    <span>{{ t('properties_listing.filter_panel.location_label') }}</span>
-                    <LocationAutocomplete id="dubai-location-mobile" name="location" v-model="locationInput" :placeholder="t('properties_listing.filter_panel.location_placeholder')" @select="onPlacePicked" />
+                    <span>{{ adminText('location', 'label', t('properties_listing.filter_panel.location_label')) }}</span>
+                    <LocationAutocomplete id="dubai-location-mobile" name="location" v-model="locationInput" :placeholder="adminText('location', 'placeholder', t('properties_listing.filter_panel.location_placeholder'))" @select="onPlacePicked" />
                 </label>
             </section>
 
             <!-- Admin filters (Admin > Filters, "Show on: Listing") in the admin's order — minus the ones
                  the top bar / toolbar already has (see panelFilter()). -->
             <template v-for="f in panelFilters" :key="f.key">
-                <section v-if="panelFilter(f).show" class="mw-filter-panel__section" :class="{ 'mw-filter-panel__section--mobile-only': panelFilter(f).mobileOnly }">
-                    <h3 class="mw-filter-panel__section-title">{{ f.label }}</h3>
-                    <div v-if="panelFilter(f).pills" class="mw-pill-tabs mw-pill-tabs--compact">
-                        <button type="button" data-tab :class="{ 'is-active': !selectRef(f.key).value }" @click="selectRef(f.key).value = ''">{{ t('properties_listing.filter_panel.any') }}</button>
-                        <button v-for="opt in f.options" :key="opt.value" type="button" data-tab :class="{ 'is-active': selectRef(f.key).value === opt.value }" @click="selectRef(f.key).value = opt.value">{{ opt.label }}</button>
-                    </div>
-                    <div v-else class="mw-filter-panel__select-wrap">
-                        <select class="mw-filter-panel__select" :aria-label="f.label" :value="selectRef(f.key).value" @change="selectRef(f.key).value = $event.target.value">
-                            <option value="">{{ t('properties_listing.filter_panel.any') }}</option>
-                            <option v-for="opt in f.options" :key="opt.value" :value="opt.value">{{ opt.label }}{{ opt.count ? ` (${opt.count})` : '' }}</option>
-                        </select>
-                    </div>
-                </section>
+                <template v-if="!panelFilter(f).show"></template>
 
-                <section v-else-if="f.key === 'price'" class="mw-filter-panel__section">
+                <section v-else-if="panelFilter(f).priceSlider" class="mw-filter-panel__section">
                     <h3 class="mw-filter-panel__section-title">{{ f.label }}</h3>
                     <div class="mw-hero__price-readout">
                         <label class="mw-hero__price-input">
@@ -533,11 +559,11 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                     </div>
                     <p class="mw-hero__price-presets-title">{{ t('properties_listing.filter_panel.quick_select') }}</p>
                     <div class="mw-hero__price-presets">
-                        <button v-for="p in pricePresets" :key="p[2]" type="button" :class="{ 'is-active': priceLo === p[0] && priceHi === p[1] }" @click="pickPricePreset(p)">{{ presetLabel(p[0], p[1], { top: p[3], baseLabel: t(`properties_listing.price_presets.${p[2]}`), under: t('properties_listing.price_presets.under_word', 'Under') }) }}</button>
+                        <button v-for="p in pricePresets" :key="p[2]" type="button" :class="{ 'is-active': priceLo === p[0] && priceHi === p[1] }" @click="pickPricePreset(p)">{{ presetLabel(p[0], p[1], { top: p[3], baseLabel: p[2], under: t('properties_listing.price_presets.under_word', 'Under') }) }}</button>
                     </div>
                 </section>
 
-                <section v-else-if="f.key === 'sqft'" class="mw-filter-panel__section">
+                <section v-else-if="f.key === 'sqft' && f.type === 'range'" class="mw-filter-panel__section">
                     <h3 class="mw-filter-panel__section-title">{{ f.label }}</h3>
                     <div class="mw-filter-panel__range-inputs">
                         <label>
@@ -550,20 +576,27 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                         </label>
                     </div>
                 </section>
+
+                <!-- Every other filter, in the style the admin picked (dropdown, buttons, checkboxes, text, numbers). -->
+                <SearchFilterField v-else :filter="f" :get="getParam" :set="setParam"
+                    :class="{ 'mw-filter-panel__section--mobile-only': panelFilter(f).mobileOnly }"
+                    :any-label="t('properties_listing.filter_panel.any')"
+                    :min-label="t('properties_listing.filter_panel.min_label')"
+                    :max-label="t('properties_listing.filter_panel.max_label')" />
             </template>
 
-            <section class="mw-filter-panel__section">
-                <h3 class="mw-filter-panel__section-title">{{ t('properties_listing.filter_panel.features_title') }}</h3>
+            <section v-if="hasFilter('features')" class="mw-filter-panel__section">
+                <h3 class="mw-filter-panel__section-title">{{ adminText('features', 'label', t('properties_listing.filter_panel.features_title')) }}</h3>
                 <div class="mw-filter-panel__checks">
-                    <label class="mw-filter-panel__check"><input type="checkbox" name="property-feature" value="floor-plans" v-model="floorPlans"><span>{{ t('properties_listing.filter_panel.feature_floor_plans') }}</span></label>
-                    <label class="mw-filter-panel__check"><input type="checkbox" name="property-feature" value="open-house" v-model="openHouse"><span>{{ t('properties_listing.filter_panel.feature_open_house_properties', 'Open house properties') }}</span></label>
+                    <label v-for="opt in featureOptions" :key="opt.value" class="mw-filter-panel__check"><input type="checkbox" name="property-feature" :value="opt.value" v-model="FEATURE_REFS[opt.value].value"><span>{{ opt.label }}</span></label>
                 </div>
             </section>
 
-            <section class="mw-filter-panel__section">
-                <h3 class="mw-filter-panel__section-title">{{ t('properties_listing.filter_panel.amenities_title') }}</h3>
+            <!-- Amenity shortcuts (Search Filters › Amenity shortcuts): which, their order and wording. -->
+            <section v-if="hasFilter('amenities')" class="mw-filter-panel__section">
+                <h3 class="mw-filter-panel__section-title">{{ adminText('amenities', 'label', t('properties_listing.filter_panel.amenities_title')) }}</h3>
                 <div class="mw-filter-panel__checks">
-                    <label v-for="a in AMENITY_OPTIONS" :key="a" class="mw-filter-panel__check"><input type="checkbox" name="amenity" :value="a" v-model="amenities"><span>{{ amenityLabel(a) }}</span></label>
+                    <label v-for="a in amenityOptions" :key="a.value" class="mw-filter-panel__check"><input type="checkbox" name="amenity" :value="a.value" v-model="amenities"><span>{{ a.label }}</span></label>
                 </div>
             </section>
 
@@ -604,9 +637,9 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                             <li v-for="opt in listingTypeOptions" :key="opt.value"><button type="button" :class="{ 'is-selected': opt.value === listingType }" data-dropdown-option @click="selectListingType(opt.value)">{{ opt.label }}</button></li>
                         </ul>
                     </div>
-                    <div class="mw-dubai-filter__field" :class="{ 'is-filled': applied.location || applied.city || applied.community }">
-                        <label for="dubai-location">{{ t('properties_listing.filter_bar.location_label') }}</label>
-                        <LocationAutocomplete id="dubai-location" name="location" v-model="locationInput" :placeholder="t('properties_listing.filter_bar.location_placeholder')" @select="onPlacePicked" @enter="submitSearch" />
+                    <div v-if="hasFilter('location')" class="mw-dubai-filter__field" :class="{ 'is-filled': applied.location || applied.city || applied.community }">
+                        <label for="dubai-location">{{ adminText('location', 'label', t('properties_listing.filter_bar.location_label')) }}</label>
+                        <LocationAutocomplete id="dubai-location" name="location" v-model="locationInput" :placeholder="adminText('location', 'placeholder', t('properties_listing.filter_bar.location_placeholder'))" @select="onPlacePicked" @enter="submitSearch" />
                     </div>
                     <div class="mw-dubai-filter__field mw-dubai-filter__field--select mw-dropdown" v-if="showFilter('property_type')" :class="{ 'is-filled': propertyType }" data-dropdown>
                         <label>{{ t('properties_listing.filter_bar.property_type_label') }}</label>
@@ -660,7 +693,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                         <button v-for="opt in completionOptions" :key="opt.value" type="button" data-tab :class="{ 'is-active': opt.value === completion }" :aria-pressed="opt.value === completion" @click="selectCompletion(opt.value)">{{ opt.label }}</button>
                     </div>
                     <div class="mw-dubai-toolbar__right">
-                        <div class="mw-dropdown mw-dubai-toolbar__sort" data-dropdown>
+                        <div v-if="hasFilter('sort')" class="mw-dropdown mw-dubai-toolbar__sort" data-dropdown>
                             <button type="button" class="mw-dubai-toolbar__sort-trigger" data-dropdown-trigger aria-haspopup="listbox">
                                 <span data-dropdown-label data-dropdown-label-reactive>{{ sortLabel }}</span>
                                 <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" class="mw-dubai-filter__chevron">

@@ -17,7 +17,7 @@
                 <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                     <i class="fas fa-info-circle text-primary me-2"></i>
                     Each card below links to a value of the <strong>Property Type</strong> filter, so make sure the
-                    types you want here already exist as options under <a href="{{ route('cms.filters.index') }}">Filters &raquo; Property Type</a>.
+                    types you want here already exist as options under <a href="{{ route('crm.app', 'master/property-options') }}?list=property_type">CRM &raquo; Master &raquo; Property Options &raquo; Property Type</a>.
                     The property count shown on each card is calculated automatically â€” it's not something you set.
                 </div>
                 <form action="{{ route('cms.find-properties.update-section') }}" method="POST">

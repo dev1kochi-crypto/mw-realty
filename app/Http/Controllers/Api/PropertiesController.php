@@ -108,6 +108,8 @@ class PropertiesController extends Controller
                 'agent' => $request->input('agent'),
                 'agency' => $request->input('agency'),
                 'attributes' => $attributes,
+                // Admin › Filters › Search Filters for this page (furnishing, amenities, view, …).
+                'dynamic' => \App\Support\SearchFilterQuery::fromRequest($request->all(), $request->boolean('premium') ? 'premium' : 'properties'),
             ],
         ));
     }

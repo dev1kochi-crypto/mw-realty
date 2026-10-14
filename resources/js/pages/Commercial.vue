@@ -1,13 +1,14 @@
 <script setup>
 import AdBlock from '../components/AdBlock.vue';
-import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, toRef, watch } from 'vue';
 import { usePageWindow } from '../composables/usePageWindow';
 import { useRoute, useRouter } from 'vue-router';
 import { useCommercial } from '../composables/useCommercial';
 import { useLanguages } from '../composables/useLanguages';
 import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
-import { usePropertyFilters } from '../composables/usePropertyFilters';
+import { useSearchFilters, filterParams, quickSelect, PAGE_CONTROLS } from '../composables/useSearchFilters';
+import SearchFilterField from '../components/SearchFilterField.vue';
 import { useWishlist } from '../composables/useWishlist';
 import EmptyState from '../components/EmptyState.vue';
 import LocationAutocomplete from '../components/LocationAutocomplete.vue';
@@ -27,9 +28,21 @@ const { t } = useStaticText();
 // Prices and the price filter are in AED; they're shown in the visitor's chosen currency.
 const { formatPrice, formatCompact, presetLabel } = useCurrency();
 
-// Property type options, price/area bounds and counts come from the live Commercial-menu listings
-// (GET /api/property-filters?scope=commercial), so the dropdown only offers types that exist.
-const { byKey: adminFilter, options: adminOptions } = usePropertyFilters('listing', 'commercial');
+// This page's own filter set (Admin › Filters › Search Filters › Commercial), via
+// GET /api/search-filters/commercial: which filters show, how, and their options. Property type
+// options, price/area bounds and counts come from the live Commercial-menu listings.
+const { filters: adminFilters, loaded: filtersLoaded, byKey: adminFilter, options: adminOptions } = useSearchFilters('commercial');
+// The page's own controls (top-bar dropdowns, bathroom / completion buttons, price slider, area
+// boxes) pick one value; they show while the admin keeps that filter in that style. Anything else
+// the admin adds, or shows in another style, is drawn in the panel by SearchFilterField.
+const OWN_CONTROLS = { property_type: ['select', 'radio'], listing_type: ['select', 'radio'], completion_status: ['select', 'radio'], bathrooms: ['select', 'radio'], price: ['range'], sqft: ['range'] };
+const ownControl = (f) => !!f && (OWN_CONTROLS[f.key] || []).includes(f.type);
+const showFilter = (key) => !filtersLoaded.value || ownControl(adminFilter(key));
+// Page controls (Location box, the Properties box = Keyword, Sort, Amenity shortcuts) show while the admin keeps them.
+const hasFilter = (key) => !filtersLoaded.value || !!adminFilter(key);
+const adminText = (key, field, fallback) => adminFilter(key)?.[field] || fallback;
+const extraFilters = computed(() => adminFilters.value.filter((f) => !ownControl(f)
+    && ![...PAGE_CONTROLS, 'keyword'].includes(f.key) && !(f.options && !f.options.length)));
 
 // --- Filter state --------------------------------------------------------------------------------
 const locationQuery = ref('');
@@ -76,9 +89,23 @@ const FIELDS = [
     ['min_price', minPrice], ['max_price', maxPrice], ['min_sqft', minSqft], ['max_sqft', maxSqft],
 ];
 
+// Values of the admin's other filters, keyed by query key (checkboxes as "a,b").
+const extra = reactive({});
+watch(adminFilters, (list) => list.filter((f) => ![...PAGE_CONTROLS, 'keyword'].includes(f.key)).forEach((f) => filterParams(f).forEach((key) => {
+    if (!FIELDS.some(([k]) => k === key) && !(key in extra)) extra[key] = '';
+})), { immediate: true });
+/** FIELDS plus the extra admin filters. */
+function allFields() {
+    return [...FIELDS, ...Object.keys(extra).map((k) => [k, toRef(extra, k)])];
+}
+const paramRef = (key) => FIELDS.find(([k]) => k === key)?.[1] || toRef(extra, key);
+const getParam = (key) => paramRef(key).value;
+const setParam = (key, value) => { paramRef(key).value = value; };
+const NON_FILTER_QUERY = ['sort', 'amenities', 'page'];
+
 function load() {
     const params = { lang: selectedLanguage.value?.code, page: currentPage.value };
-    FIELDS.forEach(([key, r]) => { const v = String(r.value ?? '').trim(); if (v) params[key] = v; });
+    allFields().forEach(([key, r]) => { const v = String(r.value ?? '').trim(); if (v) params[key] = v; });
     if (amenities.value.length) params.amenities = [...amenities.value].sort();
     if (sort.value !== 'default') params.sort = sort.value;
     const { lang, page, sort: _sort, ...filterParams } = params;
@@ -95,7 +122,7 @@ function carryToOtherView() {
 /** The current filters as a URL query (no page) — for switching between the list and the map. */
 function filterQuery() {
     const query = {};
-    FIELDS.forEach(([key, r]) => { const v = String(r.value ?? '').trim(); if (v) query[key] = v; });
+    allFields().forEach(([key, r]) => { const v = String(r.value ?? '').trim(); if (v) query[key] = v; });
     if (amenities.value.length) query.amenities = [...amenities.value].sort().join(',');
     if (sort.value !== 'default') query.sort = sort.value;
     return query;
@@ -109,7 +136,11 @@ function applyFilters() {
 }
 
 function readQuery(query) {
+    Object.keys(extra).forEach((k) => { extra[k] = ''; });
     FIELDS.forEach(([key, r]) => { r.value = query[key] ? String(query[key]) : ''; });
+    // Any other key is one of the admin's extra filters (e.g. furnishing=furnished).
+    Object.keys(query).filter((k) => !NON_FILTER_QUERY.includes(k) && !FIELDS.some(([f]) => f === k))
+        .forEach((k) => { extra[k] = String(query[k]); });
     amenities.value = query.amenities ? String(query.amenities).split(',').filter(Boolean) : [];
     sort.value = query.sort ? String(query.sort) : 'default';
     currentPage.value = Math.max(1, parseInt(query.page, 10) || 1);
@@ -119,7 +150,7 @@ function readQuery(query) {
 }
 
 function clearFilters() {
-    FIELDS.forEach(([, r]) => { r.value = ''; });
+    allFields().forEach(([, r]) => { r.value = ''; });
     locationInput.value = '';
     pickedPlace.value = null;
     amenities.value = [];
@@ -138,48 +169,59 @@ const selectListingCategory = (v) => setAndApply(listingCategory, v);
 // --- Options -------------------------------------------------------------------------------------
 const humanize = (v) => String(v).replace(/[_-]+/g, ' ').replace(/^./, (c) => c.toUpperCase());
 const propertyTypeOptions = computed(() => {
-    const options = [{ value: '', label: t('commercial.filter_bar.all_type') }, ...adminOptions('property_type')];
+    const options = [{ value: '', label: adminText('property_type', 'placeholder', t('commercial.filter_bar.all_type')) }, ...adminOptions('property_type')];
     if (propertyType.value && !options.some((o) => o.value === propertyType.value)) {
         options.push({ value: propertyType.value, label: humanize(propertyType.value) });
     }
     return options;
 });
+// Every list below: the admin's values (Search Filters › Commercial), else the built-in ones.
+const fromAdmin = (key, fallback) => (adminOptions(key).length ? adminOptions(key) : fallback);
+// script.js moves pill buttons into a phone dropdown; keying each pill row by its options makes Vue
+// rebuild it (not patch moved buttons) once the admin values arrive — then it's wired again below.
+const pillsKey = (options) => options.map((o) => `${o.value}:${o.label}`).join('|');
+watch(adminFilters, () => nextTick(() => window.MWRealty && window.MWRealty.refresh()));
+// Category = the Commercial set's Purpose filter (sale / rent / off_plan → ?category=).
 const categoryOptions = computed(() => [
-    { value: '', label: t('commercial.filter_bar.all_categories') },
-    { value: 'sale', label: t('commercial.categories.buy') },
-    { value: 'rent', label: t('commercial.categories.lease') },
-    { value: 'off_plan', label: t('commercial.categories.off_plan') },
+    { value: '', label: adminText('listing_type', 'placeholder', t('commercial.filter_bar.all_categories')) },
+    ...fromAdmin('listing_type', [
+        { value: 'sale', label: t('commercial.categories.buy') },
+        { value: 'rent', label: t('commercial.categories.lease') },
+        { value: 'off_plan', label: t('commercial.categories.off_plan') },
+    ]),
 ]);
 const completionOptions = computed(() => [
     { value: '', label: t('commercial.filter_panel.any') },
-    { value: 'ready', label: t('commercial.filter_panel.completion_ready', 'Ready') },
-    { value: 'off_plan', label: t('commercial.filter_panel.completion_off_plan', 'Off-Plan') },
+    ...fromAdmin('completion_status', [
+        { value: 'ready', label: t('commercial.filter_panel.completion_ready', 'Ready') },
+        { value: 'off_plan', label: t('commercial.filter_panel.completion_off_plan', 'Off-Plan') },
+    ]),
 ]);
-const sortOptions = computed(() => [
+const sortOptions = computed(() => fromAdmin('sort', [
     { value: 'default', label: t('commercial.filter_panel.sort_recommended', 'Recommended') },
     { value: 'recent', label: t('commercial.filter_panel.sort_recent', 'Most recent') },
     { value: 'price_asc', label: t('commercial.filter_panel.sort_price_low_high', 'Price: low to high') },
     { value: 'price_desc', label: t('commercial.filter_panel.sort_price_high_low', 'Price: high to low') },
-]);
+]));
 const labelFor = (options, value) => options.value.find((o) => o.value === value)?.label ?? humanize(value);
 const propertyTypeLabel = computed(() => labelFor(propertyTypeOptions, propertyType.value));
 const categoryLabel = computed(() => labelFor(categoryOptions, listingCategory.value));
 
-const BATHROOM_OPTIONS = ['1', '2', '3', '4', '5+'];
+const bathroomOptions = computed(() => fromAdmin('bathrooms', ['1', '2', '3', '4', '5+'].map((b) => ({ value: b, label: b }))));
 const AMENITY_OPTIONS = ['furnished', 'parking', 'pantry', 'meeting-rooms', 'metro', 'security', 'central-ac', 'loading-bay', 'gym', 'concierge'];
 const amenityLabel = (key) => t(`commercial.filter_panel.amenity_${key.replace(/-/g, '_')}`, humanize(key));
+const amenityOptions = computed(() => fromAdmin('amenities', AMENITY_OPTIONS.map((a) => ({ value: a, label: amenityLabel(a) }))));
 
 // --- Price slider (bounds = the most expensive live commercial listing) ---------------------------
 const priceCeiling = computed(() => adminFilter('price')?.max || 30000000);
 const priceStep = computed(() => adminFilter('price')?.step || 50000);
 const priceLo = ref(0);
 const priceHi = ref(30000000);
-const pricePresets = computed(() => [
+// Quick-select buttons: the admin's (Search Filters › Commercial › Price), else the built-in ones.
+const pricePresets = computed(() => quickSelect(adminFilter('price'), priceCeiling.value, [
     [0, 500000, 'under_500k'], [500000, 1000000, '500k_1m'], [1000000, 2000000, '1m_2m'],
     [2000000, 5000000, '2m_5m'], [5000000, 10000000, '5m_10m'], [10000000, Infinity, '10m_plus'],
-]
-    .filter(([lo]) => lo < priceCeiling.value)
-    .map(([lo, hi, key]) => [lo, Math.min(hi, priceCeiling.value), key, hi === Infinity]));
+].map(([lo, hi, key]) => [lo, hi, t(`commercial.price_presets.${key}`)])));
 
 function syncPriceSlider() {
     priceLo.value = Number(minPrice.value) || 0;
@@ -210,11 +252,17 @@ function applyPanel() {
 }
 
 // How many of the panel-only filters are applied — shown as a badge on the filter button.
+// Extra admin filters in use (a range counts once).
+// Only filters with their own query keys — property type / bathrooms shown as checkboxes are counted above.
+const extraCount = computed(() => extraFilters.value
+    .filter((f) => filterParams(f).every((k) => !FIELDS.some(([x]) => x === k)))
+    .filter((f) => filterParams(f).some((k) => String(getParam(k) ?? '').trim())).length);
 const panelFilterCount = computed(() => [completion, bathrooms, minPrice, maxPrice, minSqft, maxSqft]
     .filter((r) => r.value).length
     - (minPrice.value && maxPrice.value ? 1 : 0)
     - (minSqft.value && maxSqft.value ? 1 : 0)
     + amenities.value.length
+    + extraCount.value
     + (sort.value !== 'default' ? 1 : 0));
 const activeFilterCount = computed(() => {
     let count = 0;
@@ -227,6 +275,7 @@ const activeFilterCount = computed(() => {
     if (minPrice.value || maxPrice.value) count++;
     if (minSqft.value || maxSqft.value) count++;
     count += amenities.value.length;
+    count += extraCount.value;
     if (sort.value !== 'default') count++;
     return count;
 });
@@ -250,7 +299,7 @@ function saveSearch() {
     if (savingSearch.value) return;
 
     const criteria = {};
-    FIELDS.forEach(([key, field]) => {
+    allFields().forEach(([key, field]) => {
         const value = String(field.value ?? '').trim();
         if (value) criteria[key] = value;
     });
@@ -322,34 +371,34 @@ function amenityOverflow(amenities) {
             <!-- Location, Properties, Property Type and Category are in the top bar; on phones (where the
                  bar hides its fields) they live here instead. -->
             <section class="mw-filter-panel__section mw-filter-panel__section--basics mw-filter-panel__section--mobile-only">
-                <label class="mw-filter-panel__field">
-                    <span>{{ t('commercial.filter_panel.location_label') }}</span>
-                    <LocationAutocomplete id="commercial-location-mobile" name="location" scope="commercial" v-model="locationInput" :placeholder="t('commercial.filter_panel.location_placeholder')" @select="onPlacePicked" />
+                <label v-if="hasFilter('location')" class="mw-filter-panel__field">
+                    <span>{{ adminText('location', 'label', t('commercial.filter_panel.location_label')) }}</span>
+                    <LocationAutocomplete id="commercial-location-mobile" name="location" scope="commercial" v-model="locationInput" :placeholder="adminText('location', 'placeholder', t('commercial.filter_panel.location_placeholder'))" @select="onPlacePicked" />
                 </label>
-                <label class="mw-filter-panel__field">
-                    <span>{{ t('commercial.filter_panel.properties_label') }}</span>
-                    <input type="text" id="commercial-properties-mobile" name="properties" v-model="searchQuery" :placeholder="t('commercial.filter_panel.properties_placeholder')" autocomplete="off">
+                <label v-if="hasFilter('keyword')" class="mw-filter-panel__field">
+                    <span>{{ adminText('keyword', 'label', t('commercial.filter_panel.properties_label')) }}</span>
+                    <input type="text" id="commercial-properties-mobile" name="properties" v-model="searchQuery" :placeholder="adminText('keyword', 'placeholder', t('commercial.filter_panel.properties_placeholder'))" autocomplete="off">
                 </label>
             </section>
 
-            <section class="mw-filter-panel__section mw-filter-panel__section--mobile-only">
-                <h3 class="mw-filter-panel__section-title">{{ t('commercial.filter_panel.property_type_label') }}</h3>
+            <section v-if="showFilter('property_type')" class="mw-filter-panel__section mw-filter-panel__section--mobile-only">
+                <h3 class="mw-filter-panel__section-title">{{ adminText('property_type', 'label', t('commercial.filter_panel.property_type_label')) }}</h3>
                 <div class="mw-filter-panel__select-wrap">
-                    <select class="mw-filter-panel__select" :aria-label="t('commercial.filter_panel.property_type_label')" v-model="propertyType">
+                    <select class="mw-filter-panel__select" :aria-label="adminText('property_type', 'label', t('commercial.filter_panel.property_type_label'))" v-model="propertyType">
                         <option v-for="opt in propertyTypeOptions" :key="opt.value || 'all'" :value="opt.value">{{ opt.label }}{{ opt.count ? ` (${opt.count})` : '' }}</option>
                     </select>
                 </div>
             </section>
 
-            <section class="mw-filter-panel__section mw-filter-panel__section--mobile-only">
-                <h3 class="mw-filter-panel__section-title">{{ t('commercial.filter_panel.category_label') }}</h3>
-                <div class="mw-pill-tabs mw-pill-tabs--compact">
+            <section v-if="showFilter('listing_type')" class="mw-filter-panel__section mw-filter-panel__section--mobile-only">
+                <h3 class="mw-filter-panel__section-title">{{ adminText('listing_type', 'label', t('commercial.filter_panel.category_label')) }}</h3>
+                <div :key="pillsKey(categoryOptions)" class="mw-pill-tabs mw-pill-tabs--compact">
                     <button v-for="opt in categoryOptions" :key="opt.value || 'all'" type="button" data-tab :class="{ 'is-active': listingCategory === opt.value }" @click="listingCategory = opt.value">{{ opt.label }}</button>
                 </div>
             </section>
 
-            <section class="mw-filter-panel__section">
-                <h3 class="mw-filter-panel__section-title">{{ t('commercial.filter_panel.price_title') }}</h3>
+            <section v-if="showFilter('price')" class="mw-filter-panel__section">
+                <h3 class="mw-filter-panel__section-title">{{ adminText('price', 'label', t('commercial.filter_panel.price_title')) }}</h3>
                 <div class="mw-hero__price-readout">
                     <label class="mw-hero__price-input">
                         <span>{{ t('commercial.filter_panel.min_label') }}</span>
@@ -368,20 +417,20 @@ function amenityOverflow(amenities) {
                 </div>
                 <p class="mw-hero__price-presets-title">{{ t('commercial.filter_panel.quick_select') }}</p>
                 <div class="mw-hero__price-presets">
-                    <button v-for="p in pricePresets" :key="p[2]" type="button" :class="{ 'is-active': priceLo === p[0] && priceHi === p[1] }" @click="pickPricePreset(p)">{{ presetLabel(p[0], p[1], { top: p[3], baseLabel: t(`commercial.price_presets.${p[2]}`), under: t('commercial.price_presets.under_word', 'Under') }) }}</button>
+                    <button v-for="p in pricePresets" :key="p[2]" type="button" :class="{ 'is-active': priceLo === p[0] && priceHi === p[1] }" @click="pickPricePreset(p)">{{ presetLabel(p[0], p[1], { top: p[3], baseLabel: p[2], under: t('commercial.price_presets.under_word', 'Under') }) }}</button>
                 </div>
             </section>
 
-            <section class="mw-filter-panel__section">
-                <h3 class="mw-filter-panel__section-title">{{ t('commercial.filter_panel.bathrooms_title') }}</h3>
-                <div class="mw-pill-tabs mw-pill-tabs--compact">
+            <section v-if="showFilter('bathrooms')" class="mw-filter-panel__section">
+                <h3 class="mw-filter-panel__section-title">{{ adminText('bathrooms', 'label', t('commercial.filter_panel.bathrooms_title')) }}</h3>
+                <div :key="pillsKey(bathroomOptions)" class="mw-pill-tabs mw-pill-tabs--compact">
                     <button type="button" data-tab :class="{ 'is-active': !bathrooms }" @click="bathrooms = ''">{{ t('commercial.filter_panel.any') }}</button>
-                    <button v-for="b in BATHROOM_OPTIONS" :key="b" type="button" data-tab :class="{ 'is-active': bathrooms === b }" @click="bathrooms = b">{{ b }}</button>
+                    <button v-for="b in bathroomOptions" :key="b.value" type="button" data-tab :class="{ 'is-active': bathrooms === b.value }" @click="bathrooms = b.value">{{ b.label }}</button>
                 </div>
             </section>
 
-            <section class="mw-filter-panel__section">
-                <h3 class="mw-filter-panel__section-title">{{ t('commercial.filter_panel.area_title') }}</h3>
+            <section v-if="showFilter('sqft')" class="mw-filter-panel__section">
+                <h3 class="mw-filter-panel__section-title">{{ adminText('sqft', 'label', t('commercial.filter_panel.area_title')) }}</h3>
                 <div class="mw-filter-panel__range-inputs">
                     <label>
                         <span>{{ t('commercial.filter_panel.min_label') }}</span>
@@ -394,26 +443,32 @@ function amenityOverflow(amenities) {
                 </div>
             </section>
 
-            <section class="mw-filter-panel__section">
-                <h3 class="mw-filter-panel__section-title">{{ t('commercial.filter_panel.completion_title', 'Completion') }}</h3>
-                <div class="mw-pill-tabs mw-pill-tabs--compact">
+            <section v-if="showFilter('completion_status')" class="mw-filter-panel__section">
+                <h3 class="mw-filter-panel__section-title">{{ adminText('completion_status', 'label', t('commercial.filter_panel.completion_title', 'Completion')) }}</h3>
+                <div :key="pillsKey(completionOptions)" class="mw-pill-tabs mw-pill-tabs--compact">
                     <button v-for="opt in completionOptions" :key="opt.value || 'any'" type="button" data-tab :class="{ 'is-active': completion === opt.value }" @click="completion = opt.value">{{ opt.label }}</button>
                 </div>
             </section>
 
-            <section class="mw-filter-panel__section">
-                <h3 class="mw-filter-panel__section-title">{{ t('commercial.filter_panel.sort_title', 'Sort by') }}</h3>
+            <!-- The admin's other Commercial filters, in their order and chosen style. -->
+            <SearchFilterField v-for="f in extraFilters" :key="f.key" :filter="f" :get="getParam" :set="setParam"
+                :any-label="t('commercial.filter_panel.any')"
+                :min-label="t('commercial.filter_panel.min_label')"
+                :max-label="t('commercial.filter_panel.max_label')" />
+
+            <section v-if="hasFilter('sort')" class="mw-filter-panel__section">
+                <h3 class="mw-filter-panel__section-title">{{ adminText('sort', 'label', t('commercial.filter_panel.sort_title', 'Sort by')) }}</h3>
                 <div class="mw-filter-panel__select-wrap">
-                    <select class="mw-filter-panel__select" :aria-label="t('commercial.filter_panel.sort_title', 'Sort by')" v-model="sort">
+                    <select class="mw-filter-panel__select" :aria-label="adminText('sort', 'label', t('commercial.filter_panel.sort_title', 'Sort by'))" v-model="sort">
                         <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                     </select>
                 </div>
             </section>
 
-            <section class="mw-filter-panel__section">
-                <h3 class="mw-filter-panel__section-title">{{ t('commercial.filter_panel.amenities_title') }}</h3>
+            <section v-if="hasFilter('amenities')" class="mw-filter-panel__section">
+                <h3 class="mw-filter-panel__section-title">{{ adminText('amenities', 'label', t('commercial.filter_panel.amenities_title')) }}</h3>
                 <div class="mw-filter-panel__checks">
-                    <label v-for="a in AMENITY_OPTIONS" :key="a" class="mw-filter-panel__check"><input type="checkbox" name="amenity" :value="a" v-model="amenities"><span>{{ amenityLabel(a) }}</span></label>
+                    <label v-for="a in amenityOptions" :key="a.value" class="mw-filter-panel__check"><input type="checkbox" name="amenity" :value="a.value" v-model="amenities"><span>{{ a.label }}</span></label>
                 </div>
             </section>
 
@@ -443,16 +498,16 @@ function amenityOverflow(amenities) {
         <section class="mw-commercial-filter">
             <div class="container-ctn">
                 <form class="mw-commercial-filter__bar" role="search" @submit.prevent="submitSearch">
-                    <div class="mw-commercial-filter__field" :class="{ 'is-filled': locationQuery || cityFilter || communityFilter }">
-                        <label for="commercial-location">{{ t('commercial.filter_bar.location_label') }}</label>
-                        <LocationAutocomplete id="commercial-location" name="location" scope="commercial" v-model="locationInput" :placeholder="t('commercial.filter_bar.location_placeholder')" @select="onPlacePicked" @enter="submitSearch" />
+                    <div v-if="hasFilter('location')" class="mw-commercial-filter__field" :class="{ 'is-filled': locationQuery || cityFilter || communityFilter }">
+                        <label for="commercial-location">{{ adminText('location', 'label', t('commercial.filter_bar.location_label')) }}</label>
+                        <LocationAutocomplete id="commercial-location" name="location" scope="commercial" v-model="locationInput" :placeholder="adminText('location', 'placeholder', t('commercial.filter_bar.location_placeholder'))" @select="onPlacePicked" @enter="submitSearch" />
                     </div>
-                    <div class="mw-commercial-filter__field" :class="{ 'is-filled': searchQuery }">
-                        <label for="commercial-properties">{{ t('commercial.filter_bar.properties_label') }}</label>
-                        <input type="text" id="commercial-properties" name="properties" :placeholder="t('commercial.filter_bar.properties_placeholder')" autocomplete="off" v-model="searchQuery" @keyup.enter="applyFilters">
+                    <div v-if="hasFilter('keyword')" class="mw-commercial-filter__field" :class="{ 'is-filled': searchQuery }">
+                        <label for="commercial-properties">{{ adminText('keyword', 'label', t('commercial.filter_bar.properties_label')) }}</label>
+                        <input type="text" id="commercial-properties" name="properties" :placeholder="adminText('keyword', 'placeholder', t('commercial.filter_bar.properties_placeholder'))" autocomplete="off" v-model="searchQuery" @keyup.enter="applyFilters">
                     </div>
-                    <div class="mw-commercial-filter__field mw-commercial-filter__field--select mw-dropdown" :class="{ 'is-filled': propertyType }" data-dropdown>
-                        <label>{{ t('commercial.filter_bar.property_type_label') }}</label>
+                    <div v-if="showFilter('property_type')" class="mw-commercial-filter__field mw-commercial-filter__field--select mw-dropdown" :class="{ 'is-filled': propertyType }" data-dropdown>
+                        <label>{{ adminText('property_type', 'label', t('commercial.filter_bar.property_type_label')) }}</label>
                         <button type="button" class="mw-commercial-filter__select-trigger" data-dropdown-trigger aria-haspopup="listbox">
                             <span data-dropdown-label data-dropdown-label-reactive>{{ propertyTypeLabel }}</span>
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" class="mw-commercial-filter__chevron">
@@ -465,8 +520,8 @@ function amenityOverflow(amenities) {
                             </li>
                         </ul>
                     </div>
-                    <div class="mw-commercial-filter__field mw-commercial-filter__field--select mw-commercial-filter__field--last mw-dropdown" :class="{ 'is-filled': listingCategory }" data-dropdown>
-                        <label>{{ t('commercial.filter_bar.category_label') }}</label>
+                    <div v-if="showFilter('listing_type')" class="mw-commercial-filter__field mw-commercial-filter__field--select mw-commercial-filter__field--last mw-dropdown" :class="{ 'is-filled': listingCategory }" data-dropdown>
+                        <label>{{ adminText('listing_type', 'label', t('commercial.filter_bar.category_label')) }}</label>
                         <button type="button" class="mw-commercial-filter__select-trigger" data-dropdown-trigger aria-haspopup="listbox">
                             <span data-dropdown-label data-dropdown-label-reactive>{{ categoryLabel }}</span>
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" class="mw-commercial-filter__chevron">

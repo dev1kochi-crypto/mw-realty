@@ -18,9 +18,10 @@ use Illuminate\Validation\ValidationException;
 /**
  * @group CRM Master — Property Options
  *
- * Super Admin only: the option lists behind the property form's Property Type, Listing Type,
- * Completion Status and Furnishing dropdowns, plus the Nearby Places "Type" dropdown — the same
- * Filter / FilterValue records the website filters use. Agents / agencies ask for new options via a ticket.
+ * Super Admin only: the option lists behind the property form's dropdowns (Property Type, Listing
+ * Type, Category, Location, Furnishing, …), the bedroom / bathroom choices and the Nearby Places
+ * "Type" dropdown — the Filter / FilterValue records the website's Search Filters take their
+ * "From the database" values from. Agents / agencies ask for new options via a ticket.
  */
 class PropertyOptionController extends Controller
 {
@@ -30,6 +31,8 @@ class PropertyOptionController extends Controller
         'property_type' => ['Property Type', 'fa-building'],
         'listing_type' => ['Listing Type', 'fa-tags'],
         'completion_status' => ['Completion Status', 'fa-hammer'],
+        'category' => ['Category', 'fa-layer-group'],
+        'location' => ['Location (communities)', 'fa-map-marker-alt'],
         Filter::FURNISHING_KEY => ['Furnishing', 'fa-couch'],
         Filter::EMIRATE_KEY => ['Emirate', 'fa-map'],
         Filter::RENTAL_PERIOD_KEY => ['Rental Period', 'fa-calendar-alt'],
@@ -37,11 +40,17 @@ class PropertyOptionController extends Controller
         'easy_access' => ['Easy Access', 'fa-route'],
         'property_attribute' => ['Attributes', 'fa-star'],
         NearbyPlace::FILTER_KEY => ['Nearby Place Type', 'fa-map-marker-alt'],
+        'bedrooms' => ['Bedrooms', 'fa-bed'],
+        'bathrooms' => ['Bathrooms', 'fa-bath'],
     ];
+
+    /** Room lists keep their values as typed: a number, "N+" (N or more) or "studio" — never slugged. */
+    public const ROOM_LISTS = ['bedrooms', 'bathrooms'];
 
     /** The screen's left menu — every key in LISTS appears once; anything not grouped falls into "Other". */
     private const GROUPS = [
-        'Listing form dropdowns' => ['property_type', 'listing_type', 'completion_status', Filter::FURNISHING_KEY, Filter::EMIRATE_KEY, Filter::RENTAL_PERIOD_KEY],
+        'Listing form dropdowns' => ['property_type', 'listing_type', 'completion_status', 'category', 'location', Filter::FURNISHING_KEY, Filter::EMIRATE_KEY, Filter::RENTAL_PERIOD_KEY],
+        'Website search' => ['bedrooms', 'bathrooms'],
         'Features (with icons)' => ['amenity', 'easy_access', 'property_attribute'],
         'Nearby places' => [NearbyPlace::FILTER_KEY],
     ];
@@ -50,6 +59,10 @@ class PropertyOptionController extends Controller
         'property_type' => 'Property Type on the listing form and the website search.',
         'listing_type' => 'Offering type (Rent / Sale) on the listing form and the website search.',
         'completion_status' => 'Ready / off-plan, on the listing form and the website search.',
+        'category' => 'Residential / commercial, on the listing form and the website search.',
+        'location' => 'Communities: the Location dropdown on the listing form, the Communities section and the website search.',
+        'bedrooms' => 'Bedroom choices in the website search (Search Filters "From the database"). Use a number, "N+" for N or more (e.g. 6+), or "studio".',
+        'bathrooms' => 'Bathroom choices in the website search (Search Filters "From the database"). Use a number or "N+" for N or more (e.g. 5+).',
         Filter::FURNISHING_KEY => 'Furnishing type on the listing form.',
         Filter::EMIRATE_KEY => 'Emirate on the listing form (Core details).',
         Filter::RENTAL_PERIOD_KEY => 'Rental period, shown on rent listings only.',
@@ -246,16 +259,23 @@ class PropertyOptionController extends Controller
         $languages = Language::active()->get();
         $default = $languages->firstWhere('is_default', true)?->code ?? $languages->first()?->code ?? 'en';
         $defaultLabel = trim((string) $request->input("translations.{$default}.label"));
-        $request->merge(['value' => Str::slug((string) ($request->input('value') ?: $defaultLabel), '_') ?: null]);
+        $rooms = in_array($filter->key, self::ROOM_LISTS, true);
+        $raw = trim((string) ($request->input('value') ?: $defaultLabel));
+        // Bedrooms / bathrooms: "5+" / "studio" are the values listings are searched by — kept as typed.
+        $request->merge(['value' => ($rooms ? strtolower($raw) : Str::slug($raw, '_')) ?: null]);
 
         $request->validate([
-            'value' => ['required', 'string', 'max:100', Rule::unique('filter_values', 'value')->where('filter_id', $filter->id)->ignore($option?->id)],
+            'value' => array_merge(
+                ['required', 'string', 'max:100', Rule::unique('filter_values', 'value')->where('filter_id', $filter->id)->ignore($option?->id)],
+                $rooms ? ['regex:/^(studio|\d+\+?)$/'] : [],
+            ),
             "translations.{$default}.label" => 'required|string|max:255',
             'translations.*.label' => 'nullable|string|max:255',
             'icon' => 'nullable|file|mimes:svg,png,jpg,jpeg,webp|max:1024',
         ], [
             "translations.{$default}.label.required" => 'Enter the name (' . strtoupper($default) . ').',
             'value.unique' => 'That option already exists.',
+            'value.regex' => 'Use a number (e.g. 6), "N+" for N or more (e.g. 6+), or "studio".',
         ]);
 
         $translations = [];
@@ -279,13 +299,33 @@ class PropertyOptionController extends Controller
         if ($column = Filter::ICON_LISTS[$key] ?? null) {
             return collect($values)->mapWithKeys(fn ($v) => [$v => PropertyDetail::whereJsonContains($column, ['key' => $v])->count()])->all();
         }
+        // Bedrooms / bathrooms: listings with exactly that many ("5+" = that many or more; studio = 0).
+        if (in_array($key, self::ROOM_LISTS, true)) {
+            return collect($values)->mapWithKeys(fn ($v) => [$v => match (true) {
+                $v === 'studio' => Property::where($key, 0)->count(),
+                (bool) preg_match('/^(\d+)\+$/', $v, $m) => Property::where($key, '>=', (int) $m[1])->count(),
+                default => Property::where($key, (int) $v)->count(),
+            }])->all();
+        }
         $query = match ($key) {
             Filter::FURNISHING_KEY => PropertyDetail::whereIn('furnished', $values)->selectRaw('furnished as v, count(*) as c')->groupBy('furnished'),
             NearbyPlace::FILTER_KEY => NearbyPlace::whereIn('category', $values)->selectRaw('category as v, count(*) as c')->groupBy('category'),
             default => Property::whereIn($key, $values)->selectRaw("{$key} as v, count(*) as c")->groupBy($key),
         };
 
-        return $query->pluck('c', 'v')->map(fn ($c) => (int) $c)->all();
+        $counts = $query->pluck('c', 'v')->map(fn ($c) => (int) $c)->all();
+
+        // Website cards also use these values: Communities (location) and Find Properties (property type).
+        $cards = match ($key) {
+            'location' => \App\Models\CmsKit\CommunityHighlight::whereIn('community', $values)->selectRaw('community as v, count(*) as c')->groupBy('community')->pluck('c', 'v'),
+            'property_type' => \App\Models\CmsKit\FindPropertyItem::whereIn('property_type', $values)->selectRaw('property_type as v, count(*) as c')->groupBy('property_type')->pluck('c', 'v'),
+            default => collect(),
+        };
+        foreach ($cards as $v => $c) {
+            $counts[$v] = ($counts[$v] ?? 0) + (int) $c;
+        }
+
+        return $counts;
     }
 
     /** Uploaded icon for an icon list (amenities / easy access / attributes), or null when none was sent. */

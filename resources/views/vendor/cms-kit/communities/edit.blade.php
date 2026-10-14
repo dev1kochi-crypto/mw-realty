@@ -62,7 +62,7 @@
                         </select>
                         <div class="form-text mt-1 text-muted">This card links to properties filtered by this community.</div>
                     @else
-                        <input type="text" name="community" class="form-control" value="{{ old('community', $item->community) }}" placeholder="No location options configured yet — add one under Filters &raquo; Location">
+                        <input type="text" name="community" class="form-control" value="{{ old('community', $item->community) }}" placeholder="No location options configured yet — add one under CRM &raquo; Master &raquo; Property Options &raquo; Location">
                     @endif
                 </div>
                 <div class="col-md-6">
