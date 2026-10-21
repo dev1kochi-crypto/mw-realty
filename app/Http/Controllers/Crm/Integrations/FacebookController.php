@@ -212,6 +212,9 @@ class FacebookController extends Controller
         try {
             $userToken = $this->facebook->userToken((string) $request->input('code'), route('integrations.facebook.callback'));
             $pages = $this->facebook->pages($userToken);
+            // Saved on each connected Page, so a Facebook data deletion request for this user finds them.
+            $fbUserId = $this->facebook->userId($userToken);
+            $pages = array_map(fn (array $page) => $page + ['fb_user_id' => $fbUserId], $pages);
         } catch (\Throwable $e) {
             Log::warning('Facebook connect failed: ' . $e->getMessage());
 
@@ -298,6 +301,7 @@ class FacebookController extends Controller
                 'page_name' => $page['name'],
                 'page_access_token' => $page['access_token'],
                 'connected_by' => $this->actorName(),
+                'facebook_user_id' => ($page['fb_user_id'] ?? '') ?: null,
                 // A fresh token: a Page that needed reconnecting works again.
                 'needs_reconnect_at' => null,
                 'reconnect_notified_at' => null,

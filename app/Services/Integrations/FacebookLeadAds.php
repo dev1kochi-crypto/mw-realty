@@ -60,6 +60,12 @@ class FacebookLeadAds
         ])['access_token'] ?? $short;
     }
 
+    /** The logged-in user's app-scoped Facebook id — what a data deletion request names. */
+    public function userId(string $userToken): string
+    {
+        return (string) ($this->get('me', ['fields' => 'id', 'access_token' => $userToken])['id'] ?? '');
+    }
+
     /** @return array<int, array{id: string, name: string, access_token: string, picture: ?string}> Pages the user manages. */
     public function pages(string $userToken): array
     {
@@ -155,6 +161,27 @@ class FacebookLeadAds
         }
 
         return hash_equals('sha256=' . hash_hmac('sha256', $rawBody, $secret), $header);
+    }
+
+    /**
+     * Facebook's signed_request ("{signature}.{payload}", base64url, HMAC-SHA256 with the app secret),
+     * e.g. from the data deletion callback. The payload when the signature checks out, else null.
+     */
+    public function parseSignedRequest(string $signedRequest): ?array
+    {
+        $secret = (string) config('services.facebook_leads.app_secret');
+        if ($secret === '' || substr_count($signedRequest, '.') !== 1) {
+            return null;
+        }
+        [$encodedSig, $payload] = explode('.', $signedRequest, 2);
+        $decode = fn (string $value) => base64_decode(strtr($value, '-_', '+/'));
+
+        $data = json_decode((string) $decode($payload), true);
+        if (!is_array($data) || strtoupper($data['algorithm'] ?? '') !== 'HMAC-SHA256') {
+            return null;
+        }
+
+        return hash_equals(hash_hmac('sha256', $payload, $secret, true), (string) $decode($encodedSig)) ? $data : null;
     }
 
     private function paginate(string $path, array $params): \Generator

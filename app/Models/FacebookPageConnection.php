@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 class FacebookPageConnection extends Model
 {
     protected $fillable = [
-        'portal_user_id', 'page_id', 'page_name', 'page_access_token', 'connected_by',
+        'portal_user_id', 'page_id', 'page_name', 'page_access_token', 'connected_by', 'facebook_user_id',
         'subscribed_at', 'last_synced_at', 'last_lead_at', 'leads_count', 'last_error', 'needs_reconnect_at', 'reconnect_notified_at',
         'import_status', 'import_added', 'import_skipped', 'import_error', 'import_finished_at',
     ];

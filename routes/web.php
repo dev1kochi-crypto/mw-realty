@@ -875,6 +875,8 @@ Route::get('/marketing-properties/map', [SpaController::class, 'staticPage'])->d
 Route::get('/property-details/{slug}', [SpaController::class, 'propertyDetails']);
 Route::get('/terms-and-conditions', [SpaController::class, 'staticPage'])->defaults('pageKey', 'terms');
 Route::get('/privacy-policy', [SpaController::class, 'staticPage'])->defaults('pageKey', 'privacy');
+// Status of a Facebook data deletion request (the URL the deletion callback hands back to Facebook).
+Route::get('/facebook/data-deletion', [\App\Http\Controllers\Api\FacebookDataDeletionController::class, 'status'])->name('facebook.data-deletion.status')->middleware('throttle:60,1');
 Route::get('/security-policy', [SpaController::class, 'staticPage'])->defaults('pageKey', 'security');
 Route::get('/cookie-settings', [SpaController::class, 'staticPage'])->defaults('pageKey', 'cookie');
 Route::view('/thank-you', 'welcome');

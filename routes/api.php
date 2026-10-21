@@ -195,3 +195,5 @@ Route::post('/stripe/webhook', \App\Http\Controllers\StripeWebhookController::cl
 // Facebook Lead Ads "leadgen" webhook (verify handshake + signature-checked events) — /api/webhooks/facebook
 Route::get('/webhooks/facebook', [\App\Http\Controllers\Api\FacebookWebhookController::class, 'verify'])->name('webhooks.facebook.verify');
 Route::post('/webhooks/facebook', [\App\Http\Controllers\Api\FacebookWebhookController::class, 'receive'])->name('webhooks.facebook')->middleware('throttle:600,1');
+// Facebook "Data deletion callback URL" (signed_request) — /api/webhooks/facebook/data-deletion
+Route::post('/webhooks/facebook/data-deletion', [\App\Http\Controllers\Api\FacebookDataDeletionController::class, 'callback'])->name('webhooks.facebook.data-deletion')->middleware('throttle:60,1');
