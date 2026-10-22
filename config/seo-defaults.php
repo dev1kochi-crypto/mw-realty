@@ -60,6 +60,22 @@ return [
         'meta_title' => 'Contact Us | MW Realty',
         'meta_description' => 'Get in touch with MW Realty — reach our team for property enquiries, viewings, or general questions about the UAE real estate market.',
     ],
+    'mortgage-calculator' => [
+        'meta_title' => 'Mortgage Calculator UAE | MW Realty',
+        'meta_description' => 'Estimate your monthly mortgage payments and upfront costs in the UAE — adjust the property price, down payment, interest rate and loan term with MW Realty\'s free calculator.',
+    ],
+    'eligibility-calculator' => [
+        'meta_title' => 'Mortgage Eligibility Calculator UAE | MW Realty',
+        'meta_description' => 'Find out how much a UAE bank could lend you and the property price you can afford, based on your income, debts, residency and the 50% debt burden rule.',
+    ],
+    'rent-vs-buy-calculator' => [
+        'meta_title' => 'Rent vs Buy Calculator UAE | MW Realty',
+        'meta_description' => 'Compare the true cost of renting versus buying a home in the UAE — rent, agent and Ejari fees against your mortgage, Dubai purchase fees, insurance, service charges and the sale price — and see when buying pays off.',
+    ],
+    'refinance-calculator' => [
+        'meta_title' => 'Mortgage Refinance Calculator UAE | MW Realty',
+        'meta_description' => 'Refinance your UAE mortgage: enter your current loan, employment and equity release to see your new rate, monthly payment and how much you could save each month and over the loan.',
+    ],
     'terms' => [
         'meta_title' => 'Terms & Conditions | MW Realty',
         'meta_description' => 'Read the terms and conditions governing the use of MW Realty\'s website and services.',

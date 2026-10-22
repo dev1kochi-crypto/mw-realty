@@ -49,6 +49,7 @@ const quickLinks = computed(() => [
     { to: '/about', label: t('nav.about') },
     { to: '/blogs', label: t('nav.blog', 'Blog') },
     { to: '/careers', label: t('nav.careers', 'Careers') },
+    { to: '/mortgage-calculator', label: t('nav.mortgage_calculator', 'Mortgage Calculator') },
     { to: '/contact', label: t('nav.contact') },
 ]);
 

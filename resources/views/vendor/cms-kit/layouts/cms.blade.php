@@ -390,6 +390,13 @@
                     </a>
                     @endif
 
+                    {{-- The public calculator pages: copy, SEO, enquiry form and FAQs. --}}
+                    @if($cmsUser->can('calculators.view'))
+                    <a class="nav-link @if(Route::is('cms.calculators.*')) active @endif" href="{{ route('cms.calculators.index') }}">
+                        <i class="fas fa-calculator"></i> Calculators
+                    </a>
+                    @endif
+
                     {{-- Property listings themselves are managed in the separate Properties dashboard
                          (see the "Properties" button in the header) — this stays admin-only since
                          it's shared taxonomy, not content agents/companies should edit. --}}

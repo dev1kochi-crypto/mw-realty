@@ -98,6 +98,11 @@ const routes = [
         component: () => import('../pages/CareerDetails.vue'),
         meta: { title: 'Careers | MW Realty', bodyClass: 'agents-page career-details-page', activeNav: 'careers' },
     },
+    // Calculators: one page (Calculator.vue), meta.calculator picks which — see useCalculatorLinks.
+    { path: '/mortgage-calculator', name: 'mortgage-calculator', component: () => import('../pages/Calculator.vue'), meta: { title: 'Mortgage Calculator | MW Realty', bodyClass: 'agents-page calculator-page', activeNav: 'calculators', calculator: 'mortgage' } },
+    { path: '/eligibility-calculator', name: 'eligibility-calculator', component: () => import('../pages/Calculator.vue'), meta: { title: 'Mortgage Eligibility Calculator | MW Realty', bodyClass: 'agents-page calculator-page', activeNav: 'calculators', calculator: 'eligibility' } },
+    { path: '/rent-vs-buy-calculator', name: 'rent-vs-buy-calculator', component: () => import('../pages/Calculator.vue'), meta: { title: 'Rent vs Buy Calculator | MW Realty', bodyClass: 'agents-page calculator-page', activeNav: 'calculators', calculator: 'rent-vs-buy' } },
+    { path: '/refinance-calculator', name: 'refinance-calculator', component: () => import('../pages/Calculator.vue'), meta: { title: 'Mortgage Refinance Calculator | MW Realty', bodyClass: 'agents-page calculator-page', activeNav: 'calculators', calculator: 'refinance' } },
     {
         path: '/contact',
         name: 'contact',

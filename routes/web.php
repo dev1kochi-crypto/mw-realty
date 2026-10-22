@@ -583,6 +583,15 @@ Route::middleware(['web'])->group(function () {
                 Route::delete('/help-desk/{id}', 'destroy')->middleware('cms.permission:help-desk.delete')->name('cms.help-desk.destroy')->whereNumber('id');
             });
 
+            // Calculators — copy, SEO, enquiry-form text and FAQs of the public calculator pages (see App\Models\CalculatorPage)
+            Route::middleware(['cms.permission:calculators.view'])->controller(\App\Http\Controllers\CmsKit\CalculatorPageController::class)->group(function () {
+                Route::get('/calculators', 'index')->name('cms.calculators.index');
+                Route::middleware(['cms.permission:calculators.edit'])->group(function () {
+                    Route::get('/calculators/{id}/edit', 'edit')->name('cms.calculators.edit')->whereNumber('id');
+                    Route::put('/calculators/{id}', 'update')->name('cms.calculators.update')->whereNumber('id');
+                });
+            });
+
             // Coupons (discount codes Agents/Companies can apply when requesting a paid plan)
             Route::middleware(['cms.permission:coupons.view'])->group(function () {
                 Route::get('/coupons', [\App\Http\Controllers\CmsKit\CouponController::class, 'index'])->name('cms.coupons.index');
@@ -858,6 +867,10 @@ Route::get('/market-insights/{slug}', [SpaController::class, 'marketInsightDetai
 Route::get('/careers', [SpaController::class, 'staticPage'])->defaults('pageKey', 'careers');
 Route::get('/careers/{slug}', [SpaController::class, 'careerDetails']);
 Route::get('/contact', [SpaController::class, 'staticPage'])->defaults('pageKey', 'contact');
+Route::get('/mortgage-calculator', [SpaController::class, 'staticPage'])->defaults('pageKey', 'mortgage-calculator');
+Route::get('/eligibility-calculator', [SpaController::class, 'staticPage'])->defaults('pageKey', 'eligibility-calculator');
+Route::get('/rent-vs-buy-calculator', [SpaController::class, 'staticPage'])->defaults('pageKey', 'rent-vs-buy-calculator');
+Route::get('/refinance-calculator', [SpaController::class, 'staticPage'])->defaults('pageKey', 'refinance-calculator');
 Route::view('/login', 'welcome');
 Route::view('/signup', 'welcome');
 Route::view('/verify-email', 'welcome');
@@ -892,7 +905,7 @@ Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryControll
 // must always get first chance to match. The (?!...) guard is a belt-and-braces exclusion of the
 // app's other top-level path segments, in case any of them is ever reached without a deeper segment.
 Route::get('/{slug}', [\App\Http\Controllers\LandingPageController::class, 'show'])
-    ->where('slug', '^(?!(admin|portal|crm|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|market-insights|careers|contact|login|signup|verify-email|forgot-password|reset-password|profile|properties|premium-properties|marketing-properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
+    ->where('slug', '^(?!(admin|portal|crm|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|market-insights|careers|contact|mortgage-calculator|eligibility-calculator|rent-vs-buy-calculator|refinance-calculator|login|signup|verify-email|forgot-password|reset-password|profile|properties|premium-properties|marketing-properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
     ->name('landing-pages.show');
 
 // Anything no route above claims (e.g. /some/unknown/page) — the site's own 404 page, served with a

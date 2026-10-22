@@ -126,6 +126,10 @@ Route::get('/site-information', [SiteInformationController::class, 'index']);
 // Public, read-only — one endpoint shared by all 4 legal pages, keyed by {key} = terms|privacy|security|cookie.
 Route::get('/legal/{key}', [LegalController::class, 'show']);
 
+// Public, read-only — the calculator pages' copy, FAQs and settings (Admin › Calculators).
+Route::get('/calculators', [\App\Http\Controllers\Api\CalculatorPageController::class, 'index']);
+Route::get('/calculators/{key}', [\App\Http\Controllers\Api\CalculatorPageController::class, 'show']);
+
 /*
 |--------------------------------------------------------------------------
 | Mobile app — customer account, leads, AI chat, tracking

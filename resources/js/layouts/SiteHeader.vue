@@ -5,6 +5,7 @@ import { useLanguages } from '../composables/useLanguages';
 import { useCurrency } from '../composables/useCurrency';
 import { useWishlist } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
+import { useCalculatorLinks } from '../composables/useCalculatorLinks';
 
 const route = useRoute();
 const isHome = computed(() => route.meta.headerVariant === 'home');
@@ -39,39 +40,64 @@ const exploreLinks = computed(() => [
     { key: 'careers', to: '/careers', label: t('nav.careers', 'Careers') },
 ]);
 
-const exploreActive = computed(() => exploreLinks.value.some((link) => link.key === activeNav.value));
+// Calculators menu — every link is a calculator page (route meta.calculator), highlighted by that key.
+const { calculators } = useCalculatorLinks();
+const calculatorLinks = computed(() => calculators.value.map((c) => ({ key: `calc-${c.key}`, to: c.to, label: c.title })));
+const linkActive = (link) => link.key === activeNav.value || link.key === `calc-${route.meta.calculator}`;
 
-// Desktop "Explore" menu: opens on hover/focus via CSS, and on click/tap/keyboard via this flag
-// (touch screens and keyboard users have no hover). Closes on navigation, outside click and Esc.
-const exploreOpen = ref(false);
-const exploreEl = ref(null);
+// Desktop dropdown menus (Calculators, Explore).
+const subMenus = computed(() => [
+    { key: 'calculators', label: t('nav.calculators', 'Calculators'), links: calculatorLinks.value },
+    { key: 'explore', label: t('nav.explore', 'Explore'), links: exploreLinks.value },
+]);
+const menuActive = (menu) => menu.links.some(linkActive);
 
-watch(() => route.fullPath, () => { exploreOpen.value = false; });
+// Each opens on hover/focus via CSS, and on click/tap/keyboard via `openMenu` (touch screens and
+// keyboard users have no hover). Closes on navigation, outside click and Esc.
+const openMenu = ref(null);
+const menuEls = {};
+const setMenuEl = (key) => (el) => { menuEls[key] = el; };
 
-// After a link in the menu is clicked the pointer is still over it and the link still has focus,
+watch(() => route.fullPath, () => { openMenu.value = null; });
+
+function toggleMenu(key) {
+    openMenu.value = openMenu.value === key ? null : key;
+}
+
+// Only one dropdown at a time: pointing at a menu closes any other that is held open by a click
+// (openMenu) or by keyboard focus left inside it (:focus-within).
+function onMenuEnter(key) {
+    if (openMenu.value && openMenu.value !== key) openMenu.value = null;
+    const focused = document.activeElement;
+    if (Object.entries(menuEls).some(([k, el]) => k !== key && el?.contains(focused))) focused.blur();
+}
+
+// After a link in a menu is clicked the pointer is still over it and the link still has focus,
 // so the CSS :hover / :focus-within rules would keep it open. Close it, drop focus, and keep it
-// shut until the pointer leaves the Explore item.
-const exploreSuppressed = ref(false);
-function onExploreLinkClick(e) {
+// shut until the pointer leaves that item.
+const suppressedMenu = ref(null);
+function onMenuLinkClick(e, key) {
     if (!e.target.closest('a')) return;
-    exploreOpen.value = false;
-    exploreSuppressed.value = true;
+    openMenu.value = null;
+    suppressedMenu.value = key;
     document.activeElement?.blur?.();
 }
 // Cleared on a real pointer move outside the item — not on mouseleave, which also fires when the
 // page swap re-lays out the screen under a pointer that has not moved.
 function onPointerMove(e) {
-    if (exploreSuppressed.value && exploreEl.value && !exploreEl.value.contains(e.target)) exploreSuppressed.value = false;
+    const el = menuEls[suppressedMenu.value];
+    if (el && !el.contains(e.target)) suppressedMenu.value = null;
 }
 
 function onDocumentClick(e) {
-    if (exploreOpen.value && exploreEl.value && !exploreEl.value.contains(e.target)) exploreOpen.value = false;
+    const el = menuEls[openMenu.value];
+    if (el && !el.contains(e.target)) openMenu.value = null;
 }
 
 function onKeydown(e) {
-    if (e.key === 'Escape' && exploreOpen.value) {
-        exploreOpen.value = false;
-        exploreEl.value?.querySelector('.mw-nav__trigger')?.focus();
+    if (e.key === 'Escape' && openMenu.value) {
+        menuEls[openMenu.value]?.querySelector('.mw-nav__trigger')?.focus();
+        openMenu.value = null;
     }
 }
 
@@ -127,23 +153,25 @@ function logout(e) {
                         <li v-for="link in primaryLinks" :key="link.key">
                             <router-link :to="link.to" :class="{ 'is-active': activeNav === link.key }">{{ link.label }}</router-link>
                         </li>
-                        <li ref="exploreEl" class="mw-nav__item--has-sub" :class="{ 'is-open': exploreOpen, 'is-suppressed': exploreSuppressed }"
-                            @click="onExploreLinkClick">
+                        <li v-for="menu in subMenus" :key="menu.key" :ref="setMenuEl(menu.key)" class="mw-nav__item--has-sub"
+                            :class="{ 'is-open': openMenu === menu.key, 'is-suppressed': suppressedMenu === menu.key }"
+                            @mouseenter="onMenuEnter(menu.key)"
+                            @click="onMenuLinkClick($event, menu.key)">
                             <button
                                 type="button"
                                 class="mw-nav__trigger"
-                                :class="{ 'is-active': exploreActive }"
+                                :class="{ 'is-active': menuActive(menu) }"
                                 aria-haspopup="true"
-                                :aria-expanded="exploreOpen ? 'true' : 'false'"
-                                aria-controls="nav-explore-menu"
-                                @click="exploreOpen = !exploreOpen"
+                                :aria-expanded="openMenu === menu.key ? 'true' : 'false'"
+                                :aria-controls="`nav-${menu.key}-menu`"
+                                @click="toggleMenu(menu.key)"
                             >
-                                <span>{{ t('nav.explore', 'Explore') }}</span>
+                                <span>{{ menu.label }}</span>
                                 <svg class="mw-nav__chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
                             </button>
-                            <ul id="nav-explore-menu" class="mw-nav__submenu">
-                                <li v-for="link in exploreLinks" :key="link.key">
-                                    <router-link :to="link.to" :class="{ 'is-active': activeNav === link.key }">{{ link.label }}</router-link>
+                            <ul :id="`nav-${menu.key}-menu`" class="mw-nav__submenu">
+                                <li v-for="link in menu.links" :key="link.key">
+                                    <router-link :to="link.to" :class="{ 'is-active': linkActive(link) }">{{ link.label }}</router-link>
                                 </li>
                             </ul>
                         </li>
@@ -216,6 +244,9 @@ function logout(e) {
                     <li v-for="link in exploreLinks" :key="link.key">
                         <router-link :to="link.to" :class="{ 'is-active': activeNav === link.key }">{{ link.label }}</router-link>
                     </li>
+                    <li v-for="link in calculatorLinks" :key="link.key">
+                        <router-link :to="link.to" :class="{ 'is-active': linkActive(link) }">{{ link.label }}</router-link>
+                    </li>
                 </ul>
             </nav>
             <div class="mw-mobile-nav__foot">
@@ -260,7 +291,11 @@ function logout(e) {
 </template>
 
 <style>
-/* Explore: after a link is clicked, stay closed (despite :hover / :focus-within) until the pointer leaves. */
+/* Dropdown labels (e.g. "Rent vs Buy Calculator") stay on one line; the panel grows to fit. */
+header .mw-nav__submenu { width: max-content; }
+header .mw-nav__submenu a { white-space: nowrap; }
+
+/* Dropdowns: after a link is clicked, stay closed (despite :hover / :focus-within) until the pointer leaves. */
 header .mw-nav__item--has-sub.is-suppressed:not(.is-open) .mw-nav__submenu,
 header .mw-nav__item--has-sub.is-suppressed:not(.is-open) .mw-nav__submenu .mw-nav__submenu {
     opacity: 0;

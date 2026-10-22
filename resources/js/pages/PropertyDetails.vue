@@ -9,6 +9,7 @@ import { useCurrency } from '../composables/useCurrency';
 import AdBlock from '../components/AdBlock.vue';
 import PhoneInput from '../components/PhoneInput.vue';
 import PropertyNearbyMap from '../components/PropertyNearbyMap.vue';
+import MortgageCalculator from '../components/calculators/MortgageCalculator.vue';
 import { contactError, responseError } from '../composables/useContactValidation';
 import { trackLeadClick } from '../composables/useListingImpressions';
 
@@ -372,6 +373,8 @@ const hasPricing = computed(() => {
     const p = property.value;
     return !!(p && (p.pricing?.cheques || p.pricing?.security_deposit || p.rental_period_label || p.availability));
 });
+// Mortgage estimate: only for listings for sale with a known (AED) price.
+const hasMortgage = computed(() => !!(property.value && property.value.listing_type !== 'rent' && Number(property.value.price_value) > 0));
 
 // Floor Plans: the selected row drives the drawing, its zoom link, the download and the caption.
 // Regulatory information rows (PropertyPageService::regulatory), labelled in the site language.
@@ -487,6 +490,7 @@ function agentAria(template, name) {
                         <a v-if="property.floor_plans?.length" href="#floor-plans" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="floor-plans">{{ t('property_details.tab_floor_plans', 'Floor Plans') }}</a>
                         <a href="#gallery" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="gallery">{{ t('property_details.tab_gallery') }}</a>
                         <a v-if="property.map || property.full_address" href="#location" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="location">{{ t('property_details.tab_location', 'Location & Nearby') }}</a>
+                        <a v-if="hasMortgage" href="#mortgage" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="mortgage">{{ t('property_details.tab_mortgage', 'Mortgage') }}</a>
                     </nav>
 
                     <select class="mw-property__tabs-select" :aria-label="t('property_details.tabs_aria')" data-property-tabs-select>
@@ -496,6 +500,7 @@ function agentAria(template, name) {
                         <option v-if="property.floor_plans?.length" value="floor-plans">{{ t('property_details.tab_floor_plans', 'Floor Plans') }}</option>
                         <option value="gallery">{{ t('property_details.tab_gallery') }}</option>
                         <option v-if="property.map || property.full_address" value="location">{{ t('property_details.tab_location', 'Location & Nearby') }}</option>
+                        <option v-if="hasMortgage" value="mortgage">{{ t('property_details.tab_mortgage', 'Mortgage') }}</option>
                     </select>
                 </div>
 
@@ -660,6 +665,11 @@ function agentAria(template, name) {
                                 <img src="/frontend/assets/images/icons/location.svg" alt="" width="18" height="18">{{ property.full_address }}
                             </p>
                             <PropertyNearbyMap v-if="property.map" :key="property.id" :location="property.map" :groups="property.nearby || []" :title="property.name" :address="property.address || property.location" />
+                        </section>
+
+                        <section v-if="hasMortgage" id="mortgage" class="mw-property__section" data-reveal data-property-panel="mortgage">
+                            <h3 class="mw-property__section-title">{{ t('property_details.mortgage_title', 'Mortgage Calculator') }}</h3>
+                            <MortgageCalculator :price="Number(property.price_value)" />
                         </section>
 
                         <!-- Regulatory information: reference, permit, broker / agent licenses + the permit QR buyers can scan. -->

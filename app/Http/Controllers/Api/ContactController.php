@@ -59,26 +59,43 @@ class ContactController extends Controller
      * @bodyParam phone_country_code string Example: +971
      * @bodyParam interest string buy, rent, sell or management. Example: buy
      * @bodyParam message string Required unless `interest` is sent. Example: I'd like a call about 2BR apartments in Marina.
-     * @bodyParam source string contact or home. Example: contact
+     * @bodyParam calculation object Calculator pages (`source=calculator`): the figures the visitor worked out, label => value, e.g. {"Calculator": "Mortgage", "Loan amount": "AED 1,402,500"}. Saved with the enquiry; the message is then optional. No-example
+     * @bodyParam source string contact, home or calculator. Example: contact
      * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
      *
      * @response 200 {"message": "Thanks — we've received your message and will be in touch soon."}
      */
     public function store(Request $request)
     {
+        $fromCalculator = $request->input('source') === 'calculator';
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => \App\Rules\PhoneNumber::emailRules(),
             'phone' => \App\Rules\PhoneNumber::rules(),
             'phone_country_code' => \App\Rules\PhoneNumber::countryCodeRules(),
             'interest' => 'nullable|in:' . implode(',', array_keys(self::INTERESTS)),
-            'message' => 'required_without:interest|nullable|string|max:2000',
-            'source' => 'nullable|in:contact,home',
+            'message' => $fromCalculator ? 'nullable|string|max:2000' : 'required_without:interest|nullable|string|max:2000',
+            'source' => 'nullable|in:contact,home,calculator',
+            'calculation' => 'nullable|array|max:20',
+            'calculation.*' => 'nullable|string|max:150',
             'recaptcha_token' => ['nullable', new RecaptchaRule()],
         ]);
 
         $interest = self::INTERESTS[$request->input('interest')] ?? null;
         $message = trim((string) $request->input('message'));
+
+        // Calculator pages: the visitor's figures go under their note, one "Label: value" per line.
+        $calculation = $fromCalculator ? array_filter((array) $request->input('calculation', []), 'is_string') : [];
+        if ($calculation) {
+            $lines = collect($calculation)->map(fn ($value, $label) => "{$label}: {$value}")->implode("\n");
+            $message = trim($message . "\n\n" . $lines);
+        }
+        $pageSource = match (true) {
+            $fromCalculator => trim(($calculation['Calculator'] ?? '') . ' Calculator'),
+            $request->input('source') === 'home' => 'Home Page',
+            default => 'Contact Page',
+        };
 
         $enquiry = Enquiry::create([
             'name' => $request->input('name'),
@@ -87,9 +104,9 @@ class ContactController extends Controller
             'phone' => $request->filled('phone') ? trim($request->input('phone_country_code') . ' ' . $request->input('phone')) : null,
             // Interest leads the message too, so it's visible in the admin list and the notification email.
             'message' => $interest ? trim("Interested in: {$interest}\n\n{$message}") : $message,
-            'extra_fields' => $interest ? ['interest' => $interest] : null,
+            'extra_fields' => $interest ? ['interest' => $interest] : ($calculation ? ['calculation' => $calculation] : null),
             'page_url' => $request->header('referer'),
-            'page_source' => $request->input('source') === 'home' ? 'Home Page' : 'Contact Page',
+            'page_source' => $pageSource,
         ]);
 
         $adminEmail = SiteInformation::notificationEmail();
