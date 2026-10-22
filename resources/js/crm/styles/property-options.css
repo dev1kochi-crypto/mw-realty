@@ -1,0 +1,51 @@
+/* Master › Property Options — from portal/crm/master/property-options/index.blade.php. */
+.po-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.po-nav { position: sticky; top: calc(var(--portal-topbar-h, 80px) + 1rem); padding: 0.75rem; }
+.po-nav-group + .po-nav-group { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--portal-border); }
+.po-nav-label { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--portal-muted); padding: 0 0.6rem 0.4rem; }
+.po-nav-link { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.6rem; border-radius: 10px; color: var(--portal-text); font-weight: 600; font-size: 0.87rem; text-decoration: none; transition: background 0.15s ease, color 0.15s ease; }
+.po-nav-link i { width: 18px; text-align: center; color: var(--portal-muted); font-size: 0.85rem; }
+.po-nav-link:hover { background: var(--portal-bg); color: var(--portal-primary); }
+.po-nav-link.is-active { background: var(--portal-primary); color: #fff; }
+.po-nav-link.is-active i { color: #fff; }
+.po-nav-count { margin-left: auto; min-width: 26px; padding: 0.1rem 0.45rem; border-radius: 50px; background: var(--portal-bg); color: var(--portal-muted); font-size: 0.72rem; font-weight: 700; text-align: center; }
+.po-nav-link.is-active .po-nav-count { background: rgba(255, 255, 255, 0.2); color: #fff; }
+
+.po-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; padding-bottom: 1rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--portal-border); }
+.po-head-icon { flex: 0 0 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(79, 70, 229, 0.1); color: var(--portal-primary); }
+.po-head-title { font-weight: 800; font-size: 1.05rem; color: var(--portal-text); }
+.po-head-hint { font-size: 0.82rem; color: var(--portal-muted); }
+.po-head-actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+.po-search { position: relative; }
+.po-search i { position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); color: var(--portal-muted); font-size: 0.8rem; }
+.po-search input { padding-left: 2rem; width: 200px; border-radius: 10px; }
+
+.po-table th { white-space: nowrap; }
+.po-table td { vertical-align: middle; }
+.po-grip { width: 28px; color: var(--portal-muted); }
+.po-row[draggable="true"] .po-grip { cursor: grab; }
+.po-row.is-dragging { opacity: 0.4; }
+.po-row.is-off .po-fade { opacity: 0.45; }
+.po-icon-cell { width: 52px; }
+.po-icon-box { width: 36px; height: 36px; border-radius: 10px; background: var(--portal-bg); display: flex; align-items: center; justify-content: center; }
+.po-icon-box img { width: 22px; height: 22px; object-fit: contain; }
+.po-name { font-weight: 700; color: var(--portal-text); }
+.po-name-alt { display: block; font-size: 0.82rem; color: var(--portal-muted); margin-top: 0.1rem; }
+.po-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.76rem; color: var(--portal-muted); background: var(--portal-bg); padding: 0.15rem 0.45rem; border-radius: 6px; }
+.po-used { display: inline-block; min-width: 34px; padding: 0.15rem 0.55rem; border-radius: 50px; font-size: 0.78rem; font-weight: 700; background: var(--portal-bg); color: var(--portal-muted); }
+.po-used.is-used { background: rgba(79, 70, 229, 0.1); color: var(--portal-primary); }
+.po-actions { width: 1%; white-space: nowrap; }
+.po-actions .btn { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+
+.po-icon-preview { flex: 0 0 44px; height: 44px; border-radius: 10px; border: 1px solid var(--portal-border); display: flex; align-items: center; justify-content: center; background: var(--portal-bg); }
+.po-icon-preview img { width: 26px; height: 26px; object-fit: contain; }
+
+@media (max-width: 991.98px) {
+    .po-layout { grid-template-columns: minmax(0, 1fr); }
+    .po-nav { position: static; display: flex; gap: 0.35rem; overflow-x: auto; padding: 0.5rem; }
+    .po-nav-group, .po-nav-group + .po-nav-group { display: contents; }
+    .po-nav-label { display: none; }
+    .po-nav-link { flex: 0 0 auto; white-space: nowrap; }
+    .po-head-actions { margin-left: 0; width: 100%; }
+    .po-search, .po-search input { flex: 1; width: 100%; }
+}

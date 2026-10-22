@@ -1,0 +1,508 @@
+name: 'CRM Contact Us'
+description: |-
+
+  Contact Us for agents/companies — a support-ticket desk: raise a ticket with an issue type,
+  follow its status, and keep the conversation with MW Realty support in one thread.
+  Agent / company accounts only (Super Admin answers tickets in the CMS); every query is scoped
+  to the signed-in account's own tickets, so another account's ticket id is a 404.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/support/meta
+    metadata:
+      custom: []
+      groupName: 'CRM Contact Us'
+      groupDescription: |-
+
+        Contact Us for agents/companies — a support-ticket desk: raise a ticket with an issue type,
+        follow its status, and keep the conversation with MW Realty support in one thread.
+        Agent / company accounts only (Super Admin answers tickets in the CMS); every query is scoped
+        to the signed-in account's own tickets, so another account's ticket id is a 404.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Ticket form options & contact details'
+      description: 'Issue types, priorities and MW Realty''s contact details (the "Get in touch" card).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/support/tickets
+    metadata:
+      custom: []
+      groupName: 'CRM Contact Us'
+      groupDescription: |-
+
+        Contact Us for agents/companies — a support-ticket desk: raise a ticket with an issue type,
+        follow its status, and keep the conversation with MW Realty support in one thread.
+        Agent / company accounts only (Super Admin answers tickets in the CMS); every query is scoped
+        to the signed-in account's own tickets, so another account's ticket id is a 404.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'My tickets'
+      description: "Ones waiting on the account's reply first, then open ones, then the rest; 10 per page, with counts."
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      status:
+        custom: []
+        name: status
+        description: 'active, or a status: open, in_progress, awaiting_client, resolved, closed.'
+        required: false
+        example: active
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      category:
+        custom: []
+        name: category
+        description: 'An issue type.'
+        required: false
+        example: billing
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      search:
+        custom: []
+        name: search
+        description: 'Subject or ticket number (TKT-00012 / 12).'
+        required: false
+        example: invoice
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      status: active
+      category: billing
+      search: invoice
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/support/tickets
+    metadata:
+      custom: []
+      groupName: 'CRM Contact Us'
+      groupDescription: |-
+
+        Contact Us for agents/companies — a support-ticket desk: raise a ticket with an issue type,
+        follow its status, and keep the conversation with MW Realty support in one thread.
+        Agent / company accounts only (Super Admin answers tickets in the CMS); every query is scoped
+        to the signed-in account's own tickets, so another account's ticket id is a 404.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Raise a ticket'
+      description: 'Multipart when attaching a file.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: multipart/form-data
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      category:
+        custom: []
+        name: category
+        description: 'An issue type.'
+        required: true
+        example: billing
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      priority:
+        custom: []
+        name: priority
+        description: 'low, normal, high or urgent.'
+        required: true
+        example: normal
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      subject:
+        custom: []
+        name: subject
+        description: 'Max 150.'
+        required: true
+        example: 'Invoice missing'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      message:
+        custom: []
+        name: message
+        description: 'Max 5000.'
+        required: true
+        example: "I can't find last month's invoice."
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      attachment_document:
+        custom: []
+        name: attachment_document
+        description: 'JPG, PNG or PDF, max 4 MB.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      category: billing
+      priority: normal
+      subject: 'Invoice missing'
+      message: "I can't find last month's invoice."
+    fileParameters:
+      attachment_document: null
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/crm/support/tickets/{ticket}'
+    metadata:
+      custom: []
+      groupName: 'CRM Contact Us'
+      groupDescription: |-
+
+        Contact Us for agents/companies — a support-ticket desk: raise a ticket with an issue type,
+        follow its status, and keep the conversation with MW Realty support in one thread.
+        Agent / company accounts only (Super Admin answers tickets in the CMS); every query is scoped
+        to the signed-in account's own tickets, so another account's ticket id is a 404.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'One ticket with its conversation'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      ticket:
+        custom: []
+        name: ticket
+        description: 'The ticket.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      ticket: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/support/tickets/{ticket}/reply'
+    metadata:
+      custom: []
+      groupName: 'CRM Contact Us'
+      groupDescription: |-
+
+        Contact Us for agents/companies — a support-ticket desk: raise a ticket with an issue type,
+        follow its status, and keep the conversation with MW Realty support in one thread.
+        Agent / company accounts only (Super Admin answers tickets in the CMS); every query is scoped
+        to the signed-in account's own tickets, so another account's ticket id is a 404.
+      subgroup: ''
+      subgroupDescription: ''
+      title: Reply
+      description: "Replying to a solved ticket reopens it; a closed ticket can't take replies (422)."
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: multipart/form-data
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      ticket:
+        custom: []
+        name: ticket
+        description: 'The ticket.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      ticket: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      message:
+        custom: []
+        name: message
+        description: 'Max 5000.'
+        required: true
+        example: 'Thanks, that fixed it.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      attachment_document:
+        custom: []
+        name: attachment_document
+        description: 'JPG, PNG or PDF, max 4 MB.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      message: 'Thanks, that fixed it.'
+    fileParameters:
+      attachment_document: null
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/support/tickets/{ticket}/resolve'
+    metadata:
+      custom: []
+      groupName: 'CRM Contact Us'
+      groupDescription: |-
+
+        Contact Us for agents/companies — a support-ticket desk: raise a ticket with an issue type,
+        follow its status, and keep the conversation with MW Realty support in one thread.
+        Agent / company accounts only (Super Admin answers tickets in the CMS); every query is scoped
+        to the signed-in account's own tickets, so another account's ticket id is a 404.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Mark as solved'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      ticket:
+        custom: []
+        name: ticket
+        description: 'The ticket.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      ticket: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/support/tickets/{ticket}/reopen'
+    metadata:
+      custom: []
+      groupName: 'CRM Contact Us'
+      groupDescription: |-
+
+        Contact Us for agents/companies — a support-ticket desk: raise a ticket with an issue type,
+        follow its status, and keep the conversation with MW Realty support in one thread.
+        Agent / company accounts only (Super Admin answers tickets in the CMS); every query is scoped
+        to the signed-in account's own tickets, so another account's ticket id is a 404.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reopen a solved ticket'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      ticket:
+        custom: []
+        name: ticket
+        description: 'The ticket.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      ticket: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/crm/support/tickets/{ticket}/attachments/{message}'
+    metadata:
+      custom: []
+      groupName: 'CRM Contact Us'
+      groupDescription: |-
+
+        Contact Us for agents/companies — a support-ticket desk: raise a ticket with an issue type,
+        follow its status, and keep the conversation with MW Realty support in one thread.
+        Agent / company accounts only (Super Admin answers tickets in the CMS); every query is scoped
+        to the signed-in account's own tickets, so another account's ticket id is a 404.
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Download a message's attachment"
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      ticket:
+        custom: []
+        name: ticket
+        description: 'The ticket.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      message:
+        custom: []
+        name: message
+        description: ''
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      ticket: '1562'
+      message: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

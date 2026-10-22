@@ -1,0 +1,23 @@
+/* Moved from resources/views/portal/layouts/app — top bar bell + notifications panel (.notif-*). */
+        .notif-bell-btn { position: relative; border: none; background: #f4f6fb; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #4b5065; font-size: 1.05rem; }
+        .notif-bell-btn:hover { background: #e9ecf6; color: var(--secondary-color, #212529); }
+        .notif-bell-badge { position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 10px; background: #dc3545; border: 2px solid #fff; color: #fff; font-size: 0.62rem; font-weight: 800; display: flex; align-items: center; justify-content: center; line-height: 1; }
+        .notif-offcanvas { width: 400px; max-width: 92vw; }
+        .notif-offcanvas .offcanvas-header { border-bottom: 1px solid #f0f1f6; }
+        .notif-offcanvas .offcanvas-title { font-weight: 800; font-size: 1.05rem; }
+        .notif-offcanvas-actions { padding: 0.7rem 1.25rem; display: flex; justify-content: flex-end; border-bottom: 1px solid #f5f6fa; }
+        .notif-offcanvas-actions .btn-link { font-size: 0.8rem; font-weight: 700; text-decoration: none; }
+        .notif-list { overflow-y: auto; }
+        .notif-item { display: flex; gap: 0.7rem; padding: 0.8rem 1.1rem; text-decoration: none; color: inherit; border-bottom: 1px solid #f5f6fa; }
+        .notif-item:hover { background: #f9fafc; color: inherit; }
+        .notif-item.is-unread { background: #f3f9ff; }
+        .notif-icon { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.8rem; margin-top: 2px; }
+        .notif-icon.tone-teal { background: linear-gradient(135deg, var(--primary-color, #04a1cc), #2fc4e8); }
+        .notif-icon.tone-amber { background: linear-gradient(135deg, #e08e0b, #f5a623); }
+        .notif-icon.tone-green { background: linear-gradient(135deg, #0f9d58, #34c880); }
+        .notif-icon.tone-red { background: linear-gradient(135deg, #dc3545, #ef6a76); }
+        .notif-body { flex: 1; min-width: 0; }
+        .notif-title { font-weight: 700; font-size: 0.83rem; color: #1c2340; }
+        .notif-message { display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 0.78rem; color: #6b7185; line-height: 1.4; }
+        .notif-time { font-size: 0.68rem; color: #a3a8bb; margin-top: 0.2rem; }
+        .notif-empty { padding: 2.5rem 1rem; text-align: center; color: #a3a8bb; font-size: 0.85rem; }

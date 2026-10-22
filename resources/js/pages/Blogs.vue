@@ -1,5 +1,7 @@
 <script setup>
+import WithAdSidebar from '../components/WithAdSidebar.vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { usePageWindow } from '../composables/usePageWindow';
 import { useBlogListing } from '../composables/useBlogListing';
 import { useLanguages } from '../composables/useLanguages';
 import { useStaticText } from '../composables/useStaticText';
@@ -60,11 +62,7 @@ function postMeta(post) {
     return [post.author_name, post.published_at, post.read_time].filter(Boolean).join(' · ');
 }
 
-const pageNumbers = computed(() => {
-    if (!pagination.value) return [];
-    const { last_page: lastPage } = pagination.value;
-    return Array.from({ length: lastPage }, (_, i) => i + 1);
-});
+const pageNumbers = usePageWindow(currentPage, computed(() => pagination.value?.last_page));
 </script>
 
 <template>
@@ -97,6 +95,7 @@ const pageNumbers = computed(() => {
                     <p v-if="description" class="mw-blog__text">{{ description }}</p>
                 </div>
 
+                <WithAdSidebar placement="blogs">
                 <div class="mw-blog__grid" id="blog-grid">
                     <article v-for="(post, index) in posts" :key="post.slug" class="mw-blog-card" data-reveal :style="{ '--reveal-delay': index % 3 }">
                         <router-link :to="`/blog-details/${post.slug}`" class="mw-blog-card__media">
@@ -117,6 +116,7 @@ const pageNumbers = computed(() => {
                     <button v-for="page in pageNumbers" :key="page" type="button" class="mw-blog__page" :class="{ 'is-active': page === currentPage }" @click="goToPage(page)">{{ page }}</button>
                     <button type="button" class="mw-blog__page mw-blog__page--next" :disabled="currentPage === pagination.last_page" @click="goToPage(currentPage + 1)">{{ t('blogs.next') }}</button>
                 </nav>
+                </WithAdSidebar>
             </div>
         </section>
     </main>

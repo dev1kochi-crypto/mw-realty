@@ -6,17 +6,44 @@ use Illuminate\Database\Eloquent\Model;
 
 class Property extends Model
 {
+    /** `segment` values — which CRM menu (Properties / Commercial) a listing belongs to. */
+    public const SEGMENT_RESIDENTIAL = 'residential';
+    public const SEGMENT_COMMERCIAL = 'commercial';
+
     protected $fillable = [
         'portal_user_id',
         'agent_id',
+        'created_by_type',
+        'created_by_id',
+        'updated_by_type',
+        'updated_by_id',
         'translations',
         'slug',
         'reference_no',
         'rera_id',
+        'permit_number',
+        'permit_expires_at',
+        'permit_qr',
+        'permit_verification_url',
+        'permit_expiry_notified_at',
+        'compliance_status',
+        'compliance_submitted_at',
+        'compliance_reviewed_at',
+        'compliance_reviewed_by',
         'listing_type',
+        'rental_period',
+        'available_dates',
+        'emirate',
+        'permit_type',
+        'permit_city',
+        'permit_license_no',
+        'permit_verified_at',
+        'permit_verified_via',
+        'permit_data',
         'completion_status',
         'property_type',
         'category',
+        'segment',
         'location',
         'postal_code',
         'latitude',
@@ -28,15 +55,60 @@ class Property extends Model
         'currency',
         'image',
         'image_alt',
+        'brochure_path',
         'image_path',
         'image_sequence',
         'image_next_number',
         'featured',
+        'featured_from',
         'featured_until',
         'status',
         'published_at',
         'order_index',
         'metadata',
+        'sold_at',
+        'sold_type',
+        'sold_price',
+        'sold_commission',
+        'rented_until',
+        'sold_lead_id',
+        'sold_agent_id',
+        'sold_notes',
+        'sold_ownership_document',
+        'sold_contract_document',
+        'sold_documents_password',
+        'status_before_sold',
+    ];
+
+    /** Deal proof stays out of JSON (listing cards, API); it's only served through the sold-document download. */
+    protected $hidden = ['sold_ownership_document', 'sold_contract_document', 'sold_documents_password'];
+
+    /** Private `kyc` disk folder for the ownership / contract documents uploaded when marking sold. */
+    public const SALE_DOCUMENTS_DIRECTORY = 'property-sales';
+
+    public const SOLD = 'sold';
+    public const RENTED = 'rented';
+
+    /**
+     * `compliance_status` — the state of the listing's advertising permit, worked out automatically on
+     * every save (ListingComplianceService::afterSave). A listing whose permit is verified (Validate with
+     * DLD / ADREC in the property form) — or that needs no permit — is VERIFIED ("approved") and may be
+     * live (`status` = true) until the permit expires. When Super Admin approval applies
+     * (PermitRules::needsApproval: LISTING_SUPERADMIN_APPROVAL on, or a DTCM / None permit) it stays
+     * PENDING ("Awaiting approval") until Super Admin approves it on Listing Permits.
+     */
+    public const COMPLIANCE_DRAFT = 'draft';                         // permit details incomplete
+    public const COMPLIANCE_PENDING = 'pending';                     // permit entered, not verified / not approved yet
+    public const COMPLIANCE_CHANGES_REQUESTED = 'changes_requested'; // taken down by Super Admin
+    public const COMPLIANCE_APPROVED = 'approved';                   // permit verified (or none needed) — may be live
+    public const COMPLIANCE_EXPIRED = 'expired';                     // permit expiry date passed
+
+    public const COMPLIANCE_LABELS = [
+        self::COMPLIANCE_DRAFT => 'Permit details needed',
+        self::COMPLIANCE_PENDING => 'Not verified',
+        self::COMPLIANCE_CHANGES_REQUESTED => 'Taken down',
+        self::COMPLIANCE_APPROVED => 'Verified',
+        self::COMPLIANCE_EXPIRED => 'Permit expired',
     ];
 
     protected $casts = [
@@ -45,11 +117,142 @@ class Property extends Model
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
         'featured' => 'boolean',
+        'featured_from' => 'datetime',
         'featured_until' => 'datetime',
         'status' => 'boolean',
         'published_at' => 'datetime',
         'metadata' => 'array',
+        'available_dates' => 'array',
+        'last_open_house_date' => 'date',
+        'permit_verified_at' => 'datetime',
+        'permit_data' => 'array',
+        'sold_at' => 'datetime',
+        'sold_price' => 'decimal:2',
+        'sold_commission' => 'decimal:2',
+        'rented_until' => 'date',
+        'status_before_sold' => 'boolean',
+        'sold_documents_password' => 'encrypted',
+        'permit_expires_at' => 'date',
+        'permit_expiry_notified_at' => 'datetime',
+        'compliance_submitted_at' => 'datetime',
+        'compliance_reviewed_at' => 'datetime',
     ];
+
+    /**
+     * The next unused RERA reference — RERA70613, RERA70614, … It is also the gallery folder /
+     * filename key (App\Services\PropertyGallery).
+     */
+    public static function nextReferenceNo(): string
+    {
+        $maxNumber = self::where('reference_no', 'like', 'RERA%')
+            ->pluck('reference_no')
+            ->map(fn ($ref) => (int) substr($ref, 4))
+            ->max() ?? 0;
+
+        $number = max(70613, $maxNumber + 1);
+        while (self::where('reference_no', 'RERA' . $number)->exists()) {
+            $number++;
+        }
+
+        return 'RERA' . $number;
+    }
+
+    protected static function booted(): void
+    {
+        // Mirror the latest open house / viewing day into an indexed column for the "Open house" filter.
+        static::saving(function (Property $property) {
+            if ($property->isDirty('available_dates')) {
+                $dates = array_filter((array) $property->available_dates, 'is_string');
+                $property->last_open_house_date = $dates ? max($dates) : null;
+            }
+        });
+    }
+
+    /**
+     * May this listing be switched on for the website? Approved by Super Admin, not sold, and the
+     * DLD permit (when a date is recorded) hasn't expired. Every write of `status` = true checks this.
+     */
+    public function canGoLive(): bool
+    {
+        return $this->compliance_status === self::COMPLIANCE_APPROVED
+            && !$this->isSold()
+            && (!$this->permit_expires_at || $this->permit_expires_at->gte(today()));
+    }
+
+    public function complianceLabel(): string
+    {
+        if ($this->awaitingImportReview()) {
+            return 'In MW Realty review';
+        }
+        if ($this->awaitingApproval()) {
+            return 'Awaiting approval';
+        }
+
+        return self::COMPLIANCE_LABELS[$this->compliance_status] ?? ucfirst((string) $this->compliance_status);
+    }
+
+    /** Pending, and it's Super Admin's approval (not a permit validation) that it waits for. */
+    /** Imported from Property Finder and still waiting for Super Admin's import review (PropertyFinderReview). */
+    public function awaitingImportReview(): bool
+    {
+        return ($this->metadata['property_finder_review'] ?? null) === 'pending';
+    }
+
+    public function awaitingApproval(): bool
+    {
+        return $this->compliance_status === self::COMPLIANCE_PENDING
+            && \App\Support\PermitRules::needsApproval($this->permit_type);
+    }
+
+    /** Bootstrap badge classes for the compliance state (listing cards, approvals table). */
+    public function complianceBadgeClass(): string
+    {
+        return match ($this->compliance_status) {
+            self::COMPLIANCE_APPROVED => 'bg-success-subtle text-success-emphasis',
+            self::COMPLIANCE_PENDING => 'bg-info-subtle text-info-emphasis',
+            self::COMPLIANCE_CHANGES_REQUESTED, self::COMPLIANCE_EXPIRED => 'bg-danger-subtle text-danger-emphasis',
+            default => 'bg-warning-subtle text-warning-emphasis',
+        };
+    }
+
+    /** Listings that may be switched on (see canGoLive()) — used by bulk "Activate". */
+    public function scopeCompliant($query)
+    {
+        return $query->where('properties.compliance_status', self::COMPLIANCE_APPROVED)
+            ->where(fn ($q) => $q->whereNull('properties.permit_expires_at')->orWhereDate('properties.permit_expires_at', '>=', today()));
+    }
+
+    public function complianceLogs()
+    {
+        return $this->hasMany(PropertyComplianceLog::class)->latest('id');
+    }
+
+    /** The lead who bought / rented this listing (see PropertySaleService). */
+    public function soldLead()
+    {
+        return $this->belongsTo(Lead::class, 'sold_lead_id');
+    }
+
+    public function soldAgent()
+    {
+        return $this->belongsTo(PortalUser::class, 'sold_agent_id');
+    }
+
+    public function isSold(): bool
+    {
+        return $this->sold_at !== null;
+    }
+
+    /** Still on the market — neither sold nor rented. */
+    public function scopeAvailable($query)
+    {
+        return $query->whereNull('properties.sold_at');
+    }
+
+    public function scopeSoldOrRented($query)
+    {
+        return $query->whereNotNull('properties.sold_at');
+    }
 
     public function details()
     {
@@ -64,6 +267,96 @@ class Property extends Model
     public function agent()
     {
         return $this->belongsTo(PortalUser::class, 'agent_id');
+    }
+
+    /** Who created the listing (created_by_*) — an admin's name, or the agency / agent. */
+    public function createdByName(): ?string
+    {
+        return static::actorName($this->created_by_type, $this->created_by_id);
+    }
+
+    /** Who last edited the listing (updated_by_*). */
+    public function updatedByName(): ?string
+    {
+        return static::actorName($this->updated_by_type, $this->updated_by_id);
+    }
+
+    private static function actorName(?string $type, ?int $id): ?string
+    {
+        if (!$type) {
+            return null;
+        }
+        if ($type === 'admin') {
+            return ($id ? \App\Models\CmsKit\Admin::find($id)?->name : null) ?? 'MW Realty Admin';
+        }
+
+        return $id ? PortalUser::find($id)?->displayName() : null;
+    }
+
+    /**
+     * Who the public sees (and contacts) for this listing: the assigned agent while they're
+     * available — active, approved, and still in the agency that owns the listing — otherwise the
+     * owning agency / agent, if that account is available. Null when nobody is.
+     */
+    public function displayContact(): ?PortalUser
+    {
+        $available = fn (?PortalUser $u) => $u && $u->is_active && $u->isApproved();
+        $agent = $this->agent;
+        $owner = $this->owner;
+
+        $agentAvailable = $available($agent) && (
+            !$owner || $owner->type !== 'company' || $agent->id === $owner->id || $agent->company_id === $owner->id
+        );
+
+        return $agentAvailable ? $agent : ($available($owner) ? $owner : null);
+    }
+
+    /**
+     * Listings the public sees under this agent — the same rule as displayContact(), so the agent's
+     * profile, counts and "View all" only list properties whose page shows that agent:
+     *   assigned to them, on a listing of their own agency (or of no / a non-agency owner), or
+     *   their own listing, unless another available agent is assigned to it.
+     */
+    public function scopeShownUnderAgent($query, PortalUser $agent)
+    {
+        return $query->where(fn ($q) => $q
+            ->where(fn ($assigned) => $assigned
+                ->where('properties.agent_id', $agent->id)
+                ->where(fn ($owner) => $owner
+                    ->whereIn('properties.portal_user_id', array_filter([$agent->id, $agent->company_id]))
+                    ->orWhereDoesntHave('owner', fn ($o) => $o->where('type', 'company'))))
+            ->orWhere(fn ($own) => $own
+                ->where('properties.portal_user_id', $agent->id)
+                ->where(fn ($a) => $a
+                    ->whereNull('properties.agent_id')
+                    ->orWhere('properties.agent_id', $agent->id)
+                    ->orWhereDoesntHave('agent', fn ($other) => $other->where('is_active', true)->approved()))));
+    }
+
+    public function assignmentHistory()
+    {
+        return $this->hasMany(PropertyAssignmentHistory::class)->latest('id');
+    }
+
+    /**
+     * Listings a portal account may see and edit: its own, plus — for an agency agent — the
+     * agency's listings assigned to them. Delete / reorder / feature stay owner-only.
+     */
+    public function scopeAccessibleBy($query, ?PortalUser $viewer)
+    {
+        if (!$viewer) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($viewer) {
+            $q->where('properties.portal_user_id', $viewer->id);
+
+            if ($viewer->type === 'agent' && $viewer->company_id) {
+                $q->orWhere(fn ($assigned) => $assigned
+                    ->where('properties.agent_id', $viewer->id)
+                    ->where('properties.portal_user_id', $viewer->company_id));
+            }
+        });
     }
 
     public function images()
@@ -138,6 +431,86 @@ class Property extends Model
     public function scopeActive($query)
     {
         return $query->where('status', true);
+    }
+
+    public function scopeSegment($query, string $segment)
+    {
+        return $query->where('segment', $segment);
+    }
+
+    /** The website's /properties listing — everything that isn't in the Commercial menu. */
+    public function scopeResidential($query)
+    {
+        return $query->where('segment', '!=', self::SEGMENT_COMMERCIAL);
+    }
+
+    public function scopeCommercial($query)
+    {
+        return $query->where('segment', self::SEGMENT_COMMERCIAL);
+    }
+
+    /**
+     * CRM listing search (Properties / Commercial pages, the Featured picker): title, address,
+     * community and city in any active language, plus reference no and RERA. Not case-sensitive.
+     * With $includeOwner (Super Admin), it also matches the agent / agency name.
+     */
+    public function scopePortalSearch($query, string $search, bool $includeOwner = false)
+    {
+        $like = '%' . mb_strtolower($search) . '%';
+        $languages = \App\Models\CmsKit\Language::where('status', true)->pluck('code')
+            ->filter(fn ($code) => preg_match('/^[A-Za-z_-]{2,10}$/', $code))
+            ->push(config('app.fallback_locale', 'en'))
+            ->unique();
+
+        return $query->where(function ($q) use ($like, $languages, $includeOwner) {
+            $q->whereRaw('LOWER(reference_no) LIKE ?', [$like])
+                ->orWhereRaw('LOWER(rera_id) LIKE ?', [$like]);
+            foreach ($languages as $code) {
+                foreach (['title', 'address', 'community', 'city'] as $field) {
+                    $q->orWhereRaw("LOWER(JSON_UNQUOTE(JSON_EXTRACT(translations, '$.\"{$code}\".\"{$field}\"'))) LIKE ?", [$like]);
+                }
+            }
+            if ($includeOwner) {
+                $q->orWhereHas('owner', fn ($o) => $o->whereRaw('LOWER(name) LIKE ?', [$like])->orWhereRaw('LOWER(company_name) LIKE ?', [$like]));
+            }
+        });
+    }
+
+    /**
+     * The website's default listing order: exactly the CRM display order (drag and drop / "Move to"
+     * on the portal Properties and Commercial pages), then newest. Premium (featured) listings get no
+     * priority here — they have their own Home section and /premium-properties page.
+     */
+    /** Listings on Super Admin's Marketing Properties list (home "Realty Property" + /marketing-properties). */
+    public function scopeMarketing($query)
+    {
+        return $query->whereIn('properties.id', MarketingProperty::select('property_id'));
+    }
+
+    /** The order Super Admin arranged the Marketing Properties list in (1 = first). */
+    public function scopeMarketingOrder($query)
+    {
+        return $query->orderBy(
+            MarketingProperty::select('order_index')->whereColumn('marketing_properties.property_id', 'properties.id')
+        )->orderByDesc('properties.id');
+    }
+
+    public function marketingEntry()
+    {
+        return $this->hasOne(MarketingProperty::class);
+    }
+
+    public function scopeDisplayOrder($query)
+    {
+        return $query->orderBy('order_index')
+            ->orderByDesc('published_at')
+            ->orderByDesc('id');
+    }
+
+    /** Has a feature booked that hasn't started yet (see FeaturedListingService). */
+    public function isFeatureScheduled(): bool
+    {
+        return !$this->featured && $this->featured_from && $this->featured_from->isFuture();
     }
 
     /** Dummy SEO content generated from the property's own real fields, used by SeoMeta::resolve()

@@ -21,7 +21,13 @@ class AuthorizeCmsAction
             // Assigning permissions is itself a privileged security operation.
             abort_unless($user->hasRole('superadmin'), 403);
         }
-        $module = ['admins' => 'users', 'newsletter-signups' => 'newsletter'][$module] ?? $module;
+        $module = [
+            'admins' => 'users',
+            'newsletter-signups' => 'newsletter',
+            // Market Insights > Topics / Regions share the market-insights permissions.
+            'market-insight-topics' => 'market-insights',
+            'market-insight-regions' => 'market-insights',
+        ][$module] ?? $module;
         $ability = match ($action) {
             'store', 'create' => 'create',
             'destroy' => 'delete',

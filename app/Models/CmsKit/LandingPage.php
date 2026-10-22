@@ -47,6 +47,19 @@ class LandingPage extends Model
         return $this->page_type === self::TYPE_CUSTOM;
     }
 
+    /** SEO used when the page's own metadata leaves a field empty ("Blog design" pages — see SeoMeta::resolve()). */
+    public function seoFallback(?string $lang = null): array
+    {
+        $lang = $lang ?? app()->getLocale();
+        $title = $this->getTranslation('title', $lang);
+
+        return [
+            'meta_title' => $title ? "{$title} | MW Realty" : 'MW Realty',
+            'meta_description' => \App\Support\SeoMeta::excerpt($this->getTranslation('content', $lang)),
+            'og_image' => $this->feature_image ? media_url($this->feature_image) : null,
+        ];
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', true);

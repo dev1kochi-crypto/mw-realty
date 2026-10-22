@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\CmsKit\Blog;
+use App\Models\CmsKit\Career;
+use App\Models\CmsKit\MarketInsight;
+use App\Services\CareerPageService;
 use App\Models\Property;
 use App\Models\PortalUser;
 use App\Support\SeoMeta;
@@ -52,6 +55,40 @@ class SpaController extends Controller
         return $this->renderWithSeo(SeoMeta::resolve($blog->metadata, $fallback));
     }
 
+    /** A "Blog design" landing page — the Vue app (BlogDetails layout) with the page's SEO tags. */
+    public function landingPage(Request $request, \App\Models\CmsKit\LandingPage $page): Response
+    {
+        $fallback = array_merge($page->seoFallback(), ['canonical_url' => $request->url()]);
+
+        return $this->renderWithSeo(SeoMeta::resolve($page->metadata, $fallback));
+    }
+
+    public function marketInsightDetails(Request $request, string $slug): Response
+    {
+        $insight = MarketInsight::where('slug', $slug)->where('status', true)->first();
+
+        if (!$insight) {
+            return $this->notFound($request, 'Market Insight');
+        }
+
+        $fallback = array_merge($insight->seoFallback(), ['canonical_url' => $request->url()]);
+
+        return $this->renderWithSeo(SeoMeta::resolve($insight->metadata, $fallback));
+    }
+
+    public function careerDetails(Request $request, string $slug, CareerPageService $careerPage): Response
+    {
+        $career = Career::active()->where('slug', $slug)->first();
+
+        if (!$career) {
+            return $this->notFound($request, 'Job Opening');
+        }
+
+        $fallback = array_merge($careerPage->seoFallback($career), ['canonical_url' => $request->url()]);
+
+        return $this->renderWithSeo(SeoMeta::resolve($career->metadata, $fallback));
+    }
+
     public function agentDetails(Request $request, string $slug): Response
     {
         return $this->portalUserDetails($request, $slug, 'agent');
@@ -73,6 +110,21 @@ class SpaController extends Controller
         $fallback = array_merge($portalUser->seoFallback(), ['canonical_url' => $request->url()]);
 
         return $this->renderWithSeo(SeoMeta::resolve($portalUser->metadata, $fallback));
+    }
+
+    /**
+     * Any public URL nothing else claims (Route::fallback, and a landing-page slug that doesn't
+     * exist) — the Vue app's own 404 page with a real 404 status, instead of Laravel's bare error
+     * screen. API calls keep a JSON 404; admin/portal keep their own error handling.
+     */
+    public function missing(Request $request)
+    {
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['success' => false, 'message' => 'Not found.', 'data' => null], 404);
+        }
+        abort_if($request->is(config('cms-kit.common.auth.prefix', 'admin'), config('cms-kit.common.auth.prefix', 'admin') . '/*', 'portal', 'portal/*'), 404);
+
+        return $this->notFound($request, 'Page');
     }
 
     private function notFound(Request $request, string $label): Response

@@ -35,14 +35,13 @@
 <form action="{{ route('cms.landing-pages.update', $page->id) }}" method="POST" enctype="multipart/form-data" id="landingPageForm">
     @csrf
     @method('PUT')
-    {{-- Template (same as Blog) page type is disabled for now — this always saves as "custom". --}}
-    <input type="hidden" name="page_type" value="{{ old('page_type', $page->page_type) }}">
 
     <div class="row g-4">
         <div class="col-lg-8">
+            @include('cms-kit::landing-pages._page-type-switch', ['pageType' => old('page_type', $page->page_type)])
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white border-0 pt-4 px-4">
-                    <h6 class="fw-bold mb-0"><i class="fas fa-heading text-primary me-2"></i>Title</h6>
+                    <h6 class="fw-bold mb-0"><i class="fas fa-heading text-primary me-2"></i>Title<span class="template-only-field"> &amp; Content</span></h6>
                 </div>
                 <div class="card-body p-4 pt-3">
                     @if($showLanguageUi)
@@ -63,11 +62,14 @@
                             <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
                             <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $page->translations[$lang->code]['title'] ?? '') }}" required>
                             @error("translations.{$lang->code}.title")<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            @include('cms-kit::landing-pages._template-content-field', ['lang' => $lang, 'page' => $page])
                         </div>
                         @endforeach
                     </div>
                 </div>
             </div>
+
+            @include('cms-kit::landing-pages._template-section', ['page' => $page])
 
             @include('cms-kit::landing-pages._custom-html-section', [
                 'htmlValue' => old('custom_html', $page->custom_html),
@@ -219,6 +221,13 @@
 @push('styles')
 <style>
     .landing-page-sidebar { position: sticky; top: 1.5rem; }
+    .lp-type-option { display: flex; gap: .85rem; align-items: flex-start; height: 100%; padding: 1rem 1.1rem; border: 1.5px solid #e3e7ef; border-radius: 12px; cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s; }
+    .lp-type-option:hover { border-color: #9fb3d9; }
+    .btn-check:checked + .lp-type-option { border-color: var(--bs-primary); background: rgba(var(--bs-primary-rgb), .06); box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), .12); }
+    .lp-type-option__icon { width: 38px; height: 38px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: #eef2f8; color: var(--bs-primary); }
+    .btn-check:checked + .lp-type-option .lp-type-option__icon { background: var(--bs-primary); color: #fff; }
+    .lp-type-option__title { display: block; font-weight: 700; }
+    .lp-type-option__text { display: block; font-size: .8rem; color: #6c757d; margin-top: .15rem; }
     @media (max-width: 991.98px) {
         .landing-page-sidebar { position: static; }
     }
@@ -226,8 +235,7 @@
 @endpush
 
 @push('scripts')
-{{-- TinyMCE isn't loaded — Custom HTML pages don't use it; re-add this if the Template page type is ever restored.
+{{-- TinyMCE for the "Blog design" page type's content editor (initTinyMce() in _form-scripts). --}}
 <script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.3/tinymce.min.js"></script>
---}}
 @include('cms-kit::landing-pages._form-scripts')
 @endpush

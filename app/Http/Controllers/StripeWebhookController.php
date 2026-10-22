@@ -33,8 +33,11 @@ class StripeWebhookController extends Controller
             match ($event->type) {
                 'checkout.session.completed', 'checkout.session.async_payment_succeeded' => $billing->fulfillCheckout($object->id),
                 'invoice.paid' => $billing->recordInvoice($object),
+                // Credit top-up paid (the page may have closed before it reported back).
+                'payment_intent.succeeded' => ($object->metadata->kind ?? null) === 'credit_topup'
+                    ? app(\App\Services\CreditService::class)->fulfillTopUp($object->id) : null,
                 'invoice.payment_failed' => $billing->markPaymentFailed($object),
-                'customer.subscription.created', 'customer.subscription.updated' => $billing->applySubscription(null, $object),
+                'customer.subscription.created', 'customer.subscription.updated' => $this->subscriptionChanged($billing, $object),
                 'customer.subscription.deleted' => $this->subscriptionDeleted($billing, $object),
                 default => null,
             };
@@ -44,6 +47,15 @@ class StripeWebhookController extends Controller
         }
 
         return response('OK', 200);
+    }
+
+    /** An on-site checkout paid (page closed before it reported back) is fulfilled here too. */
+    private function subscriptionChanged(StripeBillingService $billing, $subscription): void
+    {
+        if (!empty($subscription->metadata->upgrade_request_id) && in_array($subscription->status, ['active', 'trialing'], true)) {
+            $billing->fulfillSubscription($subscription->id);
+        }
+        $billing->applySubscription(null, $subscription);
     }
 
     private function subscriptionDeleted(StripeBillingService $billing, $subscription): void

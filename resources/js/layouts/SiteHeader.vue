@@ -1,15 +1,117 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useLanguages } from '../composables/useLanguages';
+import { useCurrency } from '../composables/useCurrency';
 import { useWishlist } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
+import { useCalculatorLinks } from '../composables/useCalculatorLinks';
 
 const route = useRoute();
-const activeNav = computed(() => route.meta.activeNav ?? '');
 const isHome = computed(() => route.meta.headerVariant === 'home');
 const { languages, selectedLanguage, selectLanguage } = useLanguages();
+// Prices are stored in AED; the chosen currency only changes how they are shown (see useCurrency).
+const { currencies, selectedCurrency, selectCurrency } = useCurrency();
 const { t } = useStaticText();
+
+// Buy / Rent are the /properties listing pre-filtered by purpose (PropertiesDubai.vue reads
+// ?listing_type=), so they're told apart by the query rather than by a route of their own.
+const activeNav = computed(() => {
+    if (route.name === 'properties-dubai' || route.name === 'properties-map') {
+        return { sale: 'buy', rent: 'rent' }[route.query.listing_type] ?? '';
+    }
+    return route.meta.activeNav ?? '';
+});
+
+const primaryLinks = computed(() => [
+    { key: 'home', to: '/', label: t('nav.home') },
+    { key: 'buy', to: { path: '/properties', query: { listing_type: 'sale' } }, label: t('nav.buy', 'Buy') },
+    { key: 'rent', to: { path: '/properties', query: { listing_type: 'rent' } }, label: t('nav.rent', 'Rent') },
+    { key: 'commercial', to: '/commercial', label: t('nav.commercial') },
+    { key: 'agents', to: '/agents', label: t('nav.agents') },
+    { key: 'agencies', to: '/agencies', label: t('nav.agencies') },
+    { key: 'market-insights', to: '/market-insights', label: t('nav.market_insights', 'Market Insights') },
+]);
+
+const exploreLinks = computed(() => [
+    { key: 'about', to: '/about', label: t('nav.about') },
+    { key: 'contact', to: '/contact', label: t('nav.contact') },
+    { key: 'blogs', to: '/blogs', label: t('nav.blog', 'Blog') },
+    { key: 'careers', to: '/careers', label: t('nav.careers', 'Careers') },
+]);
+
+// Calculators menu — every link is a calculator page (route meta.calculator), highlighted by that key.
+const { calculators } = useCalculatorLinks();
+const calculatorLinks = computed(() => calculators.value.map((c) => ({ key: `calc-${c.key}`, to: c.to, label: c.title })));
+const linkActive = (link) => link.key === activeNav.value || link.key === `calc-${route.meta.calculator}`;
+
+// Desktop dropdown menus (Calculators, Explore).
+const subMenus = computed(() => [
+    { key: 'calculators', label: t('nav.calculators', 'Calculators'), links: calculatorLinks.value },
+    { key: 'explore', label: t('nav.explore', 'Explore'), links: exploreLinks.value },
+]);
+const menuActive = (menu) => menu.links.some(linkActive);
+
+// Each opens on hover/focus via CSS, and on click/tap/keyboard via `openMenu` (touch screens and
+// keyboard users have no hover). Closes on navigation, outside click and Esc.
+const openMenu = ref(null);
+const menuEls = {};
+const setMenuEl = (key) => (el) => { menuEls[key] = el; };
+
+watch(() => route.fullPath, () => { openMenu.value = null; });
+
+function toggleMenu(key) {
+    openMenu.value = openMenu.value === key ? null : key;
+}
+
+// Only one dropdown at a time: pointing at a menu closes any other that is held open by a click
+// (openMenu) or by keyboard focus left inside it (:focus-within).
+function onMenuEnter(key) {
+    if (openMenu.value && openMenu.value !== key) openMenu.value = null;
+    const focused = document.activeElement;
+    if (Object.entries(menuEls).some(([k, el]) => k !== key && el?.contains(focused))) focused.blur();
+}
+
+// After a link in a menu is clicked the pointer is still over it and the link still has focus,
+// so the CSS :hover / :focus-within rules would keep it open. Close it, drop focus, and keep it
+// shut until the pointer leaves that item.
+const suppressedMenu = ref(null);
+function onMenuLinkClick(e, key) {
+    if (!e.target.closest('a')) return;
+    openMenu.value = null;
+    suppressedMenu.value = key;
+    document.activeElement?.blur?.();
+}
+// Cleared on a real pointer move outside the item — not on mouseleave, which also fires when the
+// page swap re-lays out the screen under a pointer that has not moved.
+function onPointerMove(e) {
+    const el = menuEls[suppressedMenu.value];
+    if (el && !el.contains(e.target)) suppressedMenu.value = null;
+}
+
+function onDocumentClick(e) {
+    const el = menuEls[openMenu.value];
+    if (el && !el.contains(e.target)) openMenu.value = null;
+}
+
+function onKeydown(e) {
+    if (e.key === 'Escape' && openMenu.value) {
+        menuEls[openMenu.value]?.querySelector('.mw-nav__trigger')?.focus();
+        openMenu.value = null;
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('click', onDocumentClick);
+    document.addEventListener('keydown', onKeydown);
+    document.addEventListener('pointermove', onPointerMove, { passive: true });
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', onDocumentClick);
+    document.removeEventListener('keydown', onKeydown);
+    document.removeEventListener('pointermove', onPointerMove);
+});
 
 const { authenticated, user } = useWishlist();
 const firstName = computed(() => (user.value?.name || '').trim().split(/\s+/)[0] || 'Account');
@@ -48,13 +150,31 @@ function logout(e) {
 
                 <nav :aria-label="t('nav.primary_aria')">
                     <ul class="mw-nav">
-                        <li><router-link to="/" :class="{ 'is-active': activeNav === 'home' }">{{ t('nav.home') }}</router-link></li>
-                        <li><router-link to="/commercial" :class="{ 'is-active': activeNav === 'commercial' }">{{ t('nav.commercial') }}</router-link></li>
-                        <li><router-link to="/agents" :class="{ 'is-active': activeNav === 'agents' }">{{ t('nav.agents') }}</router-link></li>
-                        <li><router-link to="/agencies" :class="{ 'is-active': activeNav === 'agencies' }">{{ t('nav.agencies') }}</router-link></li>
-                        <li><router-link to="/blogs" :class="{ 'is-active': activeNav === 'blogs' }">{{ t('nav.blogs') }}</router-link></li>
-                        <li><router-link to="/about" :class="{ 'is-active': activeNav === 'about' }">{{ t('nav.about') }}</router-link></li>
-                        <li><router-link to="/contact" :class="{ 'is-active': activeNav === 'contact' }">{{ t('nav.contact') }}</router-link></li>
+                        <li v-for="link in primaryLinks" :key="link.key">
+                            <router-link :to="link.to" :class="{ 'is-active': activeNav === link.key }">{{ link.label }}</router-link>
+                        </li>
+                        <li v-for="menu in subMenus" :key="menu.key" :ref="setMenuEl(menu.key)" class="mw-nav__item--has-sub"
+                            :class="{ 'is-open': openMenu === menu.key, 'is-suppressed': suppressedMenu === menu.key }"
+                            @mouseenter="onMenuEnter(menu.key)"
+                            @click="onMenuLinkClick($event, menu.key)">
+                            <button
+                                type="button"
+                                class="mw-nav__trigger"
+                                :class="{ 'is-active': menuActive(menu) }"
+                                aria-haspopup="true"
+                                :aria-expanded="openMenu === menu.key ? 'true' : 'false'"
+                                :aria-controls="`nav-${menu.key}-menu`"
+                                @click="toggleMenu(menu.key)"
+                            >
+                                <span>{{ menu.label }}</span>
+                                <svg class="mw-nav__chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                            </button>
+                            <ul :id="`nav-${menu.key}-menu`" class="mw-nav__submenu">
+                                <li v-for="link in menu.links" :key="link.key">
+                                    <router-link :to="link.to" :class="{ 'is-active': linkActive(link) }">{{ link.label }}</router-link>
+                                </li>
+                            </ul>
+                        </li>
                     </ul>
                 </nav>
 
@@ -88,15 +208,14 @@ function logout(e) {
                         </ul>
                     </div>
                     <div class="mw-dropdown" data-dropdown>
-                        <button type="button" class="mw-header__currency" data-dropdown-trigger>
-                            <span data-dropdown-label>AED</span>
+                        <button type="button" class="mw-header__currency" data-dropdown-trigger :aria-label="t('nav.currency_aria', 'Currency')">
+                            <span>{{ selectedCurrency.code }}</span>
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" width="14" height="14">
                         </button>
                         <ul class="mw-dropdown__menu" data-dropdown-menu>
-                            <li><button type="button" class="is-selected" data-dropdown-option>AED</button></li>
-                            <li><button type="button" data-dropdown-option>USD</button></li>
-                            <li><button type="button" data-dropdown-option>EUR</button></li>
-                            <li><button type="button" data-dropdown-option>GBP</button></li>
+                            <li v-for="currency in currencies" :key="currency.code">
+                                <button type="button" :class="{ 'is-selected': selectedCurrency.code === currency.code }" :title="currency.name" data-dropdown-option @click="selectCurrency(currency.code)">{{ currency.code }}</button>
+                            </li>
                         </ul>
                     </div>
                     <button type="button" class="mobile-menu-toggle" data-bs-toggle="offcanvas" data-bs-target="#mobile-nav" :aria-label="t('nav.open_menu_aria')" aria-controls="mobile-nav" aria-expanded="false">
@@ -119,13 +238,15 @@ function logout(e) {
         <div class="offcanvas-body mw-mobile-nav__body">
             <nav :aria-label="t('nav.mobile_aria')">
                 <ul>
-                    <li><router-link to="/" :class="{ 'is-active': activeNav === 'home' }">{{ t('nav.home') }}</router-link></li>
-                    <li><router-link to="/commercial" :class="{ 'is-active': activeNav === 'commercial' }">{{ t('nav.commercial') }}</router-link></li>
-                    <li><router-link to="/agents" :class="{ 'is-active': activeNav === 'agents' }">{{ t('nav.agents') }}</router-link></li>
-                    <li><router-link to="/agencies" :class="{ 'is-active': activeNav === 'agencies' }">{{ t('nav.agencies') }}</router-link></li>
-                    <li><router-link to="/blogs" :class="{ 'is-active': activeNav === 'blogs' }">{{ t('nav.blogs') }}</router-link></li>
-                    <li><router-link to="/about" :class="{ 'is-active': activeNav === 'about' }">{{ t('nav.about') }}</router-link></li>
-                    <li><router-link to="/contact" :class="{ 'is-active': activeNav === 'contact' }">{{ t('nav.contact') }}</router-link></li>
+                    <li v-for="link in primaryLinks" :key="link.key">
+                        <router-link :to="link.to" :class="{ 'is-active': activeNav === link.key }">{{ link.label }}</router-link>
+                    </li>
+                    <li v-for="link in exploreLinks" :key="link.key">
+                        <router-link :to="link.to" :class="{ 'is-active': activeNav === link.key }">{{ link.label }}</router-link>
+                    </li>
+                    <li v-for="link in calculatorLinks" :key="link.key">
+                        <router-link :to="link.to" :class="{ 'is-active': linkActive(link) }">{{ link.label }}</router-link>
+                    </li>
                 </ul>
             </nav>
             <div class="mw-mobile-nav__foot">
@@ -139,7 +260,7 @@ function logout(e) {
                     </template>
                     <router-link v-else to="/login" class="mw-mobile-nav__login-option">{{ t('nav.login') }}</router-link>
                 </div>
-                <div v-if="isHome" class="mw-mobile-nav__prefs">
+                <div class="mw-mobile-nav__prefs">
                     <div class="mw-dropdown" data-dropdown>
                         <button type="button" class="mw-header__lang" data-dropdown-trigger>
                             <img v-if="selectedLanguage?.flag_url" :src="selectedLanguage.flag_url" alt="" class="mw-header__lang-flag" width="22" height="16">
@@ -153,15 +274,14 @@ function logout(e) {
                         </ul>
                     </div>
                     <div class="mw-dropdown" data-dropdown>
-                        <button type="button" class="mw-header__currency" data-dropdown-trigger>
-                            <span data-dropdown-label>AED</span>
+                        <button type="button" class="mw-header__currency" data-dropdown-trigger :aria-label="t('nav.currency_aria', 'Currency')">
+                            <span>{{ selectedCurrency.code }}</span>
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" width="14" height="14">
                         </button>
                         <ul class="mw-dropdown__menu" data-dropdown-menu>
-                            <li><button type="button" class="is-selected" data-dropdown-option>AED</button></li>
-                            <li><button type="button" data-dropdown-option>USD</button></li>
-                            <li><button type="button" data-dropdown-option>EUR</button></li>
-                            <li><button type="button" data-dropdown-option>GBP</button></li>
+                            <li v-for="currency in currencies" :key="currency.code">
+                                <button type="button" :class="{ 'is-selected': selectedCurrency.code === currency.code }" :title="currency.name" data-dropdown-option @click="selectCurrency(currency.code)">{{ currency.code }}</button>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -169,3 +289,18 @@ function logout(e) {
         </div>
     </div>
 </template>
+
+<style>
+/* Dropdown labels (e.g. "Rent vs Buy Calculator") stay on one line; the panel grows to fit. */
+header .mw-nav__submenu { width: max-content; }
+header .mw-nav__submenu a { white-space: nowrap; }
+
+/* Dropdowns: after a link is clicked, stay closed (despite :hover / :focus-within) until the pointer leaves. */
+header .mw-nav__item--has-sub.is-suppressed:not(.is-open) .mw-nav__submenu,
+header .mw-nav__item--has-sub.is-suppressed:not(.is-open) .mw-nav__submenu .mw-nav__submenu {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, -6px) scale(0.97);
+}
+</style>

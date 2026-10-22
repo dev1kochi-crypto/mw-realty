@@ -16,24 +16,36 @@ class SiteInformation extends Model
         'logo', 'logo_alt', 'favicon', 'footer_logo', 'footer_logo_alt', 'footer_description',
         'facebook', 'twitter', 'linkedin', 'instagram', 'tiktok', 'snapchat',
         'pinterest', 'youtube', 'skype', 'whatsapp_social', 'vimeo',
-        'gtag', 'custom_head_script', 'custom_body_script', 'extra_fields', 'translations'
+        'gtag', 'custom_head_script', 'custom_body_script', 'extra_fields', 'translations', 'watermark'
     ];
 
     protected $casts = [
         'extra_fields' => 'array',
         'translations' => 'array',
+        'watermark' => 'array',
     ];
 
     /**
-     * Where system notifications (new portal registrations, etc.) get sent.
+     * Where system notifications (new portal registrations, KYC, leads, enquiries…) get sent: every
+     * address in Recipient Email (comma separated), else Email 1, else the mail "from" address.
+     * Returns a list for Mail::to(); null when none is set.
      */
-    public static function notificationEmail(): ?string
+    public static function notificationEmail(): ?array
     {
         $info = static::first();
 
-        return $info?->receipt_email
-            ?: $info?->email_1
-            ?: config('mail.from.address');
+        return (static::splitEmails($info?->receipt_email) ?: static::splitEmails($info?->email_1 ?: config('mail.from.address'))) ?: null;
+    }
+
+    /** "a@x.com, b@y.com; c@z.com" → ['a@x.com', 'b@y.com', 'c@z.com'] — trimmed, de-duplicated (case-insensitive). */
+    public static function splitEmails(?string $value): array
+    {
+        return collect(preg_split('/[,;\s]+/', (string) $value))
+            ->map(fn ($email) => trim($email))
+            ->filter()
+            ->unique(fn ($email) => mb_strtolower($email))
+            ->values()
+            ->all();
     }
 
     /**

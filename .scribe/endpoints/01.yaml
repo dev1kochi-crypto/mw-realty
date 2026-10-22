@@ -1,0 +1,159 @@
+name: 'App Config'
+description: ''
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/languages
+    metadata:
+      custom: []
+      groupName: 'App Config'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: Languages
+      description: 'The languages content is available in. Send the chosen `code` as `?lang=` on every request.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/currencies
+    metadata:
+      custom: []
+      groupName: 'App Config'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: Currencies
+      description: |-
+        Prices from every endpoint are in AED; to display another currency, multiply by its `rate`
+        (units per 1 AED).
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/static-translations
+    metadata:
+      custom: []
+      groupName: 'App Config'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'UI translations'
+      description: |-
+        Static UI copy (labels, buttons…) as a key → text map for one language. Cache it on the
+        device per language.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: 'A code from `GET /api/languages`.'
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/site-information
+    metadata:
+      custom: []
+      groupName: 'App Config'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Site information'
+      description: 'Office address, phone, email, WhatsApp and social links (the website footer).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

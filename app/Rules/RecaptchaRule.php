@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Log;
  */
 class RecaptchaRule implements ValidationRule
 {
+    /** Runs even when the token is missing/null — otherwise `nullable` would let a form skip the check. */
+    public bool $implicit = true;
+
     public function validate(string $attribute, mixed $value, \Closure $fail): void
     {
         $secret = config('services.recaptcha.secret_key');
@@ -38,6 +41,12 @@ class RecaptchaRule implements ValidationRule
 
         $minScore = (float) config('services.recaptcha.min_score', 0.5);
         if (!($response['success'] ?? false) || ($response['score'] ?? 0) < $minScore) {
+            Log::warning('reCAPTCHA rejected', [
+                'error_codes' => $response['error-codes'] ?? [],
+                'score' => $response['score'] ?? null,
+                'hostname' => $response['hostname'] ?? null,
+                'action' => $response['action'] ?? null,
+            ]);
             $fail('Verification failed — please try again.');
         }
     }

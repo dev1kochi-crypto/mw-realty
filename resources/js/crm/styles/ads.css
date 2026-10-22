@@ -1,0 +1,166 @@
+/* Advertisements — pages/ads (list, booking form with live preview, report). Portal look: portal-card,
+   btn-portal-primary, the --portal-* variables; brand red #ca2844 / navy #1b3358 like the dashboard. */
+
+/* ---------- status chip ---------- */
+.adp-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.6rem; border-radius: 99px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
+.adp-chip i { font-size: 0.62rem; }
+.adp-chip.tone-green { background: rgba(22, 163, 74, 0.12); color: #15803d; }
+.adp-chip.tone-green i { animation: adp-pulse 1.6s ease-in-out infinite; }
+.adp-chip.tone-amber { background: rgba(245, 158, 11, 0.14); color: #b45309; }
+.adp-chip.tone-blue { background: rgba(36, 67, 115, 0.1); color: var(--portal-primary, #244373); }
+.adp-chip.tone-red { background: rgba(202, 40, 68, 0.1); color: #ca2844; }
+.adp-chip.tone-grey { background: var(--portal-bg, #f5f6fb); color: var(--portal-muted, #6b7094); }
+@keyframes adp-pulse { 50% { opacity: 0.35; } }
+
+/* ---------- KPI row ---------- */
+.adp-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.35fr); gap: 0.85rem; margin-bottom: 1rem; }
+.adp-kpi { position: relative; overflow: hidden; display: flex; align-items: center; gap: 0.8rem; padding: 1rem 1.1rem; border-radius: var(--portal-radius, 16px);
+    background: var(--portal-surface, #fff); border: 1px solid var(--portal-border, #e7e8f2); box-shadow: var(--portal-shadow); }
+.adp-kpi__icon { width: 2.6rem; height: 2.6rem; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1rem; }
+.adp-kpi__icon.is-live { background: rgba(22, 163, 74, 0.12); color: #16a34a; }
+.adp-kpi__icon.is-imp { background: rgba(36, 67, 115, 0.1); color: #1b3358; }
+.adp-kpi__icon.is-click { background: rgba(202, 40, 68, 0.1); color: #ca2844; }
+.adp-kpi__icon.is-ctr { background: rgba(124, 58, 237, 0.1); color: #7c3aed; }
+.adp-kpi__value { font-size: 1.45rem; font-weight: 800; line-height: 1.1; color: var(--portal-text, #1f2340); }
+.adp-kpi__label { font-size: 0.74rem; color: var(--portal-muted, #6b7094); }
+.adp-allow { color: #fff; border: 0; background: linear-gradient(135deg, #1b3358, #2d5291); box-shadow: 0 14px 30px rgba(27, 51, 88, 0.25); display: block; }
+.adp-allow::after { content: ""; position: absolute; right: -36px; top: -36px; width: 130px; height: 130px; border-radius: 50%; background: rgba(255, 255, 255, 0.07); }
+.adp-allow__head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-size: 0.78rem; opacity: 0.9; font-weight: 600; }
+.adp-allow__value { font-size: 1.45rem; font-weight: 800; margin: 0.3rem 0 0.45rem; }
+.adp-allow__value small { font-size: 0.8rem; font-weight: 600; opacity: 0.75; }
+.adp-allow__bar { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.2); overflow: hidden; }
+.adp-allow__bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #fcd34d, #f59e0b); transition: width 0.6s ease; }
+.adp-allow__meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.25rem 0.75rem; margin-top: 0.45rem; font-size: 0.72rem; opacity: 0.88; }
+@media (max-width: 1199.98px) { .adp-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .adp-allow { grid-column: 1 / -1; } }
+
+/* ---------- list ---------- */
+.adp-table td { vertical-align: middle; }
+.adp-thumb { width: 112px; height: 52px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--portal-bg, #f5f6fb); box-shadow: 0 2px 8px rgba(31, 35, 64, 0.08); }
+.adp-name { font-weight: 700; color: var(--portal-text, #1f2340); text-decoration: none; }
+.adp-name:hover { color: var(--portal-primary, #244373); }
+.adp-sub { font-size: 0.76rem; color: var(--portal-muted, #6b7094); }
+.adp-perf { display: flex; gap: 0.9rem; font-size: 0.82rem; white-space: nowrap; }
+.adp-perf strong { color: var(--portal-text, #1f2340); }
+.adp-perf i { color: var(--portal-muted, #6b7094); margin-right: 0.25rem; }
+.adp-note { margin-top: 0.3rem; font-size: 0.74rem; color: #ca2844; max-width: 260px; }
+
+/* ---------- booking form ---------- */
+.adp-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); gap: 1.25rem; align-items: start; }
+.adp-aside { position: sticky; top: 90px; display: grid; gap: 1rem; }
+@media (max-width: 1199.98px) { .adp-form { grid-template-columns: 1fr; } .adp-aside { position: static; } }
+.adp-step { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
+.adp-step__num { width: 1.8rem; height: 1.8rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #fff; background: var(--portal-primary, #244373); flex-shrink: 0; }
+.adp-step__title { font-weight: 800; color: var(--portal-text, #1f2340); }
+.adp-step__hint { font-size: 0.78rem; color: var(--portal-muted, #6b7094); }
+
+.adp-drop { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem; min-height: 120px; padding: 1rem;
+    border: 2px dashed var(--portal-border, #d9dcea); border-radius: 14px; background: var(--portal-bg, #f8f9fc); color: var(--portal-muted, #6b7094); text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.adp-drop:hover, .adp-drop.is-over { border-color: var(--portal-primary, #244373); background: rgba(36, 67, 115, 0.04); }
+.adp-drop i { font-size: 1.4rem; color: var(--portal-primary, #244373); }
+.adp-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.adp-drop.has-file { min-height: 0; padding: 0.5rem; border-style: solid; }
+.adp-drop__img { width: 100%; max-height: 140px; object-fit: cover; border-radius: 10px; }
+.adp-drop__name { font-size: 0.78rem; font-weight: 600; color: var(--portal-text, #1f2340); word-break: break-all; }
+
+.adp-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.6rem; }
+.adp-option { position: relative; display: flex; gap: 0.65rem; align-items: flex-start; padding: 0.8rem 0.9rem; border: 1.5px solid var(--portal-border, #e7e8f2); border-radius: 12px; cursor: pointer; background: #fff; transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s; }
+.adp-option:hover { border-color: rgba(36, 67, 115, 0.45); }
+.adp-option.is-active { border-color: var(--portal-primary, #244373); box-shadow: 0 0 0 3px rgba(36, 67, 115, 0.12); }
+.adp-option.is-disabled { opacity: 0.55; cursor: not-allowed; }
+.adp-option input { position: absolute; opacity: 0; pointer-events: none; }
+.adp-option__icon { width: 2.1rem; height: 2.1rem; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(36, 67, 115, 0.08); color: var(--portal-primary, #244373); }
+.adp-option.is-active .adp-option__icon { background: var(--portal-primary, #244373); color: #fff; }
+.adp-option__title { font-weight: 700; font-size: 0.88rem; color: var(--portal-text, #1f2340); }
+.adp-option__sub { font-size: 0.74rem; color: var(--portal-muted, #6b7094); }
+
+.adp-durations { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.adp-duration { border: 1.5px solid var(--portal-border, #e7e8f2); background: #fff; border-radius: 99px; padding: 0.35rem 0.85rem; font-size: 0.82rem; font-weight: 700; color: var(--portal-text, #1f2340); transition: all 0.2s; }
+.adp-duration:hover:not(:disabled) { border-color: var(--portal-primary, #244373); }
+.adp-duration.is-active { background: var(--portal-primary, #244373); border-color: var(--portal-primary, #244373); color: #fff; }
+.adp-duration:disabled { color: var(--portal-muted, #6b7094); background: var(--portal-bg, #f5f6fb); cursor: not-allowed; }
+.adp-duration:disabled i { font-size: 0.7rem; margin-left: 0.25rem; }
+
+.adp-hours { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 5px; }
+@media (max-width: 767.98px) { .adp-hours { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.adp-hour { position: relative; padding: 0.4rem 0 0.35rem; border: 1.5px solid transparent; border-radius: 9px; font-size: 0.76rem; font-weight: 700; line-height: 1.1; text-align: center; transition: transform 0.15s, box-shadow 0.15s; }
+.adp-hour small { display: block; font-size: 0.62rem; font-weight: 600; opacity: 0.8; }
+.adp-hour.is-free { background: rgba(22, 163, 74, 0.1); color: #15803d; }
+.adp-hour.is-few { background: rgba(245, 158, 11, 0.14); color: #b45309; }
+.adp-hour.is-full, .adp-hour.is-past { background: var(--portal-bg, #f5f6fb); color: #b5b8cc; cursor: not-allowed; }
+.adp-hour.is-full small { color: #ca2844; opacity: 1; }
+.adp-hour:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(31, 35, 64, 0.12); }
+.adp-hour.in-range { background: rgba(36, 67, 115, 0.14); color: var(--portal-primary, #244373); }
+.adp-hour.is-start { background: var(--portal-primary, #244373); color: #fff; box-shadow: 0 6px 16px rgba(36, 67, 115, 0.35); }
+.adp-legend { display: flex; flex-wrap: wrap; gap: 0.9rem; font-size: 0.72rem; color: var(--portal-muted, #6b7094); margin-top: 0.6rem; }
+.adp-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.3rem; vertical-align: -1px; }
+
+/* ---------- live preview (mirrors the website's ad slider) ---------- */
+.adp-preview__bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; }
+.adp-preview__title { font-weight: 800; font-size: 0.9rem; color: var(--portal-text, #1f2340); }
+.adp-device { display: flex; padding: 3px; background: var(--portal-bg, #f5f6fb); border-radius: 10px; }
+.adp-device button { border: 0; background: transparent; border-radius: 8px; padding: 0.2rem 0.6rem; font-size: 0.76rem; font-weight: 700; color: var(--portal-muted, #6b7094); }
+.adp-device button.is-active { background: #fff; color: var(--portal-primary, #244373); box-shadow: 0 2px 6px rgba(31, 35, 64, 0.1); }
+.adp-site { border-radius: 14px; background: #eef0f6; padding: 0.75rem; }
+.adp-site.is-phone { max-width: 260px; margin: 0 auto; border-radius: 26px; padding: 0.9rem 0.6rem; background: #1f2340; }
+.adp-banner { position: relative; overflow: hidden; border-radius: 12px; background: #c9cee0; aspect-ratio: 16 / 4.2; box-shadow: 0 10px 24px rgba(10, 15, 26, 0.18); }
+.adp-site.is-phone .adp-banner { aspect-ratio: 2 / 1; border-radius: 10px; }
+.adp-banner img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; animation: adp-zoom 7s ease-out infinite alternate; }
+.adp-banner.has-text::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10, 15, 26, 0.88) 0%, rgba(10, 15, 26, 0.5) 50%, rgba(10, 15, 26, 0.05) 100%); }
+.adp-site.is-phone .adp-banner.has-text::after { background: linear-gradient(0deg, rgba(10, 15, 26, 0.9) 0%, rgba(10, 15, 26, 0.4) 75%, rgba(10, 15, 26, 0.1) 100%); }
+.adp-banner__label { position: absolute; z-index: 2; top: 8px; left: 8px; padding: 2px 8px; border-radius: 99px; background: rgba(0, 0, 0, 0.45); color: rgba(255, 255, 255, 0.9); font-size: 8px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.adp-banner__text { position: absolute; z-index: 2; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; max-width: 68%; padding: 18px 14px 10px; }
+.adp-site.is-phone .adp-banner__text { max-width: 100%; justify-content: flex-end; }
+.adp-banner__text > * { animation: adp-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.adp-banner__text > *:nth-child(2) { animation-delay: 0.1s; }
+.adp-banner__text > *:nth-child(3) { animation-delay: 0.2s; }
+.adp-banner__eyebrow { color: #ffb0bf; font-size: 8px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.adp-banner__title { color: #fff; font-family: "Playfair Display", Georgia, serif; font-size: 15px; font-weight: 600; line-height: 1.2; }
+.adp-banner__body { color: rgba(255, 255, 255, 0.85); font-size: 9.5px; line-height: 1.4; }
+.adp-banner__dots { position: absolute; z-index: 3; right: 8px; bottom: 8px; display: flex; gap: 4px; padding: 3px 5px; border-radius: 99px; background: rgba(10, 15, 26, 0.35); }
+.adp-banner__dots span { width: 14px; height: 3px; border-radius: 99px; background: rgba(255, 255, 255, 0.4); overflow: hidden; position: relative; }
+.adp-banner__dots span.is-active { width: 22px; }
+.adp-banner__dots span.is-active::after { content: ""; position: absolute; inset: 0; background: #fff; transform-origin: left; animation: adp-progress 6s linear infinite; }
+.adp-banner__empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; color: #6b7094; font-size: 0.78rem; text-align: center; padding: 0.5rem; }
+.adp-banner__empty i { font-size: 1.3rem; }
+.adp-site__lines { display: grid; gap: 6px; margin-top: 0.7rem; }
+.adp-site__lines span { height: 8px; border-radius: 99px; background: rgba(31, 35, 64, 0.08); }
+.adp-site.is-phone .adp-site__lines span { background: rgba(255, 255, 255, 0.12); }
+.adp-site__lines span:nth-child(2) { width: 70%; }
+@keyframes adp-zoom { from { transform: scale(1.08); } to { transform: scale(1); } }
+@keyframes adp-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes adp-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+.adp-summary { display: grid; gap: 0.5rem; font-size: 0.85rem; }
+.adp-summary__row { display: flex; justify-content: space-between; gap: 1rem; }
+.adp-summary__row span:first-child { color: var(--portal-muted, #6b7094); }
+.adp-summary__row span:last-child { font-weight: 700; color: var(--portal-text, #1f2340); text-align: right; }
+.adp-summary__total { border-top: 1px dashed var(--portal-border, #e7e8f2); padding-top: 0.6rem; margin-top: 0.15rem; font-size: 0.95rem; }
+.adp-summary__total span:last-child { color: var(--portal-primary, #244373); }
+
+/* ---------- report ---------- */
+.adp-hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1.25rem; align-items: stretch; }
+@media (max-width: 991.98px) { .adp-hero { grid-template-columns: 1fr; } }
+.adp-hero__banner { position: relative; overflow: hidden; border-radius: 14px; min-height: 170px; background: #c9cee0; }
+.adp-hero__banner img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.adp-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1rem; }
+.adp-fact__label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--portal-muted, #6b7094); }
+.adp-fact__value { font-weight: 700; color: var(--portal-text, #1f2340); font-size: 0.9rem; word-break: break-word; }
+.adp-timeline { position: relative; height: 8px; border-radius: 99px; background: var(--portal-bg, #eef0f6); overflow: hidden; margin: 0.4rem 0 0.3rem; }
+.adp-timeline span { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: linear-gradient(90deg, #1b3358, #ca2844); transition: width 0.8s ease; }
+.adp-chart { position: relative; height: 260px; }
+.adp-bars { display: grid; gap: 0.55rem; }
+.adp-bar { display: grid; grid-template-columns: 64px minmax(0, 1fr) 70px; align-items: center; gap: 0.6rem; font-size: 0.8rem; }
+.adp-bar__track { height: 10px; border-radius: 99px; background: var(--portal-bg, #f1f2f8); overflow: hidden; }
+.adp-bar__track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #1b3358, #3b6bb0); }
+.adp-bar strong { text-align: right; color: var(--portal-text, #1f2340); }
+.adp-empty { padding: 2.2rem 1rem; text-align: center; color: var(--portal-muted, #6b7094); font-size: 0.86rem; }
+.adp-empty i { display: block; font-size: 1.6rem; margin-bottom: 0.4rem; color: #b5b8cc; }
+
+@media (prefers-reduced-motion: reduce) {
+    .adp-banner img, .adp-banner__text > *, .adp-banner__dots span::after, .adp-chip.tone-green i { animation: none !important; }
+}
+
+/* Character counter under the banner text fields (AdBannerFields). */
+.adp-count { margin-top: .25rem; font-size: .7rem; font-weight: 600; color: var(--portal-muted, #6b7094); text-align: right; }
+.adp-count.is-near { color: #b45309; }
+.adp-count.is-full { color: #ca2844; }

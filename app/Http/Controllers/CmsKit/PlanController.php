@@ -84,7 +84,10 @@ class PlanController extends Controller
             'featured_max_days' => 'nullable|integer|min:1|max:365',
             'featured_period' => 'nullable|in:concurrent,month',
             'agent_limit' => 'nullable|integer|min:0|max:10000',
+            'ads_per_month' => 'nullable|integer|min:0|max:1000',
+            'ad_max_hours' => ['nullable', 'integer', \Illuminate\Validation\Rule::in([0, ...\App\Services\AdBookingService::DURATIONS])],
             'order_index' => 'nullable|integer|min:1',
+            'plan_features' => 'nullable|array',
         ];
         foreach ($languages as $lang) {
             $rules["translations.{$lang->code}.name"] = 'required';
@@ -109,7 +112,10 @@ class PlanController extends Controller
 
         $data = $request->only(['price', 'yearly_price', 'billing_cycle', 'property_limit', 'featured_max_days', 'agent_limit']);
         $data['featured_per_month'] = (int) $request->input('featured_per_month', 0);
+        $data['ads_per_month'] = (int) $request->input('ads_per_month', 0);
+        $data['ad_max_hours'] = (int) $request->input('ad_max_hours', 0);
         $data['reports_access'] = $request->has('reports_access');
+        $data['plan_features'] = array_values(array_intersect(array_keys(Plan::GATED_FEATURES), (array) $request->input('plan_features', [])));
         $data['featured_period'] = $request->input('featured_period', 'concurrent');
         $data['translations'] = $this->buildTranslations($request, $languages);
         $data['is_popular'] = $request->has('is_popular');
@@ -139,7 +145,10 @@ class PlanController extends Controller
 
         $data = $request->only(['price', 'yearly_price', 'billing_cycle', 'property_limit', 'featured_max_days', 'agent_limit']);
         $data['featured_per_month'] = (int) $request->input('featured_per_month', 0);
+        $data['ads_per_month'] = (int) $request->input('ads_per_month', 0);
+        $data['ad_max_hours'] = (int) $request->input('ad_max_hours', 0);
         $data['reports_access'] = $request->has('reports_access');
+        $data['plan_features'] = array_values(array_intersect(array_keys(Plan::GATED_FEATURES), (array) $request->input('plan_features', [])));
         $data['featured_period'] = $request->input('featured_period', 'concurrent');
         $data['translations'] = $this->buildTranslations($request, $languages);
         $data['is_popular'] = $request->has('is_popular');

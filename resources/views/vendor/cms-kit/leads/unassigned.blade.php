@@ -11,10 +11,6 @@
         <small class="text-muted">Property enquiries where the listing has no agent or company assigned yet — pick who should handle each one.</small>
     </div>
     <div class="card-body p-4">
-        @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-
         @if($leads->isEmpty())
             <p class="text-muted mb-0">No unassigned leads right now.</p>
         @else

@@ -8,6 +8,26 @@ class Filter extends Model
 {
     public const SELECT_KEYS = ['listing_type', 'completion_status', 'property_type', 'category', 'location'];
     public const NUMBER_KEYS = ['bedrooms', 'bathrooms', 'sqft', 'price'];
+
+    /** Furnishing: a managed option list stored on property_details (not a properties column / website filter). */
+    public const FURNISHING_KEY = 'furnishing';
+
+    /** Form-only lists stored on `properties` (emirate / rental_period columns). */
+    public const EMIRATE_KEY = 'emirate';
+    public const RENTAL_PERIOD_KEY = 'rental_period';
+
+    /**
+     * Checkbox lists with an icon per option, picked on the property form and stored on
+     * property_details as [{key, icon, label}] rows: filter key => property_details column.
+     */
+    public const ICON_LISTS = [
+        'amenity' => 'amenities',
+        'easy_access' => 'easy_access',
+        'property_attribute' => 'property_attributes',
+    ];
+
+    /** The property-form dropdowns Super Admin manages in CRM › Master › Property Options. */
+    public const PROPERTY_OPTION_KEYS = ['property_type', 'listing_type', 'completion_status', self::FURNISHING_KEY, self::EMIRATE_KEY, self::RENTAL_PERIOD_KEY, 'amenity', 'easy_access', 'property_attribute'];
     protected $fillable = [
         'key',
         'translations',

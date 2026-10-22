@@ -65,7 +65,7 @@
                         </select>
                         <div class="form-text mt-1 text-muted">This card links to properties filtered by this type, and the count shown is calculated automatically.</div>
                     @else
-                        <input type="text" name="property_type" class="form-control" value="{{ old('property_type', $item->property_type) }}" placeholder="No property type options configured yet — add one under Filters &raquo; Property Type">
+                        <input type="text" name="property_type" class="form-control" value="{{ old('property_type', $item->property_type) }}" placeholder="No property type options configured yet — add one under CRM &raquo; Master &raquo; Property Options &raquo; Property Type">
                     @endif
                 </div>
                 <div class="col-md-6">

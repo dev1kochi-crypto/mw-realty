@@ -39,10 +39,23 @@ return [
      */
     'slug_patterns' => [
         'blog' => [
-            'detail' => '/blog/{slug}',
+            'detail' => '/blog-details/{slug}',
         ],
         'career' => [
             'detail' => '/careers/{slug}',
+        ],
+        'market-insight' => [
+            'detail' => '/market-insights/{slug}',
+        ],
+        // Recorded automatically by model events (AppServiceProvider::redirectOnSlugChange()).
+        'property' => [
+            'detail' => '/property-details/{slug}',
+        ],
+        'agent' => [
+            'detail' => '/agent-details/{slug}',
+        ],
+        'agency' => [
+            'detail' => '/agency-details/{slug}',
         ],
     ],
 
@@ -53,12 +66,22 @@ return [
     'on_delete' => [
         'blog' => [
             'enabled' => true,
-            'target_url' => '/blog',
+            'target_url' => '/blogs',
+            'status_code' => 301,
+        ],
+        'property' => [
+            'enabled' => true,
+            'target_url' => '/properties',
             'status_code' => 301,
         ],
         'career' => [
             'enabled' => true,
             'target_url' => '/careers',
+            'status_code' => 301,
+        ],
+        'market-insight' => [
+            'enabled' => true,
+            'target_url' => '/market-insights',
             'status_code' => 301,
         ],
     ],

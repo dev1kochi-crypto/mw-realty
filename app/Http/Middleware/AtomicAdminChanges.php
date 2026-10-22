@@ -12,7 +12,7 @@ class AtomicAdminChanges
     public function handle(Request $request, Closure $next)
     {
         $name = $request->route()?->getName() ?? '';
-        if ($request->isMethodSafe() || !preg_match('/^(cms|portal)\./', $name)
+        if ($request->isMethodSafe() || !preg_match('/^(cms|portal|crm\.api)\./', $name)
             || preg_match('/(login|logout|password\.|notifications\.)/', $name)) {
             return $next($request);
         }

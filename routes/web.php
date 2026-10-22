@@ -1,14 +1,20 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\FilterController;
+use App\Http\Controllers\SearchFilterController;
 use App\Http\Controllers\PortalUserController;
 use App\Http\Controllers\CmsKit\PostPropertyStepController;
 use App\Http\Controllers\CmsKit\PopularPlaceController;
 use App\Http\Controllers\CmsKit\LuxuryProjectController;
 use App\Http\Controllers\CmsKit\AboutUsController;
 use App\Http\Controllers\CmsKit\BlogCategoryController;
+use App\Http\Controllers\CmsKit\CurrencyController;
 use App\Http\Controllers\CmsKit\BlogController;
+use App\Http\Controllers\CmsKit\MarketInsightController;
+use App\Http\Controllers\CmsKit\MarketInsightTermController;
+use App\Http\Controllers\CmsKit\CareerController;
+use App\Http\Controllers\CmsKit\CareerDepartmentController;
+use App\Http\Controllers\CmsKit\CareerCandidateController;
 use App\Http\Controllers\CmsKit\MarketTrendController;
 use App\Http\Controllers\CmsKit\WhyChooseUsController;
 use App\Http\Controllers\CmsKit\OurBuilderController;
@@ -21,17 +27,7 @@ use App\Http\Controllers\CmsKit\AdController;
 use App\Http\Controllers\CmsKit\LandingPageController;
 use App\Http\Controllers\CmsKit\NotificationController;
 use App\Http\Controllers\Portal\PortalAuthController;
-use App\Http\Controllers\Portal\PortalDashboardController;
-use App\Http\Controllers\Portal\PortalPropertyController;
-use App\Http\Controllers\Portal\PortalProfileController;
 use App\Http\Controllers\Portal\PortalNotificationController;
-use App\Http\Controllers\Portal\PortalPlanController;
-use App\Http\Controllers\Portal\Crm\LeadController;
-use App\Http\Controllers\Portal\Crm\LeadNoteController;
-use App\Http\Controllers\Portal\Crm\LeadStageController;
-use App\Http\Controllers\Portal\Crm\LeadTagController;
-use App\Http\Controllers\Portal\Crm\LeadSourceController;
-use App\Http\Controllers\Portal\Crm\PortalReportController;
 use App\Http\Controllers\Crm\LeadCaptureController;
 use App\Http\Controllers\Customer\CustomerAuthController;
 use App\Http\Controllers\Api\CustomerController;
@@ -52,10 +48,36 @@ Route::get('/storage/{url}', function (string $url) {
 // Public, unauthenticated — any property-detail page can POST a lead here; it's
 // routed to the property's owning company/agent (see LeadCaptureController).
 Route::post('/leads/capture', [LeadCaptureController::class, 'store'])->name('leads.capture')->middleware('throttle:lead-capture');
+Route::post('/leads/viewing', [LeadCaptureController::class, 'storeViewing'])->name('leads.viewing')->middleware('throttle:lead-capture');
+Route::post('/leads/brochure-download', [LeadCaptureController::class, 'downloadBrochure'])->name('leads.brochure-download')->middleware('throttle:lead-capture');
+Route::post('/leads/floor-plan-download', [LeadCaptureController::class, 'downloadFloorPlan'])->name('leads.floor-plan-download')->middleware('throttle:lead-capture');
+// Signed, short-lived link handed out by the two routes above once the lead is saved.
+Route::get('/downloads/property/{property}/{kind}', \App\Http\Controllers\PropertyFileDownloadController::class)->whereIn('kind', \App\Http\Controllers\PropertyFileDownloadController::KINDS)->name('property-files.download')->middleware(['signed', 'throttle:30,1']);
 
 // Properties listing "Custom Request" — no property to attach to, always an unassigned lead
 // (see LeadCaptureController::storeCustomRequest).
 Route::post('/leads/custom-request', [LeadCaptureController::class, 'storeCustomRequest'])->name('leads.custom-request')->middleware('throttle:lead-capture');
+Route::post('/leads/profile-request', [LeadCaptureController::class, 'storeProfileRequest'])->name('leads.profile-request')->middleware('throttle:lead-capture');
+Route::get('/newsletter/unsubscribe/{token}', [\App\Http\Controllers\Api\NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
+
+// Public — the AI chat widget. Web (not API) routes: the visitor is identified by the mw_vid
+// cookie and every conversation is saved against them (see Api\ChatbotController / VisitorTracker).
+Route::prefix('chatbot')->name('chatbot.')->controller(\App\Http\Controllers\Api\ChatbotController::class)->group(function () {
+    Route::get('/session', 'session')->name('session')->middleware('throttle:60,1');
+    Route::post('/start', 'start')->name('start')->middleware('throttle:lead-capture');
+    Route::post('/reset', 'reset')->name('reset')->middleware('throttle:30,1');
+    Route::post('/message', 'send')->name('message')->middleware('throttle:ai-chatbot');
+});
+
+// Public — the site's page tracker (useVisitorTracking.js): page / property views and time spent.
+Route::post('/track/page', [\App\Http\Controllers\VisitorTrackingController::class, 'page'])->name('track.page')->middleware('throttle:120,1');
+Route::post('/track/page/{event}/time', [\App\Http\Controllers\VisitorTrackingController::class, 'time'])->whereNumber('event')->name('track.time')->middleware('throttle:240,1');
+// Listing performance: cards seen on screen (useListingImpressions.js) and contact clicks on a listing.
+Route::post('/track/impressions', [\App\Http\Controllers\VisitorTrackingController::class, 'impressions'])->name('track.impressions')->middleware('throttle:120,1');
+Route::post('/track/lead-click', [\App\Http\Controllers\VisitorTrackingController::class, 'leadClick'])->name('track.lead-click')->middleware('throttle:60,1');
+// Ad sliders (AdSlider.vue): slides seen on screen and clicks — CRM › Advertisements' reports.
+Route::post('/track/ad-impressions', [\App\Http\Controllers\PublicAdController::class, 'impressions'])->name('track.ad-impressions')->middleware('throttle:120,1');
+Route::post('/track/ad-click', [\App\Http\Controllers\PublicAdController::class, 'click'])->name('track.ad-click')->middleware('throttle:60,1');
 
 // The public-site "customer" (buyer/visitor) account — guard 'web', separate from the
 // agent/company portal above. Real <form> POSTs (CustomerLogin.vue / CustomerSignup.vue),
@@ -89,29 +111,41 @@ Route::middleware(['web'])->group(function () {
     Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->group(function () {
         Route::middleware(['cms.auth'])->group(function () {
 
+            // Currencies (website currency switcher; prices are stored in AED)
+            Route::middleware(['cms.permission:currencies.view'])->group(function () {
+                Route::get('/currencies', [CurrencyController::class, 'index'])->name('cms.currencies.index');
+                Route::post('/currencies', [CurrencyController::class, 'store'])->middleware('cms.permission:currencies.create')->name('cms.currencies.store');
+                Route::middleware(['cms.permission:currencies.edit'])->group(function () {
+                    Route::put('/currencies/{id}', [CurrencyController::class, 'update'])->name('cms.currencies.update');
+                    Route::post('/currencies/{id}/toggle-status', [CurrencyController::class, 'toggleStatus'])->name('cms.currencies.toggle-status');
+                    Route::post('/currencies/{id}/set-default', [CurrencyController::class, 'setDefault'])->name('cms.currencies.set-default');
+                });
+                Route::delete('/currencies/{id}', [CurrencyController::class, 'destroy'])->middleware('cms.permission:currencies.delete')->name('cms.currencies.destroy');
+            });
+
             // Filters
             Route::middleware(['cms.permission:filters.view'])->group(function () {
-                Route::get('/filters', [FilterController::class, 'index'])->name('cms.filters.index');
+                // Search Filters: one filter set per listing page (Properties, Commercial, Premium, Off-plan).
+                Route::get('/filters', [SearchFilterController::class, 'index'])->name('cms.filters.index');
+                Route::get('/filters/field-options', [SearchFilterController::class, 'fieldOptions'])->name('cms.filters.field-options');
 
                 Route::middleware(['cms.permission:filters.create'])->group(function () {
-                    Route::get('/filters/create', [FilterController::class, 'create'])->name('cms.filters.create');
-                    Route::post('/filters', [FilterController::class, 'store'])->name('cms.filters.store');
-                    Route::post('/filters/{filter}/values', [FilterController::class, 'storeValue'])->name('cms.filters.values.store');
+                    Route::get('/filters/create', [SearchFilterController::class, 'create'])->name('cms.filters.create');
+                    Route::post('/filters', [SearchFilterController::class, 'store'])->name('cms.filters.store');
+                    Route::post('/filters/copy', [SearchFilterController::class, 'copy'])->name('cms.filters.copy');
                 });
 
                 Route::middleware(['cms.permission:filters.edit'])->group(function () {
-                    Route::get('/filters/{id}/edit', [FilterController::class, 'edit'])->name('cms.filters.edit');
-                    Route::put('/filters/{id}', [FilterController::class, 'update'])->name('cms.filters.update');
-                    Route::post('/filters/{id}/toggle-status', [FilterController::class, 'toggleStatus'])->name('cms.filters.toggle-status');
-                    Route::post('/filters/reorder', [FilterController::class, 'reorder'])->name('cms.filters.reorder');
-                    Route::put('/filters/{filter}/values/{value}', [FilterController::class, 'updateValue'])->name('cms.filters.values.update');
-                    Route::post('/filters/{filter}/values/{value}/toggle-status', [FilterController::class, 'toggleValueStatus'])->name('cms.filters.values.toggle-status');
+                    Route::get('/filters/{filter}/edit', [SearchFilterController::class, 'edit'])->name('cms.filters.edit');
+                    Route::put('/filters/{filter}', [SearchFilterController::class, 'update'])->name('cms.filters.update');
+                    Route::post('/filters/{filter}/toggle-status', [SearchFilterController::class, 'toggleStatus'])->name('cms.filters.toggle-status');
+                    Route::post('/filters/reorder', [SearchFilterController::class, 'reorder'])->name('cms.filters.reorder');
                 });
 
-                Route::middleware(['cms.permission:filters.delete'])->group(function () {
-                    Route::delete('/filters/{id}', [FilterController::class, 'destroy'])->name('cms.filters.destroy');
-                    Route::delete('/filters/{filter}/values/{value}', [FilterController::class, 'destroyValue'])->name('cms.filters.values.destroy');
-                });
+                Route::delete('/filters/{filter}', [SearchFilterController::class, 'destroy'])->middleware('cms.permission:filters.delete')->name('cms.filters.destroy');
+
+                // The old Option Lists screen: its lists are edited in CRM › Master › Property Options now.
+                Route::get('/filter-lists/{any?}', fn () => redirect()->route('crm.app', 'master/property-options'))->where('any', '.*');
             });
 
             // Communities (under Filters — section + items, each linked to a "location" filter value)
@@ -275,6 +309,86 @@ Route::middleware(['web'])->group(function () {
                 });
             });
 
+            // Market Insights (page header + posts with topic, region, headline figures and report PDF)
+            Route::middleware(['cms.permission:market-insights.view'])->group(function () {
+                Route::get('/market-insights', [MarketInsightController::class, 'index'])->name('cms.market-insights.index');
+                Route::post('/market-insights/update-section', [MarketInsightController::class, 'updateSection'])->name('cms.market-insights.update-section')->middleware('cms.permission:market-insights.edit');
+
+                Route::middleware(['cms.permission:market-insights.create'])->group(function () {
+                    Route::get('/market-insights/create', [MarketInsightController::class, 'create'])->name('cms.market-insights.create');
+                    Route::post('/market-insights', [MarketInsightController::class, 'store'])->name('cms.market-insights.store');
+                });
+
+                Route::middleware(['cms.permission:market-insights.edit'])->group(function () {
+                    Route::get('/market-insights/{id}/edit', [MarketInsightController::class, 'edit'])->name('cms.market-insights.edit');
+                    Route::put('/market-insights/{id}', [MarketInsightController::class, 'update'])->name('cms.market-insights.update');
+                    Route::post('/market-insights/{id}/toggle-status', [MarketInsightController::class, 'toggleStatus'])->name('cms.market-insights.toggle-status');
+                    Route::post('/market-insights/{id}/toggle-featured', [MarketInsightController::class, 'toggleFeatured'])->name('cms.market-insights.toggle-featured');
+                    Route::post('/market-insights/reorder', [MarketInsightController::class, 'reorder'])->name('cms.market-insights.reorder');
+                });
+
+                Route::middleware(['cms.permission:market-insights.delete'])->group(function () {
+                    Route::delete('/market-insights/{id}', [MarketInsightController::class, 'destroy'])->name('cms.market-insights.destroy');
+                    Route::post('/market-insights/bulk-action', [MarketInsightController::class, 'bulkAction'])->name('cms.market-insights.bulk-action');
+                });
+
+                // Topics / Regions — admin-managed, translatable lists the insight form picks from.
+                // One controller for both; the route's 'type' default says which list.
+                foreach (['topic' => 'topics', 'region' => 'regions'] as $termType => $termPath) {
+                    $termName = "cms.market-insight-{$termPath}";
+                    $termUrl = "/market-insights/{$termPath}";
+                    Route::get($termUrl, [MarketInsightTermController::class, 'index'])->defaults('type', $termType)->name("{$termName}.index");
+                    Route::middleware(['cms.permission:market-insights.create'])->group(function () use ($termType, $termName, $termUrl) {
+                        Route::get("{$termUrl}/create", [MarketInsightTermController::class, 'create'])->defaults('type', $termType)->name("{$termName}.create");
+                        Route::post($termUrl, [MarketInsightTermController::class, 'store'])->defaults('type', $termType)->name("{$termName}.store");
+                    });
+                    Route::middleware(['cms.permission:market-insights.edit'])->group(function () use ($termType, $termName, $termUrl) {
+                        Route::get("{$termUrl}/{id}/edit", [MarketInsightTermController::class, 'edit'])->whereNumber('id')->defaults('type', $termType)->name("{$termName}.edit");
+                        Route::put("{$termUrl}/{id}", [MarketInsightTermController::class, 'update'])->whereNumber('id')->defaults('type', $termType)->name("{$termName}.update");
+                        Route::post("{$termUrl}/{id}/toggle-status", [MarketInsightTermController::class, 'toggleStatus'])->whereNumber('id')->defaults('type', $termType)->name("{$termName}.toggle-status");
+                        Route::post("{$termUrl}/reorder", [MarketInsightTermController::class, 'reorder'])->defaults('type', $termType)->name("{$termName}.reorder");
+                    });
+                    Route::middleware(['cms.permission:market-insights.delete'])->group(function () use ($termType, $termName, $termUrl) {
+                        Route::delete("{$termUrl}/{id}", [MarketInsightTermController::class, 'destroy'])->whereNumber('id')->defaults('type', $termType)->name("{$termName}.destroy");
+                        Route::post("{$termUrl}/bulk-action", [MarketInsightTermController::class, 'bulkAction'])->defaults('type', $termType)->name("{$termName}.bulk-action");
+                    });
+                }
+            });
+
+            // Careers — overrides the vendor package's own /careers routes (same URIs, registered
+            // first, see the Blogs note above) so this app's copies of the controllers run: they
+            // store uploads through ManagedFiles (Cloudinary) instead of the local public disk.
+            Route::middleware(['cms.permission:careers.view'])->group(function () {
+                Route::get('/careers/common', [CareerController::class, 'common'])->name('cms.careers.common');
+                Route::post('/careers/common', [CareerController::class, 'updateSection'])->name('cms.careers.update-section')->middleware('cms.permission:careers.edit');
+
+                Route::get('/careers/vacancies', [CareerController::class, 'vacancies'])->name('cms.careers.vacancies.index');
+                Route::get('/careers/create', [CareerController::class, 'create'])->name('cms.careers.create')->middleware('cms.permission:careers.create');
+                Route::post('/careers', [CareerController::class, 'store'])->name('cms.careers.store')->middleware('cms.permission:careers.create');
+                Route::get('/careers/{id}/edit', [CareerController::class, 'edit'])->whereNumber('id')->name('cms.careers.edit')->middleware('cms.permission:careers.edit');
+                Route::put('/careers/{id}', [CareerController::class, 'update'])->whereNumber('id')->name('cms.careers.update')->middleware('cms.permission:careers.edit');
+                Route::delete('/careers/{id}', [CareerController::class, 'destroy'])->whereNumber('id')->name('cms.careers.destroy')->middleware('cms.permission:careers.delete');
+                Route::post('/careers/{id}/toggle-status', [CareerController::class, 'toggleStatus'])->whereNumber('id')->name('cms.careers.toggle-status')->middleware('cms.permission:careers.edit');
+                Route::post('/careers/reorder', [CareerController::class, 'reorder'])->name('cms.careers.reorder')->middleware('cms.permission:careers.edit');
+                Route::post('/careers/bulk-action', [CareerController::class, 'bulkAction'])->name('cms.careers.bulk-action')->middleware('cms.permission:careers.edit');
+
+                Route::get('/careers/departments', [CareerDepartmentController::class, 'index'])->name('cms.careers.departments.index');
+                Route::get('/careers/departments/create', [CareerDepartmentController::class, 'create'])->name('cms.careers.departments.create')->middleware('cms.permission:careers.create');
+                Route::post('/careers/departments', [CareerDepartmentController::class, 'store'])->name('cms.careers.departments.store')->middleware('cms.permission:careers.create');
+                Route::get('/careers/departments/{id}/edit', [CareerDepartmentController::class, 'edit'])->name('cms.careers.departments.edit')->middleware('cms.permission:careers.edit');
+                Route::put('/careers/departments/{id}', [CareerDepartmentController::class, 'update'])->name('cms.careers.departments.update')->middleware('cms.permission:careers.edit');
+                Route::delete('/careers/departments/{id}', [CareerDepartmentController::class, 'destroy'])->name('cms.careers.departments.destroy')->middleware('cms.permission:careers.delete');
+                Route::post('/careers/departments/{id}/toggle-status', [CareerDepartmentController::class, 'toggleStatus'])->name('cms.careers.departments.toggle-status')->middleware('cms.permission:careers.edit');
+                Route::post('/careers/departments/reorder', [CareerDepartmentController::class, 'reorder'])->name('cms.careers.departments.reorder')->middleware('cms.permission:careers.edit');
+                Route::post('/careers/departments/bulk-action', [CareerDepartmentController::class, 'bulkAction'])->name('cms.careers.departments.bulk-action')->middleware('cms.permission:careers.edit');
+
+                Route::get('/careers/candidates', [CareerCandidateController::class, 'index'])->name('cms.careers.candidates.index');
+                Route::get('/careers/candidates/export', [CareerCandidateController::class, 'export'])->name('cms.careers.candidates.export')->middleware('cms.permission:careers.export');
+                Route::get('/careers/candidates/{id}', [CareerCandidateController::class, 'show'])->name('cms.careers.candidates.show')->middleware('cms.permission:careers.show');
+                Route::delete('/careers/candidates/{id}', [CareerCandidateController::class, 'destroy'])->name('cms.careers.candidates.destroy')->middleware('cms.permission:careers.delete');
+                Route::post('/careers/candidates/bulk-action', [CareerCandidateController::class, 'bulkAction'])->name('cms.careers.candidates.bulk-action')->middleware('cms.permission:careers.delete');
+            });
+
             // Our Builders (section + items)
             Route::middleware(['cms.permission:our-builders.view'])->group(function () {
                 Route::get('/our-builders', [OurBuilderController::class, 'index'])->name('cms.our-builders.index');
@@ -363,6 +477,7 @@ Route::middleware(['web'])->group(function () {
                     Route::post('/portal-accounts/{id}/retranslate-bio', [PortalUserController::class, 'retranslateBio'])->name('cms.portal-accounts.retranslate-bio');
                     Route::post('/portal-accounts/{id}/reset-password', [PortalUserController::class, 'resetPassword'])->name('cms.portal-accounts.reset-password');
                     Route::post('/portal-accounts/{id}/toggle-active', [PortalUserController::class, 'toggleActive'])->name('cms.portal-accounts.toggle-active');
+                    Route::post('/portal-accounts/{id}/reset-two-factor', [PortalUserController::class, 'resetTwoFactor'])->name('cms.portal-accounts.reset-two-factor');
                     Route::post('/portal-accounts/{id}/documents/{field}', [PortalUserController::class, 'uploadDocument'])->name('cms.portal-accounts.upload-document');
                     Route::delete('/portal-accounts/{id}/documents/{field}', [PortalUserController::class, 'removeDocument'])->name('cms.portal-accounts.remove-document');
                     Route::post('/portal-accounts/{id}/documents/{field}/status', [PortalUserController::class, 'updateDocumentStatus'])->name('cms.portal-accounts.update-document-status');
@@ -372,6 +487,16 @@ Route::middleware(['web'])->group(function () {
                 Route::middleware(['cms.permission:portal-accounts.delete'])->group(function () {
                     Route::delete('/portal-accounts/{id}', [PortalUserController::class, 'destroy'])->name('cms.portal-accounts.destroy');
                     Route::post('/portal-accounts/bulk-delete', [PortalUserController::class, 'bulkDelete'])->name('cms.portal-accounts.bulk-delete');
+                });
+
+                // Agency ⇄ agent memberships awaiting approval, and active ones (suspend / remove).
+                Route::get('/agency-agents', [\App\Http\Controllers\CmsKit\AgencyAgentController::class, 'index'])->name('cms.agency-agents.index');
+                Route::middleware(['cms.permission:portal-accounts.edit'])->group(function () {
+                    Route::post('/agency-agents/{id}/approve', [\App\Http\Controllers\CmsKit\AgencyAgentController::class, 'approve'])->name('cms.agency-agents.approve');
+                    Route::post('/agency-agents/{id}/reject', [\App\Http\Controllers\CmsKit\AgencyAgentController::class, 'reject'])->name('cms.agency-agents.reject');
+                    Route::post('/agency-agents/{id}/suspend', [\App\Http\Controllers\CmsKit\AgencyAgentController::class, 'suspend'])->name('cms.agency-agents.suspend');
+                    Route::post('/agency-agents/{id}/reactivate', [\App\Http\Controllers\CmsKit\AgencyAgentController::class, 'reactivate'])->name('cms.agency-agents.reactivate');
+                    Route::post('/agency-agents/{id}/remove', [\App\Http\Controllers\CmsKit\AgencyAgentController::class, 'remove'])->name('cms.agency-agents.remove');
                 });
 
                 Route::get('/plan-upgrade-requests', [PortalUserController::class, 'planUpgradeRequests'])->name('cms.portal-accounts.plan-upgrade-requests');
@@ -413,6 +538,60 @@ Route::middleware(['web'])->group(function () {
                 Route::get('/payments/{id}/invoice.pdf', [\App\Http\Controllers\CmsKit\PaymentController::class, 'pdf'])->name('cms.payments.pdf');
             });
 
+            // Credits — on/off, add-on pricing, granting credits (see App\Services\CreditService), under credits.*;
+            // Credit History — every account's credit ledger, under credit-history.view
+            Route::controller(\App\Http\Controllers\CmsKit\CreditController::class)->group(function () {
+                Route::middleware(['cms.permission:credit-history.view'])->group(function () {
+                    Route::get('/credits/history', 'history')->name('cms.credit-history.index');
+                    Route::get('/credits/history/export', 'export')->name('cms.credit-history.export');
+                });
+            });
+            Route::middleware(['cms.permission:credits.view'])->controller(\App\Http\Controllers\CmsKit\CreditController::class)->group(function () {
+                Route::get('/credits', 'index')->name('cms.credits.index');
+                Route::get('/credits/lookup', 'lookup')->name('cms.credits.lookup')->middleware('throttle:60,1');
+                Route::middleware(['cms.permission:credits.edit'])->group(function () {
+                    Route::put('/credits/toggle', 'toggle')->name('cms.credits.toggle');
+                    Route::put('/credits/settings', 'updateSettings')->name('cms.credits.settings');
+                    Route::put('/credits/rates', 'updateRates')->name('cms.credits.rates');
+                    Route::post('/credits/grant', 'grant')->name('cms.credits.grant');
+                });
+            });
+
+            // Support Tickets — raised by Agents/Companies from CRM Contact Us (see Crm\Support\TicketController)
+            Route::middleware(['cms.permission:support-tickets.view'])->controller(\App\Http\Controllers\CmsKit\SupportTicketController::class)->group(function () {
+                Route::get('/support-tickets', 'index')->name('cms.support-tickets.index');
+                Route::get('/support-tickets/{ticket}', 'show')->name('cms.support-tickets.show');
+                Route::get('/support-tickets/{ticket}/attachments/{message}', 'attachment')->name('cms.support-tickets.attachment')->whereNumber('message');
+                Route::middleware(['cms.permission:support-tickets.edit'])->group(function () {
+                    Route::post('/support-tickets/{ticket}/reply', 'reply')->name('cms.support-tickets.reply');
+                    Route::put('/support-tickets/{ticket}', 'update')->name('cms.support-tickets.update');
+                });
+            });
+
+            // Help Desk — the "!" quick-guide popup on each CRM / portal screen (see App\Support\PortalHelp)
+            Route::middleware(['cms.permission:help-desk.view'])->controller(\App\Http\Controllers\CmsKit\HelpGuideController::class)->group(function () {
+                Route::get('/help-desk', 'index')->name('cms.help-desk.index');
+                Route::middleware(['cms.permission:help-desk.create'])->group(function () {
+                    Route::get('/help-desk/create', 'create')->name('cms.help-desk.create');
+                    Route::post('/help-desk', 'store')->name('cms.help-desk.store');
+                });
+                Route::middleware(['cms.permission:help-desk.edit'])->group(function () {
+                    Route::get('/help-desk/{id}/edit', 'edit')->name('cms.help-desk.edit')->whereNumber('id');
+                    Route::put('/help-desk/{id}', 'update')->name('cms.help-desk.update')->whereNumber('id');
+                    Route::post('/help-desk/{id}/toggle-status', 'toggleStatus')->name('cms.help-desk.toggle-status')->whereNumber('id');
+                });
+                Route::delete('/help-desk/{id}', 'destroy')->middleware('cms.permission:help-desk.delete')->name('cms.help-desk.destroy')->whereNumber('id');
+            });
+
+            // Calculators — copy, SEO, enquiry-form text and FAQs of the public calculator pages (see App\Models\CalculatorPage)
+            Route::middleware(['cms.permission:calculators.view'])->controller(\App\Http\Controllers\CmsKit\CalculatorPageController::class)->group(function () {
+                Route::get('/calculators', 'index')->name('cms.calculators.index');
+                Route::middleware(['cms.permission:calculators.edit'])->group(function () {
+                    Route::get('/calculators/{id}/edit', 'edit')->name('cms.calculators.edit')->whereNumber('id');
+                    Route::put('/calculators/{id}', 'update')->name('cms.calculators.update')->whereNumber('id');
+                });
+            });
+
             // Coupons (discount codes Agents/Companies can apply when requesting a paid plan)
             Route::middleware(['cms.permission:coupons.view'])->group(function () {
                 Route::get('/coupons', [\App\Http\Controllers\CmsKit\CouponController::class, 'index'])->name('cms.coupons.index');
@@ -435,27 +614,9 @@ Route::middleware(['web'])->group(function () {
                 Route::get('/coupons/{id}', [\App\Http\Controllers\CmsKit\CouponController::class, 'show'])->name('cms.coupons.show');
             });
 
-            // Ad Management (image/GIF banners shown at a named placement — placement is free-text until the frontend design is final)
-            Route::middleware(['cms.permission:ads.view'])->group(function () {
-                Route::get('/ads', [AdController::class, 'index'])->name('cms.ads.index');
-
-                Route::middleware(['cms.permission:ads.create'])->group(function () {
-                    Route::get('/ads/create', [AdController::class, 'create'])->name('cms.ads.create');
-                    Route::post('/ads', [AdController::class, 'store'])->name('cms.ads.store');
-                });
-
-                Route::middleware(['cms.permission:ads.edit'])->group(function () {
-                    Route::get('/ads/{id}/edit', [AdController::class, 'edit'])->name('cms.ads.edit');
-                    Route::put('/ads/{id}', [AdController::class, 'update'])->name('cms.ads.update');
-                    Route::post('/ads/{id}/toggle-status', [AdController::class, 'toggleStatus'])->name('cms.ads.toggle-status');
-                    Route::post('/ads/reorder', [AdController::class, 'reorder'])->name('cms.ads.reorder');
-                });
-
-                Route::middleware(['cms.permission:ads.delete'])->group(function () {
-                    Route::delete('/ads/{id}', [AdController::class, 'destroy'])->name('cms.ads.destroy');
-                    Route::post('/ads/bulk-action', [AdController::class, 'bulkAction'])->name('cms.ads.bulk-action');
-                });
-            });
+            // Ad Management moved to the CRM (CRM › Advertisements — MW Realty ads, client ad review, placements).
+            // The old admin URL stays as a redirect for bookmarks and the sidebar link.
+            Route::get('/ads', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'ads'])->middleware('cms.permission:ads.view')->name('cms.ads.index');
 
             // Landing Pages (template pages sharing the Blog field shape, or fully custom HTML/CSS)
             Route::middleware(['cms.permission:landing-pages.view'])->group(function () {
@@ -511,7 +672,21 @@ Route::middleware(['web'])->group(function () {
     });
 });
 
+// --- Agent/Company CRM web app (Vue, resources/js/crm) — replaces the /portal screens module by
+// module; its data comes from /api/crm/* (routes/crm.php). Same sign-in as the portal: an
+// agent/company portal session, or a Super Admin's CMS session for the global view.
+// The two-factor set-up screen is where portal.2fa sends an account that has to set it up (or skip
+// it, after sign-up) — so it's the one CRM page served without that check.
+Route::get('/crm/security/two-factor', \App\Http\Controllers\Crm\CrmAppController::class)
+    ->name('crm.two-factor')->middleware('portal.or.cms');
+Route::get('/crm/{any?}', \App\Http\Controllers\Crm\CrmAppController::class)
+    ->where('any', '.*')->name('crm.app')->middleware(['portal.or.cms', 'portal.2fa']);
+
 // --- Agent/Company self-service portal (separate credentials from the CMS admin) ---
+// Facebook Login comes back here (public — the one-time OAuth state identifies the Super Admin who started it).
+Route::get('/integrations/facebook/callback', [\App\Http\Controllers\Crm\Integrations\FacebookController::class, 'callback'])
+    ->name('integrations.facebook.callback')->middleware('throttle:30,1');
+
 Route::prefix('portal')->name('portal.')->group(function () {
     Route::middleware(['guest:portal'])->group(function () {
         Route::get('/register', [PortalAuthController::class, 'showRegister'])->name('register');
@@ -520,132 +695,143 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('/resend-otp', [PortalAuthController::class, 'resendOtp'])->name('resend-otp')->middleware('throttle:otp-verify');
         Route::get('/login', [PortalAuthController::class, 'showLogin'])->name('login');
         Route::post('/login', [PortalAuthController::class, 'login'])->name('login.store')->middleware('throttle:admin-login');
+        // Login steps after the password: emailed code for a new device, then the authenticator-app code.
+        Route::post('/login/verify-email', [PortalAuthController::class, 'verifyLoginEmail'])->name('login.verify-email')->middleware('throttle:otp-verify');
+        Route::post('/login/resend-email', [PortalAuthController::class, 'resendLoginEmail'])->name('login.resend-email')->middleware('throttle:otp-verify');
+        Route::post('/login/two-factor', [PortalAuthController::class, 'verifyLoginTwoFactor'])->name('login.two-factor')->middleware('throttle:otp-verify');
+
+        // Set-password link for an agent account an agency created (emailed on admin approval).
+        Route::get('/agent-setup/{agent}', [\App\Http\Controllers\Portal\AgentAccountSetupController::class, 'show'])->name('agent-setup.show')->middleware('signed');
+        Route::post('/agent-setup/{agent}', [\App\Http\Controllers\Portal\AgentAccountSetupController::class, 'store'])->name('agent-setup.store')->middleware(['signed', 'throttle:otp-verify']);
     });
 
-    Route::middleware(['auth:portal'])->group(function () {
+    Route::middleware(['auth:portal', 'portal.2fa'])->group(function () {
         Route::post('/logout', [PortalAuthController::class, 'logout'])->name('logout');
 
-        Route::get('/profile/documents/{field}', [\App\Http\Controllers\DocumentController::class, 'own'])->name('profile.document');
-
-        // Self-service profile — available even while pending/rejected, since
-        // completing or fixing it is exactly what unblocks approval.
-        Route::get('/profile', [PortalProfileController::class, 'edit'])->name('profile.edit');
-        Route::post('/profile', [PortalProfileController::class, 'update'])->name('profile.update');
-        Route::post('/profile/documents/{field}', [PortalProfileController::class, 'uploadDocument'])->name('profile.upload-document');
-        Route::delete('/profile/documents/{field}', [PortalProfileController::class, 'removeDocument'])->name('profile.remove-document');
-        Route::post('/profile/resubmit', [PortalProfileController::class, 'submitForApproval'])->name('profile.resubmit');
-        Route::post('/profile/email/request', [PortalProfileController::class, 'requestEmailChange'])->name('profile.email.request')->middleware('throttle:otp-verify');
-        Route::post('/profile/email/verify', [PortalProfileController::class, 'verifyEmailChange'])->name('profile.email.verify')->middleware('throttle:otp-verify');
+        // My Profile, Security (two-factor) and Plans moved to the CRM app (/crm/profile, /crm/security,
+        // /crm/plans — data from routes/crm.php). These names stay as redirects for links already sent
+        // (KYC / document / renewal emails, notifications, invoice emails, Stripe return URLs).
+        Route::controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->group(function () {
+            Route::get('/security', 'security')->name('security');
+            // Reachable while portal.2fa holds the account back (EnsurePortalTwoFactor::ALLOWED_ROUTES).
+            Route::get('/two-factor/setup', 'twoFactorSetup')->name('two-factor.setup');
+            Route::get('/profile', 'profile')->name('profile.edit');
+        });
 
         // Bell-icon notifications
         Route::post('/notifications/{id}/read', [PortalNotificationController::class, 'markRead'])->name('notifications.read');
         Route::post('/notifications/read-all', [PortalNotificationController::class, 'markAllRead'])->name('notifications.read-all');
 
-        // Self-service plan upgrade — portal guard only, a Super Admin doesn't request plans for itself.
-        Route::get('/plans', [PortalPlanController::class, 'index'])->name('plans.index');
-        Route::post('/plans/request', [PortalPlanController::class, 'request'])->name('plans.request');
-        Route::post('/plans/change-preview', [PortalPlanController::class, 'previewChange'])->name('plans.change-preview');
-        Route::post('/plans/subscription/keep-plan', [PortalPlanController::class, 'keepCurrentPlan'])->name('plans.subscription.keep-plan');
-        Route::get('/plans/payments', [PortalPlanController::class, 'payments'])->name('plans.payments');
-        Route::get('/plans/payments/{id}/invoice', [PortalPlanController::class, 'invoice'])->name('plans.payments.show');
-        Route::get('/plans/payments/{id}/invoice.pdf', [PortalPlanController::class, 'invoicePdf'])->name('plans.payments.pdf');
-        Route::get('/plans/checkout/success',[PortalPlanController::class, 'checkoutSuccess'])->name('plans.checkout.success');
-        Route::post('/plans/subscription/cancel', [PortalPlanController::class, 'cancelSubscription'])->name('plans.subscription.cancel');
-        Route::post('/plans/subscription/resume', [PortalPlanController::class, 'resumeSubscription'])->name('plans.subscription.resume');
-        Route::post('/plans/billing-portal', [PortalPlanController::class, 'billingPortal'])->name('plans.billing-portal');
-        Route::post('/plans/coupon-check',[PortalPlanController::class, 'checkCoupon'])->name('plans.coupon-check')->middleware('throttle:20,1');
+        // Module help guides (top bar "!" icon) — remember which ones opened by themselves already.
+        Route::post('/help/{topic}/seen', [\App\Http\Controllers\Portal\PortalHelpController::class, 'seen'])->name('help.seen');
 
-        // Contact Us — portal guard only, reaches MW Realty support (not meaningful for admin browsing).
-        Route::get('/contact', [\App\Http\Controllers\Portal\PortalContactController::class, 'index'])->name('contact.index');
-        Route::post('/contact', [\App\Http\Controllers\Portal\PortalContactController::class, 'store'])->name('contact.store');
+        Route::controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->group(function () {
+            Route::get('/plans', 'plans')->name('plans.index');
+            Route::get('/plans/checkout', 'planCheckout')->name('plans.checkout');
+            // Stripe-hosted checkouts started before the move still come back here with ?session_id=.
+            Route::get('/plans/checkout/success', 'plans')->name('plans.checkout.success');
+            Route::get('/plans/payments', 'planPayments')->name('plans.payments');
+            Route::get('/plans/payments/{id}/invoice', 'planInvoice')->name('plans.payments.show')->whereNumber('id');
+            Route::get('/plans/payments/{id}/invoice.pdf', 'planInvoice')->name('plans.payments.pdf')->whereNumber('id');
+        });
+
+        // My Agency — an agent's own agency membership: invitations, join requests, leaving.
+        Route::prefix('agency')->name('agency.')->controller(\App\Http\Controllers\Portal\AgencyController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/search', 'searchAgencies')->name('search')->middleware('throttle:120,1');
+            Route::post('/request', 'requestToJoin')->name('request')->middleware('portal.approved');
+            Route::post('/requests/{id}/cancel', 'cancelRequest')->name('requests.cancel');
+            Route::post('/invitations/{id}/accept', 'acceptInvitation')->name('invitations.accept')->middleware('portal.approved');
+            Route::post('/invitations/{id}/decline', 'declineInvitation')->name('invitations.decline');
+            Route::post('/leave', 'leave')->name('leave');
+            Route::post('/properties/{id}/transfer', 'transferProperty')->name('properties.transfer')->middleware('portal.approved');
+        });
+
+        // Contact Us moved to the CRM app (/crm/contact — data from routes/crm.php, admin side is
+        // cms.support-tickets.*). These names stay as redirects for links already sent (ticket notifications).
+        Route::prefix('contact')->name('contact.')->controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->group(function () {
+            Route::get('/', 'contact')->name('index');
+            Route::get('/tickets/create', 'contactCreate')->name('create');
+            Route::get('/tickets/{ticket}', 'contactTicket')->name('show')->whereNumber('ticket');
+        });
     });
 
     // Shared by Super Admin (global view) and Agent/Company (own-data view) —
     // either session is accepted; controllers scope data per guard.
-    Route::middleware(['portal.or.cms'])->group(function () {
-        Route::get('/dashboard', [PortalDashboardController::class, 'index'])->name('dashboard');
+    Route::middleware(['portal.or.cms', 'portal.2fa'])->group(function () {
+        // Dashboard moved to the CRM app (/crm/dashboard); the name stays as a redirect for existing links.
+        Route::get('/dashboard', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'dashboard'])->name('dashboard');
 
-        // Real (server-side) gating on top of the create()/store()/toggleStatus() controller's own
-        // inline "approved only" checks — index/edit/update/destroy had none at all before this.
-        Route::get('/properties', [PortalPropertyController::class, 'index'])->name('properties.index')->middleware('portal.approved');
-        Route::get('/properties/create', [PortalPropertyController::class, 'create'])->name('properties.create');
-        Route::post('/properties', [PortalPropertyController::class, 'store'])->name('properties.store');
-        Route::post('/properties/bulk-action', [PortalPropertyController::class, 'bulkAction'])->name('properties.bulk-action')->middleware('portal.approved');
-        Route::post('/properties/{id}/feature', [PortalPropertyController::class, 'feature'])->name('properties.feature')->middleware('portal.approved');
-        Route::post('/properties/{id}/unfeature', [PortalPropertyController::class, 'unfeature'])->name('properties.unfeature')->middleware('portal.approved');
-        Route::post('/properties/reorder',[PortalPropertyController::class, 'reorder'])->name('properties.reorder')->middleware('portal.approved');
-        Route::get('/properties/{id}/edit', [PortalPropertyController::class, 'edit'])->name('properties.edit')->middleware('portal.approved');
-        Route::put('/properties/{id}', [PortalPropertyController::class, 'update'])->name('properties.update')->middleware('portal.approved');
-        Route::delete('/properties/{id}', [PortalPropertyController::class, 'destroy'])->name('properties.destroy')->middleware('portal.approved');
-        Route::get('/properties/{id}', [PortalPropertyController::class, 'show'])->name('properties.show');
-        Route::delete('/properties/{propertyId}/images/{imageId}', [PortalPropertyController::class, 'destroyImage'])->name('properties.images.destroy');
-        Route::delete('/properties/{propertyId}/images', [PortalPropertyController::class, 'destroyAllImages'])->name('properties.images.destroy-all');
-        Route::post('/properties/{propertyId}/images/reorder', [PortalPropertyController::class, 'reorderImages'])->name('properties.images.reorder');
-        Route::post('/properties/{id}/toggle-status', [PortalPropertyController::class, 'toggleStatus'])->name('properties.toggle-status');
-        // Feeds the property form's Type -> Place cascading Nearby Places picker — reachable by
-        // both a portal agent/company and an admin browsing the portal.
-        Route::get('/properties/nearby-places-by-type', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'byType'])->name('properties.nearby-places-by-type');
+        // Properties / Commercial moved to the CRM app (/crm/properties, /crm/commercial — data from
+        // routes/crm.php). These names stay as redirects so existing links (emails, notifications,
+        // CMS dashboard, other portal screens) open the new screens; the query string is carried over.
+        Route::controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->group(function () {
+            Route::get('/properties', 'properties')->name('properties.index');
+            Route::get('/properties/create', 'propertyCreate')->name('properties.create');
+            Route::get('/properties/{id}', 'property')->name('properties.show')->whereNumber('id');
+            Route::get('/properties/{id}/edit', 'propertyEdit')->name('properties.edit')->whereNumber('id');
+            Route::get('/commercial', 'commercial')->name('commercial.index');
+            Route::get('/commercial/create', 'commercialCreate')->name('commercial.create');
+            Route::get('/commercial/{id}', 'property')->name('commercial.show')->whereNumber('id');
+            Route::get('/commercial/{id}/edit', 'propertyEdit')->name('commercial.edit')->whereNumber('id');
+        });
 
-        // Agent roster — a Company manages its own agents; Super Admin sees every
-        // agent across every agency (see AgentController::isAdmin()/company()).
-        Route::get('/agents', [\App\Http\Controllers\Portal\AgentController::class, 'index'])->name('agents.index');
-        Route::get('/agents/create', [\App\Http\Controllers\Portal\AgentController::class, 'create'])->name('agents.create');
-        Route::post('/agents', [\App\Http\Controllers\Portal\AgentController::class, 'store'])->name('agents.store');
+        // Sold Listings, Listing Permits and Premium moved to the CRM app (/crm/sold-listings,
+        // /crm/listing-permits, /crm/premium — data from routes/crm.php). These names stay as redirects
+        // for links already sent (listing-review emails and notifications) and other screens.
+        Route::controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->group(function () {
+            Route::get('/sold-listings', 'soldListings')->name('sold.index');
+            Route::get('/listing-approvals', 'listingPermits')->name('listing-approvals.index');
+            Route::get('/listing-approvals/{id}', 'listingPermit')->name('listing-approvals.show')->whereNumber('id');
+            Route::get('/featured', 'premium')->name('featured.index');
+        });
 
-        // Nearby Places — shared list managed by Super Admin, plus each Agent/Company's own places
-        // (scoping is done in NearbyPlaceController). Approved accounts only, like Properties.
-        Route::middleware('portal.approved')->group(function () {
-        Route::get('/nearby-places',[\App\Http\Controllers\Portal\NearbyPlaceController::class, 'index'])->name('nearby-places.index');
-        Route::get('/nearby-places/create', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'create'])->name('nearby-places.create');
-        Route::post('/nearby-places', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'store'])->name('nearby-places.store');
-        Route::get('/nearby-places/{id}/edit', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'edit'])->name('nearby-places.edit');
-        Route::put('/nearby-places/{id}', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'update'])->name('nearby-places.update');
-        Route::post('/nearby-places/{id}/toggle-status', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'toggleStatus'])->name('nearby-places.toggle-status');
-        Route::delete('/nearby-places/{id}', [\App\Http\Controllers\Portal\NearbyPlaceController::class, 'destroy'])->name('nearby-places.destroy');
+        // Marketing Properties, Agents, Nearby Places and Listing Settings (watermark) moved to the CRM
+        // app (/crm/marketing-properties, /crm/agents, /crm/nearby-places, /crm/listing-settings — data
+        // from routes/crm.php). These names stay as redirects for links already sent (agency membership
+        // emails and notifications) and other screens.
+        Route::controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->group(function () {
+            Route::get('/marketing-properties', 'marketingProperties')->name('marketing.index');
+            Route::get('/agents', 'agents')->name('agents.index');
+            Route::get('/agents/create', 'agentCreate')->name('agents.create');
+            Route::get('/agents/{id}', 'agent')->name('agents.show')->whereNumber('id');
+            Route::get('/nearby-places', 'nearbyPlaces')->name('nearby-places.index');
+            Route::get('/nearby-places/create', 'nearbyPlaceCreate')->name('nearby-places.create');
+            Route::get('/nearby-places/{id}/edit', 'nearbyPlaceEdit')->name('nearby-places.edit')->whereNumber('id');
+            Route::get('/listing-settings/watermark', 'watermark')->name('watermark.edit');
         });
 
         // Real (server-side) gating for Leads/Master/Reports — previously only cosmetically
         // "locked" in the sidebar with no enforcement at all.
         Route::prefix('crm')->name('crm.')->middleware('portal.approved')->group(function () {
-            Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
-            Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
-            Route::put('/leads/table-columns', [LeadController::class, 'updateTableColumns'])->name('leads.table-columns.update');
-            Route::delete('/leads/bulk-delete', [LeadController::class, 'bulkDestroy'])->name('leads.bulk-delete');
-            Route::get('/leads/export', [LeadController::class, 'export'])->name('leads.export');
-            Route::get('/leads/import', [LeadController::class, 'importForm'])->name('leads.import.form');
-            Route::post('/leads/import', [LeadController::class, 'import'])->name('leads.import');
-            Route::get('/leads/import/template', [LeadController::class, 'downloadImportTemplate'])->name('leads.import.template');
-            Route::get('/leads/trashed', [LeadController::class, 'trashed'])->name('leads.trashed');
-            Route::post('/leads/{id}/restore', [LeadController::class, 'restore'])->name('leads.restore');
-            Route::delete('/leads/{id}/force', [LeadController::class, 'forceDestroy'])->name('leads.force-delete');
-            Route::patch('/leads/{id}/stage', [LeadController::class, 'updateStage'])->name('leads.stage.update');
-            Route::patch('/leads/{id}/tags', [LeadController::class, 'syncTags'])->name('leads.tags.update');
-            Route::get('/leads/{id}', [LeadController::class, 'show'])->name('leads.show');
-            Route::put('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
-            Route::delete('/leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
-            Route::post('/leads/{id}/notes', [LeadNoteController::class, 'store'])->name('leads.notes.store');
+            // Leads moved to the CRM app (/crm/leads, data from routes/crm.php). These names stay as
+            // redirects so existing links (emails, notifications, other screens) open the new screens.
+            Route::get('/leads', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'leads'])->name('leads.index');
+            Route::get('/leads/trashed', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'trashedLeads'])->name('leads.trashed');
+            Route::get('/leads/{id}', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'lead'])->name('leads.show')->whereNumber('id');
 
-            Route::prefix('master')->name('master.')->group(function () {
-                Route::get('/stages', [LeadStageController::class, 'index'])->name('stages.index');
-                Route::post('/stages', [LeadStageController::class, 'store'])->name('stages.store');
-                Route::put('/stages/{id}', [LeadStageController::class, 'update'])->name('stages.update');
-                Route::delete('/stages/{id}', [LeadStageController::class, 'destroy'])->name('stages.destroy');
-                Route::post('/stages/reorder', [LeadStageController::class, 'reorder'])->name('stages.reorder');
-                Route::post('/stages/{id}/set-default', [LeadStageController::class, 'setDefault'])->name('stages.set-default');
+            // Website Leads moved to the CRM app (/crm/website-leads, data from routes/crm.php).
+            Route::get('/website-leads', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'websiteLeads'])->name('website-leads.index');
+            Route::get('/website-leads/{id}', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'websiteLead'])->name('website-leads.show')->whereNumber('id');
 
-                Route::get('/tags', [LeadTagController::class, 'index'])->name('tags.index');
-                Route::post('/tags', [LeadTagController::class, 'store'])->name('tags.store');
-                Route::put('/tags/{id}', [LeadTagController::class, 'update'])->name('tags.update');
-                Route::delete('/tags/{id}', [LeadTagController::class, 'destroy'])->name('tags.destroy');
+            // Lead Insights — website activity of the viewer's own leads (property views, time spent, AI chats…).
+            Route::get('/lead-insights', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'leadInsights'])->name('lead-insights.index');
 
-                Route::get('/sources', [LeadSourceController::class, 'index'])->name('sources.index');
-                Route::post('/sources', [LeadSourceController::class, 'store'])->name('sources.store');
-                Route::put('/sources/{id}', [LeadSourceController::class, 'update'])->name('sources.update');
-                Route::delete('/sources/{id}', [LeadSourceController::class, 'destroy'])->name('sources.destroy');
-                Route::post('/sources/reorder', [LeadSourceController::class, 'reorder'])->name('sources.reorder');
+            // Integrations moved to the CRM app (/crm/integrations/*). These names stay as redirects for
+            // links already sent (Facebook reconnect emails, Property Finder notifications).
+            Route::controller(\App\Http\Controllers\Crm\LegacyRedirectController::class)->prefix('integrations')->name('integrations.')->group(function () {
+                Route::get('/', 'integrations')->name('index');
+                Route::get('/facebook', 'facebookIntegration')->name('facebook');
+                Route::get('/property-finder', 'propertyFinder')->name('property-finder.show');
+                Route::get('/property-finder/review', 'propertyFinderReview')->name('property-finder.review');
             });
 
-            Route::get('/reports', [PortalReportController::class, 'index'])->name('reports.index');
+            // Master (Stage / Tag / Source / Property Options) moved to the CRM app (routes/crm.php,
+            // /crm/master/*). This name stays as a redirect (?list=… carried over) for existing links.
+            Route::get('/master/property-options', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'propertyOptions'])->name('master.property-options.index');
+
+            // Reports moved to the CRM app (/crm/reports/*); the name stays as a redirect for existing links.
+            Route::get('/reports/{report?}', [\App\Http\Controllers\Crm\LegacyRedirectController::class, 'reports'])->name('reports.index')->whereIn('report', ['leads', 'properties', 'sales', 'revenue', 'agents']);
         });
     });
 });
@@ -653,6 +839,9 @@ Route::prefix('portal')->name('portal.')->group(function () {
 Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->middleware(['web', 'cms.auth'])->group(function () {
     Route::post('/sitemap/generate', [\App\Http\Controllers\CmsKit\SitemapController::class, 'generate'])->name('cms.sitemap.generate')->middleware('cms.permission:sitemap.edit');
     Route::post('/seo/llms-txt/generate', [\App\Http\Controllers\CmsKit\LlmsTxtController::class, 'generate'])->name('cms.llms-txt.generate')->middleware('cms.permission:llms-txt.edit');
+    // Editing a redirect goes through the app controller's loop check (adding already does, via
+    // the SafeUrlRedirectService binding) — the package version writes the row unchecked.
+    Route::put('/seo/url-redirects/{url_redirect}', [\App\Http\Controllers\CmsKit\UrlRedirectController::class, 'update'])->name('cms.url-redirects.update')->middleware(['cms.permission:url-redirects.view', 'cms.permission:url-redirects.edit']);
 });
 
 // Public — static marketing/front-end pages, served by the Vue SPA (resources/js/router).
@@ -662,6 +851,7 @@ Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->middleware(['web',
 // else (auth/profile/thank-you) stays a bare Route::view since there's nothing to index.
 Route::get('/about', [SpaController::class, 'staticPage'])->defaults('pageKey', 'about');
 Route::get('/commercial', [SpaController::class, 'staticPage'])->defaults('pageKey', 'commercial');
+Route::get('/commercial/map', [SpaController::class, 'staticPage'])->defaults('pageKey', 'commercial');
 Route::get('/agents', [SpaController::class, 'staticPage'])->defaults('pageKey', 'agents');
 Route::get('/agent-details/{slug}', [SpaController::class, 'agentDetails']);
 Route::view('/agent-login', 'welcome');
@@ -672,7 +862,15 @@ Route::view('/agency-login', 'welcome');
 Route::view('/agency-signup', 'welcome');
 Route::get('/blogs', [SpaController::class, 'staticPage'])->defaults('pageKey', 'blog');
 Route::get('/blog-details/{slug}', [SpaController::class, 'blogDetails']);
+Route::get('/market-insights', [SpaController::class, 'staticPage'])->defaults('pageKey', 'market-insights');
+Route::get('/market-insights/{slug}', [SpaController::class, 'marketInsightDetails']);
+Route::get('/careers', [SpaController::class, 'staticPage'])->defaults('pageKey', 'careers');
+Route::get('/careers/{slug}', [SpaController::class, 'careerDetails']);
 Route::get('/contact', [SpaController::class, 'staticPage'])->defaults('pageKey', 'contact');
+Route::get('/mortgage-calculator', [SpaController::class, 'staticPage'])->defaults('pageKey', 'mortgage-calculator');
+Route::get('/eligibility-calculator', [SpaController::class, 'staticPage'])->defaults('pageKey', 'eligibility-calculator');
+Route::get('/rent-vs-buy-calculator', [SpaController::class, 'staticPage'])->defaults('pageKey', 'rent-vs-buy-calculator');
+Route::get('/refinance-calculator', [SpaController::class, 'staticPage'])->defaults('pageKey', 'refinance-calculator');
 Route::view('/login', 'welcome');
 Route::view('/signup', 'welcome');
 Route::view('/verify-email', 'welcome');
@@ -680,9 +878,18 @@ Route::view('/forgot-password', 'welcome');
 Route::view('/reset-password', 'welcome');
 Route::view('/profile', 'welcome');
 Route::get('/properties', [SpaController::class, 'staticPage'])->defaults('pageKey', 'properties');
+// Map view of the same listings (same filters, same SEO page) — see PropertyMap.vue.
+Route::get('/properties/map', [SpaController::class, 'staticPage'])->defaults('pageKey', 'properties');
+Route::get('/premium-properties', [SpaController::class, 'staticPage'])->defaults('pageKey', 'premium-properties');
+Route::get('/premium-properties/map', [SpaController::class, 'staticPage'])->defaults('pageKey', 'premium-properties');
+// Super Admin's Marketing Properties list — the home "Realty Property" section's view-all page.
+Route::get('/marketing-properties', [SpaController::class, 'staticPage'])->defaults('pageKey', 'marketing-properties');
+Route::get('/marketing-properties/map', [SpaController::class, 'staticPage'])->defaults('pageKey', 'marketing-properties');
 Route::get('/property-details/{slug}', [SpaController::class, 'propertyDetails']);
 Route::get('/terms-and-conditions', [SpaController::class, 'staticPage'])->defaults('pageKey', 'terms');
 Route::get('/privacy-policy', [SpaController::class, 'staticPage'])->defaults('pageKey', 'privacy');
+// Status of a Facebook data deletion request (the URL the deletion callback hands back to Facebook).
+Route::get('/facebook/data-deletion', [\App\Http\Controllers\Api\FacebookDataDeletionController::class, 'status'])->name('facebook.data-deletion.status')->middleware('throttle:60,1');
 Route::get('/security-policy', [SpaController::class, 'staticPage'])->defaults('pageKey', 'security');
 Route::get('/cookie-settings', [SpaController::class, 'staticPage'])->defaults('pageKey', 'cookie');
 Route::view('/thank-you', 'welcome');
@@ -698,5 +905,9 @@ Route::post('/{slug}/enquiry', [\App\Http\Controllers\LandingPageEnquiryControll
 // must always get first chance to match. The (?!...) guard is a belt-and-braces exclusion of the
 // app's other top-level path segments, in case any of them is ever reached without a deeper segment.
 Route::get('/{slug}', [\App\Http\Controllers\LandingPageController::class, 'show'])
-    ->where('slug', '^(?!(admin|portal|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|contact|login|signup|verify-email|forgot-password|reset-password|profile|properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
+    ->where('slug', '^(?!(admin|portal|crm|api|storage|about|commercial|agents|agent-details|agent-login|agent-signup|agencies|agency-details|agency-login|agency-signup|blogs|blog-details|market-insights|careers|contact|mortgage-calculator|eligibility-calculator|rent-vs-buy-calculator|refinance-calculator|login|signup|verify-email|forgot-password|reset-password|profile|properties|premium-properties|marketing-properties|property-details|terms-and-conditions|privacy-policy|security-policy|cookie-settings|thank-you)$).+$')
     ->name('landing-pages.show');
+
+// Anything no route above claims (e.g. /some/unknown/page) — the site's own 404 page, served with a
+// real 404 status and the normal web middleware, instead of Laravel's bare "404 | Not Found" screen.
+Route::fallback([SpaController::class, 'missing']);

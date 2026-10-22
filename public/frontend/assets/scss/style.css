@@ -4407,7 +4407,7 @@ input:focus-visible ~ .crm-modal__checkbox-box {
   background: #f8e9ec;
 }
 .mw-projects__save.is-saved img {
-  filter: invert(22%) sepia(54%) saturate(1800%) hue-rotate(325deg) brightness(90%);
+  filter: none;
 }
 .mw-projects__nav {
   position: absolute;
@@ -5690,6 +5690,8 @@ input:focus-visible ~ .crm-modal__checkbox-box {
 }
 .mw-luxury__save.is-saved {
   color: #e31c3d;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }
 .mw-luxury__save.is-saved svg {
   fill: #e31c3d;
@@ -6092,8 +6094,8 @@ input:focus-visible ~ .crm-modal__checkbox-box {
 }
 .mw-realty__save {
   position: absolute;
+  top: 12px;
   right: 12px;
-  bottom: 15px;
   z-index: 2;
   display: inline-flex;
   align-items: center;
@@ -6103,8 +6105,9 @@ input:focus-visible ~ .crm-modal__checkbox-box {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.42);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.94);
+  color: #244374;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   cursor: pointer;
   transition: transform 0.2s ease, color 0.2s ease;
 }
@@ -6120,6 +6123,7 @@ input:focus-visible ~ .crm-modal__checkbox-box {
 }
 .mw-realty__save.is-saved {
   color: #e31c3d;
+  background: #fff;
 }
 .mw-realty__save.is-saved svg {
   fill: currentColor;
@@ -6270,8 +6274,8 @@ input:focus-visible ~ .crm-modal__checkbox-box {
   .mw-realty__save {
     width: 32px;
     height: 32px;
+    top: 8px;
     right: 8px;
-    bottom: 10px;
   }
   .mw-realty__save svg {
     width: 16px;
@@ -6545,6 +6549,8 @@ input:focus-visible ~ .crm-modal__checkbox-box {
 }
 .mw-highlight__save.is-saved {
   color: #e31c3d;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }
 .mw-highlight__save.is-saved svg {
   fill: #e31c3d;
@@ -8006,55 +8012,17 @@ main {
 .agents-page {
   --about-pin-top: 80px;
 }
-.about-page .mw-header__actions .mw-dropdown:has(.mw-header__currency),
-.contact-page .mw-header__actions .mw-dropdown:has(.mw-header__currency),
-.agents-page .mw-header__actions .mw-dropdown:has(.mw-header__currency) {
-  display: none;
-}
+/* Inner pages share the home header's menu design (same links, typography, buttons and the
+   currency switcher), only kept a little more compact so each page's hero offset still fits. */
 .about-page header.mw-header--light,
 .contact-page header.mw-header--light,
 .agents-page header.mw-header--light {
-  padding: 13px 0;
-}
-@media (min-width: 1200px) {
-  .about-page header.mw-header--light,
-  .contact-page header.mw-header--light,
-  .agents-page header.mw-header--light {
-    padding: 13px 0;
-  }
+  padding: 12px 0;
 }
 .about-page header.mw-header--light .mw-header__logo,
 .contact-page header.mw-header--light .mw-header__logo,
 .agents-page header.mw-header--light .mw-header__logo {
-  width: 85px;
-}
-.about-page header.mw-header--light .mw-nav,
-.contact-page header.mw-header--light .mw-nav,
-.agents-page header.mw-header--light .mw-nav {
-  gap: 50px;
-}
-.about-page header.mw-header--light .mw-nav > li > a,
-.contact-page header.mw-header--light .mw-nav > li > a,
-.agents-page header.mw-header--light .mw-nav > li > a {
-  padding: 6px 0;
-  color: #35373c;
-  font-size: 16px;
-  font-weight: 400;
-}
-.about-page header.mw-header--light .mw-header__login,
-.about-page header.mw-header--light .mw-header__lang,
-.contact-page header.mw-header--light .mw-header__login,
-.contact-page header.mw-header--light .mw-header__lang,
-.agents-page header.mw-header--light .mw-header__login,
-.agents-page header.mw-header--light .mw-header__lang {
-  min-height: 0;
-  padding: 15px 20px;
-  border-radius: 5px;
-  border-color: #e1e8ed;
-  background: #fff;
-  backdrop-filter: none;
-  font-size: 16px;
-  font-weight: 600;
+  width: clamp(96px, 5.4vw, 104px);
 }
 .about-page .mw-about-steps__num,
 .contact-page .mw-about-steps__num,
@@ -8179,12 +8147,21 @@ main {
   }
 }
 .mw-about-director__quote {
+  --collapsed-height: 152px;
   margin: 0;
   max-width: 703px;
   color: #35373c;
   font-size: clamp(20px, 1.67vw, 32px);
   font-weight: 400;
   line-height: 38px;
+  transition: max-height 0.3s ease;
+}
+.mw-about-director__quote.is-collapsed {
+  max-height: var(--collapsed-height);
+  overflow: hidden;
+}
+.mw-about-director__quote:not(.is-collapsed) {
+  max-height: 2000px;
 }
 .mw-about-director__byline {
   display: flex;
@@ -8767,6 +8744,7 @@ main {
     line-height: 22px;
   }
   .mw-about-director__quote {
+    --collapsed-height: 104px;
     font-size: 18px;
     line-height: 26px;
   }
@@ -9355,6 +9333,12 @@ html:has(.about-page) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+.mw-agents__grid.is-list-view {
+  grid-template-columns: minmax(0, 1fr);
+}
+.mw-agents__grid.is-list-view .mw-agent-card__body p {
+  max-width: none;
+}
 
 .mw-agent-card {
   display: flex;
@@ -9535,6 +9519,12 @@ html:has(.about-page) {
   min-width: 0;
   padding-right: 24px;
   border-right: 1px solid #e1e8ed;
+}
+/* Agents page: three fields (location, name, agency) instead of two. */
+@media (min-width: 768px) {
+  .mw-agencies-filter__bar--three .mw-agencies-filter__field {
+    flex-basis: 20%;
+  }
 }
 .mw-agencies-filter__field label {
   color: #35373c;
@@ -10232,6 +10222,15 @@ html:has(.about-page) {
   width: 24px;
   height: 24px;
 }
+.mw-agency-contact__link {
+  color: inherit;
+  text-decoration: none;
+  word-break: break-word;
+}
+.mw-agency-contact__link:hover {
+  color: #1b3459;
+  text-decoration: underline;
+}
 
 @media (max-width: 991px) {
   .mw-agency-profile {
@@ -10412,6 +10411,11 @@ html:has(.about-page) {
   display: block;
   width: 18px;
   height: 18px;
+}
+.mw-agent-profile__share-copied {
+  color: #244373;
+  font-size: 13px;
+  font-weight: 500;
 }
 .mw-agent-profile__bar {
   display: flex;
@@ -10666,8 +10670,11 @@ html:has(.about-page) {
   width: 24px;
   height: 24px;
 }
+.mw-agent-prop__save.is-saved {
+  background: #fdeef1;
+}
 .mw-agent-prop__save.is-saved img {
-  filter: invert(22%) sepia(54%) saturate(1800%) hue-rotate(325deg) brightness(90%);
+  filter: none;
 }
 .mw-agent-prop__nav {
   position: absolute;
@@ -10919,6 +10926,15 @@ html:has(.about-page) {
   font-size: 14px;
   font-weight: 500;
   line-height: 1;
+}
+.mw-commercial-filter__field.is-filled > label {
+  color: #ca2844;
+  font-weight: 600;
+}
+.mw-commercial-filter__field.is-filled input,
+.mw-commercial-filter__field.is-filled [data-dropdown-label] {
+  color: #1c2f4f;
+  font-weight: 700;
 }
 .mw-commercial-filter__field input {
   min-width: 0;
@@ -12246,9 +12262,344 @@ body.property-details-page main {
 .mw-property-agent.mw-agent-card {
   min-height: 0;
 }
+/* Property page contact card: the listing's agent (or agency) + the agent's agency strip (PropertyDetails.vue). */
+.mw-contact-card {
+  overflow: hidden;
+  border: 1px solid #e1e8ed;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(26, 51, 87, 0.08);
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+.mw-contact-card__banner {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  height: 84px;
+  padding: 14px 18px;
+  background:
+    radial-gradient(circle at 85% -20%, rgba(255, 255, 255, 0.16) 0, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(135deg, #244373 0%, #1a3357 70%, #8f1c33 140%);
+}
+.mw-contact-card__label {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.mw-contact-card__brand {
+  display: block;
+  height: 24px;
+  width: auto;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #fff;
+}
+.mw-contact-card__main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px 20px;
+  text-align: center;
+}
+.mw-contact-card__photo {
+  /* Positioned + z-index so it paints over the banner (also positioned) it overlaps. */
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  margin-top: -46px;
+  overflow: hidden;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: #eef2f8;
+  box-shadow: 0 8px 20px rgba(26, 51, 87, 0.18);
+}
+.mw-contact-card__photo--agency {
+  border-radius: 20px;
+}
+.mw-contact-card__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mw-contact-card__photo img.is-icon,
+.mw-contact-card__agency-logo img.is-icon {
+  width: 45%;
+  height: 45%;
+  object-fit: contain;
+  opacity: 0.7;
+}
+.mw-contact-card__name {
+  margin: 12px 0 0;
+  font-size: clamp(17px, 1.6vw, 19px);
+  font-weight: 700;
+  line-height: 1.3;
+}
+.mw-contact-card__name a {
+  color: #1a3357;
+  text-decoration: none;
+}
+.mw-contact-card__name a:hover {
+  color: #b9233c;
+}
+.mw-contact-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 6px 0 0;
+  color: #6b7094;
+  font-size: 13px;
+  font-weight: 500;
+}
+.mw-contact-card__meta span:not(.mw-contact-card__role) + span::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin: 0 10px 2px 0;
+  border-radius: 50%;
+  background: #c5cbe0;
+  vertical-align: middle;
+}
+.mw-contact-card__role {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #f8e9ec;
+  color: #b9233c;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.mw-contact-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+.mw-contact-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border: 1px solid #c9d6ea;
+  border-radius: 999px;
+  background: #f2f6fc;
+  color: #244373;
+  font-size: 11px;
+  font-weight: 600;
+}
+.mw-contact-card__areas {
+  margin: 10px 0 0;
+  color: #35373c;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.mw-contact-card__actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin-top: 18px;
+}
+.mw-contact-card__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.mw-contact-card__action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(20, 20, 21, 0.1);
+}
+.mw-contact-card__action img {
+  width: 16px;
+  height: 16px;
+}
+.mw-contact-card__action--call {
+  background: #b9233c;
+  color: #fff;
+}
+.mw-contact-card__action--call:hover {
+  background: #8f1c33;
+  color: #fff;
+}
+.mw-contact-card__action--call img {
+  filter: brightness(0) invert(1);
+}
+.mw-contact-card__action--whatsapp {
+  border: 1px solid #25d366;
+  background: #eafaf0;
+  color: #0b7a34;
+}
+.mw-contact-card__action--whatsapp:hover {
+  color: #0b7a34;
+}
+.mw-contact-card__action--email {
+  background: #e7edf7;
+  color: #244373;
+}
+.mw-contact-card__action--email:hover {
+  color: #1a3357;
+}
+.mw-contact-card__action--email img {
+  filter: invert(22%) sepia(24%) saturate(1200%) hue-rotate(180deg) brightness(90%);
+}
+.mw-contact-card__links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #eef1f6;
+}
+.mw-contact-card__divider {
+  width: 1px;
+  height: 16px;
+  background: #dbe3f1;
+}
+.mw-contact-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #6b7094;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.mw-contact-card__link:hover {
+  color: #1a3357;
+}
+.mw-contact-card__link--strong {
+  color: #244373;
+}
+.mw-contact-card__link svg,
+.mw-contact-card__agency-listings svg {
+  transition: transform 0.2s ease;
+}
+.mw-contact-card__link:hover svg,
+.mw-contact-card__agency-listings:hover svg {
+  transform: translateX(3px);
+}
+/* Agency strip. */
+.mw-contact-card__agency {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-top: 1px solid #e7ecf4;
+  background: #f6f8fc;
+}
+.mw-contact-card__agency-logo {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border: 1px solid #dbe3f1;
+  border-radius: 12px;
+  background: #fff;
+}
+.mw-contact-card__agency-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.mw-contact-card__agency-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.mw-contact-card__agency-label {
+  color: #6b7094;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mw-contact-card__agency-name {
+  overflow: hidden;
+  color: #1a3357;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mw-contact-card__agency-name:hover {
+  color: #b9233c;
+}
+.mw-contact-card__agency-listings {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 1px;
+  color: #b9233c;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.mw-contact-card__agency-actions {
+  display: flex;
+  gap: 6px;
+}
+.mw-contact-card__mini {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #fff;
+  border: 1px solid #dbe3f1;
+}
+.mw-contact-card__mini img {
+  width: 14px;
+  height: 14px;
+}
+.mw-contact-card__mini--call img {
+  filter: invert(22%) sepia(54%) saturate(1800%) hue-rotate(325deg) brightness(90%);
+}
+.mw-contact-card__mini--email img {
+  filter: invert(22%) sepia(24%) saturate(1200%) hue-rotate(180deg) brightness(90%);
+}
+.mw-contact-card__mini:hover {
+  border-color: #244373;
+}
+@media (max-width: 380px) {
+  .mw-contact-card__actions {
+    grid-template-columns: 1fr;
+  }
+}
 .mw-property-agent .mw-agent-card__body {
   gap: clamp(8px, 1vw, 10px);
-  padding: clamp(14px, 1.6vw, 16px);
+  /* Left inset matches the head's, so the text sits beside (not under) the overhanging avatar. */
+  padding: clamp(14px, 1.6vw, 16px) clamp(14px, 1.6vw, 16px) clamp(14px, 1.6vw, 16px) clamp(128px, 8vw, 137px);
+}
+@media (max-width: 767px) {
+  /* Phones: the avatar sits inside the head (position: static), so no inset is needed. */
+  .mw-property-agent .mw-agent-card__body {
+    padding: 16px 14px;
+  }
 }
 .mw-property-agent__stat {
   margin: 0;
@@ -12888,6 +13239,38 @@ body.property-details-page main {
   font-weight: 500;
 }
 
+.mw-dubai-listing__owner {
+  margin: -8px 0 24px;
+}
+.mw-dubai-listing__owner-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 6px 14px;
+  border: 1px solid #bed8ff;
+  border-radius: 100px;
+  background: #eef4ff;
+  color: #244373;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+}
+.mw-dubai-listing__owner-chip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #244373;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
 .mw-empty-state {
   grid-column: 1 / -1;
   display: flex;
@@ -12993,6 +13376,12 @@ body.property-details-page main {
 .mw-dubai-listing__grid.is-list-view {
   grid-template-columns: minmax(0, 1fr);
 }
+/* Desktop: two horizontal cards per row; tablet/mobile keep one per row. */
+@media (min-width: 992px) {
+  .mw-dubai-listing__grid.is-list-view {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 
 .mw-dubai-listing__grid.is-list-view .mw-dubai-card {
   flex-direction: row;
@@ -13011,7 +13400,13 @@ body.property-details-page main {
 }
 @media (min-width: 992px) {
   .mw-dubai-listing__grid.is-list-view .mw-projects__media {
-    width: 300px;
+    width: 240px;
+    min-height: 220px;
+  }
+}
+@media (min-width: 1400px) {
+  .mw-dubai-listing__grid.is-list-view .mw-projects__media {
+    width: 280px;
   }
 }
 
@@ -13084,8 +13479,16 @@ body.property-details-page main {
   height: 18px;
   filter: brightness(0) invert(1);
 }
-.mw-dubai-card__fav:hover img, .mw-dubai-card__fav.is-saved img {
+.mw-dubai-card__fav:hover img {
   filter: invert(22%) sepia(54%) saturate(1800%) hue-rotate(325deg) brightness(90%);
+}
+.mw-dubai-card__fav.is-saved,
+.mw-dubai-card__fav.is-saved:hover {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+.mw-dubai-card__fav.is-saved img {
+  filter: none;
 }
 .mw-dubai-card__fav:hover {
   background: rgba(0, 0, 0, 0.5);
@@ -15807,3 +16210,2560 @@ body.property-details-page main {
 }
 
 /*# sourceMappingURL=style.css.map */
+
+/* Saved property hearts: consistent red fill and a quick pop across home and listing cards. */
+@keyframes mw-heart-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+.mw-projects__save.is-saved,
+.mw-agent-prop__save.is-saved,
+.mw-dubai-card__fav.is-saved,
+.mw-realty__save.is-saved,
+.mw-luxury__save.is-saved,
+.mw-highlight__save.is-saved {
+  background-color: #fff0f2;
+  color: #e31c3d;
+  animation: mw-heart-pop 0.35s ease;
+}
+.mw-projects__save.is-saved img,
+.mw-agent-prop__save.is-saved img,
+.mw-dubai-card__fav.is-saved img {
+  filter: none;
+}
+.mw-realty__save.is-saved svg,
+.mw-luxury__save.is-saved svg,
+.mw-highlight__save.is-saved svg {
+  fill: #e31c3d;
+}
+.mw-realty__save.is-saved svg path,
+.mw-luxury__save.is-saved svg path,
+.mw-highlight__save.is-saved svg path {
+  fill: #e31c3d;
+  stroke: #e31c3d;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mw-projects__save.is-saved,
+  .mw-agent-prop__save.is-saved,
+  .mw-dubai-card__fav.is-saved,
+  .mw-realty__save.is-saved,
+  .mw-luxury__save.is-saved,
+  .mw-highlight__save.is-saved {
+    animation: none;
+  }
+}
+
+/* ---------- Properties listing: applied-filter feedback ---------- */
+/* A filter field that currently narrows the results: coloured label + bold value. */
+.mw-dubai-filter__field.is-filled > label { color: #ca2844; font-weight: 600; }
+.mw-dubai-filter__field.is-filled [data-dropdown-label],
+.mw-dubai-filter__field.is-filled input { color: #1c2f4f; font-weight: 700; }
+
+/* Newsletter subscribe feedback: focus glow, sending motion and a settled subscribed state. */
+@keyframes mw-newsletter-send {
+  /* translate/scale, not transform — the footer arrow's rotate(90deg) must survive this. */
+  from { translate: 0 0; scale: 1; }
+  to { translate: 5px 0; scale: 1.08; }
+}
+@keyframes mw-newsletter-feedback-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.mw-footer__newsletter-form,
+.mw-about-news__form {
+  transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+}
+.mw-footer__newsletter-form:focus-within,
+.mw-about-news__form:focus-within {
+  border-color: #21b6a8;
+  box-shadow: 0 0 0 3px rgba(33, 182, 168, .16), 0 0 18px rgba(33, 182, 168, .12);
+}
+.mw-footer__newsletter-form.is-submitting,
+.mw-about-news__form.is-submitting {
+  border-color: #21b6a8;
+  box-shadow: 0 0 0 3px rgba(33, 182, 168, .14);
+}
+.mw-footer__newsletter-form.is-submitting button img,
+.mw-about-news__form.is-submitting button img {
+  animation: mw-newsletter-send .55s ease-in-out infinite alternate;
+}
+.mw-footer__newsletter-form.is-subscribed,
+.mw-about-news__form.is-subscribed {
+  border-color: #21b6a8;
+  box-shadow: 0 0 0 3px rgba(33, 182, 168, .12);
+}
+.mw-footer__newsletter-form button,
+.mw-about-news__form button {
+  transition: color .2s ease, background-color .2s ease, transform .2s ease;
+}
+.mw-footer__newsletter-form button:hover:not(:disabled),
+.mw-about-news__form button:hover:not(:disabled) {
+  transform: translateX(2px);
+}
+.mw-footer__newsletter-form button:disabled,
+.mw-about-news__form button:disabled {
+  cursor: wait;
+}
+.mw-about-news__signup { width: min(636px, 100%); }
+.mw-about-news__signup .mw-form-feedback,
+.mw-footer__newsletter .mw-form-feedback {
+  animation: mw-newsletter-feedback-in .25s ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mw-footer__newsletter-form.is-submitting button img,
+  .mw-about-news__form.is-submitting button img,
+  .mw-about-news__signup .mw-form-feedback,
+  .mw-footer__newsletter .mw-form-feedback {
+    animation: none;
+  }
+}
+
+/* Search request trigger and drawer shared by public agent and agency profiles. */
+.mw-profile-request__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid #244373;
+  border-radius: 5px;
+  background: #244373;
+  color: #fff;
+  font: 500 14px/1.3 "Plus Jakarta Sans", sans-serif;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.mw-profile-request__trigger:hover {
+  background: #1c355a;
+  transform: translateY(-1px);
+}
+.mw-profile-request__form {
+  margin-top: 24px;
+  padding: 0;
+  box-shadow: none;
+}
+.mw-profile-request__drawer.offcanvas {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 1200;
+  width: min(640px, 96vw) !important;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  visibility: hidden;
+  transform: translateX(100%);
+  background: #fff;
+  box-shadow: -18px 0 40px rgba(16, 24, 32, 0.18);
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.32s;
+}
+.mw-profile-request__drawer.offcanvas.show,
+.mw-profile-request__drawer.offcanvas.showing {
+  visibility: visible;
+}
+.mw-profile-request__drawer.offcanvas.show {
+  transform: translateX(0);
+}
+.mw-profile-request__drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  gap: 16px;
+  padding: 22px 26px;
+  border-bottom: 1px solid #e1e8ed;
+}
+.mw-profile-request__drawer-head .offcanvas-title {
+  color: #1c2f4f;
+  font-size: 21px;
+  font-weight: 600;
+}
+.mw-profile-request__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 50%;
+  background: #f1f4f8;
+  color: #1c2f4f;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+.mw-profile-request__drawer-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 24px 26px;
+}
+.mw-profile-request__drawer-subtitle {
+  margin: 0 0 20px;
+  color: #667085;
+}
+.mw-profile-request__form {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.mw-profile-request__form .quote-modal__fields {
+  padding: 0 0 24px;
+}
+.mw-profile-request__form .crm-modal__footer {
+  padding: 0;
+}
+@media (max-width: 640px) {
+  .mw-profile-request__trigger { min-height: 40px; padding: 9px 12px; font-size: 12px; }
+  .mw-profile-request__drawer-body { padding: 20px 16px; }
+  .mw-profile-request__drawer-head { padding: 18px 16px; }
+}
+
+/* "Clear Filters" doubles as the applied-filter indicator: a count badge when anything is active. */
+.mw-dubai-toolbar__clear { display: inline-flex; align-items: center; gap: 0.4rem; }
+.mw-dubai-toolbar__clear.has-filters { color: #ca2844; }
+.mw-dubai-toolbar__clear-count {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px;
+  border-radius: 50px; background: #ca2844; color: #fff; font-size: 0.72rem; font-weight: 700; line-height: 1;
+}
+
+/* ---------- Location autocomplete (Home search, Properties listing, Commercial) ---------- */
+.mw-loc { position: relative; flex: 1 1 auto; min-width: 0; width: 100%; }
+.mw-loc > input { width: 100%; }
+.mw-loc__menu {
+  position: absolute; top: calc(100% + 10px); left: -12px; z-index: 60; min-width: 360px; max-width: min(460px, 92vw);
+  max-height: 330px; overflow-y: auto; margin: 0; padding: 6px; list-style: none; text-align: start;
+  background: #fff; border: 1px solid #e7e9f1; border-radius: 14px; box-shadow: 0 18px 40px rgba(28, 35, 64, 0.16);
+}
+.mw-loc__item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; cursor: pointer; color: #1f2340; }
+.mw-loc__item.is-active, .mw-loc__item:hover { background: #f5f6fb; }
+.mw-loc__icon { width: 30px; height: 30px; flex-shrink: 0; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; background: #eef2fa; color: #244373; }
+.mw-loc__icon--address { background: #fdf0f2; color: #ca2844; }
+.mw-loc__text { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.mw-loc__label { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mw-loc__sub { font-size: 0.75rem; color: #7a7f9a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mw-loc__type {
+  flex-shrink: 0; margin-inline-start: auto; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em;
+  padding: 3px 9px; border-radius: 50px; background: #eef2fa; color: #244373;
+}
+.mw-loc__type--community { background: #ebf5f5; color: #1f6f73; }
+.mw-loc__type--address { background: #fdf0f2; color: #ca2844; }
+.mw-loc__empty { padding: 10px 12px; font-size: 0.82rem; color: #7a7f9a; }
+@media (max-width: 575.98px) {
+  .mw-loc__menu { left: 0; min-width: 0; width: calc(100vw - 48px); }
+}
+/* Some containers (e.g. the home hero panel) force every descendant to white text; give each
+   part of the suggestion menu its own colour so it reads correctly wherever it's used. */
+.mw-loc__menu .mw-loc__label { color: #1f2340; }
+.mw-loc__menu .mw-loc__sub, .mw-loc__menu .mw-loc__empty { color: #7a7f9a; }
+.mw-loc__menu .mw-loc__icon { color: #244373; }
+.mw-loc__menu .mw-loc__icon--address { color: #ca2844; }
+.mw-loc__menu .mw-loc__icon svg { color: inherit; stroke: currentColor; }
+.mw-loc__menu .mw-loc__type { color: #244373; }
+.mw-loc__menu .mw-loc__type--community { color: #1f6f73; }
+.mw-loc__menu .mw-loc__type--address { color: #ca2844; }
+/* The hero styles every `.mw-hero__field span` as a full-width transparent input-like box; undo
+   that inside the suggestion menu so its icon/text/tag spans keep their own size and colours. */
+.mw-loc__menu span { width: auto; min-width: 0; border: 0; font-size: inherit; }
+.mw-loc__menu .mw-loc__icon { width: 30px; background: #eef2fa; }
+.mw-loc__menu .mw-loc__icon--address { background: #fdf0f2; }
+.mw-loc__menu .mw-loc__text { flex: 1 1 auto; }
+.mw-loc__menu .mw-loc__label { font-size: 0.9rem; }
+.mw-loc__menu .mw-loc__sub { font-size: 0.75rem; }
+.mw-loc__menu .mw-loc__type { font-size: 0.68rem; background: #eef2fa; }
+.mw-loc__menu .mw-loc__type--community { background: #ebf5f5; }
+.mw-loc__menu .mw-loc__type--address { background: #fdf0f2; }
+.mw-loc__menu .mw-loc__icon * { color: inherit; }
+
+/* Commercial filter bar: active "More filters" count, per-type listing counts, results line */
+.mw-commercial-filter__filter-btn {
+  position: relative;
+}
+.mw-commercial-filter__badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: #ca2844;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}
+.mw-commercial-filter__count {
+  color: #8a94a6;
+  font-size: 0.85em;
+}
+.mw-commercial-toolbar {
+  padding-top: 10px;
+  background: #fff;
+}
+.mw-commercial-filter__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+.mw-commercial-filter__clear {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #ca2844;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.mw-commercial__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: clamp(24px, 2.2vw, 36px);
+}
+.mw-commercial__title {
+  margin: 0;
+  color: #141415;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(24px, 2vw, 32px);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.mw-commercial__count {
+  margin: 0;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+}
+@media (max-width: 767px) {
+  .mw-commercial__head { flex-direction: column; align-items: flex-start; }
+  .mw-commercial-filter__actions { gap: 10px; }
+}
+
+/* /premium-properties: Commercial / Residential tag on each card (top-left of the photo) */
+.mw-dubai-card__segment {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 50px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+.mw-dubai-card__segment::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.85;
+}
+.mw-dubai-card__segment--commercial {
+  background: #6b21a8;
+}
+.mw-dubai-card__segment--residential {
+  background: #244373;
+}
+
+/* "More filters" panel (Properties + Commercial): filters the top bar already shows appear here
+   only on phones, where the bar hides its fields; long option lists use a dropdown; short fixed
+   choices use compact buttons. */
+.mw-filter-panel__section--mobile-only {
+  display: none;
+}
+@media (max-width: 767px) {
+  .mw-filter-panel__section--mobile-only {
+    display: block;
+  }
+}
+.mw-filter-panel__select-wrap {
+  position: relative;
+}
+.mw-filter-panel__select-wrap::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  transform: translateY(-50%);
+  background: url("/frontend/assets/images/icons/chevron-down.svg") center / contain no-repeat;
+  pointer-events: none;
+}
+.mw-filter-panel__select {
+  width: 100%;
+  height: 40px;
+  padding: 0 38px 0 12px;
+  border: 1px solid #e1e8ed;
+  border-radius: 6px;
+  background: #fff;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  box-sizing: border-box;
+  cursor: pointer;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+}
+.mw-filter-panel__select:focus {
+  outline: none;
+  border-color: #244373;
+}
+.mw-pill-tabs--compact {
+  gap: 8px;
+}
+.mw-pill-tabs--compact button[data-tab] {
+  min-width: 44px;
+  padding: 7px 14px;
+  font-size: 14px;
+  line-height: 1.3;
+}
+@media (max-width: 767px) {
+  /* Keep the compact buttons as buttons inside the panel (not the page toolbar's mobile dropdown). */
+  .mw-filter-panel .mw-pill-tabs--compact {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}
+
+/* ==========================================================================
+   Header — "Explore" dropdown (About / Contact / Blog / Careers)
+   ========================================================================== */
+@media (min-width: 1200px) and (max-width: 1439px) {
+  header .mw-nav {
+    gap: clamp(14px, 1.45vw, 22px);
+  }
+  header .mw-nav > li > a,
+  header .mw-nav > li > .mw-nav__trigger {
+    font-size: 14px;
+  }
+  header .mw-header__actions {
+    gap: 8px;
+  }
+  header .mw-header__login,
+  header .mw-header__lang,
+  header .mw-header__currency {
+    padding: 8px 12px;
+  }
+}
+header .mw-nav__item--has-sub {
+  position: relative;
+}
+header .mw-nav > li > .mw-nav__trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: clamp(14px, 0.83vw, 16px);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.2s ease, text-shadow 0.3s ease;
+}
+header .mw-nav > li > .mw-nav__trigger::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 18px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #c92844 0%, #6a3577 50%, #244373 100%);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+header .mw-nav > li > .mw-nav__trigger:hover::after,
+header .mw-nav > li > .mw-nav__trigger.is-active::after {
+  transform: scaleX(1);
+}
+header .mw-nav > li > .mw-nav__trigger:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+header .mw-nav__chevron {
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+header .mw-nav__item--has-sub:hover .mw-nav__chevron,
+header .mw-nav__item--has-sub.is-open .mw-nav__chevron {
+  transform: rotate(180deg);
+}
+header.is-scrolled .mw-nav > li > .mw-nav__trigger {
+  color: #141415;
+}
+header.mw-header--light .mw-nav > li > .mw-nav__trigger {
+  color: #35373c;
+}
+header .mw-nav__submenu {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  min-width: 210px;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e1e8ed;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -6px) scale(0.97);
+  transform-origin: top center;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+  z-index: 30;
+}
+/* Invisible bridge over the gap, so moving the pointer from the trigger to the menu keeps it open. */
+header .mw-nav__submenu::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -16px;
+  height: 16px;
+}
+header .mw-nav__item--has-sub:hover .mw-nav__submenu,
+header .mw-nav__item--has-sub:focus-within .mw-nav__submenu,
+header .mw-nav__item--has-sub.is-open .mw-nav__submenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0) scale(1);
+}
+header .mw-nav__submenu li {
+  list-style: none;
+}
+header .mw-nav__submenu li + li {
+  margin-top: 2px;
+}
+header .mw-nav__submenu a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  color: #35373c;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+header .mw-nav__submenu a::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-top: 1.6px solid currentColor;
+  border-right: 1.6px solid currentColor;
+  transform: rotate(45deg) translateX(-4px);
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+header .mw-nav__submenu a:hover,
+header .mw-nav__submenu a:focus-visible {
+  background: #f4f8fb;
+  color: #244373;
+  outline: none;
+}
+header .mw-nav__submenu a:hover::after,
+header .mw-nav__submenu a:focus-visible::after {
+  opacity: 1;
+  transform: rotate(45deg) translateX(0);
+}
+header .mw-nav__submenu a.is-active {
+  background: #eff3f6;
+  color: #244373;
+  font-weight: 600;
+}
+
+/* Mobile drawer — "Explore" accordion */
+.mw-mobile-nav__group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 4px;
+  border: 0;
+  border-bottom: 1px solid #e1e8ed;
+  background: none;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+.mw-mobile-nav__group-toggle:hover,
+.mw-mobile-nav__group-toggle.is-active {
+  color: #244373;
+}
+.mw-mobile-nav__group-toggle svg {
+  transition: transform 0.25s ease;
+}
+.mw-mobile-nav__group.is-open .mw-mobile-nav__group-toggle svg {
+  transform: rotate(180deg);
+}
+.mw-mobile-nav nav .mw-mobile-nav__sub {
+  margin: 4px 0 0;
+  padding: 0 0 0 14px;
+  border-left: 2px solid #e1e8ed;
+}
+.mw-mobile-nav nav .mw-mobile-nav__sub li + li {
+  margin-top: 0;
+}
+.mw-mobile-nav nav .mw-mobile-nav__sub a {
+  padding: 10px 4px;
+  font-size: 15px;
+  font-weight: 500;
+  border-bottom: 0;
+}
+
+/* ==========================================================================
+   Careers — /careers listing and /careers/{slug} vacancy pages
+   ========================================================================== */
+.mw-careers-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  color: #c92844;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.mw-careers-eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #c92844 0%, #244373 100%);
+}
+.mw-careers-eyebrow--light {
+  color: #fff;
+}
+.mw-careers-eyebrow--light::before {
+  background: rgba(255, 255, 255, 0.7);
+}
+.mw-careers-section-head {
+  margin-bottom: clamp(28px, 2.6vw, 48px);
+  text-align: center;
+}
+.mw-careers-section-head__title {
+  font-size: clamp(28px, 2.4vw, 46px);
+}
+.mw-careers-section-head--split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  text-align: left;
+}
+
+/* Intro */
+.mw-careers-intro {
+  padding: clamp(48px, 5.2vw, 100px) 0;
+}
+.mw-careers-intro__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(32px, 5vw, 96px);
+}
+@media (max-width: 991px) {
+  .mw-careers-intro__layout {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-careers-intro__title {
+  margin-bottom: 18px;
+  font-size: clamp(30px, 2.8vw, 54px);
+}
+.mw-careers-intro__text {
+  max-width: 580px;
+  margin: 0 0 clamp(24px, 2vw, 34px);
+  color: #35373c;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(15px, 0.94vw, 18px);
+  line-height: 1.8;
+}
+.mw-careers-intro__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: clamp(24px, 2vw, 36px);
+}
+.mw-careers-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 150px;
+  padding: 18px 22px;
+  border: 1px solid #e1e8ed;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+.mw-careers-stat__value {
+  background: linear-gradient(90deg, #ca2844 0%, #244373 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(32px, 2.4vw, 44px);
+  font-weight: 600;
+  line-height: 1;
+}
+.mw-careers-stat__label {
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+.mw-careers-intro__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.mw-careers-intro__actions .mw-btn--outline {
+  min-height: 60px;
+  padding: 20px 30px;
+  border-radius: 0;
+  font-weight: 700;
+}
+.mw-careers-intro__media {
+  position: relative;
+  aspect-ratio: 4/3;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px -20px rgba(36, 67, 115, 0.35);
+}
+.mw-careers-intro__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.mw-careers-intro__badge {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+.mw-careers-intro__badge strong {
+  color: #244373;
+  font-size: 16px;
+  font-weight: 800;
+}
+.mw-careers-intro__badge span {
+  color: #6a6a6a;
+  font-size: 13px;
+}
+
+/* Perks */
+.mw-careers-perks {
+  padding: clamp(48px, 5.2vw, 100px) 0;
+  background: #eff3f6;
+  border-top: 1px solid #e1e8ed;
+  border-bottom: 1px solid #e1e8ed;
+}
+.mw-careers-perks__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(16px, 1.6vw, 28px);
+}
+@media (max-width: 1199px) {
+  .mw-careers-perks__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 575px) {
+  .mw-careers-perks__grid {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-careers-perk {
+  padding: clamp(24px, 2vw, 34px);
+  border: 1px solid #e1e8ed;
+  border-radius: 14px;
+  background: #fff;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.mw-careers-perk:hover {
+  box-shadow: 0 20px 40px -12px rgba(36, 67, 115, 0.22);
+  transform: translateY(-4px);
+}
+.mw-careers-perk__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ca2844 0%, #244373 100%);
+  color: #fff;
+}
+.mw-careers-perk__icon svg {
+  width: 26px;
+  height: 26px;
+}
+.mw-careers-perk__title {
+  margin: 0 0 10px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+.mw-careers-perk__text {
+  margin: 0;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* Openings + filters */
+.mw-careers-openings {
+  padding: clamp(48px, 5.2vw, 100px) 0;
+}
+#openings,
+#apply,
+#job-apply {
+  scroll-margin-top: 110px;
+}
+.mw-careers-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+.mw-careers-filters__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+  margin: 0;
+}
+.mw-careers-filters__field span {
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mw-careers-filters__field select,
+.mw-career-form__select {
+  width: 100%;
+  height: 50px;
+  padding: 0 40px 0 14px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23244373' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.mw-careers-filters__field select:focus,
+.mw-career-form__select:focus {
+  outline: none;
+  border-color: #244373;
+}
+.mw-careers-filters__clear {
+  height: 50px;
+  padding: 0 16px;
+  border: 0;
+  background: none;
+  color: #c92844;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+@media (max-width: 767px) {
+  .mw-careers-filters,
+  .mw-careers-filters__field {
+    width: 100%;
+  }
+}
+.mw-careers-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: opacity 0.2s ease;
+}
+.mw-careers-jobs.is-loading {
+  opacity: 0.55;
+  pointer-events: none;
+}
+.mw-career-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(20px, 2.4vw, 48px);
+  padding: clamp(22px, 2vw, 32px) clamp(22px, 2.2vw, 36px);
+  border: 1px solid #e1e8ed;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+}
+.mw-career-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #ca2844 0%, #244373 100%);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mw-career-card:hover {
+  border-color: #cfd9e3;
+  box-shadow: 0 18px 40px -14px rgba(36, 67, 115, 0.25);
+  transform: translateY(-2px);
+}
+.mw-career-card:hover::before {
+  transform: scaleY(1);
+}
+@media (max-width: 767px) {
+  .mw-career-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+.mw-career-card__main {
+  min-width: 0;
+}
+.mw-career-card__tag {
+  display: inline-flex;
+  margin-bottom: 10px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: #eff3f6;
+  color: #244373;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+.mw-career-card__title {
+  margin: 0 0 8px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(18px, 1.2vw, 22px);
+  font-weight: 700;
+}
+.mw-career-card__title a {
+  color: #141415;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.mw-career-card__title a:hover {
+  color: #244373;
+}
+.mw-career-card__text {
+  max-width: 760px;
+  margin: 0 0 12px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.mw-career-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mw-career-card__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  color: #35373c;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+.mw-career-card__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+@media (max-width: 767px) {
+  .mw-career-card__side {
+    align-items: flex-start;
+  }
+}
+.mw-career-card__date {
+  color: #848484;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+}
+.mw-career-card__cta svg {
+  transition: transform 0.2s ease;
+}
+.mw-career-card:hover .mw-career-card__cta svg {
+  transform: translateX(3px);
+}
+.mw-careers-empty {
+  padding: clamp(36px, 4vw, 64px) 24px;
+  border: 1px dashed #cfd9e3;
+  border-radius: 14px;
+  background: #f8fafc;
+  text-align: center;
+}
+.mw-careers-empty h3 {
+  margin: 0 0 10px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+.mw-careers-empty p {
+  max-width: 520px;
+  margin: 0 auto 22px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.mw-careers-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* General application band */
+.mw-careers-apply {
+  position: relative;
+  padding: clamp(56px, 5.8vw, 110px) 0;
+  background: linear-gradient(120deg, #1b3459 0%, #244373 55%, #6a3577 100%);
+  overflow: hidden;
+}
+.mw-careers-apply::before {
+  content: "";
+  position: absolute;
+  right: -160px;
+  top: -160px;
+  width: 460px;
+  height: 460px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(202, 40, 68, 0.45) 0%, rgba(202, 40, 68, 0) 70%);
+  pointer-events: none;
+}
+.mw-careers-apply__layout {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: start;
+  gap: clamp(32px, 5vw, 96px);
+}
+@media (max-width: 991px) {
+  .mw-careers-apply__layout {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-careers-apply__title {
+  margin-bottom: 18px;
+  color: #fff;
+  font-size: clamp(30px, 2.6vw, 50px);
+}
+.mw-careers-apply__text {
+  margin: 0 0 28px;
+  color: rgba(255, 255, 255, 0.82);
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(15px, 0.94vw, 17px);
+  line-height: 1.8;
+}
+.mw-careers-apply__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mw-careers-apply__steps li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+}
+.mw-careers-apply__steps span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 800;
+}
+.mw-careers-apply__card {
+  padding: clamp(24px, 2.4vw, 40px);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.4);
+}
+
+/* Application form (CareerApplyForm.vue) */
+.mw-career-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.mw-career-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+@media (max-width: 575px) {
+  .mw-career-form__grid {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-career-form .mw-page-contact__field label,
+.mw-career-form__label {
+  color: #000;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.mw-career-form .mw-page-contact__field label > span[aria-hidden],
+.mw-career-form__label > span[aria-hidden] {
+  color: #c92844;
+}
+.mw-career-form .mw-page-contact__field input {
+  height: 50px;
+  font-size: 15px;
+}
+.mw-career-form .mw-page-contact__field textarea {
+  height: 104px;
+  min-height: 104px;
+  font-size: 15px;
+}
+.mw-career-form .has-error input,
+.mw-career-form .has-error textarea,
+.mw-career-form .has-error .mw-career-form__drop {
+  border-color: #e0433e;
+}
+.mw-career-form__error {
+  color: #e0433e;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+.mw-career-form__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+.mw-career-form .mw-page-contact__field .mw-career-form__drop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1.5px dashed #cfd9e3;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #244373;
+  font-weight: 400;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.mw-career-form__drop svg {
+  flex-shrink: 0;
+}
+.mw-career-form .mw-page-contact__field .mw-career-form__drop:hover,
+.mw-career-form .mw-page-contact__field .mw-career-form__drop.is-dragging,
+.mw-career-form .mw-page-contact__field .mw-career-form__drop:focus-within {
+  border-color: #244373;
+  background: #eff3f6;
+}
+.mw-career-form .mw-page-contact__field .mw-career-form__drop.has-file {
+  border-style: solid;
+  border-color: #1a9c5a;
+  background: #f1faf5;
+}
+.mw-career-form__drop-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #35373c;
+  font-size: 14px;
+}
+.mw-career-form__drop-text strong {
+  color: #244373;
+}
+.mw-career-form__drop-text small {
+  color: #848484;
+  font-size: 12px;
+}
+.mw-career-form__file {
+  min-width: 0;
+  overflow: hidden;
+  color: #141415;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mw-career-form__remove {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #c92844;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.mw-career-form__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  color: #35373c;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.mw-career-form__consent input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: #244373;
+}
+.mw-career-form__consent a {
+  color: #244373;
+  font-weight: 600;
+}
+.mw-career-form__consent.has-error {
+  color: #e0433e;
+}
+.mw-career-form__submit {
+  align-self: flex-start;
+  min-height: 56px;
+  padding: 18px 34px;
+  font-size: 15px;
+}
+.mw-career-form__submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Vacancy page */
+.mw-career-details {
+  padding: clamp(36px, 3.6vw, 70px) 0 clamp(56px, 5.2vw, 100px);
+}
+.mw-career-details__lead {
+  margin: 0 0 18px;
+  color: #35373c;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(16px, 1.05vw, 19px);
+  line-height: 1.75;
+}
+.mw-career-details__chips {
+  margin-bottom: clamp(24px, 2.4vw, 36px);
+  padding-bottom: clamp(24px, 2.4vw, 36px);
+  border-bottom: 1px solid #e1e8ed;
+}
+.mw-career-details__section + .mw-career-details__section {
+  margin-top: clamp(28px, 2.6vw, 40px);
+}
+.mw-career-details__heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(20px, 1.35vw, 24px);
+  font-weight: 700;
+}
+.mw-career-details__heading::before {
+  content: "";
+  width: 4px;
+  height: 22px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ca2844 0%, #244373 100%);
+}
+.mw-career-details__apply {
+  margin-top: clamp(36px, 3.4vw, 56px);
+  padding: clamp(24px, 2.4vw, 40px);
+  border: 1px solid #e1e8ed;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+.mw-career-details__apply-text {
+  margin: -6px 0 22px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+}
+.mw-career-summary__list {
+  margin: 0 0 20px;
+}
+.mw-career-summary__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef2f5;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+}
+.mw-career-summary__row:first-child {
+  padding-top: 0;
+}
+.mw-career-summary__row dt {
+  color: #848484;
+  font-weight: 500;
+}
+.mw-career-summary__row dd {
+  margin: 0;
+  color: #141415;
+  font-weight: 700;
+  text-align: right;
+}
+.mw-career-summary__cta {
+  width: 100%;
+  min-height: 54px;
+  padding: 16px 24px;
+}
+.mw-career-related {
+  display: flex;
+  flex-direction: column;
+}
+.mw-career-related__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef2f5;
+  text-decoration: none;
+}
+.mw-career-related__item:first-child {
+  padding-top: 0;
+}
+.mw-career-related__title {
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  transition: color 0.2s ease;
+}
+.mw-career-related__item:hover .mw-career-related__title {
+  color: #244373;
+}
+.mw-career-related__meta {
+  color: #848484;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+}
+.mw-career-related__all {
+  display: inline-block;
+  margin-top: 14px;
+  color: #244373;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* The global `* { color; font-size }` reset would otherwise restyle these nested elements. */
+header .mw-nav__trigger span,
+.mw-mobile-nav__group-toggle span,
+.mw-career-form__consent span,
+.mw-career-form .mw-page-contact__field label > span[aria-hidden],
+.mw-career-form__label > span[aria-hidden],
+.mw-career-form__drop-text strong,
+.mw-career-summary__row dt,
+.mw-career-summary__row dd {
+  font-size: inherit;
+}
+header .mw-nav__trigger span,
+.mw-mobile-nav__group-toggle span,
+.mw-career-form__consent span {
+  color: inherit;
+  font-weight: inherit;
+}
+.mw-careers-apply__steps span {
+  color: #fff;
+}
+header .mw-nav__chevron,
+.mw-mobile-nav__group-toggle svg,
+.mw-career-form__drop svg,
+.mw-career-card__cta svg,
+.mw-careers-perk__icon svg {
+  color: inherit;
+}
+/* Light (inner-page) header: the currency chevron must be dark like the language one — it was
+   only ever shown on the transparent home header before, where it is inverted to white. */
+header.mw-header--light .mw-header__currency img:not(.mw-header__lang-flag),
+header.is-scrolled .mw-header__currency img:not(.mw-header__lang-flag) {
+  filter: none;
+}
+header .mw-nav__chevron *,
+.mw-mobile-nav__group-toggle svg *,
+.mw-career-form__drop svg *,
+.mw-career-card__cta svg *,
+.mw-careers-perk__icon svg * {
+  color: inherit;
+}
+.mw-career-form__consent a {
+  font-size: inherit;
+}
+.mw-career-form__drop-text {
+  display: block;
+}
+.mw-career-form__drop-text small {
+  display: block;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   Market Insights — /market-insights listing and /market-insights/{slug}
+   ========================================================================== */
+.mw-insight-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border: 1px solid #d5deea;
+  border-radius: 100px;
+  background: #fff;
+  color: #244373;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+a.mw-insight-chip:hover {
+  border-color: #244373;
+}
+.mw-insight-chip--solid {
+  border-color: #244373;
+  background: #244373;
+  color: #fff;
+}
+.mw-insight-chip--light {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+a.mw-insight-chip--light:hover {
+  background: #fff;
+  color: #244373;
+}
+.mw-insight-trend {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.mw-insight-trend svg {
+  width: 13px;
+  height: 13px;
+}
+.mw-insight-trend svg * {
+  color: inherit;
+}
+.mw-insight-trend--up {
+  background: rgba(26, 156, 90, 0.14);
+  color: #1a9c5a;
+}
+.mw-insight-trend--down {
+  background: rgba(224, 67, 62, 0.14);
+  color: #e0433e;
+}
+.mw-insight-trend--flat {
+  background: rgba(132, 132, 132, 0.16);
+  color: #6a6a6a;
+}
+
+/* Featured report */
+.mw-insights-featured {
+  position: relative;
+  z-index: 1;
+  padding-top: clamp(36px, 3.6vw, 70px);
+}
+.mw-insights-featured__card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 30px 60px -24px rgba(20, 39, 74, 0.45);
+}
+@media (max-width: 991px) {
+  .mw-insights-featured__card {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-insights-featured__media {
+  position: relative;
+  display: block;
+  min-height: 320px;
+  overflow: hidden;
+}
+.mw-insights-featured__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mw-insights-featured__card:hover .mw-insights-featured__media img {
+  transform: scale(1.04);
+}
+.mw-insights-featured__badge {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #ca2844 0%, #6a3577 100%);
+  color: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mw-insights-featured__body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(28px, 3vw, 56px);
+}
+.mw-insights-featured__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+.mw-insights-featured__region,
+.mw-insight-card__region {
+  color: #c92844;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mw-insights-featured__title {
+  margin: 0 0 14px;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(26px, 2.1vw, 40px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.mw-insights-featured__title a {
+  color: #14274a;
+  text-decoration: none;
+}
+.mw-insights-featured__title a:hover {
+  color: #244373;
+}
+.mw-insights-featured__summary {
+  margin: 0 0 16px;
+  color: #35373c;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(15px, 0.94vw, 17px);
+  line-height: 1.75;
+}
+.mw-insights-featured__meta {
+  margin: 0 0 26px;
+  color: #848484;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+}
+.mw-insights-featured__cta {
+  min-height: 54px;
+  padding: 16px 28px;
+}
+.mw-insights-featured__cta svg {
+  transition: transform 0.2s ease;
+}
+.mw-insights-featured__cta:hover svg {
+  transform: translateX(3px);
+}
+.mw-insights-featured__stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 26px;
+  width: 100%;
+  border-top: 1px solid #eef2f5;
+  margin-block-start: 28px;
+}
+.mw-insights-featured__stat strong {
+  color: #14274a;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(28px, 2vw, 36px);
+  font-weight: 600;
+  line-height: 1;
+}
+.mw-insights-featured__stat span:not(.mw-insight-trend) {
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Grid + filters */
+.mw-insights-list {
+  padding: clamp(48px, 4.6vw, 88px) 0 clamp(56px, 5.2vw, 100px);
+}
+.mw-insights-list--related {
+  padding-top: 0;
+}
+.mw-insights-list__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.mw-insights-list__title {
+  margin: 0;
+  color: #14274a;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(28px, 2.2vw, 42px);
+  font-weight: 600;
+}
+.mw-insights-region {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+.mw-insights-region span {
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mw-insights-region select {
+  height: 44px;
+  min-width: 170px;
+  padding: 0 38px 0 14px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23244373' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  cursor: pointer;
+}
+.mw-insights-region select:focus {
+  outline: none;
+  border-color: #244373;
+}
+.mw-insights-topics {
+  display: flex;
+  gap: 8px;
+  margin-bottom: clamp(24px, 2.2vw, 36px);
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.mw-insights-topics::-webkit-scrollbar {
+  display: none;
+}
+.mw-insights-topics__item {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border: 1px solid #e1e8ed;
+  border-radius: 100px;
+  background: #fff;
+  color: #35373c;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.mw-insights-topics__item:hover {
+  border-color: #244373;
+  color: #244373;
+}
+.mw-insights-topics__item.is-active {
+  border-color: #14274a;
+  background: #14274a;
+  color: #fff;
+}
+.mw-insights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(18px, 1.8vw, 32px);
+  transition: opacity 0.2s ease;
+}
+.mw-insights-grid.is-loading {
+  opacity: 0.55;
+  pointer-events: none;
+}
+@media (max-width: 1199px) {
+  .mw-insights-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .mw-insights-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-insights-empty {
+  padding: clamp(36px, 4vw, 64px) 24px;
+  border: 1px dashed #cfd9e3;
+  border-radius: 14px;
+  background: #f8fafc;
+  text-align: center;
+}
+.mw-insights-empty h3 {
+  margin: 0 0 10px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+.mw-insights-empty p {
+  margin: 0 0 20px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+}
+
+/* Card */
+.mw-insight-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e1e8ed;
+  border-radius: 16px;
+  background: #fff;
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+}
+.mw-insight-card:hover {
+  border-color: #cfd9e3;
+  box-shadow: 0 22px 44px -18px rgba(20, 39, 74, 0.3);
+  transform: translateY(-4px);
+}
+.mw-insight-card__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 16/10;
+  overflow: hidden;
+}
+.mw-insight-card__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mw-insight-card:hover .mw-insight-card__media img {
+  transform: scale(1.05);
+}
+.mw-insight-card__media::after {
+  content: "";
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(180deg, rgba(20, 39, 74, 0) 0%, rgba(20, 39, 74, 0.7) 100%);
+}
+.mw-insight-card__media .mw-insight-chip {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  z-index: 1;
+}
+.mw-insight-card__stat {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+.mw-insight-card__stat strong {
+  color: #fff;
+  font-family: "Playfair Display", serif;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+}
+.mw-insight-card__stat .mw-insight-trend {
+  background: rgba(255, 255, 255, 0.92);
+}
+.mw-insight-card__stat small {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mw-insight-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 20px 22px 22px;
+}
+.mw-insight-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+.mw-insight-card__meta span:not(.mw-insight-card__region) {
+  color: #848484;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+}
+.mw-insight-card__title {
+  margin: 0 0 10px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.mw-insight-card__title a {
+  color: #141415;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.mw-insight-card__title a:hover {
+  color: #244373;
+}
+.mw-insight-card__summary {
+  display: -webkit-box;
+  margin: 0 0 18px;
+  overflow: hidden;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.mw-insight-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #eef2f5;
+}
+.mw-insight-card__read {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #848484;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+}
+.mw-insight-card__pdf {
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(202, 40, 68, 0.1);
+  color: #c92844;
+  font-size: 11px;
+  font-weight: 800;
+}
+.mw-insight-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #244373;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.mw-insight-card__link svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+.mw-insight-card__link svg * {
+  color: inherit;
+}
+.mw-insight-card__link:hover svg {
+  transform: translateX(3px);
+}
+
+/* Key figures */
+
+/* Body */
+
+.mw-insight-takeaways {
+  margin-bottom: clamp(28px, 2.6vw, 40px);
+  padding: clamp(22px, 2vw, 32px);
+  border: 1px solid #dfe7f1;
+  border-left: 4px solid #244373;
+  border-radius: 12px;
+  background: #f5f8fc;
+}
+.mw-insight-takeaways__title {
+  margin: 0 0 14px;
+  color: #14274a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.mw-insight-takeaways ul {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mw-insight-takeaways li {
+  position: relative;
+  padding-left: 32px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.55;
+}
+.mw-insight-takeaways li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #244373 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E") no-repeat center;
+}
+.mw-insight-content h2 {
+  color: #14274a;
+}
+
+.mw-insight-panel {
+  padding: clamp(20px, 1.8vw, 26px);
+  border: 1px solid #e1e8ed;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.mw-insight-panel__title {
+  margin: 0 0 10px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+}
+.mw-insight-panel__text {
+  margin: 0 0 18px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.mw-insight-panel__cta {
+  width: 100%;
+  min-height: 50px;
+  padding: 14px 20px;
+}
+
+.mw-insight-panel__topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mw-insight-share {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.mw-insight-share__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  background: #fff;
+  color: #244373;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.mw-insight-share__item:hover {
+  border-color: #244373;
+  background: #f5f8fc;
+}
+.mw-insights-featured__title a,
+.mw-insight-card__title a{
+  font: inherit;
+}
+.mw-insight-content p,
+.mw-insight-content li {
+  color: #35373c;
+  font-size: 17px;
+  line-height: 1.85;
+}
+.mw-insight-content h2 {
+  font-size: clamp(22px, 1.5vw, 26px);
+}
+.mw-insights-list__text {
+  max-width: 760px;
+  margin: 8px 0 0;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+
+/* Market Insights article page — one two-column layout from the top */
+.mw-insight-article {
+  padding: clamp(36px, 3.4vw, 64px) 0 clamp(56px, 5vw, 96px);
+}
+.mw-insight-article__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 370px);
+  align-items: start;
+  gap: clamp(28px, 3.2vw, 56px);
+}
+@media (max-width: 991px) {
+  .mw-insight-article__layout {
+    grid-template-columns: 1fr;
+  }
+}
+.mw-insight-article__main {
+  min-width: 0;
+}
+.mw-insight-banner {
+  position: relative;
+  margin: 0 0 24px;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #eff3f6;
+}
+.mw-insight-banner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.mw-insight-banner__tags {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mw-insight-byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 24px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e1e8ed;
+}
+.mw-insight-byline__author {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: auto;
+}
+.mw-insight-byline__author > span:last-child {
+  display: flex;
+  flex-direction: column;
+}
+.mw-insight-byline__author strong {
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+.mw-insight-byline__author small {
+  color: #848484;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+}
+.mw-insight-byline__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ca2844 0%, #6a3577 100%);
+  color: #fff;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+}
+.mw-insight-byline__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14px;
+}
+.mw-insight-byline__item + .mw-insight-byline__item::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #c3ccd6;
+}
+.mw-insight-lead {
+  margin-bottom: 28px;
+  color: #14274a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: clamp(18px, 1.25vw, 22px);
+  font-weight: 500;
+  line-height: 1.6;
+}
+.mw-insight-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.mw-insight-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 18px 16px;
+  border: 1px solid #e1e8ed;
+  border-top: 3px solid #cfd9e3;
+  border-radius: 12px;
+  background: #fff;
+}
+.mw-insight-figure--up {
+  border-top-color: #1a9c5a;
+}
+.mw-insight-figure--down {
+  border-top-color: #e0433e;
+}
+.mw-insight-figure__value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #14274a;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(26px, 1.9vw, 34px);
+  font-weight: 600;
+  line-height: 1;
+}
+.mw-insight-figure__label {
+  color: #6a6a6a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.mw-insight-sharebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: clamp(28px, 2.6vw, 40px);
+  padding-top: 24px;
+  border-top: 1px solid #e1e8ed;
+}
+.mw-insight-sharebar__label {
+  margin-right: 6px;
+  color: #141415;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+.mw-insight-sharebar .mw-insight-share__item {
+  min-height: 40px;
+  padding: 8px 16px;
+}
+.mw-insight-article__aside {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.mw-insight-glance__list {
+  margin: 0 0 18px;
+}
+.mw-insight-glance__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px solid #eef2f5;
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+.mw-insight-glance__row:first-child {
+  padding-top: 0;
+}
+.mw-insight-glance__row dt {
+  color: #848484;
+  font-size: 14px;
+  font-weight: 500;
+}
+.mw-insight-glance__row dd {
+  margin: 0;
+  color: #141415;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+}
+.mw-insight-glance .mw-insight-panel__cta,
+.mw-insight-panel--expert .mw-insight-panel__cta {
+  gap: 8px;
+}
+.mw-insight-glance .mw-insight-panel__cta svg * {
+  color: inherit;
+}
+.mw-insight-panel--expert {
+  border: 0;
+  background: linear-gradient(140deg, #14274a 0%, #244373 60%, #4a3474 100%);
+}
+.mw-insight-panel--expert .mw-insight-panel__title {
+  color: #fff;
+}
+.mw-insight-panel--expert .mw-insight-panel__text {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ==========================================================================
+   Mobile fixes — chat bubble / reCAPTCHA badge vs bottom nav, drawer
+   language/currency menus, About director (CEO) message
+   ========================================================================== */
+@media (max-width: 767px) {
+  /* Sit above the fixed bottom nav (its bar + the raised search FAB) instead of covering Properties / Login. */
+  .mw-chatbot {
+    right: 12px;
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  }
+  .mw-chatbot__panel {
+    height: calc(100vh - 170px);
+    height: calc(100dvh - 170px);
+  }
+  /* Drawer: the (hidden) menus hung below the last row and still counted toward the drawer's
+     scroll height, leaving a big empty scroll area. Open them upward, over the drawer content. */
+  .mw-mobile-nav__prefs .mw-dropdown__menu {
+    top: auto;
+    bottom: calc(100% + 10px);
+    max-height: 260px;
+    overflow-y: auto;
+    transform-origin: bottom;
+    transform: translateY(6px) scale(0.97);
+  }
+  .mw-mobile-nav__prefs .mw-dropdown.is-open .mw-dropdown__menu {
+    transform: translateY(0) scale(1);
+  }
+
+  /* About — director message: the card was position:relative inside the fixed-aspect, overflow:hidden
+     photo box, so it was pushed below the photo and clipped away. Let the box grow to hold both. */
+  .mw-about-director__media {
+    aspect-ratio: auto;
+    overflow: visible;
+    background: transparent;
+  }
+  .mw-about-director__media > img {
+    height: auto;
+    aspect-ratio: 4/3;
+    background: #070b0b;
+    transform: none !important;
+  }
+  .mw-about-director__card {
+    width: 100%;
+    padding: 24px 0 0;
+    background: transparent;
+  }
+  .mw-about-director__byline {
+    margin: 18px 0 20px;
+  }
+}
+
+/* Fancybox lightbox (property photo gallery / floor plans): sit above the fixed header, the mobile
+   bottom nav and the chat bubble, and hide those while it's open. */
+.fancybox__dialog {
+  z-index: 5000;
+}
+html.with-fancybox .mw-chatbot {
+  visibility: hidden;
+}
+
+/* reCAPTCHA v3 badge: hidden site-wide (it sat under the chat bubble). visibility, not display:none —
+   Google's documented way; the widget still loads and issues tokens. */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
+
+/* Pagination: Previous + 3 page numbers + Next on one row — slightly tighter on phones so the bar
+   fits a ~320px screen without wrapping "Next" onto its own line. */
+.mw-blog__pagination,
+.mw-dubai-listing__pagination {
+  flex-wrap: nowrap;
+}
+@media (max-width: 575px) {
+  .mw-blog__pagination,
+  .mw-dubai-listing__pagination {
+    gap: 6px;
+  }
+  .mw-blog__page,
+  .mw-dubai-listing__page {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+  .mw-blog__page--prev, .mw-blog__page--next,
+  .mw-dubai-listing__page--prev, .mw-dubai-listing__page--next {
+    padding: 0 12px;
+  }
+}
+
+/* About newsletter: on phones the "Subscribe Now" label overlapped the email field — arrow only. */
+@media (max-width: 767px) {
+  .mw-about-news__submit-text {
+    display: none;
+  }
+  .mw-about-news__form button {
+    flex-shrink: 0;
+    padding: 8px 0 8px 12px;
+  }
+}
+
+/* ==========================================================================
+   Newsletter (footer + About) — visible checkbox tick and submit animations
+   ========================================================================== */
+/* Checked terms box: brand fill + white tick (it was only a slightly lighter grey before). */
+.mw-footer__newsletter-terms input {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.mw-footer__newsletter-terms input::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3.5 8.4l2.9 2.9 6.1-6.4' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
+  opacity: 0;
+  transform: scale(.4);
+  transition: opacity .18s ease, transform .22s cubic-bezier(.34, 1.56, .64, 1);
+}
+.mw-footer__newsletter-terms input:checked {
+  background: linear-gradient(135deg, #c82845 0%, #254272 100%);
+  border-color: transparent;
+}
+.mw-footer__newsletter-terms input:checked::after {
+  opacity: 1;
+  transform: scale(1);
+}
+.mw-footer__newsletter-terms input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(33, 182, 168, .35);
+}
+.mw-footer__newsletter-terms:hover input:not(:checked) {
+  border-color: #a7a7a7;
+}
+
+/* Submitting: a light sweeps along the bottom edge of the field while the request is in flight. */
+.mw-footer__newsletter-form,
+.mw-about-news__form {
+  position: relative;
+  overflow: hidden;
+}
+.mw-footer__newsletter-form::after,
+.mw-about-news__form::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #21b6a8, transparent);
+  opacity: 0;
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+.mw-footer__newsletter-form.is-submitting::after,
+.mw-about-news__form.is-submitting::after {
+  opacity: 1;
+  animation: mw-newsletter-sweep 1.1s ease-in-out infinite;
+}
+.mw-footer__newsletter-form.is-submitting input,
+.mw-about-news__form.is-submitting input {
+  opacity: .6;
+  transition: opacity .2s ease;
+}
+
+/* Subscribed: one soft glow pulse; error (incl. "please agree to the terms"): a short shake. */
+.mw-footer__newsletter-form.is-subscribed,
+.mw-about-news__form.is-subscribed {
+  animation: mw-newsletter-success .7s ease-out both;
+}
+.mw-footer__newsletter-form.is-subscribed button img,
+.mw-about-news__form.is-subscribed button img {
+  animation: mw-newsletter-fly .6s ease-in both;
+}
+.mw-footer__newsletter-form.has-error,
+.mw-about-news__form.has-error {
+  border-color: #e04f5f;
+  animation: mw-newsletter-shake .42s ease both;
+}
+
+@keyframes mw-newsletter-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
+}
+@keyframes mw-newsletter-success {
+  0% { box-shadow: 0 0 0 0 rgba(33, 182, 168, .45); }
+  60% { box-shadow: 0 0 0 10px rgba(33, 182, 168, 0); }
+  100% { box-shadow: 0 0 0 3px rgba(33, 182, 168, .12); }
+}
+@keyframes mw-newsletter-fly {
+  0% { translate: 0 0; opacity: 1; }
+  45% { translate: 28px 0; opacity: 0; }
+  46% { translate: -18px 0; opacity: 0; }
+  100% { translate: 0 0; opacity: 1; }
+}
+@keyframes mw-newsletter-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mw-footer__newsletter-form.is-submitting::after,
+  .mw-about-news__form.is-submitting::after,
+  .mw-footer__newsletter-form.is-subscribed,
+  .mw-about-news__form.is-subscribed,
+  .mw-footer__newsletter-form.is-subscribed button img,
+  .mw-about-news__form.is-subscribed button img,
+  .mw-footer__newsletter-form.has-error,
+  .mw-about-news__form.has-error {
+    animation: none;
+  }
+  .mw-footer__newsletter-terms input::after {
+    transition: none;
+  }
+}
+
+/* Listing count next to "Listings by {name}" on agent / agency pages. */
+.mw-agent-more__count {
+  color: #6b7094;
+  font-size: 0.6em;
+  font-weight: 500;
+  vertical-align: middle;
+}

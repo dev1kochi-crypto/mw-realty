@@ -97,6 +97,9 @@
                                             <label class="form-label fw-bold">Button URL</label>
                                             <input type="url" name="sections[{{ $key }}][translations][{{ $lang->code }}][button_url]" class="form-control @error("sections.{$key}.translations.{$lang->code}.button_url") is-invalid @enderror" value="{{ old("sections.{$key}.translations.{$lang->code}.button_url", $t['button_url'] ?? '') }}" placeholder="https://...">
                                             @error("sections.{$key}.translations.{$lang->code}.button_url")<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                            @if(in_array($key, ['home-premium-property', 'home-luxury-project'], true))
+                                            <div class="form-text">Leave empty to open {{ $key === 'home-premium-property' ? 'the Premium Properties page' : 'the Properties page filtered to the luxury price range' }}.</div>
+                                            @endif
                                         </div>
                                         @endif
                                         @if(in_array('cities', $fields))
@@ -133,6 +136,29 @@
                                 </div>
                             @endforeach
                         </div>
+
+                        @if(!empty($section['price_range']))
+                        {{-- Same for every language: which residential listings count as luxury. --}}
+                        @php $extra = is_array($record?->extra_fields) ? $record->extra_fields : []; @endphp
+                        <div class="border rounded-3 p-3 mb-4 bg-light">
+                            <div class="fw-bold mb-1"><i class="fas fa-gem me-2 text-primary"></i>Luxury price range</div>
+                            <p class="text-muted small mb-3">Residential listings priced in this range appear in the home page Luxury Project slider (up to 12, in the CRM order), and "View More Details" opens the Properties page filtered to the same range. Leave a field empty for no limit on that side. If no listing matches, the section is hidden.</p>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold" for="min-price-{{ $key }}">Min Price (AED)</label>
+                                    <input type="number" min="0" step="1" id="min-price-{{ $key }}" name="sections[{{ $key }}][extra][min_price]" class="form-control @error("sections.{$key}.extra.min_price") is-invalid @enderror"
+                                           value="{{ old("sections.{$key}.extra.min_price", isset($extra['min_price']) ? (int) $extra['min_price'] : '') }}" placeholder="e.g. 5000000">
+                                    @error("sections.{$key}.extra.min_price")<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold" for="max-price-{{ $key }}">Max Price (AED)</label>
+                                    <input type="number" min="0" step="1" id="max-price-{{ $key }}" name="sections[{{ $key }}][extra][max_price]" class="form-control @error("sections.{$key}.extra.max_price") is-invalid @enderror"
+                                           value="{{ old("sections.{$key}.extra.max_price", isset($extra['max_price']) ? (int) $extra['max_price'] : '') }}" placeholder="No limit">
+                                    @error("sections.{$key}.extra.max_price")<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                            </div>
+                        </div>
+                        @endif
 
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" name="status" id="status-{{ $key }}" {{ old('status', $record->status ?? true) ? 'checked' : '' }}>

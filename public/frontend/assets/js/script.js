@@ -437,15 +437,17 @@
         e.stopPropagation();
       });
 
-      menu.querySelectorAll('[data-dropdown-option]').forEach(function (option) {
-        option.addEventListener('click', function (e) {
-          e.stopPropagation();
-          var label = dropdown.querySelector('[data-dropdown-label]');
-          if (label) label.textContent = option.textContent.trim();
-          menu.querySelectorAll('[data-dropdown-option]').forEach(function (o) { o.classList.remove('is-selected'); });
-          option.classList.add('is-selected');
-          close(dropdown);
-        });
+      // Delegated, so options rendered later (e.g. from the admin-managed filter API) behave the same.
+      // A label marked data-dropdown-label-reactive is owned by Vue: leave its text alone, or the
+      // framework loses track of it and the label stops following the real selection.
+      menu.addEventListener('click', function (e) {
+        var option = e.target.closest('[data-dropdown-option]');
+        if (!option || !menu.contains(option)) return;
+        var label = dropdown.querySelector('[data-dropdown-label]');
+        if (label && !label.hasAttribute('data-dropdown-label-reactive')) label.textContent = option.textContent.trim();
+        menu.querySelectorAll('[data-dropdown-option]').forEach(function (o) { o.classList.remove('is-selected'); });
+        option.classList.add('is-selected');
+        close(dropdown);
       });
     });
 
@@ -458,7 +460,10 @@
     }
   }
 
+  // Amounts are AED; when the Vue currency switcher is loaded (window.MWCurrency, see
+  // resources/js/composables/useCurrency.js) they are shown in — and typed in — the visitor's currency.
   function formatAed(value) {
+    if (window.MWCurrency) return window.MWCurrency.formatCompact(Number(value));
     var n = Number(value);
     if (n >= 1000000) {
       var millions = n / 1000000;
@@ -471,6 +476,10 @@
   }
 
   function parseAed(str) {
+    if (window.MWCurrency) {
+      var aed = window.MWCurrency.parseToAed(str);
+      return isNaN(aed) ? NaN : Math.round(aed);
+    }
     var raw = String(str || '').trim().toUpperCase().replace(/AED/g, '').replace(/,/g, '').replace(/\s/g, '');
     if (!raw) return NaN;
     var mult = 1;
@@ -492,17 +501,23 @@
       var fill = root.querySelector('[data-price-range]');
       var wrap = root.closest('[data-dropdown]');
       if (!minInput || !maxInput || !wrap) return;
+      if (root.dataset.mwPriceBound) return;
+      root.dataset.mwPriceBound = '1';
 
       var minText = wrap.querySelector('[data-price-min-input]');
       var maxText = wrap.querySelector('[data-price-max-input]');
       var fieldLabel = wrap.querySelector('[data-dropdown-label]');
-      var presets = Array.prototype.slice.call(wrap.querySelectorAll('[data-price-preset]'));
-      var absMin = Number(minInput.min);
-      var absMax = Number(minInput.max);
-      var step = Number(minInput.step) || 1;
+      // Looked up live: Vue re-renders the preset buttons (labels/range arrive after binding), and
+      // listeners bound to the first set of buttons would be lost with them.
+      function presetButtons() { return Array.prototype.slice.call(wrap.querySelectorAll('[data-price-preset]')); }
+      // Read the bounds live: Vue may change the slider's max after binding (the admin price filter's
+      // range arrives asynchronously), and a stale cached max would misplace the fill and labels.
+      function absMin() { return Number(minInput.min); }
+      function absMax() { return Number(maxInput.max); }
+      function stepOf() { return Number(minInput.step) || 1; }
 
       function clamp(value, min, max) {
-        var snapped = Math.round(value / step) * step;
+        var snapped = Math.round(value / stepOf()) * stepOf();
         return Math.max(min, Math.min(max, snapped));
       }
 
@@ -514,9 +529,9 @@
           min = max;
         }
 
-        var span = absMax - absMin || 1;
-        var start = ((min - absMin) / span) * 100;
-        var end = ((max - absMin) / span) * 100;
+        var span = absMax() - absMin() || 1;
+        var start = ((min - absMin()) / span) * 100;
+        var end = ((max - absMin()) / span) * 100;
         if (fill) {
           fill.style.left = start + '%';
           fill.style.width = (end - start) + '%';
@@ -524,13 +539,13 @@
         if (minText && document.activeElement !== minText) minText.value = formatAed(min);
         if (maxText && document.activeElement !== maxText) maxText.value = formatAed(max);
         if (fieldLabel) {
-          fieldLabel.textContent = (min <= absMin && max >= absMax)
+          fieldLabel.textContent = (min <= absMin() && max >= absMax())
             ? 'Price Range'
             : formatAed(min) + ' – ' + formatAed(max);
         }
 
         if (!fromPreset) {
-          presets.forEach(function (btn) {
+          presetButtons().forEach(function (btn) {
             var matches = Number(btn.getAttribute('data-min')) === min && Number(btn.getAttribute('data-max')) === max;
             btn.classList.toggle('is-selected', matches);
           });
@@ -546,9 +561,9 @@
           return;
         }
         if (which === 'min') {
-          minInput.value = clamp(parsed, absMin, Number(maxInput.value));
+          minInput.value = clamp(parsed, absMin(), Number(maxInput.value));
         } else {
-          maxInput.value = clamp(parsed, Number(minInput.value), absMax);
+          maxInput.value = clamp(parsed, Number(minInput.value), absMax());
         }
         sync(false);
       }
@@ -569,19 +584,28 @@
         field.addEventListener('blur', function () { applyTyped(which); });
       });
 
-      presets.forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
+      // Delegated to the presets' container (which Vue keeps), so re-rendered buttons still work.
+      // stopPropagation keeps the click from reaching the dropdown's own toggle and closing it.
+      var presetsBox = presetButtons()[0] && presetButtons()[0].parentElement;
+      if (presetsBox) {
+        presetsBox.addEventListener('click', function (e) {
+          var btn = e.target.closest('[data-price-preset]');
+          if (!btn) return;
           e.preventDefault();
           e.stopPropagation();
           minInput.value = btn.getAttribute('data-min');
           maxInput.value = btn.getAttribute('data-max');
-          presets.forEach(function (b) { b.classList.remove('is-selected'); });
+          presetButtons().forEach(function (b) { b.classList.remove('is-selected'); });
           btn.classList.add('is-selected');
           sync(true);
         });
-      });
+      }
 
       sync(false);
+      // Re-render the labels when the visitor switches currency (the values stay in AED).
+      window.addEventListener('mw:currency-change', function () {
+        if (document.body.contains(root)) sync(false);
+      });
     });
   }
 
@@ -598,13 +622,13 @@
       var prev = root.querySelector('[data-gallery-prev]');
       var next = root.querySelector('[data-gallery-next]');
       var dotsWrap = root.querySelector('[data-gallery-dots]');
-      var countEl = root.querySelector('[data-gallery-count]');
       var index = 0;
       var startX = 0;
       var timer = null;
       var delay = 3500 + (galleryIndex % 4) * 400;
 
-      if (countEl) countEl.textContent = String(slides.length);
+      // [data-gallery-count] is left as rendered: it holds the property's full photo count
+      // (images_count), while a card only carries its first few photos as slides.
 
       function go(i) {
         index = (i + slides.length) % slides.length;
@@ -694,7 +718,11 @@
     if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.slick !== 'function') return;
 
     var $ = window.jQuery;
-    var $slider = $('[data-places-slider]');
+    // Skip sliders already initialised or still empty (slides arrive via the async home API) —
+    // slick throws on an empty track, which used to abort every init after this one.
+    var $slider = $('[data-places-slider]').filter(function () {
+      return !$(this).hasClass('slick-initialized') && $(this).children().length > 0;
+    });
     if (!$slider.length) return;
 
     $slider.slick({
@@ -1039,7 +1067,9 @@
 
     var $ = window.jQuery;
     var $slider = $('[data-testimonials-slider]');
-    if (!$slider.length) return;
+    // refresh() runs again after data loads / route changes. Re-initialising would re-clone the
+    // slick track (its only child) — showing every card twice — and bind every handler again.
+    if (!$slider.length || $slider.hasClass('slick-initialized')) return;
 
     var $section = $slider.closest('.mw-testimonials');
     var pageCount = 3;
@@ -1371,7 +1401,7 @@
 
     var $ = window.jQuery;
     var $slider = $('[data-builders-slider]');
-    if (!$slider.length) return;
+    if (!$slider.length || $slider.hasClass('slick-initialized')) return;
 
     $slider.slick({
       slidesToShow: 5,
@@ -1483,24 +1513,9 @@
     });
   }
 
-  function initBottomNav() {
-    if (initBottomNav.bound) return;
-    initBottomNav.bound = true;
-
-    var nav = document.querySelector('.mw-bottom-nav');
-    if (!nav) return;
-
-    var items = nav.querySelectorAll('.mw-bottom-nav__item');
-
-    nav.addEventListener('click', function (e) {
-      var item = e.target.closest('.mw-bottom-nav__item');
-      if (!item) return;
-      items.forEach(function (el) {
-        el.classList.remove('is-active');
-      });
-      item.classList.add('is-active');
-    });
-  }
+  // The bottom nav's active item is derived from the current route in SiteFooter.vue; toggling
+  // `.is-active` on click here left stale highlights behind, so there is nothing to bind.
+  function initBottomNav() {}
 
   // Generic Fancybox binding — any element with [data-fancybox] anywhere on
   // the site gets lightbox behavior for free; grouping is via the
@@ -1753,15 +1768,19 @@
     });
   }
 
+  // Fancybox v6 (loaded in welcome.blade.php). bind() is a delegated document listener, so one bind
+  // covers links Vue renders later (e.g. a property's gallery after its API call resolves).
   function initFancybox() {
-    if (typeof window.Fancybox === 'undefined') return;
+    if (initFancybox.bound || typeof window.Fancybox === 'undefined') return;
+    initFancybox.bound = true;
     window.Fancybox.bind('[data-fancybox]', {
       Carousel: {
+        infinite: true,
         Toolbar: {
           display: {
-            left: ['infobar'],
+            left: ['counter'],
             middle: [],
-            right: ['slideshow', 'thumbs', 'close'],
+            right: ['autoplay', 'thumbs', 'close'],
           },
         },
       },
@@ -1777,37 +1796,23 @@
   // already removed from the DOM), and the few that touch the persistent
   // header/footer guard themselves against binding twice.
   function runAllInits() {
-    initHeaderScroll();
-    initMobileNav();
-    initBottomNav();
-    initCommunityPanels();
-    initTabGroups();
-    initDashboardRemovable();
-    initStickySidebars();
-    initPillTabDropdowns();
-    initCarousels();
-    initPopularPlacesSlider();
-    initLuxurySlider();
-    initHighlightSlider();
-    initProjectsSlider();
-    initCardGalleries();
-    initRealtySlider();
-    initAgentDetailTabs();
-    initAgenciesPage();
-    initPropertiesView();
-    initTestimonialsSlider();
-    initAboutBuildersSlider();
-    initAboutPage();
-    initPricingCycle();
-    initProjectSaves();
-    initForms();
-    initDropdowns();
-    initLanguageSwitch();
-    initPriceRange();
-    initPropertyTabs();
-    initStickyPropertyTabsBar();
-    initFloorPlanTabs();
-    initFancybox();
+    // Each init runs on its own: one failing (e.g. a third-party slider choking on half-rendered
+    // markup) must not stop the rest — dropdowns, price sliders and forms further down.
+    [
+      initHeaderScroll, initMobileNav, initBottomNav, initCommunityPanels, initTabGroups,
+      initDashboardRemovable, initStickySidebars, initPillTabDropdowns, initCarousels,
+      initPopularPlacesSlider, initLuxurySlider, initHighlightSlider, initProjectsSlider,
+      initCardGalleries, initRealtySlider, initAgentDetailTabs, initAgenciesPage, initPropertiesView,
+      initTestimonialsSlider, initAboutBuildersSlider, initAboutPage, initPricingCycle, initProjectSaves,
+      initForms, initDropdowns, initLanguageSwitch, initPriceRange, initPropertyTabs,
+      initStickyPropertyTabsBar, initFloorPlanTabs, initFancybox
+    ].forEach(function (init) {
+      try {
+        init();
+      } catch (e) {
+        if (window.console) console.warn('[MWRealty] ' + init.name + ' failed:', e);
+      }
+    });
   }
 
   document.addEventListener('DOMContentLoaded', runAllInits);

@@ -35,7 +35,7 @@ class PortalUserController extends Controller
         $type = $request->query('type');
 
         if ($request->ajax()) {
-            $data = PortalUser::withCount(['properties', 'leads', 'agents'])->with(['plan', 'company'])
+            $data = PortalUser::withCount(['properties', 'leads', 'agents'])->with(['plan', 'company.plan', 'currentMembership'])
                 ->when(in_array($type, ['agent', 'company']), fn ($q) => $q->where('type', $type))
                 ->when($request->filled('company_id'), fn ($q) => $q->where('company_id', $request->query('company_id')))
                 ->when($request->filled('plan_id'), function ($q) use ($request) {
@@ -62,7 +62,7 @@ class PortalUserController extends Controller
                 ->addColumn('select_all', function ($row) {
                     return '<input type="checkbox" class="row-checkbox form-check-input" value="' . $row->id . '">';
                 })
-                ->addColumn('type', fn ($row) => ucfirst($row->type))
+                ->addColumn('type', fn ($row) => $row->type === 'company' ? 'Agency' : 'Agent')
                 ->addColumn('contact', function ($row) {
                     $label = $row->type === 'company' ? ($row->company_name ?: $row->name) : $row->name;
                     $initials = strtoupper(collect(preg_split('/\s+/', trim($label)))->filter()->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->implode('')) ?: '?';
@@ -89,7 +89,7 @@ class PortalUserController extends Controller
                         return '<span class="text-muted">-</span>';
                     }
                     if (!$row->company) {
-                        return '<span class="text-muted fst-italic">Unaffiliated</span>';
+                        return '<span class="text-muted fst-italic">Independent</span>';
                     }
                     $label = $row->company->company_name ?: $row->company->name;
                     return '<a href="' . route('cms.portal-accounts.show', ['id' => $row->company->id, 'type' => 'company']) . '" class="text-decoration-none">' . e($label) . '</a>';
@@ -103,6 +103,11 @@ class PortalUserController extends Controller
                 ->addColumn('joined', fn ($row) => $row->created_at->format('d M Y'))
                 ->orderColumn('joined', 'created_at $1')
                 ->addColumn('plan', function ($row) use ($plans) {
+                    // Agency agent: on the agency's plan — not the agent's own, so not editable here.
+                    if ($row->isOnAgencyPlan()) {
+                        return '<span class="fw-semibold text-success">' . e($row->company->plan?->getTranslation('name') ?? 'No Plan') . '</span>'
+                            . '<div class="text-muted" style="font-size: 0.68rem;"><i class="fas fa-building me-1"></i>Agency plan</div>';
+                    }
                     $label = $row->plan ? $row->plan->getTranslation('name') : 'No Plan';
                     $colorClass = !$row->plan ? 'text-muted fst-italic' : ((float) $row->plan->price === 0.0 ? 'text-secondary fw-semibold' : 'text-success fw-bold');
 
@@ -153,6 +158,9 @@ class PortalUserController extends Controller
                     return $html;
                 })
                 ->addColumn('payment_status', function ($row) {
+                    if ($row->isOnAgencyPlan()) {
+                        return '<span class="fw-bold text-success"><i class="fas fa-building me-1"></i>Covered by agency</span>';
+                    }
                     $colorClass = $row->payment_status === 'paid' ? 'text-success' : 'text-danger';
                     $icon = $row->payment_status === 'paid' ? 'fa-check-circle' : 'fa-times-circle';
                     $sub = $row->last_payment_at ? '<div class="text-muted" style="font-size: 0.68rem;">' . $row->last_payment_at->format('d M Y') . '</div>' : '';
@@ -199,7 +207,20 @@ class PortalUserController extends Controller
         $companiesForFilter = PortalUser::companies()->orderBy('company_name')->get(['id', 'company_name', 'name']);
         $plansForFilter = Plan::orderBy('order_index')->get();
 
-        return view('portal-accounts.index', compact('type', 'companiesForFilter', 'plansForFilter'));
+        // Header tiles / tabs: accounts of this type by approval, payment and active state.
+        $scoped = fn () => PortalUser::query()->when(in_array($type, ['agent', 'company']), fn ($q) => $q->where('type', $type));
+        $counts = [
+            'all' => $scoped()->count(),
+            'pending' => $scoped()->where('status', 'pending')->count(),
+            'approved' => $scoped()->where('status', 'approved')->count(),
+            'rejected' => $scoped()->where('status', 'rejected')->count(),
+            'paid' => $scoped()->where('payment_status', 'paid')->count(),
+            'inactive' => $scoped()->where('is_active', false)->count(),
+            'new_30' => $scoped()->where('created_at', '>=', now()->subDays(30))->count(),
+        ];
+        $typeCounts = PortalUser::selectRaw('type, COUNT(*) AS total')->groupBy('type')->pluck('total', 'type');
+
+        return view('portal-accounts.index', compact('type', 'companiesForFilter', 'plansForFilter', 'counts', 'typeCounts'));
     }
 
     public function export(Request $request)
@@ -225,18 +246,18 @@ class PortalUserController extends Controller
             ->withCount(['properties', 'leads'])
             ->orderBy('id');
 
-        $filename = 'agents-companies-' . now()->format('Y-m-d-His') . '.csv';
+        $filename = 'agents-agencies-' . now()->format('Y-m-d-His') . '.csv';
 
         return response()->streamDownload(function () use ($query) {
             $out = fopen('php://output', 'w');
-            \App\Support\Csv::row($out, ['Name', 'Type', 'Company', 'Email', 'Phone', 'Properties', 'Leads', 'Plan', 'Admin Approval', 'Active', 'Payment Status', 'Last Payment', 'Joined']);
+            \App\Support\Csv::row($out, ['Name', 'Type', 'Agency', 'Email', 'Phone', 'Properties', 'Leads', 'Plan', 'Admin Approval', 'Active', 'Payment Status', 'Last Payment', 'Joined']);
 
             // Chunked (not get()) so exporting 50,000+ accounts never holds them all in memory at once.
             $query->chunk(500, function ($rows) use ($out) {
                 foreach ($rows as $row) {
                     \App\Support\Csv::row($out, [
                         $row->type === 'company' ? ($row->company_name ?: $row->name) : $row->name,
-                        ucfirst($row->type),
+                        $row->type === 'company' ? 'Agency' : 'Agent',
                         $row->company ? ($row->company->company_name ?: $row->company->name) : '-',
                         $row->email,
                         $row->phone,
@@ -317,7 +338,6 @@ class PortalUserController extends Controller
             'passport_expiry' => $request->input('passport_expiry'),
 
             'brn_number' => $type === 'agent' ? $request->input('brn_number') : null,
-            'company_id' => $type === 'agent' ? $request->input('company_id') : null,
 
             'trade_license_no' => $request->input('trade_license_no'),
             'trade_license_expiry' => $request->input('trade_license_expiry'),
@@ -330,6 +350,13 @@ class PortalUserController extends Controller
         ]);
 
         $this->storeKycDocuments($request, $portalUser);
+
+        // Admin-created agent placed straight into an agency: recorded as an admin-approved membership.
+        if ($type === 'agent' && $request->filled('company_id')) {
+            app(\App\Services\Agency\AgencyMembershipService::class)->adminAssignAgency(
+                $portalUser, PortalUser::findOrFail($request->input('company_id')), \Illuminate\Support\Facades\Auth::guard('cms')->id(),
+            );
+        }
 
         if ($portalUser->status === 'approved') {
             $this->sendStatusEmail($portalUser, 'pending');
@@ -361,7 +388,6 @@ class PortalUserController extends Controller
     public function show(Request $request, $id)
     {
         $portalUser = PortalUser::withCount(['properties', 'leads', 'agents'])->with(['plan', 'company'])->findOrFail($id);
-        $companies = PortalUser::companies()->where('id', '!=', $id)->where('status', '!=', 'rejected')->orderBy('company_name')->get(['id', 'company_name', 'name']);
 
         // Paginated — a long-lived account can build up years of payment history, and a large
         // brokerage can have thousands of affiliated agents, so neither list loads unbounded.
@@ -370,7 +396,7 @@ class PortalUserController extends Controller
         $totalPaid = (float) PlanPayment::paid()->where('portal_user_id', $portalUser->id)->sum('amount');
         $languages = \App\Models\CmsKit\Language::active()->orderByDesc('is_default')->get(['name', 'code', 'is_default']);
 
-        return view('portal-accounts.show', compact('portalUser', 'companies', 'payments', 'agents', 'totalPaid', 'languages'));
+        return view('portal-accounts.show', compact('portalUser', 'payments', 'agents', 'totalPaid', 'languages'));
     }
 
     /**
@@ -392,10 +418,11 @@ class PortalUserController extends Controller
             'passport_no' => 'sometimes|nullable|string|max:50',
             'passport_expiry' => 'sometimes|nullable|date',
             'brn_number' => 'sometimes|nullable|string|max:50',
-            'company_id' => ['sometimes', 'nullable', Rule::notIn([$portalUser->id]), Rule::exists('portal_users', 'id')->where('type', 'company')->where('status', 'approved')->where('is_active', true)],
+            'affiliated_brokerage' => 'sometimes|nullable|string|max:255',
             'trade_license_no' => 'sometimes|nullable|string|max:50',
             'trade_license_expiry' => 'sometimes|nullable|date',
             'orn_number' => 'sometimes|nullable|string|max:50',
+            'adrec_license_no' => 'sometimes|nullable|string|max:50',
             'trn_number' => 'sometimes|nullable|string|max:50',
             'trn_expiry' => 'sometimes|nullable|date',
             'authorized_signatory_name' => 'sometimes|nullable|string|max:255',
@@ -416,8 +443,10 @@ class PortalUserController extends Controller
         }
         $fieldsBySection = [
             'identity' => ['name', 'company_name', 'email', 'phone', 'nationality', 'emirates_id_no', 'passport_no', 'passport_expiry'],
-            'agent' => ['brn_number', 'company_id', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
-            'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'trn_number', 'trn_expiry', 'authorized_signatory_name', 'landline', 'office_address'],
+            // The KYC "Affiliated Brokerage" is information only. Agency membership (and the agency's
+            // plan) is not edited here — only through an accepted invitation / join request (Agency Agents).
+            'agent' => ['brn_number', 'affiliated_brokerage', 'trade_license_no', 'trade_license_expiry', 'trn_number', 'trn_expiry'],
+            'company' => ['trade_license_no', 'trade_license_expiry', 'orn_number', 'adrec_license_no', 'trn_number', 'trn_expiry', 'authorized_signatory_name', 'landline', 'office_address'],
             'about' => ['years_of_experience', 'website', 'founding_year'],
         ];
 
@@ -487,6 +516,20 @@ class PortalUserController extends Controller
         $portalUser->save();
 
         return response()->json(['success' => true]);
+    }
+
+    /** Clears authenticator-app 2FA for a user who has lost access to it (and their recovery codes). */
+    public function resetTwoFactor($id)
+    {
+        $portalUser = PortalUser::findOrFail($id);
+        $portalUser->forceFill([
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+            'two_factor_last_step' => null,
+        ])->save();
+
+        return back()->with('success', 'Two-factor authentication has been reset for this account.');
     }
 
     public function approve($id)

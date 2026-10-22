@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MW REALTY - Admin Dashboard</title>
+    <meta name="csrf-token" content="">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dvgxfjqjj/image/upload/v1790254522/MW/site-info/7x1cjVRYoNA8gWOetvmcBLTHRfKlkxpojSOAl9F0.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+        :root {
+            --primary-color: #04a1cc;
+            --primary-gradient: #04a1cc;
+            --primary-fill: #04a1cc;
+            --heading-gradient: #04a1cc;
+            --theme-status-success-bg: rgba(25, 135, 84, 0.12);
+            --theme-status-success-text: #198754;
+            --theme-status-danger-bg: rgba(220, 53, 69, 0.12);
+            --theme-status-danger-text: #dc3545;
+            --primary-rgb: 4, 161, 204;
+            --secondary-color: #264373;
+            --bg-color: #f2ecec;
+            --sidebar-color: #343a40;
+            --text-color: #212529;
+            --theme-border-color: rgba(4, 161, 204, 0.24);
+            --theme-border-strong: rgba(4, 161, 204, 0.45);
+            --theme-soft-bg: rgba(4, 161, 204, 0.08);
+            --theme-focus-ring: 0 0 0 0.2rem rgba(4, 161, 204, 0.15);
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --header-bg: rgba(255, 255, 255, 0.8);
+            --sidebar-width: 280px;
+        }
+    </style>
+    <link rel="stylesheet" href="http://127.0.0.1:8000/vendor/cms-kit/css/cms-premium.css">
+    <link rel="stylesheet" href="http://127.0.0.1:8000/vendor/cms-kit/css/sitemap.css">
+    <link rel="stylesheet" href="http://127.0.0.1:8000/vendor/cms-kit/css/cms-modules.css">
+    <style>
+        .sidebar-section-label {
+            font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+            color: rgba(255,255,255,0.32); padding: 1.1rem 1rem 0.4rem;
+            border-top: 1px solid rgba(255,255,255,0.08); margin-top: 0.6rem;
+        }
+
+        /* Sidebar — standard navy gradient (tied to the configured brand colors), dim/professional */
+        .sidebar {
+            background: linear-gradient(165deg, var(--secondary-color, #264373) 0%, #16213d 45%, #0c1730 100%) !important;
+            border-right: 1px solid rgba(255,255,255,0.06);
+        }
+        .sidebar .brand {
+            background: linear-gradient(135deg, rgba(var(--primary-rgb, 4,161,204), 0.18), transparent 70%);
+            border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+        }
+        .sidebar .nav-link.active {
+            background: linear-gradient(135deg, rgba(var(--primary-rgb, 4,161,204), 0.32), rgba(var(--primary-rgb, 4,161,204), 0.1)) !important;
+            box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb, 4,161,204), 0.24), 0 10px 22px rgba(0,0,0,0.22) !important;
+        }
+        .notif-bell-btn { position: relative; border: none; background: #f4f6fb; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #4b5065; font-size: 1.05rem; }
+        .notif-bell-btn:hover { background: #e9ecf6; color: var(--secondary-color, #212529); }
+        .notif-bell-badge { position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 10px; background: #dc3545; border: 2px solid #fff; color: #fff; font-size: 0.62rem; font-weight: 800; display: flex; align-items: center; justify-content: center; line-height: 1; }
+        .notif-offcanvas { width: 400px; max-width: 92vw; }
+        .notif-offcanvas .offcanvas-header { border-bottom: 1px solid #f0f1f6; }
+        .notif-offcanvas .offcanvas-title { font-weight: 800; font-size: 1.05rem; }
+        .notif-offcanvas-actions { padding: 0.7rem 1.25rem; display: flex; justify-content: flex-end; border-bottom: 1px solid #f5f6fa; }
+        .notif-offcanvas-actions .btn-link { font-size: 0.8rem; font-weight: 700; text-decoration: none; }
+        .notif-list { overflow-y: auto; }
+        .notif-item { display: flex; gap: 0.7rem; padding: 0.8rem 1.1rem; text-decoration: none; color: inherit; border-bottom: 1px solid #f5f6fa; }
+        .notif-item:hover { background: #f9fafc; color: inherit; }
+        .notif-item.is-unread { background: #f3f9ff; }
+        .notif-icon { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.8rem; margin-top: 2px; }
+        .notif-icon.tone-teal { background: linear-gradient(135deg, var(--primary-color, #04a1cc), #2fc4e8); }
+        .notif-icon.tone-amber { background: linear-gradient(135deg, #e08e0b, #f5a623); }
+        .notif-icon.tone-green { background: linear-gradient(135deg, #0f9d58, #34c880); }
+        .notif-icon.tone-red { background: linear-gradient(135deg, #dc3545, #ef6a76); }
+        .notif-body { flex: 1; min-width: 0; }
+        .notif-title { font-weight: 700; font-size: 0.83rem; color: #1c2340; }
+        .notif-message { font-size: 0.78rem; color: #6b7185; line-height: 1.4; }
+        .notif-time { font-size: 0.68rem; color: #a3a8bb; margin-top: 0.2rem; }
+        .notif-empty { padding: 2.5rem 1rem; text-align: center; color: #a3a8bb; font-size: 0.85rem; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js" referrerpolicy="origin"></script>
+
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+    .sf { --sf-navy: var(--secondary-color, #264373); --sf-teal: var(--primary-color, #04a1cc); --sf-ink: #1c2340; --sf-muted: #838aa3; --sf-soft: #f7f8fc; --sf-border: rgba(28, 35, 64, .08); --sf-red: #ca2844; }
+    .sf-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .sf-head h4 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: var(--sf-ink); margin: 0; }
+    .sf-head p { color: var(--sf-muted); font-size: .85rem; margin: .25rem 0 0; max-width: 640px; }
+    .sf-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .sf-btn { display: inline-flex; align-items: center; gap: .45rem; border-radius: 11px; font-weight: 700; font-size: .84rem; padding: .55rem 1rem; border: 1.5px solid transparent; transition: all .2s; text-decoration: none; cursor: pointer; }
+    .sf-btn--primary { background: linear-gradient(135deg, var(--sf-teal), #2fc4e8); color: #fff; box-shadow: 0 6px 16px rgba(4, 161, 204, .25); }
+    .sf-btn--primary:hover { color: #fff; transform: translateY(-1px); }
+    .sf-btn--ghost { background: #fff; color: var(--sf-navy); border-color: var(--sf-border); }
+    .sf-btn--ghost:hover { border-color: var(--sf-teal); color: var(--sf-teal); }
+
+    /* Page tabs */
+    .sf-pages { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .75rem; margin-bottom: 1.25rem; }
+    @media (max-width: 1199.98px) { .sf-pages { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 767.98px) { .sf-pages { grid-template-columns: repeat(2, 1fr); } }
+    .sf-page { display: flex; align-items: center; gap: .75rem; padding: .85rem 1rem; border-radius: 16px; background: #fff; border: 1.5px solid var(--sf-border); text-decoration: none; transition: all .2s; }
+    .sf-page:hover { border-color: rgba(4, 161, 204, .4); }
+    .sf-page.is-active { border-color: var(--sf-teal); box-shadow: 0 0 0 4px rgba(4, 161, 204, .1); }
+    .sf-page__icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--sf-soft); color: var(--sf-navy); flex-shrink: 0; }
+    .sf-page.is-active .sf-page__icon { background: linear-gradient(135deg, var(--sf-teal), #2fc4e8); color: #fff; }
+    .sf-page strong { display: block; color: var(--sf-ink); font-size: .92rem; }
+    .sf-page span { font-size: .74rem; color: var(--sf-muted); }
+
+    .sf-note { display: flex; gap: .75rem; align-items: flex-start; padding: .8rem 1rem; border-radius: 14px; background: rgba(4, 161, 204, .06); border: 1px solid rgba(4, 161, 204, .18); color: #3d4460; font-size: .82rem; margin-bottom: 1.25rem; }
+    .sf-note i { color: var(--sf-teal); margin-top: .15rem; }
+
+    .sf-card { background: #fff; border: 1px solid var(--sf-border); border-radius: 18px; box-shadow: 0 6px 20px rgba(28, 35, 64, .05); }
+    .sf-card__head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--sf-border); }
+    .sf-card__title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: var(--sf-ink); font-size: 1rem; }
+    .sf-card__sub { font-size: .76rem; color: var(--sf-muted); }
+
+    /* Filter rows */
+    .sf-list { list-style: none; margin: 0; padding: .5rem; }
+    .sf-row { display: grid; grid-template-columns: 28px 44px minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.2fr) 70px 92px; align-items: center; gap: .85rem; padding: .7rem .75rem; border-radius: 14px; transition: background .15s; }
+    .sf-row + .sf-row { border-top: 1px dashed var(--sf-border); }
+    .sf-row:hover { background: var(--sf-soft); }
+    .sf-row.is-off { opacity: .55; }
+    .sf-row.sortable-ghost { background: rgba(4, 161, 204, .08); }
+    @media (max-width: 991.98px) { .sf-row { grid-template-columns: 28px 44px minmax(0, 1fr) 70px 92px; } .sf-row .sf-col-type, .sf-row .sf-col-options { display: none; } }
+    .sf-drag { color: #c0c5d6; cursor: grab; text-align: center; }
+    .sf-drag:active { cursor: grabbing; }
+    .sf-type-icon { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1rem; }
+    .sf-type-icon.t-select { background: linear-gradient(135deg, var(--sf-navy), #3a5794); }
+    .sf-type-icon.t-radio { background: linear-gradient(135deg, #6d28d9, #8b5cf6); }
+    .sf-type-icon.t-checkbox { background: linear-gradient(135deg, #0f9d58, #34c880); }
+    .sf-type-icon.t-text { background: linear-gradient(135deg, #e08e0b, #f5a623); }
+    .sf-type-icon.t-number { background: linear-gradient(135deg, var(--sf-red), #e5546d); }
+    .sf-type-icon.t-range { background: linear-gradient(135deg, var(--sf-teal), #2fc4e8); }
+    .sf-name strong { display: block; color: var(--sf-ink); font-size: .9rem; }
+    .sf-name code { font-size: .72rem; color: var(--sf-red); background: rgba(202, 40, 68, .06); padding: .05rem .4rem; border-radius: 6px; }
+    .sf-name small { color: var(--sf-muted); font-size: .72rem; margin-left: .35rem; }
+    .sf-chip { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .65rem; border-radius: 99px; font-size: .74rem; font-weight: 700; background: var(--sf-soft); color: #3d4460; }
+    .sf-chip.is-db { background: rgba(4, 161, 204, .08); color: #037c9e; }
+    .sf-chip.is-custom { background: rgba(109, 40, 217, .08); color: #6d28d9; }
+    .sf-row-actions { display: flex; gap: .35rem; justify-content: flex-end; }
+    .sf-icon-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--sf-border); background: #fff; display: inline-flex; align-items: center; justify-content: center; color: var(--sf-navy); transition: all .15s; }
+    .sf-icon-btn:hover { border-color: var(--sf-teal); color: var(--sf-teal); }
+    .sf-icon-btn.is-danger:hover { border-color: var(--sf-red); color: var(--sf-red); }
+    .sf .form-switch .form-check-input { width: 2.4em; height: 1.25em; cursor: pointer; }
+
+    .sf-empty { text-align: center; padding: 3rem 1rem; }
+    .sf-empty__icon { width: 64px; height: 64px; border-radius: 20px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; background: var(--sf-soft); color: var(--sf-teal); font-size: 1.5rem; }
+    .sf-empty h6 { font-weight: 800; color: var(--sf-ink); }
+    .sf-empty p { color: var(--sf-muted); font-size: .85rem; }
+    .sf-api { display: flex; align-items: center; gap: .6rem; padding: .75rem 1.25rem; border-top: 1px solid var(--sf-border); font-size: .76rem; color: var(--sf-muted); flex-wrap: wrap; }
+    .sf-api code { color: var(--sf-navy); background: var(--sf-soft); padding: .15rem .5rem; border-radius: 6px; }
+
+    /* Form */
+    .sf-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1.5rem; align-items: start; }
+    @media (max-width: 1199.98px) { .sf-grid { grid-template-columns: 1fr; } }
+    .sf-section { background: #fff; border: 1px solid var(--sf-border); border-radius: 18px; box-shadow: 0 6px 20px rgba(28, 35, 64, .05); padding: 1.35rem 1.5rem; margin-bottom: 1.25rem; }
+    .sf-section__head { display: flex; gap: .85rem; align-items: flex-start; margin-bottom: 1.1rem; }
+    .sf-step { width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: .85rem; background: linear-gradient(135deg, var(--sf-navy), #3a5794); }
+    .sf-section__title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.02rem; color: var(--sf-ink); }
+    .sf-section__hint { font-size: .8rem; color: var(--sf-muted); margin-top: .1rem; }
+    .sf .form-label { font-size: .8rem; font-weight: 700; color: #3d4460; margin-bottom: .35rem; }
+    .sf .form-control, .sf .form-select { border-radius: 10px; }
+    .sf-help { font-size: .74rem; color: var(--sf-muted); margin-top: .3rem; }
+
+    .sf-field-group + .sf-field-group { margin-top: 1rem; }
+    .sf-field-group__name { font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--sf-muted); margin-bottom: .5rem; }
+    .sf-choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .5rem; }
+    .sf-choice { position: relative; display: flex; align-items: center; gap: .6rem; border: 1.5px solid var(--sf-border); border-radius: 12px; padding: .6rem .75rem; cursor: pointer; transition: all .15s; background: #fff; margin: 0; }
+    .sf-choice input { position: absolute; opacity: 0; pointer-events: none; }
+    .sf-choice strong { display: block; font-size: .84rem; color: var(--sf-ink); line-height: 1.25; }
+    .sf-choice span { font-size: .71rem; color: var(--sf-muted); }
+    .sf-choice i.sf-choice__icon { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: var(--sf-soft); color: var(--sf-navy); flex-shrink: 0; }
+    .sf-choice:hover { border-color: rgba(4, 161, 204, .45); }
+    .sf-choice:has(input:checked) { border-color: var(--sf-teal); box-shadow: 0 0 0 3px rgba(4, 161, 204, .12); }
+    .sf-choice:has(input:checked) i.sf-choice__icon { background: var(--sf-teal); color: #fff; }
+    .sf-choice.is-disabled { opacity: .4; cursor: not-allowed; background: var(--sf-soft); }
+    .sf-choice__tag { position: absolute; top: -8px; right: 8px; font-size: .62rem; font-weight: 800; padding: .05rem .45rem; border-radius: 99px; background: #fff; border: 1px solid var(--sf-border); color: var(--sf-muted); }
+
+    .sf-langs { display: inline-flex; gap: .25rem; padding: .25rem; border-radius: 12px; background: var(--sf-soft); margin-bottom: 1rem; }
+    .sf-langs .nav-link { border-radius: 9px; padding: .35rem .9rem; font-size: .82rem; font-weight: 700; color: var(--sf-muted); }
+    .sf-langs .nav-link.active { background: #fff; color: var(--sf-navy); box-shadow: 0 2px 8px rgba(28, 35, 64, .1); }
+
+    .sf-db-preview { display: flex; flex-wrap: wrap; gap: .4rem; padding: .85rem; border-radius: 12px; background: var(--sf-soft); min-height: 52px; }
+    .sf-db-preview .sf-chip { background: #fff; border: 1px solid var(--sf-border); }
+    .sf-db-preview .sf-chip em { font-style: normal; color: var(--sf-muted); font-weight: 600; }
+
+    .sf-options { width: 100%; }
+    .sf-options th { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--sf-muted); font-weight: 800; padding: .4rem .5rem; }
+    .sf-options td { padding: .35rem .5rem; vertical-align: middle; }
+    .sf-options tr.sortable-ghost td { background: rgba(4, 161, 204, .08); }
+    .sf-options .form-control { font-size: .84rem; }
+
+    /* Live preview */
+    .sf-preview { position: sticky; top: 90px; }
+    .sf-preview__frame { border-radius: 16px; padding: 1.25rem; background: #fff; border: 1px solid var(--sf-border); }
+    .sf-preview__label { font-weight: 800; font-size: .95rem; color: #1a1a2e; margin-bottom: .75rem; }
+    .sf-preview__pills { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .sf-preview__pills span { padding: .4rem .9rem; border-radius: 99px; border: 1px solid #dfe2ea; font-size: .8rem; color: #3d4460; }
+    .sf-preview__pills span.is-on { background: #1a1a2e; border-color: #1a1a2e; color: #fff; }
+    .sf-preview__checks { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+    .sf-preview__checks label { display: flex; gap: .45rem; align-items: center; font-size: .8rem; color: #3d4460; margin: 0; }
+    .sf-preview__range { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+    .sf-preview__range div { border: 1px solid #dfe2ea; border-radius: 10px; padding: .45rem .7rem; font-size: .8rem; color: var(--sf-muted); }
+    .sf-preview__range div b { display: block; font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; color: #3d4460; }
+    .sf-preview__params { margin-top: 1rem; padding-top: .9rem; border-top: 1px dashed var(--sf-border); font-size: .74rem; color: var(--sf-muted); }
+    .sf-preview__params code { color: var(--sf-navy); background: var(--sf-soft); padding: .1rem .4rem; border-radius: 6px; word-break: break-all; }
+
+    .sf-foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+    <div class="min-vh-100">
+        <!-- Sidebar -->
+        <div class="sidebar d-none d-md-block">
+            <div class="brand">
+                <h4 class="fw-bold mb-0 text-white">MW REALTY</h4>
+                <small class="text-white-50">Control Panel</small>
+            </div>
+            
+            <div class="mt-4">
+                <nav class="nav flex-column">
+                    <a class="nav-link " href="http://127.0.0.1:8000/admin">
+                        <i class="fas fa-th-large"></i> Dashboard
+                    </a>
+
+                    
+                                        <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle "
+                           data-bs-toggle="collapse" href="#clientsMenu" role="button"
+                           aria-expanded=" false ">
+                            <i class="fas fa-address-card"></i>
+                            <span>Clients</span>
+                                                                                    <span class="badge bg-danger ms-auto" title="Waiting for review: KYC, agency agents and plan requests">10</span>
+                                                        <i class="fas fa-chevron-down ms-2 sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu " id="clientsMenu">
+                            <nav class="nav flex-column">
+                                                                <a class="nav-link py-2 d-flex align-items-center "
+                                   href="http://127.0.0.1:8000/admin/portal-accounts?type=company">
+                                    Agencies
+                                                                        <span class="badge bg-danger ms-auto" title="KYC waiting for review">2</span>
+                                                                    </a>
+                                                                <a class="nav-link py-2 d-flex align-items-center "
+                                   href="http://127.0.0.1:8000/admin/portal-accounts?type=agent">
+                                    Agents
+                                                                        <span class="badge bg-danger ms-auto" title="KYC waiting for review">5</span>
+                                                                    </a>
+                                                                <a class="nav-link py-2 d-flex align-items-center " href="http://127.0.0.1:8000/admin/agency-agents">
+                                    Agency Agents
+                                                                        <span class="badge bg-danger ms-auto">3</span>
+                                                                    </a>
+                                
+                                
+                                
+                            </nav>
+                        </div>
+                    </div>
+                    
+                                        <a class="nav-link " href="http://127.0.0.1:8000/admin/plans">
+                        <i class="fas fa-layer-group"></i> Plans
+                    </a>
+                    
+                                        <a class="nav-link " href="http://127.0.0.1:8000/admin/payments">
+                        <i class="fas fa-receipt"></i> Payments
+                    </a>
+                    
+                                        <a class="nav-link " href="http://127.0.0.1:8000/admin/credits">
+                        <i class="fas fa-coins"></i> Credits
+                    </a>
+                    
+                                        <a class="nav-link " href="http://127.0.0.1:8000/admin/credits/history">
+                        <i class="fas fa-history"></i> Credit History
+                    </a>
+                    
+                                        <a class="nav-link " href="http://127.0.0.1:8000/admin/coupons">
+                        <i class="fas fa-ticket-alt"></i> Coupons
+                    </a>
+                    
+                    
+                                        <a class="nav-link d-flex align-items-center " href="http://127.0.0.1:8000/admin/support-tickets">
+                        <i class="fas fa-headset"></i> Support Tickets
+                                                <span class="badge bg-danger ms-auto">6</span>
+                                            </a>
+                    
+                    
+                                        <a class="nav-link d-flex align-items-center " href="http://127.0.0.1:8000/admin/help-desk">
+                        <i class="fas fa-circle-question"></i> Help Desk
+                    </a>
+                    
+                    <div class="sidebar-section-label">Website Content</div>
+
+                    
+                                            <div class="nav-item sidebar-group">
+                            <a class="nav-link d-flex align-items-center sidebar-group-toggle "
+                            data-bs-toggle="collapse" href="#settingsMenu" role="button"
+                            aria-expanded=" false ">
+                                <i class="fas fa-cog"></i>
+                                <span>General Settings</span>
+                                <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                            </a>
+                            <div class="collapse sidebar-submenu " id="settingsMenu">
+                                <nav class="nav flex-column">
+                                                                        <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/languages">
+                                        Languages
+                                    </a>
+                                                                                                            <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/currencies">
+                                        Currencies
+                                    </a>
+                                                                                                            <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/site-information">
+                                        Site Information
+                                    </a>
+                                                                    </nav>
+                            </div>
+                        </div>
+                    
+                    
+                                        <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle " 
+                           data-bs-toggle="collapse" href="#seoMenu" role="button" 
+                           aria-expanded=" false ">
+                            <i class="fas fa-search"></i>
+                            <span>SEO Management</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu " id="seoMenu">
+                            <nav class="nav flex-column">
+                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/metadata">
+                                    Metadata
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/sitemap">
+                                    Sitemap Generator
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/seo/robots-txt">
+                                    Robots.txt Editor
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/seo/llms-txt">
+                                    LLMs.txt Generator
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/seo/url-redirects">
+                                    URL redirects
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/seo/missing-urls">
+                                    404 log
+                                </a>
+                                                            </nav>
+                        </div>
+                    </div>
+                                        
+                    
+                                                            <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle "
+                           data-bs-toggle="collapse" href="#homeMenu" role="button"
+                           aria-expanded=" false ">
+                            <i class="fas fa-home"></i>
+                            <span>Home</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu " id="homeMenu">
+                            <nav class="nav flex-column">
+                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/banners">
+                                    Banner
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/popular-places">
+                                    Popular Places
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/section-headings">
+                                    Common Titles
+                                </a>
+                                                            </nav>
+                        </div>
+                    </div>
+                    
+                    
+                                                            <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle "
+                           data-bs-toggle="collapse" href="#aboutMenu" role="button"
+                           aria-expanded=" false ">
+                            <i class="fas fa-info-circle"></i>
+                            <span>About</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu " id="aboutMenu">
+                            <nav class="nav flex-column">
+                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/about-us">
+                                    About Us
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/market-trends">
+                                    Market Trends
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/why-choose-us">
+                                    Why Choose Us
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/our-builders">
+                                    Our Builders
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/connect-us">
+                                    Connect Us
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/post-property-steps">
+                                    Property Posting Steps
+                                </a>
+                                                            </nav>
+                        </div>
+                    </div>
+                    
+                                        <a class="nav-link " href="http://127.0.0.1:8000/admin/contact-us">
+                        <i class="fas fa-envelope-open-text"></i> Contact
+                    </a>
+                    
+                    
+                                                            <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle "
+                           data-bs-toggle="collapse" href="#filtersMenu" role="button"
+                           aria-expanded=" false ">
+                            <i class="fas fa-sliders-h"></i>
+                            <span>Filters</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu " id="filtersMenu">
+                            <nav class="nav flex-column">
+                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/filters">
+                                    Search Filters
+                                </a>
+                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/filter-lists">
+                                    Option Lists
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/communities">
+                                    Communities
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/find-properties">
+                                    Find Properties
+                                </a>
+                                                            </nav>
+                        </div>
+                    </div>
+                         
+                                        <a class="nav-link " href="http://127.0.0.1:8000/admin/brands">
+                        <i class="fas fa-tag"></i> Brands
+                    </a>
+                    
+                                        <a class="nav-link " href="http://127.0.0.1:8000/admin/testimonials">
+                        <i class="fas fa-comment-dots"></i> Testimonials
+                    </a>
+                    
+                    
+
+                    
+
+                                        <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle "
+                           data-bs-toggle="collapse" href="#enquiryMenu" role="button"
+                           aria-expanded=" false ">
+                            <i class="fas fa-envelope"></i>
+                            <span>Enquiries</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu " id="enquiryMenu">
+                            <nav class="nav flex-column">
+                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/enquiries">
+                                    Form Enquiries
+                                </a>
+                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/newsletter-signups">
+                                    Newsletter Signups
+                                </a>
+                                                                
+                                                            </nav>
+                        </div>
+                    </div>
+                    
+                                        <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle "
+                           data-bs-toggle="collapse" href="#blogsMenu" role="button"
+                           aria-expanded=" false ">
+                            <i class="fas fa-blog"></i>
+                            <span>Blogs</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu " id="blogsMenu">
+                            <nav class="nav flex-column">
+                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/blogs">
+                                    All Blogs
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/blog-categories">
+                                    Categories
+                                </a>
+                                                            </nav>
+                        </div>
+                    </div>
+                    
+                                                            <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle "
+                           data-bs-toggle="collapse" href="#marketInsightsMenu" role="button"
+                           aria-expanded="false">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Market Insights</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu " id="marketInsightsMenu">
+                            <nav class="nav flex-column">
+                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/market-insights">
+                                    All Insights
+                                </a>
+                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/market-insights/topics">
+                                    Topics
+                                </a>
+                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/market-insights/regions">
+                                    Regions
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                                        <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle "
+                           data-bs-toggle="collapse" href="#landingPagesMenu" role="button"
+                           aria-expanded=" false ">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Landing Pages</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu " id="landingPagesMenu">
+                            <nav class="nav flex-column">
+                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/landing-pages">
+                                    All Pages
+                                </a>
+                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/landing-pages/enquiries">
+                                    Enquiries
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                                        <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle " 
+                           data-bs-toggle="collapse" href="#careersMenu" role="button" 
+                           aria-expanded=" false ">
+                            <i class="fas fa-briefcase"></i>
+                            <span>Careers</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu " id="careersMenu">
+                            <nav class="nav flex-column">
+                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/careers/common">
+                                    Common Section
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/careers/vacancies">
+                                    Vacancies
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/careers/departments">
+                                    Departments
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/careers/candidates">
+                                    Candidates
+                                </a>
+                                                            </nav>
+                        </div>
+                    </div>
+                    
+                    
+                                        <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle "
+                           data-bs-toggle="collapse" href="#userMenu" role="button"
+                           aria-expanded=" false ">
+                            <i class="fas fa-users-cog"></i>
+                            <span>User Management</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu " id="userMenu">
+                            <nav class="nav flex-column">
+                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/admins">
+                                    Administrators
+                                </a>
+                                                                                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/roles">
+                                    Roles & Permissions
+                                </a>
+                                <a class="nav-link py-2 " href="http://127.0.0.1:8000/admin/permissions">
+                                    Permissions List
+                                </a>
+                                                            </nav>
+                        </div>
+                    </div>
+                    
+                </nav>
+            </div>
+
+            
+        </div>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper flex-grow-1">
+            <!-- Top Header -->
+            <header class="top-header">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="http://127.0.0.1:8000/crm/properties">Properties</a></li>
+    <li class="breadcrumb-item"><a href="http://127.0.0.1:8000/admin/filters?page=home">Search Filters</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Edit Price Range</li>
+                    </ol>
+                </nav>
+
+                <div class="d-flex align-items-center gap-3">
+                                        <a href="http://127.0.0.1:8000/portal/dashboard" class="btn btn-premium btn-quicknav btn-sm">
+                        <i class="fas fa-users"></i> CRM
+                    </a>
+                    
+                    <a href="/" target="_blank" class="btn btn-premium btn-view-site btn-sm">
+                        <i class="fas fa-external-link-alt me-2"></i> View Site
+                    </a>
+
+                                        <button type="button" class="notif-bell-btn" id="notifBellBtn" data-bs-toggle="offcanvas" data-bs-target="#notifOffcanvas" aria-controls="notifOffcanvas">
+                        <i class="fas fa-bell"></i>
+                                                <span class="notif-bell-badge">9+</span>
+                                            </button>
+
+                    <div class="dropdown">
+                        <div class="user-profile dropdown-toggle" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <div class="user-avatar">SA</div>
+                            <div class="d-none d-lg-block">
+                                <div class="fw-bold small lh-1">Super Admin</div>
+                                <small class="text-muted" style="font-size: 0.75rem;">admin@example.com</small>
+                            </div>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg mt-2" aria-labelledby="userDropdown" style="border-radius: 12px; min-width: 180px;">
+                            <li class="px-3 py-2 border-bottom d-lg-none">
+                                <div class="fw-bold small lh-1 text-dark">Super Admin</div>
+                                <small class="text-muted" style="font-size: 0.75rem;">admin@example.com</small>
+                            </li>
+                            <li>
+                                <form action="http://127.0.0.1:8000/admin/logout" method="POST">
+                                    <input type="hidden" name="_token" value="" autocomplete="off">                                    <button type="submit" class="dropdown-item text-danger d-flex align-items-center gap-2 py-2">
+                                        <i class="fas fa-sign-out-alt small"></i>
+                                        <span>Logout</span>
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <div class="offcanvas offcanvas-end notif-offcanvas" tabindex="-1" id="notifOffcanvas" aria-labelledby="notifOffcanvasLabel">
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title" id="notifOffcanvasLabel">Notifications</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body p-0">
+                                        <div class="notif-offcanvas-actions">
+                        <button type="button" id="notifMarkAllBtn" class="btn btn-sm btn-link p-0">Mark all read</button>
+                    </div>
+                                        <div class="notif-list">
+                                                <a href="https://mw.realty.mightywarnersdemo.com/portal/crm/leads?import=1" class="notif-item is-unread notif-mark-read" data-id="f3b4e723-717d-4363-baf5-334e4df34705">
+                            <span class="notif-icon tone-teal"><i class="fas fa-cloud-arrow-up"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">Lead import finished</span>
+                                <span class="notif-message d-block">facebook-leads-sample.csv: 2 added, 0 updated, 0 skipped.</span>
+                                <span class="notif-time">5 days ago</span>
+                            </span>
+                        </a>
+                                                <a href="https://mw.realty.mightywarnersdemo.com/portal/crm/integrations/property-finder/review" class="notif-item is-unread notif-mark-read" data-id="ec2fb10b-87c4-47b5-9a4b-3f46530f09db">
+                            <span class="notif-icon tone-amber"><i class="fas fa-file-import"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">Property Finder listings to review</span>
+                                <span class="notif-message d-block">Mighty warners imported 2 Property Finder listings. Review them before they can go on the website.</span>
+                                <span class="notif-time">6 days ago</span>
+                            </span>
+                        </a>
+                                                <a href="http://mw.realty.mightywarnersdemo.com/admin/agency-agents" class="notif-item is-unread notif-mark-read" data-id="3fa6c4cf-74a7-4fb7-8a8a-87eb29449fc8">
+                            <span class="notif-icon tone-amber"><i class="fas fa-user-clock"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">Agency agent awaiting approval</span>
+                                <span class="notif-message d-block">Isabella Cruz → Mighty warners</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="https://mw.realty.mightywarnersdemo.com/admin/portal-accounts/172?type=agent" class="notif-item  notif-mark-read" data-id="2ec931cd-aa34-4a9f-a067-8786a9c806f3">
+                            <span class="notif-icon tone-amber"><i class="fas fa-rotate-right"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">KYC resubmitted for review</span>
+                                <span class="notif-message d-block">Isabella Cruz updated their KYC and is asking for another review.</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="http://localhost/admin/agency-agents" class="notif-item is-unread notif-mark-read" data-id="4f96cc35-4a6d-4ba3-9334-d93004e7121d">
+                            <span class="notif-icon tone-amber"><i class="fas fa-user-clock"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">Agency agent awaiting approval</span>
+                                <span class="notif-message d-block">Isabella Cruz → Mighty warners</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="http://localhost/admin/agency-agents" class="notif-item is-unread notif-mark-read" data-id="aaa4550d-f9b6-4830-8192-48c5a46d801a">
+                            <span class="notif-icon tone-amber"><i class="fas fa-user-clock"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">Agency agent awaiting approval</span>
+                                <span class="notif-message d-block">Kiran Thomas → Mighty warners</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="http://localhost/admin/agency-agents" class="notif-item is-unread notif-mark-read" data-id="ae27c0d6-7141-4c8b-9764-ed8301c3438e">
+                            <span class="notif-icon tone-amber"><i class="fas fa-user-clock"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">Agency agent awaiting approval</span>
+                                <span class="notif-message d-block">Huda Al Zaabi → Mighty warners</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="http://localhost/admin/agency-agents" class="notif-item is-unread notif-mark-read" data-id="dc8b8434-448f-4075-8b8d-a3bf20ca504e">
+                            <span class="notif-icon tone-amber"><i class="fas fa-user-clock"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">Agency agent awaiting approval</span>
+                                <span class="notif-message d-block">Zara Sheikh → Mighty warners</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="http://localhost/admin/agency-agents" class="notif-item is-unread notif-mark-read" data-id="ed434db8-4e50-4c91-beab-97ba4779de68">
+                            <span class="notif-icon tone-amber"><i class="fas fa-user-clock"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">Agency agent awaiting approval</span>
+                                <span class="notif-message d-block">Mateo Rossi → Mighty warners</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="http://127.0.0.1:8000/admin/agency-agents" class="notif-item is-unread notif-mark-read" data-id="4221ac26-8e25-4d11-b663-86cb17b48e31">
+                            <span class="notif-icon tone-amber"><i class="fas fa-user-clock"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">Agency agent awaiting approval</span>
+                                <span class="notif-message d-block">Arun → Mighty warners</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="http://127.0.0.1:8000/admin/portal-accounts/162?type=agent" class="notif-item is-unread notif-mark-read" data-id="be870f1c-d96f-47fe-89bf-2e6821796ba6">
+                            <span class="notif-icon tone-teal"><i class="fas fa-user-plus"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">KYC submitted for approval</span>
+                                <span class="notif-message d-block">Arun submitted their KYC profile for approval.</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="https://mw.realty.mightywarnersdemo.com/admin/agency-agents" class="notif-item is-unread notif-mark-read" data-id="f0099df0-d2e0-4427-8968-c366e7d226e6">
+                            <span class="notif-icon tone-amber"><i class="fas fa-user-clock"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">Agency agent awaiting approval</span>
+                                <span class="notif-message d-block">Sruthi Raveendran M → Mighty warners</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="https://mw.realty.mightywarnersdemo.com/admin/portal-accounts/160?type=agent" class="notif-item is-unread notif-mark-read" data-id="4b24ae28-f4c8-4c50-9b91-a92e2727ffed">
+                            <span class="notif-icon tone-amber"><i class="fas fa-rotate-right"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">KYC resubmitted for review</span>
+                                <span class="notif-message d-block">Sruthi Raveendran M updated their KYC and is asking for another review.</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="https://mw.realty.mightywarnersdemo.com/admin/portal-accounts/161?type=company" class="notif-item is-unread notif-mark-read" data-id="5670e124-3119-48e6-abc2-730da169563f">
+                            <span class="notif-icon tone-amber"><i class="fas fa-rotate-right"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">KYC resubmitted for review</span>
+                                <span class="notif-message d-block">Mighty warners updated their KYC and is asking for another review.</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="https://mw.realty.mightywarnersdemo.com/admin/portal-accounts/161?type=company" class="notif-item is-unread notif-mark-read" data-id="ecdf09a2-94f3-40ec-8c88-9eae9c081acc">
+                            <span class="notif-icon tone-amber"><i class="fas fa-rotate-right"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">KYC resubmitted for review</span>
+                                <span class="notif-message d-block">Mighty warners updated their KYC and is asking for another review.</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="https://mw.realty.mightywarnersdemo.com/admin/portal-accounts/160?type=agent" class="notif-item is-unread notif-mark-read" data-id="65335968-bee1-47cd-a246-92615f5083bd">
+                            <span class="notif-icon tone-amber"><i class="fas fa-rotate-right"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">KYC resubmitted for review</span>
+                                <span class="notif-message d-block">Sruthi Raveendran M updated their KYC and is asking for another review.</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="http://mw.realty.mightywarnersdemo.com/admin/portal-accounts/161?type=company" class="notif-item is-unread notif-mark-read" data-id="5944ef6f-4ecf-4a0e-ad3c-e0ca5cf10b65">
+                            <span class="notif-icon tone-teal"><i class="fas fa-user-plus"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">KYC submitted for approval</span>
+                                <span class="notif-message d-block">Mighty warners submitted their KYC profile for approval.</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="http://mw.realty.mightywarnersdemo.com/admin/portal-accounts/160?type=agent" class="notif-item is-unread notif-mark-read" data-id="7cbea2c2-bdde-472b-9f76-bcd5b1b44d18">
+                            <span class="notif-icon tone-teal"><i class="fas fa-user-plus"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">KYC submitted for approval</span>
+                                <span class="notif-message d-block">Sruthi Raveendran M submitted their KYC profile for approval.</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="http://127.0.0.1:8000/admin/portal-accounts/131?type=company" class="notif-item  notif-mark-read" data-id="af8b13b6-8007-407f-8abc-361bd5c5f04f">
+                            <span class="notif-icon tone-teal"><i class="fas fa-user-plus"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">KYC submitted for approval</span>
+                                <span class="notif-message d-block">Test agency submitted their KYC profile for approval.</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                                <a href="http://mw.realty.mightywarnersdemo.com/admin/portal-accounts/130?type=agent" class="notif-item is-unread notif-mark-read" data-id="8dd7c2bb-9e9e-48cf-855b-2e5296af09e8">
+                            <span class="notif-icon tone-amber"><i class="fas fa-rotate-right"></i></span>
+                            <span class="notif-body">
+                                <span class="notif-title d-block">KYC resubmitted for review</span>
+                                <span class="notif-message d-block">Anila Paul updated their KYC and is asking for another review.</span>
+                                <span class="notif-time">2 weeks ago</span>
+                            </span>
+                        </a>
+                                            </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="main-content">
+            
+            <form class="sf" method="POST" action="http://127.0.0.1:8000/admin/filters/55" id="filterForm">
+    <input type="hidden" name="_token" value="" autocomplete="off">     <input type="hidden" name="_method" value="PUT"> 
+    <div class="sf-head">
+        <div>
+            <h4>Edit filter</h4>
+            <p>Pick what the filter searches, how it looks and which values it offers. Changes show on the website straight away.</p>
+        </div>
+        <div class="sf-actions">
+            <a href="http://127.0.0.1:8000/admin/filters?page=home" class="sf-btn sf-btn--ghost"><i class="fas fa-arrow-left"></i> Back to filters</a>
+        </div>
+    </div>
+
+    
+    <div class="sf-grid">
+        <div>
+                        
+            <section class="sf-section">
+                <div class="sf-section__head mb-0">
+                    <span class="sf-step"><i class="fas fa-lock"></i></span>
+                    <div>
+                        <div class="sf-section__title">Home banner search · Price (AED)</div>
+                        <div class="sf-section__hint">This filter is always on the Home search, as range (min – max). Change its labels and values below.</div>
+                    </div>
+                </div>
+                <input type="radio" name="page" value="home" checked hidden>
+                <input type="radio" name="field" value="price" checked hidden>
+                <input type="radio" name="type" value="range" checked hidden>
+            </section>
+            
+            
+            <section class="sf-section">
+                <div class="sf-section__head">
+                    <span class="sf-step">1</span>
+                    <div><div class="sf-section__title">What visitors read</div><div class="sf-section__hint">The filter's title, and the hint text inside empty boxes.</div></div>
+                </div>
+                                <ul class="nav sf-langs" role="tablist">
+                                            <li class="nav-item"><button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#lang-en">English</button></li>
+                                            <li class="nav-item"><button class="nav-link " type="button" data-bs-toggle="tab" data-bs-target="#lang-ar">Arabic</button></li>
+                                    </ul>
+                                <div class="tab-content">
+                                            <div class="tab-pane fade show active" id="lang-en">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Label <span class="text-danger">*</span></label>
+                                    <input type="text" name="translations[en][label]" class="form-control js-label" data-lang="en" maxlength="120"
+                                           value="Price Range" placeholder="e.g. Property type" required >
+                                                                    </div>
+                                <div class="col-md-6 js-placeholder-wrap">
+                                    <label class="form-label">Hint text <span class="text-muted fw-normal">(optional)</span></label>
+                                    <input type="text" name="translations[en][placeholder]" class="form-control js-placeholder" data-lang="en" maxlength="120"
+                                           value="" placeholder="e.g. Any type">
+                                </div>
+                            </div>
+                        </div>
+                                            <div class="tab-pane fade " id="lang-ar">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Label </label>
+                                    <input type="text" name="translations[ar][label]" class="form-control js-label" data-lang="ar" maxlength="120"
+                                           value="نطاق السعر" placeholder="e.g. Property type"   dir="auto" >
+                                    <div class="sf-help">Empty = the EN label is used.</div>                                </div>
+                                <div class="col-md-6 js-placeholder-wrap">
+                                    <label class="form-label">Hint text <span class="text-muted fw-normal">(optional)</span></label>
+                                    <input type="text" name="translations[ar][placeholder]" class="form-control js-placeholder" data-lang="ar" maxlength="120"
+                                           value="" placeholder="e.g. Any type">
+                                </div>
+                            </div>
+                        </div>
+                                    </div>
+            </section>
+
+            
+            <section class="sf-section" id="optionsSection">
+                <div class="sf-section__head">
+                    <span class="sf-step">2</span>
+                    <div><div class="sf-section__title" id="optionsTitle">Values to choose from</div><div class="sf-section__hint" id="optionsHint">Where the list of options comes from.</div></div>
+                </div>
+                <div class="sf-choices mb-3" style="grid-template-columns: 1fr 1fr;">
+                    <label class="sf-choice">
+                        <input type="radio" name="options_source" value="auto" checked>
+                        <i class="fas fa-database sf-choice__icon"></i>
+                        <span><strong id="autoTitle">From the database</strong><span id="autoHint">Always up to date with the listings and Option Lists</span></span>
+                    </label>
+                    <label class="sf-choice">
+                        <input type="radio" name="options_source" value="custom" >
+                        <i class="fas fa-list-ul sf-choice__icon"></i>
+                        <span><strong>My own list</strong><span>Pick, rename and order the values yourself</span></span>
+                    </label>
+                </div>
+
+                <div id="autoOptions">
+                    <div class="sf-db-preview" id="dbPreview"><span class="sf-help">Pick a field to see its values.</span></div>
+                    <div class="sf-help" id="dbPreviewNote"></div>
+                </div>
+
+                <div id="customOptions">
+                    <table class="sf-options">
+                        <thead>
+                            <tr>
+                                <th style="width: 28px;"></th>
+                                <th>Value <span class="text-muted fw-normal text-lowercase">(as stored)</span></th>
+                                <th>Label (EN)</th><th>Label (AR)</th>                                <th style="width: 60px;">On</th>
+                                <th style="width: 44px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="optionRows"></tbody>
+                    </table>
+                    <div class="d-flex gap-2 flex-wrap mt-2">
+                        <button type="button" class="sf-btn sf-btn--ghost" id="addOption"><i class="fas fa-plus"></i> Add option</button>
+                        <button type="button" class="sf-btn sf-btn--ghost" id="fillFromDb"><i class="fas fa-database"></i> <span id="fillLabel">Start from the database values</span></button>
+                    </div>
+                    <div class="sf-help mt-2" id="customHelp"></div>
+                </div>
+            </section>
+
+            
+            <section class="sf-section" id="numberSection">
+                <div class="sf-section__head">
+                    <span class="sf-step">2</span>
+                    <div><div class="sf-section__title">Number settings</div><div class="sf-section__hint">Leave the maximum empty to follow the most expensive / largest live listing.</div></div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Lowest</label>
+                        <input type="number" name="settings[min]" class="form-control" min="0" step="any" value="" placeholder="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Highest</label>
+                        <input type="number" name="settings[max]" class="form-control" min="0" step="any" value="" placeholder="Automatic">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Step</label>
+                        <input type="number" name="settings[step]" class="form-control" min="0" step="any" value="50000" placeholder="Default">
+                    </div>
+                    <div class="col-md-3" id="compareWrap">
+                        <label class="form-label">Match listings with</label>
+                        <select name="settings[compare]" class="form-select">
+                                                            <option value="min" selected>At least this</option>
+                                                            <option value="max" >At most this</option>
+                                                            <option value="exact" >Exactly this</option>
+                                                    </select>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        
+        <aside class="sf-preview">
+            <div class="sf-section">
+                <div class="sf-section__head mb-3">
+                    <div><div class="sf-section__title">Preview</div><div class="sf-section__hint">Roughly how it shows in the filter panel.</div></div>
+                </div>
+                <div class="sf-preview__frame">
+                    <div class="sf-preview__label" id="pvLabel">Filter</div>
+                    <div id="pvControl"></div>
+                </div>
+                <div class="sf-preview__params" id="pvParams"></div>
+            </div>
+            <div class="sf-section">
+                                <input type="hidden" name="status" value="1">
+                                <div class="sf-foot">
+                    <a href="http://127.0.0.1:8000/admin/filters?page=home" class="sf-btn sf-btn--ghost">Cancel</a>
+                    <button type="submit" class="sf-btn sf-btn--primary"><i class="fas fa-check"></i> Save filter</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+</form>
+            </div> <!-- end main-content -->
+        </div> <!-- end main-wrapper -->
+    </div> <!-- end d-flex -->
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof tinymce === 'undefined' || !document.querySelector('.tinymce-extra-field')) {
+                return;
+            }
+
+            tinymce.init({
+                selector: '.tinymce-extra-field',
+                height: 350,
+                plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table code help wordcount',
+                toolbar: 'undo redo | blocks | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+                branding: false,
+                promotion: false
+            });
+        });
+    </script>
+
+    <script>
+        // Site-wide fix for every admin form that splits per-language fields across Bootstrap
+        // tabs (English/Arabic/...): a required field on a tab that ISN'T the active one is
+        // invisible (display:none), so a validation failure there looks exactly like the
+        // Save/Update button silently doing nothing. This runs on every CMS page, so any
+        // module built with the same tab pattern gets it automatically — no per-page script
+        // needed.
+        document.addEventListener('DOMContentLoaded', function () {
+            function activateTabFor(el) {
+                const pane = el.closest('.tab-pane');
+                if (!pane || !pane.id) return;
+                const tabBtn = document.querySelector(`[data-bs-target="#${pane.id}"]`);
+                if (tabBtn && !tabBtn.classList.contains('active')) {
+                    bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+                }
+            }
+
+            // Case 1: the page just reloaded after a server-side validation failure — Laravel's
+            // error-bag markup already put .is-invalid on the offending field(s); jump to the
+            // first one so it's actually visible instead of sitting on a hidden tab.
+            const firstServerInvalid = document.querySelector('.tab-content .is-invalid');
+            if (firstServerInvalid) {
+                activateTabFor(firstServerInvalid);
+            }
+
+            // Case 2: native HTML5 "required" validation blocks the submit client-side, before
+            // any request is sent — the browser can't show its tooltip on a hidden field, so
+            // nothing visible happens at all. `invalid` doesn't bubble, so this must be a
+            // capture-phase listener. One click fires this event for EVERY empty required field
+            // at once (not just the first in DOM order) — the guard below only acts on the
+            // first one per click, otherwise a still-empty English field would be skipped in
+            // favor of jumping straight to Arabic.
+            let handledThisAttempt = false;
+            document.addEventListener('invalid', function (e) {
+                if (handledThisAttempt) return;
+                handledThisAttempt = true;
+                setTimeout(() => { handledThisAttempt = false; }, 0);
+
+                activateTabFor(e.target);
+                setTimeout(() => e.target.focus(), 150);
+            }, true);
+        });
+    </script>
+
+    <script>
+    (function () {
+        // Show a "Processing..." spinner on the submit button when a form really submits (the
+        // browser only fires `submit` once native validation has passed), and disable every submit
+        // button in it to prevent double-submits. Listens on window in the bubble phase, i.e. AFTER
+        // the page's own handlers: a form a script handles itself (preventDefault → fetch, e.g. the
+        // Reset Password popup) manages its own button, so it never gets a spinner nothing undoes.
+        window.addEventListener('submit', function (e) {
+            const form = e.target;
+            if (!(form instanceof HTMLFormElement) || form.dataset.noSpinner || e.defaultPrevented) return;
+
+            const submitBtns = form.querySelectorAll('button[type="submit"]');
+            const clicked = (e.submitter && e.submitter.tagName === 'BUTTON') ? e.submitter : submitBtns[0];
+
+            submitBtns.forEach(function (btn) { btn.disabled = true; });
+
+            if (clicked) {
+                if (clicked.dataset.originalHtml === undefined) {
+                    clicked.dataset.originalHtml = clicked.innerHTML;
+                }
+                clicked.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+            }
+        });
+
+        function restoreSubmitButtons(form) {
+            form.querySelectorAll('button[type="submit"][data-original-html]').forEach(function (btn) {
+                btn.innerHTML = btn.dataset.originalHtml;
+                btn.disabled = false;
+            });
+        }
+        window.restoreSubmitButtons = restoreSubmitButtons;
+
+        // Guard against a stuck spinner if the page is restored from the back/forward cache.
+        window.addEventListener('pageshow', function () {
+            document.querySelectorAll('form').forEach(restoreSubmitButtons);
+        });
+
+        // After a failed server-side validation round trip, jump straight to the first
+        // invalid field instead of leaving the admin to hunt for it in a long form. If that
+        // field lives inside an inactive Bootstrap tab (e.g. the Arabic language tab), switch
+        // to that tab first — otherwise scrollIntoView/focus silently land on a hidden element
+        // and the admin never sees which tab the error is actually in.
+        document.addEventListener('DOMContentLoaded', function () {
+            const firstInvalid = document.querySelector('.is-invalid');
+            if (!firstInvalid) return;
+
+            const invalidTabPane = firstInvalid.closest('.tab-pane');
+            if (invalidTabPane && !invalidTabPane.classList.contains('active') && window.bootstrap) {
+                const tabBtn = document.querySelector('[data-bs-target="#' + invalidTabPane.id + '"], [href="#' + invalidTabPane.id + '"]');
+                if (tabBtn) {
+                    bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+                }
+            }
+
+            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstInvalid.focus({ preventScroll: true });
+        });
+
+        // Bell-icon notifications — mark as read on click (link navigation proceeds normally)
+        document.querySelectorAll('.notif-mark-read').forEach(function (link) {
+            link.addEventListener('click', function () {
+                fetch("http://127.0.0.1:8000/admin/notifications/" + this.dataset.id + "/read", {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': '' },
+                });
+            });
+        });
+
+        const notifMarkAllBtn = document.getElementById('notifMarkAllBtn');
+        if (notifMarkAllBtn) {
+            notifMarkAllBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                fetch("http://127.0.0.1:8000/admin/notifications/read-all", {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': '' },
+                }).then(function () { window.location.reload(); });
+            });
+        }
+    })();
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script>
+(function () {
+    const FIELDS = {"listing_type":{"label":"Purpose (Buy \/ Rent)","group":"Listing","storage":"column","column":"listing_type","types":["select","radio"],"master":"listing_type","legacy":"value"},"completion_status":{"label":"Completion (Ready \/ Off-plan)","group":"Listing","storage":"column","column":"completion_status","types":["select","radio"],"master":"completion_status","legacy":"value"},"property_type":{"label":"Property type","group":"Listing","storage":"column","column":"property_type","types":["select","radio","checkbox"],"master":"property_type","legacy":"value"},"category":{"label":"Category (Residential \/ Commercial)","group":"Listing","storage":"column","column":"category","types":["select","radio","checkbox"],"master":"category","legacy":"value"},"emirate":{"label":"Emirate","group":"Location","storage":"column","column":"emirate","types":["select","radio","checkbox"],"master":"emirate"},"rental_period":{"label":"Rental period","group":"Listing","storage":"column","column":"rental_period","types":["select","radio","checkbox"],"master":"rental_period"},"bedrooms":{"label":"Bedrooms","group":"Size \u0026 price","storage":"column","column":"bedrooms","types":["select","radio","checkbox","number","range"],"master":"bedrooms","legacy":"value","numeric":true},"bathrooms":{"label":"Bathrooms","group":"Size \u0026 price","storage":"column","column":"bathrooms","types":["select","radio","checkbox","number","range"],"master":"bathrooms","legacy":"value","numeric":true},"price":{"label":"Price (AED)","group":"Size \u0026 price","storage":"column","column":"price","types":["range","number"],"legacy":"range","numeric":true,"step":50000,"round":1000000},"sqft":{"label":"Area (sq.ft)","group":"Size \u0026 price","storage":"column","column":"sqft","types":["range","number"],"legacy":"range","numeric":true,"step":50,"round":500},"furnishing":{"label":"Furnishing","group":"Features","storage":"details","column":"furnished","types":["select","radio","checkbox"],"master":"furnishing"},"amenity":{"label":"Amenities","group":"Features","storage":"details_list","column":"amenities","types":["select","radio","checkbox"],"master":"amenity"},"easy_access":{"label":"Easy access","group":"Features","storage":"details_list","column":"easy_access","types":["select","radio","checkbox"],"master":"easy_access"},"property_attribute":{"label":"Property attributes","group":"Features","storage":"details_list","column":"property_attributes","types":["select","radio","checkbox"],"master":"property_attribute"},"view":{"label":"View","group":"Features","storage":"details","column":"view","types":["select","radio","checkbox","text"],"master":null},"developer":{"label":"Developer","group":"Features","storage":"details","column":"developer","types":["select","radio","checkbox","text"],"master":null},"parking":{"label":"Parking spaces","group":"Features","storage":"details","column":"parking","types":["select","radio","number","range"],"master":null,"numeric":true,"step":1,"round":5},"year_built":{"label":"Year built","group":"Features","storage":"details","column":"year_built","types":["select","number","range"],"master":null,"numeric":true,"step":1,"round":1},"location":{"label":"Location search box","group":"Search","storage":"page","column":null,"types":["text"],"master":null,"legacy":"value"},"keyword":{"label":"Keyword (title \/ reference)","group":"Search","storage":"keyword","column":null,"types":["text"],"master":null},"reference_no":{"label":"Reference number","group":"Search","storage":"column","column":"reference_no","types":["text"],"master":null},"sort":{"label":"Sort order","group":"Page controls","storage":"page","column":null,"types":["select"],"master":null,"legacy":"value","fixed":{"default":["Recommended",["properties_listing.toolbar.sort_recommended","commercial.filter_panel.sort_recommended"]],"recent":["Most recent",["properties_listing.toolbar.sort_most_recent","commercial.filter_panel.sort_recent"]],"price_asc":["Price: low to high",["properties_listing.toolbar.sort_price_low_high","commercial.filter_panel.sort_price_low_high"]],"price_desc":["Price: high to low",["properties_listing.toolbar.sort_price_high_low","commercial.filter_panel.sort_price_high_low"]],"popular":["Most popular",["properties_listing.toolbar.sort_most_popular"]]}},"features":{"label":"Property features (floor plans \/ open house)","group":"Page controls","storage":"page","column":null,"types":["checkbox"],"master":null,"legacy":"value","fixed":{"floor_plans":["Properties with floor plans",["properties_listing.filter_panel.feature_floor_plans"]],"open_house":["Open house properties",["properties_listing.filter_panel.feature_open_house_properties"]]}},"amenities":{"label":"Amenity shortcuts (grouped)","group":"Page controls","storage":"page","column":null,"types":["checkbox"],"master":null,"legacy":"value","fixed":{"furnished":["Furnished",["properties_listing.filter_panel.amenity_furnished","commercial.filter_panel.amenity_furnished"]],"parking":["Parking",["properties_listing.filter_panel.amenity_parking","commercial.filter_panel.amenity_parking"]],"community-pool":["Community Pool",["properties_listing.filter_panel.amenity_community_pool","commercial.filter_panel.amenity_community_pool"]],"gym":["Gym",["properties_listing.filter_panel.amenity_gym","commercial.filter_panel.amenity_gym"]],"security":["24\/7 Security",["properties_listing.filter_panel.amenity_security","commercial.filter_panel.amenity_security"]],"balcony":["Balcony",["properties_listing.filter_panel.amenity_balcony","commercial.filter_panel.amenity_balcony"]],"concierge":["Concierge",["properties_listing.filter_panel.amenity_concierge","commercial.filter_panel.amenity_concierge"]],"private-pool":["Private Pool",["properties_listing.filter_panel.amenity_private_pool","commercial.filter_panel.amenity_private_pool"]],"pantry":["Pantry",["commercial.filter_panel.amenity_pantry"]],"meeting-rooms":["Meeting Rooms",["commercial.filter_panel.amenity_meeting_rooms"]],"metro":["Metro Access",["commercial.filter_panel.amenity_metro"]],"central-ac":["Central A\/C",["commercial.filter_panel.amenity_central_ac"]],"loading-bay":["Loading Bay",["commercial.filter_panel.amenity_loading_bay"]]}}};
+    const TYPES = {"select":"Dropdown","radio":"Radio buttons","checkbox":"Checkboxes","text":"Text box","number":"Number","range":"Range (min \u2013 max)"};
+    const OPTION_TYPES = ["select","radio","checkbox"];
+    const LANGS = ["en","ar"];
+    const FALLBACK = "en";
+    const PREVIEW_URL = "http:\/\/127.0.0.1:8000\/admin\/filters\/field-options";
+    const initialOptions = [];
+    const USED_BY_PAGE = {"commercial":["amenities","bathrooms","completion_status","keyword","listing_type","location","price","property_type","sort","sqft"],"home":["bedrooms","completion_status","listing_type","property_type"],"offplan":["amenities","bathrooms","bedrooms","category","features","listing_type","location","price","property_type","sort","sqft"],"premium":["amenities","bathrooms","bedrooms","category","completion_status","features","listing_type","location","price","property_type","sort","sqft"],"properties":["amenities","bathrooms","bedrooms","category","completion_status","features","listing_type","location","price","property_type","sort","sqft"]};
+
+    const form = document.getElementById('filterForm');
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+    const checked = (name) => (form.querySelector(`input[name="${name}"]:checked`) || {}).value;
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    let dbOptions = [];
+
+    // ---- Page -> fields already used there -------------------------------------------------
+    function syncUsedFields() {
+        const used = USED_BY_PAGE[checked('page')] || [];
+        $$('[data-field-choice]').forEach((label) => {
+            const taken = used.includes(label.dataset.fieldChoice);
+            const input = label.querySelector('input');
+            label.classList.toggle('is-disabled', taken);
+            input.disabled = taken;
+            if (taken && input.checked) input.checked = false;
+            let tag = label.querySelector('.sf-choice__tag');
+            if (taken && !tag) {
+                tag = document.createElement('em');
+                tag.className = 'sf-choice__tag';
+                tag.textContent = 'On this page';
+                label.appendChild(tag);
+            }
+            if (!taken && tag) tag.remove();
+        });
+    }
+
+    // ---- Field -> allowed types -------------------------------------------------------------
+    function syncTypes() {
+        const field = FIELDS[checked('field')];
+        $$('[data-type-choice]').forEach((label) => {
+            const ok = !field || field.types.includes(label.dataset.typeChoice);
+            label.classList.toggle('is-disabled', !ok);
+            label.querySelector('input').disabled = !ok;
+        });
+        // Current type not allowed for this field -> the field's first type.
+        if (field && !field.types.includes(checked('type'))) {
+            const first = form.querySelector(`input[name="type"][value="${field.types[0]}"]`);
+            if (first) first.checked = true;
+        }
+        // A fresh label follows the field until the admin types their own.
+        const label = $(`.js-label[data-lang="${FALLBACK}"]`);
+        if (field && label && (!label.value || label.dataset.auto === '1')) {
+            label.value = field.label.replace(/\s*\(.*\)$/, '');
+            label.dataset.auto = '1';
+        }
+    }
+
+    // "db" = values from the listings / Option Lists; "fixed" = a built-in set (sort, features,
+    // amenity shortcuts); "presets" = the price range's quick-select buttons.
+    function optionKind() {
+        const type = checked('type');
+        const field = FIELDS[checked('field')];
+        if (type === 'range' && checked('field') === 'price') return 'presets';
+        if (!OPTION_TYPES.includes(type)) return null;
+        return field && field.fixed ? 'fixed' : 'db';
+    }
+
+    const KIND_TEXT = {
+        db: {
+            title: 'Values to choose from', hint: 'Where the list of options comes from.',
+            auto: ['From the database', 'Always up to date with the listings and Option Lists'], fill: 'Start from the database values',
+            help: 'The value must match what listings store (e.g. <code>villa</code>, <code>6</code>, <code>6+</code>, <code>studio</code>, <code>Sea View</code>) — "Start from the database values" fills them in. <code>6+</code> means 6 or more. Drag rows to reorder.',
+        },
+        fixed: {
+            title: 'Values to choose from', hint: 'This control has a built-in set of values.',
+            auto: ['Built-in list', 'All of them, with the site\'s own wording'], fill: 'Start from the built-in values',
+            help: 'Pick which built-in values show, rename them and drag to reorder. Empty label = the built-in wording (in every language).',
+        },
+        presets: {
+            title: 'Quick-select buttons', hint: 'The price buttons under the slider.',
+            auto: ['Built-in buttons', 'Under 500K, 500K – 1M … 10M+'], fill: 'Start from the built-in buttons',
+            help: 'Value = <code>min-max</code> in AED, e.g. <code>500000-1000000</code>; leave the max empty for "and up" (<code>10000000-</code>). The label is the button text (prices in other currencies are converted automatically).',
+        },
+    };
+
+    function syncSections() {
+        const type = checked('type');
+        const kind = optionKind();
+        const hasOptions = !!kind;
+        if (kind) {
+            const text = KIND_TEXT[kind];
+            $('#optionsTitle').textContent = text.title;
+            $('#optionsHint').textContent = text.hint;
+            $('#autoTitle').textContent = text.auto[0];
+            $('#autoHint').textContent = text.auto[1];
+            $('#fillLabel').textContent = text.fill;
+            $('#customHelp').innerHTML = text.help;
+            syncValueInputs();
+        }
+        $('#optionsSection').style.display = hasOptions ? '' : 'none';
+        $('#numberSection').style.display = ['number', 'range'].includes(type) ? '' : 'none';
+        $('#compareWrap').style.display = type === 'number' ? '' : 'none';
+        $$('.js-placeholder-wrap').forEach((el) => { el.style.display = ['select', 'text', 'number'].includes(type) ? '' : 'none'; });
+        const custom = checked('options_source') === 'custom';
+        $('#autoOptions').style.display = custom ? 'none' : '';
+        $('#customOptions').style.display = custom ? '' : 'none';
+    }
+
+    // ---- Database values preview ------------------------------------------------------------
+    let previewReq = 0;
+    function loadDbOptions() {
+        const field = checked('field');
+        const box = $('#dbPreview');
+        if (!field) return;
+        const id = ++previewReq;
+        box.innerHTML = '<span class="sf-help"><i class="fas fa-spinner fa-spin"></i> Loading values…</span>';
+        fetch(`${PREVIEW_URL}?field=${encodeURIComponent(field)}&page=${encodeURIComponent(checked('page'))}&type=${encodeURIComponent(checked('type'))}`, { headers: { Accept: 'application/json' } })
+            .then((r) => r.json())
+            .then((data) => {
+                if (id !== previewReq) return;
+                dbOptions = data.options || [];
+                box.innerHTML = dbOptions.length
+                    ? dbOptions.map((o) => `<span class="sf-chip">${esc(o.label)}${o.count != null ? ` <em>${o.count}</em>` : ''}</span>`).join('')
+                    : '<span class="sf-help">No values yet — they appear once listings or Option Lists have them.</span>';
+                const counted = dbOptions.some((o) => o.count != null);
+                const kind = optionKind();
+                $('#dbPreviewNote').textContent = (data.total > dbOptions.length ? `Showing ${dbOptions.length} of ${data.total}. ` : '')
+                    + (kind !== 'db' ? 'The built-in set, with the site\'s own wording.'
+                        : (counted ? 'Numbers = live listings on this page. Values with no listings are hidden automatically.' : 'From Option Lists, in their order.'));
+                syncValueInputs();
+                renderPreview();
+            })
+            .catch(() => { if (id === previewReq) box.innerHTML = '<span class="sf-help text-danger">Could not load the values.</span>'; });
+    }
+
+    // ---- Custom options repeater ------------------------------------------------------------
+    let rowIndex = 0;
+    function addRow(opt = {}) {
+        const i = rowIndex++;
+        const tr = document.createElement('tr');
+        const labels = LANGS.map((code) => `<td><input type="text" class="form-control form-control-sm js-opt-label" data-lang="${code}" name="options[${i}][translations][${code}][label]" value="${esc(opt.translations?.[code]?.label ?? '')}" placeholder="${code === FALLBACK ? 'Shown as' : 'Optional'}" maxlength="120"></td>`).join('');
+        tr.innerHTML = `
+            <td class="sf-drag"><i class="fas fa-grip-vertical"></i></td>
+            <td class="js-value-cell" data-index="${i}" data-value="${esc(opt.value ?? '')}"></td>
+            ${labels}
+            <td><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" name="options[${i}][status]" value="1" ${opt.status === false || opt.status === 0 || opt.status === '0' ? '' : 'checked'}></div></td>
+            <td><button type="button" class="sf-icon-btn is-danger js-remove" title="Remove"><i class="fas fa-times"></i></button></td>`;
+        $('#optionRows').appendChild(tr);
+        fillValueCell(tr.querySelector('.js-value-cell'));
+    }
+
+    /** Built-in sets: the value is picked from a dropdown (only values the site understands). */
+    function fillValueCell(cell) {
+        const i = cell.dataset.index;
+        const current = cell.querySelector('.js-opt-value')?.value ?? cell.dataset.value ?? '';
+        const field = FIELDS[checked('field')];
+        const kind = optionKind();
+        if (kind === 'fixed' && field?.fixed) {
+            const values = Object.keys(field.fixed);
+            cell.innerHTML = `<select class="form-select form-select-sm js-opt-value" name="options[${i}][value]">${values
+                .map((v) => `<option value="${esc(v)}" ${v === current ? 'selected' : ''}>${esc(field.fixed[v][0])} (${esc(v)})</option>`).join('')}</select>`;
+        } else {
+            const ph = kind === 'presets' ? 'e.g. 500000-1000000' : 'e.g. villa';
+            cell.innerHTML = `<input type="text" class="form-control form-control-sm js-opt-value" name="options[${i}][value]" value="${esc(current)}" placeholder="${ph}" maxlength="100">`;
+        }
+    }
+    function syncValueInputs() {
+        $$('#optionRows .js-value-cell').forEach(fillValueCell);
+    }
+
+    $('#addOption').addEventListener('click', () => { addRow(); renderPreview(); });
+    $('#fillFromDb').addEventListener('click', () => {
+        const existing = $$('.js-opt-value').map((el) => el.value.trim());
+        const fresh = dbOptions.filter((o) => !existing.includes(String(o.value)));
+        if (!fresh.length) { alert(dbOptions.length ? 'All database values are already in your list.' : 'This field has no database values yet.'); return; }
+        // Replace the single empty starter row, if that's all there is.
+        if ($$('#optionRows tr').length === 1 && !existing[0]) $('#optionRows').innerHTML = '';
+        fresh.forEach((o) => addRow({ value: o.value, translations: { [FALLBACK]: { label: o.label } } }));
+        renderPreview();
+    });
+    $('#optionRows').addEventListener('click', (e) => {
+        if (e.target.closest('.js-remove')) { e.target.closest('tr').remove(); renderPreview(); }
+    });
+    Sortable.create($('#optionRows'), { handle: '.sf-drag', animation: 150, onEnd: renderPreview });
+
+    // ---- Live preview -----------------------------------------------------------------------
+    function previewOptions() {
+        if (checked('options_source') === 'custom') {
+            return $$('#optionRows tr').map((tr) => {
+                const value = $('.js-opt-value', tr).value.trim();
+                const label = ($(`.js-opt-label[data-lang="${FALLBACK}"]`, tr) || {}).value?.trim();
+                return value ? { value, label: label || value } : null;
+            }).filter(Boolean);
+        }
+        return dbOptions;
+    }
+
+    function renderPreview() {
+        const type = checked('type');
+        const field = checked('field');
+        const label = ($(`.js-label[data-lang="${FALLBACK}"]`) || {}).value || (FIELDS[field]?.label ?? 'Filter');
+        const hint = ($(`.js-placeholder[data-lang="${FALLBACK}"]`) || {}).value;
+        const opts = previewOptions().slice(0, 8).map((o) => {
+            // Built-in values left without a label keep the built-in wording.
+            const builtIn = FIELDS[field]?.fixed?.[o.value]?.[0];
+            return builtIn && o.label === o.value ? { ...o, label: builtIn } : o;
+        });
+        const names = opts.length ? opts.map((o) => esc(o.label)) : ['Option 1', 'Option 2', 'Option 3'];
+        const min = form.querySelector('[name="settings[min]"]').value || '0';
+        const max = form.querySelector('[name="settings[max]"]').value || 'Max';
+        let html = '';
+        if (type === 'select') {
+            html = `<select class="form-select" disabled><option>${esc(hint || 'Any')}</option>${names.map((n) => `<option>${n}</option>`).join('')}</select>`;
+        } else if (type === 'radio') {
+            html = `<div class="sf-preview__pills"><span class="is-on">Any</span>${names.map((n) => `<span>${n}</span>`).join('')}</div>`;
+        } else if (type === 'checkbox') {
+            html = `<div class="sf-preview__checks">${names.map((n, i) => `<label><input type="checkbox" disabled ${i === 0 ? 'checked' : ''}> ${n}</label>`).join('')}</div>`;
+        } else if (type === 'text') {
+            html = `<input type="text" class="form-control" disabled placeholder="${esc(hint || 'Type to search…')}">`;
+        } else if (type === 'number') {
+            html = `<input type="number" class="form-control" disabled placeholder="${esc(hint || min)}">`;
+        } else if (type === 'range') {
+            html = `<div class="sf-preview__range"><div><b>Min</b>${esc(min)}</div><div><b>Max</b>${esc(max)}</div></div>`;
+            if (optionKind() === 'presets' && opts.length) {
+                html += `<div class="sf-preview__pills mt-3">${opts.map((o) => `<span>${esc(o.label)}</span>`).join('')}</div>`;
+            }
+        }
+        $('#pvLabel').textContent = label;
+        $('#pvControl').innerHTML = html;
+
+        const compare = form.querySelector('[name="settings[compare]"]').value;
+        const sample = opts[0]?.value ?? 'value';
+        let params = '';
+        if (!field) params = 'Pick a field to see the API parameter.';
+        else if (type === 'checkbox') params = `Sends <code>?${field}=${esc(sample)},${esc(opts[1]?.value ?? 'other')}</code> (any of the ticked values)`;
+        else if (OPTION_TYPES.includes(type)) params = `Sends <code>?${field}=${esc(sample)}</code>`;
+        else if (type === 'text') params = `Sends <code>?${field}=text</code> (listings containing it)`;
+        else if (type === 'range') params = `Sends <code>?min_${field}=…&max_${field}=…</code>`;
+        else params = `Sends <code>?${compare === 'exact' ? field : compare + '_' + field}=…</code>`;
+        $('#pvParams').innerHTML = `<i class="fas fa-code me-1"></i> ${params}`;
+    }
+
+    // ---- Wiring -----------------------------------------------------------------------------
+    form.addEventListener('change', (e) => {
+        if (e.target.name === 'field') { syncTypes(); loadDbOptions(); }
+        if (e.target.name === 'type') loadDbOptions();
+        if (e.target.name === 'page') { syncUsedFields(); syncTypes(); loadDbOptions(); }
+        syncSections();
+        renderPreview();
+    });
+    form.addEventListener('input', (e) => {
+        if (e.target.classList.contains('js-label')) e.target.dataset.auto = '0';
+        renderPreview();
+    });
+    initialOptions.forEach((o) => addRow(o));
+    if (!initialOptions.length) addRow();
+    syncUsedFields();
+    syncTypes();
+    syncSections();
+    loadDbOptions();
+    renderPreview();
+})();
+</script>
+</body>
+</html>

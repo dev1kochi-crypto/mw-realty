@@ -64,16 +64,19 @@ class ChatbotService
             $args['bathrooms'] ?? null,
         );
 
+        // The listing service may return the cards as a Collection or (shuffled order) a plain array.
+        $properties = collect($result['properties'])->values();
+
         $replyText = $this->provider->secondTurn($first['state'], [
-            'properties' => $result['properties'],
+            'properties' => $properties->all(),
             'pagination' => $result['pagination'],
         ]);
 
         return [
-            'reply' => $replyText ?? ($result['properties']->isEmpty()
+            'reply' => $replyText ?? ($properties->isEmpty()
                 ? 'I couldn\'t find any properties matching that — try broadening your search.'
                 : 'Here\'s what I found:'),
-            'properties' => $result['properties']->values()->all(),
+            'properties' => $properties->all(),
             'pagination' => $result['pagination'],
             'error' => false,
         ];

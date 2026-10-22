@@ -11,19 +11,15 @@ use Illuminate\Support\Facades\Cache;
 /**
  * Builds the payload for the /commercial listing page.
  *
- * Filters by property_type (office/retail-shop/warehouse/showroom), not the `category` column —
- * `category` (residential/commercial) was seeded somewhat arbitrarily on early demo data and
- * ended up on apartment/villa listings that aren't commercial in any real sense, while
- * property_type is the actual physical building type and is what "commercial property" means
- * here in practice.
+ * Shows listings with segment = commercial — the ones added from the CRM's Commercial menu
+ * (the CRM Commercial menu). Not the `category` column: that was seeded somewhat arbitrarily
+ * on early demo data and ended up on apartment/villa listings that aren't commercial at all.
  */
 class CommercialPageService
 {
     use MapsPropertyCards;
 
     private const CACHE_TTL = 180; // seconds
-
-    public const COMMERCIAL_TYPES = ['office', 'retail-shop', 'warehouse', 'showroom'];
 
     public function getListingData(
         string $lang,
@@ -33,33 +29,42 @@ class CommercialPageService
         ?string $listingCategory = null,
         int $page = 1,
         int $perPage = 6,
+        ?string $city = null,
+        ?string $community = null,
+        array $refine = [],
     ): array {
-        // Location/type/search/category filtering and pagination all run in the same
-        // database query — not as a client-side filter of one already-fetched page — so
-        // pagination totals/pages stay correct for whatever filters are currently applied
-        // (see Blogs.vue's category-filter fix earlier for why this matters).
+        // All filtering and pagination run in the same database query — not as a client-side
+        // filter of one already-fetched page — so pagination totals/pages stay correct for
+        // whatever filters are applied. The filters themselves are the /properties ones
+        // (PropertiesPageService::applyFilters): price, area, bathrooms, completion, amenities, sort.
+        $listingPage = app(PropertiesPageService::class);
+        // One value or a comma list of them (checkbox filter).
+        $bathrooms = is_string($refine['bathrooms'] ?? null)
+            && preg_match('/^(studio|\d+\+?)(,(studio|\d+\+?))*$/', $refine['bathrooms']) === 1 ? $refine['bathrooms'] : null;
+        $refine = $listingPage->normaliseRefine(array_merge($refine, ['city' => $city, 'community' => $community]));
+        $search = trim((string) $search) !== '' ? mb_substr(trim($search), 0, 100) : null;
         $cacheKey = "commercial-listing:{$lang}:{$page}:{$perPage}:"
-            . ($location ?: 'all') . ':' . ($propertyType ?: 'all') . ':' . ($search ?: '') . ':' . ($listingCategory ?: 'all');
+            . md5(json_encode([$location, $propertyType, $search, $listingCategory, $bathrooms, $refine]));
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($lang, $location, $propertyType, $search, $listingCategory, $page, $perPage) {
+        $data = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($lang, $location, $propertyType, $search, $listingCategory, $bathrooms, $page, $perPage, $refine, $listingPage) {
             $section = SectionLabel::where('section_key', 'commercial')->where('status', true)->first();
-            $paginator = Property::where('status', true)->whereIn('property_type', self::COMMERCIAL_TYPES)
-                ->when($location, fn ($q) => $q->where(function ($q) use ($location) {
-                    $q->where('translations->en->community', 'like', "%{$location}%")
-                        ->orWhere('translations->ar->community', 'like', "%{$location}%");
-                }))
-                ->when($propertyType, fn ($q) => $q->where('property_type', $propertyType))
-                ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
-                    $q->where('translations->en->title', 'like', "%{$search}%")
-                        ->orWhere('translations->ar->title', 'like', "%{$search}%")
-                        ->orWhere('translations->en->community', 'like', "%{$search}%")
-                        ->orWhere('translations->ar->community', 'like', "%{$search}%");
-                }))
-                ->when($listingCategory === 'off_plan', fn ($q) => $q->where('completion_status', 'off_plan'))
-                ->when(in_array($listingCategory, ['sale', 'rent'], true), fn ($q) => $q->where('listing_type', $listingCategory))
-                ->orderByDesc('featured')
-                ->orderByDesc('published_at')
-                ->paginate($perPage, ['*'], 'page', $page);
+            $query = Property::where('status', true)->commercial()->with('details');
+
+            // "Properties" box: title, community or reference no, any language, not case-sensitive.
+            if ($search) {
+                $like = '%' . mb_strtolower($search) . '%';
+                $query->where(function ($q) use ($like) {
+                    $q->whereRaw('LOWER(reference_no) LIKE ?', [$like]);
+                    foreach (['en', 'ar'] as $code) {
+                        foreach (['title', 'community', 'address'] as $field) {
+                            $q->orWhereRaw("LOWER(JSON_UNQUOTE(JSON_EXTRACT(translations, '$.\"{$code}\".\"{$field}\"'))) LIKE ?", [$like]);
+                        }
+                    }
+                });
+            }
+
+            $listingPage->applyFilters($query, $location, $propertyType, $listingCategory, null, $bathrooms, $refine);
+            $paginator = $query->paginate($perPage, ['*'], 'page', $page);
 
             return [
                 'title' => $section?->getTranslation('title_1', $lang) ?: 'Commercial',
@@ -72,6 +77,12 @@ class CommercialPageService
                 'seo' => SeoMeta::forStaticPage('commercial', $lang),
             ];
         });
+
+        if ($refine['sort'] === 'default') {
+            $data['properties'] = collect($data['properties'])->shuffle()->values()->all();
+        }
+
+        return $data;
     }
 
     private function mapCommercialCard(Property $property, string $lang): array
@@ -87,6 +98,7 @@ class CommercialPageService
             'cta' => $property->listing_type === 'rent' ? 'For Rent' : 'Buy Now',
             'cta_variant' => $property->listing_type === 'rent' ? 'sell' : null,
             'service' => $service ? '+' . number_format($service) . ' service' : null,
+            'service_value' => $service ?: null, // AED, converted on the frontend
             'description' => $property->getTranslation('key_features', $lang),
             'floor' => $details?->floor,
             'rera_id' => $property->rera_id,

@@ -126,4 +126,20 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Registration OTP
+    |--------------------------------------------------------------------------
+    |
+    | When OTP_ENABLED is true, registration emails a random one-time code.
+    | When false (local/testing), no email is sent and OTP_STATIC_CODE is
+    | accepted instead.
+    |
+    */
+
+    'otp' => [
+        'enabled' => env('OTP_ENABLED', true),
+        'static_code' => env('OTP_STATIC_CODE', '1234'),
+    ],
+
 ];

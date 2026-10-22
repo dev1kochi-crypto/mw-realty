@@ -8,42 +8,66 @@ use App\Models\LeadTag;
 use App\Services\Crm\AdminOwnerResolver;
 use Illuminate\Database\Seeder;
 
-/**
- * Seeds the initial CRM master data (Stages/Tags/Sources) owned by the shared
- * "Admin" PortalUser row, reusing the same portal_user_id ownership column
- * every other CRM owner uses — see AdminOwnerResolver. Idempotent: skipped
- * per-type if that type already has rows for this owner, so re-running never
- * duplicates or reorders existing records.
- */
+/** Seeds the shared CRM master data owned by Super Admin. */
 class CrmAdminMasterDataSeeder extends Seeder
 {
-    /** Stage funnel for the Admin owner — name, color, and whether it's a terminal/closed stage. */
     public const STAGES = [
-        ['name' => 'New', 'color' => '#4f46e5'],
-        ['name' => 'Connected', 'color' => '#f59e0b'],
+        ['name' => 'New', 'color' => '#4f46e5', 'is_default' => true],
+        ['name' => 'Hot Buyer', 'color' => '#ef4444'],
+        ['name' => 'Active Buyer', 'color' => '#0ea5e9'],
+        ['name' => 'Active Seller', 'color' => '#14b8a6'],
+        ['name' => 'Closed', 'color' => '#22c55e', 'is_closed' => true],
         ['name' => 'Negotiation', 'color' => '#8b5cf6'],
-        ['name' => 'Closed', 'color' => '#14b8a6', 'is_closed' => true],
-        ['name' => 'Dropped', 'color' => '#ef4444', 'is_closed' => true],
+        ['name' => 'Dropped', 'color' => '#64748b', 'is_closed' => true],
+        ['name' => 'Connected', 'color' => '#f59e0b'],
+    ];
+
+    public const TAGS = [
+        ['name' => 'Buyer Lead', 'color' => '#0ea5e9'],
+        ['name' => 'Seller Lead', 'color' => '#14b8a6'],
+        ['name' => 'Hot Lead', 'color' => '#ef4444'],
+        ['name' => 'Follow Up', 'color' => '#f59e0b'],
+        ['name' => 'VIP', 'color' => '#8b5cf6'],
     ];
 
     public function run(): void
     {
         $admin = AdminOwnerResolver::resolve();
+        $existingStageNames = LeadStage::where('portal_user_id', $admin->id)
+            ->pluck('name')->map(fn ($name) => mb_strtolower(trim($name)))->all();
+        $stageOrder = (int) LeadStage::where('portal_user_id', $admin->id)->max('order_index');
 
-        if (!LeadStage::where('portal_user_id', $admin->id)->exists()) {
-            foreach (static::STAGES as $index => $stage) {
-                LeadStage::create([
-                    'portal_user_id' => $admin->id,
-                    'name' => $stage['name'],
-                    'color' => $stage['color'],
-                    'order_index' => $index + 1,
-                    'is_closed' => $stage['is_closed'] ?? false,
-                    'is_default' => $index === 0,
-                ]);
+        foreach (static::STAGES as $stage) {
+            if (in_array(mb_strtolower($stage['name']), $existingStageNames, true)) {
+                continue;
             }
+
+            LeadStage::create([
+                'portal_user_id' => $admin->id,
+                'name' => $stage['name'],
+                'color' => $stage['color'],
+                'order_index' => ++$stageOrder,
+                'is_closed' => $stage['is_closed'] ?? false,
+                'is_default' => $stage['is_default'] ?? false,
+            ]);
         }
 
+        // Existing Super Admin sources are preserved; missing system sources are added.
         LeadSource::seedDefaultsFor($admin);
-        LeadTag::seedDefaultsFor($admin);
+        LeadSource::ensureSystemSources();
+
+        $existingTagNames = LeadTag::where('portal_user_id', $admin->id)
+            ->pluck('name')->map(fn ($name) => mb_strtolower(trim($name)))->all();
+        foreach (static::TAGS as $tag) {
+            if (in_array(mb_strtolower($tag['name']), $existingTagNames, true)) {
+                continue;
+            }
+
+            LeadTag::create([
+                'portal_user_id' => $admin->id,
+                'name' => $tag['name'],
+                'color' => $tag['color'],
+            ]);
+        }
     }
 }

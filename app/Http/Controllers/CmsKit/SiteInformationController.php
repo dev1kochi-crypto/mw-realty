@@ -48,7 +48,23 @@ class SiteInformationController extends Controller
             }
         }
 
-        foreach (['email_1', 'email_2', 'email_3', 'email_4', 'receipt_email'] as $field) {
+        // Recipient Email takes several addresses, comma separated — each one is checked.
+        if ($siteInfoConfig['receipt_email'] ?? true) {
+            $rules['receipt_email'] = [
+                in_array('receipt_email', $requiredFields) ? 'required' : 'nullable',
+                'string',
+                'max:1000',
+                function (string $attribute, $value, \Closure $fail) {
+                    foreach (SiteInformation::splitEmails($value) as $email) {
+                        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match('/^[^\s@]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}$/', $email)) {
+                            $fail("\"{$email}\" is not a valid email address.");
+                        }
+                    }
+                },
+            ];
+        }
+
+        foreach (['email_1', 'email_2', 'email_3', 'email_4'] as $field) {
             if ($siteInfoConfig[$field] ?? true) {
                 $prefix = in_array($field, $requiredFields) ? 'required' : 'nullable';
                 $rules[$field] = [
@@ -150,6 +166,11 @@ class SiteInformationController extends Controller
     {
         $siteInfo = SiteInformation::first() ?? new SiteInformation();
         $defaultLanguageCode = $this->getDefaultLanguageCode();
+
+        // "a@x.com; b@y.com,c@z.com" → "a@x.com, b@y.com, c@z.com" (duplicates dropped).
+        if ($request->has('receipt_email')) {
+            $request->merge(['receipt_email' => implode(', ', SiteInformation::splitEmails($request->input('receipt_email'))) ?: null]);
+        }
 
         $data = $request->validate(
             $this->getValidationRules($siteInfo->exists),

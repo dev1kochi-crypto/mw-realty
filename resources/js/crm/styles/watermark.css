@@ -1,0 +1,94 @@
+/* Moved from resources/views/portal/watermark/edit — Listing Settings › Watermark (.wm-*). */
+.wm-page-head { margin-bottom: .6rem; }
+.wm-page-head h1 { font-size: 1.3rem; font-weight: 800; margin: 0 0 .15rem; }
+.wm-page-head p { margin: 0; font-size: .85rem; color: var(--portal-muted); }
+.wm-tabs { display: flex; gap: 1.5rem; border-bottom: 1px solid var(--portal-border); margin-bottom: .9rem; overflow-x: auto; }
+.wm-tabs a { padding: .65rem 0; font-weight: 600; font-size: .86rem; color: var(--portal-muted); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.wm-tabs a:hover { color: var(--portal-text); }
+.wm-tabs a.is-active { color: var(--portal-primary); border-bottom-color: var(--portal-primary); }
+.wm-tabs .wm-tab-count { margin-left: .35rem; padding: .05rem .45rem; border-radius: 999px; background: #eef1f7; font-size: .7rem; }
+
+.wm-notice { display: flex; gap: .65rem; align-items: flex-start; padding: .75rem 1rem; border-radius: 10px; font-size: .84rem; margin-bottom: 1rem; background: #eef3fb; color: #244373; }
+.wm-notice i { margin-top: .15rem; }
+
+.wm-layout { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.wm-panel { background: var(--portal-surface); border: 1px solid var(--portal-border); border-radius: var(--portal-radius); box-shadow: var(--portal-shadow); }
+.wm-settings { display: flex; flex-direction: column; margin: 0; padding: 0; border: 0; min-width: 0; }
+.wm-row { padding: .7rem 1.1rem; border-bottom: 1px solid var(--portal-border); }
+.wm-row-title { font-size: .78rem; font-weight: 700; color: var(--portal-text); margin-bottom: .4rem; display: flex; justify-content: space-between; align-items: center; }
+.wm-row-title output { font-weight: 600; color: var(--portal-muted); }
+.wm-help { font-size: .76rem; color: var(--portal-muted); }
+
+.wm-switch-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.wm-switch-row .form-check-input { width: 2.6em; height: 1.4em; cursor: pointer; margin: 0; }
+.wm-switch-row .form-check-input:checked { background-color: var(--portal-primary); border-color: var(--portal-primary); }
+.wm-state { display: inline-flex; align-items: center; gap: .3rem; font-size: .7rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; margin-left: .4rem; vertical-align: middle; }
+.wm-state.is-on { background: #e8f7ef; color: #15803d; }
+.wm-state.is-off { background: #f1f2f7; color: var(--portal-muted); }
+
+.wm-segment { display: grid; grid-template-columns: 1fr 1fr; padding: 3px; border-radius: 10px; background: #f1f2f7; }
+.wm-segment label { margin: 0; cursor: pointer; }
+.wm-segment input { position: absolute; opacity: 0; pointer-events: none; }
+.wm-segment span { display: flex; align-items: center; justify-content: center; gap: .4rem; padding: .45rem; border-radius: 8px; font-size: .82rem; font-weight: 600; color: var(--portal-muted); transition: background .15s, color .15s; }
+.wm-segment input:checked + span { background: #fff; color: var(--portal-text); box-shadow: 0 1px 3px rgba(20, 24, 50, .12); }
+.wm-segment input:focus-visible + span { outline: 2px solid var(--portal-primary); }
+
+.wm-logo { display: flex; align-items: center; gap: .85rem; }
+.wm-logo-box { width: 56px; height: 56px; flex: 0 0 56px; border-radius: 10px; border: 1px solid var(--portal-border); background: repeating-conic-gradient(#eef0f5 0% 25%, #fff 0% 50%) 50% / 12px 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; color: #9aa0b8; }
+.wm-logo-box img { max-width: 88%; max-height: 88%; }
+.wm-logo-actions { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .3rem; }
+.wm-logo-actions .btn { font-size: .78rem; padding: .3rem .7rem; }
+
+.wm-swatches { display: flex; gap: .45rem; align-items: center; }
+.wm-swatch { width: 22px; height: 22px; flex: 0 0 22px; border-radius: 50%; border: 2px solid var(--portal-border); cursor: pointer; padding: 0; }
+.wm-swatch.is-active { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--portal-primary); }
+.wm-color { width: 26px; height: 26px; padding: 0; border: 0; background: none; cursor: pointer; }
+
+.wm-grid { display: grid; grid-template-columns: repeat(3, 34px); grid-template-rows: repeat(3, 26px); gap: 4px; padding: 6px; border-radius: 10px; background: #f1f2f7; width: max-content; }
+.wm-grid button { border: 0; border-radius: 6px; background: #fff; padding: 0; position: relative; }
+.wm-grid button::after { content: ""; position: absolute; inset: 50% auto auto 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: #c4c9da; }
+.wm-grid button:hover::after { background: var(--portal-primary); }
+.wm-grid button.is-active { background: var(--portal-primary); }
+.wm-grid button.is-active::after { background: #fff; }
+.wm-position-row { display: flex; align-items: center; gap: 1rem; }
+
+.wm-range { width: 100%; accent-color: var(--portal-primary); }
+.wm-sliders { display: flex; flex-direction: column; justify-content: center; gap: .8rem; }
+.wm-place { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.wm-text-row { display: flex; align-items: center; gap: .6rem; }
+.wm-text-row .form-control { flex: 1; min-width: 0; }
+
+.wm-footer { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: .5rem; padding: .7rem 1.1rem; background: var(--portal-surface); border-radius: 0 0 var(--portal-radius) var(--portal-radius); }
+.wm-footer .btn { min-width: 110px; }
+
+.wm-preview-panel { position: sticky; top: 1rem; padding: .85rem 1rem; }
+.wm-preview-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .75rem; font-size: .85rem; font-weight: 700; }
+/* Sized to the screen: as wide as fits, but never taller than the space under the header. */
+.wm-preview { position: relative; aspect-ratio: 4 / 3; width: 100%; max-width: calc((100vh - 330px) * 4 / 3); min-width: 280px; margin: 0 auto; border-radius: 10px; overflow: hidden; background: #ddd; }
+.wm-preview > img.wm-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wm-mark { position: absolute; pointer-events: none; transition: opacity .15s; }
+.wm-mark img { display: block; width: 100%; }
+.wm-mark span { display: block; white-space: nowrap; font-family: Verdana, 'DejaVu Sans', sans-serif; font-weight: 700; line-height: 1.15; }
+.wm-preview.is-off .wm-mark { display: none; }
+.wm-preview-off { position: absolute; inset: auto 0 0 0; padding: .5rem .8rem; background: rgba(20, 24, 50, .65); color: #fff; font-size: .76rem; display: none; }
+.wm-preview.is-off .wm-preview-off { display: block; }
+
+/* Agency & agent watermarks tab */
+.wm-toolbar { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--portal-border); }
+.wm-toolbar form { display: flex; gap: .5rem; flex: 1; max-width: 420px; }
+.wm-filter { display: inline-flex; padding: 3px; border-radius: 999px; background: #f1f2f7; }
+.wm-filter a { font-size: .76rem; font-weight: 600; padding: .3rem .8rem; border-radius: 999px; color: var(--portal-muted); text-decoration: none; }
+.wm-filter a.is-active { background: #fff; color: var(--portal-text); box-shadow: 0 1px 3px rgba(20, 24, 50, .12); }
+.wm-accounts th:first-child, .wm-accounts td:first-child { padding-left: 1.25rem; }
+.wm-accounts th:last-child, .wm-accounts td:last-child { padding-right: 1.25rem; }
+.wm-accounts td { padding-top: .7rem; padding-bottom: .7rem; }
+.wm-accounts thead th { padding-top: .75rem; }
+.wm-accounts .wm-sn { width: 3.5rem; color: var(--portal-muted); font-size: .8rem; font-weight: 600; }
+.wm-thumb { width: 64px; height: 40px; border-radius: 6px; border: 1px solid var(--portal-border); background: repeating-conic-gradient(#eef0f5 0% 25%, #fff 0% 50%) 50% / 10px 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.wm-thumb img { max-width: 90%; max-height: 85%; }
+.wm-thumb span { font-size: .62rem; font-weight: 700; padding: 0 .25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; text-shadow: 0 0 2px rgba(0, 0, 0, .5); }
+
+@media (max-width: 991.98px) {
+    .wm-layout { grid-template-columns: 1fr; }
+    .wm-preview-panel { position: static; order: -1; }
+}

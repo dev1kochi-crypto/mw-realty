@@ -25,9 +25,13 @@ class SitemapController extends Controller
     public function generate(Request $request)
     {
         abort_unless(request()->isMethod('POST'), 405);
-        dispatch(new UpdateSitemapJob());
+        // Built straight from the database (App\Services\Seo\SiteSitemapService) — quick, so it
+        // runs now rather than waiting for the queue. llms.txt uses the same page list.
+        $this->sitemapService->generate();
+        app(\CMS\SiteManager\Services\LlmsTxtService::class)->generate();
+        $count = substr_count((string) file_get_contents(public_path('sitemap.xml')), '<url>');
 
-        return redirect()->back()->with('success', 'Sitemap regeneration has been queued.');
+        return redirect()->back()->with('success', "Sitemap generated — {$count} URLs. llms.txt was refreshed too.");
     }
 
     public function edit()

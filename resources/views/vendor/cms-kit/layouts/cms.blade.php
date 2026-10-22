@@ -116,27 +116,45 @@
                          below the "Website Content" label is CMS content for the public site, not the product itself. --}}
                     @if(config('cms-kit.common.modules.portal-accounts', true) && ($cmsUser->hasRole('superadmin') || $cmsUser->can('portal-accounts.view')))
                     <div class="nav-item sidebar-group">
-                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.portal-accounts.*')) active @endif"
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.portal-accounts.*', 'cms.agency-agents.*')) active @endif"
                            data-bs-toggle="collapse" href="#clientsMenu" role="button"
-                           aria-expanded="@if(request()->routeIs('cms.portal-accounts.*')) true @else false @endif">
+                           aria-expanded="@if(request()->routeIs('cms.portal-accounts.*', 'cms.agency-agents.*')) true @else false @endif">
                             <i class="fas fa-address-card"></i>
                             <span>Clients</span>
-                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                            @php $clientsPending = array_sum($pendingKycCounts ?? []) + ($pendingAgencyAgentCount ?? 0) + ($pendingUpgradeCount ?? 0); @endphp
+                            @if($clientsPending > 0)
+                            <span class="badge bg-danger ms-auto" title="Waiting for review: KYC, agency agents and plan requests">{{ $clientsPending }}</span>
+                            @endif
+                            <i class="fas fa-chevron-down {{ $clientsPending > 0 ? 'ms-2' : 'ms-auto' }} sidebar-chevron"></i>
                         </a>
-                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.portal-accounts.*')) show @endif" id="clientsMenu">
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.portal-accounts.*', 'cms.agency-agents.*')) show @endif" id="clientsMenu">
                             <nav class="nav flex-column">
-                               <a class="nav-link py-2 @if(request()->routeIs('cms.portal-accounts.*') && request()->query('type') === 'company') active @endif" href="{{ route('cms.portal-accounts.index', ['type' => 'company']) }}">
-                                    Companies
+                                @foreach(['company' => 'Agencies', 'agent' => 'Agents'] as $clientType => $clientLabel)
+                                <a class="nav-link py-2 d-flex align-items-center @if(request()->routeIs('cms.portal-accounts.*') && request()->query('type') === $clientType) active @endif"
+                                   href="{{ route('cms.portal-accounts.index', ['type' => $clientType]) }}">
+                                    {{ $clientLabel }}
+                                    @if(($pendingKycCounts[$clientType] ?? 0) > 0)
+                                    <span class="badge bg-danger ms-auto" title="KYC waiting for review">{{ $pendingKycCounts[$clientType] }}</span>
+                                    @endif
                                 </a>
-                                <a class="nav-link py-2 @if(request()->routeIs('cms.portal-accounts.*') && request()->query('type') === 'agent') active @endif" href="{{ route('cms.portal-accounts.index', ['type' => 'agent']) }}">
-                                    Agents
+                                @endforeach
+                                <a class="nav-link py-2 d-flex align-items-center @if(request()->routeIs('cms.agency-agents.*')) active @endif" href="{{ route('cms.agency-agents.index') }}">
+                                    Agency Agents
+                                    @if(($pendingAgencyAgentCount ?? 0) > 0)
+                                    <span class="badge bg-danger ms-auto">{{ $pendingAgencyAgentCount }}</span>
+                                    @endif
                                 </a>
+                                {{-- Only when something is waiting: with Stripe on, plans are bought directly at checkout, so
+                                     a request only happens on the manual fallback (Stripe off / non-Stripe plan). Still reachable
+                                     from the bell notification and the dashboard's "needs attention" card. --}}
+                                @if(($pendingUpgradeCount ?? 0) > 0 || request()->routeIs('cms.portal-accounts.plan-upgrade-requests'))
                                 <a class="nav-link py-2 d-flex align-items-center @if(request()->routeIs('cms.portal-accounts.plan-upgrade-requests')) active @endif" href="{{ route('cms.portal-accounts.plan-upgrade-requests') }}">
                                     Plan Requests
                                     @if(($pendingUpgradeCount ?? 0) > 0)
                                     <span class="badge bg-danger ms-auto">{{ $pendingUpgradeCount }}</span>
                                     @endif
                                 </a>
+                                @endif
 
                                 {{-- Frontend/customer user logins land here once frontend auth is integrated. --}}
                             </nav>
@@ -156,29 +174,63 @@
                     </a>
                     @endif
 
+                    @if(config('cms-kit.common.modules.credits', true) && $cmsUser->can('credits.view'))
+                    <a class="nav-link @if(Route::is('cms.credits.*')) active @endif" href="{{ route('cms.credits.index') }}">
+                        <i class="fas fa-coins"></i> Credits
+                    </a>
+                    @endif
+
+                    @if(config('cms-kit.common.modules.credit-history', true) && $cmsUser->can('credit-history.view'))
+                    <a class="nav-link @if(Route::is('cms.credit-history.*')) active @endif" href="{{ route('cms.credit-history.index') }}">
+                        <i class="fas fa-history"></i> Credit History
+                    </a>
+                    @endif
+
                     @if(config('cms-kit.common.modules.coupons', true) && $cmsUser->can('coupons.view'))
                     <a class="nav-link @if(Route::is('cms.coupons.*')) active @endif" href="{{ route('cms.coupons.index') }}">
                         <i class="fas fa-ticket-alt"></i> Coupons
                     </a>
                     @endif
 
+                    {{-- Portal Contact Us tickets from Agents/Companies — core client support, so it sits with the business items above. --}}
+                    @if(config('cms-kit.common.modules.support-tickets', true) && $cmsUser->can('support-tickets.view'))
+                    <a class="nav-link d-flex align-items-center @if(Route::is('cms.support-tickets.*')) active @endif" href="{{ route('cms.support-tickets.index') }}">
+                        <i class="fas fa-headset"></i> Support Tickets
+                        @if(($supportTicketsNeedingReply ?? 0) > 0)
+                        <span class="badge bg-danger ms-auto">{{ $supportTicketsNeedingReply }}</span>
+                        @endif
+                    </a>
+                    @endif
+
+                    {{-- The "!" quick-guide popups agents / companies see on each CRM screen. --}}
+                    @if($cmsUser->can('help-desk.view'))
+                    <a class="nav-link d-flex align-items-center @if(Route::is('cms.help-desk.*')) active @endif" href="{{ route('cms.help-desk.index') }}">
+                        <i class="fas fa-circle-question"></i> Help Desk
+                    </a>
+                    @endif
+
                     <div class="sidebar-section-label">Website Content</div>
 
                     {{-- Site Settings Group --}}
-                    @if((config('cms-kit.common.modules.languages', true) && $cmsUser->can('languages.view')) || $cmsUser->can('site-information.view'))
+                    @if((config('cms-kit.common.modules.languages', true) && $cmsUser->can('languages.view')) || $cmsUser->can('site-information.view') || $cmsUser->can('currencies.view'))
                         <div class="nav-item sidebar-group">
-                            <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) active @endif" 
-                            data-bs-toggle="collapse" href="#settingsMenu" role="button" 
-                            aria-expanded="@if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) true @else false @endif">
+                            <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*') || request()->routeIs('cms.currencies.*')) active @endif"
+                            data-bs-toggle="collapse" href="#settingsMenu" role="button"
+                            aria-expanded="@if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*') || request()->routeIs('cms.currencies.*')) true @else false @endif">
                                 <i class="fas fa-cog"></i>
                                 <span>General Settings</span>
                                 <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
                             </a>
-                            <div class="collapse sidebar-submenu @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) show @endif" id="settingsMenu">
+                            <div class="collapse sidebar-submenu @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*') || request()->routeIs('cms.currencies.*')) show @endif" id="settingsMenu">
                                 <nav class="nav flex-column">
                                     @if(config('cms-kit.common.modules.languages', true) && $cmsUser->can('languages.view'))
                                     <a class="nav-link py-2 @if(request()->routeIs('cms.languages.index') || request()->routeIs('cms.languages.static-texts.*') || request()->routeIs('cms.languages.translations*')) active @endif" href="{{ route('cms.languages.index') }}">
                                         Languages
+                                    </a>
+                                    @endif
+                                    @if($cmsUser->can('currencies.view'))
+                                    <a class="nav-link py-2 @if(request()->routeIs('cms.currencies.*')) active @endif" href="{{ route('cms.currencies.index') }}">
+                                        Currencies
                                     </a>
                                     @endif
                                     @if($cmsUser->can('site-information.view'))
@@ -338,6 +390,13 @@
                     </a>
                     @endif
 
+                    {{-- The public calculator pages: copy, SEO, enquiry form and FAQs. --}}
+                    @if($cmsUser->can('calculators.view'))
+                    <a class="nav-link @if(Route::is('cms.calculators.*')) active @endif" href="{{ route('cms.calculators.index') }}">
+                        <i class="fas fa-calculator"></i> Calculators
+                    </a>
+                    @endif
+
                     {{-- Property listings themselves are managed in the separate Properties dashboard
                          (see the "Properties" button in the header) — this stays admin-only since
                          it's shared taxonomy, not content agents/companies should edit. --}}
@@ -359,7 +418,7 @@
                             <nav class="nav flex-column">
                                 @if(config('cms-kit.common.modules.filters', true) && $cmsUser->can('filters.view'))
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.filters.*')) active @endif" href="{{ route('cms.filters.index') }}">
-                                    Manage Filters
+                                    Search Filters
                                 </a>
                                 @endif
                                 @if(config('cms-kit.common.modules.communities', true) && $cmsUser->can('communities.view'))
@@ -422,9 +481,16 @@
                                     Newsletter Signups
                                 </a>
                                 @endif
-                                <a class="nav-link py-2 @if(request()->routeIs('cms.unassigned-leads.*')) active @endif" href="{{ route('cms.unassigned-leads.index') }}">
-                                    Unassigned Property Leads
+                                {{-- Only when something is waiting — Custom Property Requests and enquiries on listings with no
+                                     owner land here; the bell notification links straight to it too. --}}
+                                @if(($unassignedLeadCount ?? 0) > 0 || request()->routeIs('cms.unassigned-leads.*'))
+                                <a class="nav-link py-2 d-flex align-items-center @if(request()->routeIs('cms.unassigned-leads.*')) active @endif" href="{{ route('cms.unassigned-leads.index') }}">
+                                    Unassigned Leads
+                                    @if(($unassignedLeadCount ?? 0) > 0)
+                                    <span class="badge bg-danger ms-auto">{{ $unassignedLeadCount }}</span>
+                                    @endif
                                 </a>
+                                @endif
                             </nav>
                         </div>
                     </div>
@@ -456,6 +522,32 @@
                     </div>
                     @endif
 
+                    @if(config('cms-kit.common.modules.blogs', true) && $cmsUser->can('market-insights.view'))
+                    @php $insightsOpen = request()->routeIs('cms.market-insights.*') || request()->routeIs('cms.market-insight-topics.*') || request()->routeIs('cms.market-insight-regions.*'); @endphp
+                    <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if($insightsOpen) active @endif"
+                           data-bs-toggle="collapse" href="#marketInsightsMenu" role="button"
+                           aria-expanded="{{ $insightsOpen ? 'true' : 'false' }}">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Market Insights</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu @if($insightsOpen) show @endif" id="marketInsightsMenu">
+                            <nav class="nav flex-column">
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.market-insights.*')) active @endif" href="{{ route('cms.market-insights.index') }}">
+                                    All Insights
+                                </a>
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.market-insight-topics.*')) active @endif" href="{{ route('cms.market-insight-topics.index') }}">
+                                    Topics
+                                </a>
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.market-insight-regions.*')) active @endif" href="{{ route('cms.market-insight-regions.index') }}">
+                                    Regions
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                    @endif
+
                     @if(config('cms-kit.common.modules.landing-pages', true) && $cmsUser->can('landing-pages.view'))
                     <div class="nav-item sidebar-group">
                         <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.landing-pages.*')) active @endif"
@@ -476,12 +568,6 @@
                             </nav>
                         </div>
                     </div>
-                    @endif
-
-                    @if(config('cms-kit.common.modules.ads', true) && $cmsUser->can('ads.view'))
-                    <a class="nav-link @if(Route::is('cms.ads.*')) active @endif" href="{{ route('cms.ads.index') }}">
-                        <i class="fas fa-bullhorn"></i> Ad Management
-                    </a>
                     @endif
 
                     @if(config('cms-kit.common.modules.careers', true) && $cmsUser->can('careers.view'))
@@ -727,12 +813,14 @@
 
     <script>
     (function () {
-        // Show a "Processing..." spinner on the submit button the moment a form is actually
-        // submitted (the browser only fires `submit` once native validation has passed),
-        // and disable every submit button in it to prevent double-submits.
-        document.addEventListener('submit', function (e) {
+        // Show a "Processing..." spinner on the submit button when a form really submits (the
+        // browser only fires `submit` once native validation has passed), and disable every submit
+        // button in it to prevent double-submits. Listens on window in the bubble phase, i.e. AFTER
+        // the page's own handlers: a form a script handles itself (preventDefault → fetch, e.g. the
+        // Reset Password popup) manages its own button, so it never gets a spinner nothing undoes.
+        window.addEventListener('submit', function (e) {
             const form = e.target;
-            if (!(form instanceof HTMLFormElement) || form.dataset.noSpinner) return;
+            if (!(form instanceof HTMLFormElement) || form.dataset.noSpinner || e.defaultPrevented) return;
 
             const submitBtns = form.querySelectorAll('button[type="submit"]');
             const clicked = (e.submitter && e.submitter.tagName === 'BUTTON') ? e.submitter : submitBtns[0];
@@ -745,7 +833,7 @@
                 }
                 clicked.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
             }
-        }, true);
+        });
 
         function restoreSubmitButtons(form) {
             form.querySelectorAll('button[type="submit"][data-original-html]').forEach(function (btn) {

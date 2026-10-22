@@ -25,6 +25,13 @@ class SectionLabel extends Model
         'status' => 'boolean',
     ];
 
+    // Section titles feed the cached website payloads — show an edit on the site straight away.
+    protected static function booted(): void
+    {
+        static::saved(fn () => \App\Services\HomePageService::flushCache());
+        static::deleted(fn () => \App\Services\HomePageService::flushCache());
+    }
+
     /**
      * Helper to get translated attribute
      */

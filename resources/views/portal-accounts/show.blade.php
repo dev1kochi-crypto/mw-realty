@@ -1,7 +1,7 @@
 @extends('cms-kit::layouts.cms')
 
 @section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('cms.portal-accounts.index', ['type' => $portalUser->type]) }}">{{ $portalUser->type === 'company' ? 'Companies' : 'Agents' }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ route('cms.portal-accounts.index', ['type' => $portalUser->type]) }}">{{ $portalUser->type === 'company' ? 'Agencies' : 'Agents' }}</a></li>
     <li class="breadcrumb-item active" aria-current="page">{{ $portalUser->type === 'company' ? ($portalUser->company_name ?: $portalUser->name) : $portalUser->name }}</li>
 @endsection
 
@@ -33,7 +33,24 @@
         background: linear-gradient(120deg, var(--dash-navy) 0%, #16294f 55%, var(--dash-teal) 145%);
         border-radius: 16px; padding: 1.75rem 2rem; color: #fff; margin-bottom: 1.25rem;
         display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;
+        /* Stays in view while scrolling — just under the 70px sticky admin top bar. */
+        position: sticky; top: calc(70px + 0.75rem); z-index: 800;
+        transition: padding 0.2s ease, box-shadow 0.2s ease;
     }
+    /* The layout's `.main-content { overflow-x: hidden }` makes it its own (never-scrolling) scroll box, so a
+       sticky child can't stick to the window — it just gets pushed down over the cards below. `clip` still
+       stops sideways overflow without creating a scroll box. */
+    .main-content { overflow-x: clip; }
+    /* Page-coloured strip between the top bar and the card, so scrolled content doesn't peek through. */
+    .profile-hero::before {
+        content: ''; position: absolute; left: -2rem; right: -2rem; bottom: 100%;
+        height: calc(0.75rem + 1px); background: var(--bg-color, #f4f1f1); pointer-events: none;
+    }
+    /* Once stuck: a compact bar (name, badges, actions) so it doesn't cover the page. */
+    .profile-hero.is-stuck { padding: 0.7rem 1.5rem; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18); }
+    .profile-hero.is-stuck .profile-avatar { width: 40px; height: 40px; font-size: 0.95rem; }
+    .profile-hero.is-stuck .profile-meta { display: none !important; }
+    .profile-hero.is-stuck .profile-name { font-size: 1.1rem; margin-bottom: 0.2rem; }
     .profile-avatar {
         width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
         display: flex; align-items: center; justify-content: center;
@@ -128,6 +145,22 @@
     .mini-table thead th { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.02em; color: var(--dash-muted); border-bottom: 1.5px solid var(--dash-border); font-weight: 800; }
     .mini-table tbody tr { border-bottom: 1px solid #f5f6fa; }
     .mini-table tbody tr:last-child { border-bottom: none; }
+
+    /* Same look as the Agencies / Agents list and Add pages: rounder cards, icon chips on titles. */
+    .dash-card { border-radius: 18px; padding: 1.35rem 1.5rem; scroll-margin-top: 200px; transition: box-shadow .2s ease; }
+    .dash-card:hover { box-shadow: 0 10px 26px rgba(28, 35, 64, 0.08); }
+    .dash-card h6 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: .82rem; letter-spacing: .04em; color: var(--dash-ink); }
+    .dash-card h6 > i:first-child { width: 30px; height: 30px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-size: .8rem;
+        color: #fff; background: linear-gradient(135deg, var(--dash-navy), #3a5794); }
+    #sec-licence h6 > i:first-child { background: linear-gradient(135deg, #6d28d9, #8b5cf6); }
+    #sec-profile h6 > i:first-child { background: linear-gradient(135deg, var(--dash-teal), #2fc4e8); }
+    #sec-documents h6 > i:first-child { background: linear-gradient(135deg, var(--dash-amber), var(--dash-amber-2)); }
+    #sec-payments h6 > i:first-child { background: linear-gradient(135deg, var(--dash-green), var(--dash-green-2)); }
+    .stat-mini { border-radius: 16px; }
+    .section-nav { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; padding: .35rem; border-radius: 14px; background: #fff; border: 1px solid var(--dash-border); box-shadow: 0 4px 14px rgba(28,35,64,0.05); }
+    .section-nav a { display: inline-flex; align-items: center; gap: .45rem; padding: .45rem .85rem; border-radius: 10px; font-size: .8rem; font-weight: 700; color: var(--dash-muted); text-decoration: none; transition: all .2s; }
+    .section-nav a:hover { color: var(--dash-navy); background: var(--dash-bg-soft); }
+    .section-nav a i { font-size: .78rem; }
 </style>
 @endpush
 
@@ -167,13 +200,14 @@
 </div>
 @endif
 
-<div class="profile-hero">
+<div id="profileHeroSentinel" aria-hidden="true"></div>
+<div class="profile-hero" id="profileHero">
     <div class="d-flex align-items-center gap-3">
         <div class="profile-avatar {{ $avatarFill }}">{{ $initials }}</div>
         <div>
             <div class="profile-name">{{ $displayName }}</div>
             <div class="profile-badges d-flex gap-2">
-                <span class="badge bg-light text-dark border-0">{{ ucfirst($portalUser->type) }}</span>
+                <span class="badge bg-light text-dark border-0">{{ $portalUser->type === 'company' ? 'Agency' : 'Agent' }}</span>
                 <span class="badge {{ $statusMap[$portalUser->status] ?? 'bg-secondary' }}">{{ ucfirst($portalUser->status) }}</span>
                 <span class="badge bg-light text-dark border">KYC: {{ !$portalUser->kyc_user_submitted_at && $portalUser->status !== 'approved' ? 'Awaiting user submission' : ucfirst(str_replace('_', ' ', $portalUser->kyc_review_status)) }}</span>
             </div>
@@ -193,15 +227,19 @@
         <button type="button" class="btn btn-reject reject-item" data-id="{{ $portalUser->id }}"><i class="fas fa-ban me-1"></i> Reject</button>
         @endif
         <button type="button" class="btn btn-reject trigger-reset-password" data-id="{{ $portalUser->id }}" data-name="{{ $displayName ?? $portalUser->name }}"><i class="fas fa-key me-1"></i> Reset Password</button>
+        @if($portalUser->hasTwoFactorEnabled())
+        {{-- For a user locked out of their authenticator app (lost phone + recovery codes). --}}
+        <form method="POST" action="{{ route('cms.portal-accounts.reset-two-factor', $portalUser->id) }}" onsubmit="return confirm('Turn off two-factor authentication for this account? They can sign in with just their password (plus the new-device email code) and set it up again.');">
+            @csrf
+            <button type="submit" class="btn btn-reject"><i class="fas fa-shield-halved me-1"></i> Reset 2FA</button>
+        </form>
+        @endif
     </div>
     @endcan
 </div>
 
 @if($portalUser->kyc_review_status === 'changes_requested' && $portalUser->kyc_review_note)
 <div class="alert alert-warning">Requested KYC changes: {{ $portalUser->kyc_review_note }}</div>
-@endif
-@if(session('success'))
-<div class="alert alert-success">{{ session('success') }}</div>
 @endif
 @if(session('error'))
 <div class="alert alert-danger">{{ session('error') }}</div>
@@ -263,7 +301,7 @@
     <div class="col-6 col-md-3">
         <div class="stat-mini">
             <span class="stat-mini-icon fill-green"><i class="fas fa-layer-group"></i></span>
-            <div><div class="stat-mini-value">{{ $portalUser->plan?->getTranslation('name') ?? 'No Plan' }}</div><div class="stat-mini-label">Plan</div></div>
+            <div><div class="stat-mini-value">{{ $portalUser->effectivePlan()?->getTranslation('name') ?? 'No Plan' }}</div><div class="stat-mini-label">{{ $portalUser->isOnAgencyPlan() ? 'Plan · via agency' : 'Plan' }}</div></div>
         </div>
     </div>
     <div class="col-6 col-md-3">
@@ -274,9 +312,18 @@
     </div>
 </div>
 
+<nav class="section-nav" aria-label="Jump to section">
+    <a href="#sec-identity"><i class="fas fa-id-badge"></i> Identity</a>
+    <a href="#sec-licence"><i class="fas {{ $portalUser->type === 'agent' ? 'fa-user-tie' : 'fa-building' }}"></i> {{ $portalUser->type === 'agent' ? 'Broker licence' : 'Agency licence' }}</a>
+    <a href="#sec-profile"><i class="fas fa-globe"></i> Public profile</a>
+    <a href="#sec-documents"><i class="fas fa-folder-open"></i> Documents</a>
+    <a href="#sec-payments"><i class="fas fa-receipt"></i> Payments</a>
+    <a href="{{ $portalUser->type === 'company' ? '#sec-team' : '#sec-membership' }}"><i class="fas fa-people-group"></i> {{ $portalUser->type === 'company' ? 'Team agents' : 'Agency' }}</a>
+</nav>
+
 <div class="row g-3">
     <div class="col-lg-8 d-flex flex-column gap-3">
-        <div class="dash-card">
+        <div class="dash-card" id="sec-identity">
             <h6><i class="fas fa-id-badge"></i> Identity
                 @can('portal-accounts.edit')
                 <button type="button" class="section-edit-btn section-edit-toggle" data-section="identity" title="Edit"><i class="fas fa-pen"></i></button>
@@ -306,7 +353,7 @@
                     </div>
                     @if($portalUser->type === 'company')
                     <div class="col-md-4">
-                        <label class="form-label">Company Name</label>
+                        <label class="form-label">Agency Name</label>
                         <input type="text" name="company_name" class="form-control form-control-sm" value="{{ $portalUser->company_name }}">
                     </div>
                     @endif
@@ -344,8 +391,8 @@
         </div>
 
         @if($portalUser->type === 'agent')
-        <div class="dash-card">
-            <h6><i class="fas fa-user-tie"></i> RERA Broker Details
+        <div class="dash-card" id="sec-licence">
+            <h6><i class="fas fa-user-tie"></i> Broker Licence (RERA)
                 @can('portal-accounts.edit')
                 <button type="button" class="section-edit-btn section-edit-toggle" data-section="agent" title="Edit"><i class="fas fa-pen"></i></button>
                 @endcan
@@ -354,14 +401,8 @@
                 <div class="row">
                     <div class="col-md-4 info-row"><div class="info-label">BRN (Broker Registration No.)</div><div class="info-value">{{ $portalUser->brn_number ?: '-' }}</div></div>
                     <div class="col-md-8 info-row">
-                        <div class="info-label">Affiliated Brokerage</div>
-                        <div class="info-value">
-                            @if($portalUser->company)
-                                <a href="{{ route('cms.portal-accounts.show', ['id' => $portalUser->company->id, 'type' => 'company']) }}">{{ $portalUser->company->company_name ?: $portalUser->company->name }}</a>
-                            @else
-                                -
-                            @endif
-                        </div>
+                        <div class="info-label">Affiliated Brokerage <span class="text-muted fw-normal text-lowercase">(as stated by the agent)</span></div>
+                        <div class="info-value">{{ $portalUser->affiliated_brokerage ?: '-' }}</div>
                     </div>
                     <div class="col-md-4 info-row"><div class="info-label">Trade License No.</div><div class="info-value">{{ $portalUser->trade_license_no ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">Trade License Expiry</div><div class="info-value">{{ $portalUser->trade_license_expiry?->format('d M Y') ?: '-' }}</div></div>
@@ -378,12 +419,8 @@
                     </div>
                     <div class="col-md-8">
                         <label class="form-label">Affiliated Brokerage</label>
-                        <select name="company_id" class="form-select form-select-sm">
-                            <option value="">Unaffiliated</option>
-                            @foreach($companies as $company)
-                            <option value="{{ $company->id }}" {{ $portalUser->company_id === $company->id ? 'selected' : '' }}>{{ $company->company_name ?: $company->name }}</option>
-                            @endforeach
-                        </select>
+                        <input type="text" name="affiliated_brokerage" class="form-control form-control-sm" maxlength="255" value="{{ $portalUser->affiliated_brokerage }}">
+                        <div class="form-text">KYC information only — agency membership and plan are managed under Clients › Agency Agents.</div>
                     </div>
                     <div class="col-md-4"><label class="form-label">Trade License No.</label><input type="text" name="trade_license_no" class="form-control form-control-sm" value="{{ $portalUser->trade_license_no }}"></div>
                     <div class="col-md-4"><label class="form-label">Trade License Expiry</label><input type="date" name="trade_license_expiry" class="form-control form-control-sm" value="{{ $portalUser->trade_license_expiry?->format('Y-m-d') }}"></div>
@@ -398,8 +435,8 @@
             @endcan
         </div>
         @else
-        <div class="dash-card">
-            <h6><i class="fas fa-building"></i> Company / RERA Office Details
+        <div class="dash-card" id="sec-licence">
+            <h6><i class="fas fa-building"></i> Agency Licence &amp; Office
                 @can('portal-accounts.edit')
                 <button type="button" class="section-edit-btn section-edit-toggle" data-section="company" title="Edit"><i class="fas fa-pen"></i></button>
                 @endcan
@@ -409,6 +446,7 @@
                     <div class="col-md-4 info-row"><div class="info-label">Trade License No.</div><div class="info-value">{{ $portalUser->trade_license_no ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">Trade License Expiry</div><div class="info-value">{{ $portalUser->trade_license_expiry?->format('d M Y') ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">ORN</div><div class="info-value">{{ $portalUser->orn_number ?: '-' }}</div></div>
+                    <div class="col-md-4 info-row"><div class="info-label">ADREC Brokerage No.</div><div class="info-value">{{ $portalUser->adrec_license_no ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">TRN (VAT)</div><div class="info-value">{{ $portalUser->trn_number ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">TRN Expiry</div><div class="info-value">{{ $portalUser->trn_expiry?->format('d M Y') ?: '-' }}</div></div>
                     <div class="col-md-4 info-row"><div class="info-label">Authorized Signatory</div><div class="info-value">{{ $portalUser->authorized_signatory_name ?: '-' }}</div></div>
@@ -430,6 +468,10 @@
                     <div class="col-md-4">
                         <label class="form-label">ORN</label>
                         <input type="text" name="orn_number" class="form-control form-control-sm" value="{{ $portalUser->orn_number }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">ADREC Brokerage No. <span class="text-muted small">(Abu Dhabi listings)</span></label>
+                        <input type="text" name="adrec_license_no" class="form-control form-control-sm" value="{{ $portalUser->adrec_license_no }}">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">TRN (VAT)</label>
@@ -461,7 +503,7 @@
         </div>
         @endif
 
-        <div class="dash-card">
+        <div class="dash-card" id="sec-profile">
             <h6><i class="fas fa-globe"></i> Public Profile
                 @can('portal-accounts.edit')
                 <button type="button" class="section-edit-btn section-edit-toggle" data-section="about" title="Edit"><i class="fas fa-pen"></i></button>
@@ -545,7 +587,7 @@
             @endcan
         </div>
 
-        <div class="dash-card">
+        <div class="dash-card" id="sec-documents">
             <h6><i class="fas fa-folder-open"></i> Submitted Documents</h6>
             <div class="row g-2">
                 @foreach($documents as $doc)
@@ -610,7 +652,7 @@
                             @php
                                 $profileRequestOptions = [
                                     'identity' => 'Identity and contact details',
-                                    'registration_details' => $portalUser->type === 'agent' ? 'BRN and brokerage details' : 'Company and office details',
+                                    'registration_details' => $portalUser->type === 'agent' ? 'BRN and brokerage details' : 'Agency and office details',
                                     'tax_details' => 'Tax registration details (TRN)',
                                     'public_profile' => 'Public profile, bio, and service areas',
                                 ];
@@ -653,14 +695,14 @@
         @endif
         @endcan
 
-        <div class="dash-card">
+        <div class="dash-card" id="sec-payments">
             <h6><i class="fas fa-receipt"></i> Payment History
                 @if($portalUser->plan)
                 <a href="{{ route('cms.plans.show', $portalUser->plan_id) }}" class="ms-auto" style="font-size: 0.72rem; font-weight: 700; text-transform: none; letter-spacing: normal; color: var(--dash-teal); text-decoration: none;">View "{{ $portalUser->plan->getTranslation('name') }}" plan &rarr;</a>
                 @endif
             </h6>
             @if($payments->isEmpty())
-                <div class="text-muted text-center py-3" style="font-size: 0.85rem;">No payments recorded yet. Mark them "Paid" from the Agents & Companies list to start a history.</div>
+                <div class="text-muted text-center py-3" style="font-size: 0.85rem;">No payments recorded yet. Mark them "Paid" from the Agencies & Agents list to start a history.</div>
             @else
                 <div class="table-responsive">
                     <table class="mini-table">
@@ -692,8 +734,8 @@
 
     <div class="col-lg-4">
         @if($portalUser->type === 'company')
-        <div class="dash-card">
-            <h6><i class="fas fa-people-group"></i> Affiliated Agents ({{ $portalUser->agents_count }})</h6>
+        <div class="dash-card" id="sec-team">
+            <h6><i class="fas fa-people-group"></i> Team Agents ({{ $portalUser->agents_count }})</h6>
             <div class="d-flex flex-column gap-2">
                 @forelse($agents as $agent)
                 <a href="{{ route('cms.portal-accounts.show', ['id' => $agent->id, 'type' => 'agent']) }}" class="agent-chip">
@@ -701,7 +743,7 @@
                     <span class="badge {{ $statusMap[$agent->status] ?? 'bg-secondary' }}">{{ ucfirst($agent->status) }}</span>
                 </a>
                 @empty
-                <div class="text-muted text-center py-3" style="font-size: 0.85rem;">No agents linked to this company yet.</div>
+                <div class="text-muted text-center py-3" style="font-size: 0.85rem;">No agents linked to this agency yet.</div>
                 @endforelse
             </div>
             @if($agents->hasPages())
@@ -709,8 +751,8 @@
             @endif
         </div>
         @else
-        <div class="dash-card">
-            <h6><i class="fas fa-building"></i> Affiliated Company</h6>
+        <div class="dash-card" id="sec-membership">
+            <h6><i class="fas fa-building"></i> Agency Membership</h6>
             @if($portalUser->company)
                 @php
                     $companyLabel = $portalUser->company->company_name ?: $portalUser->company->name;
@@ -724,7 +766,7 @@
                     <span class="badge {{ $statusMap[$portalUser->company->status] ?? 'bg-secondary' }}">{{ ucfirst($portalUser->company->status) }}</span>
                 </a>
             @else
-                <div class="text-muted text-center py-3" style="font-size: 0.85rem;">Not yet affiliated with any company.</div>
+                <div class="text-muted text-center py-3" style="font-size: 0.85rem;">Independent agent — not a member of any agency on MW Realty (own plan).</div>
             @endif
         </div>
         @endif
@@ -736,6 +778,15 @@
 
 @push('scripts')
 <script>
+    // Header card: compact once it's stuck under the top bar (the marker above it has scrolled past).
+    (function () {
+        const hero = document.getElementById('profileHero');
+        const sentinel = document.getElementById('profileHeroSentinel');
+        if (!hero || !sentinel || !('IntersectionObserver' in window)) return;
+        new IntersectionObserver(([entry]) => hero.classList.toggle('is-stuck', !entry.isIntersecting && entry.boundingClientRect.top < 100),
+            { rootMargin: '-83px 0px 0px 0px', threshold: 0 }).observe(sentinel);
+    })();
+
     (function () {
         const base = "{{ url(config('cms-kit.common.auth.prefix', 'admin')) }}/portal-accounts/";
 

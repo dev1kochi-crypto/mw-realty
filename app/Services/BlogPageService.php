@@ -73,6 +73,46 @@ class BlogPageService
         });
     }
 
+    /**
+     * A "Blog design" landing page in the same shape as getPostData(), so BlogDetails.vue renders it
+     * with the blog detail layout (recent blogs + categories in the sidebar, no prev/next pager).
+     * Not cached — it's one row, and an admin edit should show immediately.
+     */
+    public function getLandingPageData(string $lang, string $slug): ?array
+    {
+        $page = \App\Models\CmsKit\LandingPage::where('slug', $slug)->where('status', true)
+            ->where('page_type', \App\Models\CmsKit\LandingPage::TYPE_TEMPLATE)->first();
+        if (!$page) {
+            return null;
+        }
+
+        $content = $page->getTranslation('content', $lang);
+        $recent = Blog::where('status', true)->orderBy('published_at', 'desc')->take(5)->get();
+
+        return [
+            'post' => [
+                'slug' => $page->slug,
+                'title' => $page->getTranslation('title', $lang),
+                'content' => $content,
+                'cover_image_url' => $page->feature_image ? media_url($page->feature_image) : null,
+                'cover_image_alt' => $page->feature_image_alt,
+                'read_time' => $this->calculateReadTime($content),
+                'published_at' => $page->published_at?->format('F d, Y'),
+                'seo' => SeoMeta::resolve($page->metadata, $page->seoFallback($lang)),
+            ],
+            'categories' => $this->categoryOptions($this->categoryLabels($lang)),
+            'previous' => null,
+            'next' => null,
+            'recent' => $recent->map(fn ($p) => [
+                'slug' => $p->slug,
+                'title' => $p->getTranslation('title', $lang),
+                'image_url' => $p->feature_image ? media_url($p->feature_image) : null,
+                'published_at' => $p->published_at?->format('M d, Y'),
+            ])->values(),
+            'is_landing_page' => true,
+        ];
+    }
+
     /** slug => translated title, for every active blog category. */
     private function categoryLabels(string $lang): array
     {

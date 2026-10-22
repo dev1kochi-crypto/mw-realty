@@ -1,0 +1,59 @@
+/* Moved from resources/views/portal/crm/leads/index.blade.php + _lead_tags_modal — the Leads table and tag picker. */
+    /* Loading state while filters / pages / sorting fetch (#leadsListingWrapper.leads-loading). */
+    .portal-leads-table-card { position: relative; }
+    .portal-leads-loader { display: none; position: absolute; inset: 0; z-index: 6; align-items: center; justify-content: center; pointer-events: none; }
+    .portal-leads-loader__box { display: inline-flex; align-items: center; gap: .6rem; padding: .55rem 1.1rem; border-radius: 999px; background: #fff; box-shadow: 0 8px 28px rgba(15, 23, 42, .14); font-size: .85rem; font-weight: 600; color: #1e3a5f; }
+    .portal-leads-loader__spin { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(30, 58, 95, .18); border-top-color: #c8102e; animation: portalLeadsSpin .7s linear infinite; }
+    .portal-leads-table-card::before { content: ''; position: absolute; top: 0; left: 0; height: 3px; width: 35%; border-radius: 3px; background: linear-gradient(90deg, transparent, #c8102e, transparent); opacity: 0; z-index: 7; }
+    #leadsListingWrapper.leads-loading .portal-leads-loader { display: flex; animation: portalLeadsFade .15s ease-out; }
+    #leadsListingWrapper.leads-loading .portal-leads-table-card::before { opacity: 1; animation: portalLeadsBar 1s ease-in-out infinite; }
+    #leadsListingWrapper.leads-loading .portal-leads-table-card table tbody { opacity: .35; transition: opacity .15s; }
+    #leadsListingWrapper.leads-loading .portal-leads-table-card table,
+    #leadsListingWrapper.leads-loading .portal-lead-quick,
+    #leadsListingWrapper.leads-loading .dataTables_paginate { pointer-events: none; }
+    #leadsListingWrapper.leads-loading .portal-filter-submit i::before { content: '\f110'; }
+    #leadsListingWrapper.leads-loading .portal-filter-submit i { animation: portalLeadsSpin .8s linear infinite; }
+    @keyframes portalLeadsSpin { to { transform: rotate(360deg); } }
+    @keyframes portalLeadsBar { 0% { left: -35%; } 100% { left: 100%; } }
+    @keyframes portalLeadsFade { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Frozen header + Lead column: the table scrolls inside .portal-leads-dt-scroll (DataTables dom),
+       so the header sticks to its top and checkbox / # / Lead stick to its left. The left offsets
+       (--lead-pin-2 / -3) are measured by pinLeadTableColumns(). Below the page loader (z-index 6). */
+    .portal-leads-dt-scroll { max-height: max(420px, calc(100vh - 240px)); overflow: auto; overscroll-behavior-x: contain; }
+    #leadsDataTable { border-collapse: separate; border-spacing: 0; }
+    /* Columns keep their natural width (the wrapper scrolls sideways) instead of squeezing to fit the
+       screen; long free-text fields wrap inside a minimum width instead of stretching a column. */
+    #leadsDataTable { width: auto; min-width: 100%; }
+    #leadsDataTable :is(th, td) { white-space: nowrap; }
+    #leadsDataTable td:is([data-column-key="source"], [data-column-key="tags"], [data-column-key="message"], [data-column-key="notes"], [data-column-key="property"], [data-column-key="campaign"], [data-column-key="page"]) { white-space: normal; min-width: 200px; }
+    #leadsDataTable thead th { position: sticky; top: 0; z-index: 3; background: var(--portal-surface); }
+    /* :where keeps this below the thead rule next, so the pinned headers stay above the pinned cells. */
+    #leadsDataTable :where(th, td:not([data-empty-cell])):is(:nth-child(1), :nth-child(2), [data-column-key="lead"]) { position: sticky; z-index: 2; background-color: var(--portal-surface); }
+    #leadsDataTable thead th:is(:nth-child(1), :nth-child(2), [data-column-key="lead"]) { z-index: 4; }
+    #leadsDataTable :is(th, td):nth-child(1) { left: 0; }
+    #leadsDataTable :is(th, td):nth-child(2) { left: var(--lead-pin-2, 2.5rem); }
+    #leadsDataTable :is(th, td)[data-column-key="lead"] { left: var(--lead-pin-3, 5.25rem); }
+    /* Divider on the pinned column's edge once the table is scrolled sideways. */
+    .portal-leads-dt-scroll.is-scrolled-x #leadsDataTable [data-column-key="lead"] { box-shadow: 8px 0 10px -8px rgba(15, 23, 42, .18); }
+    /* Opaque versions of the row hover / focus tints, so scrolled cells don't show through. */
+    #leadsDataTable .portal-lead-row:hover > td:is(:nth-child(1), :nth-child(2), [data-column-key="lead"]) { background-color: #f9f9fe; }
+    #leadsDataTable .portal-lead-row:focus-visible > td:is(:nth-child(1), :nth-child(2), [data-column-key="lead"]) { background-color: #f4f4fd; }
+    #leadTagsModal .modal-dialog { max-width: 420px; }
+    .lead-tags-list { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px; max-height: 240px; min-height: 60px; overflow-y: auto; padding: 8px; border: 1px solid var(--portal-border, #dee2e6); border-radius: 10px; }
+    .lead-tags-selected { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .lead-tags-selected:empty { display: none; }
+    .lead-tags-selected__chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 6px 2px 10px; border-radius: 999px; font-size: .75rem; font-weight: 600; color: #fff; }
+    .lead-tags-selected__chip button { border: 0; background: rgba(255,255,255,.25); color: inherit; width: 18px; height: 18px; border-radius: 50%; line-height: 1; font-size: .7rem; padding: 0; }
+
+/* Same checkbox size in the header as in the rows (header cells use a smaller font, and Bootstrap sizes checkboxes in em). */
+#leadsDataTable .form-check-input { width: 1rem; height: 1rem; font-size: 1rem; }
+
+
+/* Filter bar: the server-searched picker (components/RemoteSelect) stands in for the old <select>,
+   so it fills the field and takes the portal's own .portal-filter-control .form-select styling. */
+.portal-filter-control .crm-remote-select { flex: 1 1 auto; align-self: stretch; min-width: 0; }
+.portal-filter-control .crm-remote-select > .form-select { width: 100%; text-align: left; }
+.portal-filter-control .crm-remote-select > .form-select .text-muted { color: inherit !important; }/* …but the picker's own search box inside its menu stays a normal small input (the filter-field
+   input rule above would otherwise stretch it, drop its border and indent it). */
+.portal-filter-control .crm-remote-select .dropdown-menu .form-control { height: auto; padding: 0.25rem 0.5rem; border: 1px solid var(--portal-border); border-radius: 0.375rem; background-color: #fff; font-size: 0.84rem; }

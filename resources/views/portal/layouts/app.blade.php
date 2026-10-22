@@ -11,6 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.1/build/css/intlTelInput.css">
+    <style>.iti { width: 100%; } .iti__dropdown-content { z-index: 1060; }</style>
     <link rel="stylesheet" href="{{ asset('portal/css/portal.css') }}?v={{ filemtime(public_path('portal/css/portal.css')) }}">
     <style>
         .notif-bell-btn { position: relative; border: none; background: #f4f6fb; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #4b5065; font-size: 1.05rem; }
@@ -47,17 +49,39 @@
 
             @php
                 $notApproved = $owner && $owner->status !== 'approved';
+                // "Sold Listings" only appears once something has been marked sold / rented (indexed exists()).
+                $hasSoldListings = ($owner || $cmsActor) && \App\Models\Property::soldOrRented()
+                    ->when($owner, fn ($q) => $q->accessibleBy($owner))->exists();
             @endphp
             <nav class="nav flex-column">
-                <a href="{{ route('portal.dashboard') }}" class="nav-link @if(request()->routeIs('portal.dashboard')) active @endif">
+                {{-- Dashboard, Leads and Lead Insights moved to the CRM web app (resources/js/crm). --}}
+                <a href="{{ route('crm.app', 'dashboard') }}" class="nav-link">
                     <i class="fas fa-chart-pie"></i> Dashboard
                 </a>
 
                 <div class="nav-section-label">Leads</div>
-                <a href="{{ route('portal.crm.leads.index') }}" class="nav-link @if(request()->routeIs('portal.crm.leads.*')) active @endif">
+                <a href="{{ route('crm.app', 'leads') }}" class="nav-link">
                     <i class="fas fa-address-book"></i> Leads
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
+                {{-- Website activity of these leads (property views, time spent, AI chats…). --}}
+                <a href="{{ route('crm.app', 'lead-insights') }}" class="nav-link">
+                    <i class="fas fa-chart-line"></i> Lead Insights
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
+                </a>
+
+                @if(!$owner && $cmsActor?->hasRole('superadmin'))
+                {{-- Website Leads — AI chat / form / customer visitors with their insights; the pool is everyone not
+                     routed to an agency / agent yet (badge = pool leads from the last 7 days). Super Admin only. --}}
+                {{-- Pool / Routed / All are tabs on the page itself, so this is a plain link. --}}
+                @php
+                    $newWebsiteLeads = \App\Models\Visitors\VisitorLead::inPool()->where('created_at', '>=', now()->subDays(7))->count();
+                @endphp
+                <a href="{{ route('crm.app', 'website-leads') }}" class="nav-link">
+                    <i class="fas fa-user-clock"></i> Website Leads
+                    @if($newWebsiteLeads > 0)<span class="portal-nav-badge" title="New in the lead pool this week">{{ $newWebsiteLeads }}</span>@endif
+                </a>
+                @endif
 
                 <div class="nav-item portal-nav-group">
                     <a class="nav-link portal-nav-group-toggle @if(request()->routeIs('portal.crm.master.*')) active @endif"
@@ -69,40 +93,90 @@
                     </a>
                     <div class="collapse portal-nav-submenu @if(request()->routeIs('portal.crm.master.*')) show @endif" id="masterMenu">
                         <nav class="nav flex-column">
-                            <a class="nav-link py-2 @if(request()->routeIs('portal.crm.master.stages.*')) active @endif" href="{{ route('portal.crm.master.stages.index') }}">Stage</a>
-                            <a class="nav-link py-2 @if(request()->routeIs('portal.crm.master.tags.*')) active @endif" href="{{ route('portal.crm.master.tags.index') }}">Tag</a>
-                            <a class="nav-link py-2 @if(request()->routeIs('portal.crm.master.sources.*')) active @endif" href="{{ route('portal.crm.master.sources.index') }}">Source</a>
+                            {{-- Moved to the new CRM web app (resources/js/crm). --}}
+                            <a class="nav-link py-2" href="{{ route('crm.app', 'master/stages') }}">Stage</a>
+                            <a class="nav-link py-2" href="{{ route('crm.app', 'master/tags') }}">Tag</a>
+                            <a class="nav-link py-2" href="{{ route('crm.app', 'master/sources') }}">Source</a>
+                            @if(!$owner && $cmsActor?->hasRole('superadmin'))
+                            {{-- Property form dropdowns (type / listing / completion / furnishing) — Super Admin only. --}}
+                            <a class="nav-link py-2" href="{{ route('crm.app', 'master/property-options') }}">Property Options</a>
+                            @endif
                         </nav>
                     </div>
                 </div>
 
-                @if($owner)
-                <div class="nav-section-label">Account</div>
-                <a href="{{ route('portal.profile.edit') }}" class="nav-link @if(request()->routeIs('portal.profile.*')) active @endif">
-                    <i class="fas fa-user-edit"></i> My Profile
-                    @if($notApproved)
-                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">!</span>
-                    @endif
-                </a>
-                @endif
-
-                <div class="nav-section-label">Listings</div>
-                <a href="{{ route('portal.properties.index') }}" class="nav-link @if(request()->routeIs('portal.properties.*')) active @endif">
-                    <i class="fas fa-building"></i> Properties
+                <a href="{{ route('crm.app', 'integrations') }}" class="nav-link">
+                    <i class="fas fa-plug"></i> Integrations
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
-                @if($cmsActor || $owner?->type === 'company')
-                <a href="{{ route('portal.agents.index') }}" class="nav-link @if(request()->routeIs('portal.agents.*')) active @endif">
-                    <i class="fas fa-user-tie"></i> Agents
+
+                <div class="nav-section-label">Listings</div>
+                <a href="{{ route('crm.app', 'properties') }}" class="nav-link">
+                    <i class="fas fa-building"></i> Properties
+                    @php
+                        // Listings sent back or with an expired DLD permit — the agency / agent must act.
+                        $listingsNeedingAction = $owner ? \App\Models\Property::accessibleBy($owner)->whereNull('sold_at')
+                            ->whereIn('compliance_status', [\App\Models\Property::COMPLIANCE_CHANGES_REQUESTED, \App\Models\Property::COMPLIANCE_EXPIRED])->count() : 0;
+                    @endphp
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>
+                    @elseif($listingsNeedingAction > 0)<span class="portal-nav-badge" title="Listings that need changes or a renewed DLD permit">{{ $listingsNeedingAction }}</span>@endif
+                </a>
+                <a href="{{ route('crm.app', 'commercial') }}" class="nav-link">
+                    <i class="fas fa-store"></i> Commercial
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
+                </a>
+                @if(!$owner && $cmsActor?->hasRole('superadmin'))
+                {{-- Listing permits: which are verified (verified ones go live by themselves). --}}
+                <a href="{{ route('crm.app', 'listing-permits') }}" class="nav-link">
+                    <i class="fas fa-file-shield"></i> Listing Permits
                 </a>
                 @endif
-                <a href="{{ route('portal.nearby-places.index') }}" class="nav-link @if(request()->routeIs('portal.nearby-places.*')) active @endif">
+                <a href="{{ route('crm.app', 'premium') }}" class="nav-link">
+                    <i class="fas fa-star"></i> Premium
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
+                </a>
+                @if($hasSoldListings)
+                <a href="{{ route('crm.app', 'sold-listings') }}" class="nav-link">
+                    <i class="fas fa-handshake"></i> Sold Listings
+                </a>
+                @endif
+                @if(!$owner && $cmsActor?->hasRole('superadmin'))
+                {{-- Home "Realty Property" list — Super Admin only. --}}
+                <a href="{{ route('crm.app', 'marketing-properties') }}" class="nav-link">
+                    <i class="fas fa-bullhorn"></i> Marketing Properties
+                </a>
+                @endif
+                @if($owner?->type === 'agent')
+                {{-- Agency invitations waiting for this agent's answer. --}}
+                @php $agencyInvites = \App\Models\AgencyAgent::where('agent_id', $owner->id)->where('status', \App\Models\AgencyAgent::INVITED)->count(); @endphp
+                <a href="{{ route('portal.agency.index') }}" class="nav-link @if(request()->routeIs('portal.agency.*')) active @endif">
+                    <i class="fas fa-building-user"></i> My Agency
+                    @if($agencyInvites > 0)<span class="portal-nav-badge" title="Agency invitations waiting for you">{{ $agencyInvites }}</span>@endif
+                </a>
+                @endif
+                @if($cmsActor || $owner?->type === 'company')
+                {{-- Join requests waiting for this agency to accept / decline. --}}
+                @php $joinRequests = $owner ? \App\Models\AgencyAgent::where('agency_id', $owner->id)->where('status', \App\Models\AgencyAgent::REQUESTED)->count() : 0; @endphp
+                <a href="{{ route('crm.app', 'agents') }}" class="nav-link">
+                    <i class="fas fa-user-tie"></i> Agents
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>
+                    @elseif($joinRequests > 0)<span class="portal-nav-badge" title="Join requests waiting for you">{{ $joinRequests }}</span>@endif
+                </a>
+                @endif
+                <a href="{{ route('crm.app', 'nearby-places') }}" class="nav-link">
                     <i class="fas fa-map-marker-alt"></i> Nearby Places
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
+                @if($owner || $cmsActor?->hasRole('superadmin'))
+                {{-- Watermark — Super Admin: the default one + every agency / agent watermark. --}}
+                <a href="{{ route('crm.app', 'listing-settings') }}" class="nav-link">
+                    <i class="fas fa-stamp"></i> Listing Settings
+                    @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
+                </a>
+                @endif
 
                 <div class="nav-section-label">Insights</div>
-                <a href="{{ route('portal.crm.reports.index') }}" class="nav-link @if(request()->routeIs('portal.crm.reports.*')) active @endif">
+                <a href="{{ route('crm.app', 'reports') }}" class="nav-link">
                     <i class="fas fa-chart-pie"></i> Reports
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>
                     @elseif($owner && !$owner->hasReportsAccess())<span class="portal-nav-lock" title="Upgrade your plan to unlock reports"><i class="fas fa-lock"></i></span>@endif
@@ -110,15 +184,16 @@
 
                 @if($owner)
                 <div class="nav-section-label">Support</div>
-                <a href="{{ route('portal.contact.index') }}" class="nav-link @if(request()->routeIs('portal.contact.*')) active @endif">
+                @php $ticketsAwaitingReply = \App\Models\SupportTicket::where('portal_user_id', $owner->id)->needsClientReply()->count(); @endphp
+                <a href="{{ route('crm.app', 'contact') }}" class="nav-link">
                     <i class="fas fa-headset"></i> Contact Us
-                </a>
-
-                <div class="nav-section-label">Billing</div>
-                <a href="{{ route('portal.plans.index') }}" class="nav-link @if(request()->routeIs('portal.plans.*')) active @endif">
-                    <i class="fas fa-layer-group"></i> Plans
+                    @if($ticketsAwaitingReply > 0)<span class="portal-nav-badge" title="Tickets with a reply from our team">{{ $ticketsAwaitingReply }}</span>@endif
                 </a>
                 @endif
+                <a href="{{ route('crm.app', 'help-desk') }}" class="nav-link">
+                    <i class="fas fa-circle-question"></i> Help Desk
+                </a>
+                {{-- My Profile and Plans live in the account (avatar) menu at the top right. --}}
             </nav>
         </aside>
 
@@ -139,15 +214,32 @@
                         <i class="fas fa-shield-alt"></i> Back to Admin
                     </a>
                     @endif
-                    @if($owner && !$owner->plan?->isTopTier())
-                    <a href="{{ route('portal.plans.index') }}" class="btn-portal-upgrade-cta">
-                        <span class="btn-portal-upgrade-shine"></span>
-                        <i class="fas fa-rocket"></i> Upgrade Plan
-                    </a>
+                    {{-- An agency agent is on the agency's plan — nothing to upgrade themselves. --}}
+                    @if($owner && !$owner->isOnAgencyPlan() && !$owner->plan?->isTopTier())
+                        @if($owner->status !== 'approved')
+                        <span class="btn-portal-upgrade-cta is-locked" title="Unlocks after KYC approval" aria-disabled="true">
+                            <i class="fas fa-lock"></i> Upgrade Plan
+                        </span>
+                        @else
+                        <a href="{{ route('crm.app', 'plans') }}" class="btn-portal-upgrade-cta">
+                            <span class="btn-portal-upgrade-shine"></span>
+                            <i class="fas fa-rocket"></i> Upgrade Plan
+                        </a>
+                        @endif
                     @endif
                     <a href="/" target="_blank" class="portal-btn-ghost btn btn-sm">
                         <i class="fas fa-external-link-alt me-1"></i> View Site
                     </a>
+
+                    @php
+                        $helpTopic = \App\Support\PortalHelp::topicFor(request());
+                        $help = $helpTopic ? \App\Support\PortalHelp::load($helpTopic) : null;
+                    @endphp
+                    @if($help)
+                    <button type="button" class="portal-help-btn" id="portalHelpBtn" title="How {{ $help['title'] }} works" aria-label="Help: how {{ $help['title'] }} works">
+                        <i class="fas fa-circle-exclamation"></i>
+                    </button>
+                    @endif
 
                     @php
                         $notifiable = $owner ?? $cmsActor;
@@ -205,8 +297,9 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             @if($owner)
-                            <li><a class="dropdown-item" href="{{ route('portal.profile.edit') }}"><i class="fas fa-user-edit me-2"></i>My Profile</a></li>
-                            <li><a class="dropdown-item" href="{{ route('portal.plans.index') }}"><i class="fas fa-layer-group me-2"></i>Plans</a></li>
+                            <li><a class="dropdown-item" href="{{ route('crm.app', 'profile') }}"><i class="fas fa-user-edit me-2"></i>My Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ route('crm.app', 'security') }}"><i class="fas fa-shield-halved me-2"></i>Security</a></li>
+                            <li><a class="dropdown-item" href="{{ route('crm.app', 'plans') }}"><i class="fas fa-layer-group me-2"></i>Plans @if($owner->status !== 'approved')<i class="fas fa-lock ms-1 text-warning small" title="Unlocks after KYC approval"></i>@endif</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form action="{{ route('portal.logout') }}" method="POST" class="m-0">
@@ -228,25 +321,31 @@
             </header>
 
             <main class="portal-content">
-                @if($owner && $owner->status !== 'approved')
-                    <div class="alert @if($owner->status === 'rejected') alert-danger @else alert-warning @endif d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                        <div>
-                            @if($owner->status === 'pending')
-                                <i class="fas fa-clock me-2"></i>
-                                <strong>Your account is pending Super Admin approval.</strong>
-                                Leads, Reports and property listing unlock once your KYC documents are reviewed and your account is approved — complete your profile and upload documents now.
+                {{-- Not on the profile page itself — it shows the full KYC progress card instead. --}}
+                @if($owner && $owner->status !== 'approved' && !request()->routeIs('portal.profile.*'))
+                    @php
+                        $rejected = $owner->status === 'rejected';
+                        $awaitingReview = !$rejected && $owner->kyc_review_status === 'submitted' && $owner->kyc_user_submitted_at;
+                    @endphp
+                    <div class="portal-status-banner {{ $rejected ? 'is-rejected' : ($awaitingReview ? 'is-waiting' : '') }}" role="status">
+                        <span class="portal-status-banner__icon"><i class="fas {{ $rejected ? 'fa-ban' : ($awaitingReview ? 'fa-hourglass-half' : 'fa-user-clock') }}"></i></span>
+                        <div class="portal-status-banner__body">
+                            @if($rejected)
+                                <div class="portal-status-banner__title">Your application needs changes</div>
+                                <div class="portal-status-banner__text">{{ $owner->rejection_reason ? 'Reason: ' . $owner->rejection_reason . '. ' : '' }}Update your profile and resubmit. CRM access unlocks once you're approved.</div>
+                            @elseif($awaitingReview)
+                                <div class="portal-status-banner__title">KYC submitted — waiting for review</div>
+                                <div class="portal-status-banner__text">Our team is reviewing your documents. Leads, Reports and listings unlock as soon as your account is approved.</div>
                             @else
-                                <i class="fas fa-ban me-2"></i>
-                                <strong>Your account application was rejected.</strong>
-                                @if($owner->rejection_reason)
-                                    Reason: {{ $owner->rejection_reason }}.
-                                @endif
-                                Update your profile and resubmit for review — CRM access unlocks once you're approved.
+                                <div class="portal-status-banner__title">Finish your KYC to unlock the CRM</div>
+                                <div class="portal-status-banner__text">Leads, Reports and property listing unlock once your KYC documents are reviewed and your account is approved.</div>
                             @endif
                         </div>
-                        <a href="{{ route('portal.profile.edit') }}" class="btn btn-sm btn-dark">
-                            <i class="fas fa-user-edit me-1"></i> {{ $owner->status === 'rejected' ? 'Fix & Resubmit' : 'Complete Profile' }}
+                        @unless($awaitingReview)
+                        <a href="{{ route('crm.app', 'profile') }}" class="btn portal-status-banner__cta">
+                            <i class="fas fa-user-edit me-1"></i>{{ $rejected ? 'Fix & Resubmit' : 'Complete Profile' }}
                         </a>
+                        @endunless
                     </div>
                 @endif
 
@@ -275,15 +374,111 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @if($help)
+        @include('portal.layouts._help')
+    @endif
+    {{-- Phone fields with a country-code picker: [data-phone-input] (see portal/js/phone-input.js). --}}
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.1/build/js/intlTelInput.min.js"></script>
+    <script src="{{ asset('portal/js/phone-input.js') }}?v={{ filemtime(public_path('portal/js/phone-input.js')) }}"></script>
+
+    {{-- Shared confirm dialog — use window.portalConfirm({...}) instead of the browser's confirm(). --}}
+    <div class="modal fade portal-dialog" id="portalConfirmModal" tabindex="-1" aria-labelledby="portalConfirmTitle" aria-describedby="portalConfirmText" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <button type="button" class="btn-close portal-dialog__close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-body">
+                    <div class="portal-dialog__icon" id="portalConfirmIcon"><i class="fas fa-exclamation"></i></div>
+                    <h5 class="portal-dialog__title" id="portalConfirmTitle">Are you sure?</h5>
+                    <p class="portal-dialog__text" id="portalConfirmText"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-portal-light" id="portalConfirmCancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn portal-dialog__ok" id="portalConfirmOk">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
     (function () {
-        // Show a "Processing..." spinner on the submit button the moment a form is actually
-        // submitted (the browser only fires `submit` once native validation has passed),
-        // and disable every submit button in it to prevent double-submits.
+        /**
+         * Styled replacement for window.confirm(). Resolves true on Confirm, false on Cancel / Esc /
+         * close. tone: 'danger' (red, deletes), 'warning' (amber, stop / turn off), 'primary'.
+         *
+         *   if (!(await portalConfirm({ title: 'Remove premium?', message: '…', confirmText: 'Remove', tone: 'warning' }))) return;
+         *
+         * Forms can ask too, with no script: <form data-confirm="Message" data-confirm-title="…"
+         * data-confirm-ok="…" data-confirm-tone="danger">.
+         */
+        const el = document.getElementById('portalConfirmModal');
+        const modal = new bootstrap.Modal(el);
+        const ICONS = { danger: 'fa-trash-alt', warning: 'fa-exclamation', primary: 'fa-question' };
+        let settle = null;
+
+        window.portalConfirm = function (opts) {
+            opts = typeof opts === 'string' ? { message: opts } : (opts || {});
+            const tone = ICONS[opts.tone] ? opts.tone : 'danger';
+            document.getElementById('portalConfirmTitle').textContent = opts.title || 'Are you sure?';
+            document.getElementById('portalConfirmText').textContent = opts.message || '';
+            document.getElementById('portalConfirmCancel').textContent = opts.cancelText || 'Cancel';
+            const ok = document.getElementById('portalConfirmOk');
+            ok.textContent = opts.confirmText || 'Confirm';
+            ok.className = 'btn portal-dialog__ok portal-dialog__ok--' + tone;
+            const icon = document.getElementById('portalConfirmIcon');
+            icon.className = 'portal-dialog__icon portal-dialog__icon--' + tone;
+            icon.innerHTML = '<i class="fas ' + (opts.icon || ICONS[tone]) + '"></i>';
+
+            if (settle) settle(false); // a second call replaces an unanswered one
+            return new Promise(function (resolve) {
+                settle = function (answer) { settle = null; resolve(answer); };
+                modal.show();
+            });
+        };
+
+        document.getElementById('portalConfirmOk').addEventListener('click', function () {
+            const done = settle;
+            settle = null;
+            modal.hide();
+            if (done) done(true);
+        });
+        el.addEventListener('shown.bs.modal', function () { document.getElementById('portalConfirmOk').focus(); });
+        el.addEventListener('hidden.bs.modal', function () { if (settle) settle(false); });
+
+        // <form data-confirm="…">: ask first, then submit for real. Registered before the
+        // "Processing…" spinner handler below, so a cancelled confirm never shows a spinner.
         document.addEventListener('submit', function (e) {
             const form = e.target;
-            if (!(form instanceof HTMLFormElement) || form.dataset.noSpinner) return;
+            if (!(form instanceof HTMLFormElement) || !form.dataset.confirm || form.dataset.confirmed === '1') return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const submitter = e.submitter;
+            window.portalConfirm({
+                title: form.dataset.confirmTitle,
+                message: form.dataset.confirm,
+                confirmText: form.dataset.confirmOk,
+                tone: form.dataset.confirmTone,
+            }).then(function (yes) {
+                if (!yes) return;
+                form.dataset.confirmed = '1';
+                form.requestSubmit(submitter && submitter.form === form ? submitter : undefined);
+                // requestSubmit dispatches synchronously, so the flag has done its job — clear it so
+                // the form asks again if the page is shown again (e.g. Back from Stripe).
+                delete form.dataset.confirmed;
+            });
+        }, true);
+    })();
+    </script>
+
+    <script>
+    (function () {
+        // Show a "Processing..." spinner on the submit button when a form really submits (the
+        // browser only fires `submit` once native validation has passed), and disable every submit
+        // button in it to prevent double-submits. Listens on window in the bubble phase, i.e. AFTER
+        // the page's own handlers: a form a script handles itself (preventDefault → fetch, e.g. the
+        // coupon box, lead / note / sold popups) never gets a spinner that nothing would undo.
+        window.addEventListener('submit', function (e) {
+            const form = e.target;
+            if (!(form instanceof HTMLFormElement) || form.dataset.noSpinner || e.defaultPrevented) return;
 
             const submitBtns = form.querySelectorAll('button[type="submit"]');
             const clicked = (e.submitter && e.submitter.tagName === 'BUTTON') ? e.submitter : submitBtns[0];
@@ -296,7 +491,7 @@
                 }
                 clicked.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
             }
-        }, true);
+        });
 
         function restoreSubmitButtons(form) {
             // Every submit button in the form was disabled above, but only the one actually
@@ -346,6 +541,54 @@
                 }).then(function () { window.location.reload(); });
             });
         }
+    })();
+    </script>
+
+    {{-- Toasts: top-right, auto-dismiss. window.portalToast('success' | 'danger' | 'info', message). --}}
+    <div class="portal-toast-stack" id="portalToastStack" aria-live="polite" aria-atomic="false"></div>
+    <script>
+    (function () {
+        const icons = { success: 'fa-circle-check', danger: 'fa-circle-exclamation', info: 'fa-circle-info' };
+        window.portalToast = function (type, message, duration) {
+            type = icons[type] ? type : 'info';
+            duration = duration || (type === 'danger' ? 6000 : 3500);
+            const stack = document.getElementById('portalToastStack');
+            const toast = document.createElement('div');
+            toast.className = 'portal-toast portal-toast-' + type;
+            toast.setAttribute('role', type === 'danger' ? 'alert' : 'status');
+            toast.style.setProperty('--toast-duration', duration + 'ms');
+            toast.innerHTML = '<i class="fas ' + icons[type] + ' portal-toast-icon" aria-hidden="true"></i><div class="portal-toast-text"></div>'
+                + '<button type="button" class="portal-toast-close" aria-label="Dismiss"><i class="fas fa-xmark"></i></button><span class="portal-toast-progress"></span>';
+            toast.querySelector('.portal-toast-text').textContent = message;
+            stack.appendChild(toast);
+            requestAnimationFrame(function () { toast.classList.add('is-shown'); });
+
+            function dismiss() {
+                if (toast.classList.contains('is-leaving')) return;
+                toast.classList.add('is-leaving');
+                setTimeout(function () { toast.remove(); }, 300);
+            }
+            const timer = setTimeout(dismiss, duration);
+            toast.querySelector('.portal-toast-close').addEventListener('click', function () { clearTimeout(timer); dismiss(); });
+            return toast;
+        };
+    })();
+    </script>
+    @if(session('toast'))
+    {{-- Flash shown as a toast instead of the in-page banner: redirect()->with('toast', 'Saved.'). --}}
+    <script>window.portalToast('success', @json(session('toast')));</script>
+    @endif
+    <script>
+    // Sticky top bar: publish its height as --portal-topbar-h (for sticky cards under it) and add a shadow once scrolled.
+    (function () {
+        const bar = document.querySelector('.portal-topbar');
+        if (!bar) return;
+        const setHeight = () => document.documentElement.style.setProperty('--portal-topbar-h', bar.offsetHeight + 'px');
+        setHeight();
+        if ('ResizeObserver' in window) new ResizeObserver(setHeight).observe(bar); else window.addEventListener('resize', setHeight);
+        const onScroll = () => bar.classList.toggle('is-scrolled', window.scrollY > 4);
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
     })();
     </script>
 

@@ -36,7 +36,7 @@ trait MapsPropertyCards
         // Same assigned-agent-else-owning-agency fallback as the real property detail page
         // (PropertyPageService::mapContact) — kept here as raw fields (not tel:/wa.me/mailto:
         // links) so each card template decides for itself which of the three to hide when unset.
-        $contact = $property->agent ?: $property->owner;
+        $contact = $property->displayContact();
 
         return [
             'id' => $property->id,
@@ -51,8 +51,12 @@ trait MapsPropertyCards
             'area' => $property->sqft ? number_format($property->sqft) . ' sq.ft' : '—',
             'type' => $property->filterLabel('property_type', $lang) ?: '—',
             'price' => $property->price ? $property->currency . ' ' . number_format($property->price) : 'Price on request',
+            // Raw AED amount — the frontend converts it to the visitor's chosen currency (null = on request).
+            'price_value' => $property->price ? (float) $property->price : null,
             'purpose_badge' => $purposeBadge ?: null,
-            'furnished' => (bool) ($property->details?->furnished),
+            // 'commercial' | 'residential' — the Premium page tags each card with it.
+            'segment' => $property->segment === Property::SEGMENT_COMMERCIAL ? 'commercial' : 'residential',
+            'furnished' => (bool) $property->details?->isFurnished(),
             'contact' => [
                 'phone' => $contact?->phone,
                 'whatsapp_number' => $contact?->whatsapp_number,

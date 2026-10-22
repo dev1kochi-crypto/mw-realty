@@ -14,8 +14,11 @@ class Plan extends Model
         'featured_per_month',
         'featured_max_days',
         'featured_period',
+        'ads_per_month',
+        'ad_max_hours',
         'agent_limit',
         'reports_access',
+        'plan_features',
         'is_popular',
         'order_index',
         'status',
@@ -35,9 +38,29 @@ class Plan extends Model
         'status' => 'boolean',
         'featured_per_month' => 'integer',
         'featured_max_days' => 'integer',
+        'ads_per_month' => 'integer',
+        'ad_max_hours' => 'integer',
         'agent_limit' => 'integer',
         'reports_access' => 'boolean',
+        'plan_features' => 'array',
     ];
+
+    /**
+     * CRM sections a plan has to unlock (plans.plan_features), with their pricing-card line.
+     * Enforced by the `plan.feature` middleware and padlocked in CrmNavigation.
+     */
+    public const GATED_FEATURES = [
+        'lead_insights' => 'Lead insights',
+        'property_insights' => 'Property insights',
+        'listing_settings' => 'Listing settings (watermark)',
+        'facebook' => 'Facebook Lead Ads integration',
+        'property_finder' => 'Property Finder integration',
+    ];
+
+    public function allows(string $feature): bool
+    {
+        return in_array($feature, $this->plan_features ?? [], true);
+    }
 
     public function subscribers()
     {
@@ -78,6 +101,16 @@ class Plan extends Model
         return $this->property_limit === null;
     }
 
+    /**
+     * Paid plans grant property_limit new listings per calendar month (deleting one doesn't hand
+     * the slot back, and unused slots don't carry over); the free plan's property_limit is a cap
+     * on listings held at once.
+     */
+    public function listingsPerMonth(): bool
+    {
+        return $this->billing_cycle !== 'free';
+    }
+
     public const INTERVALS = ['monthly', 'yearly'];
 
     public function hasYearly(): bool
@@ -112,6 +145,23 @@ class Plan extends Model
         return $this->featured_period === 'month';
     }
 
+    /**
+     * Website advertising (CRM › Advertisements): ad_max_hours is the longest single booking — 0 means
+     * the plan has no advertising at all; ads_per_month are included, more are paid with credits.
+     */
+    public function includesAds(): bool
+    {
+        return (int) $this->ad_max_hours > 0;
+    }
+
+    /** "6 hours", "1 day", "3 days". */
+    public static function adDurationLabel(int $hours): string
+    {
+        return $hours >= 24 && $hours % 24 === 0
+            ? ($hours / 24) . ' day' . ($hours === 24 ? '' : 's')
+            : $hours . ' hour' . ($hours === 1 ? '' : 's');
+    }
+
     /** null = unlimited team agents, 0 = team accounts not included. */
     public function agentsUnlimited(): bool
     {
@@ -125,10 +175,21 @@ class Plan extends Model
     public function entitlementLines(): array
     {
         $featured = $this->includesFeatured()
-            ? $this->featured_per_month . ' featured listing' . ($this->featured_per_month === 1 ? '' : 's')
+            ? $this->featured_per_month . ' premium listing' . ($this->featured_per_month === 1 ? '' : 's')
                 . ($this->featuredPerMonth() ? ' / month' : '')
                 . ($this->featured_max_days ? ' (max ' . $this->featured_max_days . ' days)' : '')
-            : 'Featured listings';
+            : 'Premium listings';
+
+        // Website advertising: what's included, how long one ad can run, and its report — or one crossed-out line.
+        $ads = $this->includesAds()
+            ? [
+                [(int) $this->ads_per_month > 0
+                    ? $this->ads_per_month . ' website banner ad' . ($this->ads_per_month === 1 ? '' : 's') . ' / month'
+                    : 'Website banner ads (paid with credits)', true],
+                ['Ads run up to ' . self::adDurationLabel((int) $this->ad_max_hours) . ' each', true],
+                ['Ad impressions & clicks report', true],
+            ]
+            : [['Website banner ads', false]];
 
         $agents = match (true) {
             $this->agentsUnlimited() => 'Unlimited team agents',
@@ -136,11 +197,15 @@ class Plan extends Model
             default => 'Team agent accounts',
         };
 
+        $gated = collect(self::GATED_FEATURES)->map(fn ($label, $key) => [$label, $this->allows($key)])->values()->all();
+
         return [
-            [$this->isUnlimited() ? 'Unlimited listings' : $this->property_limit . ' listings', true],
+            [$this->isUnlimited() ? 'Unlimited listings' : $this->property_limit . ' listings' . ($this->listingsPerMonth() ? ' / month' : ''), true],
             [$featured, $this->includesFeatured()],
+            ...$ads,
             [$agents, $this->agentsUnlimited() || (int) $this->agent_limit > 0],
             ['Leads reports & analytics', (bool) $this->reports_access],
+            ...$gated,
         ];
     }
 

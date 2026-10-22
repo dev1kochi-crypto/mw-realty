@@ -27,7 +27,7 @@
 
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                 <i class="fas fa-info-circle text-primary me-2"></i>
-                <strong>Note:</strong> This single record controls the page intro, banner, and frontend vacancy filters.
+                <strong>Note:</strong> This single record controls the Careers page intro text and image.
             </div>
 
             @if($showLanguageUi)

@@ -29,6 +29,15 @@ class UpdateLeadRequest extends FormRequest
         return true;
     }
 
+    /** A number typed/stored with its "+code" is split into code + number before the digit-count rule runs. */
+    protected function prepareForValidation(): void
+    {
+        [$code, $number] = \App\Rules\PhoneNumber::split($this->input('phone'));
+        if ($code) {
+            $this->merge(['phone' => $number, 'phone_country_code' => $code]);
+        }
+    }
+
     public function rules(): array
     {
         $leadOwnerId = Lead::withTrashed()->find($this->route('id'))?->portal_user_id;
@@ -40,20 +49,22 @@ class UpdateLeadRequest extends FormRequest
                 if ($actorOwnerId && $actorOwnerId !== $leadOwnerId) {
                     $q->orWhere('portal_user_id', $actorOwnerId);
                 }
+                $q->orWhere('portal_user_id', \App\Models\LeadStage::globalOwnerId()); // Super Admin's global items
             });
         };
 
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'email' => \App\Rules\PhoneNumber::emailRules(false),
+            'phone' => \App\Rules\PhoneNumber::rules(),
             'phone_country_code' => ['nullable', 'regex:/^\+\d{1,4}$/'],
             'message' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
             'owner_id' => ['nullable', 'integer', 'exists:portal_users,id'],
             'stage_id' => ['nullable', 'integer', Rule::exists('lead_stages', 'id')->where($ownedByLeadOrActor)],
-            'source_id' => ['nullable', 'integer', Rule::exists('lead_sources', 'id')->where($ownedByLeadOrActor)],
+            // A lead always keeps a source — it can be changed, not cleared.
+            'source_id' => ['sometimes', 'required', 'integer', Rule::exists('lead_sources', 'id')->where($ownedByLeadOrActor)],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['integer', Rule::exists('lead_tags', 'id')->where($ownedByLeadOrActor)],
         ];

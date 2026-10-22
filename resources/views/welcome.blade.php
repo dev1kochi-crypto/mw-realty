@@ -11,6 +11,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <script>window.MW_RECAPTCHA_SITE_KEY = @json(config('services.recaptcha.site_key'));</script>
+        <script>window.MW_MAP_TILES = @json(config('services.map_tiles'));</script>
         <script>window.MW_CHATBOT_NAME = @json(config('chatbot.persona_name'));</script>
         {{-- The portal/customer login+signup forms are real <form> POSTs (session redirect flow,
              not axios) — Laravel flashes validation errors and old() input to the session on
@@ -43,6 +44,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="/frontend/assets/scss/style.css?v={{ file_exists(public_path('frontend/assets/scss/style.css')) ? filemtime(public_path('frontend/assets/scss/style.css')) : 1 }}">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.15/dist/fancybox/fancybox.css">
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -58,6 +60,8 @@
         <script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
         <script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js" defer></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
-        <script src="/frontend/assets/js/script.js" defer></script>
+        {{-- Fancybox: the lightbox for [data-fancybox] links (property photo gallery, floor plans). --}}
+        <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.15/dist/fancybox/fancybox.umd.js" defer></script>
+        <script src="/frontend/assets/js/script.js?v={{ file_exists(public_path('frontend/assets/js/script.js')) ? filemtime(public_path('frontend/assets/js/script.js')) : 1 }}" defer></script>
     </body>
 </html>

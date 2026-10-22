@@ -9,12 +9,12 @@ class ExpireFeaturedProperties extends Command
 {
     protected $signature = 'properties:expire-featured';
 
-    protected $description = 'Un-feature listings whose plan-based featured period has ended';
+    protected $description = 'Start scheduled featured listings and un-feature the ones whose featured period has ended';
 
     public function handle(FeaturedListingService $featured): int
     {
-        $count = $featured->expire();
-        $this->info("Expired {$count} featured listing(s).");
+        $count = $featured->sync();
+        $this->info("Updated {$count} featured listing(s).");
 
         return self::SUCCESS;
     }

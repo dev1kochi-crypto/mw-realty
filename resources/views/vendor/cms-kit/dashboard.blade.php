@@ -38,7 +38,7 @@
         ['count' => $attention['failed_payments'], 'label' => 'failed payments (30 days)', 'icon' => 'fa-credit-card', 'tone' => 'critical', 'url' => route('cms.payments.index', ['status' => 'failed']), 'cta' => 'Check'],
         ['count' => $stats['new_crm_leads'], 'label' => 'active leads to follow up', 'icon' => 'fa-bell', 'tone' => 'info', 'url' => route('portal.crm.leads.index', ['status' => 'active']), 'cta' => 'Open'],
         ['count' => $attention['recent_enquiries'], 'label' => 'website enquiries this week', 'icon' => 'fa-envelope-open-text', 'tone' => 'info', 'url' => route('cms.enquiries.index'), 'cta' => 'Read'],
-        ['count' => $attention['inactive_properties'], 'label' => 'inactive listings', 'icon' => 'fa-eye-slash', 'tone' => 'muted', 'url' => route('portal.properties.index'), 'cta' => 'View'],
+        ['count' => $attention['inactive_properties'], 'label' => 'inactive listings', 'icon' => 'fa-eye-slash', 'tone' => 'muted', 'url' => route('crm.app', 'properties'), 'cta' => 'View'],
     ])->filter(fn ($i) => $i['count'] > 0)->values();
     $urgentCount = $stats['pending_accounts'] + $attention['upgrade_requests'] + $attention['failed_payments'];
 
@@ -60,7 +60,7 @@
             'label' => 'Listings', 'icon' => 'fa-building', 'tone' => 'blue',
             'value' => number_format($stats['total_properties']), 'trend' => $trends['properties'], 'trendLabel' => 'new listings',
             'sub' => $stats['active_properties'] . ' active · ' . $stats['featured_properties'] . ' featured',
-            'url' => route('portal.properties.index'), 'spark' => $activity['properties']['data'],
+            'url' => route('crm.app', 'properties'), 'spark' => $activity['properties']['data'],
         ],
         [
             'label' => 'CRM Leads', 'icon' => 'fa-address-book', 'tone' => 'teal',
@@ -377,7 +377,7 @@
                 <h6 class="dash-card-title"><span class="ico"><i class="fas fa-bolt"></i></span> Quick Links</h6>
             </div>
             <div class="ql-grid">
-                <a href="{{ route('portal.properties.create') }}" class="ql-tile tone-navy"><i class="fas fa-plus"></i> Add Property</a>
+                <a href="{{ route('crm.app', 'properties/create') }}" class="ql-tile tone-navy"><i class="fas fa-plus"></i> Add Property</a>
                 @if($cmsUser->can('portal-accounts.view'))
                     <a href="{{ route('cms.portal-accounts.index') }}" class="ql-tile tone-blue"><i class="fas fa-user-check"></i> Clients</a>
                 @endif

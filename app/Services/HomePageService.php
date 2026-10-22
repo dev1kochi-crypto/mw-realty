@@ -15,6 +15,7 @@ use App\Models\CmsKit\SiteInformation;
 use App\Models\CmsKit\Testimonial;
 use App\Models\CmsKit\WhyChooseUsItem;
 use App\Models\Property;
+use App\Support\LocationFilter;
 use App\Support\MapsPropertyCards;
 use App\Support\SeoMeta;
 use Illuminate\Support\Facades\Cache;
@@ -38,6 +39,25 @@ class HomePageService
     use MapsPropertyCards;
 
     private const CACHE_TTL = 180; // seconds
+
+    /** Most listings in each Home slider (Premium Properties, Luxury Project, Realty Property). */
+    private const HOME_SLIDER_LIMIT = 12;
+
+    /**
+     * Drop the cached home / contact / footer / about payloads for every language, so a CMS
+     * edit (Common Titles, section settings…) or a Marketing Properties change shows straight
+     * away instead of after CACHE_TTL. Called from SectionLabel's saved hook and the Marketing
+     * Properties screen. (Home Developments is cached per city and just expires.)
+     */
+    public static function flushCache(): void
+    {
+        $languages = \App\Models\CmsKit\Language::pluck('code')->push(config('app.locale'), config('app.fallback_locale'))->filter()->unique();
+        foreach ($languages as $lang) {
+            foreach (['home-page', 'contact-page', 'footer-data', 'about-page'] as $key) {
+                Cache::forget("{$key}:{$lang}");
+            }
+        }
+    }
 
     public function getHomeData(string $lang): array
     {
@@ -95,20 +115,10 @@ class HomePageService
             ])->values()->all();
     }
 
+    /** Kept for API compatibility; the Home page itself loads its ad live (AdBlock) so ads rotate. */
     protected function ad(string $placement): ?array
     {
-        $ad = Ad::forPlacement($placement)->currentlyRunning()->orderBy('order_index')->first();
-        if (!$ad) {
-            return null;
-        }
-
-        return [
-            'name' => $ad->name,
-            'image_url' => media_url($ad->image),
-            'mobile_image_url' => $ad->mobile_image ? media_url($ad->mobile_image) : null,
-            'image_alt' => $ad->image_alt,
-            'link_url' => $ad->link_url,
-        ];
+        return Ad::payloadFor($placement, app()->getLocale());
     }
 
     protected function developments(string $lang): array
@@ -117,25 +127,39 @@ class HomePageService
         $cities = $section?->getTranslation('cities', $lang);
         $cities = is_array($cities) ? array_values(array_filter($cities, fn ($c) => trim((string) $c) !== '')) : [];
 
-        $properties = Property::where('status', true)
-            ->latest('published_at')
-            ->take(8)
-            ->get()
-            ->map(function ($property) use ($lang, $cities) {
-                $mapped = $this->mapProperty($property, $lang);
-                $mapped['category'] = $this->matchCityCategory($mapped['location'], $property->getTranslation('address', $lang), $cities);
-                return $mapped;
-            })
-            ->values();
-
         return [
             'eyebrow' => $section?->getTranslation('title_1', $lang) ?: 'UAE Developments',
             'title' => $section?->getTranslation('title_2', $lang) ?: 'Browse New Projects in the UAE',
             'button_name' => $section?->getTranslation('button_name', $lang) ?: 'View All Properties',
             'button_url' => $section?->getTranslation('button_url', $lang) ?: null,
             'cities' => $cities,
-            'properties' => $properties,
+            'properties' => $this->developmentProperties($lang),
         ];
+    }
+
+    /**
+     * Listings for the Developments section — every city ("All" tab, part of /api/home) or one
+     * city tab (GET /api/home/new-projects?city=Ajman, fetched when the tab is clicked). The city
+     * is matched loosely (address/community/city contains it) so an admin tab label like "Sharja"
+     * still finds "Sharjah" listings.
+     */
+    public function developmentProperties(string $lang, ?string $city = null): array
+    {
+        $city = $city !== null && trim($city) !== '' ? trim($city) : null;
+
+        return Cache::remember('home-developments:' . $lang . ':' . md5((string) $city), self::CACHE_TTL, function () use ($lang, $city) {
+            $query = Property::where('status', true);
+            if ($city) {
+                LocationFilter::apply($query, null, null, $city);
+            }
+
+            return $query->displayOrder()
+                ->take(8)
+                ->get()
+                ->map(fn ($property) => $this->mapProperty($property, $lang))
+                ->values()
+                ->all();
+        });
     }
 
     protected function premiumProperties(string $lang): array
@@ -147,41 +171,93 @@ class HomePageService
             'title' => $section?->getTranslation('title_2', $lang) ?: 'Premium Properties',
             'description' => $section?->getTranslation('description', $lang) ?: 'A highlight of exclusive listings from our premium customers — featured homes selected for exceptional location, quality, and investment value.',
             'button_name' => $section?->getTranslation('button_name', $lang) ?: 'View More Details',
-            'button_url' => $section?->getTranslation('button_url', $lang) ?: null,
-            'properties' => $this->featuredOrLatestProperties(4)->map(fn ($p) => $this->mapProperty($p, $lang, true))->values(),
+            // "View More Details" opens the full Premium listing page unless the admin set another link.
+            'button_url' => $section?->getTranslation('button_url', $lang) ?: '/premium-properties',
+            // Premium = listings featured from the CRM (Properties and Commercial), in the CRM order.
+            'properties' => Property::where('status', true)->where('featured', true)->displayOrder()
+                ->take(self::HOME_SLIDER_LIMIT)->get()
+                ->map(fn ($p) => $this->mapProperty($p, $lang, true))->values(),
         ];
     }
 
     protected function luxury(string $lang): array
     {
         $section = SectionLabel::where('section_key', 'home-luxury-project')->where('status', true)->first();
+        [$min, $max] = $this->luxuryPriceRange();
 
-        $properties = Property::where('status', true)->orderByDesc('price')->take(4)->get()
+        $properties = $this->luxuryQuery()->take(self::HOME_SLIDER_LIMIT)->get()
             ->map(fn ($p) => array_merge($this->mapProperty($p, $lang), [
                 'stat1' => $p->bedrooms ? "{$p->bedrooms} Bed" : '—',
                 'stat2' => $p->bathrooms ? "{$p->bathrooms} Bath" : '—',
             ]))->values();
+
+        // "View More Details" → the Properties page with the same price filter (and its default
+        // Recommended order, i.e. the CRM order) unless the admin set another link.
+        $listingUrl = '/properties' . (($min !== null || $max !== null)
+            ? '?' . http_build_query(array_filter(['min_price' => $min, 'max_price' => $max], fn ($v) => $v !== null))
+            : '?sort=price_desc');
 
         return [
             'eyebrow' => $section?->getTranslation('title_1', $lang) ?: 'Signature collection',
             'title' => $section?->getTranslation('title_2', $lang) ?: 'Luxury Project',
             'description' => $section?->getTranslation('description', $lang) ?: null,
             'button_text' => $section?->getTranslation('button_name', $lang) ?: 'View More Details',
-            'button_url' => $section?->getTranslation('button_url', $lang) ?: null,
+            'button_url' => $section?->getTranslation('button_url', $lang) ?: $listingUrl,
+            // Empty when no listing matches — the Home page then hides the section.
             'properties' => $properties,
         ];
+    }
+
+    /**
+     * Admin > Common Titles > Luxury Project "Min / Max Price" (either may be empty = no limit).
+     * Read even while the section's text is switched off, since it only defines what counts as luxury.
+     *
+     * @return array{0: ?int, 1: ?int}
+     */
+    protected function luxuryPriceRange(): array
+    {
+        $extra = SectionLabel::where('section_key', 'home-luxury-project')->value('extra_fields');
+        $extra = is_array($extra) ? $extra : (json_decode((string) $extra, true) ?: []);
+        $num = fn ($v) => is_numeric($v) && $v >= 0 ? (int) $v : null;
+
+        return [$num($extra['min_price'] ?? null), $num($extra['max_price'] ?? null)];
+    }
+
+    /**
+     * Luxury listings: active residential (never commercial) within the admin's price range, in the
+     * CRM display order. With no range set yet, the most expensive residential listings instead.
+     */
+    protected function luxuryQuery()
+    {
+        [$min, $max] = $this->luxuryPriceRange();
+        $query = Property::where('status', true)->residential();
+
+        if ($min === null && $max === null) {
+            return $query->orderByDesc('price')->orderByDesc('id');
+        }
+
+        return $query
+            ->when($min !== null, fn ($q) => $q->where('price', '>=', $min))
+            ->when($max !== null, fn ($q) => $q->where('price', '<=', $max))
+            ->displayOrder();
     }
 
     protected function realty(string $lang): array
     {
         $section = SectionLabel::where('section_key', 'home-realty-property')->where('status', true)->first();
-        $excludeIds = Property::where('status', true)->orderByDesc('price')->take(4)->pluck('id');
+        $marketing = app(MarketingPropertyService::class);
 
-        $properties = Property::where('status', true)
-            ->whereNotIn('id', $excludeIds)
-            ->latest('published_at')
-            ->take(4)
-            ->get()
+        // Super Admin's Marketing Properties list (portal › Listings), first 12 in its order.
+        // Until anything is picked, fall back to the automatic selection — skipping the listings
+        // already shown in the Luxury slider so the two don't repeat.
+        $curated = $marketing->hasAny();
+        $properties = ($curated
+            ? $marketing->homeProperties()
+            : Property::where('status', true)
+                ->whereNotIn('id', $this->luxuryQuery()->take(self::HOME_SLIDER_LIMIT)->pluck('id'))
+                ->displayOrder()
+                ->take(self::HOME_SLIDER_LIMIT)
+                ->get())
             ->map(fn ($p) => $this->mapProperty($p, $lang, true))
             ->values();
 
@@ -190,7 +266,8 @@ class HomePageService
             'title' => $section?->getTranslation('title_2', $lang) ?: 'Realty Property',
             'description' => $section?->getTranslation('description', $lang) ?: null,
             'button_text' => $section?->getTranslation('button_name', $lang) ?: 'View More Details',
-            'button_url' => $section?->getTranslation('button_url', $lang) ?: null,
+            // The view-all page for the curated list, unless the admin set a link of their own.
+            'button_url' => $section?->getTranslation('button_url', $lang) ?: ($curated ? '/marketing-properties' : '/properties'),
             'properties' => $properties,
         ];
     }
@@ -239,6 +316,7 @@ class HomePageService
             'items' => $items->map(fn ($item) => [
                 'image_url' => $item->image ? media_url($item->image) : null,
                 'title' => $item->getTranslation('title', $lang),
+                'property_type' => $item->property_type,
                 'count' => $item->propertyCount(),
             ])->values(),
         ];
@@ -288,8 +366,9 @@ class HomePageService
         $items = Testimonial::where('status', true)->orderBy('order_index')->take(20)->get();
 
         return [
-            'eyebrow' => $section?->getTranslation('sub_heading_1', $lang) ?: 'From our clients',
-            'title' => $section?->getTranslation('title', $lang) ?: 'Why Our Clients Trust Us',
+            // Keys as saved by the admin Testimonials > Section Settings form (TestimonialController::updateSection).
+            'eyebrow' => $section?->getTranslation('section_sub_heading_1', $lang) ?: 'From our clients',
+            'title' => $section?->getTranslation('section_title', $lang) ?: 'Why Our Clients Trust Us',
             'description' => $section?->getTranslation('description', $lang) ?: null,
             'items' => $items->map(fn ($item) => [
                 'type' => $item->type === 'video' ? 'video' : 'quote',
@@ -297,7 +376,8 @@ class HomePageService
                 'video_url' => $item->video_file ? media_url($item->video_file) : $item->video_url,
                 'name' => $item->getTranslation('name', $lang),
                 'role' => $item->getTranslation('designation', $lang),
-                'content' => $item->getTranslation('content', $lang),
+                // Shown as plain text; older entries were saved from a rich-text editor.
+                'content' => ($content = $item->getTranslation('content', $lang)) ? trim(html_entity_decode(strip_tags($content))) : null,
                 'rating' => $item->rating,
             ])->values(),
         ];
@@ -439,35 +519,5 @@ class HomePageService
                 'seo' => SeoMeta::forStaticPage('about', $lang),
             ];
         });
-    }
-
-    /** Featured listings first, topped up with the latest others if fewer than $count are featured. */
-    protected function featuredOrLatestProperties(int $count)
-    {
-        $featured = Property::where('status', true)->where('featured', true)->latest('published_at')->take($count)->get();
-        if ($featured->count() >= $count) {
-            return $featured;
-        }
-
-        $filler = Property::where('status', true)
-            ->whereNotIn('id', $featured->pluck('id'))
-            ->latest('published_at')
-            ->take($count - $featured->count())
-            ->get();
-
-        return $featured->concat($filler);
-    }
-
-    /** Which admin-configured city tab (Developments) a listing's location text matches, if any. */
-    protected function matchCityCategory(string $location, ?string $address, array $cities): ?string
-    {
-        $haystack = Str::lower($location . ' ' . $address);
-        foreach ($cities as $cityName) {
-            if ($cityName !== '' && Str::contains($haystack, Str::lower($cityName))) {
-                return Str::slug($cityName);
-            }
-        }
-
-        return null;
     }
 }

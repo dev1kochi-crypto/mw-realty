@@ -1,0 +1,234 @@
+name: Advertisements
+description: ''
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/ads
+    metadata:
+      custom: []
+      groupName: Advertisements
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Ad banner'
+      description: |-
+        One active ad for a screen (picked at random when several run), or `false` when there is
+        none (hide the slot). Kept for older clients — the website's ad slots are sliders that show
+        every running ad: use **Ad slider** (`/api/ads/slides`).
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      placement:
+        custom: []
+        name: placement
+        description: 'home, property-details, …'
+        required: false
+        example: home
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      placement: home
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/ads/slides
+    metadata:
+      custom: []
+      groupName: Advertisements
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Ad slider'
+      description: |-
+        Every ad running on a screen right now, in slide order (sponsored client ads first, in a
+        different order each time). Show them as a slider that moves on every `interval` seconds;
+        an empty list means hide the slot. Report each slide once it has been on screen
+        (**Ad impressions**) and taps on it (**Ad click**).
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      placement:
+        custom: []
+        name: placement
+        description: 'home, property-details, …'
+        required: false
+        example: home
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      placement: home
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"slides": [{"id": 12, "name": "Marina launch", "image_url": "https://…", "mobile_image_url": null, "image_alt": null, "link_url": "/property-details/marina-heights", "eyebrow": "New launch", "title": "Marina Heights", "text": "1–3 bed apartments from AED 1.2M", "sponsor": "Prime Homes"}], "interval": 6}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/track/ad-impressions
+    metadata:
+      custom: []
+      groupName: Advertisements
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Ad impressions'
+      description: |-
+        Slides that were on screen (at least half visible for a second). Send each slide once per
+        screen visit — not again every time the slider comes back round to it.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      ids:
+        custom: []
+        name: ids
+        description: 'Up to 30 ad ids.'
+        required: true
+        example:
+          - 12
+          - 15
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      ids:
+        - 12
+        - 15
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Recorded
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/track/ad-click
+    metadata:
+      custom: []
+      groupName: Advertisements
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Ad click'
+      description: 'The user tapped an ad (send it before opening its link).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      id:
+        custom: []
+        name: id
+        description: ''
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      id: 12
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Recorded
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

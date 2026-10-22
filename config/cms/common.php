@@ -45,11 +45,14 @@ return [
         'blogs' => true,
         'landing-pages' => true,
         'ads' => true,
-        'careers' => false,
+        'careers' => true,
         'properties' => true,
         'portal-accounts' => true,
         'plans' => true,
+        'credits' => true,
+        'credit-history' => true,
         'coupons' => true,
+        'support-tickets' => true,
     ],
 
     'careers' => [

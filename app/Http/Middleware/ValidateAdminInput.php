@@ -24,7 +24,10 @@ class ValidateAdminInput
             $isDocument = str_contains($field, 'document') || str_contains($field, 'resume');
             $isVideo = str_contains($field, 'video');
             $isSpreadsheet = str_ends_with($name, '.import');
+            // Property brochure / floor-plan file: PDF, image or an office document.
+            $isBrochure = str_contains($field, 'brochure') || $field === 'floor_plan_file';
             $rules[$field] = match (true) {
+                $isBrochure => 'file|extensions:' . \App\Http\Requests\PropertyRequest::BROCHURE_EXTENSIONS . '|max:20480',
                 $isDocument => 'file|mimes:jpg,jpeg,png,pdf|extensions:jpg,jpeg,png,pdf|max:4096',
                 $isVideo => 'file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|extensions:mp4,mov,avi|max:51200',
                 $isSpreadsheet => 'file|mimes:xlsx,xls,csv|extensions:xlsx,xls,csv|max:10240',
@@ -37,7 +40,10 @@ class ValidateAdminInput
         if (str_ends_with($name, '.bulk-action')) {
             $rules['action'] = ['required', Rule::in(['delete', 'active', 'activate', 'inactive', 'deactivate'])];
         }
-        if (str_contains($name, '.bulk-')) {
+        // "Select all N" sends select_all=1 (+ filters) instead of an id list — the controller
+        // resolves that selection itself, so only a ticked id list is checked here. (Leads' bulk
+        // actions live in the CRM API now and cap their own id lists — Crm\Leads\LeadController.)
+        if (str_contains($name, '.bulk-') && !$request->boolean('select_all') && !$request->boolean('all')) {
             $rules['ids'] = 'required|array|min:1|max:100';
             $rules['ids.*'] = 'required|integer|min:1|distinct';
         }

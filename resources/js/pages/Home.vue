@@ -1,18 +1,58 @@
 <script setup>
-import { computed, nextTick, watch } from 'vue';
+import { computed, nextTick, reactive, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useHomePage } from '../composables/useHomePage';
+import { useSearchFilters, quickSelect } from '../composables/useSearchFilters';
+import LocationAutocomplete from '../components/LocationAutocomplete.vue';
 import { useWishlist } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
+import { useCurrency } from '../composables/useCurrency';
+import { useLanguages } from '../composables/useLanguages';
+import { useRecaptcha } from '../composables/useRecaptcha';
+import AdBlock from '../components/AdBlock.vue';
+import PhoneInput from '../components/PhoneInput.vue';
+import { contactError as findContactProblem } from '../composables/useContactValidation';
 
 // One fetch for the whole page (see routes/api.php -> Api\HomeController) instead of a
 // request per section — every section below just reads its own slice of `homePage.value`.
 const { homePage } = useHomePage();
 const { isWishlisted, toggleWishlist } = useWishlist();
 const { t } = useStaticText();
+// Prices arrive in AED (price_value) and are shown in the visitor's chosen currency.
+const { formatPrice, formatCompact, presetLabel } = useCurrency();
+const router = useRouter();
+const { selectedLanguage } = useLanguages();
+const { getRecaptchaToken } = useRecaptcha();
+
+// "Get in touch" section form — saved as an Enquiry (same endpoint as the /contact page), then
+// the visitor lands on the thank-you page.
+const contactForm = reactive({ name: '', email: '', phone: '', phone_country_code: '+971', interest: '', message: '' });
+const contactSubmitting = ref(false);
+const contactError = ref(null);
+
+async function submitContactForm() {
+    if (contactSubmitting.value) return;
+    contactSubmitting.value = true;
+    contactError.value = null;
+    const problem = findContactProblem({ email: contactForm.email, phone: contactForm.phone, phoneRequired: true });
+    if (problem) {
+        contactError.value = problem;
+        contactSubmitting.value = false;
+        return;
+    }
+    try {
+        const recaptcha_token = await getRecaptchaToken('home_contact');
+        await window.axios.post('/api/contact', { ...contactForm, source: 'home', recaptcha_token });
+        router.push({ path: '/thank-you', state: { thankYou: { type: 'enquiry', name: contactForm.name.trim().split(/\s+/)[0] || '' } } });
+    } catch (error) {
+        const fieldErrors = error.response?.data?.errors;
+        contactError.value = fieldErrors ? Object.values(fieldErrors).flat()[0] : (error.response?.data?.message || t('contact_page.generic_error'));
+        contactSubmitting.value = false;
+    }
+}
 
 const banner = computed(() => homePage.value?.banner || null);
 const brands = computed(() => homePage.value?.brands || []);
-const homeAd = computed(() => homePage.value?.ad || null);
 const developments = computed(() => homePage.value?.developments || null);
 const premiumProperties = computed(() => homePage.value?.premiumProperties || null);
 const luxuryProject = computed(() => homePage.value?.luxury || null);
@@ -33,41 +73,75 @@ const heroNoteBadge = computed(() => banner.value?.note_badge || t('home.hero.no
 const heroGuideText = computed(() => banner.value?.note_link_text || t('home.hero.guide_text_default'));
 const heroGuideUrl = computed(() => banner.value?.note_link_url || '#');
 
+// --- Hero search ---
+// The banner search has a fixed layout (4 tabs, 4 fields). Only labels and option VALUES come from
+// Admin › Filters › Search Filters › Home: dropdown options, tab labels and the price slider's range.
+// Until they load (or if a list is empty), each field works on the defaults below.
+const { byKey: heroFilter, options: heroOptions } = useSearchFilters('home');
+const adminLabel = (key, value, fallback) => heroOptions(key).find((o) => o.value === value)?.label || fallback;
 const heroTabs = computed(() => [
-    { filter: 'buy', label: t('home.hero.tabs.buy'), active: true },
-    { filter: 'rent', label: t('home.hero.tabs.rent') },
-    { filter: 'ready', label: t('home.hero.tabs.ready') },
-    { filter: 'off-plan', label: t('home.hero.tabs.off_plan') },
+    { key: 'listing_type', value: 'sale', label: adminLabel('listing_type', 'sale', t('home.hero.tabs.buy')) },
+    { key: 'listing_type', value: 'rent', label: adminLabel('listing_type', 'rent', t('home.hero.tabs.rent')) },
+    { key: 'completion_status', value: 'ready', label: adminLabel('completion_status', 'ready', t('home.hero.tabs.ready')) },
+    { key: 'completion_status', value: 'off_plan', label: adminLabel('completion_status', 'off_plan', t('home.hero.tabs.off_plan')) },
 ]);
+const DEFAULT_BEDROOMS = ['1', '2', '3', '4', '5+'].map((v) => ({ value: v, label: v }));
+const DEFAULT_TYPES = ['apartment', 'villa', 'penthouse', 'townhouse', 'plot', 'office'].map((v) => ({ value: v, label: t(`home.property_types.${v}`) }));
+const bedroomOptions = computed(() => (heroOptions('bedrooms').length ? heroOptions('bedrooms') : DEFAULT_BEDROOMS));
+const propertyTypeOptions = computed(() => (heroOptions('property_type').length ? heroOptions('property_type') : DEFAULT_TYPES));
+const priceFilter = computed(() => heroFilter('price') || { max: 30000000, step: 50000 });
+const priceMax = computed(() => priceFilter.value.max || 30000000);
+// Quick-select buttons: the admin's (Search Filters › Home › Price), else the built-in ones.
+const pricePresets = computed(() => quickSelect(heroFilter('price'), priceMax.value, [
+    [0, 500000, 'under_500k'], [500000, 1000000, '500k_1m'], [1000000, 2000000, '1m_2m'],
+    [2000000, 5000000, '2m_5m'], [5000000, 10000000, '5m_10m'], [10000000, Infinity, '10m_plus'],
+].map(([min, max, key]) => [min, max, t(`home.price_presets.${key}`)]))
+    .map(([min, max, baseLabel, top]) => ({
+        min,
+        max,
+        label: presetLabel(min, max, { top, baseLabel, under: t('home.price_presets.under_word', 'Under') }),
+    })));
 
-const bedroomOptions = computed(() => [
-    { value: 'studio', label: t('home.bedroom_options.studio') },
-    { value: '1', label: t('home.bedroom_options.one') },
-    { value: '2', label: t('home.bedroom_options.two') },
-    { value: '3', label: t('home.bedroom_options.three') },
-    { value: '4', label: t('home.bedroom_options.four') },
-    { value: '5', label: t('home.bedroom_options.five') },
-    { value: '6', label: t('home.bedroom_options.six') },
-    { value: '7+', label: t('home.bedroom_options.seven_plus') },
-]);
+// The selected tab is stored as "key:value" (not the tab object), so it survives heroTabs being
+// rebuilt when the admin labels arrive. "Buy" is selected by default.
+// `place` is the picked location suggestion (city / community / address), null for free text.
+const heroSearch = reactive({ tab: 'listing_type:sale', location: '', place: null, bedrooms: '', propertyType: '' });
+const tabId = (tab) => `${tab.key}:${tab.value}`;
+const heroPriceMin = ref(null);
+const heroPriceMax = ref(null);
+// The hero dropdowns + price slider are wired by the legacy script.js; the fields only render once
+// the admin filters arrive, so bind them after that (MWRealty.refresh is idempotent for dropdowns).
+watch(priceFilter, () => {
+    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+});
+// Nothing picked: the admin's hint text for that filter, else the default wording.
+const heroBedroomLabel = computed(() => bedroomOptions.value.find((o) => o.value === heroSearch.bedrooms)?.label || heroFilter('bedrooms')?.placeholder || t('home.hero.search.bedroom_label'));
+const heroTypeLabel = computed(() => propertyTypeOptions.value.find((o) => o.value === heroSearch.propertyType)?.label || heroFilter('property_type')?.placeholder || t('home.hero.search.property_type_label'));
 
-const propertyTypeOptions = computed(() => [
-    t('home.property_types.apartment'),
-    t('home.property_types.villa'),
-    t('home.property_types.penthouse'),
-    t('home.property_types.townhouse'),
-    t('home.property_types.plot'),
-    t('home.property_types.office'),
-]);
-
-const pricePresets = computed(() => [
-    { min: 0, max: 500000, label: t('home.price_presets.under_500k') },
-    { min: 500000, max: 1000000, label: t('home.price_presets.500k_1m') },
-    { min: 1000000, max: 2000000, label: t('home.price_presets.1m_2m') },
-    { min: 2000000, max: 5000000, label: t('home.price_presets.2m_5m') },
-    { min: 5000000, max: 10000000, label: t('home.price_presets.5m_10m') },
-    { min: 10000000, max: 30000000, label: t('home.price_presets.10m_plus') },
-]);
+/**
+ * A picked address opens that property; otherwise opens /properties with the hero's choices as
+ * filters (same query keys as the listing page) — a picked city/community filters exactly by it.
+ */
+function submitHeroSearch() {
+    const place = heroSearch.place;
+    if (['address', 'property'].includes(place?.type) && place.slug) {
+        router.push(`/property-details/${place.slug}`);
+        return;
+    }
+    const query = {};
+    const [tabKey, tabValue] = heroSearch.tab.split(':');
+    query[tabKey] = tabValue;
+    if (place && (place.type === 'city' || place.type === 'community')) query[place.type] = place.label;
+    else if (heroSearch.location.trim()) query.location = heroSearch.location.trim();
+    if (heroSearch.bedrooms) query.bedrooms = heroSearch.bedrooms;
+    if (heroSearch.propertyType) query.property_type = heroSearch.propertyType;
+    // The price slider lives in a script.js-managed dropdown, so read its thumbs directly.
+    const lo = Number(heroPriceMin.value?.value || 0);
+    const hi = Number(heroPriceMax.value?.value || priceMax.value);
+    if (lo > 0) query.min_price = String(lo);
+    if (hi < priceMax.value) query.max_price = String(hi);
+    router.push({ path: '/properties', query });
+}
 
 const displayLogos = computed(() => brands.value.map((brand) => ({ src: brand.image_url, alt: brand.alt || '' })));
 
@@ -75,20 +149,53 @@ const projectsEyebrow = computed(() => developments.value?.eyebrow || 'UAE devel
 const projectsTitle = computed(() => developments.value?.title || 'Browse New Projects in the UAE');
 const projectsButtonLabel = computed(() => developments.value?.button_name || 'View All Properties');
 
+// City tabs: "All" uses the listings already in /api/home; clicking a city asks the API for that
+// city's listings (GET /api/home/new-projects?city=) instead of hiding cards from the first 8.
+const activeCity = ref('');
+const cityProperties = ref(null);
+const cityLoading = ref(false);
+let cityRequestId = 0;
+
 const projectFilters = computed(() => {
     const cities = developments.value?.cities || [];
     return [
-        { filter: 'all', label: 'All', active: true },
-        ...cities.map((city) => ({ filter: slugify(city), label: city })),
+        { filter: 'all', city: '', label: 'All' },
+        ...cities.map((city) => ({ filter: slugify(city), city, label: city })),
     ];
 });
 
+function selectProjectCity(city) {
+    if (city === activeCity.value) return;
+    activeCity.value = city;
+    if (!city) {
+        cityProperties.value = null;
+        return;
+    }
+    const requestId = ++cityRequestId;
+    cityLoading.value = true;
+    const lang = selectedLanguage.value?.code;
+    window.axios.get('/api/home/new-projects', { params: { city, lang } }).then((res) => {
+        if (requestId === cityRequestId) cityProperties.value = res.data?.properties || [];
+    }).catch(() => {
+        if (requestId === cityRequestId) cityProperties.value = [];
+    }).finally(() => {
+        if (requestId === cityRequestId) cityLoading.value = false;
+    });
+}
+
+// A language switch reloads /api/home — drop back to "All" so the cards match the new language.
+watch(developments, () => {
+    cityRequestId++;
+    activeCity.value = '';
+    cityProperties.value = null;
+    cityLoading.value = false;
+});
+
 const projectCards = computed(() => {
-    const properties = developments.value?.properties || [];
+    const properties = (activeCity.value ? cityProperties.value : developments.value?.properties) || [];
     return properties.map((p) => ({
         id: p.id,
         slug: p.slug,
-        category: p.category,
         images: p.images,
         images_count: p.images_count,
         isAbsoluteImage: true,
@@ -99,21 +206,30 @@ const projectCards = computed(() => {
         area: p.area ?? '—',
         type: p.type,
         price: p.price,
+        priceValue: p.price_value,
     }));
 });
 
 // Nothing to show until real listings exist — no lorem-ipsum placeholder cards on a live site.
-const showDevelopments = computed(() => projectCards.value.length > 0);
+// Based on the "All" listings, so a city tab with no results keeps the section (and its tabs) visible.
+const showDevelopments = computed(() => (developments.value?.properties || []).length > 0);
+
+// "View All Properties" carries the chosen city over to the listing page.
+const projectsViewAllLink = computed(() => (activeCity.value ? { path: '/properties', query: { location: activeCity.value } } : '/properties'));
 
 function slugify(value) {
     return String(value).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-// The project cards' photo gallery slider and the "All / Dubai / Abu Dhabi ..." tab filter
-// are wired up by the legacy assets/js/script.js, which only scans the DOM once — once the
-// real data replaces the placeholder cards above, the freshly rendered elements need that
-// binding run again (window.MWRealty.refresh is idempotent, safe to call repeatedly).
+// The project cards' photo gallery slider (and the mobile slick carousel) are wired up by the
+// legacy assets/js/script.js, which only scans the DOM once — whenever the cards change, the
+// freshly rendered elements need that binding run again (window.MWRealty.refresh is idempotent).
+// This watcher runs before Vue patches the DOM, so the mobile carousel is torn down first —
+// slick moves the cards into its own wrappers, which Vue can't patch.
 watch(projectCards, () => {
+    const $ = window.jQuery;
+    const $slider = $ && $('[data-projects-slider]');
+    if ($slider && $slider.hasClass('slick-initialized')) $slider.slick('unslick');
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
 
@@ -137,6 +253,7 @@ const highlightCards = computed(() => {
         baths: p.baths,
         area: p.area,
         price: p.price,
+        priceValue: p.price_value,
     }));
 });
 
@@ -175,9 +292,12 @@ const popularPlacesTitle = computed(() => popularPlacesSection.value?.title || '
 
 const popularPlaces = computed(() => {
     const places = popularPlacesSection.value?.places || [];
+    // Each card opens the listing page filtered to that place (free-text location match, so an
+    // admin label like "Sharja" still finds "Sharjah" listings).
     return places.map((p) => ({
         imageSrc: p.image_url,
         name: p.name,
+        to: { path: '/properties', query: p.name ? { location: p.name } : {} },
     }));
 });
 
@@ -197,6 +317,8 @@ const luxuryButtonUrl = computed(() => luxuryProject.value?.button_url || '#');
 const luxuryCards = computed(() => {
     const properties = luxuryProject.value?.properties || [];
     return properties.map((p) => ({
+        id: p.id,
+        slug: p.slug,
         image: p.images?.[0],
         villa: String(p.type || '').toLowerCase().includes('villa'),
         name: p.name,
@@ -205,9 +327,20 @@ const luxuryCards = computed(() => {
         stat2: p.stat2,
         area: p.area,
         price: p.price,
+        priceValue: p.price_value,
     }));
 });
 const showLuxury = computed(() => luxuryCards.value.length > 0);
+
+// Luxury / Realty cards open their property's detail page. Handled on the slider container
+// (not per card) because slick's infinite mode clones the cards, and clones have no Vue
+// listeners — they do keep data-property-slug. The save/contact buttons and links keep their
+// own behaviour.
+function openPropertyCard(event) {
+    if (event.target.closest('button, a')) return;
+    const slug = event.target.closest('[data-property-slug]')?.getAttribute('data-property-slug');
+    if (slug) router.push(`/property-details/${slug}`);
+}
 
 // --- Why Choose Us ---
 const whyChooseUsEyebrow = computed(() => whyChooseUsSection.value?.eyebrow || 'The MW advantage');
@@ -230,6 +363,8 @@ const realtyButtonUrl = computed(() => realtyProperty.value?.button_url || '#');
 const realtyCards = computed(() => {
     const properties = realtyProperty.value?.properties || [];
     return properties.map((p) => ({
+        id: p.id,
+        slug: p.slug,
         image: p.image,
         name: p.name,
         location: p.location,
@@ -237,6 +372,7 @@ const realtyCards = computed(() => {
         baths: p.baths,
         area: p.area,
         price: p.price,
+        priceValue: p.price_value,
     }));
 });
 const showRealty = computed(() => realtyCards.value.length > 0);
@@ -260,6 +396,25 @@ const communitiesColumns = computed(() => {
 });
 const showCommunities = computed(() => (communitiesSection.value?.items || []).length > 0);
 
+// A community row opens the listing page filtered to that community + the active tab
+// (For Sale / For Rent / Off Plan). Handled on the panels wrapper because script.js clones the
+// For Sale grid into the For Rent / Off Plan panels, and those clones have no Vue listeners.
+const COMMUNITY_TAB_QUERY = {
+    'for-sale': { listing_type: 'sale' },
+    'for-rent': { listing_type: 'rent' },
+    'off-plan': { completion_status: 'off_plan' },
+};
+function openCommunity(event) {
+    const row = event.target.closest('[data-community]');
+    if (!row) return;
+    event.preventDefault();
+    const tab = row.closest('[data-category]')?.getAttribute('data-category');
+    router.push({
+        path: '/properties',
+        query: { ...(COMMUNITY_TAB_QUERY[tab] || COMMUNITY_TAB_QUERY['for-sale']), location: row.getAttribute('data-community') },
+    });
+}
+
 // --- Find Properties ---
 const findPropertiesModifiers = ['penthouse-1', 'villa', 'penthouse-2', 'plot'];
 const findPropertiesEyebrow = computed(() => findPropertiesSection.value?.eyebrow || 'Browse by type');
@@ -270,6 +425,8 @@ const findPropertiesCards = computed(() => {
         modifier: findPropertiesModifiers[i % findPropertiesModifiers.length],
         image: item.image_url,
         type: item.title,
+        // Each card is a shortcut into the listing page pre-filtered to its property type.
+        link: item.property_type ? { path: '/properties', query: { property_type: item.property_type } } : '/properties',
         count: `${item.count} ${item.count === 1 ? 'property' : 'properties'}`,
     }));
 });
@@ -310,21 +467,22 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     <h1 class="mw-hero__title">{{ heroLine1 }}</h1>
                     <p class="mw-hero__subtitle">{{ heroLine2 }}</p>
 
-                    <div class="mw-hero__tabs" role="tablist" :aria-label="t('home.hero.tabs_aria_label')" data-tab-group>
-                        <button v-for="tab in heroTabs" :key="tab.filter" type="button" class="mw-hero__tab" :class="{ 'is-active': tab.active }" data-tab :data-filter="tab.filter">{{ tab.label }}</button>
+                    <div class="mw-hero__tabs" role="tablist" :aria-label="t('home.hero.tabs_aria_label')">
+                        <button v-for="tab in heroTabs" :key="tabId(tab)" type="button" class="mw-hero__tab" :class="{ 'is-active': heroSearch.tab === tabId(tab) }" data-tab role="tab" :aria-selected="heroSearch.tab === tabId(tab)" @click="heroSearch.tab = tabId(tab)">{{ tab.label }}</button>
                     </div>
 
-                    <form class="mw-hero__search" id="search" role="search" @submit.prevent>
+                    <form class="mw-hero__search" id="search" role="search" @submit.prevent="submitHeroSearch">
                         <label class="mw-hero__field">
                             <img src="/frontend/assets/images/icons/location.svg" alt="">
-                            <input type="text" name="location" :placeholder="t('home.hero.search.location_placeholder')">
+                            <LocationAutocomplete v-model="heroSearch.location" name="location" :placeholder="t('home.hero.search.location_placeholder')" @select="heroSearch.place = $event" @enter="submitHeroSearch" />
                         </label>
                         <div class="mw-hero__field mw-hero__field--select mw-dropdown" data-dropdown data-dropdown-trigger tabindex="0" role="button" aria-haspopup="listbox">
                             <img src="/frontend/assets/images/icons/bed.svg" alt="">
-                            <span data-dropdown-label>{{ t('home.hero.search.bedroom_label') }}</span>
+                            <span data-dropdown-label data-dropdown-label-reactive>{{ heroBedroomLabel }}</span>
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" class="mw-hero__field-chevron">
                             <ul class="mw-dropdown__menu" data-dropdown-menu>
-                                <li v-for="opt in bedroomOptions" :key="opt.value"><button type="button" data-dropdown-option :data-value="opt.value">{{ opt.label }}</button></li>
+                                <li><button type="button" data-dropdown-option :class="{ 'is-selected': !heroSearch.bedrooms }" @click="heroSearch.bedrooms = ''">{{ t('home.hero.search.bedroom_label') }}</button></li>
+                                <li v-for="opt in bedroomOptions" :key="opt.value"><button type="button" data-dropdown-option :class="{ 'is-selected': heroSearch.bedrooms === opt.value }" :data-value="opt.value" @click="heroSearch.bedrooms = opt.value">{{ opt.label }}</button></li>
                             </ul>
                         </div>
                         <div class="mw-hero__field mw-hero__field--select mw-hero__price mw-dropdown" data-dropdown>
@@ -337,31 +495,32 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 <div class="mw-hero__price-readout">
                                     <label class="mw-hero__price-input">
                                         <span>{{ t('home.hero.price.min_label') }}</span>
-                                        <input type="text" inputmode="decimal" data-price-min-input :aria-label="t('home.hero.price.min_aria')" value="AED 0">
+                                        <input type="text" inputmode="decimal" data-price-min-input :aria-label="t('home.hero.price.min_aria')" :value="formatCompact(0)">
                                     </label>
                                     <label class="mw-hero__price-input">
                                         <span>{{ t('home.hero.price.max_label') }}</span>
-                                        <input type="text" inputmode="decimal" data-price-max-input :aria-label="t('home.hero.price.max_aria')" value="AED 30M">
+                                        <input type="text" inputmode="decimal" data-price-max-input :aria-label="t('home.hero.price.max_aria')" :value="formatCompact(priceMax)">
                                     </label>
                                 </div>
                                 <div class="mw-hero__price-slider" data-price-slider>
                                     <div class="mw-hero__price-track"></div>
                                     <div class="mw-hero__price-fill" data-price-range></div>
-                                    <input type="range" name="min_price" min="0" max="30000000" step="50000" value="0" data-price-min :aria-label="t('home.hero.price.min_aria')">
-                                    <input type="range" name="max_price" min="0" max="30000000" step="50000" value="30000000" data-price-max :aria-label="t('home.hero.price.max_aria')">
+                                    <input ref="heroPriceMin" type="range" name="min_price" min="0" :max="priceMax" :step="priceFilter.step || 50000" value="0" data-price-min :aria-label="t('home.hero.price.min_aria')">
+                                    <input ref="heroPriceMax" type="range" name="max_price" min="0" :max="priceMax" :step="priceFilter.step || 50000" :value="priceMax" data-price-max :aria-label="t('home.hero.price.max_aria')">
                                 </div>
                                 <p class="mw-hero__price-presets-title">{{ t('home.hero.price.quick_select') }}</p>
                                 <div class="mw-hero__price-presets">
-                                    <button v-for="preset in pricePresets" :key="preset.label" type="button" data-price-preset :data-min="preset.min" :data-max="preset.max">{{ preset.label }}</button>
+                                    <button v-for="preset in pricePresets" :key="`${preset.min}-${preset.max}`" type="button" data-price-preset :data-min="preset.min" :data-max="preset.max">{{ preset.label }}</button>
                                 </div>
                             </div>
                         </div>
                         <div class="mw-hero__field mw-hero__field--select mw-dropdown" data-dropdown data-dropdown-trigger tabindex="0" role="button" aria-haspopup="listbox">
                             <img src="/frontend/assets/images/icons/building.svg" alt="">
-                            <span data-dropdown-label>{{ t('home.hero.search.property_type_label') }}</span>
+                            <span data-dropdown-label data-dropdown-label-reactive>{{ heroTypeLabel }}</span>
                             <img src="/frontend/assets/images/icons/chevron-down.svg" alt="" class="mw-hero__field-chevron">
                             <ul class="mw-dropdown__menu" data-dropdown-menu>
-                                <li v-for="opt in propertyTypeOptions" :key="opt"><button type="button" data-dropdown-option>{{ opt }}</button></li>
+                                <li><button type="button" data-dropdown-option :class="{ 'is-selected': !heroSearch.propertyType }" @click="heroSearch.propertyType = ''">{{ t('home.hero.search.property_type_label') }}</button></li>
+                                <li v-for="opt in propertyTypeOptions" :key="opt.value"><button type="button" data-dropdown-option :class="{ 'is-selected': heroSearch.propertyType === opt.value }" @click="heroSearch.propertyType = opt.value">{{ opt.label }}</button></li>
                             </ul>
                         </div>
                         <button type="submit" class="mw-hero__submit">{{ t('home.hero.search.submit') }}</button>
@@ -401,13 +560,16 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                 </div>
 
                 <div class="mw-projects__filters">
-                    <div class="mw-pill-tabs" data-tab-group data-filter-target="#projects-grid">
-                        <button v-for="f in projectFilters" :key="f.filter" type="button" :class="{ 'is-active': f.active }" data-tab :data-filter="f.filter">{{ f.label }}</button>
+                    <div class="mw-pill-tabs" role="tablist">
+                        <button v-for="f in projectFilters" :key="f.filter" type="button" role="tab" data-tab :class="{ 'is-active': f.city === activeCity }" :aria-selected="f.city === activeCity" :disabled="cityLoading && f.city === activeCity" @click="selectProjectCity(f.city)">{{ f.label }}</button>
                     </div>
                 </div>
 
-                <div class="mw-projects__grid" id="projects-grid" data-projects-slider>
-                    <article v-for="(card, index) in projectCards" :key="index" class="mw-projects__card" :data-category="card.category">
+                <p v-if="activeCity && cityLoading && !cityProperties" class="mw-projects__empty" style="text-align: center; padding: 40px 0;">{{ t('home.projects.loading', 'Loading properties…') }}</p>
+                <p v-else-if="activeCity && !cityLoading && !projectCards.length" class="mw-projects__empty" style="text-align: center; padding: 40px 0;">{{ t('home.projects.no_results', 'No properties found in this city yet.') }}</p>
+
+                <div v-else class="mw-projects__grid" id="projects-grid" data-projects-slider :style="cityLoading ? 'opacity: .5;' : ''">
+                    <article v-for="card in projectCards" :key="card.id" class="mw-projects__card" v-track-impression="card.id">
                         <div class="mw-projects__media" data-card-gallery role="link" tabindex="0" @click="card.slug && $router.push(`/property-details/${card.slug}`)" @keydown.enter="card.slug && $router.push(`/property-details/${card.slug}`)" :style="card.slug ? 'cursor: pointer;' : ''">
                             <div class="mw-projects__slides" data-gallery-track>
                                 <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-projects__photo" loading="lazy">
@@ -417,7 +579,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 {{ t('home.badges.verified') }}
                             </span>
                             <button type="button" class="mw-projects__save" :class="{ 'is-saved': isWishlisted(card.id) }" :aria-label="t('home.aria.save_property')" :aria-pressed="isWishlisted(card.id)" @click.stop="toggleWishlist(card.id)">
-                                <img src="/frontend/assets/images/icons/heart.svg" alt="" width="24" height="24">
+                                <img :src="isWishlisted(card.id) ? '/frontend/assets/images/icons/heart-filled.svg' : '/frontend/assets/images/icons/heart.svg'" alt="" width="24" height="24">
                             </button>
                             <button type="button" class="mw-projects__nav mw-projects__nav--prev" data-gallery-prev :aria-label="t('home.aria.previous_photo')" @click.stop>
                                 <img src="/frontend/assets/images/icons/chevron.svg" alt="">
@@ -460,14 +622,14 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                             <div class="mw-projects__divider"></div>
                             <div class="mw-projects__foot-row">
                                 <span class="mw-projects__type">{{ card.type }}</span>
-                                <span class="mw-projects__price">{{ card.price }}</span>
+                                <span class="mw-projects__price">{{ formatPrice(card.priceValue, card.price) }}</span>
                             </div>
                         </div>
                     </article>
                 </div>
 
                 <div class="mw-projects__actions">
-                    <router-link to="/properties" class="mw-btn mw-btn--solid">
+                    <router-link :to="projectsViewAllLink" class="mw-btn mw-btn--solid">
                         {{ projectsButtonLabel }}
                         <img src="/frontend/assets/images/icons/arrow-up-right.svg" alt="" class="mw-projects__view-all-icon">
                     </router-link>
@@ -491,7 +653,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
 
                 <div class="mw-highlight__carousel">
                     <div class="mw-highlight__track" data-highlight-slider>
-                        <article v-for="(card, index) in highlightCards" :key="index" class="mw-highlight__card">
+                        <article v-for="(card, index) in highlightCards" :key="index" class="mw-highlight__card" v-track-impression="card.id">
                             <div class="mw-highlight__media" data-card-gallery role="link" tabindex="0" @click="card.slug && $router.push(`/property-details/${card.slug}`)" @keydown.enter="card.slug && $router.push(`/property-details/${card.slug}`)" :style="card.slug ? 'cursor: pointer;' : ''">
                                 <div class="mw-highlight__slides" data-gallery-track>
                                     <img v-for="(img, i) in card.images" :key="i" :src="card.isAbsoluteImage ? img : `/frontend/assets/images/home/${img}`" :alt="i === 0 ? card.name : ''" class="mw-highlight__photo" loading="lazy">
@@ -518,7 +680,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 </span>
                             </div>
                             <div class="mw-highlight__body">
-                                <span class="mw-highlight__price">{{ card.price }}</span>
+                                <span class="mw-highlight__price">{{ formatPrice(card.priceValue, card.price) }}</span>
                                 <h3 class="mw-highlight__name"><router-link v-if="card.slug" :to="`/property-details/${card.slug}`">{{ card.name }}</router-link><template v-else>{{ card.name }}</template></h3>
                                 <p class="mw-highlight__location">
                                     <img src="/frontend/assets/images/icons/location.svg" alt="" width="18" height="18">
@@ -549,17 +711,8 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             </div>
         </section>
 
-        <section class="mw-home-banner" v-if="homeAd && homeAd.image_url">
-            <div class="container-ctn">
-                <a :href="homeAd.link_url || '#'" class="mw-home-banner__card" :target="homeAd.link_url ? '_blank' : null" rel="noopener">
-                    <span class="mw-home-banner__label">{{ t('home.badges.advertisement') }}</span>
-                    <picture>
-                        <source v-if="homeAd.mobile_image_url" media="(max-width: 767px)" :srcset="homeAd.mobile_image_url">
-                        <img :src="homeAd.image_url" :alt="homeAd.image_alt || homeAd.name" class="mw-home-banner__image" loading="lazy">
-                    </picture>
-                </a>
-            </div>
-        </section>
+        <!-- Admin › Ads, placement "Home" — loaded live so several ads take turns. -->
+        <AdBlock placement="home" />
 
         <section class="mw-post-property mw-section mw-section--alt" id="post-property" v-if="showPostProperty">
             <div class="container-ctn">
@@ -616,7 +769,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                 </div>
 
                 <div class="mw-popular-places__slider" data-places-slider>
-                    <a v-for="(place, index) in popularPlaces" :key="index" href="#" class="mw-popular-places__card">
+                    <a v-for="(place, index) in popularPlaces" :key="index" :href="router.resolve(place.to).href" class="mw-popular-places__card" @click.prevent="router.push(place.to)">
                         <div class="mw-popular-places__media">
                             <img :src="place.imageSrc" :alt="place.name" loading="lazy">
                             <div class="mw-popular-places__foot">
@@ -658,11 +811,11 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     </div>
 
                     <div class="mw-luxury__stage">
-                        <div class="mw-luxury__slider" data-luxury-slider>
-                            <article v-for="(card, index) in luxuryCards" :key="index" class="mw-luxury__card">
+                        <div class="mw-luxury__slider" data-luxury-slider @click="openPropertyCard">
+                            <article v-for="(card, index) in luxuryCards" :key="index" class="mw-luxury__card" v-track-impression="card.id" :data-property-slug="card.slug" :style="card.slug ? 'cursor: pointer;' : ''">
                                 <img :src="card.image" :alt="card.name" class="mw-luxury__photo" :class="{ 'mw-luxury__photo--villa': card.villa }" loading="lazy">
                                 <span class="mw-luxury__tag">{{ t('home.hero.tabs.buy') }}</span>
-                                <button type="button" class="mw-luxury__save" :aria-label="t('home.aria.save_property')" aria-pressed="false">
+                                <button type="button" class="mw-luxury__save" :class="{ 'is-saved': isWishlisted(card.id) }" :aria-label="t('home.aria.save_property')" :aria-pressed="isWishlisted(card.id)" @click.stop="toggleWishlist(card.id)">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path d="M16.696 3C14.652 3 12.887 4.197 12 5.943C11.113 4.197 9.348 3 7.304 3C4.374 3 2 5.457 2 8.481C2 11.505 3.817 14.277 6.165 16.554C8.513 18.831 12 21 12 21C12 21 15.374 18.867 17.835 16.554C20.46 14.088 22 11.514 22 8.481C22 5.448 19.626 3 16.696 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
@@ -688,7 +841,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                         </span>
                                     </div>
                                     <div class="mw-luxury__foot">
-                                        <span class="mw-luxury__price">{{ card.price }}</span>
+                                        <span class="mw-luxury__price">{{ formatPrice(card.priceValue, card.price) }}</span>
                                         <div class="mw-luxury__contacts">
                                             <a href="mailto:info@mightywarnersrealty.com" class="mw-luxury__contact" :aria-label="t('home.contact_card.mail')">
                                                 <img src="/frontend/assets/images/icons/luxury-email.svg" alt="" width="40" height="40">
@@ -756,15 +909,15 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                 </div>
 
                 <div class="mw-realty__carousel">
-                    <div class="mw-realty__track" data-realty-slider>
-                        <article v-for="(card, index) in realtyCards" :key="index" class="mw-realty__card">
+                    <div class="mw-realty__track" data-realty-slider @click="openPropertyCard">
+                        <article v-for="(card, index) in realtyCards" :key="index" class="mw-realty__card" v-track-impression="card.id" :data-property-slug="card.slug" :style="card.slug ? 'cursor: pointer;' : ''">
                             <div class="mw-realty__media">
                                 <img :src="card.image" :alt="card.name" class="mw-realty__photo" loading="lazy">
                                 <span class="mw-badge mw-badge--success mw-realty__verified">
                                     <img src="/frontend/assets/images/icons/verified.svg" alt="" width="18" height="18">
                                     {{ t('home.badges.verified') }}
                                 </span>
-                                <button type="button" class="mw-realty__save" :aria-label="t('home.aria.save_property')" aria-pressed="false">
+                                <button type="button" class="mw-realty__save" :class="{ 'is-saved': isWishlisted(card.id) }" :aria-label="t('home.aria.save_property')" :aria-pressed="isWishlisted(card.id)" @click.stop="toggleWishlist(card.id)">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <path d="M16.696 3C14.652 3 12.887 4.197 12 5.943C11.113 4.197 9.348 3 7.304 3C4.374 3 2 5.457 2 8.481C2 11.505 3.817 14.277 6.165 16.554C8.513 18.831 12 21 12 21C12 21 15.374 18.867 17.835 16.554C20.46 14.088 22 11.514 22 8.481C22 5.448 19.626 3 16.696 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
@@ -784,7 +937,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 </div>
                                 <div class="mw-realty__divider"></div>
                                 <div class="mw-realty__foot">
-                                    <span class="mw-realty__price">{{ card.price }}</span>
+                                    <span class="mw-realty__price">{{ formatPrice(card.priceValue, card.price) }}</span>
                                     <div class="mw-realty__actions">
                                         <a href="mailto:info@mightywarnersrealty.com" :aria-label="t('home.aria.email')"><img src="/frontend/assets/images/icons/realty-email.svg" alt="" width="40" height="40"></a>
                                         <a href="tel:+971585899990" :aria-label="t('home.aria.call')"><img src="/frontend/assets/images/icons/realty-phone.svg" alt="" width="40" height="40"></a>
@@ -819,10 +972,10 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     </div>
                 </div>
 
-                <div id="communities-panels">
+                <div id="communities-panels" @click="openCommunity">
                     <div class="mw-communities__grid" data-category="for-sale">
                         <div v-for="(col, ci) in communitiesColumns" :key="ci" class="mw-communities__col">
-                            <a v-for="(row, ri) in col" :key="ri" href="#" class="mw-communities__row" :class="{ 'mw-communities__row--last': ri === col.length - 1 }">
+                            <a v-for="(row, ri) in col" :key="ri" :href="`/properties?listing_type=sale&location=${encodeURIComponent(row.name)}`" :data-community="row.name" class="mw-communities__row" :class="{ 'mw-communities__row--last': ri === col.length - 1 }">
                                 <img class="mw-communities__icon" :src="row.icon" alt="" width="24" height="24">
                                 <span class="mw-communities__name">{{ row.name }}</span>
                             </a>
@@ -840,13 +993,13 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                 </div>
 
                 <div class="mw-find-properties__grid">
-                    <a v-for="(card, index) in findPropertiesCards" :key="index" href="#" class="mw-find-properties__card" :class="`mw-find-properties__card--${card.modifier}`">
+                    <router-link v-for="(card, index) in findPropertiesCards" :key="index" :to="card.link" class="mw-find-properties__card" :class="`mw-find-properties__card--${card.modifier}`">
                         <img :src="card.image" :alt="`${card.type} properties`" loading="lazy">
                         <span class="mw-find-properties__label">
                             <span class="mw-find-properties__label-type">{{ card.type }}</span>
                             <span class="mw-find-properties__label-count">{{ card.count }}</span>
                         </span>
-                    </a>
+                    </router-link>
 
                     <div class="mw-find-properties__card mw-find-properties__card--tall">
                         <img src="/frontend/assets/images/home/find-tall.jpg" :alt="t('home.find_properties.tall_alt')" loading="lazy">
@@ -930,26 +1083,26 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                     </div>
 
                     <div class="mw-contact__form-card">
-                        <form class="mw-contact__form" novalidate @submit.prevent>
+                        <form class="mw-contact__form" @submit.prevent="submitContactForm">
                             <div class="mw-contact__field">
                                 <label for="contact-name">{{ t('home.contact.form.name_label') }}</label>
-                                <input type="text" id="contact-name" name="name" :placeholder="t('home.contact.form.name_placeholder')" required>
+                                <input type="text" id="contact-name" name="name" v-model="contactForm.name" maxlength="255" :placeholder="t('home.contact.form.name_placeholder')" required>
                             </div>
 
                             <div class="mw-contact__field">
                                 <label for="contact-email">{{ t('home.contact.form.email_label') }}</label>
-                                <input type="email" id="contact-email" name="email" :placeholder="t('home.contact.form.email_placeholder')" required>
+                                <input type="email" id="contact-email" name="email" v-model="contactForm.email" maxlength="255" :placeholder="t('home.contact.form.email_placeholder')" required>
                             </div>
 
                             <div class="mw-contact__field">
                                 <label for="contact-phone">{{ t('home.contact.form.phone_label') }}</label>
-                                <input type="tel" id="contact-phone" name="phone" :placeholder="t('home.contact.form.phone_placeholder')" required>
+                                <PhoneInput id="contact-phone" v-model="contactForm.phone" v-model:country-code="contactForm.phone_country_code" required />
                             </div>
 
                             <div class="mw-contact__field mw-contact__field--select">
                                 <label for="contact-interest">{{ t('home.contact.form.interest_label') }}</label>
                                 <div class="mw-contact__select-wrap">
-                                    <select id="contact-interest" name="interest" required>
+                                    <select id="contact-interest" name="interest" v-model="contactForm.interest" required>
                                         <option value="" selected disabled hidden>{{ t('home.contact.form.interest_select_placeholder') }}</option>
                                         <option value="buy">{{ t('home.contact.form.interest_buy') }}</option>
                                         <option value="rent">{{ t('home.contact.form.interest_rent') }}</option>
@@ -962,10 +1115,11 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
 
                             <div class="mw-contact__field">
                                 <label for="contact-message">{{ t('home.contact.form.message_label') }}</label>
-                                <textarea id="contact-message" name="message" rows="5" :placeholder="t('home.contact.form.message_placeholder')"></textarea>
+                                <textarea id="contact-message" name="message" rows="5" v-model="contactForm.message" maxlength="2000" :placeholder="t('home.contact.form.message_placeholder')"></textarea>
                             </div>
 
-                            <button type="submit" class="mw-contact__submit">{{ t('home.contact.form.submit') }}</button>
+                            <p v-if="contactError" class="mw-form-feedback mw-form-feedback--error" role="alert">{{ contactError }}</p>
+                            <button type="submit" class="mw-contact__submit" :disabled="contactSubmitting">{{ contactSubmitting ? t('home.contact.form.sending') : t('home.contact.form.submit') }}</button>
                         </form>
                     </div>
                 </div>

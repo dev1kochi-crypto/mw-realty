@@ -25,7 +25,7 @@ class PortalAccountRejectedNotification extends Notification
         return [
             'title' => 'Account rejected',
             'message' => $this->reason ? 'Reason: ' . $this->reason : 'Your account application was rejected.',
-            'url' => route('portal.profile.edit'),
+            'url' => route('crm.app', 'profile'),
             'icon' => 'fa-times-circle',
             'tone' => 'red',
         ];

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Filter;
 use App\Models\FilterValue;
+use App\Models\NearbyPlace;
 use Illuminate\Database\Seeder;
 
 class FilterSeeder extends Seeder
@@ -51,12 +52,7 @@ class FilterSeeder extends Seeder
             'nearby_place_type' => [
                 'label' => 'Nearby Place Type',
                 'show_on' => [],
-                'values' => [
-                    'school' => ['en' => 'School', 'ar' => 'مدرسة'],
-                    'hospital' => ['en' => 'Hospital', 'ar' => 'مستشفى'],
-                    'restaurant' => ['en' => 'Restaurant', 'ar' => 'مطعم'],
-                    'attraction' => ['en' => 'Attraction', 'ar' => 'معلم سياحي'],
-                ],
+                'values' => NearbyPlace::DEFAULT_TYPES,
             ],
         ];
 

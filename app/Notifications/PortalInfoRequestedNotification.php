@@ -22,7 +22,7 @@ class PortalInfoRequestedNotification extends Notification
         return [
             'title' => 'Admin has requested more information',
             'message' => 'Please check your email for the requested profile or document updates.',
-            'url' => route('portal.profile.edit'),
+            'url' => route('crm.app', 'profile'),
             'icon' => 'fa-comment-medical',
             'tone' => 'amber',
         ];

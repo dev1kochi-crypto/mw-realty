@@ -1,0 +1,177 @@
+name: 'CRM Properties — Gallery'
+description: |-
+
+  A listing's saved photos — `{reference_no}-{n}.jpeg`, shown in `image_sequence` order. New photos
+  are uploaded with the listing form (images[]).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/crm/properties/{id}/images'
+    metadata:
+      custom: []
+      groupName: 'CRM Properties — Gallery'
+      groupDescription: |-
+
+        A listing's saved photos — `{reference_no}-{n}.jpeg`, shown in `image_sequence` order. New photos
+        are uploaded with the listing form (images[]).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete every photo'
+      description: 'Removes the whole per-listing image folder in one go.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the property.'
+        required: true
+        example: 82
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 82
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/properties/{id}/images/reorder'
+    metadata:
+      custom: []
+      groupName: 'CRM Properties — Gallery'
+      groupDescription: |-
+
+        A listing's saved photos — `{reference_no}-{n}.jpeg`, shown in `image_sequence` order. New photos
+        are uploaded with the listing form (images[]).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reorder photos'
+      description: 'Filenames never change — this rewrites the display order (the first photo is the featured one).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the property.'
+        required: true
+        example: 82
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 82
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      order:
+        custom: []
+        name: order
+        description: 'Photo numbers in the new order.'
+        required: true
+        example:
+          - 3
+          - 1
+          - 2
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      order:
+        - 3
+        - 1
+        - 2
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/crm/properties/{id}/images/{number}'
+    metadata:
+      custom: []
+      groupName: 'CRM Properties — Gallery'
+      groupDescription: |-
+
+        A listing's saved photos — `{reference_no}-{n}.jpeg`, shown in `image_sequence` order. New photos
+        are uploaded with the listing form (images[]).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a photo'
+      description: '`number` is the gallery position suffix from the filename ({reference_no}-{number}.jpeg).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the property.'
+        required: true
+        example: 82
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      number:
+        custom: []
+        name: number
+        description: ''
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 82
+      number: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

@@ -34,7 +34,7 @@ class PortalInfoRequestedMail extends Mailable
             with: [
                 'portalUser' => $this->portalUser,
                 'requestMessage' => $this->message,
-                'profileUrl' => route('portal.profile.edit'),
+                'profileUrl' => route('crm.app', 'profile'),
             ],
         );
     }

@@ -2,8 +2,20 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useWishlist, patchSessionUser } from '../composables/useWishlist';
 import { useStaticText } from '../composables/useStaticText';
+import { useCurrency } from '../composables/useCurrency';
 
 const { t } = useStaticText();
+// Prices arrive in AED (price_value) and are shown in the visitor's chosen currency.
+const { formatPrice, formatAmount, selectedCurrency } = useCurrency();
+
+/** The saved search's summary line, with its AED price range shown in the chosen currency. */
+function savedSearchMeta(search) {
+    const min = Number(search.criteria?.min_price) || 0;
+    const max = Number(search.criteria?.max_price) || 0;
+    if (!search.meta || (!min && !max)) return search.meta;
+    const range = `${selectedCurrency.value.code} ${formatAmount(min)} – ${max ? formatAmount(max) : 'any'}`;
+    return search.meta.replace(/AED [\d,.]+ – (?:[\d,.]+|any)/, range);
+}
 
 const navTabs = computed(() => [
     { filter: 'overview', icon: 'icon-home.svg', label: t('profile.nav.overview') },
@@ -142,7 +154,7 @@ watch(dashboard, () => {
                     <aside class="mw-dashboard__sidebar" data-sticky-sidebar>
                         <div class="mw-dashboard__profile">
                             <span class="mw-dashboard__avatar">
-                                <img :src="avatarPreview || dashboard.profile.avatar_url || '/frontend/assets/images/home/testimonial-anna.jpg'" alt="">
+                                <img :src="avatarPreview || dashboard.profile.avatar_url || '/frontend/assets/images/placeholders/avatar.svg'" alt="">
                             </span>
                             <p class="mw-dashboard__name">{{ dashboard.profile.name }}</p>
                             <p class="mw-dashboard__email">{{ dashboard.profile.email }}</p>
@@ -211,13 +223,13 @@ watch(dashboard, () => {
                                         <router-link :to="`/property-details/${property.slug}`"><img :src="property.image" :alt="property.name" class="mw-projects__photo"></router-link>
                                         <span v-if="property.purpose_badge" class="mw-dubai-card__purpose">{{ property.purpose_badge }}</span>
                                         <button type="button" class="mw-dubai-card__fav is-saved" :aria-label="t('profile.wishlist.remove_aria')" @click="removeFromWishlist(property.id)">
-                                            <img src="/frontend/assets/images/icons/heart.svg" alt="" width="18" height="18">
+                                            <img src="/frontend/assets/images/icons/heart-filled.svg" alt="" width="18" height="18">
                                         </button>
                                         <span class="mw-dubai-card__type">{{ property.type }}</span>
                                     </div>
                                     <div class="mw-dubai-card__body">
                                         <div class="mw-dubai-card__price-row">
-                                            <span class="mw-dubai-card__price">{{ property.price }}</span>
+                                            <span class="mw-dubai-card__price">{{ formatPrice(property.price_value, property.price) }}</span>
                                             <span v-if="property.furnished" class="mw-dubai-card__amenity">{{ t('profile.wishlist.furnished_badge') }}</span>
                                         </div>
                                         <h3 class="mw-dubai-card__title"><router-link :to="`/property-details/${property.slug}`">{{ property.name }}</router-link></h3>
@@ -263,10 +275,10 @@ watch(dashboard, () => {
                                 <div v-for="search in dashboard.saved_searches" :key="search.id" class="mw-dashboard__search-row">
                                     <div class="mw-dashboard__search-row-info">
                                         <p class="mw-dashboard__search-row-title">{{ search.title }}</p>
-                                        <p class="mw-dashboard__search-row-meta">{{ search.meta }}</p>
+                                        <p class="mw-dashboard__search-row-meta">{{ savedSearchMeta(search) }}</p>
                                     </div>
                                     <div class="mw-dashboard__search-row-actions">
-                                        <router-link to="/properties" class="mw-dashboard__link-btn">{{ t('profile.saved_searches.view_results') }}</router-link>
+                                        <router-link :to="{ path: '/properties', query: search.criteria || {} }" class="mw-dashboard__link-btn">{{ t('profile.saved_searches.view_results') }}</router-link>
                                         <button type="button" class="mw-dashboard__icon-btn" :aria-label="t('profile.saved_searches.delete_aria')" @click="deleteSavedSearch(search.id)">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
                                         </button>
@@ -310,7 +322,7 @@ watch(dashboard, () => {
                             <form class="mw-dashboard__settings-form" @submit.prevent="saveSettings">
                                 <div class="mw-dashboard__avatar-upload">
                                     <span class="mw-dashboard__avatar-upload-preview">
-                                        <img :src="avatarPreview || dashboard.profile.avatar_url || '/frontend/assets/images/home/testimonial-anna.jpg'" alt="">
+                                        <img :src="avatarPreview || dashboard.profile.avatar_url || '/frontend/assets/images/placeholders/avatar.svg'" alt="">
                                     </span>
                                     <div>
                                         <button type="button" class="mw-dashboard__link-btn" @click="avatarInput?.click()">{{ t('profile.settings.change_photo') }}</button>

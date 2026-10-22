@@ -23,3 +23,5 @@ Homestead.yaml
 Thumbs.db
 /MW-Reality
 /public/sitemap.xml
+/public/llms.txt
+/public/robots.txt

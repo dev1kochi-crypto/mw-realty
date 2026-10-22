@@ -1,0 +1,166 @@
+name: 'CRM Reports'
+description: |-
+
+  Reports — Leads, Properties, Sales and (agencies only) Agents. The whole section is a plan
+  entitlement (plans.reports_access): without it every report answers `locked` (with the plan to
+  mention) instead of data. Super Admin always has it and sees every account's data.
+  Chart series come as `{labels: [], values: []}`.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/reports/sales/export
+    metadata:
+      custom: []
+      groupName: 'CRM Reports'
+      groupDescription: |-
+
+        Reports — Leads, Properties, Sales and (agencies only) Agents. The whole section is a plan
+        entitlement (plans.reports_access): without it every report answers `locked` (with the plan to
+        mention) instead of data. Super Admin always has it and sees every account's data.
+        Chart series come as `{labels: [], values: []}`.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Export the Sales deals (CSV)'
+      description: 'Every deal matching the Sales filters, streamed in chunks so a large export never sits in memory.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/crm/reports/{id?}'
+    metadata:
+      custom: []
+      groupName: 'CRM Reports'
+      groupDescription: |-
+
+        Reports — Leads, Properties, Sales and (agencies only) Agents. The whole section is a plan
+        entitlement (plans.reports_access): without it every report answers `locked` (with the plan to
+        mention) instead of data. Super Admin always has it and sees every account's data.
+        Chart series come as `{labels: [], values: []}`.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'A report'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the .'
+        required: false
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      report:
+        custom: []
+        name: report
+        description: 'leads, properties, sales or agents (agencies / Super Admin).'
+        required: false
+        example: leads
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: consequatur
+      report: leads
+    queryParameters:
+      range:
+        custom: []
+        name: range
+        description: '7, 30, 90 or 365 days.'
+        required: false
+        example: 30
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      q:
+        custom: []
+        name: q
+        description: 'Sales only — client, email, phone, property, reference or agent.'
+        required: false
+        example: marina
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      outcome:
+        custom: []
+        name: outcome
+        description: 'Sales only — won, lost or all.'
+        required: false
+        example: won
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      listing:
+        custom: []
+        name: listing
+        description: 'Sales only — sale or rent.'
+        required: false
+        example: sale
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: 'Sales only — the deals page.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      range: 30
+      q: marina
+      outcome: won
+      listing: sale
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

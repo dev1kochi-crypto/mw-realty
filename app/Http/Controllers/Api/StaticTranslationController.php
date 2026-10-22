@@ -11,6 +11,8 @@ use Illuminate\Routing\Controller;
  * text, etc.), keyed by ?lang= code. Reads the same JSON files the admin's
  * Languages > Translations screen edits (StaticTranslationService), so an admin
  * edit there shows up here immediately, no deploy needed.
+ *
+ * @group App Config
  */
 class StaticTranslationController extends Controller
 {
@@ -18,6 +20,14 @@ class StaticTranslationController extends Controller
     {
     }
 
+    /**
+     * UI translations
+     *
+     * Static UI copy (labels, buttons…) as a key → text map for one language. Cache it on the
+     * device per language.
+     *
+     * @queryParam lang string A code from `GET /api/languages`. Example: en
+     */
     public function index(Request $request)
     {
         $code = strtolower((string) $request->query('lang', $this->staticTranslations->masterCode()));

@@ -3,6 +3,9 @@ Disallow: /admin
 Disallow: /portal
 Disallow: /login
 Disallow: /signup
+Disallow: /verify-email
+Disallow: /forgot-password
+Disallow: /reset-password
 Disallow: /agent-login
 Disallow: /agent-signup
 Disallow: /agency-login

@@ -8,7 +8,9 @@ return new class extends Migration
     public function up(): void
     {
         // 'checkout' = online Stripe payment started but not confirmed yet (see StripeBillingService).
-        DB::statement("ALTER TABLE plan_upgrade_requests MODIFY status ENUM('pending', 'approved', 'rejected', 'checkout') NOT NULL DEFAULT 'pending'");
+        DB::getDriverName() === 'mysql'
+            ? DB::statement("ALTER TABLE plan_upgrade_requests MODIFY status ENUM('pending', 'approved', 'rejected', 'checkout') NOT NULL DEFAULT 'pending'")
+            : \Illuminate\Support\Facades\Schema::table('plan_upgrade_requests', fn ($t) => $t->string('status', 20)->default('pending')->change());
     }
 
     public function down(): void

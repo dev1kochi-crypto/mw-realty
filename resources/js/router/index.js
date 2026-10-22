@@ -28,6 +28,13 @@ const routes = [
         meta: { title: 'Commercial Properties | MW Realty', bodyClass: 'agents-page commercial-page', activeNav: 'commercial' },
     },
     {
+        // Same page and filters as /commercial, results on a map (PropertyMap.vue).
+        path: '/commercial/map',
+        name: 'commercial-map',
+        component: () => import('../pages/Commercial.vue'),
+        meta: { title: 'Commercial Properties on Map | MW Realty', bodyClass: 'agents-page commercial-page map-view-page', activeNav: 'commercial', mapView: true },
+    },
+    {
         path: '/agents',
         name: 'agents',
         component: () => import('../pages/Agents.vue'),
@@ -67,6 +74,35 @@ const routes = [
         component: () => import('../pages/BlogDetails.vue'),
         meta: { title: 'Blog Details | MW Realty', bodyClass: 'agents-page blog-details-page', activeNav: 'blogs' },
     },
+    {
+        path: '/market-insights',
+        name: 'market-insights',
+        component: () => import('../pages/MarketInsights.vue'),
+        meta: { title: 'Market Insights | MW Realty', bodyClass: 'agents-page market-insights-page', activeNav: 'market-insights' },
+    },
+    {
+        path: '/market-insights/:slug',
+        name: 'market-insight-details',
+        component: () => import('../pages/MarketInsightDetails.vue'),
+        meta: { title: 'Market Insights | MW Realty', bodyClass: 'agents-page market-insight-details-page', activeNav: 'market-insights' },
+    },
+    {
+        path: '/careers',
+        name: 'careers',
+        component: () => import('../pages/Careers.vue'),
+        meta: { title: 'Careers | MW Realty', bodyClass: 'agents-page careers-page', activeNav: 'careers' },
+    },
+    {
+        path: '/careers/:slug',
+        name: 'career-details',
+        component: () => import('../pages/CareerDetails.vue'),
+        meta: { title: 'Careers | MW Realty', bodyClass: 'agents-page career-details-page', activeNav: 'careers' },
+    },
+    // Calculators: one page (Calculator.vue), meta.calculator picks which — see useCalculatorLinks.
+    { path: '/mortgage-calculator', name: 'mortgage-calculator', component: () => import('../pages/Calculator.vue'), meta: { title: 'Mortgage Calculator | MW Realty', bodyClass: 'agents-page calculator-page', activeNav: 'calculators', calculator: 'mortgage' } },
+    { path: '/eligibility-calculator', name: 'eligibility-calculator', component: () => import('../pages/Calculator.vue'), meta: { title: 'Mortgage Eligibility Calculator | MW Realty', bodyClass: 'agents-page calculator-page', activeNav: 'calculators', calculator: 'eligibility' } },
+    { path: '/rent-vs-buy-calculator', name: 'rent-vs-buy-calculator', component: () => import('../pages/Calculator.vue'), meta: { title: 'Rent vs Buy Calculator | MW Realty', bodyClass: 'agents-page calculator-page', activeNav: 'calculators', calculator: 'rent-vs-buy' } },
+    { path: '/refinance-calculator', name: 'refinance-calculator', component: () => import('../pages/Calculator.vue'), meta: { title: 'Mortgage Refinance Calculator | MW Realty', bodyClass: 'agents-page calculator-page', activeNav: 'calculators', calculator: 'refinance' } },
     {
         path: '/contact',
         name: 'contact',
@@ -116,6 +152,40 @@ const routes = [
         meta: { title: 'Properties in Dubai | MW Realty', bodyClass: 'agents-page properties-dubai-page' },
     },
     {
+        // Same page and filters as /properties, results on a map (PropertyMap.vue).
+        path: '/properties/map',
+        name: 'properties-map',
+        component: () => import('../pages/PropertiesDubai.vue'),
+        meta: { title: 'Properties on Map | MW Realty', bodyClass: 'agents-page properties-dubai-page map-view-page', mapView: true },
+    },
+    {
+        // Same listing page and design, showing every premium (CRM-featured) listing —
+        // residential and commercial, each card tagged with which it is. See PropertiesDubai.vue `premium`.
+        path: '/premium-properties',
+        name: 'premium-properties',
+        component: () => import('../pages/PropertiesDubai.vue'),
+        meta: { title: 'Premium Properties | MW Realty', bodyClass: 'agents-page properties-dubai-page premium-properties-page', premium: true },
+    },
+    {
+        // Home "Realty Property" view-all: Super Admin's Marketing Properties list, in its order.
+        path: '/marketing-properties',
+        name: 'marketing-properties',
+        component: () => import('../pages/PropertiesDubai.vue'),
+        meta: { title: 'Realty Properties | MW Realty', bodyClass: 'agents-page properties-dubai-page premium-properties-page', marketing: true },
+    },
+    {
+        path: '/marketing-properties/map',
+        name: 'marketing-properties-map',
+        component: () => import('../pages/PropertiesDubai.vue'),
+        meta: { title: 'Realty Properties on Map | MW Realty', bodyClass: 'agents-page properties-dubai-page premium-properties-page map-view-page', marketing: true, mapView: true },
+    },
+    {
+        path: '/premium-properties/map',
+        name: 'premium-properties-map',
+        component: () => import('../pages/PropertiesDubai.vue'),
+        meta: { title: 'Premium Properties on Map | MW Realty', bodyClass: 'agents-page properties-dubai-page premium-properties-page map-view-page', premium: true, mapView: true },
+    },
+    {
         path: '/property-details/:slug',
         name: 'property-details',
         component: () => import('../pages/PropertyDetails.vue'),
@@ -154,7 +224,8 @@ const routes = [
     {
         path: '/:pathMatch(.*)*',
         name: 'not-found',
-        component: () => import('../pages/NotFound.vue'),
+        // Also serves "Blog design" landing pages (/{slug}) — see LandingOrNotFound.vue.
+        component: () => import('../pages/LandingOrNotFound.vue'),
         meta: { title: 'Page Not Found | MW Realty', bodyClass: 'agents-page not-found-page' },
     },
 ];

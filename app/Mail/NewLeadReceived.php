@@ -22,7 +22,7 @@ class NewLeadReceived extends Mailable
     {
         $propertyLabel = $this->lead->property?->getTranslation('title') ?? 'your listing';
 
-        return new Envelope(subject: 'New Enquiry — ' . $propertyLabel);
+        return new Envelope(subject: ($this->lead->enquiry_count > 1 ? 'Repeat Enquiry — ' : 'New Enquiry — ') . $propertyLabel);
     }
 
     public function content(): Content

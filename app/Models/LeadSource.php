@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class LeadSource extends Model
 {
+    use Concerns\SharedMasterData;
+
     protected $fillable = ['portal_user_id', 'name', 'order_index'];
 
     public const DEFAULTS = ['Website', 'Referral', 'Walk-in', 'Social Media', 'Property Portal'];
@@ -20,14 +22,39 @@ class LeadSource extends Model
         return $this->hasMany(Lead::class, 'source_id');
     }
 
-    public function scopeForOwner($query, ?int $ownerId)
+    /**
+     * Sources the website forms and system channels stamp on leads (Lead::SOURCE_NAMES) — Super
+     * Admin's global sources, so every agency / agent gets them. Any other channel's source is
+     * created for the lead's own account instead (Lead::applyStageAndSourceDefaults()).
+     */
+    public static function systemNames(): array
     {
-        return $query->when($ownerId, fn ($q) => $q->where('portal_user_id', $ownerId));
+        return array_values(array_unique(array_merge(array_values(Lead::SOURCE_NAMES), ['Landing Page'])));
     }
 
-    /** Idempotent — only seeds if this owner has no sources yet. */
-    public static function seedDefaultsFor(PortalUser $owner): void
+    public static function isSystemName(string $name): bool
     {
+        return in_array(mb_strtolower($name), array_map('mb_strtolower', static::systemNames()), true);
+    }
+
+    /** Adds whichever website / system sources Super Admin doesn't have yet (idempotent, by name). */
+    public static function ensureSystemSources(): void
+    {
+        $globalId = static::globalOwnerId();
+        $existing = static::where('portal_user_id', $globalId)->pluck('name')->map(fn ($n) => mb_strtolower($n))->all();
+        $order = (int) static::where('portal_user_id', $globalId)->max('order_index');
+
+        foreach (static::systemNames() as $name) {
+            if (!in_array(mb_strtolower($name), $existing, true)) {
+                static::create(['portal_user_id' => $globalId, 'name' => $name, 'order_index' => ++$order]);
+            }
+        }
+    }
+
+    /** The defaults are Super Admin's global sources, seeded once (idempotent) — no per-account copies. */
+    public static function seedDefaultsFor(?PortalUser $owner = null): void
+    {
+        $owner = PortalUser::findOrFail(static::globalOwnerId());
         if (static::where('portal_user_id', $owner->id)->exists()) {
             return;
         }

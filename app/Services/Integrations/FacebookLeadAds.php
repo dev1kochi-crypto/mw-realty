@@ -1,0 +1,241 @@
+<?php
+
+namespace App\Services\Integrations;
+
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Facades\Http;
+use RuntimeException;
+
+/**
+ * Facebook Graph API calls for the Lead Ads integration (config/services.php "facebook_leads"):
+ * Facebook Login for connecting Pages, subscribing a Page to the app's "leadgen" webhook, reading
+ * leads, and checking webhook signatures. Failures throw RuntimeException with Facebook's message.
+ */
+class FacebookLeadAds
+{
+    /**
+     * Permissions asked for at Facebook Login: list the user's Pages, subscribe them, read their lead
+     * forms + leads (Facebook requires pages_manage_ads for {page}/leadgen_forms) and the ad names.
+     */
+    public const SCOPES = ['pages_show_list', 'pages_read_engagement', 'pages_manage_metadata', 'pages_manage_ads', 'leads_retrieval', 'ads_read'];
+
+    /** Lead fields read from Facebook. The ad / campaign ones need ads_read — see lead(). */
+    private const LEAD_FIELDS = 'id,created_time,field_data,form_id,ad_id,ad_name,adset_name,campaign_name,platform,is_organic';
+    private const LEAD_FIELDS_BASIC = 'id,created_time,field_data,form_id,ad_id,platform,is_organic';
+
+    public function configured(): bool
+    {
+        return filled(config('services.facebook_leads.app_id')) && filled(config('services.facebook_leads.app_secret'));
+    }
+
+    public function loginUrl(string $redirectUri, string $state): string
+    {
+        return 'https://www.facebook.com/' . $this->version() . '/dialog/oauth?' . http_build_query([
+            'client_id' => config('services.facebook_leads.app_id'),
+            'redirect_uri' => $redirectUri,
+            'state' => $state,
+            'scope' => implode(',', self::SCOPES),
+            'response_type' => 'code',
+        ]);
+    }
+
+    /** Login code → long-lived user token (Page tokens read with it don't expire). */
+    public function userToken(string $code, string $redirectUri): string
+    {
+        $short = $this->get('oauth/access_token', [
+            'client_id' => config('services.facebook_leads.app_id'),
+            'client_secret' => config('services.facebook_leads.app_secret'),
+            'redirect_uri' => $redirectUri,
+            'code' => $code,
+        ])['access_token'] ?? null;
+        if (!$short) {
+            throw new RuntimeException('Facebook did not return an access token.');
+        }
+
+        return $this->get('oauth/access_token', [
+            'grant_type' => 'fb_exchange_token',
+            'client_id' => config('services.facebook_leads.app_id'),
+            'client_secret' => config('services.facebook_leads.app_secret'),
+            'fb_exchange_token' => $short,
+        ])['access_token'] ?? $short;
+    }
+
+    /** The logged-in user's app-scoped Facebook id — what a data deletion request names. */
+    public function userId(string $userToken): string
+    {
+        return (string) ($this->get('me', ['fields' => 'id', 'access_token' => $userToken])['id'] ?? '');
+    }
+
+    /** @return array<int, array{id: string, name: string, access_token: string, picture: ?string}> Pages the user manages. */
+    public function pages(string $userToken): array
+    {
+        $pages = [];
+        $params = ['fields' => 'id,name,access_token,picture{url}', 'limit' => 100, 'access_token' => $userToken];
+        foreach ($this->paginate('me/accounts', $params) as $page) {
+            if (!empty($page['access_token'])) {
+                $pages[] = ['id' => (string) $page['id'], 'name' => $page['name'] ?? $page['id'], 'access_token' => $page['access_token'], 'picture' => $page['picture']['data']['url'] ?? null];
+            }
+        }
+
+        return $pages;
+    }
+
+    /** Sends the Page's new leads to this app's webhook. */
+    public function subscribe(string $pageId, string $pageToken): void
+    {
+        $result = $this->post("{$pageId}/subscribed_apps", ['subscribed_fields' => 'leadgen', 'access_token' => $pageToken]);
+        if (empty($result['success'])) {
+            throw new RuntimeException('Facebook did not confirm the webhook subscription.');
+        }
+    }
+
+    public function unsubscribe(string $pageId, string $pageToken): void
+    {
+        $this->request()->delete($this->url("{$pageId}/subscribed_apps"), ['access_token' => $pageToken]);
+    }
+
+    /** Cheap call with the Page token — throws FacebookTokenException once Facebook stops accepting it. */
+    public function checkPageToken(string $pageId, string $pageToken): void
+    {
+        $this->get($pageId, ['fields' => 'id', 'access_token' => $pageToken]);
+    }
+
+    /** One lead by its leadgen id. Without ads_read the ad / campaign names are left out. */
+    public function lead(string $leadgenId, string $pageToken): array
+    {
+        try {
+            return $this->get($leadgenId, ['fields' => self::LEAD_FIELDS, 'access_token' => $pageToken]);
+        } catch (FacebookTokenException $e) {
+            throw $e;
+        } catch (RuntimeException) {
+            return $this->get($leadgenId, ['fields' => self::LEAD_FIELDS_BASIC, 'access_token' => $pageToken]);
+        }
+    }
+
+    /**
+     * @return array<int, array{id: string, name: ?string, status: ?string, leads_count: ?int}> All the Page's
+     * lead forms (active and archived — old campaigns' leads live on archived forms).
+     */
+    public function forms(string $pageId, string $pageToken): array
+    {
+        return array_map(fn ($f) => [
+            'id' => (string) $f['id'],
+            'name' => $f['name'] ?? null,
+            'status' => $f['status'] ?? null,
+            'leads_count' => isset($f['leads_count']) ? (int) $f['leads_count'] : null,
+        ], iterator_to_array($this->paginate("{$pageId}/leadgen_forms", ['fields' => 'id,name,status,leads_count', 'limit' => 100, 'access_token' => $pageToken]), false));
+    }
+
+    /** Leads of a form created after $since (Unix time; 0 = all of them), newest first. */
+    public function formLeads(string $formId, string $pageToken, int $since): \Generator
+    {
+        // $since <= 0 → every lead the form has, no date filter.
+        $filter = $since > 0 ? ['filtering' => json_encode([['field' => 'time_created', 'operator' => 'GREATER_THAN', 'value' => $since]])] : [];
+        try {
+            yield from $this->paginate("{$formId}/leads", ['fields' => self::LEAD_FIELDS, 'limit' => 100, 'access_token' => $pageToken] + $filter);
+        } catch (FacebookTokenException $e) {
+            throw $e;
+        } catch (RuntimeException) {
+            yield from $this->paginate("{$formId}/leads", ['fields' => self::LEAD_FIELDS_BASIC, 'limit' => 100, 'access_token' => $pageToken] + $filter);
+        }
+    }
+
+    /** @return array{ad: ?string, adset: ?string, campaign: ?string} Names for an ad id (when the lead itself didn't carry them). */
+    public function adInfo(string $adId, string $token): array
+    {
+        try {
+            $ad = $this->get($adId, ['fields' => 'name,adset{name},campaign{name}', 'access_token' => $token]);
+        } catch (\Throwable) { // names are a nice-to-have: never fail the lead over them
+            return ['ad' => null, 'adset' => null, 'campaign' => null];
+        }
+
+        return ['ad' => $ad['name'] ?? null, 'adset' => $ad['adset']['name'] ?? null, 'campaign' => $ad['campaign']['name'] ?? null];
+    }
+
+    /** Webhook request really from Facebook: X-Hub-Signature-256 = sha256 HMAC of the raw body with the app secret. */
+    public function validSignature(string $rawBody, ?string $header): bool
+    {
+        $secret = (string) config('services.facebook_leads.app_secret');
+        if ($secret === '' || !$header || !str_starts_with($header, 'sha256=')) {
+            return false;
+        }
+
+        return hash_equals('sha256=' . hash_hmac('sha256', $rawBody, $secret), $header);
+    }
+
+    /**
+     * Facebook's signed_request ("{signature}.{payload}", base64url, HMAC-SHA256 with the app secret),
+     * e.g. from the data deletion callback. The payload when the signature checks out, else null.
+     */
+    public function parseSignedRequest(string $signedRequest): ?array
+    {
+        $secret = (string) config('services.facebook_leads.app_secret');
+        if ($secret === '' || substr_count($signedRequest, '.') !== 1) {
+            return null;
+        }
+        [$encodedSig, $payload] = explode('.', $signedRequest, 2);
+        $decode = fn (string $value) => base64_decode(strtr($value, '-_', '+/'));
+
+        $data = json_decode((string) $decode($payload), true);
+        if (!is_array($data) || strtoupper($data['algorithm'] ?? '') !== 'HMAC-SHA256') {
+            return null;
+        }
+
+        return hash_equals(hash_hmac('sha256', $payload, $secret, true), (string) $decode($encodedSig)) ? $data : null;
+    }
+
+    private function paginate(string $path, array $params): \Generator
+    {
+        $response = $this->get($path, $params);
+        while (true) {
+            foreach ($response['data'] ?? [] as $row) {
+                yield $row;
+            }
+            $next = $response['paging']['next'] ?? null;
+            if (!$next) {
+                return;
+            }
+            $response = $this->send(fn () => $this->request()->get($next));
+        }
+    }
+
+    private function get(string $path, array $params): array
+    {
+        return $this->send(fn () => $this->request()->get($this->url($path), $params));
+    }
+
+    private function post(string $path, array $params): array
+    {
+        return $this->send(fn () => $this->request()->asForm()->post($this->url($path), $params));
+    }
+
+    private function send(callable $call): array
+    {
+        $response = $call();
+        $json = $response->json() ?? [];
+        if ($response->failed() || isset($json['error'])) {
+            $code = (int) ($json['error']['code'] ?? 0);
+            if (in_array($code, FacebookTokenException::CODES, true)) {
+                throw new FacebookTokenException($json['error']['message'] ?? 'Facebook rejected the access token.', $code);
+            }
+            throw new RuntimeException($json['error']['message'] ?? ('Facebook request failed (HTTP ' . $response->status() . ').'));
+        }
+
+        return $json;
+    }
+
+    private function request(): PendingRequest
+    {
+        return Http::timeout(20)->acceptJson();
+    }
+
+    private function url(string $path): string
+    {
+        return 'https://graph.facebook.com/' . $this->version() . '/' . ltrim($path, '/');
+    }
+
+    private function version(): string
+    {
+        return (string) config('services.facebook_leads.graph_version', 'v21.0');
+    }
+}

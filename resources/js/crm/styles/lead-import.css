@@ -1,0 +1,30 @@
+/* Moved from resources/views/portal/crm/leads/_lead_import_modal — Import Leads popup (.lead-import-*, .limp-*). */
+    .lead-import-type { border: 1.5px solid var(--portal-border); border-radius: 12px; cursor: pointer; background: var(--portal-surface); transition: border-color .15s ease, background .15s ease; }
+    .lead-import-type:hover { border-color: var(--portal-primary); }
+    .btn-check:checked + .lead-import-type { border-color: var(--portal-primary); background: rgba(79, 70, 229, 0.06); box-shadow: 0 0 0 1px var(--portal-primary) inset; }
+    .btn-check:focus-visible + .lead-import-type { outline: 2px solid var(--portal-primary); outline-offset: 2px; }
+
+    /* Import progress (popup + Leads page banner) */
+    .limp { display: flex; gap: 14px; align-items: flex-start; }
+    .limp-icon { position: relative; width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; background: rgba(79, 70, 229, 0.1); color: var(--portal-primary); }
+    .limp-icon.is-working::before { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--portal-primary); border-right-color: var(--portal-primary); animation: limp-spin 1s linear infinite; }
+    .limp-icon.is-working i { animation: limp-float 1.4s ease-in-out infinite; }
+    .limp-icon.is-done { background: #dcfce7; color: #15803d; animation: limp-pop .35s ease-out; }
+    .limp-icon.is-failed { background: #fee2e2; color: #b91c1c; }
+    .limp-body { flex: 1; min-width: 0; }
+    .limp-title { font-weight: 600; }
+    .limp-file { font-size: .78rem; color: var(--portal-muted, #6b7280); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .limp .progress { height: 8px; border-radius: 99px; margin: 10px 0 6px; background: var(--portal-bg); }
+    .limp .progress-bar { background-color: var(--portal-primary); border-radius: 99px; transition: width .6s ease; }
+    .limp-progress-queued .progress-bar { width: 30% !important; animation: limp-slide 1.3s ease-in-out infinite, progress-bar-stripes 1s linear infinite; }
+    .limp-stats { display: flex; flex-wrap: wrap; gap: 6px; font-size: .78rem; margin-top: 8px; }
+    .limp-stat { padding: 2px 9px; border-radius: 99px; font-weight: 600; }
+    .limp-stat.added { background: #dcfce7; color: #15803d; }
+    .limp-stat.updated { background: #dbeafe; color: #1d4ed8; }
+    .limp-stat.skipped { background: #fee2e2; color: #b91c1c; }
+    .limp-meta { font-size: .78rem; color: var(--portal-muted, #6b7280); }
+    @keyframes limp-spin { to { transform: rotate(360deg); } }
+    @keyframes limp-float { 0%, 100% { transform: translateY(2px); } 50% { transform: translateY(-3px); } }
+    @keyframes limp-pop { 0% { transform: scale(.6); } 80% { transform: scale(1.08); } 100% { transform: scale(1); } }
+    @keyframes limp-slide { 0% { margin-left: -30%; } 100% { margin-left: 100%; } }
+    @media (prefers-reduced-motion: reduce) { .limp-icon.is-working::before, .limp-icon.is-working i, .limp-progress-queued .progress-bar, .limp-icon.is-done { animation: none; } }

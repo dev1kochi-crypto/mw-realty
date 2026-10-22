@@ -5,13 +5,30 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 
 class PortalUser extends Authenticatable
 {
-    use Notifiable;
+    // API tokens = the CRM mobile app's sign-ins (see Crm\Auth\AuthController).
+    use HasApiTokens, Notifiable;
 
     protected static function booted(): void
     {
+        // A new password or a disabled account signs the CRM app out everywhere — the token
+        // counterpart of EnforceAccountSecurity's session check.
+        static::updated(function (PortalUser $portalUser) {
+            if ($portalUser->wasChanged('password') || ($portalUser->wasChanged('is_active') && !$portalUser->is_active)) {
+                $portalUser->tokens()->delete();
+            }
+        });
+
+        // Every account starts on the default Free plan unless one was chosen (never "No Plan").
+        static::creating(function (PortalUser $portalUser) {
+            if (!$portalUser->plan_id) {
+                $portalUser->plan_id = Plan::defaultFree()?->id;
+            }
+        });
+
         // The public Agent/Agency detail pages are URLed by slug, so every profile needs one —
         // generated from whichever name is actually displayed, unless one was already set
         // explicitly (e.g. by a seeder).
@@ -48,6 +65,7 @@ class PortalUser extends Authenticatable
         'passport_expiry',
         'passport_expiry_notified_at',
         'brn_number',
+        'affiliated_brokerage',
         'company_id',
         'rera_card_document',
         'trade_license_no',
@@ -55,6 +73,18 @@ class PortalUser extends Authenticatable
         'trade_license_expiry',
         'trade_license_expiry_notified_at',
         'orn_number',
+        'adrec_license_no',
+        'adrec_license_expiry',
+        'orn_expiry',
+        'other_license',
+        'other_license_expiry',
+        'public_email',
+        'secondary_phone',
+        'city',
+        'position',
+        'linkedin_url',
+        'spoken_languages',
+        'experience_since',
         'rera_certificate_document',
         'office_address',
         'trn_number',
@@ -90,6 +120,7 @@ class PortalUser extends Authenticatable
         'subscription_status',
         'subscription_renews_at',
         'subscription_cancel_at_period_end',
+        'renewal_reminder_sent_for',
         'scheduled_plan_id',
         'scheduled_interval',
         'billing_interval',
@@ -128,6 +159,8 @@ class PortalUser extends Authenticatable
         'password',
         'remember_token',
         'otp_code',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     protected $casts = [
@@ -141,6 +174,7 @@ class PortalUser extends Authenticatable
         'trn_expiry_notified_at' => 'date',
         'last_payment_at' => 'date',
         'subscription_renews_at' => 'datetime',
+        'renewal_reminder_sent_for' => 'datetime',
         'subscription_cancel_at_period_end' => 'boolean',
         'status_changed_at' => 'datetime',
         'kyc_submitted_at' => 'datetime',
@@ -152,6 +186,17 @@ class PortalUser extends Authenticatable
         'features' => 'array',
         'badges' => 'array',
         'metadata' => 'array',
+        'orn_expiry' => 'date',
+        'adrec_license_expiry' => 'date',
+        'other_license_expiry' => 'date',
+        'spoken_languages' => 'array',
+        'seen_help_topics' => 'array',
+        'two_factor_secret' => 'encrypted',
+        'two_factor_recovery_codes' => 'encrypted:array',
+        'two_factor_confirmed_at' => 'datetime',
+        'two_factor_prompt_pending' => 'boolean',
+        'watermark' => 'array',
+        'two_factor_enforced' => 'boolean',
     ];
 
     /**
@@ -224,6 +269,28 @@ class PortalUser extends Authenticatable
         return $this->hasMany(PortalUser::class, 'company_id');
     }
 
+    /** Authenticator-app 2FA is set up and confirmed. */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_confirmed_at !== null && !empty($this->two_factor_secret);
+    }
+
+    /** New account that hasn't yet set up 2FA or chosen "Skip for now" on the sign-up step. */
+    public function needsTwoFactorPrompt(): bool
+    {
+        return $this->two_factor_prompt_pending && !$this->hasTwoFactorEnabled();
+    }
+
+    /** 2FA is mandatory for this account: its own company setting, or its agency's. */
+    public function twoFactorRequired(): bool
+    {
+        if ($this->isAgency()) {
+            return (bool) $this->two_factor_enforced;
+        }
+
+        return $this->isAgencyAgent() && (bool) $this->company?->two_factor_enforced;
+    }
+
     public function scopeCompanies($query)
     {
         return $query->where('type', 'company');
@@ -235,8 +302,8 @@ class PortalUser extends Authenticatable
     // ->where('type', 'agent') directly instead.
 
     /**
-     * How many more properties this owner can list under their current plan,
-     * or null if unlimited (no plan assigned = unlimited, matching legacy behavior).
+     * How many more properties this owner can list under their current plan, or null if
+     * unlimited. Paid plans: per calendar month (see Plan::listingsPerMonth()); free: in total.
      */
     public function remainingPropertySlots(): ?int
     {
@@ -245,8 +312,22 @@ class PortalUser extends Authenticatable
             return null;
         }
 
-        $used = $this->properties()->count();
-        return max(0, $this->plan->property_limit - $used);
+        return max(0, $this->plan->property_limit - $this->usedPropertySlots());
+    }
+
+    /**
+     * Listings counted against the plan: added this calendar month on a paid plan, all of them on free.
+     * Extra listings paid with credits don't count.
+     */
+    public function usedPropertySlots(): int
+    {
+        return $this->properties()
+            ->when($this->plan?->listingsPerMonth(), fn ($q) => $q->where('created_at', '>=', now()->startOfMonth()))
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('credit_transactions')
+                ->whereColumn('credit_transactions.property_id', 'properties.id')
+                ->where('credit_transactions.type', \App\Models\CreditTransaction::SPEND)
+                ->where('credit_transactions.kind', 'listing'))
+            ->count();
     }
 
     /** Downgrade waiting for the next renewal (see StripeBillingService::scheduleDowngrade()). */
@@ -262,7 +343,12 @@ class PortalUser extends Authenticatable
             && in_array($this->subscription_status, ['active', 'trialing', 'past_due', 'unpaid'], true);
     }
 
-    /** How many more team agents this company can add under its plan, or null if unlimited. */
+    /**
+     * How many more team agents this company can add under its plan, or null if unlimited.
+     * Every relationship the agency itself opened (active, suspended, awaiting approval, invited)
+     * holds a slot, so it can't get past its limit by stacking up invitations or pending adds. An
+     * agent's unanswered join request doesn't — it's checked when the agency accepts it.
+     */
     public function remainingAgentSlots(): ?int
     {
         if (!$this->plan || !$this->plan->status) return 0;
@@ -270,12 +356,161 @@ class PortalUser extends Authenticatable
             return null;
         }
 
-        return max(0, (int) $this->plan->agent_limit - $this->agents()->count());
+        return max(0, (int) $this->plan->agent_limit - $this->usedAgentSlots());
+    }
+
+    public function usedAgentSlots(): int
+    {
+        return $this->agencyMemberships()->open()->where('status', '!=', AgencyAgent::REQUESTED)->count();
+    }
+
+    // --- Account types -------------------------------------------------------------------
+    // Stored as type (company|agent) + company_id; the three business account types derive from it.
+
+    public const ACCOUNT_AGENCY = 'agency';
+    public const ACCOUNT_AGENCY_AGENT = 'agency_agent';
+    public const ACCOUNT_INDIVIDUAL_AGENT = 'individual_agent';
+
+    public function isAgency(): bool
+    {
+        return $this->type === 'company';
+    }
+
+    public function isAgent(): bool
+    {
+        return $this->type === 'agent';
+    }
+
+    /** An agent currently working under an agency (company_id is only ever set by an approved membership). */
+    public function isAgencyAgent(): bool
+    {
+        return $this->type === 'agent' && $this->company_id !== null;
+    }
+
+    public function isIndependentAgent(): bool
+    {
+        return $this->type === 'agent' && $this->company_id === null;
+    }
+
+    public function accountType(): string
+    {
+        return match (true) {
+            $this->isAgency() => self::ACCOUNT_AGENCY,
+            $this->isAgencyAgent() => self::ACCOUNT_AGENCY_AGENT,
+            default => self::ACCOUNT_INDIVIDUAL_AGENT,
+        };
+    }
+
+    /** Every agency relationship this agent has ever had (invitations, requests, stints). */
+    public function memberships()
+    {
+        return $this->hasMany(AgencyAgent::class, 'agent_id');
+    }
+
+    /** Every agent relationship this agency has ever had. */
+    public function agencyMemberships()
+    {
+        return $this->hasMany(AgencyAgent::class, 'agency_id');
+    }
+
+    /** The agent's membership in its current agency (approved or suspended), if any. */
+    public function currentMembership()
+    {
+        return $this->hasOne(AgencyAgent::class, 'agent_id')->member()->latestOfMany();
+    }
+
+    /**
+     * Agents that may receive properties/leads for an agency: approved membership, approved +
+     * active account, and still pointing at that agency. Ordered by id so round-robin is stable.
+     */
+    public function eligibleAgentsQuery()
+    {
+        return PortalUser::query()
+            ->where('portal_users.type', 'agent')
+            ->where('portal_users.company_id', $this->id)
+            ->where('portal_users.status', 'approved')
+            ->where('portal_users.is_active', true)
+            ->whereExists(fn ($q) => $q->from('agency_agents')
+                ->whereColumn('agency_agents.agent_id', 'portal_users.id')
+                ->where('agency_agents.agency_id', $this->id)
+                ->where('agency_agents.status', AgencyAgent::APPROVED))
+            ->orderBy('portal_users.id');
+    }
+
+    public function hasEligibleAgent(int $agentId): bool
+    {
+        return $this->isAgency() && $this->eligibleAgentsQuery()->whereKey($agentId)->exists();
+    }
+
+    /**
+     * The account a new listing is owned by / counted against: an agency agent lists on behalf of
+     * its agency (agency plan limits apply), everyone else lists for themselves.
+     */
+    public function listingOwner(): PortalUser
+    {
+        return $this->isAgencyAgent() && $this->company ? $this->company : $this;
+    }
+
+    /**
+     * Covered by the agency's plan when connected through My Agency / Agents — the agency created the
+     * account, invited them, or accepted their join request (then admin approved) — AND that agency has
+     * an active plan that includes team agents. Only naming a brokerage in the profile, an admin link, or
+     * an old backfilled brokerage link — or an agency without such a plan — leaves them on their own plan.
+     */
+    public function isOnAgencyPlan(): bool
+    {
+        if (!$this->isAgencyAgent() || !$this->company) {
+            return false;
+        }
+        // Nothing to be covered by: the agency needs an active plan that includes team agents.
+        $agencyPlan = $this->company->plan;
+        if (!$agencyPlan?->status || !($agencyPlan->agentsUnlimited() || (int) $agencyPlan->agent_limit > 0)) {
+            return false;
+        }
+
+        $membership = $this->currentMembership;
+
+        if ($membership === null || $membership->agency_id !== $this->company_id) {
+            return false;
+        }
+
+        // Connected through My Agency / Agents: the agent's request the agency accepted, or the
+        // agency's invitation / new account. Admin links and old backfilled brokerage links don't count.
+        return $membership->initiated_by === \App\Services\Agency\AssignmentActor::AGENT
+            || ($membership->initiated_by === \App\Services\Agency\AssignmentActor::AGENCY
+                && ($membership->account_created_by_agency || $membership->invited_at !== null));
+    }
+
+    /** The plan whose entitlements apply: the agency's when covered by it, otherwise the account's own. */
+    public function effectivePlan(): ?Plan
+    {
+        return $this->isOnAgencyPlan() ? $this->company->plan : $this->plan;
+    }
+
+    /** Leads assigned to this agent to work (across owners — see Lead::scopeVisibleTo()). */
+    public function assignedLeads()
+    {
+        return $this->hasMany(Lead::class, 'agent_id');
+    }
+
+    public function leadAssignmentSetting()
+    {
+        return $this->hasOne(AgencyLeadAssignmentSetting::class, 'agency_id');
     }
 
     public function hasReportsAccess(): bool
     {
-        return (bool) ($this->plan?->status && $this->plan->reports_access);
+        $plan = $this->effectivePlan();
+
+        return (bool) ($plan?->status && $plan->reports_access);
+    }
+
+    /** Whether the plan in effect unlocks one of Plan::GATED_FEATURES (an agency's agents use the agency's). */
+    public function planAllows(string $feature): bool
+    {
+        $plan = $this->effectivePlan();
+
+        return (bool) ($plan?->status && $plan->allows($feature));
     }
 
     public function featurings()

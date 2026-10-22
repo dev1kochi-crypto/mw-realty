@@ -11,13 +11,32 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Mail;
 
-/** Single aggregate endpoint for the standalone /contact page (GET /api/contact) plus its form submission. */
+/**
+ * Single aggregate endpoint for the standalone /contact page (GET /api/contact) plus its form submission.
+ *
+ * @group Contact & Newsletter
+ */
 class ContactController extends Controller
 {
+    /** The home page contact form's "I'm interested in" options. */
+    public const INTERESTS = [
+        'buy' => 'Buying',
+        'rent' => 'Renting',
+        'sell' => 'Selling',
+        'management' => 'Property Management',
+    ];
+
     public function __construct(private readonly HomePageService $homePage)
     {
     }
 
+    /**
+     * Contact page
+     *
+     * Office details, map embed, hero image and social links.
+     *
+     * @queryParam lang string Example: en
+     */
     public function index(Request $request)
     {
         $lang = $request->input('lang', app()->getLocale());
@@ -25,30 +44,83 @@ class ContactController extends Controller
         return response()->json($this->homePage->getContactPageData($lang));
     }
 
-    /** Public, unauthenticated — the /contact page form (POST /api/contact). Saves to Enquiries and emails admin. */
+    /**
+     * Send a contact message
+     *
+     * General enquiry (not about a specific property — for that use `POST /api/leads/capture`).
+     * Saves to Enquiries and emails admin.
+     *
+     * Public, unauthenticated — the /contact page form and the home page's contact section
+     * (`source=home`, which also sends `interest`; its message is then optional).
+     *
+     * @bodyParam name string required Example: Sara Ahmed
+     * @bodyParam email string required Example: buyer@example.com
+     * @bodyParam phone string Local number. Example: 501234567
+     * @bodyParam phone_country_code string Example: +971
+     * @bodyParam interest string buy, rent, sell or management. Example: buy
+     * @bodyParam message string Required unless `interest` is sent. Example: I'd like a call about 2BR apartments in Marina.
+     * @bodyParam calculation object Calculator pages (`source=calculator`): the figures the visitor worked out, label => value, e.g. {"Calculator": "Mortgage", "Loan amount": "AED 1,402,500"}. Saved with the enquiry; the message is then optional. No-example
+     * @bodyParam source string contact, home or calculator. Example: contact
+     * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
+     *
+     * @response 200 {"message": "Thanks — we've received your message and will be in touch soon."}
+     */
     public function store(Request $request)
     {
+        $fromCalculator = $request->input('source') === 'calculator';
+
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:50',
-            'message' => 'required|string|max:2000',
+            'email' => \App\Rules\PhoneNumber::emailRules(),
+            'phone' => \App\Rules\PhoneNumber::rules(),
+            'phone_country_code' => \App\Rules\PhoneNumber::countryCodeRules(),
+            'interest' => 'nullable|in:' . implode(',', array_keys(self::INTERESTS)),
+            'message' => $fromCalculator ? 'nullable|string|max:2000' : 'required_without:interest|nullable|string|max:2000',
+            'source' => 'nullable|in:contact,home,calculator',
+            'calculation' => 'nullable|array|max:20',
+            'calculation.*' => 'nullable|string|max:150',
             'recaptcha_token' => ['nullable', new RecaptchaRule()],
         ]);
+
+        $interest = self::INTERESTS[$request->input('interest')] ?? null;
+        $message = trim((string) $request->input('message'));
+
+        // Calculator pages: the visitor's figures go under their note, one "Label: value" per line.
+        $calculation = $fromCalculator ? array_filter((array) $request->input('calculation', []), 'is_string') : [];
+        if ($calculation) {
+            $lines = collect($calculation)->map(fn ($value, $label) => "{$label}: {$value}")->implode("\n");
+            $message = trim($message . "\n\n" . $lines);
+        }
+        $pageSource = match (true) {
+            $fromCalculator => trim(($calculation['Calculator'] ?? '') . ' Calculator'),
+            $request->input('source') === 'home' => 'Home Page',
+            default => 'Contact Page',
+        };
 
         $enquiry = Enquiry::create([
             'name' => $request->input('name'),
             'email' => $request->input('email'),
-            'phone' => $request->input('phone'),
-            'message' => $request->input('message'),
+            // Enquiries keep one phone column — stored with its dial code ("+971 50 123 4567").
+            'phone' => $request->filled('phone') ? trim($request->input('phone_country_code') . ' ' . $request->input('phone')) : null,
+            // Interest leads the message too, so it's visible in the admin list and the notification email.
+            'message' => $interest ? trim("Interested in: {$interest}\n\n{$message}") : $message,
+            'extra_fields' => $interest ? ['interest' => $interest] : ($calculation ? ['calculation' => $calculation] : null),
             'page_url' => $request->header('referer'),
-            'page_source' => 'Contact Page',
+            'page_source' => $pageSource,
         ]);
 
         $adminEmail = SiteInformation::notificationEmail();
         if ($adminEmail) {
             Mail::to($adminEmail)->queue((new ContactEnquiryReceived($enquiry))->afterCommit());
         }
+
+        // The enquirer becomes a Website Lead (Super Admin's pool) with their browsing history.
+        app(\App\Services\Visitors\VisitorTracker::class)->captureEnquiry(
+            $request,
+            $request->only(['name', 'email', 'phone', 'phone_country_code']),
+            \App\Models\Visitors\VisitorLead::SOURCE_CONTACT_FORM,
+            ['form' => $enquiry->page_source . ' form', 'enquiry_id' => $enquiry->id, 'message' => \Illuminate\Support\Str::limit((string) $enquiry->message, 500)],
+        );
 
         return response()->json(['message' => "Thanks — we've received your message and will be in touch soon."]);
     }

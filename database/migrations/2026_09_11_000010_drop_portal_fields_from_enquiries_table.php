@@ -14,6 +14,11 @@ return new class extends Migration
 {
     public function up()
     {
+        // harden_admin_integrity indexed portal_user_id + status; SQLite refuses to drop a column an index still uses.
+        if (Schema::hasIndex('enquiries', ['portal_user_id', 'status', 'created_at'])) {
+            Schema::table('enquiries', fn (Blueprint $table) => $table->dropIndex(['portal_user_id', 'status', 'created_at']));
+        }
+
         Schema::table('enquiries', function (Blueprint $table) {
             $table->dropConstrainedForeignId('property_id');
             $table->dropConstrainedForeignId('portal_user_id');

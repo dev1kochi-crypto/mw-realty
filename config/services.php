@@ -39,10 +39,30 @@ return [
         'key' => env('GOOGLE_TRANSLATE_API_KEY'),
     ],
 
+    // Which auto-translate service App\Services\AutoTranslator uses:
+    //   google   — Google Cloud Translation (needs GOOGLE_TRANSLATE_API_KEY; production)
+    //   mymemory — MyMemory free API, no key (testing; ~5,000 chars/day, 50,000 with an email)
+    'translate' => [
+        'driver' => env('TRANSLATE_DRIVER', 'google'),
+        'mymemory_email' => env('MYMEMORY_EMAIL'),
+    ],
+
     'recaptcha' => [
         'site_key' => env('RECAPTCHA_SITE_KEY'),
         'secret_key' => env('RECAPTCHA_SECRET_KEY'),
         'min_score' => env('RECAPTCHA_MIN_SCORE', 0.5),
+    ],
+
+    // Basemap for the listing pages' map view (PropertyMap.vue). A vector style (MapLibre), so place
+    // labels follow the site language — English names, or Arabic when the site is in Arabic.
+    // Default: OpenFreeMap "Liberty" (full colour) — free, no key, no usage limits. Any MapLibre style URL works
+    // (e.g. MapTiler https://api.maptiler.com/maps/streets-v2/style.json?key=KEY).
+    // fallback_*: plain raster tiles, only used if the browser can't run WebGL.
+    'map_tiles' => [
+        'style' => env('MAP_STYLE_URL', 'https://tiles.openfreemap.org/styles/liberty'),
+        'attribution' => env('MAP_ATTRIBUTION', '<a href="https://openfreemap.org">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'),
+        'fallback_url' => env('MAP_FALLBACK_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+        'fallback_attribution' => '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     ],
 
     // "Continue with Google" — customer accounts only (see Customer\CustomerAuthController).
@@ -78,6 +98,21 @@ return [
         'secret' => env('STRIPE_SECRET'),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
         'currency' => env('STRIPE_CURRENCY', 'aed'),
+    ],
+
+    // Facebook Lead Ads → CRM leads (CRM › Integrations, App\Services\Integrations\FacebookLeadAds).
+    // A Meta app with Facebook Login + the Webhooks product ("Page" object, "leadgen" field).
+    // Property Finder Enterprise API (CRM › Integrations): each account enters its own API key + secret.
+    'property_finder' => [
+        'base_url' => env('PROPERTY_FINDER_API_URL', 'https://atlas.propertyfinder.com'),
+    ],
+
+    'facebook_leads' => [
+        'app_id' => env('FACEBOOK_APP_ID'),
+        'app_secret' => env('FACEBOOK_APP_SECRET'),
+        // Any random string — entered again as the "Verify token" of the app's Page webhook.
+        'verify_token' => env('FACEBOOK_WEBHOOK_VERIFY_TOKEN'),
+        'graph_version' => env('FACEBOOK_GRAPH_VERSION', 'v21.0'),
     ],
 
 ];

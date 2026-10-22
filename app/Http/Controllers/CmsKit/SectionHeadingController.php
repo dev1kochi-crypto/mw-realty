@@ -24,7 +24,9 @@ class SectionHeadingController extends Controller
         return [
             'home-developments' => ['label' => 'Developments', 'fields' => ['title_1', 'title_2', 'button_name', 'button_url', 'cities']],
             'home-premium-property' => ['label' => 'Premium Property', 'fields' => ['title_1', 'title_2', 'description', 'button_name', 'button_url']],
-            'home-luxury-project' => ['label' => 'Luxury Project', 'fields' => ['title_1', 'title_2', 'description', 'button_name', 'button_url']],
+            // price_range: Min/Max price (not per language, stored in extra_fields) that decide
+            // which residential listings count as "luxury" (HomePageService::luxury()).
+            'home-luxury-project' => ['label' => 'Luxury Project', 'fields' => ['title_1', 'title_2', 'description', 'button_name', 'button_url'], 'price_range' => true],
             'home-realty-property' => ['label' => 'Realty Property', 'fields' => ['title_1', 'title_2', 'description', 'button_name', 'button_url']],
             // Page-hero titles for listing pages that otherwise have no admin screen of their
             // own (title_1 here is the <h1> shown on the page, not a home-page section title).
@@ -70,7 +72,18 @@ class SectionHeadingController extends Controller
                 $rules["{$prefix}.{$lang->code}.cities.*"] = 'nullable|string|max:100';
             }
         }
-        $request->validate($rules, [], ["{$prefix}.*.title_1" => 'Title 1']);
+        $hasPriceRange = !empty($sections[$section]['price_range']);
+        if ($hasPriceRange) {
+            $rules["sections.{$section}.extra.min_price"] = 'nullable|numeric|min:0|max:9999999999999';
+            $rules["sections.{$section}.extra.max_price"] = 'nullable|numeric|min:0|max:9999999999999|gte:sections.'.$section.'.extra.min_price';
+        }
+        $request->validate($rules, [
+            "sections.{$section}.extra.max_price.gte" => 'Max price must be greater than or equal to Min price.',
+        ], [
+            "{$prefix}.*.title_1" => 'Title 1',
+            "sections.{$section}.extra.min_price" => 'Min price',
+            "sections.{$section}.extra.max_price" => 'Max price',
+        ]);
 
         $translations = $request->input("sections.{$section}.translations", []);
         foreach ($translations as $lang => $values) {
@@ -81,10 +94,15 @@ class SectionHeadingController extends Controller
             $translations[$lang] = $values;
         }
 
-        SectionLabel::updateOrCreate(
-            ['section_key' => $section],
-            ['translations' => $translations, 'status' => $request->has('status')]
-        );
+        $values = ['translations' => $translations, 'status' => $request->has('status')];
+        if ($hasPriceRange) {
+            $existing = SectionLabel::where('section_key', $section)->value('extra_fields') ?? [];
+            $existing = is_array($existing) ? $existing : (json_decode((string) $existing, true) ?: []);
+            $price = fn ($key) => ($v = $request->input("sections.{$section}.extra.{$key}")) === null || $v === '' ? null : (float) $v;
+            $values['extra_fields'] = array_merge($existing, ['min_price' => $price('min_price'), 'max_price' => $price('max_price')]);
+        }
+
+        SectionLabel::updateOrCreate(['section_key' => $section], $values);
 
         return redirect()->route('cms.section-headings.index')->with('success', $sections[$section]['label'].' updated successfully.');
     }

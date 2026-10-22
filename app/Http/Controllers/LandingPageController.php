@@ -16,7 +16,11 @@ class LandingPageController extends Controller
 {
     public function show(Request $request, string $slug)
     {
-        $page = LandingPage::where('slug', $slug)->where('status', true)->firstOrFail();
+        $page = LandingPage::where('slug', $slug)->where('status', true)->first();
+        if (!$page) {
+            // Not a landing page either — show the site's own 404 page (this route is the catch-all).
+            return app(\App\Http\Controllers\SpaController::class)->missing($request);
+        }
 
         $activeLangCodes = Language::where('status', true)->pluck('code')->all();
         $lang = $request->query('lang');
@@ -32,12 +36,9 @@ class LandingPageController extends Controller
             return response($document)->header('Content-Type', 'text/html; charset=UTF-8');
         }
 
-        $title = $page->getTranslation('title', $lang);
-        $content = $page->getTranslation('content', $lang);
-        $isRtl = in_array($lang, LandingPage::RTL_LANGUAGE_CODES, true);
-        $metaTags = $page->metaTagsHtml(includeTitle: false);
-
-        return response()->view('landing-pages.show-template', compact('page', 'lang', 'title', 'content', 'metaTags', 'isRtl'));
+        // "Blog design" page: served by the Vue app with the blog detail layout — the catch-all route
+        // (LandingOrNotFound.vue) loads it from /api/landing-pages/{slug}.
+        return app(\App\Http\Controllers\SpaController::class)->landingPage($request, $page);
     }
 
     /**

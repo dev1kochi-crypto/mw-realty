@@ -30,8 +30,9 @@ class LlmsTxtController extends Controller
         abort_unless(request()->isMethod('POST'), 405);
         $this->sitemapService->generate();
         $this->llmsTxtService->generate();
+        $count = substr_count((string) file_get_contents($this->llmsTxtService->path()), "\n- [");
 
-        return redirect()->back()->with('success', 'llms.txt generated successfully.');
+        return redirect()->back()->with('success', "llms.txt generated — {$count} pages listed (sitemap.xml refreshed too).");
     }
 
     public function edit()

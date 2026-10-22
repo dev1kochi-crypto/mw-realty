@@ -45,11 +45,11 @@
             <label class="form-label fw-bold">Content
                 <span class="content-required-mark text-danger" style="{{ $contentRequired && $currentType !== 'video' ? '' : 'display:none;' }}">*</span>
             </label>
-            <textarea name="translations[{{ $lang->code }}][content]" class="form-control tinymce-editor content-textarea @error("translations.{$lang->code}.content") is-invalid @enderror" rows="4" data-required="{{ $contentRequired ? '1' : '0' }}" {{ $contentRequired && $currentType !== 'video' ? 'required' : '' }}>{{ old("translations.{$lang->code}.content", $trans['content'] ?? '') }}</textarea>
+            <textarea name="translations[{{ $lang->code }}][content]" class="form-control content-textarea @error("translations.{$lang->code}.content") is-invalid @enderror" rows="4" data-required="{{ $contentRequired ? '1' : '0' }}" {{ $contentRequired && $currentType !== 'video' ? 'required' : '' }}>{{ old("translations.{$lang->code}.content", html_entity_decode(strip_tags($trans['content'] ?? ''))) }}</textarea>
             @error("translations.{$lang->code}.content")
                 <div class="invalid-feedback d-block">{{ $message }}</div>
             @enderror
-            <div class="form-text">Not required for Video testimonials — the video plays instead of showing this text.</div>
+            <div class="form-text">Plain text shown on the quote card. Not required for Video testimonials — the video plays instead of showing this text.</div>
         </div>
         @endif
 
@@ -82,7 +82,7 @@
         <label class="form-label d-block fw-bold">Video Source</label>
         <div class="form-check form-check-inline">
             <input class="form-check-input video-source-toggle" type="radio" name="video_source" id="video_source_url" value="url" {{ old('video_source', $item->video_source ?? 'url') === 'url' ? 'checked' : '' }}>
-            <label class="form-check-label" for="video_source_url">Video URL (YouTube/Vimeo)</label>
+            <label class="form-check-label" for="video_source_url">Direct Video Link</label>
         </div>
         <div class="form-check form-check-inline">
             <input class="form-check-input video-source-toggle" type="radio" name="video_source" id="video_source_file" value="file" {{ old('video_source', $item->video_source ?? '') === 'file' ? 'checked' : '' }}>
@@ -92,13 +92,15 @@
     </div>
     <div class="col-md-12 {{ old('video_source', $item->video_source ?? 'url') === 'file' ? 'd-none' : '' }}" id="video-url-input">
         <label class="form-label">Video URL</label>
-        <input type="text" name="video_url" class="form-control @error('video_url') is-invalid @enderror" placeholder="YouTube/Vimeo or self-hosted URL" value="{{ old('video_url', $item->video_url ?? '') }}">
+        <input type="text" name="video_url" class="form-control @error('video_url') is-invalid @enderror" placeholder="https://example.com/video.mp4" value="{{ old('video_url', $item->video_url ?? '') }}">
         @error('video_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        <div class="form-text">A direct link to the video file (.mp4 / .webm). YouTube and Vimeo page links can't play in the card — upload the file instead.</div>
     </div>
     <div class="col-md-12 {{ old('video_source', $item->video_source ?? 'url') === 'file' ? '' : 'd-none' }}" id="video-file-input">
         <label class="form-label">Upload Video</label>
         <input type="file" name="video_file" class="form-control @error('video_file') is-invalid @enderror" accept=".mp4,.mov,.avi,video/mp4,video/quicktime,video/x-msvideo">
         @error('video_file')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+        <div class="form-text">MP4, MOV or AVI, up to 10 MB. The image above is shown as the video's cover.</div>
         @if(!empty($item?->video_file))
             <small class="text-muted d-block mt-1">Current: {{ basename($item->video_file) }}</small>
         @endif

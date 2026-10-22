@@ -13,7 +13,15 @@
         "primary_aria": "Primary",
         "mobile_aria": "Mobile",
         "open_menu_aria": "Open menu",
-        "close_menu_aria": "Close menu"
+        "close_menu_aria": "Close menu",
+        "buy": "Buy",
+        "rent": "Rent",
+        "market_insights": "Market Insights",
+        "explore": "Explore",
+        "blog": "Blog",
+        "careers": "Careers",
+        "currency_aria": "Currency",
+        "calculators": "Calculators"
     },
     "footer": {
         "quick_links": {
@@ -34,7 +42,9 @@
             "properties_in_ras_al_khaimah": "Properties in Ras Al Khaimah",
             "sobha_siniya_island": "Sobha Siniya Island",
             "sobha_elwood": "Sobha Elwood",
-            "binghatti": "Binghatti"
+            "binghatti": "Binghatti",
+            "properties_in": "Properties in",
+            "premium_properties": "Premium Properties"
         },
         "buy": {
             "title": "Buy",
@@ -42,7 +52,12 @@
             "guide_to_buying": "Guide to Buying",
             "mortgages": "Mortgages",
             "property_management": "Property Management",
-            "legal_services": "Legal Services"
+            "legal_services": "Legal Services",
+            "apartments_for_sale": "Apartments for Sale",
+            "villas_for_sale": "Villas for Sale",
+            "townhouses_for_sale": "Townhouses for Sale",
+            "penthouses_for_sale": "Penthouses for Sale",
+            "ready_to_move": "Ready to Move In"
         },
         "off_plan": {
             "title": "Off-Plan",
@@ -52,7 +67,9 @@
             "top_dubai_developers": "Top Dubai Developers",
             "snagging_inspection": "Snagging & Inspection",
             "upcoming_roadshows": "Upcoming Roadshows",
-            "branded_residences": "Branded Residences"
+            "branded_residences": "Branded Residences",
+            "all_off_plan": "All Off-Plan Projects",
+            "off_plan_in": "Off-Plan in"
         },
         "legal": {
             "title": "Legal",
@@ -102,7 +119,7 @@
                 "off_plan": "Off-Plan"
             },
             "search": {
-                "location_placeholder": "Enter location",
+                "location_placeholder": "Search location or property title",
                 "bedroom_label": "Bedroom",
                 "price_range_label": "Price Range",
                 "property_type_label": "Property Type",
@@ -144,12 +161,18 @@
             "1m_2m": "1M – 2M",
             "2m_5m": "2M – 5M",
             "5m_10m": "5M – 10M",
-            "10m_plus": "10M+"
+            "10m_plus": "10M+",
+            "under_word": "Under"
         },
         "badges": {
             "verified": "Verified",
             "premium": "Premium",
-            "advertisement": "Advertisement"
+            "advertisement": "Advertisement",
+            "sponsored": "Sponsored",
+            "ad_by": "Ad by",
+            "view_property": "View property",
+            "view_profile": "View profile",
+            "learn_more": "Learn more"
         },
         "aria": {
             "save_property": "Save property",
@@ -209,7 +232,8 @@
                 "interest_management": "Property management",
                 "message_label": "Message",
                 "message_placeholder": "How can we help you?",
-                "submit": "Contact Our Expert"
+                "submit": "Contact Our Expert",
+                "sending": "Sending…"
             }
         }
     },
@@ -218,8 +242,8 @@
             "title": "Filters",
             "close_aria": "Close filters",
             "purpose_label": "Purpose",
-            "location_label": "Location",
-            "location_placeholder": "Enter location",
+            "location_label": "Location / Title",
+            "location_placeholder": "Search location or property title",
             "property_type_label": "Property Type",
             "all_type": "All type",
             "price_title": "Price Range",
@@ -249,7 +273,9 @@
             "amenity_concierge": "Concierge",
             "amenity_private_pool": "Private Pool",
             "reset": "Reset",
-            "apply": "Apply Filters"
+            "apply": "Apply Filters",
+            "feature_open_house": "Open house",
+            "feature_open_house_properties": "Open house properties"
         },
         "property_types": {
             "apartment": "Apartment",
@@ -265,7 +291,8 @@
             "1m_2m": "1M – 2M",
             "2m_5m": "2M – 5M",
             "5m_10m": "5M – 10M",
-            "10m_plus": "10M+"
+            "10m_plus": "10M+",
+            "under_word": "Under"
         },
         "bedroom_options": {
             "studio": "Studio",
@@ -292,8 +319,8 @@
             "buy": "Buy",
             "rent": "Rent",
             "off_plan": "Off-Plan",
-            "location_label": "Location",
-            "location_placeholder": "Enter location",
+            "location_label": "Location / Title",
+            "location_placeholder": "Search location or property title",
             "property_type_label": "Property Type",
             "all_type": "All type",
             "bedrooms_label": "Bedrooms",
@@ -319,7 +346,8 @@
             "saving": "Saving…",
             "search_saved": "Search Saved ✓",
             "save_error": "Couldn't save — try again",
-            "clear_filters": "Clear Filters"
+            "clear_filters": "Clear Filters",
+            "sort_recommended": "Recommended"
         },
         "ticker": {
             "aria_label": "Recommended searches and off-plan investment links",
@@ -331,6 +359,10 @@
         "listing": {
             "title": "Properties for sale in dubai",
             "count_suffix": "listings",
+            "by_owner_title": "Properties by {name}",
+            "agent_label": "Agent",
+            "agency_label": "Agency",
+            "clear_owner_aria": "Show all properties",
             "email": "Email",
             "call_us": "Call Us",
             "whatsapp": "WhatsApp",
@@ -392,8 +424,6 @@
         "furnishing_unfurnished": "Unfurnished",
         "furnishing_semi_furnished": "Semi-Furnished",
         "furnishing_no_preference": "No Preference",
-        "whatsapp_consent_label": "WhatsApp Consent",
-        "whatsapp_consent_text": "I agree to receive updates about my property request via WhatsApp.",
         "submit": "Submit Request",
         "submitting": "Submitting…",
         "terms_prefix": "By submitting this form you agree to our",
@@ -406,8 +436,8 @@
         "filter_panel": {
             "title": "Filters",
             "close_aria": "Close filters",
-            "location_label": "Location",
-            "location_placeholder": "Enter location",
+            "location_label": "Location / Title",
+            "location_placeholder": "Search location or property title",
             "properties_label": "Properties",
             "properties_placeholder": "Search by title, location",
             "property_type_label": "Property Type",
@@ -438,7 +468,20 @@
             "amenity_concierge": "Concierge",
             "amenity_private_pool": "Private Pool",
             "reset": "Reset",
-            "apply": "Apply Filters"
+            "apply": "Apply Filters",
+            "completion_title": "Completion",
+            "completion_ready": "Ready",
+            "completion_off_plan": "Off-Plan",
+            "sort_title": "Sort by",
+            "sort_recent": "Most recent",
+            "sort_price_low_high": "Price: low to high",
+            "sort_price_high_low": "Price: high to low",
+            "amenity_pantry": "Pantry",
+            "amenity_meeting_rooms": "Meeting Rooms",
+            "amenity_metro": "Metro Access",
+            "amenity_central_ac": "Central A/C",
+            "amenity_loading_bay": "Loading Bay",
+            "sort_recommended": "Recommended"
         },
         "price_presets": {
             "under_500k": "Under 500K",
@@ -446,7 +489,8 @@
             "1m_2m": "1M – 2M",
             "2m_5m": "2M – 5M",
             "5m_10m": "5M – 10M",
-            "10m_plus": "10M+"
+            "10m_plus": "10M+",
+            "under_word": "Under"
         },
         "property_types": {
             "hotel_apartment": "Hotel Apartment",
@@ -476,8 +520,8 @@
             "breadcrumb_current": "Commercial"
         },
         "filter_bar": {
-            "location_label": "Location",
-            "location_placeholder": "Enter location",
+            "location_label": "Location / Title",
+            "location_placeholder": "Search location or property title",
             "properties_label": "Properties",
             "properties_placeholder": "Search by title, location",
             "property_type_label": "Property Type",
@@ -505,7 +549,8 @@
         "pagination_aria": "Commercial properties pagination",
         "previous": "Previous",
         "next": "Next",
-        "clear_filters": "Clear Filters"
+        "clear_filters": "Clear Filters",
+        "results_count": "{count} commercial properties"
     },
     "empty_state": {
         "default_title": "No Properties Available",
@@ -527,6 +572,9 @@
         "tab_overview": "Overview",
         "tab_features": "Features & Amenities",
         "tab_gallery": "Gallery",
+        "tab_floor_plans": "Floor Plans",
+        "floor_plans_title": "Floor Plans",
+        "floor_plan_download": "Download Floor Plan",
         "overview_title": "About This Property",
         "description_fallback": "A {type} located in {location}.",
         "gallery_title": "Photo Gallery",
@@ -548,7 +596,8 @@
             "call_aria": "Call {name}",
             "whatsapp_aria": "WhatsApp {name}",
             "email_aria": "Email {name}",
-            "view_details": "View Details"
+            "view_details": "View Details",
+            "agency_tag": "Agency"
         },
         "enquiry": {
             "title": "Enquire About This Property",
@@ -580,14 +629,36 @@
             "message": "This property listing doesn't exist or is no longer available.",
             "back_link": "Back to Properties"
         },
-        "generic_error": "Something went wrong — please try again."
+        "generic_error": "Something went wrong — please try again.",
+        "book_a_viewing": "Book a Viewing",
+        "available_now_text_book": "Ready to move in or view any time — pick a day and time that suits you.",
+        "viewing": {
+            "morning": "Morning",
+            "afternoon": "Afternoon",
+            "evening": "Evening",
+            "open_house_days": "Open house days",
+            "choose_day": "Choose a day",
+            "choose_time": "Preferred time",
+            "pick_day": "Please pick a day.",
+            "pick_time": "Please pick a time.",
+            "name": "Name",
+            "email": "Email",
+            "phone": "Phone",
+            "note": "Note for the agent (optional)",
+            "sending": "Sending…",
+            "submit": "Request Viewing",
+            "done_title": "Viewing requested",
+            "done_text": "The agent will contact you shortly to confirm the exact time.",
+            "close": "Done"
+        }
     },
     "about": {
         "breadcrumb_aria": "Breadcrumb",
         "breadcrumb_home": "Home",
         "breadcrumb_current": "About Us",
         "director": {
-            "read_message": "Read Director Message"
+            "read_message": "Read Director Message",
+            "show_less": "Show Less"
         },
         "steps": {
             "heading": "Post Your property in 3 simple steps"
@@ -645,6 +716,19 @@
         "breadcrumb_aria": "Breadcrumb",
         "breadcrumb_home": "Home",
         "breadcrumb_current": "Agent",
+        "filter": {
+            "location_label": "Location",
+            "location_placeholder": "Enter location",
+            "name_label": "Agent Name",
+            "name_placeholder": "Search agent name",
+            "agency_label": "Agency",
+            "agency_placeholder": "Search agency name",
+            "search": "Search",
+            "views_aria": "Toggle agents view",
+            "grid_view_aria": "Grid view",
+            "list_view_aria": "List view"
+        },
+        "no_results": "No agents match your search.",
         "card": {
             "serves_in_dubai": "Serves in Dubai",
             "rent_prefix": "Rent",
@@ -690,6 +774,7 @@
         "share_facebook_aria": "Share on Facebook",
         "share_instagram_aria": "Share on Instagram",
         "share_linkedin_aria": "Share on LinkedIn",
+        "link_copied": "Link copied",
         "years_of_experience_prefix": "Years of Experience",
         "preferred_areas_prefix": "Preferred Areas",
         "rent_prefix": "Rent",
@@ -703,6 +788,8 @@
         },
         "bio_fallback": "{name} is a Dubai-based real estate professional ready to help you buy, sell or rent.",
         "other_properties_title": "Other Properties",
+        "listings_by": "Listings by",
+        "view_all": "View All",
         "previous_properties_aria": "Previous properties",
         "next_properties_aria": "Next properties",
         "verified": "Verified",
@@ -733,6 +820,7 @@
         "bio_fallback": "{name} is a Dubai-based real estate agency.",
         "map_title": "Services Area — Dubai",
         "properties_panel_title": "Properties",
+        "listings_by": "Listings by",
         "previous_properties_aria": "Previous properties",
         "next_properties_aria": "Next properties",
         "verified": "Verified",
@@ -812,7 +900,20 @@
         "divider_or": "OR",
         "google_cta": "Continue with Google",
         "generic_error": "Something went wrong — please try again.",
-        "agent_tab_hint": "Registered as an agent or agency? Switch to the Agent / Agency tab."
+        "agent_tab_hint": "Registered as an agent or agency? Switch to the Agent / Agency tab.",
+        "new_device_title": "Verify it's you",
+        "new_device_subtitle": "You're signing in from a new device. We've sent a verification code to",
+        "two_factor_title": "Two-factor authentication",
+        "two_factor_subtitle": "Open your authenticator app (Authy, Google Authenticator…) and enter the 6-digit code for MW Realty.",
+        "email_code_label": "Verification code",
+        "two_factor_code_label": "Authentication code",
+        "recovery_hint": "Lost your phone? Enter one of your recovery codes instead.",
+        "verify": "Verify",
+        "verifying": "Verifying…",
+        "resend_code": "Resend code",
+        "resending": "Sending…",
+        "code_resent": "A new code has been sent.",
+        "back_to_login": "Back to sign in"
     },
     "signup": {
         "photo_alt": "Cozy Dubai apartment interior",
@@ -834,7 +935,7 @@
         "strength_medium": "Medium",
         "strength_strong": "Strong",
         "account_type_label": "Account Type",
-        "role_customer": "Customer",
+        "role_customer": "User",
         "role_agent": "Agent",
         "role_agency": "Agency",
         "full_name_label": "Full Name",
@@ -1009,12 +1110,69 @@
         "title": "Thank You!",
         "line1": "Your submission has been received.",
         "line2": "We will be in touch and contact you soon!",
-        "cta": "Back to Homepage"
+        "cta": "Back to Homepage",
+        "title_named": "Thank you, {name}!",
+        "eyebrow": "Submission received",
+        "cta_browse": "Browse Properties",
+        "urgent": "Need something urgently?",
+        "contact": {
+            "line1": "Your message is on its way to our team.",
+            "line2": "A member of MW Realty will get back to you within one business day."
+        },
+        "enquiry": {
+            "line1": "Thanks for your interest — your enquiry is in.",
+            "line2": "A property advisor will call you shortly to understand exactly what you need."
+        },
+        "request": {
+            "line1": "Your property request has been received.",
+            "line2_agent": "Your agent is already on it and will share properties that match your brief.",
+            "line2_agency": "The agency is already on it and will share properties that match your brief."
+        },
+        "steps": {
+            "1_title": "Received",
+            "1_text": "Your details reached our team securely.",
+            "2_title": "We'll reach out",
+            "2_text": "An advisor contacts you by phone, email or WhatsApp.",
+            "3_title": "Find your place",
+            "3_text": "Get tailored options and expert guidance.",
+            "request_1_title": "Brief shared",
+            "request_1_text": "Your requirements are with the right specialist.",
+            "request_2_title": "Shortlisting",
+            "request_2_text": "Matching listings are hand-picked for you.",
+            "request_3_title": "Options in your inbox",
+            "request_3_text": "Review, shortlist and book your viewings.",
+            "property_1_title": "Enquiry delivered",
+            "property_1_text": "Sent straight to the listing agent.",
+            "property_1_text_agency": "Sent straight to the agency handling this listing.",
+            "property_2_title": "They'll reach out",
+            "property_2_text": "Expect a call, email or WhatsApp to answer your questions.",
+            "property_3_title": "Book a viewing",
+            "property_3_text": "See the property in person at a time that suits you."
+        },
+        "property": {
+            "line1": "Your enquiry about “{property}” has been sent.",
+            "line2": "{handler} will get in touch with you shortly.",
+            "our_team": "Our team",
+            "this_property": "this property",
+            "enquired_about": "You enquired about",
+            "sent_to": "Sent to",
+            "role_agent": "Listing Agent",
+            "role_agency": "Agency",
+            "call": "Call",
+            "whatsapp": "WhatsApp",
+            "back": "Back to Property"
+        }
     },
     "not_found": {
         "title": "Page Not Found",
         "text": "Sorry, We can't find the page you're looking for.",
-        "cta": "Back to Homepage"
+        "cta": "Back to Homepage",
+        "eyebrow": "Error 404",
+        "hint": "It may have been moved, sold or taken off the market — but your next home is still out there.",
+        "search_placeholder": "Search by city, community or building",
+        "search_button": "Search",
+        "popular": "Popular pages",
+        "contact": "Contact Us"
     },
     "chat_widget": {
         "welcome_message": "Welcome to MW Realty! I'm {name}, your personal property finder. Tell me what you're dreaming of, and I'll pull up real matches for you in seconds.",
@@ -1028,6 +1186,16 @@
         "voice_read": "Read replies aloud",
         "clear_conversation_aria": "Clear conversation",
         "dialog_aria": "AI chat assistant",
+        "details_form": {
+            "title": "Want to keep chatting?",
+            "subtitle": "Share your details so we can save this chat and send you properties that match.",
+            "thanks": "Thanks, {name}! What else would you like to know?",
+            "name_placeholder": "Your name",
+            "email_placeholder": "Email address",
+            "phone_placeholder": "Phone number",
+            "name_required": "Please enter your name.",
+            "submit": "Continue chatting"
+        },
         "card": {
             "bed_suffix": "bed",
             "bath_suffix": "bath",
@@ -1064,6 +1232,7 @@
             "voice_aria": "Ask by voice",
             "listening_placeholder": "Listening…",
             "ask_placeholder": "Ask about properties or buying process…",
+            "details_placeholder": "Share your details above to continue…",
             "send_aria": "Send"
         }
     },
@@ -1089,5 +1258,318 @@
     "furnished": {
         "yes": "Furnished",
         "no": "Unfurnished"
+    },
+    "premium_listing": {
+        "hero_title": "Premium Properties",
+        "all_title": "All Premium Properties",
+        "tag_commercial": "Commercial",
+        "tag_residential": "Residential"
+    },
+    "market_insights": {
+        "page_default_title": "Market Insights",
+        "heading_default": "Research & Reports",
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "eyebrow": "MW Realty Research",
+        "facts_reports": "Reports & analyses",
+        "facts_topics": "Research topics",
+        "facts_regions": "Markets covered",
+        "featured": "Featured Report",
+        "read_report": "Read the report",
+        "read_insight": "Read insight",
+        "region_label": "Market",
+        "all_regions": "All markets",
+        "topics_aria": "Filter by topic",
+        "all_topics": "All topics",
+        "empty_title": "No insights found",
+        "empty_filtered": "Nothing matches these filters yet — try another topic or market.",
+        "empty_text": "New research is on its way. Check back soon.",
+        "clear_filters": "Clear filters",
+        "pagination_aria": "Market insights pagination"
+    },
+    "market_insight_details": {
+        "breadcrumb_aria": "Breadcrumb",
+        "takeaways_title": "Key Takeaways",
+        "download": "Download full report",
+        "share_title": "Share this insight",
+        "copy_link": "Copy link",
+        "copied": "Copied!",
+        "topics_title": "Explore topics",
+        "advice_title": "Talk to an expert",
+        "advice_text": "Want to know what this means for your next purchase or investment? Our consultants can walk you through it.",
+        "advice_cta": "Contact our team",
+        "related_title": "Related Insights",
+        "view_all": "View all insights",
+        "not_found": {
+            "title": "Insight Not Found",
+            "message": "This market insight doesn't exist or has been removed.",
+            "back_link": "Back to Market Insights"
+        },
+        "glance_title": "At a glance",
+        "glance_topic": "Topic",
+        "glance_market": "Market",
+        "glance_published": "Published",
+        "glance_read": "Reading time",
+        "glance_author": "Author"
+    },
+    "careers": {
+        "page_default_title": "Careers",
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "eyebrow": "Work With Us",
+        "intro_title": "Build Your Future in UAE Real Estate",
+        "intro_default": "Join a team of property specialists helping people buy, rent and invest across the UAE. We look for curious, driven people who put clients first — and we give them the tools, training and support to grow.",
+        "stats": {
+            "openings": "Open Positions",
+            "departments": "Teams Hiring"
+        },
+        "view_openings": "View Open Roles",
+        "send_cv": "Send Your CV",
+        "badge_title": "We're Hiring",
+        "badge_text": "Business Bay, Dubai",
+        "perks_eyebrow": "Why MW Realty",
+        "perks_title": "More Than Just a Job",
+        "perks": {
+            "growth_title": "Career Growth",
+            "growth_text": "Clear progression paths, mentoring from senior consultants and ongoing RERA-aligned training.",
+            "reward_title": "Rewarding Pay",
+            "reward_text": "Competitive packages and transparent commission structures that reward real results.",
+            "tools_title": "Modern Tools",
+            "tools_text": "A built-in CRM, verified listings and marketing support so you can focus on your clients.",
+            "team_title": "Supportive Team",
+            "team_text": "A collaborative, multicultural team in the heart of Business Bay, Dubai."
+        },
+        "openings_eyebrow": "Current Openings",
+        "openings_title": "Find Your Next Role",
+        "filters": {
+            "department": "Department",
+            "all_departments": "All Departments",
+            "job_type": "Job Type",
+            "all_types": "All Types",
+            "location": "Location",
+            "all_locations": "All Locations",
+            "clear": "Clear",
+            "clear_all": "Clear Filters"
+        },
+        "posted": "Posted",
+        "view_apply": "View & Apply",
+        "empty_title": "No open positions right now",
+        "empty_filtered_title": "No roles match these filters",
+        "empty_text": "We're always happy to meet talented people. Send us your CV and we'll reach out when a suitable role opens up.",
+        "apply_eyebrow": "General Application",
+        "apply_title": "Don't See the Right Role?",
+        "apply_text": "Send us your CV anyway. Our HR team reviews every application and will contact you as soon as a role that matches your experience becomes available.",
+        "apply_step_1": "Submit your details and CV",
+        "apply_step_2": "Our HR team reviews your profile",
+        "apply_step_3": "We get in touch for an interview",
+        "form": {
+            "name_label": "Full Name",
+            "name_placeholder": "Your full name",
+            "email_label": "Email Address",
+            "email_placeholder": "you@example.com",
+            "phone_label": "Phone Number",
+            "phone_placeholder": "+971 50 000 0000",
+            "country_label": "Country of Residence",
+            "country_placeholder": "e.g. United Arab Emirates",
+            "designation_label": "Current Job Title",
+            "designation_placeholder": "e.g. Property Consultant",
+            "experience_label": "Years of Experience",
+            "experience_placeholder": "Select",
+            "experience_0_1": "Less than 1 year",
+            "experience_1_3": "1 – 3 years",
+            "experience_3_5": "3 – 5 years",
+            "experience_5_10": "5 – 10 years",
+            "experience_10_plus": "10+ years",
+            "message_label": "Why would you be a great fit?",
+            "message_placeholder": "Tell us a little about yourself (optional)",
+            "cv_label": "Upload CV",
+            "cv_cta": "Click to upload",
+            "cv_or_drag": "or drag and drop",
+            "cv_hint": "PDF, DOC or DOCX — max 5 MB",
+            "cv_remove": "Remove file",
+            "cv_required": "Please attach your CV.",
+            "cv_type_error": "Your CV must be a PDF or Word document.",
+            "cv_size_error": "Your CV must be 5 MB or smaller.",
+            "privacy_prefix": "I agree to the",
+            "privacy_link": "Privacy Policy",
+            "privacy_suffix": "and consent to MW Realty storing my details for recruitment.",
+            "submit": "Submit Application",
+            "submitting": "Submitting…",
+            "generic_error": "Something went wrong. Please try again."
+        }
+    },
+    "career_details": {
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "breadcrumb_careers": "Careers",
+        "about_title": "About the Role",
+        "responsibilities_title": "Key Responsibilities",
+        "requirements_title": "Requirements",
+        "join_title": "Why Join Our Team",
+        "apply_title": "Apply for this Position",
+        "apply_text": "Fill in your details and attach your CV — our HR team will get back to you shortly.",
+        "summary_title": "Job Overview",
+        "summary": {
+            "department": "Department",
+            "job_type": "Job Type",
+            "contract": "Contract",
+            "location": "Location",
+            "posted": "Posted"
+        },
+        "apply_now": "Apply Now",
+        "related_title": "Other Openings",
+        "view_all": "View all openings",
+        "not_found": {
+            "title": "Position Not Available",
+            "message": "This role has been filled or is no longer open.",
+            "back_link": "See current openings"
+        }
+    },
+    "location_search": {
+        "type_property": "Property"
+    },
+    "map": {
+        "aria_label": "Properties on a map",
+        "map_view_aria": "Map view",
+        "properties_short": "Properties",
+        "on_request": "On request",
+        "none_here": "No properties in this area",
+        "none": "No properties match your filters",
+        "show_all": "Show all results",
+        "in_area": "properties in this area",
+        "zoom_in": "zoom in to see all",
+        "loading": "Loading properties…",
+        "reset_dubai": "Back to Dubai",
+        "close": "Close",
+        "at_address": "properties at this address",
+        "all_at_address": "All properties here",
+        "bed": "Bed",
+        "premium": "Premium",
+        "view_details": "View Details",
+        "credits": "Map credits"
+    },
+    "calculators": {
+        "refinance": {
+            "lender": "Current mortgage lender",
+            "lender_placeholder": "Select your bank",
+            "original_loan": "Original loan amount",
+            "valuation": "Current property valuation",
+            "term_years": "Full loan term (years)",
+            "term_months": "Full loan term (months)",
+            "start_date": "Date mortgage started",
+            "current_rate": "Current interest rate",
+            "fixed_period": "Fixed interest rate period",
+            "no_fixed": "No fixed period (variable rate)",
+            "employment": "Employment status",
+            "salaried": "Salaried",
+            "self_employed": "Self-employed",
+            "income": "Income per month",
+            "income_placeholder": "Your monthly income",
+            "tenure_years": "Employment tenure (years)",
+            "in_years": "In years",
+            "tenure_months": "Employment tenure (months)",
+            "additional_months": "Additional months",
+            "dob": "Borrower’s date of birth",
+            "balance": "Current mortgage balance",
+            "balance_placeholder": "What you still owe",
+            "balance_estimated": "Estimated from your loan details — change it if your statement shows a different amount.",
+            "equity": "Desired equity release",
+            "equity_placeholder": "Enter amount",
+            "equity_hint": "Extra cash to borrow against your home on top of what you owe.",
+            "changed": "You have changed your details — press “See my savings” to update your results.",
+            "see_savings": "See my savings",
+            "recommendations": "Refinance recommendations",
+            "no_saving_title": "Refinancing would not lower your payments",
+            "save_title": "By refinancing your mortgage you can save:",
+            "per_month": "Per month",
+            "first_year": "In the first year",
+            "over_years": "Over {n}",
+            "will_cost": "Refinancing your mortgage will cost",
+            "recovered_in": "recovered in {n} months",
+            "lock_steps": "Complete the 3 steps to see how much you could save.",
+            "col_current": "Current loan",
+            "col_refinance": "Refinance",
+            "col_difference": "Difference",
+            "loan_amount": "Loan amount",
+            "equity_release": "Equity release",
+            "interest_rate": "Interest rate",
+            "monthly_payment": "Monthly payment",
+            "term_left": "Term left",
+            "settlement_fee": "Early settlement fee (1%, max AED 10,000)",
+            "valuation_fee": "Property valuation fee",
+            "switch_costs": "Total switching costs",
+            "disclaimer": "Figures are estimates for guidance only and do not constitute a loan offer. The refinance rate is a typical market rate; your actual rate, loan amount and fees depend on the lender, the property valuation and your profile.",
+            "modal_title": "Your custom refinance solutions are ready!",
+            "modal_text": "Please verify your contact details to unlock them.",
+            "step_loan": "Current loan",
+            "step_employment": "Employment details",
+            "step_refinance": "Refinance",
+            "err_required": "This field cannot be left empty.",
+            "err_lender": "Please select your current lender.",
+            "err_term": "Please enter the full loan term.",
+            "err_term_max": "UAE home loans run for at most 25 years.",
+            "err_paid_off": "With this start date and term, the loan is already paid off.",
+            "err_rate": "Enter your interest rate (e.g. 5.25).",
+            "err_employment": "Please choose your employment status.",
+            "err_tenure": "Please enter how long you have been in your job.",
+            "err_age_min": "Minimum age should be {n}.",
+            "err_age_max": "Maximum age should be {n}.",
+            "err_balance": "The balance cannot be more than the original loan.",
+            "note_not_covered": "Based on your income, property value and age, a new loan may not cover your full balance. Talk to an advisor about your options.",
+            "note_ltv": "Banks usually lend up to {n}% of the property value, so the equity release is limited to {amount}.",
+            "note_dbr": "Your monthly payment may not exceed 50% of your income, which limits the new loan amount.",
+            "note_age": "The new loan has to end by age {n}, so its term is shorter than 25 years.",
+            "note_fixed": "You are still in your fixed-rate period ({n} left) — switching now may cost more with your current bank.",
+            "note_tenure": "Most banks want at least 6 months in your job (2 years if self-employed) before approving a refinance.",
+            "err_valuation_min": "Property value must be at least AED 300,000.",
+            "err_start_future": "Mortgage start date cannot be in the future.",
+            "err_start_min": "Mortgage start date cannot be before 1950.",
+            "err_income_min": "Total monthly income must be more than AED 10,000.",
+            "err_dob_future": "Date of birth cannot be in the future.",
+            "err_dob_min": "Date of birth cannot be before 1950.",
+            "employment_placeholder": "Select client type",
+            "employment_stl": "Employed Salary Transfer",
+            "employment_nstl": "Employed No Salary Transfer",
+            "employment_se": "Self Employed",
+            "employment_nr": "Non Resident",
+            "err_loan_min": "Minimum mortgage amount should be AED 100,000.",
+            "settlement_fee_vat": "Early settlement fee (1%, max AED 10,000, + VAT)",
+            "registration_transfer": "Mortgage registration, release and transfer fees",
+            "note_current_rate": "The current loan is shown at the rate it moves to when its fixed period ends: your lender’s margin over EIBOR."
+        },
+        "year": "year",
+        "years_long": "years",
+        "optional": "(optional)",
+        "previous": "Previous",
+        "next": "Next",
+        "eligibility": {
+            "unlock": "Unlock your results",
+            "legal_prefix": "By continuing you accept our"
+        },
+        "fees": {
+            "mortgage_registration": "Mortgage registration fee (0.25% + AED 10)"
+        },
+        "close": "Close",
+        "continue": "Continue",
+        "and": "and",
+        "month": "month",
+        "months": "months",
+        "enquiry": {
+            "eyebrow": "Free mortgage advice",
+            "text": "Share your details and one of our mortgage advisors will compare offers from UAE banks for you — your calculation is sent along, so there is nothing to re-enter.",
+            "message_label": "Message (optional)",
+            "message_placeholder": "e.g. I am looking at a 2-bedroom in Dubai Marina",
+            "submit": "Get a mortgage quote",
+            "point_banks": "Rates compared across leading UAE banks",
+            "point_pre_approval": "Help with pre-approval and paperwork",
+            "point_free": "No cost and no obligation"
+        },
+        "breadcrumb_aria": "Breadcrumb",
+        "breadcrumb_home": "Home",
+        "faq_title": "Frequently asked questions"
+    },
+    "mortgage_page": {
+        "contact_cta": "Talk to an advisor",
+        "browse_cta": "Browse properties in budget"
     }
 }

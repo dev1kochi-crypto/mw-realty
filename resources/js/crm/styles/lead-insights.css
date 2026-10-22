@@ -1,0 +1,6 @@
+/* Moved from resources/views/portal/crm/lead-insights/index — Lead Insights table (.li-*). */
+    .li-row { cursor: pointer; }
+    .li-metric { white-space: nowrap; font-weight: 600; color: #1f2340; }
+    .li-metric small { display: block; font-weight: 400; color: #8a8fae; font-size: 11.5px; }
+    .li-heat { display: inline-block; width: 64px; height: 6px; border-radius: 999px; background: #eef0f6; overflow: hidden; vertical-align: middle; margin-left: 6px; }
+    .li-heat span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #f2a33a, #b9233c); }
