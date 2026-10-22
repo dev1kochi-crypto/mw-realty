@@ -18,7 +18,7 @@ class LeadsExport implements FromQuery, WithHeadings, WithMapping
     {
     }
 
-    public function query()
+    public function query(): Builder
     {
         return $this->query->with(['owner', 'agent', 'stage', 'source', 'tags']);
     }

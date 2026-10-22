@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use Illuminate\Http\UploadedFile;
+use Maatwebsite\Excel\Concerns\Import;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
@@ -22,7 +23,7 @@ class LeadImportReader
 
         $rows = in_array($extension, ['csv', 'tsv', 'txt'], true)
             ? self::readDelimited((string) file_get_contents($file->getRealPath()))
-            : (Excel::toArray(new class {}, $file)[0] ?? []);
+            : (Excel::toArray(new class implements Import {}, $file)[0] ?? []);
 
         $rows = array_map(fn ($row) => array_map([self::class, 'cell'], array_values((array) $row)), $rows);
 
