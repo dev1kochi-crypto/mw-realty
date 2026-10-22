@@ -1,0 +1,1483 @@
+name: Search
+description: |-
+  Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).
+
+  **Also uses (connected):**
+
+  * `POST /api/customer/wishlist/{property}` — see **Saved**
+  * `POST /api/customer/saved-searches` — see **Saved**
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/property-filters
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+        Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).
+
+        **Also uses (connected):**
+
+        * `POST /api/customer/wishlist/{property}` — see **Saved**
+        * `POST /api/customer/saved-searches` — see **Saved**
+      subgroup: 'Results, map & filters'
+      subgroupDescription: ''
+      title: 'Search filter bar'
+      description: |-
+        The filters to render (selects with their options and live listing counts, number sliders
+        with min/max/step), in admin order. Pass the chosen `value`s back to the listing endpoints
+        under each filter's `key`.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: "Which screen's filter set: `home` (compact) or `listing` (full)."
+        required: false
+        example: listing
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      scope:
+        custom: []
+        name: scope
+        description: 'Whose listings the counts/bounds come from: residential, commercial, premium, marketing.'
+        required: false
+        example: residential
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: listing
+      scope: residential
+      lang: en
+    bodyParameters:
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: listing
+        type: string
+        enumValues:
+          - home
+          - listing
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: 'Must not be greater than 10 characters.'
+        required: false
+        example: vmqeopfuu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      scope:
+        custom: []
+        name: scope
+        description: ''
+        required: false
+        example: marketing
+        type: string
+        enumValues:
+          - residential
+          - commercial
+          - premium
+          - marketing
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      page: listing
+      lang: vmqeopfuu
+      scope: marketing
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/search-filters/{page}'
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+        Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).
+
+        **Also uses (connected):**
+
+        * `POST /api/customer/wishlist/{property}` — see **Saved**
+        * `POST /api/customer/saved-searches` — see **Saved**
+      subgroup: 'Results, map & filters'
+      subgroupDescription: ''
+      title: 'Page search filters'
+      description: |-
+        Key-value: `filters` is keyed by each filter's key, and every option list is `{ value: label }`.
+        Send the picked values back to the listing endpoint under the filter's `param` (or `params.min`
+        / `params.max` for a range). Checkbox filters (`multiple: true`) take several values,
+        comma-separated. `order` / `options_order` give the admin's order.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      page:
+        custom: []
+        name: page
+        description: 'properties, commercial, premium or offplan.'
+        required: false
+        example: properties
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      page: properties
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters:
+      lang:
+        custom: []
+        name: lang
+        description: 'Must not be greater than 10 characters.'
+        required: false
+        example: vmqeopfuu
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      lang: vmqeopfuu
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "page": "properties",
+            "filters": {
+              "property_type": {"label": "Property Type", "type": "checkbox", "placeholder": null, "param": "property_type", "multiple": true,
+                "options": {"apartment": "Apartment", "villa": "Villa"}, "options_order": ["apartment", "villa"], "counts": {"apartment": 42, "villa": 17}},
+              "bedrooms": {"label": "Bedrooms", "type": "radio", "placeholder": null, "param": "bedrooms", "multiple": false,
+                "options": {"1": "1", "2": "2", "5+": "5+"}, "options_order": ["1", "2", "5+"]},
+              "price": {"label": "Price", "type": "range", "placeholder": null, "min": 0, "max": 19000000, "step": 50000,
+                "params": {"min": "min_price", "max": "max_price"}},
+              "parking": {"label": "Parking", "type": "number", "placeholder": "Min. spaces", "min": 0, "max": 5, "step": 1, "compare": "min", "param": "min_parking"},
+              "keyword": {"label": "Keyword", "type": "text", "placeholder": "Title or reference", "param": "keyword"}
+            },
+            "order": ["property_type", "bedrooms", "price", "parking", "keyword"]
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/location-suggestions
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+        Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).
+
+        **Also uses (connected):**
+
+        * `POST /api/customer/wishlist/{property}` — see **Saved**
+        * `POST /api/customer/saved-searches` — see **Saved**
+      subgroup: 'Results, map & filters'
+      subgroupDescription: ''
+      title: 'Location autocomplete'
+      description: |-
+        Cities, communities and addresses matching what the user typed (2+ characters; fewer
+        returns an empty list). Pass a picked suggestion back as `city=` / `community=` /
+        `location=` on the listing endpoints. Debounce on the client — limited to 120 calls/minute.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      q:
+        custom: []
+        name: q
+        description: 'The typed text.'
+        required: false
+        example: mar
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      scope:
+        custom: []
+        name: scope
+        description: 'all (default) or commercial.'
+        required: false
+        example: all
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      q: mar
+      scope: all
+      lang: en
+    bodyParameters:
+      q:
+        custom: []
+        name: q
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: 'Must not be greater than 10 characters.'
+        required: false
+        example: amniihfqc
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      scope:
+        custom: []
+        name: scope
+        description: ''
+        required: false
+        example: commercial
+        type: string
+        enumValues:
+          - all
+          - commercial
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      q: vmqeopfuudtdsufvyvddq
+      lang: amniihfqc
+      scope: commercial
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/commercial
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+        Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).
+
+        **Also uses (connected):**
+
+        * `POST /api/customer/wishlist/{property}` — see **Saved**
+        * `POST /api/customer/saved-searches` — see **Saved**
+      subgroup: 'Results, map & filters'
+      subgroupDescription: ''
+      title: 'Search commercial properties'
+      description: 'Commercial listings (16 per page) — same response shape as `GET /api/properties`.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      search:
+        custom: []
+        name: search
+        description: 'Title, community or reference number.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      category:
+        custom: []
+        name: category
+        description: 'Purpose: sale, rent or off_plan. e.g. `rent`.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      property_type:
+        custom: []
+        name: property_type
+        description: 'e.g. `office`.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      location:
+        custom: []
+        name: location
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      city:
+        custom: []
+        name: city
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      community:
+        custom: []
+        name: community
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      completion_status:
+        custom: []
+        name: completion_status
+        description: 'ready or off_plan.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      min_price:
+        custom: []
+        name: min_price
+        description: ''
+        required: false
+        example: null
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      max_price:
+        custom: []
+        name: max_price
+        description: ''
+        required: false
+        example: null
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      min_sqft:
+        custom: []
+        name: min_sqft
+        description: ''
+        required: false
+        example: null
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      max_sqft:
+        custom: []
+        name: max_sqft
+        description: ''
+        required: false
+        example: null
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      bathrooms:
+        custom: []
+        name: bathrooms
+        description: '1, 2, 3, 4 or 5+.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      amenities:
+        custom: []
+        name: amenities
+        description: ''
+        required: false
+        example: null
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'recent, price_asc, price_desc or popular.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/properties
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+        Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).
+
+        **Also uses (connected):**
+
+        * `POST /api/customer/wishlist/{property}` — see **Saved**
+        * `POST /api/customer/saved-searches` — see **Saved**
+      subgroup: 'Results, map & filters'
+      subgroupDescription: ''
+      title: 'Search properties'
+      description: |-
+        Residential listings (16 per page) with the result count, pagination and the card data for
+        each listing. Filter keys and values come from `GET /api/property-filters`; any admin
+        select filter whose key is a property column also works as `?{key}=value`.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      listing_type:
+        custom: []
+        name: listing_type
+        description: 'Purpose: sale, rent or off_plan. e.g. `sale`.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      property_type:
+        custom: []
+        name: property_type
+        description: 'e.g. `apartment`.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      location:
+        custom: []
+        name: location
+        description: 'Free-text location. e.g. `Dubai Marina`.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      city:
+        custom: []
+        name: city
+        description: 'Exact city from a location suggestion. e.g. `Dubai`.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      community:
+        custom: []
+        name: community
+        description: 'Exact community from a location suggestion. e.g. `Dubai Marina`.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      bedrooms:
+        custom: []
+        name: bedrooms
+        description: 'e.g. `2`.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      bathrooms:
+        custom: []
+        name: bathrooms
+        description: 'e.g. `2`.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      completion_status:
+        custom: []
+        name: completion_status
+        description: 'ready or off_plan. e.g. `ready`.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      min_price:
+        custom: []
+        name: min_price
+        description: 'AED. e.g. `1000000`.'
+        required: false
+        example: null
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      max_price:
+        custom: []
+        name: max_price
+        description: 'AED. e.g. `3000000`.'
+        required: false
+        example: null
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      min_sqft:
+        custom: []
+        name: min_sqft
+        description: 'e.g. `800`.'
+        required: false
+        example: null
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      max_sqft:
+        custom: []
+        name: max_sqft
+        description: 'e.g. `2000`.'
+        required: false
+        example: null
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      amenities:
+        custom: []
+        name: amenities
+        description: 'Amenity values from the filters endpoint.'
+        required: false
+        example: null
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'recent, price_asc, price_desc or popular. e.g. `recent`.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      premium:
+        custom: []
+        name: premium
+        description: '1 = featured (premium) listings only, residential + commercial. e.g. `0`.'
+        required: false
+        example: null
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      marketing:
+        custom: []
+        name: marketing
+        description: '1 = Marketing Properties only. e.g. `0`.'
+        required: false
+        example: null
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      agent:
+        custom: []
+        name: agent
+        description: "An agent's slug — only their listings."
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      agency:
+        custom: []
+        name: agency
+        description: "An agency's slug — only its listings."
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      floor_plans:
+        custom: []
+        name: floor_plans
+        description: '1 = only listings with floor plans.'
+        required: false
+        example: null
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      open_house:
+        custom: []
+        name: open_house
+        description: '1 = only listings with upcoming open house days.'
+        required: false
+        example: null
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/properties/map
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+        Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).
+
+        **Also uses (connected):**
+
+        * `POST /api/customer/wishlist/{property}` — see **Saved**
+        * `POST /api/customer/saved-searches` — see **Saved**
+      subgroup: 'Results, map & filters'
+      subgroupDescription: ''
+      title: 'Map pins'
+      description: |-
+        Pins for the map view. Takes every filter of `GET /api/properties` (or of
+        `/api/commercial` with `segment=commercial`), plus the visible map area. Send the bounds
+        of the current viewport after each pan/zoom.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      segment:
+        custom: []
+        name: segment
+        description: 'residential (default), commercial, premium or marketing.'
+        required: false
+        example: residential
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      south:
+        custom: []
+        name: south
+        description: 'Viewport bounds — all four or none. e.g. `25.05`.'
+        required: false
+        example: null
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      west:
+        custom: []
+        name: west
+        description: 'e.g. `55.10`.'
+        required: false
+        example: null
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      north:
+        custom: []
+        name: north
+        description: 'e.g. `25.30`.'
+        required: false
+        example: null
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      east:
+        custom: []
+        name: east
+        description: 'e.g. `55.40`.'
+        required: false
+        example: null
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      segment: residential
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/properties/{slug}'
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+        Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).
+
+        **Also uses (connected):**
+
+        * `POST /api/customer/wishlist/{property}` — see **Saved**
+        * `POST /api/customer/saved-searches` — see **Saved**
+      subgroup: 'Property details'
+      subgroupDescription: ''
+      title: 'Property details'
+      description: |-
+        The full listing: gallery, price, specs, description, amenities, location, agent/agency
+        contact, floor plans, open house days, similar listings and SEO. Use the property's `id`
+        from here for wishlist and lead endpoints.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      slug:
+        custom: []
+        name: slug
+        description: 'The listing slug from a property card.'
+        required: true
+        example: virella-2
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      slug: virella-2
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 404
+        content: '{"message": "Not found"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/calculators/{key}'
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+        Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).
+
+        **Also uses (connected):**
+
+        * `POST /api/customer/wishlist/{property}` — see **Saved**
+        * `POST /api/customer/saved-searches` — see **Saved**
+      subgroup: 'Property details'
+      subgroupDescription: ''
+      title: 'Calculator page'
+      description: 'Page copy, enquiry-form copy, FAQs, settings and SEO of one calculator.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      key:
+        custom: []
+        name: key
+        description: 'mortgage, eligibility, rent-vs-buy or refinance.'
+        required: true
+        example: refinance
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      key: refinance
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 404
+        content: '{"message": "Not found"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/leads/capture
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+        Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).
+
+        **Also uses (connected):**
+
+        * `POST /api/customer/wishlist/{property}` — see **Saved**
+        * `POST /api/customer/saved-searches` — see **Saved**
+      subgroup: 'Property details'
+      subgroupDescription: ''
+      title: 'Property enquiry'
+      description: |-
+        "Contact agent" form on a listing — goes to the listing's agent/agency CRM. If a customer
+        token is sent, the enquiry also appears under their account.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      property_id:
+        custom: []
+        name: property_id
+        description: ''
+        required: true
+        example: 111
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      name:
+        custom: []
+        name: name
+        description: ''
+        required: true
+        example: 'Sara Ahmed'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: ''
+        required: false
+        example: buyer@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone:
+        custom: []
+        name: phone
+        description: ''
+        required: false
+        example: '501234567'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone_country_code:
+        custom: []
+        name: phone_country_code
+        description: ''
+        required: false
+        example: '+971'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      company:
+        custom: []
+        name: company
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: mniihfqcoynlazghdtqtq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      country:
+        custom: []
+        name: country
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example: xbajwbpilpmufinllwloa
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      message:
+        custom: []
+        name: message
+        description: ''
+        required: true
+        example: "Is this still available? I'd like to view it this week."
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page_source:
+        custom: []
+        name: page_source
+        description: 'Where in the app it was sent from.'
+        required: false
+        example: mobile-app
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      recaptcha_token:
+        custom: []
+        name: recaptcha_token
+        description: 'See "Forms & reCAPTCHA" in the introduction.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      property_id: 111
+      name: 'Sara Ahmed'
+      email: buyer@example.com
+      phone: '501234567'
+      phone_country_code: '+971'
+      company: mniihfqcoynlazghdtqtq
+      country: xbajwbpilpmufinllwloa
+      message: "Is this still available? I'd like to view it this week."
+      page_source: mobile-app
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"message": "Thanks — your enquiry has been received and we''ll be in touch soon."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/leads/viewing
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+        Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).
+
+        **Also uses (connected):**
+
+        * `POST /api/customer/wishlist/{property}` — see **Saved**
+        * `POST /api/customer/saved-searches` — see **Saved**
+      subgroup: 'Property details'
+      subgroupDescription: ''
+      title: 'Book a viewing'
+      description: |-
+        A property lead (same routing as an enquiry) with the requested day + time slot. If the
+        listing has open house days (`available_dates` on the property details), only those days
+        are accepted; otherwise any day from today up to 60 days ahead.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      property_id:
+        custom: []
+        name: property_id
+        description: ''
+        required: true
+        example: 111
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      name:
+        custom: []
+        name: name
+        description: ''
+        required: true
+        example: 'Sara Ahmed'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: ''
+        required: false
+        example: buyer@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone:
+        custom: []
+        name: phone
+        description: ''
+        required: false
+        example: '501234567'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone_country_code:
+        custom: []
+        name: phone_country_code
+        description: ''
+        required: false
+        example: '+971'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      viewing_date:
+        custom: []
+        name: viewing_date
+        description: Y-m-d.
+        required: true
+        example: '2026-10-15'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      viewing_time:
+        custom: []
+        name: viewing_time
+        description: 'morning (9–12), afternoon (12–4) or evening (4–7).'
+        required: true
+        example: afternoon
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      note:
+        custom: []
+        name: note
+        description: ''
+        required: false
+        example: 'Please call before coming.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      recaptcha_token:
+        custom: []
+        name: recaptcha_token
+        description: 'See "Forms & reCAPTCHA" in the introduction.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      property_id: 111
+      name: 'Sara Ahmed'
+      email: buyer@example.com
+      phone: '501234567'
+      phone_country_code: '+971'
+      viewing_date: '2026-10-15'
+      viewing_time: afternoon
+      note: 'Please call before coming.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"message": "Thanks — your viewing request for Thursday, 15 Oct 2026, Afternoon (12 PM – 4 PM) has been sent. The agent will confirm with you shortly.", "when": "Thursday, 15 Oct 2026, Afternoon (12 PM – 4 PM)"}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"message": "Please pick one of the open house days for this property.", "errors": {"viewing_date": ["Please pick one of the open house days for this property."]}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/track/lead-click
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+        Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).
+
+        **Also uses (connected):**
+
+        * `POST /api/customer/wishlist/{property}` — see **Saved**
+        * `POST /api/customer/saved-searches` — see **Saved**
+      subgroup: 'Property details'
+      subgroupDescription: ''
+      title: 'Contact click'
+      description: 'The user tapped a contact button on a listing (before the call/WhatsApp/email app opens).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      property_id:
+        custom: []
+        name: property_id
+        description: ''
+        required: true
+        example: 111
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      kind:
+        custom: []
+        name: kind
+        description: 'call, whatsapp, email, enquiry, viewing, brochure or floor_plan.'
+        required: true
+        example: whatsapp
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      property_id: 111
+      kind: whatsapp
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Recorded
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

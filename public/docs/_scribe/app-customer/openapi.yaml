@@ -1,0 +1,2945 @@
+openapi: 3.0.3
+info:
+  title: 'MW Realty — Customer App API'
+  description: 'The endpoints the MW Realty customer app calls, by app tab: Entry, Home, Search, Saved, Activity, Account.'
+  version: 1.0.0
+servers:
+  -
+    url: 'http://127.0.0.1:8000'
+tags:
+  -
+    name: Entry
+    description: 'First launch: pick a language, then continue as a guest or sign in. Guests can search, view properties and send enquiries; Saved, Activity and Account need a signed-in user.'
+  -
+    name: Home
+    description: "Buy / Rent / Commercial / New Projects switch, the search bar, recently viewed and latest listings. **Recently viewed** has no endpoint: keep the last viewed property cards on the phone.\n\n**Also uses (connected):**\n\n* `GET /api/location-suggestions` — see **Search**\n* `GET /api/properties` — see **Search**\n* `GET /api/commercial` — see **Search**"
+  -
+    name: Search
+    description: "Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).\n\n**Also uses (connected):**\n\n* `POST /api/customer/wishlist/{property}` — see **Saved**\n* `POST /api/customer/saved-searches` — see **Saved**"
+  -
+    name: Saved
+    description: "Saved properties and saved searches. Signed-in users only.\n\n**Also uses (connected):**\n\n* `GET /api/customer/me` — see **Activity**\n* `GET /api/properties` — see **Search**"
+  -
+    name: Activity
+    description: 'Enquiries and viewing requests the user sent, with their status, and the recent activity feed. Signed-in users only.'
+  -
+    name: Account
+    description: "Profile, language and settings; help, privacy and terms; delete account.\n\n**Also uses (connected):**\n\n* `GET /api/customer/me` — see **Activity**\n* `GET /api/languages` — see **Entry**\n* `POST /api/auth/logout` — see **Entry**"
+  -
+    name: 'Background tracking'
+    description: "Sent in the background, not tied to one tab: screen views, time on a listing and listing impressions. They feed the agents' listing stats and lead insights."
+components:
+  securitySchemes:
+    default:
+      type: http
+      scheme: bearer
+      description: 'Get a token from <code>POST /api/auth/login</code>, <code>/api/auth/verify-otp</code> or <code>/api/auth/google</code>, and send it as <code>Authorization: Bearer {token}</code>.'
+security:
+  -
+    default: []
+paths:
+  /api/languages:
+    get:
+      summary: Languages
+      operationId: languages
+      description: 'The languages content is available in. Send the chosen `code` as `?lang=` on every request.'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Entry
+      security: []
+  /api/currencies:
+    get:
+      summary: Currencies
+      operationId: currencies
+      description: "Prices from every endpoint are in AED; to display another currency, multiply by its `rate`\n(units per 1 AED)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Entry
+      security: []
+  /api/static-translations:
+    get:
+      summary: 'UI translations'
+      operationId: uITranslations
+      description: "Static UI copy (labels, buttons…) as a key → text map for one language. Cache it on the\ndevice per language."
+      parameters:
+        -
+          in: query
+          name: lang
+          description: 'A code from `GET /api/languages`.'
+          example: en
+          required: false
+          schema:
+            type: string
+            description: 'A code from `GET /api/languages`.'
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Entry
+      security: []
+  /api/auth/register:
+    post:
+      summary: 'Sign up'
+      operationId: signUp
+      description: "Step 1 of sign-up. Creates the account and emails a 4-digit code — no token yet; call\n`POST /api/auth/verify-otp` with the returned `user_id` and the code.\n`email_sent: false` means the email failed — offer \"Resend code\"."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  otp_required: true
+                  user_id: 7
+                  email_sent: true
+                properties:
+                  otp_required:
+                    type: boolean
+                    example: true
+                  user_id:
+                    type: integer
+                    example: 7
+                  email_sent:
+                    type: boolean
+                    example: true
+        422:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The email has already been taken.'
+                  errors:
+                    email:
+                      - 'The email has already been taken.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The email has already been taken.'
+                  errors:
+                    type: object
+                    properties:
+                      email:
+                        type: array
+                        example:
+                          - 'The email has already been taken.'
+                        items:
+                          type: string
+      tags:
+        - Entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: ''
+                  example: 'Sara Ahmed'
+                email:
+                  type: string
+                  description: 'Must not already be registered.'
+                  example: buyer@example.com
+                phone:
+                  type: string
+                  description: 'Local number without the dial code.'
+                  example: '501234567'
+                phone_country_code:
+                  type: string
+                  description: 'Dial code, required with phone.'
+                  example: '+971'
+                password:
+                  type: string
+                  description: 'At least 8 characters.'
+                  example: secret123
+                password_confirmation:
+                  type: string
+                  description: 'Must match password.'
+                  example: secret123
+              required:
+                - name
+                - email
+                - password
+                - password_confirmation
+      security: []
+  /api/auth/verify-otp:
+    post:
+      summary: 'Verify sign-up code'
+      operationId: verifySignUpCode
+      description: "Step 2 of sign-up: the 4-digit code emailed by `POST /api/auth/register`. Marks the\nemail verified and returns a Bearer token."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  token: 12|9xQ...
+                  token_type: Bearer
+                  user:
+                    id: 7
+                    name: 'Sara Ahmed'
+                    email: buyer@example.com
+                    phone: null
+                    location: null
+                    avatar_url: null
+                    email_verified: true
+                properties:
+                  token:
+                    type: string
+                    example: 12|9xQ...
+                  token_type:
+                    type: string
+                    example: Bearer
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 7
+                      name:
+                        type: string
+                        example: 'Sara Ahmed'
+                      email:
+                        type: string
+                        example: buyer@example.com
+                      phone:
+                        type: string
+                        example: null
+                        nullable: true
+                      location:
+                        type: string
+                        example: null
+                        nullable: true
+                      avatar_url:
+                        type: string
+                        example: null
+                        nullable: true
+                      email_verified:
+                        type: boolean
+                        example: true
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Invalid or expired code.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Invalid or expired code.'
+      tags:
+        - Entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: 'The `user_id` returned by register.'
+                  example: 7
+                code:
+                  type: string
+                  description: 'The emailed code.'
+                  example: '1234'
+                device_name:
+                  type: string
+                  description: "A label for this device's token."
+                  example: 'Pixel 8'
+              required:
+                - user_id
+                - code
+      security: []
+  /api/auth/resend-otp:
+    post:
+      summary: 'Resend sign-up code'
+      operationId: resendSignUpCode
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'A new code has been sent.'
+                properties:
+                  message:
+                    type: string
+                    example: 'A new code has been sent.'
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This account is already verified.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This account is already verified.'
+        503:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Could not send the code right now — please try again in a moment.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Could not send the code right now — please try again in a moment.'
+      tags:
+        - Entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: ''
+                  example: 7
+              required:
+                - user_id
+      security: []
+  /api/auth/login:
+    post:
+      summary: 'Sign in'
+      operationId: signIn
+      description: 'Email + password sign-in. Returns a Bearer token for the `Authorization` header.'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: 'Signed in'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  token: 12|9xQ...
+                  token_type: Bearer
+                  user:
+                    id: 7
+                    name: 'Sara Ahmed'
+                    email: buyer@example.com
+                    phone: '+971 50 123 4567'
+                    location: 'Dubai Marina'
+                    avatar_url: null
+                    email_verified: true
+                properties:
+                  token:
+                    type: string
+                    example: 12|9xQ...
+                  token_type:
+                    type: string
+                    example: Bearer
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 7
+                      name:
+                        type: string
+                        example: 'Sara Ahmed'
+                      email:
+                        type: string
+                        example: buyer@example.com
+                      phone:
+                        type: string
+                        example: '+971 50 123 4567'
+                      location:
+                        type: string
+                        example: 'Dubai Marina'
+                      avatar_url:
+                        type: string
+                        example: null
+                        nullable: true
+                      email_verified:
+                        type: boolean
+                        example: true
+        422:
+          description: 'Wrong email or password'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Invalid credentials.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Invalid credentials.'
+      tags:
+        - Entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: ''
+                  example: buyer@example.com
+                password:
+                  type: string
+                  description: ''
+                  example: secret123
+                device_name:
+                  type: string
+                  description: "A label for this device's token (shown nowhere yet, useful for support)."
+                  example: 'iPhone 15 Pro'
+                  nullable: true
+              required:
+                - email
+                - password
+      security: []
+  /api/auth/google:
+    post:
+      summary: 'Continue with Google'
+      operationId: continueWithGoogle
+      description: "Exchange the access token from the native Google Sign-In SDK for an app token. Links to an\nexisting account with the same email, or creates one. For the **User** account only —\nagents and agencies don't have Google sign-in (show the button only on the User tab)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  token: 12|9xQ...
+                  token_type: Bearer
+                  user:
+                    id: 7
+                    name: 'Sara Ahmed'
+                    email: sara@gmail.com
+                    phone: null
+                    location: null
+                    avatar_url: null
+                    email_verified: true
+                properties:
+                  token:
+                    type: string
+                    example: 12|9xQ...
+                  token_type:
+                    type: string
+                    example: Bearer
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 7
+                      name:
+                        type: string
+                        example: 'Sara Ahmed'
+                      email:
+                        type: string
+                        example: sara@gmail.com
+                      phone:
+                        type: string
+                        example: null
+                        nullable: true
+                      location:
+                        type: string
+                        example: null
+                        nullable: true
+                      avatar_url:
+                        type: string
+                        example: null
+                        nullable: true
+                      email_verified:
+                        type: boolean
+                        example: true
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Google sign-in failed — please try again.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Google sign-in failed — please try again.'
+      tags:
+        - Entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                access_token:
+                  type: string
+                  description: 'The Google OAuth access token from the device SDK.'
+                  example: ya29.a0Af...
+                device_name:
+                  type: string
+                  description: "A label for this device's token."
+                  example: 'iPhone 15 Pro'
+                  nullable: true
+              required:
+                - access_token
+      security: []
+  /api/auth/forgot-password:
+    post:
+      summary: 'Forgot password'
+      operationId: forgotPassword
+      description: "Emails a reset link (opens the website's reset page). Always the same reply, whether or not\nthe email is registered."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'If an account exists for that email, a reset link has been sent.'
+                properties:
+                  message:
+                    type: string
+                    example: 'If an account exists for that email, a reset link has been sent.'
+      tags:
+        - Entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: ''
+                  example: buyer@example.com
+              required:
+                - email
+      security: []
+  /api/auth/reset-password:
+    post:
+      summary: 'Reset password'
+      operationId: resetPassword
+      description: "Only needed if the app handles the reset link itself (deep link\n`/reset-password?token=...&email=...`); otherwise the website page does this."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Your password has been reset — you can now sign in.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Your password has been reset — you can now sign in.'
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This password reset token is invalid.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This password reset token is invalid.'
+      tags:
+        - Entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: 'The token from the reset link.'
+                  example: 3f9a...
+                email:
+                  type: string
+                  description: ''
+                  example: buyer@example.com
+                password:
+                  type: string
+                  description: ''
+                  example: newSecret123
+                password_confirmation:
+                  type: string
+                  description: ''
+                  example: newSecret123
+              required:
+                - token
+                - email
+                - password
+                - password_confirmation
+      security: []
+  /api/auth/logout:
+    post:
+      summary: 'Sign out'
+      operationId: signOut
+      description: 'Revokes the token used for this request (other devices stay signed in).'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Signed out.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Signed out.'
+      tags:
+        - Entry
+  /api/customer/session:
+    get:
+      summary: 'Session state'
+      operationId: sessionState
+      description: "Is someone signed in, and which property ids are in their wishlist (to draw the heart\nicons). Works without a token too — guests get `authenticated: false` instead of a 401.\n\nPublic — every page's shared session state (useWishlist.js) calls this once on load."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  -
+                    description: 'Signed in'
+                    type: object
+                    example:
+                      authenticated: true
+                      wishlist_ids:
+                        - 12
+                        - 48
+                      user:
+                        name: 'Sara Ahmed'
+                        avatar_url: null
+                    properties:
+                      authenticated:
+                        type: boolean
+                        example: true
+                      wishlist_ids:
+                        type: array
+                        example:
+                          - 12
+                          - 48
+                        items:
+                          type: integer
+                      user:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            example: 'Sara Ahmed'
+                          avatar_url:
+                            type: string
+                            example: null
+                            nullable: true
+                  -
+                    description: Guest
+                    type: object
+                    example:
+                      authenticated: false
+                      wishlist_ids: []
+                      user: null
+                    properties:
+                      authenticated:
+                        type: boolean
+                        example: false
+                      wishlist_ids:
+                        type: array
+                        example: []
+                      user:
+                        type: string
+                        example: null
+                        nullable: true
+      tags:
+        - Entry
+      security: []
+  /api/home:
+    get:
+      summary: 'Home screen'
+      operationId: homeScreen
+      description: "Every home section in one request: banner, brands, ad, developments, premium properties,\nluxury, why-choose-us, communities, popular places, testimonials, contact. Property lists\ninside are shuffled on each call.\n\n`ad` is a single ad, kept for older clients. The home ad slider shows every running ad:\nload it from **Ad slider** (`/api/ads/slides?placement=home`)."
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Home
+      security: []
+  /api/home/new-projects:
+    get:
+      summary: 'New projects by city'
+      operationId: newProjectsByCity
+      description: 'The home "Browse New Projects" section''s listings for one city tab.'
+      parameters:
+        -
+          in: query
+          name: city
+          description: 'A city tab from the home response.'
+          example: Dubai
+          required: false
+          schema:
+            type: string
+            description: 'A city tab from the home response.'
+            example: Dubai
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Home
+      security: []
+  /api/property-filters:
+    get:
+      summary: 'Search filter bar'
+      operationId: searchFilterBar
+      description: "The filters to render (selects with their options and live listing counts, number sliders\nwith min/max/step), in admin order. Pass the chosen `value`s back to the listing endpoints\nunder each filter's `key`."
+      parameters:
+        -
+          in: query
+          name: page
+          description: "Which screen's filter set: `home` (compact) or `listing` (full)."
+          example: listing
+          required: false
+          schema:
+            type: string
+            description: "Which screen's filter set: `home` (compact) or `listing` (full)."
+            example: listing
+        -
+          in: query
+          name: scope
+          description: 'Whose listings the counts/bounds come from: residential, commercial, premium, marketing.'
+          example: residential
+          required: false
+          schema:
+            type: string
+            description: 'Whose listings the counts/bounds come from: residential, commercial, premium, marketing.'
+            example: residential
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Search
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: string
+                  description: ''
+                  example: listing
+                  enum:
+                    - home
+                    - listing
+                lang:
+                  type: string
+                  description: 'Must not be greater than 10 characters.'
+                  example: vmqeopfuu
+                scope:
+                  type: string
+                  description: ''
+                  example: marketing
+                  enum:
+                    - residential
+                    - commercial
+                    - premium
+                    - marketing
+      security: []
+  '/api/search-filters/{page}':
+    get:
+      summary: 'Page search filters'
+      operationId: pageSearchFilters
+      description: "Key-value: `filters` is keyed by each filter's key, and every option list is `{ value: label }`.\nSend the picked values back to the listing endpoint under the filter's `param` (or `params.min`\n/ `params.max` for a range). Checkbox filters (`multiple: true`) take several values,\ncomma-separated. `order` / `options_order` give the admin's order."
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  page: properties
+                  filters:
+                    property_type:
+                      label: 'Property Type'
+                      type: checkbox
+                      placeholder: null
+                      param: property_type
+                      multiple: true
+                      options:
+                        apartment: Apartment
+                        villa: Villa
+                      options_order:
+                        - apartment
+                        - villa
+                      counts:
+                        apartment: 42
+                        villa: 17
+                    bedrooms:
+                      label: Bedrooms
+                      type: radio
+                      placeholder: null
+                      param: bedrooms
+                      multiple: false
+                      options:
+                        '1': '1'
+                        '2': '2'
+                        5+: 5+
+                      options_order:
+                        - '1'
+                        - '2'
+                        - 5+
+                    price:
+                      label: Price
+                      type: range
+                      placeholder: null
+                      min: 0
+                      max: 19000000
+                      step: 50000
+                      params:
+                        min: min_price
+                        max: max_price
+                    parking:
+                      label: Parking
+                      type: number
+                      placeholder: 'Min. spaces'
+                      min: 0
+                      max: 5
+                      step: 1
+                      compare: min
+                      param: min_parking
+                    keyword:
+                      label: Keyword
+                      type: text
+                      placeholder: 'Title or reference'
+                      param: keyword
+                  order:
+                    - property_type
+                    - bedrooms
+                    - price
+                    - parking
+                    - keyword
+                properties:
+                  page:
+                    type: string
+                    example: properties
+                  filters:
+                    type: object
+                    properties:
+                      property_type:
+                        type: object
+                        properties:
+                          label:
+                            type: string
+                            example: 'Property Type'
+                          type:
+                            type: string
+                            example: checkbox
+                          placeholder:
+                            type: string
+                            example: null
+                            nullable: true
+                          param:
+                            type: string
+                            example: property_type
+                          multiple:
+                            type: boolean
+                            example: true
+                          options:
+                            type: object
+                            properties:
+                              apartment:
+                                type: string
+                                example: Apartment
+                              villa:
+                                type: string
+                                example: Villa
+                          options_order:
+                            type: array
+                            example:
+                              - apartment
+                              - villa
+                            items:
+                              type: string
+                          counts:
+                            type: object
+                            properties:
+                              apartment:
+                                type: integer
+                                example: 42
+                              villa:
+                                type: integer
+                                example: 17
+                      bedrooms:
+                        type: object
+                        properties:
+                          label:
+                            type: string
+                            example: Bedrooms
+                          type:
+                            type: string
+                            example: radio
+                          placeholder:
+                            type: string
+                            example: null
+                            nullable: true
+                          param:
+                            type: string
+                            example: bedrooms
+                          multiple:
+                            type: boolean
+                            example: false
+                          options:
+                            type: object
+                            properties:
+                              1:
+                                type: string
+                                example: '1'
+                              2:
+                                type: string
+                                example: '2'
+                              5+:
+                                type: string
+                                example: 5+
+                          options_order:
+                            type: array
+                            example:
+                              - '1'
+                              - '2'
+                              - 5+
+                            items:
+                              type: string
+                      price:
+                        type: object
+                        properties:
+                          label:
+                            type: string
+                            example: Price
+                          type:
+                            type: string
+                            example: range
+                          placeholder:
+                            type: string
+                            example: null
+                            nullable: true
+                          min:
+                            type: integer
+                            example: 0
+                          max:
+                            type: integer
+                            example: 19000000
+                          step:
+                            type: integer
+                            example: 50000
+                          params:
+                            type: object
+                            properties:
+                              min:
+                                type: string
+                                example: min_price
+                              max:
+                                type: string
+                                example: max_price
+                      parking:
+                        type: object
+                        properties:
+                          label:
+                            type: string
+                            example: Parking
+                          type:
+                            type: string
+                            example: number
+                          placeholder:
+                            type: string
+                            example: 'Min. spaces'
+                          min:
+                            type: integer
+                            example: 0
+                          max:
+                            type: integer
+                            example: 5
+                          step:
+                            type: integer
+                            example: 1
+                          compare:
+                            type: string
+                            example: min
+                          param:
+                            type: string
+                            example: min_parking
+                      keyword:
+                        type: object
+                        properties:
+                          label:
+                            type: string
+                            example: Keyword
+                          type:
+                            type: string
+                            example: text
+                          placeholder:
+                            type: string
+                            example: 'Title or reference'
+                          param:
+                            type: string
+                            example: keyword
+                  order:
+                    type: array
+                    example:
+                      - property_type
+                      - bedrooms
+                      - price
+                      - parking
+                      - keyword
+                    items:
+                      type: string
+      tags:
+        - Search
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lang:
+                  type: string
+                  description: 'Must not be greater than 10 characters.'
+                  example: vmqeopfuu
+      security: []
+    parameters:
+      -
+        in: path
+        name: page
+        description: 'Optional parameter. properties, commercial, premium or offplan.'
+        required: true
+        schema:
+          type: string
+        examples:
+          omitted:
+            summary: 'When the value is omitted'
+            value: ''
+          present:
+            summary: 'When the value is present'
+            value: properties
+  /api/location-suggestions:
+    get:
+      summary: 'Location autocomplete'
+      operationId: locationAutocomplete
+      description: "Cities, communities and addresses matching what the user typed (2+ characters; fewer\nreturns an empty list). Pass a picked suggestion back as `city=` / `community=` /\n`location=` on the listing endpoints. Debounce on the client — limited to 120 calls/minute."
+      parameters:
+        -
+          in: query
+          name: q
+          description: 'The typed text.'
+          example: mar
+          required: false
+          schema:
+            type: string
+            description: 'The typed text.'
+            example: mar
+        -
+          in: query
+          name: scope
+          description: 'all (default) or commercial.'
+          example: all
+          required: false
+          schema:
+            type: string
+            description: 'all (default) or commercial.'
+            example: all
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Search
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                q:
+                  type: string
+                  description: 'Must not be greater than 100 characters.'
+                  example: vmqeopfuudtdsufvyvddq
+                  nullable: true
+                lang:
+                  type: string
+                  description: 'Must not be greater than 10 characters.'
+                  example: amniihfqc
+                  nullable: true
+                scope:
+                  type: string
+                  description: ''
+                  example: commercial
+                  enum:
+                    - all
+                    - commercial
+                  nullable: true
+      security: []
+  /api/commercial:
+    get:
+      summary: 'Search commercial properties'
+      operationId: searchCommercialProperties
+      description: 'Commercial listings (16 per page) — same response shape as `GET /api/properties`.'
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: query
+          name: search
+          description: 'Title, community or reference number.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'Title, community or reference number.'
+            example: null
+        -
+          in: query
+          name: category
+          description: 'Purpose: sale, rent or off_plan. e.g. `rent`.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'Purpose: sale, rent or off_plan. e.g. `rent`.'
+            example: null
+        -
+          in: query
+          name: property_type
+          description: 'e.g. `office`.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'e.g. `office`.'
+            example: null
+        -
+          in: query
+          name: location
+          description: ''
+          example: null
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: null
+        -
+          in: query
+          name: city
+          description: ''
+          example: null
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: null
+        -
+          in: query
+          name: community
+          description: ''
+          example: null
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: null
+        -
+          in: query
+          name: completion_status
+          description: 'ready or off_plan.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'ready or off_plan.'
+            example: null
+        -
+          in: query
+          name: min_price
+          description: ''
+          example: null
+          required: false
+          schema:
+            type: number
+            description: ''
+            example: null
+        -
+          in: query
+          name: max_price
+          description: ''
+          example: null
+          required: false
+          schema:
+            type: number
+            description: ''
+            example: null
+        -
+          in: query
+          name: min_sqft
+          description: ''
+          example: null
+          required: false
+          schema:
+            type: number
+            description: ''
+            example: null
+        -
+          in: query
+          name: max_sqft
+          description: ''
+          example: null
+          required: false
+          schema:
+            type: number
+            description: ''
+            example: null
+        -
+          in: query
+          name: bathrooms
+          description: '1, 2, 3, 4 or 5+.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: '1, 2, 3, 4 or 5+.'
+            example: null
+        -
+          in: query
+          name: amenities
+          description: ''
+          example: null
+          required: false
+          schema:
+            type: array
+            description: ''
+            example: null
+            items:
+              type: string
+        -
+          in: query
+          name: sort
+          description: 'recent, price_asc, price_desc or popular.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'recent, price_asc, price_desc or popular.'
+            example: null
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Search
+      security: []
+  /api/properties:
+    get:
+      summary: 'Search properties'
+      operationId: searchProperties
+      description: "Residential listings (16 per page) with the result count, pagination and the card data for\neach listing. Filter keys and values come from `GET /api/property-filters`; any admin\nselect filter whose key is a property column also works as `?{key}=value`."
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: query
+          name: listing_type
+          description: 'Purpose: sale, rent or off_plan. e.g. `sale`.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'Purpose: sale, rent or off_plan. e.g. `sale`.'
+            example: null
+        -
+          in: query
+          name: property_type
+          description: 'e.g. `apartment`.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'e.g. `apartment`.'
+            example: null
+        -
+          in: query
+          name: location
+          description: 'Free-text location. e.g. `Dubai Marina`.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'Free-text location. e.g. `Dubai Marina`.'
+            example: null
+        -
+          in: query
+          name: city
+          description: 'Exact city from a location suggestion. e.g. `Dubai`.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'Exact city from a location suggestion. e.g. `Dubai`.'
+            example: null
+        -
+          in: query
+          name: community
+          description: 'Exact community from a location suggestion. e.g. `Dubai Marina`.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'Exact community from a location suggestion. e.g. `Dubai Marina`.'
+            example: null
+        -
+          in: query
+          name: bedrooms
+          description: 'e.g. `2`.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'e.g. `2`.'
+            example: null
+        -
+          in: query
+          name: bathrooms
+          description: 'e.g. `2`.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'e.g. `2`.'
+            example: null
+        -
+          in: query
+          name: completion_status
+          description: 'ready or off_plan. e.g. `ready`.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'ready or off_plan. e.g. `ready`.'
+            example: null
+        -
+          in: query
+          name: min_price
+          description: 'AED. e.g. `1000000`.'
+          example: null
+          required: false
+          schema:
+            type: number
+            description: 'AED. e.g. `1000000`.'
+            example: null
+        -
+          in: query
+          name: max_price
+          description: 'AED. e.g. `3000000`.'
+          example: null
+          required: false
+          schema:
+            type: number
+            description: 'AED. e.g. `3000000`.'
+            example: null
+        -
+          in: query
+          name: min_sqft
+          description: 'e.g. `800`.'
+          example: null
+          required: false
+          schema:
+            type: number
+            description: 'e.g. `800`.'
+            example: null
+        -
+          in: query
+          name: max_sqft
+          description: 'e.g. `2000`.'
+          example: null
+          required: false
+          schema:
+            type: number
+            description: 'e.g. `2000`.'
+            example: null
+        -
+          in: query
+          name: amenities
+          description: 'Amenity values from the filters endpoint.'
+          example: null
+          required: false
+          schema:
+            type: array
+            description: 'Amenity values from the filters endpoint.'
+            example: null
+            items:
+              type: string
+        -
+          in: query
+          name: sort
+          description: 'recent, price_asc, price_desc or popular. e.g. `recent`.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'recent, price_asc, price_desc or popular. e.g. `recent`.'
+            example: null
+        -
+          in: query
+          name: premium
+          description: '1 = featured (premium) listings only, residential + commercial. e.g. `0`.'
+          example: null
+          required: false
+          schema:
+            type: boolean
+            description: '1 = featured (premium) listings only, residential + commercial. e.g. `0`.'
+            example: null
+        -
+          in: query
+          name: marketing
+          description: '1 = Marketing Properties only. e.g. `0`.'
+          example: null
+          required: false
+          schema:
+            type: boolean
+            description: '1 = Marketing Properties only. e.g. `0`.'
+            example: null
+        -
+          in: query
+          name: agent
+          description: "An agent's slug — only their listings."
+          example: null
+          required: false
+          schema:
+            type: string
+            description: "An agent's slug — only their listings."
+            example: null
+        -
+          in: query
+          name: agency
+          description: "An agency's slug — only its listings."
+          example: null
+          required: false
+          schema:
+            type: string
+            description: "An agency's slug — only its listings."
+            example: null
+        -
+          in: query
+          name: floor_plans
+          description: '1 = only listings with floor plans.'
+          example: null
+          required: false
+          schema:
+            type: boolean
+            description: '1 = only listings with floor plans.'
+            example: null
+        -
+          in: query
+          name: open_house
+          description: '1 = only listings with upcoming open house days.'
+          example: null
+          required: false
+          schema:
+            type: boolean
+            description: '1 = only listings with upcoming open house days.'
+            example: null
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Search
+      security: []
+  /api/properties/map:
+    get:
+      summary: 'Map pins'
+      operationId: mapPins
+      description: "Pins for the map view. Takes every filter of `GET /api/properties` (or of\n`/api/commercial` with `segment=commercial`), plus the visible map area. Send the bounds\nof the current viewport after each pan/zoom."
+      parameters:
+        -
+          in: query
+          name: segment
+          description: 'residential (default), commercial, premium or marketing.'
+          example: residential
+          required: false
+          schema:
+            type: string
+            description: 'residential (default), commercial, premium or marketing.'
+            example: residential
+        -
+          in: query
+          name: south
+          description: 'Viewport bounds — all four or none. e.g. `25.05`.'
+          example: null
+          required: false
+          schema:
+            type: number
+            description: 'Viewport bounds — all four or none. e.g. `25.05`.'
+            example: null
+        -
+          in: query
+          name: west
+          description: 'e.g. `55.10`.'
+          example: null
+          required: false
+          schema:
+            type: number
+            description: 'e.g. `55.10`.'
+            example: null
+        -
+          in: query
+          name: north
+          description: 'e.g. `25.30`.'
+          example: null
+          required: false
+          schema:
+            type: number
+            description: 'e.g. `25.30`.'
+            example: null
+        -
+          in: query
+          name: east
+          description: 'e.g. `55.40`.'
+          example: null
+          required: false
+          schema:
+            type: number
+            description: 'e.g. `55.40`.'
+            example: null
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Search
+      security: []
+  '/api/properties/{slug}':
+    get:
+      summary: 'Property details'
+      operationId: propertyDetails
+      description: "The full listing: gallery, price, specs, description, amenities, location, agent/agency\ncontact, floor plans, open house days, similar listings and SEO. Use the property's `id`\nfrom here for wishlist and lead endpoints."
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not found'
+      tags:
+        - Search
+      security: []
+    parameters:
+      -
+        in: path
+        name: slug
+        description: 'The listing slug from a property card.'
+        example: virella-2
+        required: true
+        schema:
+          type: string
+  '/api/calculators/{key}':
+    get:
+      summary: 'Calculator page'
+      operationId: calculatorPage
+      description: 'Page copy, enquiry-form copy, FAQs, settings and SEO of one calculator.'
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not found'
+      tags:
+        - Search
+      security: []
+    parameters:
+      -
+        in: path
+        name: key
+        description: 'mortgage, eligibility, rent-vs-buy or refinance.'
+        example: refinance
+        required: true
+        schema:
+          type: string
+  /api/leads/capture:
+    post:
+      summary: 'Property enquiry'
+      operationId: propertyEnquiry
+      description: "\"Contact agent\" form on a listing — goes to the listing's agent/agency CRM. If a customer\ntoken is sent, the enquiry also appears under their account."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: "Thanks — your enquiry has been received and we'll be in touch soon."
+                properties:
+                  message:
+                    type: string
+                    example: "Thanks — your enquiry has been received and we'll be in touch soon."
+      tags:
+        - Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                property_id:
+                  type: integer
+                  description: ''
+                  example: 111
+                name:
+                  type: string
+                  description: ''
+                  example: 'Sara Ahmed'
+                email:
+                  type: string
+                  description: ''
+                  example: buyer@example.com
+                phone:
+                  type: string
+                  description: ''
+                  example: '501234567'
+                phone_country_code:
+                  type: string
+                  description: ''
+                  example: '+971'
+                company:
+                  type: string
+                  description: 'Must not be greater than 255 characters.'
+                  example: mniihfqcoynlazghdtqtq
+                  nullable: true
+                country:
+                  type: string
+                  description: 'Must not be greater than 100 characters.'
+                  example: xbajwbpilpmufinllwloa
+                  nullable: true
+                message:
+                  type: string
+                  description: ''
+                  example: "Is this still available? I'd like to view it this week."
+                page_source:
+                  type: string
+                  description: 'Where in the app it was sent from.'
+                  example: mobile-app
+                  nullable: true
+                recaptcha_token:
+                  type: string
+                  description: 'See "Forms & reCAPTCHA" in the introduction.'
+                  example: null
+                  nullable: true
+              required:
+                - property_id
+                - name
+                - message
+      security: []
+  /api/leads/viewing:
+    post:
+      summary: 'Book a viewing'
+      operationId: bookAViewing
+      description: "A property lead (same routing as an enquiry) with the requested day + time slot. If the\nlisting has open house days (`available_dates` on the property details), only those days\nare accepted; otherwise any day from today up to 60 days ahead."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Thanks — your viewing request for Thursday, 15 Oct 2026, Afternoon (12 PM – 4 PM) has been sent. The agent will confirm with you shortly.'
+                  when: 'Thursday, 15 Oct 2026, Afternoon (12 PM – 4 PM)'
+                properties:
+                  message:
+                    type: string
+                    example: 'Thanks — your viewing request for Thursday, 15 Oct 2026, Afternoon (12 PM – 4 PM) has been sent. The agent will confirm with you shortly.'
+                  when:
+                    type: string
+                    example: 'Thursday, 15 Oct 2026, Afternoon (12 PM – 4 PM)'
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Please pick one of the open house days for this property.'
+                  errors:
+                    viewing_date:
+                      - 'Please pick one of the open house days for this property.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Please pick one of the open house days for this property.'
+                  errors:
+                    type: object
+                    properties:
+                      viewing_date:
+                        type: array
+                        example:
+                          - 'Please pick one of the open house days for this property.'
+                        items:
+                          type: string
+      tags:
+        - Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                property_id:
+                  type: integer
+                  description: ''
+                  example: 111
+                name:
+                  type: string
+                  description: ''
+                  example: 'Sara Ahmed'
+                email:
+                  type: string
+                  description: ''
+                  example: buyer@example.com
+                phone:
+                  type: string
+                  description: ''
+                  example: '501234567'
+                phone_country_code:
+                  type: string
+                  description: ''
+                  example: '+971'
+                viewing_date:
+                  type: string
+                  description: Y-m-d.
+                  example: '2026-10-15'
+                viewing_time:
+                  type: string
+                  description: 'morning (9–12), afternoon (12–4) or evening (4–7).'
+                  example: afternoon
+                note:
+                  type: string
+                  description: ''
+                  example: 'Please call before coming.'
+                  nullable: true
+                recaptcha_token:
+                  type: string
+                  description: 'See "Forms & reCAPTCHA" in the introduction.'
+                  example: null
+                  nullable: true
+              required:
+                - property_id
+                - name
+                - viewing_date
+                - viewing_time
+      security: []
+  /api/track/lead-click:
+    post:
+      summary: 'Contact click'
+      operationId: contactClick
+      description: 'The user tapped a contact button on a listing (before the call/WhatsApp/email app opens).'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        204:
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {  }
+                properties: {  }
+      tags:
+        - Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                property_id:
+                  type: integer
+                  description: ''
+                  example: 111
+                kind:
+                  type: string
+                  description: 'call, whatsapp, email, enquiry, viewing, brochure or floor_plan.'
+                  example: whatsapp
+              required:
+                - property_id
+                - kind
+      security: []
+  /api/customer/wishlist:
+    get:
+      summary: 'Wishlist (paginated)'
+      operationId: wishlistpaginated
+      description: 'The saved properties as listing cards, newest first, 16 per page.'
+      parameters:
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  properties:
+                    -
+                      id: 12
+                      slug: marina-gate-2br
+                      title: 'Marina Gate 2BR'
+                      image: 'https://.../photo.jpg'
+                      ...: 'same card shape as GET /api/properties'
+                  pagination:
+                    current_page: 1
+                    last_page: 1
+                    per_page: 16
+                    total: 2
+                properties:
+                  properties:
+                    type: array
+                    example:
+                      -
+                        id: 12
+                        slug: marina-gate-2br
+                        title: 'Marina Gate 2BR'
+                        image: 'https://.../photo.jpg'
+                        ...: 'same card shape as GET /api/properties'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 12
+                        slug:
+                          type: string
+                          example: marina-gate-2br
+                        title:
+                          type: string
+                          example: 'Marina Gate 2BR'
+                        image:
+                          type: string
+                          example: 'https://.../photo.jpg'
+                        ...:
+                          type: string
+                          example: 'same card shape as GET /api/properties'
+                  pagination:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                        example: 1
+                      last_page:
+                        type: integer
+                        example: 1
+                      per_page:
+                        type: integer
+                        example: 16
+                      total:
+                        type: integer
+                        example: 2
+      tags:
+        - Saved
+  '/api/customer/wishlist/{property_id}':
+    post:
+      summary: 'Toggle wishlist'
+      operationId: toggleWishlist
+      description: "Adds the property to the wishlist, or removes it if it's already there."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  wishlisted: true
+                properties:
+                  wishlisted:
+                    type: boolean
+                    example: true
+      tags:
+        - Saved
+    parameters:
+      -
+        in: path
+        name: property_id
+        description: 'The ID of the property.'
+        example: 82
+        required: true
+        schema:
+          type: integer
+      -
+        in: path
+        name: property
+        description: 'The property **id** (not slug).'
+        example: 12
+        required: true
+        schema:
+          type: integer
+  /api/customer/saved-searches:
+    post:
+      summary: 'Save a search'
+      operationId: saveASearch
+      description: "Stores the listing filters so the user can reopen them later. `criteria` takes the same\nkeys as the `GET /api/properties` query string."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 3
+                  title: '2BR in Marina'
+                  meta: 'Dubai Marina · 2 Bed · For sale · AED 1,500,000 – any'
+                  criteria:
+                    location: 'Dubai Marina'
+                    bedrooms: '2'
+                    listing_type: sale
+                    min_price: 1500000
+                properties:
+                  id:
+                    type: integer
+                    example: 3
+                  title:
+                    type: string
+                    example: '2BR in Marina'
+                  meta:
+                    type: string
+                    example: 'Dubai Marina · 2 Bed · For sale · AED 1,500,000 – any'
+                  criteria:
+                    type: object
+                    properties:
+                      location:
+                        type: string
+                        example: 'Dubai Marina'
+                      bedrooms:
+                        type: string
+                        example: '2'
+                      listing_type:
+                        type: string
+                        example: sale
+                      min_price:
+                        type: integer
+                        example: 1500000
+      tags:
+        - Saved
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: ''
+                  example: '2BR in Marina'
+                criteria:
+                  type: object
+                  description: 'The listing filters.'
+                  example:
+                    location: 'Dubai Marina'
+                    bedrooms: '2'
+                    listing_type: sale
+                    min_price: 1500000
+                  properties: {  }
+                  nullable: true
+              required:
+                - title
+  '/api/customer/saved-searches/{savedSearch_id}':
+    delete:
+      summary: 'Delete a saved search'
+      operationId: deleteASavedSearch
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Removed.
+                properties:
+                  message:
+                    type: string
+                    example: Removed.
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+      tags:
+        - Saved
+    parameters:
+      -
+        in: path
+        name: savedSearch_id
+        description: 'The ID of the savedSearch.'
+        example: 3
+        required: true
+        schema:
+          type: integer
+      -
+        in: path
+        name: savedSearch
+        description: 'The saved search id.'
+        example: 3
+        required: true
+        schema:
+          type: integer
+  /api/customer/me:
+    get:
+      summary: Dashboard
+      operationId: dashboard
+      description: "Everything for the account screen in one call: profile, counts, recent activity, the\nwishlist (property cards), saved searches and sent enquiries. For long wishlists, use the\npaginated `GET /api/customer/wishlist` instead."
+      parameters:
+        -
+          in: query
+          name: lang
+          description: 'Language code for translated titles.'
+          example: en
+          required: false
+          schema:
+            type: string
+            description: 'Language code for translated titles.'
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  profile:
+                    name: 'Sara Ahmed'
+                    email: buyer@example.com
+                    phone: '+971 50 123 4567'
+                    location: 'Dubai Marina'
+                    avatar_url: null
+                  stats:
+                    wishlist: 2
+                    saved_searches: 1
+                    enquiries: 1
+                  activity:
+                    -
+                      icon: heart.svg
+                      text: 'You saved "Marina Gate 2BR" to your wishlist.'
+                      time: '2 hours ago'
+                  wishlist:
+                    -
+                      id: 12
+                      slug: marina-gate-2br
+                      image: 'https://.../photo.jpg'
+                      ...: 'same card shape as GET /api/properties'
+                  saved_searches:
+                    -
+                      id: 3
+                      title: '2BR in Marina'
+                      meta: 'Dubai Marina · 2 Bed · For sale'
+                      criteria:
+                        location: 'Dubai Marina'
+                        bedrooms: '2'
+                        listing_type: sale
+                  enquiries:
+                    -
+                      id: 91
+                      property: 'Marina Gate 2BR'
+                      sent_to: 'Ahmed Khan'
+                      date: 'Oct 08, 2026'
+                      status: New
+                properties:
+                  profile:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: 'Sara Ahmed'
+                      email:
+                        type: string
+                        example: buyer@example.com
+                      phone:
+                        type: string
+                        example: '+971 50 123 4567'
+                      location:
+                        type: string
+                        example: 'Dubai Marina'
+                      avatar_url:
+                        type: string
+                        example: null
+                        nullable: true
+                  stats:
+                    type: object
+                    properties:
+                      wishlist:
+                        type: integer
+                        example: 2
+                      saved_searches:
+                        type: integer
+                        example: 1
+                      enquiries:
+                        type: integer
+                        example: 1
+                  activity:
+                    type: array
+                    example:
+                      -
+                        icon: heart.svg
+                        text: 'You saved "Marina Gate 2BR" to your wishlist.'
+                        time: '2 hours ago'
+                    items:
+                      type: object
+                      properties:
+                        icon:
+                          type: string
+                          example: heart.svg
+                        text:
+                          type: string
+                          example: 'You saved "Marina Gate 2BR" to your wishlist.'
+                        time:
+                          type: string
+                          example: '2 hours ago'
+                  wishlist:
+                    type: array
+                    example:
+                      -
+                        id: 12
+                        slug: marina-gate-2br
+                        image: 'https://.../photo.jpg'
+                        ...: 'same card shape as GET /api/properties'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 12
+                        slug:
+                          type: string
+                          example: marina-gate-2br
+                        image:
+                          type: string
+                          example: 'https://.../photo.jpg'
+                        ...:
+                          type: string
+                          example: 'same card shape as GET /api/properties'
+                  saved_searches:
+                    type: array
+                    example:
+                      -
+                        id: 3
+                        title: '2BR in Marina'
+                        meta: 'Dubai Marina · 2 Bed · For sale'
+                        criteria:
+                          location: 'Dubai Marina'
+                          bedrooms: '2'
+                          listing_type: sale
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 3
+                        title:
+                          type: string
+                          example: '2BR in Marina'
+                        meta:
+                          type: string
+                          example: 'Dubai Marina · 2 Bed · For sale'
+                        criteria:
+                          type: object
+                          properties:
+                            location:
+                              type: string
+                              example: 'Dubai Marina'
+                            bedrooms:
+                              type: string
+                              example: '2'
+                            listing_type:
+                              type: string
+                              example: sale
+                  enquiries:
+                    type: array
+                    example:
+                      -
+                        id: 91
+                        property: 'Marina Gate 2BR'
+                        sent_to: 'Ahmed Khan'
+                        date: 'Oct 08, 2026'
+                        status: New
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 91
+                        property:
+                          type: string
+                          example: 'Marina Gate 2BR'
+                        sent_to:
+                          type: string
+                          example: 'Ahmed Khan'
+                        date:
+                          type: string
+                          example: 'Oct 08, 2026'
+                        status:
+                          type: string
+                          example: New
+      tags:
+        - Activity
+  /api/site-information:
+    get:
+      summary: 'Site information'
+      operationId: siteInformation
+      description: 'Office address, phone, email, WhatsApp and social links (the website footer).'
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {  }
+      tags:
+        - Account
+      security: []
+  '/api/legal/{key}':
+    get:
+      summary: 'Legal page'
+      operationId: legalPage
+      description: ''
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not found'
+      tags:
+        - Account
+      security: []
+    parameters:
+      -
+        in: path
+        name: key
+        description: 'terms, privacy, security or cookie.'
+        example: privacy
+        required: true
+        schema:
+          type: string
+  /api/customer/settings:
+    post:
+      summary: 'Update profile'
+      operationId: updateProfile
+      description: "Send as `multipart/form-data` when uploading an avatar. Use `POST` from the app — PHP does\nnot parse file uploads on `PUT` (the `PUT` route is kept for the website)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Settings updated.'
+                  avatar_url: 'https://res.cloudinary.com/.../avatar.jpg'
+                properties:
+                  message:
+                    type: string
+                    example: 'Settings updated.'
+                  avatar_url:
+                    type: string
+                    example: 'https://res.cloudinary.com/.../avatar.jpg'
+      tags:
+        - Account
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: ''
+                  example: 'Sara Ahmed'
+                email:
+                  type: string
+                  description: ''
+                  example: buyer@example.com
+                phone:
+                  type: string
+                  description: ''
+                  example: '+971 50 123 4567'
+                  nullable: true
+                location:
+                  type: string
+                  description: ''
+                  example: 'Dubai Marina'
+                  nullable: true
+                password:
+                  type: string
+                  description: 'Leave out to keep the current password.'
+                  example: newSecret123
+                  nullable: true
+                avatar:
+                  type: string
+                  format: binary
+                  description: 'Image, max 2 MB.'
+                  nullable: true
+                password_confirmation:
+                  type: string
+                  description: 'Required with password.'
+                  example: newSecret123
+              required:
+                - name
+                - email
+  /api/customer/account:
+    delete:
+      summary: 'Delete account'
+      operationId: deleteAccount
+      description: "Permanently deletes the account (required by the App Store / Play Store for apps with\nsign-up). Wishlist and saved searches are removed; enquiries already sent to agents stay\nwith them, unlinked from the account. Password accounts must confirm their password;\nGoogle-only accounts send nothing."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Your account has been deleted.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Your account has been deleted.'
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The password is incorrect.'
+                  errors:
+                    password:
+                      - 'The password is incorrect.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The password is incorrect.'
+                  errors:
+                    type: object
+                    properties:
+                      password:
+                        type: array
+                        example:
+                          - 'The password is incorrect.'
+                        items:
+                          type: string
+      tags:
+        - Account
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  description: 'The current password (accounts created with email + password).'
+                  example: secret123
+  /api/track/page:
+    post:
+      summary: 'Screen view'
+      operationId: screenView
+      description: "Call when a screen opens. Send the **website path** the screen corresponds to — that is\nhow views are classified: `/property-details/{slug}` = property view (counts towards the\nlisting's stats and routes the visitor to its agent), `/properties?bedrooms=2&...` = a\nsearch, anything else = a page view. Keep the returned `id` to report time spent.\n\nRequires the `X-Device-Id` header (nothing is recorded without it)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 5821
+                properties:
+                  id:
+                    type: integer
+                    example: 5821
+      tags:
+        - 'Background tracking'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                path:
+                  type: string
+                  description: ''
+                  example: /property-details/virella-2
+                title:
+                  type: string
+                  description: 'Screen title.'
+                  example: 'Virella 2'
+                  nullable: true
+                referrer:
+                  type: string
+                  description: ''
+                  example: null
+                  nullable: true
+              required:
+                - path
+      security: []
+  '/api/track/page/{event}/time':
+    post:
+      summary: 'Time on screen'
+      operationId: timeOnScreen
+      description: "Seconds the screen has been visible so far. Send whenever the screen is left or the app\ngoes to the background; the largest value wins, so re-sending is safe."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        204:
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {  }
+                properties: {  }
+      tags:
+        - 'Background tracking'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                seconds:
+                  type: integer
+                  description: ''
+                  example: 42
+              required:
+                - seconds
+      security: []
+    parameters:
+      -
+        in: path
+        name: event
+        description: 'The `id` returned by the screen view call.'
+        example: 5821
+        required: true
+        schema:
+          type: integer
+  /api/track/impressions:
+    post:
+      summary: 'Listing impressions'
+      operationId: listingImpressions
+      description: "Property cards that were visible on screen. Batch them, and send each id at most once per\nday per device.\n\nListing cards that were on screen (ids, de-duplicated per day by the browser)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        204:
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {  }
+                properties: {  }
+      tags:
+        - 'Background tracking'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  description: 'Up to 60 property ids.'
+                  example:
+                    - 111
+                    - 112
+                    - 150651
+                  items:
+                    type: integer
+              required:
+                - ids
+      security: []

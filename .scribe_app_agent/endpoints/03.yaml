@@ -1,0 +1,913 @@
+name: Leads
+description: 'The inbox (enquiries and viewings from the website, the app, Facebook and Property Finder) and one lead: contact details, stage, tags, notes and — for agency managers — assigning it to an agent.'
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/leads
+    metadata:
+      custom: []
+      groupName: Leads
+      groupDescription: 'The inbox (enquiries and viewings from the website, the app, Facebook and Property Finder) and one lead: contact details, stage, tags, notes and — for agency managers — assigning it to an agent.'
+      subgroup: Inbox
+      subgroupDescription: ''
+      title: 'List leads'
+      description: 'One page of the listing plus the stat-card counts (`quick_counts`, which ignore `q`).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: 'Name, email or phone (also every other email / phone it enquired with).'
+        required: false
+        example: sara
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      q:
+        custom: []
+        name: q
+        description: "The table's quick search."
+        required: false
+        example: marina
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      stage_id:
+        custom: []
+        name: stage_id
+        description: ''
+        required: false
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      source_id:
+        custom: []
+        name: source_id
+        description: ''
+        required: false
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      tag_id:
+        custom: []
+        name: tag_id
+        description: ''
+        required: false
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'active or inactive.'
+        required: false
+        example: active
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      agent_id:
+        custom: []
+        name: agent_id
+        description: 'Agency only — leads assigned to this agent (`unassigned` = none).'
+        required: false
+        example: 14
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      owner_id:
+        custom: []
+        name: owner_id
+        description: "Super Admin only — one account's leads."
+        required: false
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      date_from:
+        custom: []
+        name: date_from
+        description: 'Received on/after (Y-m-d).'
+        required: false
+        example: '2026-01-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      date_to:
+        custom: []
+        name: date_to
+        description: 'Received on/before (Y-m-d).'
+        required: false
+        example: '2026-01-31'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      quick:
+        custom: []
+        name: quick
+        description: 'active_24h, last_7d or website.'
+        required: false
+        example: last_7d
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'A column key (see Leads screen set-up).'
+        required: false
+        example: received
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      dir:
+        custom: []
+        name: dir
+        description: 'asc or desc.'
+        required: false
+        example: desc
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: '10, 25, 50 or 100.'
+        required: false
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: sara
+      q: marina
+      stage_id: 3
+      source_id: 2
+      tag_id: 5
+      status: active
+      agent_id: 14
+      owner_id: 12
+      date_from: '2026-01-01'
+      date_to: '2026-01-31'
+      quick: last_7d
+      sort: received
+      dir: desc
+      per_page: 25
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/leads/meta
+    metadata:
+      custom: []
+      groupName: Leads
+      groupDescription: 'The inbox (enquiries and viewings from the website, the app, Facebook and Property Finder) and one lead: contact details, stage, tags, notes and — for agency managers — assigning it to an agent.'
+      subgroup: Inbox
+      subgroupDescription: ''
+      title: 'Leads screen set-up'
+      description: |-
+        What the Leads screen needs besides the rows: the table fields (`columns.shown` = the
+        viewer's saved order), agency extras (its agents, unassigned count, assignment mode) and a
+        lead import still running. Owner / stage / source / tag filter options page through
+        `/leads/owner-options` and `/leads/options/{type}`.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/crm/leads/options/{type}'
+    metadata:
+      custom: []
+      groupName: Leads
+      groupDescription: 'The inbox (enquiries and viewings from the website, the app, Facebook and Property Finder) and one lead: contact details, stage, tags, notes and — for agency managers — assigning it to an agent.'
+      subgroup: Inbox
+      subgroupDescription: ''
+      title: 'Stage / source / tag options'
+      description: |-
+        Your own items plus the shared ones, searched and paged on the server (20 per page —
+        load the `next_page` on scroll).
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      type:
+        custom: []
+        name: type
+        description: 'stages, sources or tags.'
+        required: true
+        example: stages
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      type: stages
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: ''
+        required: false
+        example: view
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: view
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data": [{"id": 3, "name": "New", "color": "#64748b", "leads": 12}], "next_page": null, "total": 1}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/crm/leads/{id}'
+    metadata:
+      custom: []
+      groupName: Leads
+      groupDescription: 'The inbox (enquiries and viewings from the website, the app, Facebook and Property Finder) and one lead: contact details, stage, tags, notes and — for agency managers — assigning it to an agent.'
+      subgroup: Lead
+      subgroupDescription: ''
+      title: 'Show a lead'
+      description: |-
+        Everything on the lead screen: the lead, its emails / phones, enquiry details, activity
+        timeline, every enquiry it made (`source_history`), notes, purchases, assignment, the
+        stage / source / tag options it can be edited with, and the previous / next lead in your
+        list. Website activity loads separately (`GET /leads/{id}/insights/summary`).
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the lead.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PATCH
+    uri: 'api/crm/leads/{id}'
+    metadata:
+      custom: []
+      groupName: Leads
+      groupDescription: 'The inbox (enquiries and viewings from the website, the app, Facebook and Property Finder) and one lead: contact details, stage, tags, notes and — for agency managers — assigning it to an agent.'
+      subgroup: Lead
+      subgroupDescription: ''
+      title: 'Edit lead fields'
+      description: |-
+        Saves only the fields sent (one card at a time on the lead screen). `owner_id` (transfer
+        to another account) is Super Admin only.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the lead.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: ''
+        required: false
+        example: 'John Smith'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      company:
+        custom: []
+        name: company
+        description: ''
+        required: false
+        example: 'Acme LLC'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      country:
+        custom: []
+        name: country
+        description: ''
+        required: false
+        example: UAE
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      message:
+        custom: []
+        name: message
+        description: ''
+        required: false
+        example: 'Prefers sea view.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'active or inactive.'
+        required: false
+        example: inactive
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      owner_id:
+        custom: []
+        name: owner_id
+        description: 'Super Admin only.'
+        required: false
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: 'John Smith'
+      company: 'Acme LLC'
+      country: UAE
+      message: 'Prefers sea view.'
+      status: inactive
+      owner_id: 12
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Name updated."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/crm/leads/{id}/stage'
+    metadata:
+      custom: []
+      groupName: Leads
+      groupDescription: 'The inbox (enquiries and viewings from the website, the app, Facebook and Property Finder) and one lead: contact details, stage, tags, notes and — for agency managers — assigning it to an agent.'
+      subgroup: Lead
+      subgroupDescription: ''
+      title: 'Change stage'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the lead.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      stage_id:
+        custom: []
+        name: stage_id
+        description: ''
+        required: false
+        example: 4
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      stage_id: 4
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Stage updated.", "stage": {"id": 4, "name": "Viewing", "color": "#0ea5e9"}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/crm/leads/{id}/tags'
+    metadata:
+      custom: []
+      groupName: Leads
+      groupDescription: 'The inbox (enquiries and viewings from the website, the app, Facebook and Property Finder) and one lead: contact details, stage, tags, notes and — for agency managers — assigning it to an agent.'
+      subgroup: Lead
+      subgroupDescription: ''
+      title: 'Replace tags'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the lead.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      tags:
+        custom: []
+        name: tags
+        description: ''
+        required: false
+        example:
+          - 5
+          - 6
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      tags:
+        - 5
+        - 6
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Tags updated.", "tags": [{"id": 5, "name": "VIP", "color": "#ef4444"}]}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/leads/{id}/assign'
+    metadata:
+      custom: []
+      groupName: Leads
+      groupDescription: 'The inbox (enquiries and viewings from the website, the app, Facebook and Property Finder) and one lead: contact details, stage, tags, notes and — for agency managers — assigning it to an agent.'
+      subgroup: Lead
+      subgroupDescription: ''
+      title: 'Assign to an agent'
+      description: |-
+        Agency leads only — the owning agency (or Super Admin). `agent_id: null` moves the lead
+        back to agency level. Options come from the lead's `assignment.agent_options`.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the lead.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      agent_id:
+        custom: []
+        name: agent_id
+        description: ''
+        required: false
+        example: 14
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      note:
+        custom: []
+        name: note
+        description: ''
+        required: false
+        example: 'Speaks Arabic.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      agent_id: 14
+      note: 'Speaks Arabic.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Lead assigned to Omar.", "agent_id": 14}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/leads/{id}/contacts'
+    metadata:
+      custom: []
+      groupName: Leads
+      groupDescription: 'The inbox (enquiries and viewings from the website, the app, Facebook and Property Finder) and one lead: contact details, stage, tags, notes and — for agency managers — assigning it to an agent.'
+      subgroup: Lead
+      subgroupDescription: ''
+      title: 'Add an email / phone'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the lead.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      type:
+        custom: []
+        name: type
+        description: 'email or phone.'
+        required: true
+        example: phone
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      value:
+        custom: []
+        name: value
+        description: ''
+        required: true
+        example: '501234567'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone_country_code:
+        custom: []
+        name: phone_country_code
+        description: 'With a phone.'
+        required: false
+        example: '+971'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      type: phone
+      value: '501234567'
+      phone_country_code: '+971'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Phone number added."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'api/crm/leads/{id}/contacts/{contactId}/primary'
+    metadata:
+      custom: []
+      groupName: Leads
+      groupDescription: 'The inbox (enquiries and viewings from the website, the app, Facebook and Property Finder) and one lead: contact details, stage, tags, notes and — for agency managers — assigning it to an agent.'
+      subgroup: Lead
+      subgroupDescription: ''
+      title: 'Make an email / phone primary'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the lead.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      contactId:
+        custom: []
+        name: contactId
+        description: ''
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+      contactId: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Primary contact updated."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/leads/{id}/notes'
+    metadata:
+      custom: []
+      groupName: Leads
+      groupDescription: 'The inbox (enquiries and viewings from the website, the app, Facebook and Property Finder) and one lead: contact details, stage, tags, notes and — for agency managers — assigning it to an agent.'
+      subgroup: Lead
+      subgroupDescription: ''
+      title: 'Add a note'
+      description: "Adds an entry to the lead's activity timeline, signed with your name."
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the lead.'
+        required: true
+        example: '1562'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: '1562'
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      body:
+        custom: []
+        name: body
+        description: ''
+        required: true
+        example: 'Called — wants a viewing on Saturday.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      body: 'Called — wants a viewing on Saturday.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "message": "Note added.", "note": {"id": 55, "body": "Called — wants a viewing on Saturday.", "author_name": "Sara Ahmed", "created_at": "2026-10-09T14:20:00+00:00"}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

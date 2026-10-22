@@ -1,0 +1,60 @@
+name: Activity
+description: 'Enquiries and viewing requests the user sent, with their status, and the recent activity feed. Signed-in users only.'
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/customer/me
+    metadata:
+      custom: []
+      groupName: Activity
+      groupDescription: 'Enquiries and viewing requests the user sent, with their status, and the recent activity feed. Signed-in users only.'
+      subgroup: Activity
+      subgroupDescription: ''
+      title: Dashboard
+      description: |-
+        Everything for the account screen in one call: profile, counts, recent activity, the
+        wishlist (property cards), saved searches and sent enquiries. For long wishlists, use the
+        paginated `GET /api/customer/wishlist` instead.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: 'Language code for translated titles.'
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"profile": {"name": "Sara Ahmed", "email": "buyer@example.com", "phone": "+971 50 123 4567", "location": "Dubai Marina", "avatar_url": null}, "stats": {"wishlist": 2, "saved_searches": 1, "enquiries": 1}, "activity": [{"icon": "heart.svg", "text": "You saved \"Marina Gate 2BR\" to your wishlist.", "time": "2 hours ago"}], "wishlist": [{"id": 12, "slug": "marina-gate-2br", "image": "https://.../photo.jpg", "...": "same card shape as GET /api/properties"}], "saved_searches": [{"id": 3, "title": "2BR in Marina", "meta": "Dubai Marina · 2 Bed · For sale", "criteria": {"location": "Dubai Marina", "bedrooms": "2", "listing_type": "sale"}}], "enquiries": [{"id": 91, "property": "Marina Gate 2BR", "sent_to": "Ahmed Khan", "date": "Oct 08, 2026", "status": "New"}]}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
