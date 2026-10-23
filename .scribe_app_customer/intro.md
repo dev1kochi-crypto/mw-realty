@@ -7,7 +7,7 @@ The endpoints the MW Realty customer app calls, by app tab: Entry, Home, Search,
 </aside>
 
 Only the endpoints the **customer app's first release** calls, filed under the app's tabs:
-**Entry → Home → Search → Saved → Activity → Account**, plus **Background tracking**. Each tab's
+**Entry → Home → Search → Saved → Activity → Account**, plus **Ads & featured** (ad slider and premium listings, shown on Home and Search) and **Background tracking**. Each tab's
 introduction also lists the *connected* endpoints it calls that are documented under another tab.
 The complete website API is at [/docs/frontend](/docs/frontend).
 

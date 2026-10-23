@@ -21,7 +21,10 @@ tags:
     description: 'Permit, location, details, media, preview. Drafts are kept on the phone until the agent submits, then sent in one `POST /api/crm/properties` (multipart, photos included).'
   -
     name: Listings
-    description: "My listings by state (active, inactive, permit review), quick sold / rented, edit, photos and the sold / rented proof documents.\n\n**Also uses (connected):**\n\n* `POST /api/crm/properties/permit/validate` — see **Add listing**\n* `GET /api/crm/properties/nearby-places` — see **Add listing**\n* `GET /api/crm/properties/agent-options` — see **Add listing**"
+    description: "My listings by state (active, inactive, permit review), quick sold / rented, edit, photos and the sold / rented proof documents.\n\n**Also uses (connected):**\n\n* `POST /api/crm/properties/permit/validate` — see **Add listing**\n* `GET /api/crm/properties/nearby-places` — see **Add listing**\n* `GET /api/crm/properties/agent-options` — see **Add listing**\n* `POST /api/crm/properties/{id}/feature` — see **Featured & ads**"
+  -
+    name: 'Featured & ads'
+    description: "Promoting listings: **Featured** (Premium) listings and **advertisements** in the website / app ad sliders.Featured and ads are paid from the plan's allowance (`pay_with=plan`) or with credits (`pay_with=credits`). Opened from a listing (\"Make premium\") or from the More tab.\n\n**Also uses (connected):**\n\n* `GET /api/crm/properties` — see **Listings**"
   -
     name: More
     description: "Team view for agency managers, notifications, profile and support.\n\n**Also uses (connected):**\n\n* `GET /api/crm/profile` — see **Entry**\n* `POST /api/crm/profile` — see **Entry**\n* `POST /api/crm/profile/avatar` — see **Entry**\n* `POST /api/crm/auth/logout` — see **Entry**"
@@ -645,7 +648,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Entry
       security: []
@@ -661,7 +664,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Entry
       requestBody:
@@ -678,58 +681,58 @@ paths:
                 public_email:
                   type: string
                   description: 'Must be a valid email address. Must not be greater than 255 characters.'
-                  example: carolyne.luettgen@example.org
+                  example: zbailey@example.net
                   nullable: true
                 secondary_phone:
                   type: string
                   description: 'Must match the regex /^\+?[0-9 ()\-]{6,30}$/. Must not be greater than 30 characters.'
-                  example: fuudtdsufvyvddqamniih
+                  example: i
                   nullable: true
                 whatsapp_number:
                   type: string
                   description: 'Must match the regex /^\+?[0-9 ()\-]{6,30}$/. Must not be greater than 30 characters.'
-                  example: fqcoynlazghdtqtqxbajw
+                  example: 'y'
                   nullable: true
                 city:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: bpilpmufinllwloauydls
+                  example: v
                   nullable: true
                 orn_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-22T09:05:25'
+                  example: '2026-10-23T06:12:59'
                   nullable: true
                 adrec_license_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-22T09:05:25'
+                  example: '2026-10-23T06:12:59'
                   nullable: true
                 other_license:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: msjuryvojcybzvrbyickz
+                  example: d
                   nullable: true
                 other_license_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-22T09:05:25'
+                  example: '2026-10-23T06:12:59'
                   nullable: true
                 position:
                   type: string
                   description: 'Must not be greater than 150 characters.'
-                  example: nkygloigmkwxphlvazjrc
+                  example: l
                   nullable: true
                 linkedin_url:
                   type: string
                   description: 'Must be a valid URL. Must not be greater than 255 characters.'
-                  example: 'http://www.dubuque.com/fuga-a-debitis-autem.html'
+                  example: 'http://www.dickens.com/deserunt-aut-ab-provident-perspiciatis-quo-omnis-nostrum'
                   nullable: true
                 spoken_languages:
                   type: array
                   description: ''
                   example:
-                    - consequatur
+                    - architecto
                   items:
                     type: string
                 experience_since:
@@ -739,16 +742,16 @@ paths:
                 bio_ar:
                   type: string
                   description: 'Must not be greater than 2000 characters.'
-                  example: mqeopfuudtdsufvyvddqa
+                  example: 'n'
                   nullable: true
                 name:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: mniihfqcoynlazghdtqtq
+                  example: g
                 company_name:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: xbajwbpilpmufinllwloa
+                  example: z
                   nullable: true
                 phone:
                   type: string
@@ -761,97 +764,97 @@ paths:
                 nationality:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: uydlsmsjuryvojcybzvrb
+                  example: m
                   nullable: true
                 emirates_id_no:
                   type: string
                   description: 'Must not be greater than 50 characters.'
-                  example: yickznkygloigmkwxphlv
+                  example: i
                   nullable: true
                 passport_no:
                   type: string
                   description: 'Must not be greater than 50 characters.'
-                  example: azjrcnfbaqywuxhgjjmzu
+                  example: 'y'
                   nullable: true
                 passport_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-22T09:05:25'
+                  example: '2026-10-23T06:12:59'
                   nullable: true
                 brn_number:
                   type: string
                   description: 'Must not be greater than 50 characters.'
-                  example: xjubqouzswiwxtrkimfca
+                  example: v
                   nullable: true
                 affiliated_brokerage:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: tbxspzmrazsroyjpxmqes
+                  example: d
                   nullable: true
                 trade_license_no:
                   type: string
                   description: 'Must not be greater than 50 characters.'
-                  example: edyghenqcopwvownkbaml
+                  example: l
                   nullable: true
                 trade_license_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-22T09:05:25'
+                  example: '2026-10-23T06:12:59'
                   nullable: true
                 orn_number:
                   type: string
                   description: 'Must not be greater than 50 characters.'
-                  example: nfngefbeilfzsyuxoezbd
+                  example: j
                   nullable: true
                 adrec_license_no:
                   type: string
                   description: 'Must not be greater than 50 characters.'
-                  example: tabptcyyerevrljcbwkth
+                  example: 'n'
                   nullable: true
                 trn_number:
                   type: string
                   description: 'Must not be greater than 50 characters.'
-                  example: jnescwsestcouxpqsydki
+                  example: i
                   nullable: true
                 trn_expiry:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-22T09:05:25'
+                  example: '2026-10-23T06:12:59'
                   nullable: true
                 authorized_signatory_name:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: gioyoyprjkfdjsneawgaa
+                  example: k
                   nullable: true
                 landline:
                   type: string
                   description: 'Must not be greater than 50 characters.'
-                  example: vuiwlezlcraoooxrrjhbd
+                  example: h
                   nullable: true
                 office_address:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: uowtbaqrrtgxiuvujtzci
+                  example: w
                   nullable: true
                 bio:
                   type: string
                   description: 'Must not be greater than 2000 characters.'
-                  example: rplnfqsaymxpayeblqozc
+                  example: a
                   nullable: true
                 years_of_experience:
                   type: integer
                   description: 'Must be at least 0. Must not be greater than 80.'
-                  example: 11
+                  example: 24
                   nullable: true
                 preferred_areas:
                   type: string
                   description: 'Must not be greater than 500 characters.'
-                  example: azplqjijwkuzgpjfumffs
+                  example: k
                   nullable: true
                 website:
                   type: string
                   description: 'Must be a valid URL. Must not be greater than 255 characters.'
-                  example: mqnmbekhsobzoqisjmbiu
+                  example: c
                   nullable: true
                 founding_year:
                   type: string
@@ -865,37 +868,37 @@ paths:
                     meta_title:
                       type: string
                       description: 'Must not be greater than 255 characters.'
-                      example: qxdnvttnwpjqkxxmutyza
+                      example: m
                       nullable: true
                     meta_description:
                       type: string
                       description: 'Must not be greater than 500 characters.'
-                      example: adbjkbosusobdoqhlrecw
+                      example: 'y'
                       nullable: true
                     meta_keywords:
                       type: string
                       description: 'Must not be greater than 500 characters.'
-                      example: gwnfrnqkqzoekemczcjka
+                      example: u
                       nullable: true
                     canonical_url:
                       type: string
                       description: 'Must be a valid URL. Must not be greater than 2048 characters.'
-                      example: 'http://www.walker.com/'
+                      example: 'https://www.hirthe.com/commodi-incidunt-iure-odit'
                       nullable: true
                     og_title:
                       type: string
                       description: 'Must not be greater than 255 characters.'
-                      example: wxjfjhqnumftkwbfqsgay
+                      example: s
                       nullable: true
                     og_description:
                       type: string
                       description: 'Must not be greater than 500 characters.'
-                      example: wjxhjqovkxzlvalyuwppf
+                      example: i
                       nullable: true
                     other_meta_tags:
                       type: string
                       description: ''
-                      example: consequatur
+                      example: architecto
                       nullable: true
                   nullable: true
                 metadata_og_image:
@@ -906,7 +909,7 @@ paths:
                 remove_metadata_og_image:
                   type: boolean
                   description: ''
-                  example: true
+                  example: false
                   nullable: true
               required:
                 - section
@@ -924,7 +927,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Entry
       requestBody:
@@ -953,7 +956,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Entry
       security: []
@@ -990,7 +993,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Entry
       security: []
@@ -1007,7 +1010,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Entry
       security: []
@@ -1023,7 +1026,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Entry
       requestBody:
@@ -1052,7 +1055,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Entry
       security: []
@@ -1061,7 +1064,7 @@ paths:
         in: path
         name: field
         description: ''
-        example: consequatur
+        example: architecto
         required: true
         schema:
           type: string
@@ -1078,7 +1081,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Entry
       security: []
@@ -1095,7 +1098,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Home
       security: []
@@ -1262,7 +1265,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Leads
       security: []
@@ -1279,7 +1282,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Leads
       security: []
@@ -1388,7 +1391,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Leads
       security: []
@@ -1460,7 +1463,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the lead.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -1530,7 +1533,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the lead.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -1611,7 +1614,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the lead.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -1674,7 +1677,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the lead.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -1738,7 +1741,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the lead.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -1780,7 +1783,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the lead.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -1788,7 +1791,7 @@ paths:
         in: path
         name: contactId
         description: ''
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -1863,7 +1866,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the lead.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -1890,7 +1893,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'Add listing'
       security: []
@@ -1907,7 +1910,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'Add listing'
       requestBody:
@@ -1933,7 +1936,7 @@ paths:
                           title:
                             type: string
                             description: 'Must not be greater than 255 characters.'
-                            example: mqeopfuudtdsufvyvddqa
+                            example: 'n'
                         required:
                           - title
                       ar:
@@ -1944,40 +1947,40 @@ paths:
                           title:
                             type: string
                             description: 'Must not be greater than 255 characters.'
-                            example: mniihfqcoynlazghdtqtq
+                            example: g
                         required:
                           - title
                       title:
                         type: string
                         description: 'Must not be greater than 255 characters.'
-                        example: edyghenqcopwvownkbaml
+                        example: l
                       key_features:
                         type: string
                         description: 'Must not be greater than 5000 characters.'
-                        example: nfngefbeilfzsyuxoezbd
+                        example: j
                         nullable: true
                       description:
                         type: string
                         description: 'Must not be greater than 100000 characters.'
-                        example: 'Doloremque illo deserunt placeat fugit non hic sequi.'
+                        example: 'Mollitia modi deserunt aut ab provident perspiciatis quo.'
                         nullable: true
                       address:
                         type: string
                         description: 'Must not be greater than 1000 characters.'
-                        example: revrljcbwkthjnescwses
+                        example: m
                       community:
                         type: string
                         description: 'Must not be greater than 255 characters.'
-                        example: tcouxpqsydkigioyoyprj
+                        example: 'y'
                         nullable: true
                       city:
                         type: string
                         description: 'Must not be greater than 255 characters.'
-                        example: kfdjsneawgaavuiwlezlc
+                        example: u
                       country:
                         type: string
                         description: 'Must not be greater than 255 characters.'
-                        example: raoooxrrjhbduowtbaqrr
+                        example: w
                     required:
                       - title
                       - address
@@ -1986,26 +1989,26 @@ paths:
                 slug:
                   type: string
                   description: 'Must contain only letters, numbers, dashes and underscores. Must not be greater than 255 characters.'
-                  example: vmqeopfuudtdsufvyvddq
+                  example: b
                 reference_no:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: amniihfqcoynlazghdtqt
+                  example: 'n'
                   nullable: true
                 rera_id:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: qxbajwbpilpmufinllwlo
+                  example: g
                   nullable: true
                 permit_number:
                   type: string
                   description: 'Must match the regex /^[A-Za-z0-9\-\/]+$/. Must not be greater than 64 characters.'
-                  example: auydlsmsjuryvojcybzvr
+                  example: z
                   nullable: true
                 permit_expires_at:
                   type: string
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
-                  example: '2026-10-22'
+                  example: '2026-10-23'
                   nullable: true
                 permit_qr:
                   type: string
@@ -2015,44 +2018,44 @@ paths:
                 permit_verification_url:
                   type: string
                   description: 'Must be a valid URL. Must not be greater than 2048 characters.'
-                  example: 'http://www.ward.com/'
+                  example: 'http://rempel.com/sunt-nihil-accusantium-harum-mollitia'
                   nullable: true
                 postal_code:
                   type: string
                   description: 'Must not be greater than 50 characters.'
-                  example: ckznkygloigmkwxphlvaz
+                  example: k
                   nullable: true
                 latitude:
                   type: number
                   description: 'Must be between -90 and 90.'
-                  example: -90
+                  example: -89
                 longitude:
                   type: number
                   description: 'Must be between -180 and 180.'
-                  example: -179
+                  example: -180
                 bedrooms:
                   type: integer
                   description: 'Must be at least 0. Must not be greater than 1000.'
-                  example: 3
+                  example: 22
                   nullable: true
                 bathrooms:
                   type: integer
                   description: 'Must be at least 0. Must not be greater than 1000.'
-                  example: 14
+                  example: 24
                   nullable: true
                 sqft:
                   type: integer
                   description: 'Must be at least 0. Must not be greater than 4294967295.'
-                  example: 6
+                  example: 18
                   nullable: true
                 price:
                   type: number
                   description: 'Must be at least 0. Must not be greater than 9999999999999.99.'
-                  example: 2
+                  example: 8
                 currency:
                   type: string
                   description: 'Must contain only letters. Must be 3 characters.'
-                  example: aqy
+                  example: myu
                 image:
                   type: string
                   format: binary
@@ -2061,7 +2064,7 @@ paths:
                 image_alt:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: wuxhgjjmzuxjubqouzswi
+                  example: w
                   nullable: true
                 brochure:
                   type: string
@@ -2078,7 +2081,7 @@ paths:
                   type: array
                   description: 'Must match an existing stored value. Must not be greater than 100 characters.'
                   example:
-                    - wxtrkimfcatbxspzmrazs
+                    - p
                   items:
                     type: string
                     nullable: true
@@ -2086,7 +2089,7 @@ paths:
                   type: array
                   description: 'Must match an existing stored value. Must not be greater than 100 characters.'
                   example:
-                    - royjpxmqesedyghenqcop
+                    - w
                   items:
                     type: string
                     nullable: true
@@ -2094,19 +2097,19 @@ paths:
                   type: array
                   description: 'Must match an existing stored value. Must not be greater than 100 characters.'
                   example:
-                    - wvownkbamlnfngefbeilf
+                    - l
                   items:
                     type: string
                     nullable: true
                 rental_period:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 100 characters.'
-                  example: zsyuxoezbdtabptcyyere
+                  example: v
                   nullable: true
                 permit_type:
                   type: string
                   description: ''
-                  example: none
+                  example: rera
                   enum:
                     - rera
                     - dtcm
@@ -2123,7 +2126,7 @@ paths:
                 permit_token:
                   type: string
                   description: 'Must not be greater than 64 characters.'
-                  example: vrljcbwkthjnescwsestc
+                  example: q
                   nullable: true
                 availability:
                   type: string
@@ -2137,23 +2140,23 @@ paths:
                   type: array
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
                   example:
-                    - '2026-10-22'
+                    - '2026-10-23'
                   items:
                     type: string
                 developer:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: ouxpqsydkigioyoyprjkf
+                  example: w
                   nullable: true
                 unit_number:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: djsneawgaavuiwlezlcra
+                  example: r
                   nullable: true
                 owner_name:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: oooxrrjhbduowtbaqrrtg
+                  example: s
                   nullable: true
                 upgraded:
                   type: boolean
@@ -2163,52 +2166,52 @@ paths:
                 video_tour_url:
                   type: string
                   description: 'Must be a valid URL. Must not be greater than 2048 characters.'
-                  example: 'http://harber.info/dolor-autem-omnis-doloribus-beatae-laboriosam-expedita-deserunt.html'
+                  example: 'https://www.bauch.com/omnis-autem-et-consequatur'
                   nullable: true
                 cheques:
                   type: integer
                   description: 'Must be at least 1. Must not be greater than 12.'
-                  example: 6
+                  example: 4
                   nullable: true
                 year_built:
                   type: integer
                   description: 'Must be at least 1800. Must not be greater than 2200.'
-                  example: 14
+                  example: 16
                   nullable: true
                 floor:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: fqsaymxpayeblqozckazp
+                  example: s
                   nullable: true
                 parking:
                   type: integer
                   description: 'Must be at least 0. Must not be greater than 10000.'
-                  example: 11
+                  example: 12
                   nullable: true
                 garage:
                   type: integer
                   description: 'Must be at least 0. Must not be greater than 1000.'
-                  example: 16
+                  example: 23
                   nullable: true
                 direct_from_owner:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: jijwkuzgpjfumffsmqnmb
+                  example: w
                   nullable: true
                 security_deposit:
                   type: number
                   description: 'Must be at least 0. Must not be greater than 9999999999999.99.'
-                  example: 5
+                  example: 19
                   nullable: true
                 virtual_tour_url:
                   type: string
                   description: 'Must be a valid URL. Must not be greater than 2048 characters.'
-                  example: 'https://www.grady.info/quasi-aut-unde-harum-sit-qui-aliquid'
+                  example: 'http://www.glover.biz/'
                   nullable: true
                 view:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: mbiuqxdnvttnwpjqkxxmu
+                  example: v
                   nullable: true
                 floor_plans:
                   type: array
@@ -2221,17 +2224,17 @@ paths:
                       label:
                         type: string
                         description: 'Must not be greater than 255 characters.'
-                        example: tgxiuvujtzcirplnfqsay
+                        example: p
                         nullable: true
                       size_from:
                         type: integer
                         description: 'Must be at least 0.'
-                        example: 43
+                        example: 61
                         nullable: true
                       size_to:
                         type: integer
                         description: 'Must be at least 0.'
-                        example: 80
+                        example: 89
                         nullable: true
                       image:
                         type: string
@@ -2241,7 +2244,7 @@ paths:
                       existing_image:
                         type: string
                         description: ''
-                        example: consequatur
+                        example: architecto
                         nullable: true
                 floor_plan_file:
                   type: string
@@ -2252,18 +2255,18 @@ paths:
                   type: array
                   description: 'Must match an existing stored value.'
                   example:
-                    - 17
+                    - 16
                   items:
                     type: integer
                 published_at:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-22T09:05:26'
+                  example: '2026-10-23T06:13:00'
                   nullable: true
                 order_index:
                   type: integer
                   description: 'Must be at least 0.'
-                  example: 45
+                  example: 39
                   nullable: true
                 metadata:
                   type: object
@@ -2273,37 +2276,37 @@ paths:
                     meta_title:
                       type: string
                       description: 'Must not be greater than 255 characters.'
-                      example: qeopfuudtdsufvyvddqam
+                      example: g
                       nullable: true
                     meta_description:
                       type: string
                       description: 'Must not be greater than 500 characters.'
-                      example: niihfqcoynlazghdtqtqx
+                      example: z
                       nullable: true
                     meta_keywords:
                       type: string
                       description: 'Must not be greater than 500 characters.'
-                      example: bajwbpilpmufinllwloau
+                      example: m
                       nullable: true
                     canonical_url:
                       type: string
                       description: 'Must be a valid URL. Must not be greater than 2048 characters.'
-                      example: 'https://considine.com/laudantium-nihil-autem-omnis-cum-molestiae-vel-natus.html'
+                      example: 'https://www.gulgowski.com/nihil-accusantium-harum-mollitia-modi-deserunt'
                       nullable: true
                     og_title:
                       type: string
                       description: 'Must not be greater than 255 characters.'
-                      example: jcybzvrbyickznkygloig
+                      example: w
                       nullable: true
                     og_description:
                       type: string
                       description: 'Must not be greater than 500 characters.'
-                      example: mkwxphlvazjrcnfbaqywu
+                      example: a
                       nullable: true
                     other_meta_tags:
                       type: string
                       description: ''
-                      example: consequatur
+                      example: architecto
                       nullable: true
                   nullable: true
                 metadata_og_image:
@@ -2314,28 +2317,28 @@ paths:
                 listing_type:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 255 characters.'
-                  example: xbajwbpilpmufinllwloa
+                  example: z
                 completion_status:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 255 characters.'
-                  example: uydlsmsjuryvojcybzvrb
+                  example: m
                   nullable: true
                 property_type:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 255 characters.'
-                  example: yickznkygloigmkwxphlv
+                  example: i
                 category:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 255 characters.'
-                  example: azjrcnfbaqywuxhgjjmzu
+                  example: 'y'
                 location:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 255 characters.'
-                  example: xjubqouzswiwxtrkimfca
+                  example: v
                 emirate:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 100 characters.'
-                  example: tbxspzmrazsroyjpxmqes
+                  example: d
                 segment:
                   type: string
                   description: 'residential | commercial.'
@@ -2445,7 +2448,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Listings
       security: []
@@ -2482,7 +2485,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'Add listing'
       security: []
@@ -2509,7 +2512,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'Add listing'
       security: []
@@ -2526,7 +2529,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'Add listing'
       requestBody:
@@ -2548,7 +2551,7 @@ paths:
                 permit_city:
                   type: string
                   description: 'al_ain | other (Northern Emirates).'
-                  example: consequatur
+                  example: architecto
                   nullable: true
                 permit_number:
                   type: string
@@ -2557,7 +2560,7 @@ paths:
                 property_id:
                   type: integer
                   description: 'The listing being edited.'
-                  example: 17
+                  example: 16
                   nullable: true
               required:
                 - emirate
@@ -2576,7 +2579,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Listings
       security: []
@@ -2592,7 +2595,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Listings
       requestBody:
@@ -2618,7 +2621,7 @@ paths:
                           title:
                             type: string
                             description: 'Must not be greater than 255 characters.'
-                            example: mqeopfuudtdsufvyvddqa
+                            example: 'n'
                         required:
                           - title
                       ar:
@@ -2629,40 +2632,40 @@ paths:
                           title:
                             type: string
                             description: 'Must not be greater than 255 characters.'
-                            example: mniihfqcoynlazghdtqtq
+                            example: g
                         required:
                           - title
                       title:
                         type: string
                         description: 'Must not be greater than 255 characters.'
-                        example: edyghenqcopwvownkbaml
+                        example: l
                       key_features:
                         type: string
                         description: 'Must not be greater than 5000 characters.'
-                        example: nfngefbeilfzsyuxoezbd
+                        example: j
                         nullable: true
                       description:
                         type: string
                         description: 'Must not be greater than 100000 characters.'
-                        example: 'Doloremque illo deserunt placeat fugit non hic sequi.'
+                        example: 'Mollitia modi deserunt aut ab provident perspiciatis quo.'
                         nullable: true
                       address:
                         type: string
                         description: 'Must not be greater than 1000 characters.'
-                        example: revrljcbwkthjnescwses
+                        example: m
                       community:
                         type: string
                         description: 'Must not be greater than 255 characters.'
-                        example: tcouxpqsydkigioyoyprj
+                        example: 'y'
                         nullable: true
                       city:
                         type: string
                         description: 'Must not be greater than 255 characters.'
-                        example: kfdjsneawgaavuiwlezlc
+                        example: u
                       country:
                         type: string
                         description: 'Must not be greater than 255 characters.'
-                        example: raoooxrrjhbduowtbaqrr
+                        example: w
                     required:
                       - title
                       - address
@@ -2671,26 +2674,26 @@ paths:
                 slug:
                   type: string
                   description: 'Must contain only letters, numbers, dashes and underscores. Must not be greater than 255 characters.'
-                  example: vmqeopfuudtdsufvyvddq
+                  example: b
                 reference_no:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: amniihfqcoynlazghdtqt
+                  example: 'n'
                   nullable: true
                 rera_id:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: qxbajwbpilpmufinllwlo
+                  example: g
                   nullable: true
                 permit_number:
                   type: string
                   description: 'Must match the regex /^[A-Za-z0-9\-\/]+$/. Must not be greater than 64 characters.'
-                  example: auydlsmsjuryvojcybzvr
+                  example: z
                   nullable: true
                 permit_expires_at:
                   type: string
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
-                  example: '2026-10-22'
+                  example: '2026-10-23'
                   nullable: true
                 permit_qr:
                   type: string
@@ -2700,44 +2703,44 @@ paths:
                 permit_verification_url:
                   type: string
                   description: 'Must be a valid URL. Must not be greater than 2048 characters.'
-                  example: 'http://www.ward.com/'
+                  example: 'http://rempel.com/sunt-nihil-accusantium-harum-mollitia'
                   nullable: true
                 postal_code:
                   type: string
                   description: 'Must not be greater than 50 characters.'
-                  example: ckznkygloigmkwxphlvaz
+                  example: k
                   nullable: true
                 latitude:
                   type: number
                   description: 'Must be between -90 and 90.'
-                  example: -90
+                  example: -89
                 longitude:
                   type: number
                   description: 'Must be between -180 and 180.'
-                  example: -179
+                  example: -180
                 bedrooms:
                   type: integer
                   description: 'Must be at least 0. Must not be greater than 1000.'
-                  example: 3
+                  example: 22
                   nullable: true
                 bathrooms:
                   type: integer
                   description: 'Must be at least 0. Must not be greater than 1000.'
-                  example: 14
+                  example: 24
                   nullable: true
                 sqft:
                   type: integer
                   description: 'Must be at least 0. Must not be greater than 4294967295.'
-                  example: 6
+                  example: 18
                   nullable: true
                 price:
                   type: number
                   description: 'Must be at least 0. Must not be greater than 9999999999999.99.'
-                  example: 2
+                  example: 8
                 currency:
                   type: string
                   description: 'Must contain only letters. Must be 3 characters.'
-                  example: aqy
+                  example: myu
                 image:
                   type: string
                   format: binary
@@ -2746,7 +2749,7 @@ paths:
                 image_alt:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: wuxhgjjmzuxjubqouzswi
+                  example: w
                   nullable: true
                 brochure:
                   type: string
@@ -2763,7 +2766,7 @@ paths:
                   type: array
                   description: 'Must match an existing stored value. Must not be greater than 100 characters.'
                   example:
-                    - wxtrkimfcatbxspzmrazs
+                    - p
                   items:
                     type: string
                     nullable: true
@@ -2771,7 +2774,7 @@ paths:
                   type: array
                   description: 'Must match an existing stored value. Must not be greater than 100 characters.'
                   example:
-                    - royjpxmqesedyghenqcop
+                    - w
                   items:
                     type: string
                     nullable: true
@@ -2779,19 +2782,19 @@ paths:
                   type: array
                   description: 'Must match an existing stored value. Must not be greater than 100 characters.'
                   example:
-                    - wvownkbamlnfngefbeilf
+                    - l
                   items:
                     type: string
                     nullable: true
                 rental_period:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 100 characters.'
-                  example: zsyuxoezbdtabptcyyere
+                  example: v
                   nullable: true
                 permit_type:
                   type: string
                   description: ''
-                  example: rera
+                  example: dtcm
                   enum:
                     - rera
                     - dtcm
@@ -2800,7 +2803,7 @@ paths:
                 permit_city:
                   type: string
                   description: ''
-                  example: al_ain
+                  example: other
                   enum:
                     - al_ain
                     - other
@@ -2808,12 +2811,12 @@ paths:
                 permit_token:
                   type: string
                   description: 'Must not be greater than 64 characters.'
-                  example: vrljcbwkthjnescwsestc
+                  example: q
                   nullable: true
                 availability:
                   type: string
                   description: ''
-                  example: immediately
+                  example: from_date
                   enum:
                     - immediately
                     - from_date
@@ -2822,23 +2825,23 @@ paths:
                   type: array
                   description: 'Must be a valid date in the format <code>Y-m-d</code>.'
                   example:
-                    - '2026-10-22'
+                    - '2026-10-23'
                   items:
                     type: string
                 developer:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: ouxpqsydkigioyoyprjkf
+                  example: w
                   nullable: true
                 unit_number:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: djsneawgaavuiwlezlcra
+                  example: r
                   nullable: true
                 owner_name:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: oooxrrjhbduowtbaqrrtg
+                  example: s
                   nullable: true
                 upgraded:
                   type: boolean
@@ -2848,52 +2851,52 @@ paths:
                 video_tour_url:
                   type: string
                   description: 'Must be a valid URL. Must not be greater than 2048 characters.'
-                  example: 'http://harber.info/dolor-autem-omnis-doloribus-beatae-laboriosam-expedita-deserunt.html'
+                  example: 'https://www.bauch.com/omnis-autem-et-consequatur'
                   nullable: true
                 cheques:
                   type: integer
                   description: 'Must be at least 1. Must not be greater than 12.'
-                  example: 6
+                  example: 4
                   nullable: true
                 year_built:
                   type: integer
                   description: 'Must be at least 1800. Must not be greater than 2200.'
-                  example: 14
+                  example: 16
                   nullable: true
                 floor:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: fqsaymxpayeblqozckazp
+                  example: s
                   nullable: true
                 parking:
                   type: integer
                   description: 'Must be at least 0. Must not be greater than 10000.'
-                  example: 11
+                  example: 12
                   nullable: true
                 garage:
                   type: integer
                   description: 'Must be at least 0. Must not be greater than 1000.'
-                  example: 16
+                  example: 23
                   nullable: true
                 direct_from_owner:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: jijwkuzgpjfumffsmqnmb
+                  example: w
                   nullable: true
                 security_deposit:
                   type: number
                   description: 'Must be at least 0. Must not be greater than 9999999999999.99.'
-                  example: 5
+                  example: 19
                   nullable: true
                 virtual_tour_url:
                   type: string
                   description: 'Must be a valid URL. Must not be greater than 2048 characters.'
-                  example: 'https://www.grady.info/quasi-aut-unde-harum-sit-qui-aliquid'
+                  example: 'http://www.glover.biz/'
                   nullable: true
                 view:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: mbiuqxdnvttnwpjqkxxmu
+                  example: v
                   nullable: true
                 floor_plans:
                   type: array
@@ -2906,17 +2909,17 @@ paths:
                       label:
                         type: string
                         description: 'Must not be greater than 255 characters.'
-                        example: tgxiuvujtzcirplnfqsay
+                        example: p
                         nullable: true
                       size_from:
                         type: integer
                         description: 'Must be at least 0.'
-                        example: 43
+                        example: 61
                         nullable: true
                       size_to:
                         type: integer
                         description: 'Must be at least 0.'
-                        example: 80
+                        example: 89
                         nullable: true
                       image:
                         type: string
@@ -2926,7 +2929,7 @@ paths:
                       existing_image:
                         type: string
                         description: ''
-                        example: consequatur
+                        example: architecto
                         nullable: true
                 floor_plan_file:
                   type: string
@@ -2937,18 +2940,18 @@ paths:
                   type: array
                   description: 'Must match an existing stored value.'
                   example:
-                    - 17
+                    - 16
                   items:
                     type: integer
                 published_at:
                   type: string
                   description: 'Must be a valid date.'
-                  example: '2026-10-22T09:05:26'
+                  example: '2026-10-23T06:13:00'
                   nullable: true
                 order_index:
                   type: integer
                   description: 'Must be at least 0.'
-                  example: 45
+                  example: 39
                   nullable: true
                 metadata:
                   type: object
@@ -2958,37 +2961,37 @@ paths:
                     meta_title:
                       type: string
                       description: 'Must not be greater than 255 characters.'
-                      example: qeopfuudtdsufvyvddqam
+                      example: g
                       nullable: true
                     meta_description:
                       type: string
                       description: 'Must not be greater than 500 characters.'
-                      example: niihfqcoynlazghdtqtqx
+                      example: z
                       nullable: true
                     meta_keywords:
                       type: string
                       description: 'Must not be greater than 500 characters.'
-                      example: bajwbpilpmufinllwloau
+                      example: m
                       nullable: true
                     canonical_url:
                       type: string
                       description: 'Must be a valid URL. Must not be greater than 2048 characters.'
-                      example: 'https://considine.com/laudantium-nihil-autem-omnis-cum-molestiae-vel-natus.html'
+                      example: 'https://www.gulgowski.com/nihil-accusantium-harum-mollitia-modi-deserunt'
                       nullable: true
                     og_title:
                       type: string
                       description: 'Must not be greater than 255 characters.'
-                      example: jcybzvrbyickznkygloig
+                      example: w
                       nullable: true
                     og_description:
                       type: string
                       description: 'Must not be greater than 500 characters.'
-                      example: mkwxphlvazjrcnfbaqywu
+                      example: a
                       nullable: true
                     other_meta_tags:
                       type: string
                       description: ''
-                      example: consequatur
+                      example: architecto
                       nullable: true
                   nullable: true
                 metadata_og_image:
@@ -2999,28 +3002,28 @@ paths:
                 listing_type:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 255 characters.'
-                  example: xbajwbpilpmufinllwloa
+                  example: z
                 completion_status:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 255 characters.'
-                  example: uydlsmsjuryvojcybzvrb
+                  example: m
                   nullable: true
                 property_type:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 255 characters.'
-                  example: yickznkygloigmkwxphlv
+                  example: i
                 category:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 255 characters.'
-                  example: azjrcnfbaqywuxhgjjmzu
+                  example: 'y'
                 location:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 255 characters.'
-                  example: xjubqouzswiwxtrkimfca
+                  example: v
                 emirate:
                   type: string
                   description: 'Must match an existing stored value. Must not be greater than 100 characters.'
-                  example: tbxspzmrazsroyjpxmqes
+                  example: d
               required:
                 - translations
                 - slug
@@ -3056,7 +3059,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Listings
       security: []
@@ -3082,7 +3085,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Listings
       security: []
@@ -3108,7 +3111,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Listings
       requestBody:
@@ -3152,7 +3155,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Listings
       security: []
@@ -3169,7 +3172,7 @@ paths:
         in: path
         name: number
         description: ''
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -3206,7 +3209,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Listings
       security: []
@@ -3232,7 +3235,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Listings
       requestBody:
@@ -3257,17 +3260,17 @@ paths:
                 rented_until:
                   type: string
                   description: 'Must be a valid date. Must be a date after <code>sold_at</code>.'
-                  example: '2107-11-20'
+                  example: '2052-11-15'
                   nullable: true
                 commission:
                   type: number
                   description: 'Must be at least 0. Must not be greater than 9999999999999.'
-                  example: 13
+                  example: 22
                   nullable: true
                 notes:
                   type: string
                   description: 'Must not be greater than 2000 characters.'
-                  example: qeopfuudtdsufvyvddqam
+                  example: g
                   nullable: true
                 buyer_mode:
                   type: string
@@ -3286,22 +3289,22 @@ paths:
                     name:
                       type: string
                       description: 'This field is required when <code>buyer_mode</code> is <code>new</code>. Must not be greater than 255 characters.'
-                      example: mqeopfuudtdsufvyvddqa
+                      example: 'n'
                       nullable: true
                     email:
                       type: string
                       description: 'Must be a valid email address. Must not be greater than 255 characters.'
-                      example: eloisa.harber@example.com
+                      example: ashly64@example.com
                       nullable: true
                     phone:
                       type: string
                       description: 'Must not be greater than 30 characters.'
-                      example: fqcoynlazghdtqtqxbajw
+                      example: v
                       nullable: true
                     phone_country_code:
                       type: string
                       description: 'Must not be greater than 8 characters.'
-                      example: bpilpmu
+                      example: dljnikhw
                       nullable: true
                 ownership_document:
                   type: string
@@ -3314,7 +3317,7 @@ paths:
                 documents_password:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: finllwloauydlsmsjuryv
+                  example: a
                   nullable: true
               required:
                 - type
@@ -3376,7 +3379,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Listings
       security: []
@@ -3393,7 +3396,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Listings
       security: []
@@ -3402,7 +3405,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the sold listing.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -3414,6 +3417,662 @@ paths:
         required: true
         schema:
           type: string
+  '/api/crm/properties/{id}/feature':
+    post:
+      summary: 'Make premium'
+      operationId: makePremium
+      description: "With `pay_with=credits` (agents / companies) it's bought with credits for `days` (7, 15 or 30)\ninstead of using the plan's quota; no end date is sent."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_date:
+                  type: string
+                  description: Y-m-d.
+                  example: '2026-10-10'
+                end_date:
+                  type: string
+                  description: 'Y-m-d — required except for Super Admin and credits.'
+                  example: '2026-11-08'
+                days:
+                  type: integer
+                  description: '7, 15 or 30 — with credits.'
+                  example: 15
+                pay_with:
+                  type: string
+                  description: 'plan | credits.'
+                  example: credits
+              required:
+                - start_date
+      security: []
+    put:
+      summary: 'Change premium dates'
+      operationId: changePremiumDates
+      description: 'A live feature keeps its start date (send null).'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_date:
+                  type: string
+                  description: Y-m-d.
+                  example: '2026-10-10'
+                  nullable: true
+                end_date:
+                  type: string
+                  description: Y-m-d.
+                  example: '2026-11-08'
+      security: []
+    delete:
+      summary: 'Stop / cancel premium'
+      operationId: stopCancelPremium
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the property.'
+        example: 82
+        required: true
+        schema:
+          type: integer
+  /api/crm/premium:
+    get:
+      summary: 'List premium listings'
+      operationId: listPremiumListings
+      description: 'Live first (ending soonest), then scheduled — 20 per page, with the counts and the plan quota.'
+      parameters:
+        -
+          in: query
+          name: status
+          description: 'all | live | scheduled.'
+          example: live
+          required: false
+          schema:
+            type: string
+            description: 'all | live | scheduled.'
+            example: live
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      security: []
+    post:
+      summary: 'Add Premium (several listings)'
+      operationId: addPremiumseveralListings
+      description: "The same start / end dates for every ticked listing, all-or-nothing (FeaturedListingService::featureMany).\nWith `pay_with=credits` each is bought with credits for `days` (7, 15 or 30) instead."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                property_ids:
+                  type: array
+                  description: ''
+                  example:
+                    - 12
+                    - 14
+                  items:
+                    type: integer
+                start_date:
+                  type: string
+                  description: Y-m-d.
+                  example: '2026-10-10'
+                end_date:
+                  type: string
+                  description: 'Y-m-d — required except for Super Admin.'
+                  example: '2026-11-08'
+                days:
+                  type: integer
+                  description: '7, 15 or 30 — with credits.'
+                  example: 15
+                pay_with:
+                  type: string
+                  description: 'plan | credits.'
+                  example: credits
+              required:
+                - property_ids
+                - start_date
+      security: []
+  /api/crm/premium/eligible:
+    get:
+      summary: 'Listings that can be made premium'
+      operationId: listingsThatCanBeMadePremium
+      description: "The \"Add Premium\" picker, searched and paged on the server (20 at a time). Owners only see\nactive listings that aren't premium or scheduled already."
+      parameters:
+        -
+          in: query
+          name: q
+          description: ''
+          example: marina
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: marina
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                q:
+                  type: string
+                  description: 'Must not be greater than 100 characters.'
+                  example: b
+                  nullable: true
+                page:
+                  type: integer
+                  description: 'Must be at least 1.'
+                  example: 22
+                  nullable: true
+      security: []
+  /api/crm/ads:
+    get:
+      summary: 'List ads'
+      operationId: listAds
+      description: "The account's ads, newest booking first (20 per page), with impressions / clicks per ad, the\nlast 30 days' totals and the plan allowance. `quota.included` false = the plan has no\nadvertising (show the upgrade card)."
+      parameters:
+        -
+          in: query
+          name: status
+          description: 'all | live | upcoming | past.'
+          example: live
+          required: false
+          schema:
+            type: string
+            description: 'all | live | upcoming | past.'
+            example: live
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      security: []
+    post:
+      summary: 'Book an ad'
+      operationId: bookAnAd
+      description: "Multipart form. The ad waits for MW Realty's review and runs, once approved, from `start` for\n`hours`. `pay_with=plan` uses the monthly allowance; `credits` spends credits (refunded if it's\nrejected or cancelled before it runs)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 'Only you see it.'
+                  example: 'Marina Heights launch'
+                placement:
+                  type: string
+                  description: 'A page from the booking options.'
+                  example: home
+                start:
+                  type: string
+                  description: 'Y-m-d H:i, Dubai time, on the hour.'
+                  example: '2026-10-14 18:00'
+                hours:
+                  type: integer
+                  description: "One of the plan's lengths."
+                  example: 6
+                pay_with:
+                  type: string
+                  description: 'plan | credits.'
+                  example: plan
+                link_type:
+                  type: string
+                  description: 'property | profile | url.'
+                  example: property
+                property_id:
+                  type: integer
+                  description: 'With link_type=property.'
+                  example: 111
+                link_url:
+                  type: string
+                  description: 'With link_type=url, https://…'
+                  example: null
+                image:
+                  type: string
+                  format: binary
+                  description: 'The banner (wide image).'
+                mobile_image:
+                  type: string
+                  format: binary
+                  description: 'Optional banner for phones.'
+                image_alt:
+                  type: string
+                  description: ''
+                  example: 'Marina Heights tower at sunset'
+                translations:
+                  type: object
+                  description: 'Optional text over the image per language: {code: {eyebrow, title, text}}.'
+                  example: null
+                  properties: {}
+              required:
+                - name
+                - placement
+                - start
+                - hours
+                - pay_with
+                - link_type
+                - image
+      security: []
+  /api/crm/ads/form-options:
+    get:
+      summary: 'Booking options'
+      operationId: bookingOptions
+      description: "Everything the \"Book an ad\" form needs: the pages ads can run on (with their credit prices and\nhow many run at once), the lengths the plan allows, the allowance and credit balance, the\nactive languages for the banner text, and the earliest start."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      security: []
+  /api/crm/ads/availability:
+    get:
+      summary: 'Free slots'
+      operationId: freeSlots
+      description: "For each hour of a day (Dubai time) on a page: how many client ads are booked and how many\nslots are still free. `past` hours can't be booked any more."
+      parameters:
+        -
+          in: query
+          name: placement
+          description: ''
+          example: home
+          required: true
+          schema:
+            type: string
+            description: ''
+            example: home
+        -
+          in: query
+          name: date
+          description: Y-m-d.
+          example: '2026-10-14'
+          required: true
+          schema:
+            type: string
+            description: Y-m-d.
+            example: '2026-10-14'
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                placement:
+                  type: string
+                  description: ''
+                  example: architecto
+                date:
+                  type: string
+                  description: 'Must be a valid date in the format <code>Y-m-d</code>.'
+                  example: '2026-10-23'
+              required:
+                - placement
+                - date
+      security: []
+  /api/crm/ads/properties:
+    get:
+      summary: 'Listings an ad can link to'
+      operationId: listingsAnAdCanLinkTo
+      description: "The account's active listings, searched and paged on the server (20 at a time) — RemoteSelect's\n`{data: [{id, name}], next_page}`."
+      parameters:
+        -
+          in: query
+          name: q
+          description: ''
+          example: marina
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: marina
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                q:
+                  type: string
+                  description: 'Must not be greater than 100 characters.'
+                  example: b
+                  nullable: true
+                page:
+                  type: integer
+                  description: 'Must be at least 1.'
+                  example: 22
+                  nullable: true
+      security: []
+  '/api/crm/ads/{id}':
+    get:
+      summary: 'One ad'
+      operationId: oneAd
+      description: "The ad with its booking, review state and full report: totals, an hourly series over its run,\ntotals per day and its busiest hours."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      security: []
+    put:
+      summary: 'Change an ad'
+      operationId: changeAnAd
+      description: "Banner, text and link only, before the ad starts (send as multipart POST with `_method=PUT`).\nThe page, time and payment stay; it goes back to MW Realty's review."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                remove_mobile_image:
+                  type: boolean
+                  description: 'Drop the phone banner.'
+                  example: false
+      security: []
+    delete:
+      summary: 'Cancel / stop an ad'
+      operationId: cancelStopAnAd
+      description: "Not started yet (or still in review): cancelled, with its credits / allowance given back.\nLive: stops now — the time already used isn't refunded."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: ''
+        example: 12
+        required: true
+        schema:
+          type: integer
+  /api/crm/credits:
+    get:
+      summary: 'Credit usage history'
+      operationId: creditUsageHistory
+      description: "The wallet (balance, next expiry, top-up pricing) and its transactions, newest first, 20 per page.\nSuper Admin sees every account's."
+      parameters:
+        -
+          in: query
+          name: q
+          description: 'Reference search.'
+          example: RERA1024
+          required: false
+          schema:
+            type: string
+            description: 'Reference search.'
+            example: RERA1024
+        -
+          in: query
+          name: from
+          description: 'Y-m-d, default a month ago.'
+          example: '2026-09-12'
+          required: false
+          schema:
+            type: string
+            description: 'Y-m-d, default a month ago.'
+            example: '2026-09-12'
+        -
+          in: query
+          name: to
+          description: 'Y-m-d, default today.'
+          example: '2026-10-12'
+          required: false
+          schema:
+            type: string
+            description: 'Y-m-d, default today.'
+            example: '2026-10-12'
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      security: []
+  /api/crm/credits/quote:
+    get:
+      summary: 'Quote for listings'
+      operationId: quoteForListings
+      description: 'Credit costs for these listings (the "pay with credits" option when making them premium), plus the balance.'
+      parameters:
+        -
+          in: query
+          name: property_ids
+          description: ''
+          example:
+            - 12
+            - 14
+          required: false
+          schema:
+            type: array
+            description: ''
+            example:
+              - 12
+              - 14
+            items:
+              type: integer
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Featured & ads'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                property_ids:
+                  type: array
+                  description: ''
+                  example:
+                    - 16
+                  items:
+                    type: integer
+      security: []
   /api/crm/notifications:
     get:
       summary: Notifications
@@ -3590,7 +4249,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the notification.'
-        example: consequatur
+        example: architecto
         required: true
         schema:
           type: string
@@ -3607,7 +4266,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - More
       requestBody:
@@ -3637,7 +4296,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - More
       requestBody:
@@ -3687,7 +4346,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - More
       security: []
@@ -3714,7 +4373,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - More
       security: []
@@ -3723,7 +4382,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the agent.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -3740,7 +4399,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - More
       security: []
@@ -3797,7 +4456,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - More
       security: []
@@ -3813,7 +4472,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - More
       requestBody:
@@ -3863,7 +4522,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - More
       security: []
@@ -3872,7 +4531,7 @@ paths:
         in: path
         name: ticket
         description: 'The ticket.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -3889,7 +4548,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - More
       requestBody:
@@ -3916,7 +4575,7 @@ paths:
         in: path
         name: ticket
         description: 'The ticket.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -3933,7 +4592,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - More
       security: []
@@ -3942,7 +4601,7 @@ paths:
         in: path
         name: ticket
         description: 'The ticket.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -3959,7 +4618,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - More
       security: []
@@ -3968,7 +4627,7 @@ paths:
         in: path
         name: ticket
         description: 'The ticket.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -3985,7 +4644,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - More
       security: []
@@ -3994,7 +4653,7 @@ paths:
         in: path
         name: ticket
         description: 'The ticket.'
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string
@@ -4002,7 +4661,7 @@ paths:
         in: path
         name: message
         description: ''
-        example: '1562'
+        example: '564'
         required: true
         schema:
           type: string

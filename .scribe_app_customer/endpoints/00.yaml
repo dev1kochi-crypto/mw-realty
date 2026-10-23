@@ -6,6 +6,7 @@ description: |-
 
   * `POST /api/customer/wishlist/{property}` — see **Saved**
   * `POST /api/customer/saved-searches` — see **Saved**
+  * `GET /api/ads/slides` — see **Ads & featured**
 endpoints:
   -
     custom: []
@@ -22,6 +23,7 @@ endpoints:
 
         * `POST /api/customer/wishlist/{property}` — see **Saved**
         * `POST /api/customer/saved-searches` — see **Saved**
+        * `GET /api/ads/slides` — see **Ads & featured**
       subgroup: 'Results, map & filters'
       subgroupDescription: ''
       title: 'Search filter bar'
@@ -94,7 +96,7 @@ endpoints:
         name: lang
         description: 'Must not be greater than 10 characters.'
         required: false
-        example: vmqeopfuu
+        example: bngzmi
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -117,7 +119,7 @@ endpoints:
         deprecated: false
     cleanBodyParameters:
       page: listing
-      lang: vmqeopfuu
+      lang: bngzmi
       scope: marketing
     fileParameters: []
     responses: []
@@ -141,6 +143,7 @@ endpoints:
 
         * `POST /api/customer/wishlist/{property}` — see **Saved**
         * `POST /api/customer/saved-searches` — see **Saved**
+        * `GET /api/ads/slides` — see **Ads & featured**
       subgroup: 'Results, map & filters'
       subgroupDescription: ''
       title: 'Page search filters'
@@ -189,14 +192,14 @@ endpoints:
         name: lang
         description: 'Must not be greater than 10 characters.'
         required: false
-        example: vmqeopfuu
+        example: bngzmi
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      lang: vmqeopfuu
+      lang: bngzmi
     fileParameters: []
     responses:
       -
@@ -239,6 +242,7 @@ endpoints:
 
         * `POST /api/customer/wishlist/{property}` — see **Saved**
         * `POST /api/customer/saved-searches` — see **Saved**
+        * `GET /api/ads/slides` — see **Ads & featured**
       subgroup: 'Results, map & filters'
       subgroupDescription: ''
       title: 'Location autocomplete'
@@ -298,7 +302,7 @@ endpoints:
         name: q
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: vmqeopfuudtdsufvyvddq
+        example: b
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -309,7 +313,7 @@ endpoints:
         name: lang
         description: 'Must not be greater than 10 characters.'
         required: false
-        example: amniihfqc
+        example: ngzmiy
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -329,8 +333,8 @@ endpoints:
         nullable: true
         deprecated: false
     cleanBodyParameters:
-      q: vmqeopfuudtdsufvyvddq
-      lang: amniihfqc
+      q: b
+      lang: ngzmiy
       scope: commercial
     fileParameters: []
     responses: []
@@ -354,6 +358,7 @@ endpoints:
 
         * `POST /api/customer/wishlist/{property}` — see **Saved**
         * `POST /api/customer/saved-searches` — see **Saved**
+        * `GET /api/ads/slides` — see **Ads & featured**
       subgroup: 'Results, map & filters'
       subgroupDescription: ''
       title: 'Search commercial properties'
@@ -570,6 +575,7 @@ endpoints:
 
         * `POST /api/customer/wishlist/{property}` — see **Saved**
         * `POST /api/customer/saved-searches` — see **Saved**
+        * `GET /api/ads/slides` — see **Ads & featured**
       subgroup: 'Results, map & filters'
       subgroupDescription: ''
       title: 'Search properties'
@@ -855,6 +861,7 @@ endpoints:
 
         * `POST /api/customer/wishlist/{property}` — see **Saved**
         * `POST /api/customer/saved-searches` — see **Saved**
+        * `GET /api/ads/slides` — see **Ads & featured**
       subgroup: 'Results, map & filters'
       subgroupDescription: ''
       title: 'Map pins'
@@ -964,6 +971,7 @@ endpoints:
 
         * `POST /api/customer/wishlist/{property}` — see **Saved**
         * `POST /api/customer/saved-searches` — see **Saved**
+        * `GET /api/ads/slides` — see **Ads & featured**
       subgroup: 'Property details'
       subgroupDescription: ''
       title: 'Property details'
@@ -1035,6 +1043,7 @@ endpoints:
 
         * `POST /api/customer/wishlist/{property}` — see **Saved**
         * `POST /api/customer/saved-searches` — see **Saved**
+        * `GET /api/ads/slides` — see **Ads & featured**
       subgroup: 'Property details'
       subgroupDescription: ''
       title: 'Calculator page'
@@ -1103,6 +1112,7 @@ endpoints:
 
         * `POST /api/customer/wishlist/{property}` — see **Saved**
         * `POST /api/customer/saved-searches` — see **Saved**
+        * `GET /api/ads/slides` — see **Ads & featured**
       subgroup: 'Property details'
       subgroupDescription: ''
       title: 'Property enquiry'
@@ -1180,7 +1190,7 @@ endpoints:
         name: company
         description: 'Must not be greater than 255 characters.'
         required: false
-        example: mniihfqcoynlazghdtqtq
+        example: g
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -1191,7 +1201,7 @@ endpoints:
         name: country
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: xbajwbpilpmufinllwloa
+        example: z
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -1236,8 +1246,8 @@ endpoints:
       email: buyer@example.com
       phone: '501234567'
       phone_country_code: '+971'
-      company: mniihfqcoynlazghdtqtq
-      country: xbajwbpilpmufinllwloa
+      company: g
+      country: z
       message: "Is this still available? I'd like to view it this week."
       page_source: mobile-app
     fileParameters: []
@@ -1268,6 +1278,7 @@ endpoints:
 
         * `POST /api/customer/wishlist/{property}` — see **Saved**
         * `POST /api/customer/saved-searches` — see **Saved**
+        * `GET /api/ads/slides` — see **Ads & featured**
       subgroup: 'Property details'
       subgroupDescription: ''
       title: 'Book a viewing'
@@ -1428,6 +1439,7 @@ endpoints:
 
         * `POST /api/customer/wishlist/{property}` — see **Saved**
         * `POST /api/customer/saved-searches` — see **Saved**
+        * `GET /api/ads/slides` — see **Ads & featured**
       subgroup: 'Property details'
       subgroupDescription: ''
       title: 'Contact click'

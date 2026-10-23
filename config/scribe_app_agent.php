@@ -120,6 +120,38 @@ $screens = [
             'POST /api/crm/properties/permit/validate',
             'GET /api/crm/properties/nearby-places',
             'GET /api/crm/properties/agent-options',
+            'POST /api/crm/properties/{id}/feature',
+        ],
+    ],
+    [
+        'group' => 'Featured & ads',
+        'description' => 'Promoting listings: **Featured** (Premium) listings and **advertisements** in the website / app ad sliders.Featured and ads are paid from the plan\'s allowance (`pay_with=plan`) or with credits (`pay_with=credits`). Opened from a listing ("Make premium") or from the More tab.',
+        'screens' => [
+            'Featured (Premium)' => [
+                'GET /api/crm/premium',
+                'GET /api/crm/premium/eligible',
+                'POST /api/crm/premium',
+                'POST /api/crm/properties/{id}/feature',
+                'PUT /api/crm/properties/{id}/feature',
+                'DELETE /api/crm/properties/{id}/feature',
+            ],
+            'Advertisements' => [
+                'GET /api/crm/ads',
+                'GET /api/crm/ads/form-options',
+                'GET /api/crm/ads/availability',
+                'GET /api/crm/ads/properties',
+                'POST /api/crm/ads',
+                'GET /api/crm/ads/{id}',
+                'PUT /api/crm/ads/{id}',
+                'DELETE /api/crm/ads/{id}',
+            ],
+            'Pay with credits' => [
+                'GET /api/crm/credits',
+                'GET /api/crm/credits/quote',
+            ],
+        ],
+        'also' => [
+            'GET /api/crm/properties',
         ],
     ],
     [
@@ -161,7 +193,8 @@ $screens = [
 
 $intro = <<<'INTRO'
     Only the CRM endpoints the **agent app's first release** calls, filed under the app's tabs:
-    **Entry → Home → Leads → Add listing → Listings → More**. Each tab's introduction also lists the
+    **Entry → Home → Leads → Add listing → Listings → More**, plus **Featured & ads** (featured
+    listings and ads — reached from Listings and More). Each tab's introduction also lists the
     *connected* endpoints it calls that are documented under another tab. The complete CRM API is at
     [/docs/crm](/docs/crm).
 
@@ -178,6 +211,7 @@ $intro = <<<'INTRO'
     | Home / Leads | **Follow-ups** — a lead's *next follow-up* date and the *today's follow-ups* list. |
     | Leads | Inbox by channel (**calls / WhatsApp**) — a lead's source is its channel; there is no call or WhatsApp log. |
     | More | **Push notifications** (device-token registration) — the in-app list exists. |
+    | Featured & ads | **Buying credits** in the app — top-up is a Stripe card payment on the web; app stores may require in-app purchase for it. |
 
 
     INTRO;

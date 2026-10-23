@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "MW Realty \u2014 Customer App API",
-        "_postman_id": "e4c022f6-83c5-45b9-bc05-9e89b44b24a5",
+        "_postman_id": "508a2d99-32d0-4a74-8fbc-ce0124fd93fe",
         "description": "The endpoints the MW Realty customer app calls, by app tab: Entry, Home, Search, Saved, Activity, Account.",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -555,7 +555,7 @@
         },
         {
             "name": "Home",
-            "description": "Buy \/ Rent \/ Commercial \/ New Projects switch, the search bar, recently viewed and latest listings. **Recently viewed** has no endpoint: keep the last viewed property cards on the phone.\n\n**Also uses (connected):**\n\n* `GET \/api\/location-suggestions` \u2014 see **Search**\n* `GET \/api\/properties` \u2014 see **Search**\n* `GET \/api\/commercial` \u2014 see **Search**",
+            "description": "Buy \/ Rent \/ Commercial \/ New Projects switch, the search bar, recently viewed and latest listings. **Recently viewed** has no endpoint: keep the last viewed property cards on the phone.\n\n**Also uses (connected):**\n\n* `GET \/api\/location-suggestions` \u2014 see **Search**\n* `GET \/api\/properties` \u2014 see **Search**\n* `GET \/api\/commercial` \u2014 see **Search**\n* `GET \/api\/ads\/slides` \u2014 see **Ads & featured**",
             "item": [
                 {
                     "name": "Home",
@@ -650,8 +650,207 @@
             ]
         },
         {
+            "name": "Ads & featured",
+            "description": "The ad slider on Home and Property details (MW Realty's own ads and agents' booked ads), its impression \/ click tracking \u2014 which is what agents see in their ad reports \u2014 and **featured (premium)** listings: `GET \/api\/properties?premium=1` lists only them, and `\/api\/home` returns its premium properties and marketing (\"Realty\") sections.\n\n**Also uses (connected):**\n\n* `GET \/api\/properties` \u2014 see **Search**\n* `GET \/api\/home` \u2014 see **Home**",
+            "item": [
+                {
+                    "name": "Ad banner & slider",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Ad banner",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/ads",
+                                    "query": [
+                                        {
+                                            "key": "placement",
+                                            "value": "home",
+                                            "description": "home, property-details, \u2026",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "lang",
+                                            "value": "en",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/ads?placement=home&lang=en"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "One active ad for a screen (picked at random when several run), or `false` when there is\nnone (hide the slot). Kept for older clients \u2014 the website's ad slots are sliders that show\nevery running ad: use **Ad slider** (`\/api\/ads\/slides`).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Ad slider",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/ads\/slides",
+                                    "query": [
+                                        {
+                                            "key": "placement",
+                                            "value": "home",
+                                            "description": "home, property-details, \u2026",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "lang",
+                                            "value": "en",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/ads\/slides?placement=home&lang=en"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "Every ad running on a screen right now, in slide order (sponsored client ads first, in a\ndifferent order each time). Show them as a slider that moves on every `interval` seconds;\nan empty list means hide the slot. Report each slide once it has been on screen\n(**Ad impressions**) and taps on it (**Ad click**).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"slides\": [{\"id\": 12, \"name\": \"Marina launch\", \"image_url\": \"https:\/\/\u2026\", \"mobile_image_url\": null, \"image_alt\": null, \"link_url\": \"\/property-details\/marina-heights\", \"eyebrow\": \"New launch\", \"title\": \"Marina Heights\", \"text\": \"1\u20133 bed apartments from AED 1.2M\", \"sponsor\": \"Prime Homes\"}], \"interval\": 6}",
+                                    "name": ""
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Ad tracking",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Ad impressions",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/track\/ad-impressions",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/track\/ad-impressions"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"ids\":[12,15]}"
+                                },
+                                "description": "Slides that were on screen (at least half visible for a second). Send each slide once per\nscreen visit \u2014 not again every time the slider comes back round to it.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 204,
+                                    "body": "{}",
+                                    "name": "Recorded"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Ad click",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/track\/ad-click",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/track\/ad-click"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"id\":12}"
+                                },
+                                "description": "The user tapped an ad (send it before opening its link).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 204,
+                                    "body": "{}",
+                                    "name": "Recorded"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "name": "Search",
-            "description": "Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).\n\n**Also uses (connected):**\n\n* `POST \/api\/customer\/wishlist\/{property}` \u2014 see **Saved**\n* `POST \/api\/customer\/saved-searches` \u2014 see **Saved**",
+            "description": "Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).\n\n**Also uses (connected):**\n\n* `POST \/api\/customer\/wishlist\/{property}` \u2014 see **Saved**\n* `POST \/api\/customer\/saved-searches` \u2014 see **Saved**\n* `GET \/api\/ads\/slides` \u2014 see **Ads & featured**",
             "item": [
                 {
                     "name": "Results, map & filters",
@@ -702,7 +901,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\"page\":\"listing\",\"lang\":\"vmqeopfuu\",\"scope\":\"marketing\"}"
+                                    "raw": "{\"page\":\"listing\",\"lang\":\"bngzmi\",\"scope\":\"marketing\"}"
                                 },
                                 "description": "The filters to render (selects with their options and live listing counts, number sliders\nwith min\/max\/step), in admin order. Pass the chosen `value`s back to the listing endpoints\nunder each filter's `key`.",
                                 "auth": {
@@ -752,7 +951,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\"lang\":\"vmqeopfuu\"}"
+                                    "raw": "{\"lang\":\"bngzmi\"}"
                                 },
                                 "description": "Key-value: `filters` is keyed by each filter's key, and every option list is `{ value: label }`.\nSend the picked values back to the listing endpoint under the filter's `param` (or `params.min`\n\/ `params.max` for a range). Checkbox filters (`multiple: true`) take several values,\ncomma-separated. `order` \/ `options_order` give the admin's order.",
                                 "auth": {
@@ -813,7 +1012,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\"q\":\"vmqeopfuudtdsufvyvddq\",\"lang\":\"amniihfqc\",\"scope\":\"commercial\"}"
+                                    "raw": "{\"q\":\"b\",\"lang\":\"ngzmiy\",\"scope\":\"commercial\"}"
                                 },
                                 "description": "Cities, communities and addresses matching what the user typed (2+ characters; fewer\nreturns an empty list). Pass a picked suggestion back as `city=` \/ `community=` \/\n`location=` on the listing endpoints. Debounce on the client \u2014 limited to 120 calls\/minute.",
                                 "auth": {
@@ -1325,7 +1524,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\"property_id\":111,\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"company\":\"mniihfqcoynlazghdtqtq\",\"country\":\"xbajwbpilpmufinllwloa\",\"message\":\"Is this still available? I'd like to view it this week.\",\"page_source\":\"mobile-app\"}"
+                                    "raw": "{\"property_id\":111,\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"company\":\"g\",\"country\":\"z\",\"message\":\"Is this still available? I'd like to view it this week.\",\"page_source\":\"mobile-app\"}"
                                 },
                                 "description": "\"Contact agent\" form on a listing \u2014 goes to the listing's agent\/agency CRM. If a customer\ntoken is sent, the enquiry also appears under their account.",
                                 "auth": {

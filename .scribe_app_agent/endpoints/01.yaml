@@ -148,14 +148,14 @@ endpoints:
         name: id
         description: 'The ID of the notification.'
         required: true
-        example: consequatur
+        example: architecto
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: consequatur
+      id: architecto
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -378,14 +378,14 @@ endpoints:
         name: id
         description: 'The ID of the agent.'
         required: true
-        example: '1562'
+        example: '564'
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: '1562'
+      id: '564'
     queryParameters:
       page:
         custom: []
@@ -670,14 +670,14 @@ endpoints:
         name: ticket
         description: 'The ticket.'
         required: true
-        example: '1562'
+        example: '564'
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      ticket: '1562'
+      ticket: '564'
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -722,14 +722,14 @@ endpoints:
         name: ticket
         description: 'The ticket.'
         required: true
-        example: '1562'
+        example: '564'
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      ticket: '1562'
+      ticket: '564'
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
@@ -798,14 +798,14 @@ endpoints:
         name: ticket
         description: 'The ticket.'
         required: true
-        example: '1562'
+        example: '564'
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      ticket: '1562'
+      ticket: '564'
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -850,14 +850,14 @@ endpoints:
         name: ticket
         description: 'The ticket.'
         required: true
-        example: '1562'
+        example: '564'
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      ticket: '1562'
+      ticket: '564'
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -902,7 +902,7 @@ endpoints:
         name: ticket
         description: 'The ticket.'
         required: true
-        example: '1562'
+        example: '564'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -913,15 +913,15 @@ endpoints:
         name: message
         description: ''
         required: true
-        example: '1562'
+        example: '564'
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      ticket: '1562'
-      message: '1562'
+      ticket: '564'
+      message: '564'
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []

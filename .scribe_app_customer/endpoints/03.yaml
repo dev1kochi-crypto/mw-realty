@@ -1,33 +1,41 @@
-name: Account
+name: Home
 description: |-
-  Profile, language and settings; help, privacy and terms; delete account.
+  Buy / Rent / Commercial / New Projects switch, the search bar, recently viewed and latest listings. **Recently viewed** has no endpoint: keep the last viewed property cards on the phone.
 
   **Also uses (connected):**
 
-  * `GET /api/customer/me` — see **Activity**
-  * `GET /api/languages` — see **Entry**
-  * `POST /api/auth/logout` — see **Entry**
+  * `GET /api/location-suggestions` — see **Search**
+  * `GET /api/properties` — see **Search**
+  * `GET /api/commercial` — see **Search**
+  * `GET /api/ads/slides` — see **Ads & featured**
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/site-information
+    uri: api/home
     metadata:
       custom: []
-      groupName: Account
+      groupName: Home
       groupDescription: |-
-        Profile, language and settings; help, privacy and terms; delete account.
+        Buy / Rent / Commercial / New Projects switch, the search bar, recently viewed and latest listings. **Recently viewed** has no endpoint: keep the last viewed property cards on the phone.
 
         **Also uses (connected):**
 
-        * `GET /api/customer/me` — see **Activity**
-        * `GET /api/languages` — see **Entry**
-        * `POST /api/auth/logout` — see **Entry**
-      subgroup: 'Help, privacy & terms'
+        * `GET /api/location-suggestions` — see **Search**
+        * `GET /api/properties` — see **Search**
+        * `GET /api/commercial` — see **Search**
+        * `GET /api/ads/slides` — see **Ads & featured**
+      subgroup: Home
       subgroupDescription: ''
-      title: 'Site information'
-      description: 'Office address, phone, email, WhatsApp and social links (the website footer).'
+      title: 'Home screen'
+      description: |-
+        Every home section in one request: banner, brands, ad, developments, premium properties,
+        luxury, why-choose-us, communities, popular places, testimonials, contact. Property lists
+        inside are shuffled on each call.
+
+        `ad` is a single ad, kept for older clients. The home ad slider shows every running ad:
+        load it from **Ad slider** (`/api/ads/slides?placement=home`).
       authenticated: false
       deprecated: false
     headers:
@@ -63,43 +71,43 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/legal/{key}'
+    uri: api/home/new-projects
     metadata:
       custom: []
-      groupName: Account
+      groupName: Home
       groupDescription: |-
-        Profile, language and settings; help, privacy and terms; delete account.
+        Buy / Rent / Commercial / New Projects switch, the search bar, recently viewed and latest listings. **Recently viewed** has no endpoint: keep the last viewed property cards on the phone.
 
         **Also uses (connected):**
 
-        * `GET /api/customer/me` — see **Activity**
-        * `GET /api/languages` — see **Entry**
-        * `POST /api/auth/logout` — see **Entry**
-      subgroup: 'Help, privacy & terms'
+        * `GET /api/location-suggestions` — see **Search**
+        * `GET /api/properties` — see **Search**
+        * `GET /api/commercial` — see **Search**
+        * `GET /api/ads/slides` — see **Ads & featured**
+      subgroup: Home
       subgroupDescription: ''
-      title: 'Legal page'
-      description: ''
+      title: 'New projects by city'
+      description: 'The home "Browse New Projects" section''s listings for one city tab.'
       authenticated: false
       deprecated: false
     headers:
       Content-Type: application/json
       Accept: application/json
       X-Device-Id: '{DEVICE_ID}'
-    urlParameters:
-      key:
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      city:
         custom: []
-        name: key
-        description: 'terms, privacy, security or cookie.'
-        required: true
-        example: privacy
+        name: city
+        description: 'A city tab from the home response.'
+        required: false
+        example: Dubai
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-    cleanUrlParameters:
-      key: privacy
-    queryParameters:
       lang:
         custom: []
         name: lang
@@ -112,225 +120,14 @@ endpoints:
         nullable: false
         deprecated: false
     cleanQueryParameters:
+      city: Dubai
       lang: en
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 404
-        content: '{"message": "Not found"}'
-        headers: []
-        description: ''
+    responses: []
     responseFields: []
     auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/customer/settings
-    metadata:
-      custom: []
-      groupName: Account
-      groupDescription: |-
-        Profile, language and settings; help, privacy and terms; delete account.
-
-        **Also uses (connected):**
-
-        * `GET /api/customer/me` — see **Activity**
-        * `GET /api/languages` — see **Entry**
-        * `POST /api/auth/logout` — see **Entry**
-      subgroup: 'Profile & settings'
-      subgroupDescription: ''
-      title: 'Update profile'
-      description: |-
-        Send as `multipart/form-data` when uploading an avatar. Use `POST` from the app — PHP does
-        not parse file uploads on `PUT` (the `PUT` route is kept for the website).
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {YOUR_TOKEN}'
-      Content-Type: multipart/form-data
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      name:
-        custom: []
-        name: name
-        description: ''
-        required: true
-        example: 'Sara Ahmed'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      email:
-        custom: []
-        name: email
-        description: ''
-        required: true
-        example: buyer@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      phone:
-        custom: []
-        name: phone
-        description: ''
-        required: false
-        example: '+971 50 123 4567'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      location:
-        custom: []
-        name: location
-        description: ''
-        required: false
-        example: 'Dubai Marina'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      password:
-        custom: []
-        name: password
-        description: 'Leave out to keep the current password.'
-        required: false
-        example: newSecret123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      avatar:
-        custom: []
-        name: avatar
-        description: 'Image, max 2 MB.'
-        required: false
-        example: null
-        type: file
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: true
-        deprecated: false
-      password_confirmation:
-        custom: []
-        name: password_confirmation
-        description: 'Required with password.'
-        required: false
-        example: newSecret123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      name: 'Sara Ahmed'
-      email: buyer@example.com
-      phone: '+971 50 123 4567'
-      location: 'Dubai Marina'
-      password: newSecret123
-      password_confirmation: newSecret123
-    fileParameters:
-      avatar: null
-    responses:
-      -
-        custom: []
-        status: 200
-        content: '{"message": "Settings updated.", "avatar_url": "https://res.cloudinary.com/.../avatar.jpg"}'
-        headers: []
-        description: ''
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - DELETE
-    uri: api/customer/account
-    metadata:
-      custom: []
-      groupName: Account
-      groupDescription: |-
-        Profile, language and settings; help, privacy and terms; delete account.
-
-        **Also uses (connected):**
-
-        * `GET /api/customer/me` — see **Activity**
-        * `GET /api/languages` — see **Entry**
-        * `POST /api/auth/logout` — see **Entry**
-      subgroup: 'Profile & settings'
-      subgroupDescription: ''
-      title: 'Delete account'
-      description: |-
-        Permanently deletes the account (required by the App Store / Play Store for apps with
-        sign-up). Wishlist and saved searches are removed; enquiries already sent to agents stay
-        with them, unlinked from the account. Password accounts must confirm their password;
-        Google-only accounts send nothing.
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer {YOUR_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-      X-Device-Id: '{DEVICE_ID}'
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      password:
-        custom: []
-        name: password
-        description: 'The current password (accounts created with email + password).'
-        required: false
-        example: secret123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      password: secret123
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: '{"message": "Your account has been deleted."}'
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 422
-        content: '{"message": "The password is incorrect.", "errors": {"password": ["The password is incorrect."]}}'
-        headers: []
-        description: ''
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
     controller: null
     method: null
     route: null

@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "MW Realty \u2014 Agent App API",
-        "_postman_id": "295ffb54-b35d-46b0-89e4-e50b530b9e83",
+        "_postman_id": "774ae536-2822-45f1-a9ec-8f806817a228",
         "description": "The CRM endpoints the MW Realty agent app calls, by app tab: Entry, Home, Leads, Add listing, Listings, More.",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -546,247 +546,247 @@
                                         },
                                         {
                                             "key": "public_email",
-                                            "value": "carolyne.luettgen@example.org",
+                                            "value": "zbailey@example.net",
                                             "type": "text",
                                             "description": "Must be a valid email address. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "secondary_phone",
-                                            "value": "fuudtdsufvyvddqamniih",
+                                            "value": "i",
                                             "type": "text",
                                             "description": "Must match the regex \/^\\+?[0-9 ()\\-]{6,30}$\/. Must not be greater than 30 characters."
                                         },
                                         {
                                             "key": "whatsapp_number",
-                                            "value": "fqcoynlazghdtqtqxbajw",
+                                            "value": "y",
                                             "type": "text",
                                             "description": "Must match the regex \/^\\+?[0-9 ()\\-]{6,30}$\/. Must not be greater than 30 characters."
                                         },
                                         {
                                             "key": "city",
-                                            "value": "bpilpmufinllwloauydls",
+                                            "value": "v",
                                             "type": "text",
                                             "description": "Must not be greater than 100 characters."
                                         },
                                         {
                                             "key": "orn_expiry",
-                                            "value": "2026-10-22T09:05:25",
+                                            "value": "2026-10-23T06:12:59",
                                             "type": "text",
                                             "description": "Must be a valid date."
                                         },
                                         {
                                             "key": "adrec_license_expiry",
-                                            "value": "2026-10-22T09:05:25",
+                                            "value": "2026-10-23T06:12:59",
                                             "type": "text",
                                             "description": "Must be a valid date."
                                         },
                                         {
                                             "key": "other_license",
-                                            "value": "msjuryvojcybzvrbyickz",
+                                            "value": "d",
                                             "type": "text",
                                             "description": "Must not be greater than 100 characters."
                                         },
                                         {
                                             "key": "other_license_expiry",
-                                            "value": "2026-10-22T09:05:25",
+                                            "value": "2026-10-23T06:12:59",
                                             "type": "text",
                                             "description": "Must be a valid date."
                                         },
                                         {
                                             "key": "position",
-                                            "value": "nkygloigmkwxphlvazjrc",
+                                            "value": "l",
                                             "type": "text",
                                             "description": "Must not be greater than 150 characters."
                                         },
                                         {
                                             "key": "linkedin_url",
-                                            "value": "http:\/\/www.dubuque.com\/fuga-a-debitis-autem.html",
+                                            "value": "http:\/\/www.dickens.com\/deserunt-aut-ab-provident-perspiciatis-quo-omnis-nostrum",
                                             "type": "text",
                                             "description": "Must be a valid URL. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "spoken_languages[0]",
-                                            "value": "consequatur",
+                                            "value": "architecto",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "bio_ar",
-                                            "value": "mqeopfuudtdsufvyvddqa",
+                                            "value": "n",
                                             "type": "text",
                                             "description": "Must not be greater than 2000 characters."
                                         },
                                         {
                                             "key": "name",
-                                            "value": "mniihfqcoynlazghdtqtq",
+                                            "value": "g",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "company_name",
-                                            "value": "xbajwbpilpmufinllwloa",
+                                            "value": "z",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "nationality",
-                                            "value": "uydlsmsjuryvojcybzvrb",
+                                            "value": "m",
                                             "type": "text",
                                             "description": "Must not be greater than 100 characters."
                                         },
                                         {
                                             "key": "emirates_id_no",
-                                            "value": "yickznkygloigmkwxphlv",
+                                            "value": "i",
                                             "type": "text",
                                             "description": "Must not be greater than 50 characters."
                                         },
                                         {
                                             "key": "passport_no",
-                                            "value": "azjrcnfbaqywuxhgjjmzu",
+                                            "value": "y",
                                             "type": "text",
                                             "description": "Must not be greater than 50 characters."
                                         },
                                         {
                                             "key": "passport_expiry",
-                                            "value": "2026-10-22T09:05:25",
+                                            "value": "2026-10-23T06:12:59",
                                             "type": "text",
                                             "description": "Must be a valid date."
                                         },
                                         {
                                             "key": "brn_number",
-                                            "value": "xjubqouzswiwxtrkimfca",
+                                            "value": "v",
                                             "type": "text",
                                             "description": "Must not be greater than 50 characters."
                                         },
                                         {
                                             "key": "affiliated_brokerage",
-                                            "value": "tbxspzmrazsroyjpxmqes",
+                                            "value": "d",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "trade_license_no",
-                                            "value": "edyghenqcopwvownkbaml",
+                                            "value": "l",
                                             "type": "text",
                                             "description": "Must not be greater than 50 characters."
                                         },
                                         {
                                             "key": "trade_license_expiry",
-                                            "value": "2026-10-22T09:05:25",
+                                            "value": "2026-10-23T06:12:59",
                                             "type": "text",
                                             "description": "Must be a valid date."
                                         },
                                         {
                                             "key": "orn_number",
-                                            "value": "nfngefbeilfzsyuxoezbd",
+                                            "value": "j",
                                             "type": "text",
                                             "description": "Must not be greater than 50 characters."
                                         },
                                         {
                                             "key": "adrec_license_no",
-                                            "value": "tabptcyyerevrljcbwkth",
+                                            "value": "n",
                                             "type": "text",
                                             "description": "Must not be greater than 50 characters."
                                         },
                                         {
                                             "key": "trn_number",
-                                            "value": "jnescwsestcouxpqsydki",
+                                            "value": "i",
                                             "type": "text",
                                             "description": "Must not be greater than 50 characters."
                                         },
                                         {
                                             "key": "trn_expiry",
-                                            "value": "2026-10-22T09:05:25",
+                                            "value": "2026-10-23T06:12:59",
                                             "type": "text",
                                             "description": "Must be a valid date."
                                         },
                                         {
                                             "key": "authorized_signatory_name",
-                                            "value": "gioyoyprjkfdjsneawgaa",
+                                            "value": "k",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "landline",
-                                            "value": "vuiwlezlcraoooxrrjhbd",
+                                            "value": "h",
                                             "type": "text",
                                             "description": "Must not be greater than 50 characters."
                                         },
                                         {
                                             "key": "office_address",
-                                            "value": "uowtbaqrrtgxiuvujtzci",
+                                            "value": "w",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "bio",
-                                            "value": "rplnfqsaymxpayeblqozc",
+                                            "value": "a",
                                             "type": "text",
                                             "description": "Must not be greater than 2000 characters."
                                         },
                                         {
                                             "key": "years_of_experience",
-                                            "value": "11",
+                                            "value": "24",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 80."
                                         },
                                         {
                                             "key": "preferred_areas",
-                                            "value": "azplqjijwkuzgpjfumffs",
+                                            "value": "k",
                                             "type": "text",
                                             "description": "Must not be greater than 500 characters."
                                         },
                                         {
                                             "key": "website",
-                                            "value": "mqnmbekhsobzoqisjmbiu",
+                                            "value": "c",
                                             "type": "text",
                                             "description": "Must be a valid URL. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "metadata[meta_title]",
-                                            "value": "qxdnvttnwpjqkxxmutyza",
+                                            "value": "m",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[meta_description]",
-                                            "value": "adbjkbosusobdoqhlrecw",
+                                            "value": "y",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[meta_keywords]",
-                                            "value": "gwnfrnqkqzoekemczcjka",
+                                            "value": "u",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[canonical_url]",
-                                            "value": "http:\/\/www.walker.com\/",
+                                            "value": "https:\/\/www.hirthe.com\/commodi-incidunt-iure-odit",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[og_title]",
-                                            "value": "wxjfjhqnumftkwbfqsgay",
+                                            "value": "s",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[og_description]",
-                                            "value": "wjxhjqovkxzlvalyuwppf",
+                                            "value": "i",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[other_meta_tags]",
-                                            "value": "consequatur",
+                                            "value": "architecto",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "remove_metadata_og_image",
-                                            "value": "1",
+                                            "value": "",
                                             "type": "text",
                                             "description": ""
                                         },
@@ -934,7 +934,7 @@
                                         {
                                             "id": "field",
                                             "key": "field",
-                                            "value": "consequatur",
+                                            "value": "architecto",
                                             "description": ""
                                         }
                                     ]
@@ -974,7 +974,7 @@
                                         {
                                             "id": "field",
                                             "key": "field",
-                                            "value": "consequatur",
+                                            "value": "architecto",
                                             "description": ""
                                         }
                                     ]
@@ -1023,7 +1023,7 @@
                                         {
                                             "id": "field",
                                             "key": "field",
-                                            "value": "consequatur",
+                                            "value": "architecto",
                                             "description": ""
                                         }
                                     ]
@@ -1372,7 +1372,7 @@
                                         {
                                             "id": "id",
                                             "key": "id",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ID of the lead."
                                         }
                                     ]
@@ -1412,7 +1412,7 @@
                                         {
                                             "id": "id",
                                             "key": "id",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ID of the lead."
                                         }
                                     ]
@@ -1462,7 +1462,7 @@
                                         {
                                             "id": "id",
                                             "key": "id",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ID of the lead."
                                         }
                                     ]
@@ -1512,7 +1512,7 @@
                                         {
                                             "id": "id",
                                             "key": "id",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ID of the lead."
                                         }
                                     ]
@@ -1562,7 +1562,7 @@
                                         {
                                             "id": "id",
                                             "key": "id",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ID of the lead."
                                         }
                                     ]
@@ -1612,7 +1612,7 @@
                                         {
                                             "id": "id",
                                             "key": "id",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ID of the lead."
                                         }
                                     ]
@@ -1662,13 +1662,13 @@
                                         {
                                             "id": "id",
                                             "key": "id",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ID of the lead."
                                         },
                                         {
                                             "id": "contactId",
                                             "key": "contactId",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": ""
                                         }
                                     ]
@@ -1715,7 +1715,7 @@
                                         {
                                             "id": "id",
                                             "key": "id",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ID of the lead."
                                         }
                                     ]
@@ -1833,175 +1833,175 @@
                                     "formdata": [
                                         {
                                             "key": "translations[0][title]",
-                                            "value": "edyghenqcopwvownkbaml",
+                                            "value": "l",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[0][key_features]",
-                                            "value": "nfngefbeilfzsyuxoezbd",
+                                            "value": "j",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[0][description]",
-                                            "value": "Doloremque illo deserunt placeat fugit non hic sequi.",
+                                            "value": "Mollitia modi deserunt aut ab provident perspiciatis quo.",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[0][address]",
-                                            "value": "revrljcbwkthjnescwses",
+                                            "value": "m",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[0][community]",
-                                            "value": "tcouxpqsydkigioyoyprj",
+                                            "value": "y",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[0][city]",
-                                            "value": "kfdjsneawgaavuiwlezlc",
+                                            "value": "u",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[0][country]",
-                                            "value": "raoooxrrjhbduowtbaqrr",
+                                            "value": "w",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[en][title]",
-                                            "value": "mqeopfuudtdsufvyvddqa",
+                                            "value": "n",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[ar][title]",
-                                            "value": "mniihfqcoynlazghdtqtq",
+                                            "value": "g",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "slug",
-                                            "value": "vmqeopfuudtdsufvyvddq",
+                                            "value": "b",
                                             "type": "text",
                                             "description": "Must contain only letters, numbers, dashes and underscores. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "reference_no",
-                                            "value": "amniihfqcoynlazghdtqt",
+                                            "value": "n",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "rera_id",
-                                            "value": "qxbajwbpilpmufinllwlo",
+                                            "value": "g",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "permit_number",
-                                            "value": "auydlsmsjuryvojcybzvr",
+                                            "value": "z",
                                             "type": "text",
                                             "description": "Must match the regex \/^[A-Za-z0-9\\-\\\/]+$\/. Must not be greater than 64 characters."
                                         },
                                         {
                                             "key": "permit_expires_at",
-                                            "value": "2026-10-22",
+                                            "value": "2026-10-23",
                                             "type": "text",
                                             "description": "Must be a valid date in the format <code>Y-m-d<\/code>."
                                         },
                                         {
                                             "key": "permit_verification_url",
-                                            "value": "http:\/\/www.ward.com\/",
+                                            "value": "http:\/\/rempel.com\/sunt-nihil-accusantium-harum-mollitia",
                                             "type": "text",
                                             "description": "Must be a valid URL. Must not be greater than 2048 characters."
                                         },
                                         {
                                             "key": "postal_code",
-                                            "value": "ckznkygloigmkwxphlvaz",
+                                            "value": "k",
                                             "type": "text",
                                             "description": "Must not be greater than 50 characters."
                                         },
                                         {
                                             "key": "latitude",
-                                            "value": "-90",
+                                            "value": "-89",
                                             "type": "text",
                                             "description": "Must be between -90 and 90."
                                         },
                                         {
                                             "key": "longitude",
-                                            "value": "-179",
+                                            "value": "-180",
                                             "type": "text",
                                             "description": "Must be between -180 and 180."
                                         },
                                         {
                                             "key": "bedrooms",
-                                            "value": "3",
+                                            "value": "22",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 1000."
                                         },
                                         {
                                             "key": "bathrooms",
-                                            "value": "14",
+                                            "value": "24",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 1000."
                                         },
                                         {
                                             "key": "sqft",
-                                            "value": "6",
+                                            "value": "18",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 4294967295."
                                         },
                                         {
                                             "key": "price",
-                                            "value": "2",
+                                            "value": "8",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 9999999999999.99."
                                         },
                                         {
                                             "key": "currency",
-                                            "value": "aqy",
+                                            "value": "myu",
                                             "type": "text",
                                             "description": "Must contain only letters. Must be 3 characters."
                                         },
                                         {
                                             "key": "image_alt",
-                                            "value": "wuxhgjjmzuxjubqouzswi",
+                                            "value": "w",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "amenities[0]",
-                                            "value": "wxtrkimfcatbxspzmrazs",
+                                            "value": "p",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "easy_access[0]",
-                                            "value": "royjpxmqesedyghenqcop",
+                                            "value": "w",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "property_attributes[0]",
-                                            "value": "wvownkbamlnfngefbeilf",
+                                            "value": "l",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "rental_period",
-                                            "value": "zsyuxoezbdtabptcyyere",
+                                            "value": "v",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 100 characters."
                                         },
                                         {
                                             "key": "permit_type",
-                                            "value": "none",
+                                            "value": "rera",
                                             "type": "text",
                                             "description": ""
                                         },
@@ -2013,7 +2013,7 @@
                                         },
                                         {
                                             "key": "permit_token",
-                                            "value": "vrljcbwkthjnescwsestc",
+                                            "value": "q",
                                             "type": "text",
                                             "description": "Must not be greater than 64 characters."
                                         },
@@ -2025,25 +2025,25 @@
                                         },
                                         {
                                             "key": "available_dates[0]",
-                                            "value": "2026-10-22",
+                                            "value": "2026-10-23",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "developer",
-                                            "value": "ouxpqsydkigioyoyprjkf",
+                                            "value": "w",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "unit_number",
-                                            "value": "djsneawgaavuiwlezlcra",
+                                            "value": "r",
                                             "type": "text",
                                             "description": "Must not be greater than 100 characters."
                                         },
                                         {
                                             "key": "owner_name",
-                                            "value": "oooxrrjhbduowtbaqrrtg",
+                                            "value": "s",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
@@ -2055,181 +2055,181 @@
                                         },
                                         {
                                             "key": "video_tour_url",
-                                            "value": "http:\/\/harber.info\/dolor-autem-omnis-doloribus-beatae-laboriosam-expedita-deserunt.html",
+                                            "value": "https:\/\/www.bauch.com\/omnis-autem-et-consequatur",
                                             "type": "text",
                                             "description": "Must be a valid URL. Must not be greater than 2048 characters."
                                         },
                                         {
                                             "key": "cheques",
-                                            "value": "6",
+                                            "value": "4",
                                             "type": "text",
                                             "description": "Must be at least 1. Must not be greater than 12."
                                         },
                                         {
                                             "key": "year_built",
-                                            "value": "14",
+                                            "value": "16",
                                             "type": "text",
                                             "description": "Must be at least 1800. Must not be greater than 2200."
                                         },
                                         {
                                             "key": "floor",
-                                            "value": "fqsaymxpayeblqozckazp",
+                                            "value": "s",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "parking",
-                                            "value": "11",
+                                            "value": "12",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 10000."
                                         },
                                         {
                                             "key": "garage",
-                                            "value": "16",
+                                            "value": "23",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 1000."
                                         },
                                         {
                                             "key": "direct_from_owner",
-                                            "value": "jijwkuzgpjfumffsmqnmb",
+                                            "value": "w",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "security_deposit",
-                                            "value": "5",
+                                            "value": "19",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 9999999999999.99."
                                         },
                                         {
                                             "key": "virtual_tour_url",
-                                            "value": "https:\/\/www.grady.info\/quasi-aut-unde-harum-sit-qui-aliquid",
+                                            "value": "http:\/\/www.glover.biz\/",
                                             "type": "text",
                                             "description": "Must be a valid URL. Must not be greater than 2048 characters."
                                         },
                                         {
                                             "key": "view",
-                                            "value": "mbiuqxdnvttnwpjqkxxmu",
+                                            "value": "v",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "nearby_places[0]",
-                                            "value": "17",
+                                            "value": "16",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "published_at",
-                                            "value": "2026-10-22T09:05:26",
+                                            "value": "2026-10-23T06:13:00",
                                             "type": "text",
                                             "description": "Must be a valid date."
                                         },
                                         {
                                             "key": "order_index",
-                                            "value": "45",
+                                            "value": "39",
                                             "type": "text",
                                             "description": "Must be at least 0."
                                         },
                                         {
                                             "key": "metadata[meta_title]",
-                                            "value": "qeopfuudtdsufvyvddqam",
+                                            "value": "g",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[meta_description]",
-                                            "value": "niihfqcoynlazghdtqtqx",
+                                            "value": "z",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[meta_keywords]",
-                                            "value": "bajwbpilpmufinllwloau",
+                                            "value": "m",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[canonical_url]",
-                                            "value": "https:\/\/considine.com\/laudantium-nihil-autem-omnis-cum-molestiae-vel-natus.html",
+                                            "value": "https:\/\/www.gulgowski.com\/nihil-accusantium-harum-mollitia-modi-deserunt",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[og_title]",
-                                            "value": "jcybzvrbyickznkygloig",
+                                            "value": "w",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[og_description]",
-                                            "value": "mkwxphlvazjrcnfbaqywu",
+                                            "value": "a",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[other_meta_tags]",
-                                            "value": "consequatur",
+                                            "value": "architecto",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "listing_type",
-                                            "value": "xbajwbpilpmufinllwloa",
+                                            "value": "z",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "completion_status",
-                                            "value": "uydlsmsjuryvojcybzvrb",
+                                            "value": "m",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "property_type",
-                                            "value": "yickznkygloigmkwxphlv",
+                                            "value": "i",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "category",
-                                            "value": "azjrcnfbaqywuxhgjjmzu",
+                                            "value": "y",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "location",
-                                            "value": "xjubqouzswiwxtrkimfca",
+                                            "value": "v",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "emirate",
-                                            "value": "tbxspzmrazsroyjpxmqes",
+                                            "value": "d",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 100 characters."
                                         },
                                         {
                                             "key": "floor_plans[0][label]",
-                                            "value": "tgxiuvujtzcirplnfqsay",
+                                            "value": "p",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "floor_plans[0][size_from]",
-                                            "value": "43",
+                                            "value": "61",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "floor_plans[0][size_to]",
-                                            "value": "80",
+                                            "value": "89",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "floor_plans[0][existing_image]",
-                                            "value": "consequatur",
+                                            "value": "architecto",
                                             "type": "text",
                                             "description": ""
                                         },
@@ -2393,7 +2393,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\"emirate\":\"dubai\",\"permit_type\":\"rera\",\"permit_city\":\"consequatur\",\"permit_number\":\"7112345678\",\"property_id\":17}"
+                                    "raw": "{\"emirate\":\"dubai\",\"permit_type\":\"rera\",\"permit_city\":\"architecto\",\"permit_number\":\"7112345678\",\"property_id\":16}"
                                 },
                                 "description": "Checks the permit with DLD \/ ADREC. Returns the status, the details to fill in and a token the\nform posts back on save (`permit_token`, see PermitVerifier).",
                                 "auth": {
@@ -2408,7 +2408,7 @@
         },
         {
             "name": "Listings",
-            "description": "My listings by state (active, inactive, permit review), quick sold \/ rented, edit, photos and the sold \/ rented proof documents.\n\n**Also uses (connected):**\n\n* `POST \/api\/crm\/properties\/permit\/validate` \u2014 see **Add listing**\n* `GET \/api\/crm\/properties\/nearby-places` \u2014 see **Add listing**\n* `GET \/api\/crm\/properties\/agent-options` \u2014 see **Add listing**",
+            "description": "My listings by state (active, inactive, permit review), quick sold \/ rented, edit, photos and the sold \/ rented proof documents.\n\n**Also uses (connected):**\n\n* `POST \/api\/crm\/properties\/permit\/validate` \u2014 see **Add listing**\n* `GET \/api\/crm\/properties\/nearby-places` \u2014 see **Add listing**\n* `GET \/api\/crm\/properties\/agent-options` \u2014 see **Add listing**\n* `POST \/api\/crm\/properties\/{id}\/feature` \u2014 see **Featured & ads**",
             "item": [
                 {
                     "name": "My listings",
@@ -2658,217 +2658,217 @@
                                     "formdata": [
                                         {
                                             "key": "translations[0][title]",
-                                            "value": "edyghenqcopwvownkbaml",
+                                            "value": "l",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[0][key_features]",
-                                            "value": "nfngefbeilfzsyuxoezbd",
+                                            "value": "j",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[0][description]",
-                                            "value": "Doloremque illo deserunt placeat fugit non hic sequi.",
+                                            "value": "Mollitia modi deserunt aut ab provident perspiciatis quo.",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[0][address]",
-                                            "value": "revrljcbwkthjnescwses",
+                                            "value": "m",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[0][community]",
-                                            "value": "tcouxpqsydkigioyoyprj",
+                                            "value": "y",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[0][city]",
-                                            "value": "kfdjsneawgaavuiwlezlc",
+                                            "value": "u",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[0][country]",
-                                            "value": "raoooxrrjhbduowtbaqrr",
+                                            "value": "w",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[en][title]",
-                                            "value": "mqeopfuudtdsufvyvddqa",
+                                            "value": "n",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "translations[ar][title]",
-                                            "value": "mniihfqcoynlazghdtqtq",
+                                            "value": "g",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "slug",
-                                            "value": "vmqeopfuudtdsufvyvddq",
+                                            "value": "b",
                                             "type": "text",
                                             "description": "Must contain only letters, numbers, dashes and underscores. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "reference_no",
-                                            "value": "amniihfqcoynlazghdtqt",
+                                            "value": "n",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "rera_id",
-                                            "value": "qxbajwbpilpmufinllwlo",
+                                            "value": "g",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "permit_number",
-                                            "value": "auydlsmsjuryvojcybzvr",
+                                            "value": "z",
                                             "type": "text",
                                             "description": "Must match the regex \/^[A-Za-z0-9\\-\\\/]+$\/. Must not be greater than 64 characters."
                                         },
                                         {
                                             "key": "permit_expires_at",
-                                            "value": "2026-10-22",
+                                            "value": "2026-10-23",
                                             "type": "text",
                                             "description": "Must be a valid date in the format <code>Y-m-d<\/code>."
                                         },
                                         {
                                             "key": "permit_verification_url",
-                                            "value": "http:\/\/www.ward.com\/",
+                                            "value": "http:\/\/rempel.com\/sunt-nihil-accusantium-harum-mollitia",
                                             "type": "text",
                                             "description": "Must be a valid URL. Must not be greater than 2048 characters."
                                         },
                                         {
                                             "key": "postal_code",
-                                            "value": "ckznkygloigmkwxphlvaz",
+                                            "value": "k",
                                             "type": "text",
                                             "description": "Must not be greater than 50 characters."
                                         },
                                         {
                                             "key": "latitude",
-                                            "value": "-90",
+                                            "value": "-89",
                                             "type": "text",
                                             "description": "Must be between -90 and 90."
                                         },
                                         {
                                             "key": "longitude",
-                                            "value": "-179",
+                                            "value": "-180",
                                             "type": "text",
                                             "description": "Must be between -180 and 180."
                                         },
                                         {
                                             "key": "bedrooms",
-                                            "value": "3",
+                                            "value": "22",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 1000."
                                         },
                                         {
                                             "key": "bathrooms",
-                                            "value": "14",
+                                            "value": "24",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 1000."
                                         },
                                         {
                                             "key": "sqft",
-                                            "value": "6",
+                                            "value": "18",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 4294967295."
                                         },
                                         {
                                             "key": "price",
-                                            "value": "2",
+                                            "value": "8",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 9999999999999.99."
                                         },
                                         {
                                             "key": "currency",
-                                            "value": "aqy",
+                                            "value": "myu",
                                             "type": "text",
                                             "description": "Must contain only letters. Must be 3 characters."
                                         },
                                         {
                                             "key": "image_alt",
-                                            "value": "wuxhgjjmzuxjubqouzswi",
+                                            "value": "w",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "amenities[0]",
-                                            "value": "wxtrkimfcatbxspzmrazs",
+                                            "value": "p",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "easy_access[0]",
-                                            "value": "royjpxmqesedyghenqcop",
+                                            "value": "w",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "property_attributes[0]",
-                                            "value": "wvownkbamlnfngefbeilf",
+                                            "value": "l",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "rental_period",
-                                            "value": "zsyuxoezbdtabptcyyere",
+                                            "value": "v",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 100 characters."
                                         },
                                         {
                                             "key": "permit_type",
-                                            "value": "rera",
+                                            "value": "dtcm",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "permit_city",
-                                            "value": "al_ain",
+                                            "value": "other",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "permit_token",
-                                            "value": "vrljcbwkthjnescwsestc",
+                                            "value": "q",
                                             "type": "text",
                                             "description": "Must not be greater than 64 characters."
                                         },
                                         {
                                             "key": "availability",
-                                            "value": "immediately",
+                                            "value": "from_date",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "available_dates[0]",
-                                            "value": "2026-10-22",
+                                            "value": "2026-10-23",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "developer",
-                                            "value": "ouxpqsydkigioyoyprjkf",
+                                            "value": "w",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "unit_number",
-                                            "value": "djsneawgaavuiwlezlcra",
+                                            "value": "r",
                                             "type": "text",
                                             "description": "Must not be greater than 100 characters."
                                         },
                                         {
                                             "key": "owner_name",
-                                            "value": "oooxrrjhbduowtbaqrrtg",
+                                            "value": "s",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
@@ -2880,181 +2880,181 @@
                                         },
                                         {
                                             "key": "video_tour_url",
-                                            "value": "http:\/\/harber.info\/dolor-autem-omnis-doloribus-beatae-laboriosam-expedita-deserunt.html",
+                                            "value": "https:\/\/www.bauch.com\/omnis-autem-et-consequatur",
                                             "type": "text",
                                             "description": "Must be a valid URL. Must not be greater than 2048 characters."
                                         },
                                         {
                                             "key": "cheques",
-                                            "value": "6",
+                                            "value": "4",
                                             "type": "text",
                                             "description": "Must be at least 1. Must not be greater than 12."
                                         },
                                         {
                                             "key": "year_built",
-                                            "value": "14",
+                                            "value": "16",
                                             "type": "text",
                                             "description": "Must be at least 1800. Must not be greater than 2200."
                                         },
                                         {
                                             "key": "floor",
-                                            "value": "fqsaymxpayeblqozckazp",
+                                            "value": "s",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "parking",
-                                            "value": "11",
+                                            "value": "12",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 10000."
                                         },
                                         {
                                             "key": "garage",
-                                            "value": "16",
+                                            "value": "23",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 1000."
                                         },
                                         {
                                             "key": "direct_from_owner",
-                                            "value": "jijwkuzgpjfumffsmqnmb",
+                                            "value": "w",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "security_deposit",
-                                            "value": "5",
+                                            "value": "19",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 9999999999999.99."
                                         },
                                         {
                                             "key": "virtual_tour_url",
-                                            "value": "https:\/\/www.grady.info\/quasi-aut-unde-harum-sit-qui-aliquid",
+                                            "value": "http:\/\/www.glover.biz\/",
                                             "type": "text",
                                             "description": "Must be a valid URL. Must not be greater than 2048 characters."
                                         },
                                         {
                                             "key": "view",
-                                            "value": "mbiuqxdnvttnwpjqkxxmu",
+                                            "value": "v",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "nearby_places[0]",
-                                            "value": "17",
+                                            "value": "16",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "published_at",
-                                            "value": "2026-10-22T09:05:26",
+                                            "value": "2026-10-23T06:13:00",
                                             "type": "text",
                                             "description": "Must be a valid date."
                                         },
                                         {
                                             "key": "order_index",
-                                            "value": "45",
+                                            "value": "39",
                                             "type": "text",
                                             "description": "Must be at least 0."
                                         },
                                         {
                                             "key": "metadata[meta_title]",
-                                            "value": "qeopfuudtdsufvyvddqam",
+                                            "value": "g",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[meta_description]",
-                                            "value": "niihfqcoynlazghdtqtqx",
+                                            "value": "z",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[meta_keywords]",
-                                            "value": "bajwbpilpmufinllwloau",
+                                            "value": "m",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[canonical_url]",
-                                            "value": "https:\/\/considine.com\/laudantium-nihil-autem-omnis-cum-molestiae-vel-natus.html",
+                                            "value": "https:\/\/www.gulgowski.com\/nihil-accusantium-harum-mollitia-modi-deserunt",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[og_title]",
-                                            "value": "jcybzvrbyickznkygloig",
+                                            "value": "w",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[og_description]",
-                                            "value": "mkwxphlvazjrcnfbaqywu",
+                                            "value": "a",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "metadata[other_meta_tags]",
-                                            "value": "consequatur",
+                                            "value": "architecto",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "listing_type",
-                                            "value": "xbajwbpilpmufinllwloa",
+                                            "value": "z",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "completion_status",
-                                            "value": "uydlsmsjuryvojcybzvrb",
+                                            "value": "m",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "property_type",
-                                            "value": "yickznkygloigmkwxphlv",
+                                            "value": "i",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "category",
-                                            "value": "azjrcnfbaqywuxhgjjmzu",
+                                            "value": "y",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "location",
-                                            "value": "xjubqouzswiwxtrkimfca",
+                                            "value": "v",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 255 characters."
                                         },
                                         {
                                             "key": "emirate",
-                                            "value": "tbxspzmrazsroyjpxmqes",
+                                            "value": "d",
                                             "type": "text",
                                             "description": "Must match an existing stored value. Must not be greater than 100 characters."
                                         },
                                         {
                                             "key": "floor_plans[0][label]",
-                                            "value": "tgxiuvujtzcirplnfqsay",
+                                            "value": "p",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "floor_plans[0][size_from]",
-                                            "value": "43",
+                                            "value": "61",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "floor_plans[0][size_to]",
-                                            "value": "80",
+                                            "value": "89",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "floor_plans[0][existing_image]",
-                                            "value": "consequatur",
+                                            "value": "architecto",
                                             "type": "text",
                                             "description": ""
                                         },
@@ -3168,7 +3168,7 @@
                                         {
                                             "id": "number",
                                             "key": "number",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": ""
                                         }
                                     ]
@@ -3310,19 +3310,19 @@
                                         },
                                         {
                                             "key": "rented_until",
-                                            "value": "2107-11-20",
+                                            "value": "2052-11-15",
                                             "type": "text",
                                             "description": "Must be a valid date. Must be a date after <code>sold_at<\/code>."
                                         },
                                         {
                                             "key": "commission",
-                                            "value": "13",
+                                            "value": "22",
                                             "type": "text",
                                             "description": "Must be at least 0. Must not be greater than 9999999999999."
                                         },
                                         {
                                             "key": "notes",
-                                            "value": "qeopfuudtdsufvyvddqam",
+                                            "value": "g",
                                             "type": "text",
                                             "description": "Must not be greater than 2000 characters."
                                         },
@@ -3340,31 +3340,31 @@
                                         },
                                         {
                                             "key": "buyer[name]",
-                                            "value": "mqeopfuudtdsufvyvddqa",
+                                            "value": "n",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "buyer[email]",
-                                            "value": "eloisa.harber@example.com",
+                                            "value": "ashly64@example.com",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "buyer[phone]",
-                                            "value": "fqcoynlazghdtqtqxbajw",
+                                            "value": "v",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "buyer[phone_country_code]",
-                                            "value": "bpilpmu",
+                                            "value": "dljnikhw",
                                             "type": "text",
                                             "description": ""
                                         },
                                         {
                                             "key": "documents_password",
-                                            "value": "finllwloauydlsmsjuryv",
+                                            "value": "a",
                                             "type": "text",
                                             "description": "Must not be greater than 255 characters."
                                         },
@@ -3450,7 +3450,7 @@
                                         {
                                             "id": "id",
                                             "key": "id",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ID of the sold listing."
                                         },
                                         {
@@ -3478,6 +3478,779 @@
                                 ],
                                 "body": null,
                                 "description": "The ownership document (title deed) or the contract (Form F \/ MOU, or the Ejari) \u2014 private\nstorage, same access as the listing itself.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Featured & ads",
+            "description": "Promoting listings: **Featured** (Premium) listings and **advertisements** in the website \/ app ad sliders.Featured and ads are paid from the plan's allowance (`pay_with=plan`) or with credits (`pay_with=credits`). Opened from a listing (\"Make premium\") or from the More tab.\n\n**Also uses (connected):**\n\n* `GET \/api\/crm\/properties` \u2014 see **Listings**",
+            "item": [
+                {
+                    "name": "Featured (Premium)",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Make premium",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/:id\/feature",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/:id\/feature",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": 82,
+                                            "description": "The ID of the property."
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"start_date\":\"2026-10-10\",\"end_date\":\"2026-11-08\",\"days\":15,\"pay_with\":\"credits\"}"
+                                },
+                                "description": "With `pay_with=credits` (agents \/ companies) it's bought with credits for `days` (7, 15 or 30)\ninstead of using the plan's quota; no end date is sent.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Change premium dates",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/:id\/feature",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/:id\/feature",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": 82,
+                                            "description": "The ID of the property."
+                                        }
+                                    ]
+                                },
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"start_date\":\"2026-10-10\",\"end_date\":\"2026-11-08\"}"
+                                },
+                                "description": "A live feature keeps its start date (send null).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Stop \/ cancel premium",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/:id\/feature",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/:id\/feature",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": 82,
+                                            "description": "The ID of the property."
+                                        }
+                                    ]
+                                },
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "List premium listings",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/premium",
+                                    "query": [
+                                        {
+                                            "key": "status",
+                                            "value": "live",
+                                            "description": "all | live | scheduled.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/premium?status=live&page=1"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "Live first (ending soonest), then scheduled \u2014 20 per page, with the counts and the plan quota.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Add Premium (several listings)",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/premium",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/premium"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"property_ids\":[12,14],\"start_date\":\"2026-10-10\",\"end_date\":\"2026-11-08\",\"days\":15,\"pay_with\":\"credits\"}"
+                                },
+                                "description": "The same start \/ end dates for every ticked listing, all-or-nothing (FeaturedListingService::featureMany).\nWith `pay_with=credits` each is bought with credits for `days` (7, 15 or 30) instead.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Listings that can be made premium",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/premium\/eligible",
+                                    "query": [
+                                        {
+                                            "key": "q",
+                                            "value": "marina",
+                                            "description": "",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/premium\/eligible?q=marina&page=1"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"q\":\"b\",\"page\":22}"
+                                },
+                                "description": "The \"Add Premium\" picker, searched and paged on the server (20 at a time). Owners only see\nactive listings that aren't premium or scheduled already.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Advertisements",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "List ads",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/ads",
+                                    "query": [
+                                        {
+                                            "key": "status",
+                                            "value": "live",
+                                            "description": "all | live | upcoming | past.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/ads?status=live&page=1"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The account's ads, newest booking first (20 per page), with impressions \/ clicks per ad, the\nlast 30 days' totals and the plan allowance. `quota.included` false = the plan has no\nadvertising (show the upgrade card).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Booking options",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/ads\/form-options",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/ads\/form-options"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "Everything the \"Book an ad\" form needs: the pages ads can run on (with their credit prices and\nhow many run at once), the lengths the plan allows, the allowance and credit balance, the\nactive languages for the banner text, and the earliest start.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Free slots",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/ads\/availability",
+                                    "query": [
+                                        {
+                                            "key": "placement",
+                                            "value": "home",
+                                            "description": "",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "date",
+                                            "value": "2026-10-14",
+                                            "description": "Y-m-d.",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/ads\/availability?placement=home&date=2026-10-14"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"placement\":\"architecto\",\"date\":\"2026-10-23\"}"
+                                },
+                                "description": "For each hour of a day (Dubai time) on a page: how many client ads are booked and how many\nslots are still free. `past` hours can't be booked any more.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Listings an ad can link to",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/ads\/properties",
+                                    "query": [
+                                        {
+                                            "key": "q",
+                                            "value": "marina",
+                                            "description": "",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/ads\/properties?q=marina&page=1"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"q\":\"b\",\"page\":22}"
+                                },
+                                "description": "The account's active listings, searched and paged on the server (20 at a time) \u2014 RemoteSelect's\n`{data: [{id, name}], next_page}`.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Book an ad",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/ads",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/ads"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart\/form-data"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "name",
+                                            "value": "Marina Heights launch",
+                                            "type": "text",
+                                            "description": "Only you see it."
+                                        },
+                                        {
+                                            "key": "placement",
+                                            "value": "home",
+                                            "type": "text",
+                                            "description": "A page from the booking options."
+                                        },
+                                        {
+                                            "key": "start",
+                                            "value": "2026-10-14 18:00",
+                                            "type": "text",
+                                            "description": "Y-m-d H:i, Dubai time, on the hour."
+                                        },
+                                        {
+                                            "key": "hours",
+                                            "value": "6",
+                                            "type": "text",
+                                            "description": "One of the plan's lengths."
+                                        },
+                                        {
+                                            "key": "pay_with",
+                                            "value": "plan",
+                                            "type": "text",
+                                            "description": "plan | credits."
+                                        },
+                                        {
+                                            "key": "link_type",
+                                            "value": "property",
+                                            "type": "text",
+                                            "description": "property | profile | url."
+                                        },
+                                        {
+                                            "key": "property_id",
+                                            "value": "111",
+                                            "type": "text",
+                                            "description": "With link_type=property."
+                                        },
+                                        {
+                                            "key": "image_alt",
+                                            "value": "Marina Heights tower at sunset",
+                                            "type": "text",
+                                            "description": ""
+                                        },
+                                        {
+                                            "key": "image",
+                                            "src": [],
+                                            "type": "file"
+                                        },
+                                        {
+                                            "key": "mobile_image",
+                                            "src": [],
+                                            "type": "file"
+                                        }
+                                    ]
+                                },
+                                "description": "Multipart form. The ad waits for MW Realty's review and runs, once approved, from `start` for\n`hours`. `pay_with=plan` uses the monthly allowance; `credits` spends credits (refunded if it's\nrejected or cancelled before it runs).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "One ad",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/ads\/:id",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/ads\/:id",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": 12,
+                                            "description": ""
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The ad with its booking, review state and full report: totals, an hourly series over its run,\ntotals per day and its busiest hours.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Change an ad",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/ads\/:id",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/ads\/:id",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": 12,
+                                            "description": ""
+                                        }
+                                    ]
+                                },
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"remove_mobile_image\":false}"
+                                },
+                                "description": "Banner, text and link only, before the ad starts (send as multipart POST with `_method=PUT`).\nThe page, time and payment stay; it goes back to MW Realty's review.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Cancel \/ stop an ad",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/ads\/:id",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/ads\/:id",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": 12,
+                                            "description": ""
+                                        }
+                                    ]
+                                },
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "Not started yet (or still in review): cancelled, with its credits \/ allowance given back.\nLive: stops now \u2014 the time already used isn't refunded.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Pay with credits",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Credit usage history",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/credits",
+                                    "query": [
+                                        {
+                                            "key": "q",
+                                            "value": "RERA1024",
+                                            "description": "Reference search.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "from",
+                                            "value": "2026-09-12",
+                                            "description": "Y-m-d, default a month ago.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "to",
+                                            "value": "2026-10-12",
+                                            "description": "Y-m-d, default today.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/credits?q=RERA1024&from=2026-09-12&to=2026-10-12&page=1"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The wallet (balance, next expiry, top-up pricing) and its transactions, newest first, 20 per page.\nSuper Admin sees every account's.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Quote for listings",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/credits\/quote",
+                                    "query": [
+                                        {
+                                            "key": "property_ids[0]",
+                                            "value": "12",
+                                            "description": "",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "property_ids[1]",
+                                            "value": "14",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/credits\/quote?property_ids%5B0%5D=12&property_ids%5B1%5D=14"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"property_ids\":[16]}"
+                                },
+                                "description": "Credit costs for these listings (the \"pay with credits\" option when making them premium), plus the balance.",
                                 "auth": {
                                     "type": "noauth"
                                 }
@@ -3593,7 +4366,7 @@
                                         {
                                             "id": "id",
                                             "key": "id",
-                                            "value": "consequatur",
+                                            "value": "architecto",
                                             "description": "The ID of the notification."
                                         }
                                     ]
@@ -3774,7 +4547,7 @@
                                         {
                                             "id": "id",
                                             "key": "id",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ID of the agent."
                                         }
                                     ]
@@ -3974,7 +4747,7 @@
                                         {
                                             "id": "ticket",
                                             "key": "ticket",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ticket."
                                         }
                                     ]
@@ -4014,7 +4787,7 @@
                                         {
                                             "id": "ticket",
                                             "key": "ticket",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ticket."
                                         }
                                     ]
@@ -4069,7 +4842,7 @@
                                         {
                                             "id": "ticket",
                                             "key": "ticket",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ticket."
                                         }
                                     ]
@@ -4109,7 +4882,7 @@
                                         {
                                             "id": "ticket",
                                             "key": "ticket",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ticket."
                                         }
                                     ]
@@ -4149,13 +4922,13 @@
                                         {
                                             "id": "ticket",
                                             "key": "ticket",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": "The ticket."
                                         },
                                         {
                                             "id": "message",
                                             "key": "message",
-                                            "value": "1562",
+                                            "value": "564",
                                             "description": ""
                                         }
                                     ]
