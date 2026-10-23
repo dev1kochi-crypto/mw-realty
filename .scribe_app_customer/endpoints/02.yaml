@@ -1,39 +1,34 @@
-name: Home
+name: 'Ads & featured'
 description: |-
-  Buy / Rent / Commercial / New Projects switch, the search bar, recently viewed and latest listings. **Recently viewed** has no endpoint: keep the last viewed property cards on the phone.
+  The ad slider on Home and Property details (MW Realty's own ads and agents' booked ads), its impression / click tracking — which is what agents see in their ad reports — and **featured (premium)** listings: `GET /api/properties?premium=1` lists only them, and `/api/home` returns its premium properties and marketing ("Realty") sections.
 
   **Also uses (connected):**
 
-  * `GET /api/location-suggestions` — see **Search**
   * `GET /api/properties` — see **Search**
-  * `GET /api/commercial` — see **Search**
+  * `GET /api/home` — see **Home**
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/home
+    uri: api/ads
     metadata:
       custom: []
-      groupName: Home
+      groupName: 'Ads & featured'
       groupDescription: |-
-        Buy / Rent / Commercial / New Projects switch, the search bar, recently viewed and latest listings. **Recently viewed** has no endpoint: keep the last viewed property cards on the phone.
+        The ad slider on Home and Property details (MW Realty's own ads and agents' booked ads), its impression / click tracking — which is what agents see in their ad reports — and **featured (premium)** listings: `GET /api/properties?premium=1` lists only them, and `/api/home` returns its premium properties and marketing ("Realty") sections.
 
         **Also uses (connected):**
 
-        * `GET /api/location-suggestions` — see **Search**
         * `GET /api/properties` — see **Search**
-        * `GET /api/commercial` — see **Search**
-      subgroup: Home
+        * `GET /api/home` — see **Home**
+      subgroup: 'Ad banner & slider'
       subgroupDescription: ''
-      title: 'Home screen'
+      title: 'Ad banner'
       description: |-
-        Every home section in one request: banner, brands, ad, developments, premium properties,
-        luxury, why-choose-us, communities, popular places, testimonials, contact. Property lists
-        inside are shuffled on each call.
-
-        `ad` is a single ad, kept for older clients. The home ad slider shows every running ad:
-        load it from **Ad slider** (`/api/ads/slides?placement=home`).
+        One active ad for a screen (picked at random when several run), or `false` when there is
+        none (hide the slot). Kept for older clients — the website's ad slots are sliders that show
+        every running ad: use **Ad slider** (`/api/ads/slides`).
       authenticated: false
       deprecated: false
     headers:
@@ -43,6 +38,17 @@ endpoints:
     urlParameters: []
     cleanUrlParameters: []
     queryParameters:
+      placement:
+        custom: []
+        name: placement
+        description: 'home, property-details, …'
+        required: false
+        example: home
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
       lang:
         custom: []
         name: lang
@@ -55,6 +61,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanQueryParameters:
+      placement: home
       lang: en
     bodyParameters: []
     cleanBodyParameters: []
@@ -69,22 +76,25 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/home/new-projects
+    uri: api/ads/slides
     metadata:
       custom: []
-      groupName: Home
+      groupName: 'Ads & featured'
       groupDescription: |-
-        Buy / Rent / Commercial / New Projects switch, the search bar, recently viewed and latest listings. **Recently viewed** has no endpoint: keep the last viewed property cards on the phone.
+        The ad slider on Home and Property details (MW Realty's own ads and agents' booked ads), its impression / click tracking — which is what agents see in their ad reports — and **featured (premium)** listings: `GET /api/properties?premium=1` lists only them, and `/api/home` returns its premium properties and marketing ("Realty") sections.
 
         **Also uses (connected):**
 
-        * `GET /api/location-suggestions` — see **Search**
         * `GET /api/properties` — see **Search**
-        * `GET /api/commercial` — see **Search**
-      subgroup: Home
+        * `GET /api/home` — see **Home**
+      subgroup: 'Ad banner & slider'
       subgroupDescription: ''
-      title: 'New projects by city'
-      description: 'The home "Browse New Projects" section''s listings for one city tab.'
+      title: 'Ad slider'
+      description: |-
+        Every ad running on a screen right now, in slide order (sponsored client ads first, in a
+        different order each time). Show them as a slider that moves on every `interval` seconds;
+        an empty list means hide the slot. Report each slide once it has been on screen
+        (**Ad impressions**) and taps on it (**Ad click**).
       authenticated: false
       deprecated: false
     headers:
@@ -94,12 +104,12 @@ endpoints:
     urlParameters: []
     cleanUrlParameters: []
     queryParameters:
-      city:
+      placement:
         custom: []
-        name: city
-        description: 'A city tab from the home response.'
+        name: placement
+        description: 'home, property-details, …'
         required: false
-        example: Dubai
+        example: home
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -117,12 +127,136 @@ endpoints:
         nullable: false
         deprecated: false
     cleanQueryParameters:
-      city: Dubai
+      placement: home
       lang: en
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
-    responses: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"slides": [{"id": 12, "name": "Marina launch", "image_url": "https://…", "mobile_image_url": null, "image_alt": null, "link_url": "/property-details/marina-heights", "eyebrow": "New launch", "title": "Marina Heights", "text": "1–3 bed apartments from AED 1.2M", "sponsor": "Prime Homes"}], "interval": 6}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/track/ad-impressions
+    metadata:
+      custom: []
+      groupName: 'Ads & featured'
+      groupDescription: |-
+        The ad slider on Home and Property details (MW Realty's own ads and agents' booked ads), its impression / click tracking — which is what agents see in their ad reports — and **featured (premium)** listings: `GET /api/properties?premium=1` lists only them, and `/api/home` returns its premium properties and marketing ("Realty") sections.
+
+        **Also uses (connected):**
+
+        * `GET /api/properties` — see **Search**
+        * `GET /api/home` — see **Home**
+      subgroup: 'Ad tracking'
+      subgroupDescription: ''
+      title: 'Ad impressions'
+      description: |-
+        Slides that were on screen (at least half visible for a second). Send each slide once per
+        screen visit — not again every time the slider comes back round to it.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      ids:
+        custom: []
+        name: ids
+        description: 'Up to 30 ad ids.'
+        required: true
+        example:
+          - 12
+          - 15
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      ids:
+        - 12
+        - 15
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Recorded
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/track/ad-click
+    metadata:
+      custom: []
+      groupName: 'Ads & featured'
+      groupDescription: |-
+        The ad slider on Home and Property details (MW Realty's own ads and agents' booked ads), its impression / click tracking — which is what agents see in their ad reports — and **featured (premium)** listings: `GET /api/properties?premium=1` lists only them, and `/api/home` returns its premium properties and marketing ("Realty") sections.
+
+        **Also uses (connected):**
+
+        * `GET /api/properties` — see **Search**
+        * `GET /api/home` — see **Home**
+      subgroup: 'Ad tracking'
+      subgroupDescription: ''
+      title: 'Ad click'
+      description: 'The user tapped an ad (send it before opening its link).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      id:
+        custom: []
+        name: id
+        description: ''
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      id: 12
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: Recorded
     responseFields: []
     auth: []
     controller: null

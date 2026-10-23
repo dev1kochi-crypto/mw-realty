@@ -50,6 +50,25 @@ $screens = [
             'GET /api/location-suggestions',
             'GET /api/properties',
             'GET /api/commercial',
+            'GET /api/ads/slides',
+        ],
+    ],
+    [
+        'group' => 'Ads & featured',
+        'description' => 'The ad slider on Home and Property details (MW Realty\'s own ads and agents\' booked ads), its impression / click tracking — which is what agents see in their ad reports — and **featured (premium)** listings: `GET /api/properties?premium=1` lists only them, and `/api/home` returns its premium properties and marketing ("Realty") sections.',
+        'screens' => [
+            'Ad banner & slider' => [
+                'GET /api/ads/slides',
+                'GET /api/ads',
+            ],
+            'Ad tracking' => [
+                'POST /api/track/ad-impressions',
+                'POST /api/track/ad-click',
+            ],
+        ],
+        'also' => [
+            'GET /api/properties',
+            'GET /api/home',
         ],
     ],
     [
@@ -75,6 +94,7 @@ $screens = [
         'also' => [
             'POST /api/customer/wishlist/{property}',
             'POST /api/customer/saved-searches',
+            'GET /api/ads/slides',
         ],
     ],
     [
@@ -138,7 +158,7 @@ $screens = [
 
 $intro = <<<'INTRO'
     Only the endpoints the **customer app's first release** calls, filed under the app's tabs:
-    **Entry → Home → Search → Saved → Activity → Account**, plus **Background tracking**. Each tab's
+    **Entry → Home → Search → Saved → Activity → Account**, plus **Ads & featured** (ad slider and premium listings, shown on Home and Search) and **Background tracking**. Each tab's
     introduction also lists the *connected* endpoints it calls that are documented under another tab.
     The complete website API is at [/docs/frontend](/docs/frontend).
 

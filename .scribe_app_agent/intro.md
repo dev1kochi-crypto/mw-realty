@@ -7,7 +7,8 @@ The CRM endpoints the MW Realty agent app calls, by app tab: Entry, Home, Leads,
 </aside>
 
 Only the CRM endpoints the **agent app's first release** calls, filed under the app's tabs:
-**Entry → Home → Leads → Add listing → Listings → More**. Each tab's introduction also lists the
+**Entry → Home → Leads → Add listing → Listings → More**, plus **Featured & ads** (featured
+listings and ads — reached from Listings and More). Each tab's introduction also lists the
 *connected* endpoints it calls that are documented under another tab. The complete CRM API is at
 [/docs/crm](/docs/crm).
 
@@ -24,6 +25,7 @@ These parts of the app map have no endpoint yet. Agree on them with the backend 
 | Home / Leads | **Follow-ups** — a lead's *next follow-up* date and the *today's follow-ups* list. |
 | Leads | Inbox by channel (**calls / WhatsApp**) — a lead's source is its channel; there is no call or WhatsApp log. |
 | More | **Push notifications** (device-token registration) — the in-app list exists. |
+| Featured & ads | **Buying credits** in the app — top-up is a Stripe card payment on the web; app stores may require in-app purchase for it. |
 
     The agent / company CRM API: leads, properties, agents, masters, reports, integrations and account settings. It powers both the CRM web app and the mobile app.
 

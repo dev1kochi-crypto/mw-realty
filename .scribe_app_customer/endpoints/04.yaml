@@ -1,26 +1,36 @@
-name: Activity
-description: 'Enquiries and viewing requests the user sent, with their status, and the recent activity feed. Signed-in users only.'
+name: Account
+description: |-
+  Profile, language and settings; help, privacy and terms; delete account.
+
+  **Also uses (connected):**
+
+  * `GET /api/customer/me` — see **Activity**
+  * `GET /api/languages` — see **Entry**
+  * `POST /api/auth/logout` — see **Entry**
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/customer/me
+    uri: api/site-information
     metadata:
       custom: []
-      groupName: Activity
-      groupDescription: 'Enquiries and viewing requests the user sent, with their status, and the recent activity feed. Signed-in users only.'
-      subgroup: Activity
+      groupName: Account
+      groupDescription: |-
+        Profile, language and settings; help, privacy and terms; delete account.
+
+        **Also uses (connected):**
+
+        * `GET /api/customer/me` — see **Activity**
+        * `GET /api/languages` — see **Entry**
+        * `POST /api/auth/logout` — see **Entry**
+      subgroup: 'Help, privacy & terms'
       subgroupDescription: ''
-      title: Dashboard
-      description: |-
-        Everything for the account screen in one call: profile, counts, recent activity, the
-        wishlist (property cards), saved searches and sent enquiries. For long wishlists, use the
-        paginated `GET /api/customer/wishlist` instead.
-      authenticated: true
+      title: 'Site information'
+      description: 'Office address, phone, email, WhatsApp and social links (the website footer).'
+      authenticated: false
       deprecated: false
     headers:
-      Authorization: 'Bearer {YOUR_TOKEN}'
       Content-Type: application/json
       Accept: application/json
       X-Device-Id: '{DEVICE_ID}'
@@ -30,7 +40,70 @@ endpoints:
       lang:
         custom: []
         name: lang
-        description: 'Language code for translated titles.'
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/legal/{key}'
+    metadata:
+      custom: []
+      groupName: Account
+      groupDescription: |-
+        Profile, language and settings; help, privacy and terms; delete account.
+
+        **Also uses (connected):**
+
+        * `GET /api/customer/me` — see **Activity**
+        * `GET /api/languages` — see **Entry**
+        * `POST /api/auth/logout` — see **Entry**
+      subgroup: 'Help, privacy & terms'
+      subgroupDescription: ''
+      title: 'Legal page'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      key:
+        custom: []
+        name: key
+        description: 'terms, privacy, security or cookie.'
+        required: true
+        example: privacy
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      key: privacy
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
         required: false
         example: en
         type: string
@@ -46,15 +119,218 @@ endpoints:
     responses:
       -
         custom: []
+        status: 404
+        content: '{"message": "Not found"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/customer/settings
+    metadata:
+      custom: []
+      groupName: Account
+      groupDescription: |-
+        Profile, language and settings; help, privacy and terms; delete account.
+
+        **Also uses (connected):**
+
+        * `GET /api/customer/me` — see **Activity**
+        * `GET /api/languages` — see **Entry**
+        * `POST /api/auth/logout` — see **Entry**
+      subgroup: 'Profile & settings'
+      subgroupDescription: ''
+      title: 'Update profile'
+      description: |-
+        Send as `multipart/form-data` when uploading an avatar. Use `POST` from the app — PHP does
+        not parse file uploads on `PUT` (the `PUT` route is kept for the website).
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_TOKEN}'
+      Content-Type: multipart/form-data
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: ''
+        required: true
+        example: 'Sara Ahmed'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: ''
+        required: true
+        example: buyer@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone:
+        custom: []
+        name: phone
+        description: ''
+        required: false
+        example: '+971 50 123 4567'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      location:
+        custom: []
+        name: location
+        description: ''
+        required: false
+        example: 'Dubai Marina'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: 'Leave out to keep the current password.'
+        required: false
+        example: newSecret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      avatar:
+        custom: []
+        name: avatar
+        description: 'Image, max 2 MB.'
+        required: false
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      password_confirmation:
+        custom: []
+        name: password_confirmation
+        description: 'Required with password.'
+        required: false
+        example: newSecret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: 'Sara Ahmed'
+      email: buyer@example.com
+      phone: '+971 50 123 4567'
+      location: 'Dubai Marina'
+      password: newSecret123
+      password_confirmation: newSecret123
+    fileParameters:
+      avatar: null
+    responses:
+      -
+        custom: []
         status: 200
-        content: '{"profile": {"name": "Sara Ahmed", "email": "buyer@example.com", "phone": "+971 50 123 4567", "location": "Dubai Marina", "avatar_url": null}, "stats": {"wishlist": 2, "saved_searches": 1, "enquiries": 1}, "activity": [{"icon": "heart.svg", "text": "You saved \"Marina Gate 2BR\" to your wishlist.", "time": "2 hours ago"}], "wishlist": [{"id": 12, "slug": "marina-gate-2br", "image": "https://.../photo.jpg", "...": "same card shape as GET /api/properties"}], "saved_searches": [{"id": 3, "title": "2BR in Marina", "meta": "Dubai Marina · 2 Bed · For sale", "criteria": {"location": "Dubai Marina", "bedrooms": "2", "listing_type": "sale"}}], "enquiries": [{"id": 91, "property": "Marina Gate 2BR", "sent_to": "Ahmed Khan", "date": "Oct 08, 2026", "status": "New"}]}'
+        content: '{"message": "Settings updated.", "avatar_url": "https://res.cloudinary.com/.../avatar.jpg"}'
         headers: []
         description: ''
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: api/customer/account
+    metadata:
+      custom: []
+      groupName: Account
+      groupDescription: |-
+        Profile, language and settings; help, privacy and terms; delete account.
+
+        **Also uses (connected):**
+
+        * `GET /api/customer/me` — see **Activity**
+        * `GET /api/languages` — see **Entry**
+        * `POST /api/auth/logout` — see **Entry**
+      subgroup: 'Profile & settings'
+      subgroupDescription: ''
+      title: 'Delete account'
+      description: |-
+        Permanently deletes the account (required by the App Store / Play Store for apps with
+        sign-up). Wishlist and saved searches are removed; enquiries already sent to agents stay
+        with them, unlinked from the account. Password accounts must confirm their password;
+        Google-only accounts send nothing.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      password:
+        custom: []
+        name: password
+        description: 'The current password (accounts created with email + password).'
+        required: false
+        example: secret123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      password: secret123
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"message": "Your account has been deleted."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"message": "The password is incorrect.", "errors": {"password": ["The password is incorrect."]}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
     controller: null
     method: null
     route: null

@@ -12,10 +12,13 @@ tags:
     description: 'First launch: pick a language, then continue as a guest or sign in. Guests can search, view properties and send enquiries; Saved, Activity and Account need a signed-in user.'
   -
     name: Home
-    description: "Buy / Rent / Commercial / New Projects switch, the search bar, recently viewed and latest listings. **Recently viewed** has no endpoint: keep the last viewed property cards on the phone.\n\n**Also uses (connected):**\n\n* `GET /api/location-suggestions` — see **Search**\n* `GET /api/properties` — see **Search**\n* `GET /api/commercial` — see **Search**"
+    description: "Buy / Rent / Commercial / New Projects switch, the search bar, recently viewed and latest listings. **Recently viewed** has no endpoint: keep the last viewed property cards on the phone.\n\n**Also uses (connected):**\n\n* `GET /api/location-suggestions` — see **Search**\n* `GET /api/properties` — see **Search**\n* `GET /api/commercial` — see **Search**\n* `GET /api/ads/slides` — see **Ads & featured**"
+  -
+    name: 'Ads & featured'
+    description: "The ad slider on Home and Property details (MW Realty's own ads and agents' booked ads), its impression / click tracking — which is what agents see in their ad reports — and **featured (premium)** listings: `GET /api/properties?premium=1` lists only them, and `/api/home` returns its premium properties and marketing (\"Realty\") sections.\n\n**Also uses (connected):**\n\n* `GET /api/properties` — see **Search**\n* `GET /api/home` — see **Home**"
   -
     name: Search
-    description: "Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).\n\n**Also uses (connected):**\n\n* `POST /api/customer/wishlist/{property}` — see **Saved**\n* `POST /api/customer/saved-searches` — see **Saved**"
+    description: "Location search, the results list and map, filters, and the property details screen (contact, viewing, mortgage).\n\n**Also uses (connected):**\n\n* `POST /api/customer/wishlist/{property}` — see **Saved**\n* `POST /api/customer/saved-searches` — see **Saved**\n* `GET /api/ads/slides` — see **Ads & featured**"
   -
     name: Saved
     description: "Saved properties and saved searches. Signed-in users only.\n\n**Also uses (connected):**\n\n* `GET /api/customer/me` — see **Activity**\n* `GET /api/properties` — see **Search**"
@@ -51,7 +54,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Entry
       security: []
@@ -68,7 +71,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Entry
       security: []
@@ -95,7 +98,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Entry
       security: []
@@ -798,7 +801,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Home
       security: []
@@ -835,9 +838,236 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Home
+      security: []
+  /api/ads:
+    get:
+      summary: 'Ad banner'
+      operationId: adBanner
+      description: "One active ad for a screen (picked at random when several run), or `false` when there is\nnone (hide the slot). Kept for older clients — the website's ad slots are sliders that show\nevery running ad: use **Ad slider** (`/api/ads/slides`)."
+      parameters:
+        -
+          in: query
+          name: placement
+          description: 'home, property-details, …'
+          example: home
+          required: false
+          schema:
+            type: string
+            description: 'home, property-details, …'
+            example: home
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Ads & featured'
+      security: []
+  /api/ads/slides:
+    get:
+      summary: 'Ad slider'
+      operationId: adSlider
+      description: "Every ad running on a screen right now, in slide order (sponsored client ads first, in a\ndifferent order each time). Show them as a slider that moves on every `interval` seconds;\nan empty list means hide the slot. Report each slide once it has been on screen\n(**Ad impressions**) and taps on it (**Ad click**)."
+      parameters:
+        -
+          in: query
+          name: placement
+          description: 'home, property-details, …'
+          example: home
+          required: false
+          schema:
+            type: string
+            description: 'home, property-details, …'
+            example: home
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  slides:
+                    -
+                      id: 12
+                      name: 'Marina launch'
+                      image_url: 'https://…'
+                      mobile_image_url: null
+                      image_alt: null
+                      link_url: /property-details/marina-heights
+                      eyebrow: 'New launch'
+                      title: 'Marina Heights'
+                      text: '1–3 bed apartments from AED 1.2M'
+                      sponsor: 'Prime Homes'
+                  interval: 6
+                properties:
+                  slides:
+                    type: array
+                    example:
+                      -
+                        id: 12
+                        name: 'Marina launch'
+                        image_url: 'https://…'
+                        mobile_image_url: null
+                        image_alt: null
+                        link_url: /property-details/marina-heights
+                        eyebrow: 'New launch'
+                        title: 'Marina Heights'
+                        text: '1–3 bed apartments from AED 1.2M'
+                        sponsor: 'Prime Homes'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 12
+                        name:
+                          type: string
+                          example: 'Marina launch'
+                        image_url:
+                          type: string
+                          example: 'https://…'
+                        mobile_image_url:
+                          type: string
+                          example: null
+                          nullable: true
+                        image_alt:
+                          type: string
+                          example: null
+                          nullable: true
+                        link_url:
+                          type: string
+                          example: /property-details/marina-heights
+                        eyebrow:
+                          type: string
+                          example: 'New launch'
+                        title:
+                          type: string
+                          example: 'Marina Heights'
+                        text:
+                          type: string
+                          example: '1–3 bed apartments from AED 1.2M'
+                        sponsor:
+                          type: string
+                          example: 'Prime Homes'
+                  interval:
+                    type: integer
+                    example: 6
+      tags:
+        - 'Ads & featured'
+      security: []
+  /api/track/ad-impressions:
+    post:
+      summary: 'Ad impressions'
+      operationId: adImpressions
+      description: "Slides that were on screen (at least half visible for a second). Send each slide once per\nscreen visit — not again every time the slider comes back round to it."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        204:
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+                properties: {}
+      tags:
+        - 'Ads & featured'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  description: 'Up to 30 ad ids.'
+                  example:
+                    - 12
+                    - 15
+                  items:
+                    type: integer
+              required:
+                - ids
+      security: []
+  /api/track/ad-click:
+    post:
+      summary: 'Ad click'
+      operationId: adClick
+      description: 'The user tapped an ad (send it before opening its link).'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        204:
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+                properties: {}
+      tags:
+        - 'Ads & featured'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: ''
+                  example: 12
+              required:
+                - id
       security: []
   /api/property-filters:
     get:
@@ -882,7 +1112,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Search
       requestBody:
@@ -902,7 +1132,7 @@ paths:
                 lang:
                   type: string
                   description: 'Must not be greater than 10 characters.'
-                  example: vmqeopfuu
+                  example: bngzmi
                 scope:
                   type: string
                   description: ''
@@ -1190,7 +1420,7 @@ paths:
                 lang:
                   type: string
                   description: 'Must not be greater than 10 characters.'
-                  example: vmqeopfuu
+                  example: bngzmi
       security: []
     parameters:
       -
@@ -1250,7 +1480,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Search
       requestBody:
@@ -1263,12 +1493,12 @@ paths:
                 q:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: vmqeopfuudtdsufvyvddq
+                  example: b
                   nullable: true
                 lang:
                   type: string
                   description: 'Must not be greater than 10 characters.'
-                  example: amniihfqc
+                  example: ngzmiy
                   nullable: true
                 scope:
                   type: string
@@ -1454,7 +1684,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Search
       security: []
@@ -1693,7 +1923,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Search
       security: []
@@ -1770,7 +2000,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Search
       security: []
@@ -1928,12 +2158,12 @@ paths:
                 company:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: mniihfqcoynlazghdtqtq
+                  example: g
                   nullable: true
                 country:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: xbajwbpilpmufinllwloa
+                  example: z
                   nullable: true
                 message:
                   type: string
@@ -2081,8 +2311,8 @@ paths:
             application/json:
               schema:
                 type: object
-                example: {  }
-                properties: {  }
+                example: {}
+                properties: {}
       tags:
         - Search
       requestBody:
@@ -2151,7 +2381,7 @@ paths:
                       slug: marina-gate-2br
                       title: 'Marina Gate 2BR'
                       image: 'https://.../photo.jpg'
-                      ...: 'same card shape as GET /api/properties'
+                      '...': 'same card shape as GET /api/properties'
                   pagination:
                     current_page: 1
                     last_page: 1
@@ -2166,7 +2396,7 @@ paths:
                         slug: marina-gate-2br
                         title: 'Marina Gate 2BR'
                         image: 'https://.../photo.jpg'
-                        ...: 'same card shape as GET /api/properties'
+                        '...': 'same card shape as GET /api/properties'
                     items:
                       type: object
                       properties:
@@ -2182,7 +2412,7 @@ paths:
                         image:
                           type: string
                           example: 'https://.../photo.jpg'
-                        ...:
+                        '...':
                           type: string
                           example: 'same card shape as GET /api/properties'
                   pagination:
@@ -2322,7 +2552,7 @@ paths:
                     bedrooms: '2'
                     listing_type: sale
                     min_price: 1500000
-                  properties: {  }
+                  properties: {}
                   nullable: true
               required:
                 - title
@@ -2434,7 +2664,7 @@ paths:
                       id: 12
                       slug: marina-gate-2br
                       image: 'https://.../photo.jpg'
-                      ...: 'same card shape as GET /api/properties'
+                      '...': 'same card shape as GET /api/properties'
                   saved_searches:
                     -
                       id: 3
@@ -2509,7 +2739,7 @@ paths:
                         id: 12
                         slug: marina-gate-2br
                         image: 'https://.../photo.jpg'
-                        ...: 'same card shape as GET /api/properties'
+                        '...': 'same card shape as GET /api/properties'
                     items:
                       type: object
                       properties:
@@ -2522,7 +2752,7 @@ paths:
                         image:
                           type: string
                           example: 'https://.../photo.jpg'
-                        ...:
+                        '...':
                           type: string
                           example: 'same card shape as GET /api/properties'
                   saved_searches:
@@ -2612,7 +2842,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Account
       security: []
@@ -2873,8 +3103,8 @@ paths:
             application/json:
               schema:
                 type: object
-                example: {  }
-                properties: {  }
+                example: {}
+                properties: {}
       tags:
         - 'Background tracking'
       requestBody:
@@ -2920,8 +3150,8 @@ paths:
             application/json:
               schema:
                 type: object
-                example: {  }
-                properties: {  }
+                example: {}
+                properties: {}
       tags:
         - 'Background tracking'
       requestBody:
