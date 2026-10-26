@@ -57,18 +57,27 @@ class PermitRules
         return in_array($type, ['rera', 'adrec'], true);
     }
 
+    /**
+     * Is this permit validated online right now? Only RERA / ADREC, and only while that authority's
+     * API is switched on (DLD_PERMIT_API_ENABLED / ADREC_PERMIT_API_ENABLED) — when it's off the form
+     * hides Validate and the listing waits for Super Admin instead (needsApproval).
+     */
     public static function validates(?string $type): bool
     {
-        return (bool) (self::TYPES[$type]['validates'] ?? false);
+        return (bool) (self::TYPES[$type]['validates'] ?? false)
+            && (bool) config('permits.' . self::authority($type) . '.enabled');
     }
 
     /**
      * Does a listing with this permit type wait for Super Admin's approval before going live? Always
-     * when LISTING_SUPERADMIN_APPROVAL is on; otherwise only DTCM and None, which can't be validated online.
+     * when LISTING_SUPERADMIN_APPROVAL is on; otherwise DTCM and None, which can't be validated online,
+     * and RERA / ADREC while their authority's API is switched off.
      */
     public static function needsApproval(?string $type): bool
     {
-        return (bool) config('permits.superadmin_approval') || (bool) (self::TYPES[$type]['needs_approval'] ?? false);
+        return (bool) config('permits.superadmin_approval')
+            || (bool) (self::TYPES[$type]['needs_approval'] ?? false)
+            || ((self::TYPES[$type]['validates'] ?? false) && !self::validates($type));
     }
 
     public static function authority(?string $type): ?string

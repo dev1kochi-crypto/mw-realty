@@ -10,9 +10,11 @@ use App\Services\TwoFactor\PortalLoginVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -20,6 +22,7 @@ class PortalAuthController extends Controller
 {
     private const CHALLENGE_KEY = 'portal_login_challenge';
     private const MAX_CHALLENGE_ATTEMPTS = 5;
+    private const RESET_KEY = 'portal-password-reset:';
 
     public function __construct(private PortalDeviceTrust $devices, private PortalLoginVerifier $verifier)
     {
@@ -399,6 +402,60 @@ class PortalAuthController extends Controller
         $request->session()->put(self::CHALLENGE_KEY . '.email_code', $sent);
 
         return true;
+    }
+
+    /**
+     * Public — step 1 of resources/js/pages/ForgotPassword.vue's Agent / Agency tab. The email
+     * must belong to an active agent or agency account whose sign-up code was verified (otp_code is
+     * cleared by verifyOtp()); it then gets a one-time token for resetPassword() below. Kept in
+     * the cache, not password_reset_tokens — that table is keyed by email and belongs to the
+     * customer broker, and the same address can exist in both users and portal_users.
+     */
+    public function checkResetEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $portalUser = PortalUser::where('email', $request->input('email'))->first();
+
+        if (!$portalUser) {
+            return response()->json(['message' => 'No agent or agency account found with this email.'], 422);
+        }
+
+        if (!$portalUser->is_active) {
+            return response()->json(['message' => 'Your account has been disabled. Contact the site administrator.'], 422);
+        }
+
+        if ($portalUser->otp_code) {
+            return response()->json(['message' => 'This email is not verified yet — please complete sign-up first.'], 422);
+        }
+
+        $token = Str::random(64);
+        Cache::put(self::RESET_KEY . $portalUser->id, hash('sha256', $token), now()->addMinutes(15));
+
+        return response()->json(['token' => $token]);
+    }
+
+    /** Public — step 2 of ForgotPassword.vue's Agent / Agency tab. */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|email',
+            'password' => ['required', 'confirmed', Password::min(8)],
+        ]);
+
+        $portalUser = PortalUser::where('email', $request->input('email'))->first();
+        $stored = $portalUser ? Cache::get(self::RESET_KEY . $portalUser->id) : null;
+
+        if (!$stored || !hash_equals($stored, hash('sha256', $request->input('token')))) {
+            return response()->json(['message' => 'This reset session has expired — please start again.'], 422);
+        }
+
+        Cache::forget(self::RESET_KEY . $portalUser->id);
+        // The model's updated hook signs the CRM app out everywhere on a password change.
+        $portalUser->forceFill(['password' => Hash::make($request->input('password'))])->save();
+
+        return response()->json(['message' => 'Your password has been reset — you can now sign in.']);
     }
 
     public function logout(Request $request)

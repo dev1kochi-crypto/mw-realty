@@ -311,6 +311,7 @@
         },
         "hero": {
             "title": "Properties in Dubai",
+            "title_in": "Properties in {place}",
             "breadcrumb_aria": "Breadcrumb",
             "breadcrumb_home": "Home"
         },
@@ -360,6 +361,7 @@
             "title": "Properties for sale in dubai",
             "count_suffix": "listings",
             "by_owner_title": "Properties by {name}",
+            "all_title_in": "All Properties in {place}",
             "agent_label": "Agent",
             "agency_label": "Agency",
             "clear_owner_aria": "Show all properties",
@@ -913,7 +915,8 @@
         "resend_code": "Resend code",
         "resending": "Sending…",
         "code_resent": "A new code has been sent.",
-        "back_to_login": "Back to sign in"
+        "back_to_login": "Back to sign in",
+        "password_reset_success": "Your password has been reset — sign in with your new password."
     },
     "signup": {
         "photo_alt": "Cozy Dubai apartment interior",
@@ -976,15 +979,14 @@
     "forgot_password": {
         "photo_alt": "Cozy Dubai apartment interior",
         "title": "Forgot your password?",
-        "subtitle": "Enter your email and we'll send you a link to reset it.",
+        "subtitle": "Enter your registered email to set a new password.",
         "email_label": "Email",
         "email_placeholder": "Enter your email",
-        "submit": "Send Reset Link",
-        "submitting": "Sending…",
+        "submit": "Continue",
+        "submitting": "Checking…",
         "back_to_sign_in": "Back to Sign In",
-        "sent_title": "Check your email",
-        "sent_subtitle": "If an account exists for {email}, we've sent a link to reset your password. The link expires in 60 minutes.",
-        "generic_error": "Something went wrong — please try again."
+        "generic_error": "Something went wrong — please try again.",
+        "verified_badge": "Email verified"
     },
     "reset_password": {
         "photo_alt": "Cozy Dubai apartment interior",

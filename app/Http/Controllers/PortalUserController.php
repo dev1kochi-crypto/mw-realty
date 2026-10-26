@@ -52,8 +52,7 @@ class PortalUserController extends Controller
                 ->when($request->filled('pending_days'), fn ($q) => $q->where('status', 'pending')
                     ->where('status_changed_at', '<=', now()->subDays((int) $request->query('pending_days'))))
                 ->when($request->filled('has_properties'), fn ($q) => $request->query('has_properties') === '1' ? $q->has('properties') : $q->doesntHave('properties'))
-                ->when($request->filled('has_leads'), fn ($q) => $request->query('has_leads') === '1' ? $q->has('leads') : $q->doesntHave('leads'))
-                ->latest();
+                ->when($request->filled('has_leads'), fn ($q) => $request->query('has_leads') === '1' ? $q->has('leads') : $q->doesntHave('leads'));
 
             $plans = Plan::active()->orderBy('order_index')->get();
 
@@ -101,7 +100,10 @@ class PortalUserController extends Controller
                     return '<a href="' . route('cms.portal-accounts.index', ['type' => 'agent', 'company_id' => $row->id]) . '" class="text-decoration-none fw-semibold">' . $row->agents_count . '</a>';
                 })
                 ->addColumn('joined', fn ($row) => $row->created_at->format('d M Y'))
-                ->orderColumn('joined', 'created_at $1')
+                ->orderColumn('joined', 'created_at $1, id $1')
+                // No default sort ahead of these, so the clicked count drives row order; newest first breaks ties.
+                ->orderColumn('properties_count', 'properties_count $1, created_at desc')
+                ->orderColumn('leads_count', 'leads_count $1, created_at desc')
                 ->addColumn('plan', function ($row) use ($plans) {
                     // Agency agent: on the agency's plan — not the agent's own, so not editable here.
                     if ($row->isOnAgencyPlan()) {

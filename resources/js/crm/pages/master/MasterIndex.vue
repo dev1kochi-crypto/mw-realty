@@ -79,7 +79,10 @@
                                     <button type="button" class="btn btn-sm portal-btn-ghost" @click="openForm(item)">Edit</button>
                                     <button v-if="!item.is_default" type="button" class="btn btn-sm btn-outline-danger ms-1" @click="remove(item)">Delete</button>
                                 </template>
-                                <span v-else class="portal-muted small">View only</span>
+                                <span v-else class="portal-muted small">
+                                    <!-- Lists without the drag column (e.g. Tags) still mark shared rows as locked. -->
+                                    <i v-if="!config.reorderable" class="fas fa-lock me-1" title="Set by MW Realty"></i>View only
+                                </span>
                             </td>
                         </tr>
                         <tr v-if="!loading && !items.length">

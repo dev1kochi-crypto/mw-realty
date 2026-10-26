@@ -49,7 +49,7 @@ const carryKey = premium ? 'premium' : (marketing ? 'marketing' : 'properties');
 function carryToOtherView() {
     carryFilters(carryKey, currentQuery());
 }
-// Set while we clear an incoming ?query ourselves, so the route.query watcher ignores that change.
+// Set while we write the applied filters to the URL ourselves, so the route.query watcher ignores that change.
 let clearingUrl = false;
 // /premium-properties has its own filter set; /properties, /marketing-properties and agent / agency
 // "View all" lists use the Properties set.
@@ -183,13 +183,14 @@ function load() {
     }
 }
 
-/** A filter change made on this page — filters stay in memory; any incoming ?query is cleared from the URL. */
+/** A filter change made on this page — the applied filters and sort go into the URL, so a reload or a shared link keeps them. */
 function applyFilters() {
     currentPage.value = 1;
     load();
-    if (Object.keys(route.query).length) {
+    const query = currentQuery();
+    if (JSON.stringify(query) !== JSON.stringify(route.query)) {
         clearingUrl = true;
-        router.replace({ query: {} });
+        router.replace({ query });
     }
 }
 
@@ -383,11 +384,15 @@ function clearOwnerFilter() {
 // /marketing-properties text comes from the CMS section heading the home block (Common Titles ›
 // Realty Property): Title 1 → eyebrow, Title 2 → heading, Description → intro.
 const marketingSection = computed(() => propertiesListing.value?.section || null);
+// The applied city / community / location text (footer "Properties in Abu Dhabi" etc.) — headings name it instead of Dubai.
+const place = computed(() => applied.city || applied.community || applied.location || '');
 const pageTitle = computed(() => (premium
     ? t('premium_listing.hero_title', 'Premium Properties')
     : (marketing
         ? (marketingSection.value?.title || t('marketing_listing.hero_title', 'Realty Properties'))
-        : t('properties_listing.hero.title'))));
+        : (place.value
+            ? t('properties_listing.hero.title_in', 'Properties in {place}').replace('{place}', place.value)
+            : t('properties_listing.hero.title')))));
 
 // "Penthouse Properties for Rent in Dubai" — the heading says what is actually being shown.
 const listingTitle = computed(() => {
@@ -407,6 +412,10 @@ const listingTitle = computed(() => {
     }
     if ((applied.agent || applied.agency) && ownerName.value) {
         return t('properties_listing.listing.by_owner_title', 'Properties by {name}').replace('{name}', ownerName.value);
+    }
+    if (place.value) {
+        if (!type && !purpose && !offPlan) return t('properties_listing.listing.all_title_in', 'All Properties in {place}').replace('{place}', place.value);
+        return `${offPlan}${type}Properties${purpose} in ${place.value}`;
     }
     if (!type && !purpose && !offPlan) return t('properties_listing.listing.all_title', 'All Properties in Dubai');
     if (!type && !offPlan && applied.listing_type === 'sale') return t('properties_listing.listing.title');
@@ -451,7 +460,8 @@ const saveSearchLabel = computed(() => {
 });
 
 function buildSearchTitle() {
-    const extras = [applied.bedrooms && `${applied.bedrooms} Bed`, applied.location].filter(Boolean);
+    // The location is already in the listing title.
+    const extras = [applied.bedrooms && `${applied.bedrooms} Bed`].filter(Boolean);
     return [listingTitle.value, ...extras].join(' · ');
 }
 

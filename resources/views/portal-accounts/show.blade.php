@@ -855,8 +855,12 @@
 
         document.querySelectorAll('.section-edit-cancel').forEach(btn => btn.addEventListener('click', function () {
             const card = this.closest('.dash-card');
-            const section = this.closest('.section-edit').dataset.section;
-            card.querySelector('.section-edit[data-section="' + section + '"]').classList.add('d-none');
+            const form = this.closest('.section-edit');
+            const section = form.dataset.section;
+            // Discard the unsaved draft so reopening Edit starts from the saved values.
+            form.reset();
+            form.querySelector('.section-form-error')?.classList.add('d-none');
+            form.classList.add('d-none');
             card.querySelector('.section-view[data-section="' + section + '"]').classList.remove('d-none');
         }));
 

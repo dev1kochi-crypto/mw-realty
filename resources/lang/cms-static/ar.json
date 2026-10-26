@@ -228,7 +228,7 @@
                 "interest_select_placeholder": "اختر",
                 "interest_buy": "شراء عقار",
                 "interest_rent": "استئجار عقار",
-                "interest_sell": "بيع / إدراج عقار",
+                "interest_sell": "بيع \/ إدراج عقار",
                 "interest_management": "إدارة الأملاك",
                 "message_label": "الرسالة",
                 "message_placeholder": "كيف يمكننا مساعدتك؟",
@@ -242,7 +242,7 @@
             "title": "الفلاتر",
             "close_aria": "إغلاق الفلاتر",
             "purpose_label": "الغرض",
-            "location_label": "الموقع / اسم العقار",
+            "location_label": "الموقع \/ اسم العقار",
             "location_placeholder": "ابحث بالموقع أو اسم العقار",
             "property_type_label": "نوع العقار",
             "all_type": "جميع الأنواع",
@@ -311,6 +311,7 @@
         },
         "hero": {
             "title": "عقارات في دبي",
+            "title_in": "عقارات في {place}",
             "breadcrumb_aria": "مسار التنقل",
             "breadcrumb_home": "الرئيسية"
         },
@@ -319,7 +320,7 @@
             "buy": "شراء",
             "rent": "إيجار",
             "off_plan": "على الخارطة",
-            "location_label": "الموقع / اسم العقار",
+            "location_label": "الموقع \/ اسم العقار",
             "location_placeholder": "ابحث بالموقع أو اسم العقار",
             "property_type_label": "نوع العقار",
             "all_type": "جميع الأنواع",
@@ -360,6 +361,7 @@
             "title": "عقارات للبيع في دبي",
             "count_suffix": "إعلان",
             "by_owner_title": "عقارات {name}",
+            "all_title_in": "جميع العقارات في {place}",
             "agent_label": "الوكيل",
             "agency_label": "الوكالة",
             "clear_owner_aria": "عرض جميع العقارات",
@@ -436,7 +438,7 @@
         "filter_panel": {
             "title": "الفلاتر",
             "close_aria": "إغلاق الفلاتر",
-            "location_label": "الموقع / اسم العقار",
+            "location_label": "الموقع \/ اسم العقار",
             "location_placeholder": "ابحث بالموقع أو اسم العقار",
             "properties_label": "العقارات",
             "properties_placeholder": "ابحث بالعنوان أو الموقع",
@@ -520,7 +522,7 @@
             "breadcrumb_current": "تجاري"
         },
         "filter_bar": {
-            "location_label": "الموقع / اسم العقار",
+            "location_label": "الموقع \/ اسم العقار",
             "location_placeholder": "ابحث بالموقع أو اسم العقار",
             "properties_label": "العقارات",
             "properties_placeholder": "ابحث بالعنوان أو الموقع",
@@ -885,7 +887,7 @@
     "login": {
         "photo_alt": "شقة دافئة في دبي",
         "tab_user": "مستخدم",
-        "tab_agent_agency": "وكيل / وكالة",
+        "tab_agent_agency": "وكيل \/ وكالة",
         "title": "مرحباً بعودتك",
         "subtitle": "يرجى إدخال بياناتك لتسجيل الدخول.",
         "email_label": "البريد الإلكتروني",
@@ -900,7 +902,7 @@
         "divider_or": "أو",
         "google_cta": "المتابعة باستخدام Google",
         "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى.",
-        "agent_tab_hint": "مسجّل كوكيل أو وكالة؟ انتقل إلى تبويب الوكيل / الوكالة.",
+        "agent_tab_hint": "مسجّل كوكيل أو وكالة؟ انتقل إلى تبويب الوكيل \/ الوكالة.",
         "new_device_title": "تأكيد هويتك",
         "new_device_subtitle": "أنت تسجّل الدخول من جهاز جديد. لقد أرسلنا رمز تحقق إلى",
         "two_factor_title": "المصادقة الثنائية",
@@ -913,7 +915,8 @@
         "resend_code": "إعادة إرسال الرمز",
         "resending": "جارٍ الإرسال…",
         "code_resent": "تم إرسال رمز جديد.",
-        "back_to_login": "العودة لتسجيل الدخول"
+        "back_to_login": "العودة لتسجيل الدخول",
+        "password_reset_success": "تم إعادة تعيين كلمة مرورك — سجّل الدخول بكلمة المرور الجديدة."
     },
     "signup": {
         "photo_alt": "شقة دافئة في دبي",
@@ -953,7 +956,7 @@
         "password_strength_label": "قوة كلمة المرور",
         "passwords_match": "كلمتا المرور متطابقتان",
         "passwords_no_match": "كلمتا المرور غير متطابقتين",
-        "agent_license_label": "رقم رخصة ريرا / الوسيط",
+        "agent_license_label": "رقم رخصة ريرا \/ الوسيط",
         "agent_license_placeholder": "أدخل رقم رخصتك",
         "agency_name_label": "اسم الوكالة",
         "agency_name_placeholder": "أدخل اسم وكالتك",
@@ -976,15 +979,14 @@
     "forgot_password": {
         "photo_alt": "شقة دافئة في دبي",
         "title": "هل نسيت كلمة المرور؟",
-        "subtitle": "أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيينها.",
+        "subtitle": "أدخل بريدك الإلكتروني المسجّل لتعيين كلمة مرور جديدة.",
         "email_label": "البريد الإلكتروني",
         "email_placeholder": "أدخل بريدك الإلكتروني",
-        "submit": "إرسال رابط إعادة التعيين",
-        "submitting": "جارٍ الإرسال…",
+        "submit": "متابعة",
+        "submitting": "جارٍ التحقق…",
         "back_to_sign_in": "العودة إلى تسجيل الدخول",
-        "sent_title": "تحقق من بريدك الإلكتروني",
-        "sent_subtitle": "إذا كان هناك حساب مرتبط بـ {email}، فقد أرسلنا رابطاً لإعادة تعيين كلمة المرور. ينتهي صلاحية الرابط خلال 60 دقيقة.",
-        "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى."
+        "generic_error": "حدث خطأ ما — يرجى المحاولة مرة أخرى.",
+        "verified_badge": "تم التحقق من البريد الإلكتروني"
     },
     "reset_password": {
         "photo_alt": "شقة دافئة في دبي",

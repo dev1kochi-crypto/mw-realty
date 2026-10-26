@@ -53,8 +53,8 @@
                     <option v-if="f.license.value">{{ f.license.value.name }} — {{ f.permitType.value === 'adrec' ? 'Brokerage Registration Number' : 'ORN' }}: {{ f.license.value.number }}</option>
                     <option v-else>No license on file</option>
                 </select>
-                <div id="permitLicenseHelp" class="form-text">{{ f.permitType.value === 'adrec' ? 'ADREC checks the broker license together with the permit number.' : 'DLD checks the permit against this RERA office registration number (ORN).' }}</div>
-                <div v-if="!f.license.value" class="alert alert-warning small py-2 mt-2 mb-0">
+                <div v-if="show.validates" id="permitLicenseHelp" class="form-text">{{ f.permitType.value === 'adrec' ? 'ADREC checks the broker license together with the permit number.' : 'DLD checks the permit against this RERA office registration number (ORN).' }}</div>
+                <div v-if="show.validates && !f.license.value" class="alert alert-warning small py-2 mt-2 mb-0">
                     <i class="fas fa-triangle-exclamation me-1"></i><span>{{ f.licenseMissing.value.text || '' }}</span>
                     <a v-if="f.licenseMissing.value.url" :href="f.licenseMissing.value.url" target="_blank" class="ms-1 fw-semibold">{{ f.licenseMissing.value.link }}</a>
                 </div>
@@ -103,7 +103,7 @@
                 <div class="alert alert-light border small mb-0"><i class="fas fa-circle-check text-success me-1"></i>No advertising permit is needed for this listing.</div>
             </div>
 
-            <!-- PermitRules::needsApproval: LISTING_SUPERADMIN_APPROVAL on, or a DTCM / None permit. -->
+            <!-- PermitRules::needsApproval: LISTING_SUPERADMIN_APPROVAL on, a DTCM / None permit, or DLD / ADREC API off. -->
             <div v-if="show.approval" class="col-12">
                 <div class="alert alert-info small mb-0"><i class="fas fa-user-shield me-1"></i>After you save, MW Realty checks and approves this listing before it shows on the website.</div>
             </div>
