@@ -45,6 +45,8 @@ class TwoFactorController extends Controller
             'is_agency' => $portalUser->isAgency(),
             'enabled' => $enabled,
             'required' => $portalUser->twoFactorRequired(),
+            // ENH-SEC-01: required on every account (so no Skip, no Disable, no per-company switch).
+            'platform_required' => $portalUser->twoFactorRequiredByPlatform(),
             'setup_required' => !$enabled && ($portalUser->twoFactorRequired() || $portalUser->needsTwoFactorPrompt()),
             'can_skip' => !$enabled && !$portalUser->twoFactorRequired() && $portalUser->needsTwoFactorPrompt(),
             'company_enforced' => $portalUser->isAgency() ? (bool) $portalUser->two_factor_enforced : null,
@@ -137,8 +139,8 @@ class TwoFactorController extends Controller
     {
         $portalUser = $this->portalUser();
         if ($portalUser->twoFactorRequired()) {
-            return response()->json(['message' => $portalUser->twoFactorRequiredForAgencies()
-                ? 'Agency accounts must use two-factor authentication.'
+            return response()->json(['message' => $portalUser->twoFactorRequiredByPlatform()
+                ? 'Two-factor authentication is required on every MW Realty account.'
                 : 'Your agency requires two-factor authentication.'], 422);
         }
         $this->twoFactor->skip($portalUser);
@@ -180,7 +182,7 @@ class TwoFactorController extends Controller
 
         if ($portalUser->twoFactorRequired()) {
             return response()->json(['message' => match (true) {
-                $portalUser->twoFactorRequiredForAgencies() => 'Agency accounts must use two-factor authentication, so it can\'t be turned off.',
+                $portalUser->twoFactorRequiredByPlatform() => 'Two-factor authentication is required on every MW Realty account, so it can\'t be turned off.',
                 $portalUser->isAgency() => 'Turn off "Mandatory 2FA for my company" first.',
                 default => 'Your agency requires two-factor authentication, so it can\'t be turned off.',
             }], 422);

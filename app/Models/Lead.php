@@ -291,10 +291,16 @@ class Lead extends Model
         return $this->belongsToMany(LeadTag::class, 'lead_tag_pivot');
     }
 
-    /** Activity history (notes today; Follow-ups/Calls/Site Visits later) — see LeadNoteService. */
+    /** Activity history (notes, system changes, follow-up events) — see LeadNoteService. */
     public function notesHistory()
     {
         return $this->hasMany(LeadNote::class);
+    }
+
+    /** Scheduled follow-ups and logged Call / WhatsApp / Email activity — see LeadFollowUpService. */
+    public function followUps()
+    {
+        return $this->hasMany(LeadFollowUp::class);
     }
 
     /** The agent working this lead (null = agency-level unassigned). */

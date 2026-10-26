@@ -26,6 +26,12 @@ class NotificationController extends Controller
      */
     public function index(Request $request)
     {
+        // Held at 2FA set-up (ENH-SEC-01): notifications name leads and listings, so none until it's done.
+        // Empty rather than 403 — the bell on the set-up screen itself must not bounce back to set-up.
+        if (Auth::guard('portal')->user()?->mustSetUpTwoFactor()) {
+            return response()->json(['data' => [], 'unread_count' => 0, 'next_page' => null]);
+        }
+
         $page = $this->notifiable()->notifications()->latest()->paginate(20, ['*'], 'page', max(1, (int) $request->input('page', 1)));
 
         return response()->json([

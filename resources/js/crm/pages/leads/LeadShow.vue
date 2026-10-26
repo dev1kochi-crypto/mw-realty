@@ -173,6 +173,9 @@
             </div>
 
             <div class="col-lg-5">
+                <!-- Follow-ups — scheduled Call / WhatsApp / Email with reminders, and the logged ones -->
+                <LeadFollowUpsCard ref="followUpsCard" :lead-id="lead.id" @changed="reload" />
+
                 <!-- Purchases — listings marked sold / rented to this lead -->
                 <section v-if="page.purchases.length" class="portal-lp-card">
                     <header class="portal-lp-card-head"><h2><span class="portal-lp-card-icon is-success"><i class="fas fa-handshake"></i></span>Purchases</h2></header>
@@ -366,6 +369,7 @@
                     <li><span>Call</span><a :href="telHref(lead.formatted_phone)" class="portal-lp-fab-item" aria-label="Call"><i class="fas fa-phone"></i></a></li>
                     <li><span>WhatsApp</span><a :href="whatsappHref(lead.formatted_phone)" target="_blank" rel="noopener" class="portal-lp-fab-item" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a></li>
                 </template>
+                <li><span>Schedule Follow-up</span><button type="button" class="portal-lp-fab-item" aria-label="Schedule follow-up" @click="fabFollowUp"><i class="fas fa-calendar-plus"></i></button></li>
                 <li><span>Add Note</span><button type="button" class="portal-lp-fab-item" aria-label="Add note" @click="fabNote"><i class="fas fa-clipboard"></i></button></li>
                 <li><span>Add Tag</span><button type="button" class="portal-lp-fab-item" aria-label="Add tag" @click="fabTag"><i class="fas fa-tags"></i></button></li>
                 <li><span>Mark as {{ ucfirst(nextStatus) }}</span>
@@ -392,6 +396,7 @@ import TagMultiSelect from '../../components/TagMultiSelect.vue';
 import VisitorInsightsPanel from '../../components/VisitorInsightsPanel.vue';
 import PhoneInput from '../../../components/PhoneInput.vue';
 import LeadTimelineTab from './components/LeadTimelineTab.vue';
+import LeadFollowUpsCard from './components/LeadFollowUpsCard.vue';
 import { useToast } from '../../composables/useToast';
 import { useConfirm } from '../../composables/useConfirm';
 import { formatDate, formatDateTime, initials, number, telHref, timeAgo, ucfirst, whatsappHref } from '../../utils/format';
@@ -412,6 +417,7 @@ const saving = ref(false);
 const fabOpen = ref(false);
 const tagsCard = ref(null);
 const timelineTab = ref(null);
+const followUpsCard = ref(null);
 
 const lead = computed(() => page.value.lead);
 const status = computed(() => lead.value.status || 'inactive');
@@ -510,6 +516,12 @@ function fabNote() {
     fabOpen.value = false;
     setTab('timeline');
     nextTick(() => timelineTab.value?.focusNote());
+}
+
+function fabFollowUp() {
+    fabOpen.value = false;
+    setTab('profile');
+    followUpsCard.value?.openModal('schedule');
 }
 
 function fabTag() {

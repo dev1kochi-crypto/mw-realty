@@ -281,20 +281,29 @@ class PortalUser extends Authenticatable
         return $this->two_factor_prompt_pending && !$this->hasTwoFactorEnabled();
     }
 
-    /** 2FA is mandatory for this account: every agency (config), its own company setting, or its agency's. */
+    /** 2FA is mandatory for this account: the platform rule (config), its own company setting, or its agency's. */
     public function twoFactorRequired(): bool
     {
+        if ($this->twoFactorRequiredByPlatform()) {
+            return true;
+        }
         if ($this->isAgency()) {
-            return $this->twoFactorRequiredForAgencies() || (bool) $this->two_factor_enforced;
+            return (bool) $this->two_factor_enforced;
         }
 
         return $this->isAgencyAgent() && (bool) $this->company?->two_factor_enforced;
     }
 
-    /** Platform rule (config auth.two_factor.required_for_agencies): agencies can't use the CRM without 2FA. */
-    public function twoFactorRequiredForAgencies(): bool
+    /** Platform rule (config auth.two_factor.required, ENH-SEC-01): no agency or agent uses the CRM without 2FA. */
+    public function twoFactorRequiredByPlatform(): bool
     {
-        return $this->isAgency() && (bool) config('auth.two_factor.required_for_agencies');
+        return (bool) config('auth.two_factor.required');
+    }
+
+    /** Held at the 2FA set-up screen right now (EnsurePortalTwoFactor): not set up, and required or not yet skipped. */
+    public function mustSetUpTwoFactor(): bool
+    {
+        return !$this->hasTwoFactorEnabled() && ($this->twoFactorRequired() || $this->needsTwoFactorPrompt());
     }
 
     public function scopeCompanies($query)

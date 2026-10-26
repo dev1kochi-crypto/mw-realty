@@ -26,6 +26,12 @@ const routes = [
         meta: { title: 'Deleted Leads', nav: 'leads', help: 'leads' },
     },
     {
+        path: '/leads/follow-ups',
+        name: 'follow-ups.index',
+        component: () => import('../pages/leads/FollowUpsIndex.vue'),
+        meta: { title: 'Follow-ups', nav: 'follow-ups', help: 'leads' },
+    },
+    {
         path: '/leads/:id(\\d+)',
         name: 'leads.show',
         component: () => import('../pages/leads/LeadShow.vue'),

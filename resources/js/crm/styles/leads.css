@@ -57,3 +57,6 @@
 .portal-filter-control .crm-remote-select > .form-select .text-muted { color: inherit !important; }/* …but the picker's own search box inside its menu stays a normal small input (the filter-field
    input rule above would otherwise stretch it, drop its border and indent it). */
 .portal-filter-control .crm-remote-select .dropdown-menu .form-control { height: auto; padding: 0.25rem 0.5rem; border: 1px solid var(--portal-border); border-radius: 0.375rem; background-color: #fff; font-size: 0.84rem; }
+
+/* Lead follow-ups (LeadFollowUpsCard / FollowUpsIndex): overdue icons, next to portal.css's is-success / is-warning tones. */
+.portal-lead-page .is-danger { --tone: #dc2626; }
