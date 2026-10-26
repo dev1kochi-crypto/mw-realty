@@ -37,6 +37,9 @@ class CrmNavigation
             $this->item('dashboard', 'Dashboard', 'fa-chart-pie', null, null, route: 'dashboard'),
 
             $this->item('leads', 'Leads', 'fa-address-book', 'Leads', null, route: 'leads.index', lock: $kycLock),
+            // Badge = overdue follow-ups on the leads this account can see.
+            $this->item('follow-ups', 'Follow-ups', 'fa-calendar-check', 'Leads', null, route: 'follow-ups.index', lock: $kycLock,
+                badge: $kycLock ? 0 : app(LeadFollowUpService::class)->visibleTo($this->context->ownerId())->open()->where('due_at', '<', now())->count()),
             $this->item('lead-insights', 'Lead Insights', 'fa-chart-line', 'Leads', null, route: 'lead-insights.index', lock: $planLock('lead_insights')),
             $isSuperAdmin ? $this->item('website-leads', 'Website Leads', 'fa-user-clock', 'Leads', null, route: 'website-leads.index',
                 badge: VisitorLead::inPool()->where('created_at', '>=', now()->subDays(7))->count()) : null,
@@ -78,7 +81,27 @@ class CrmNavigation
             $this->item('help-desk', 'Help Desk', 'fa-circle-question', 'Support', null, route: 'help-desk.index'),
         ];
 
-        return array_values(array_filter($items));
+        return $this->lockUntilTwoFactor(array_values(array_filter($items)));
+    }
+
+    /**
+     * Held at 2FA set-up (EnsurePortalTwoFactor): every item gets a padlock and no count, except
+     * the ones in $open — nothing behind them would open yet, and counts would leak data.
+     */
+    private function lockUntilTwoFactor(array $items, array $open = []): array
+    {
+        if (!$this->context->owner()?->mustSetUpTwoFactor()) {
+            return $items;
+        }
+
+        $lock = fn (array $item) => in_array($item['key'], $open, true) ? $item : [
+            'locked' => true,
+            'lock_reason' => 'Set up two-factor authentication first',
+            'badge' => 0,
+            'children' => array_map(fn ($child) => ['locked' => true, 'lock_reason' => 'Set up two-factor authentication first', 'badge' => 0] + $child, $item['children']),
+        ] + $item;
+
+        return array_map($lock, $items);
     }
 
     /**
@@ -90,8 +113,8 @@ class CrmNavigation
     public function credits(): ?array
     {
         $owner = $this->context->owner();
-        // An agency agent has no credits of their own (the agency's), so no card.
-        if (!\App\Services\CreditService::usableBy($owner)) {
+        // An agency agent has no credits of their own (the agency's), so no card; none either until 2FA is set up.
+        if (!\App\Services\CreditService::usableBy($owner) || $owner->mustSetUpTwoFactor()) {
             return null;
         }
         $credits = app(\App\Services\CreditService::class);
@@ -132,14 +155,15 @@ class CrmNavigation
 
         $kycLock = $owner->status !== 'approved' ? 'Unlocks after KYC approval' : null;
 
-        return array_values(array_filter([
+        // Security stays open while 2FA set-up is pending — it's where set-up happens.
+        return $this->lockUntilTwoFactor(array_values(array_filter([
             $this->item('profile', 'My Profile', 'fa-user-edit', null, null, route: 'profile'),
             $this->item('security', 'Security', 'fa-shield-halved', null, null, route: 'security'),
             $this->item('plans', 'Plans', 'fa-layer-group', null, null, route: 'plans.index', lock: $kycLock),
             // Credits — add-ons next to the plan (extra listings, Premium), so they sit right under Plans.
             \App\Services\CreditService::usableBy($owner) || ($kycLock && \App\Services\CreditService::enabled() && $owner->listingOwner()->id === $owner->id)
                 ? $this->item('credits', 'Credits', 'fa-coins', null, null, route: 'credits.index', lock: $kycLock) : null,
-        ]));
+        ])), ['security']);
     }
 
     private function item(string $key, string $label, ?string $icon, ?string $section, ?string $legacyRoute, ?string $route = null, ?string $lock = null, int $badge = 0, array $children = []): array

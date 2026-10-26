@@ -15,6 +15,7 @@ use App\Http\Controllers\Crm\Integrations\FacebookController;
 use App\Http\Controllers\Crm\Integrations\IntegrationController;
 use App\Http\Controllers\Crm\Integrations\PropertyFinderController;
 use App\Http\Controllers\Crm\Leads\LeadController;
+use App\Http\Controllers\Crm\Leads\LeadFollowUpController;
 use App\Http\Controllers\Crm\Leads\LeadImportController;
 use App\Http\Controllers\Crm\Leads\LeadInsightsController;
 use App\Http\Controllers\Crm\Leads\LeadNoteController;
@@ -163,6 +164,16 @@ Route::middleware('crm.auth')->group(function () {
                 Route::delete('/{id}/contacts/{contactId}', 'removeContact')->name('contacts.destroy')->whereNumber(['id', 'contactId']);
             });
             Route::post('/{id}/notes', [LeadNoteController::class, 'store'])->name('notes.store')->whereNumber('id');
+
+            // Follow-ups (Call / WhatsApp / Email reminders) — on one lead, and the Follow-ups screen across leads.
+            Route::controller(LeadFollowUpController::class)->group(function () {
+                Route::get('/{id}/follow-ups', 'forLead')->name('follow-ups.lead')->whereNumber('id');
+                Route::post('/{id}/follow-ups', 'store')->name('follow-ups.store')->whereNumber('id');
+                Route::get('/follow-ups', 'index')->name('follow-ups.index');
+                Route::put('/follow-ups/{id}', 'update')->name('follow-ups.update')->whereNumber('id');
+                Route::post('/follow-ups/{id}/complete', 'complete')->name('follow-ups.complete')->whereNumber('id');
+                Route::post('/follow-ups/{id}/cancel', 'cancel')->name('follow-ups.cancel')->whereNumber('id');
+            });
 
             Route::controller(LeadImportController::class)->prefix('imports')->name('imports.')->group(function () {
                 Route::post('/', 'store')->name('store');

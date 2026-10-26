@@ -27,18 +27,18 @@ class EnsurePortalTwoFactor
             return $next($request);
         }
 
-        $required = $portalUser->twoFactorRequired();
-        if (!$required && !$portalUser->needsTwoFactorPrompt()) {
+        if (!$portalUser->mustSetUpTwoFactor()) {
             return $next($request);
         }
+        $required = $portalUser->twoFactorRequired();
 
         // The CRM app's set-up screen; its API (/api/crm/account/two-factor/*) sits outside this check.
         $setupUrl = route('crm.two-factor', $required ? [] : ['onboarding' => 1]);
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => $required
-                    ? ($portalUser->twoFactorRequiredForAgencies()
-                        ? 'Agency accounts must set up two-factor authentication to continue.'
+                    ? ($portalUser->twoFactorRequiredByPlatform()
+                        ? 'Two-factor authentication is required on every MW Realty account. Please set it up to continue.'
                         : 'Your company requires two-factor authentication. Please set it up to continue.')
                     : 'Please set up two-factor authentication or skip it to continue.',
                 'redirect' => $setupUrl,

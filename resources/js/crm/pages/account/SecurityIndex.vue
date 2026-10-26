@@ -14,7 +14,8 @@
 
         <div class="sec-layout">
             <div class="sec-main">
-                <div v-if="s.is_agency" class="sec-card">
+                <!-- Not shown while MW Realty requires 2FA on every account (ENH-SEC-01): the switch would change nothing. -->
+                <div v-if="s.is_agency && !s.platform_required" class="sec-card">
                     <div class="sec-card__title"><span>2-Factor Authentication (My Company)</span></div>
                     <div class="sec-row">
                         <div class="sec-method__desc">Enable mandatory 2FA for all users in my company. Agents without it will be asked to set it up before they can use the portal.</div>
@@ -30,8 +31,8 @@
                         <span class="sec-pill" :class="s.enabled ? 'is-on' : 'is-off'">{{ s.enabled ? 'Enabled' : 'Disabled' }}</span>
                     </div>
                     <p class="sec-card__text">2-factor authentication adds an extra layer of security to your account. After your password, you'll enter a code from your phone.</p>
-                    <div v-if="s.required && !s.is_agency" class="alert alert-info py-2 small"><i class="fas fa-building me-1"></i>Your agency has made 2FA mandatory, so it can't be turned off.</div>
-                    <div v-else-if="s.required && s.is_agency && !s.company_enforced" class="alert alert-info py-2 small"><i class="fas fa-building-shield me-1"></i>Agency accounts must use 2FA, so it can't be turned off.</div>
+                    <div v-if="s.platform_required" class="alert alert-info py-2 small"><i class="fas fa-building-shield me-1"></i>MW Realty requires 2FA on every account, so it can't be turned off.</div>
+                    <div v-else-if="s.required && !s.is_agency" class="alert alert-info py-2 small"><i class="fas fa-building me-1"></i>Your agency has made 2FA mandatory, so it can't be turned off.</div>
 
                     <div class="sec-methods">
                         <div class="sec-methods__label">2-factor authentication methods</div>
@@ -86,7 +87,7 @@
                             <strong>Set up the authenticator app</strong>
                             <span>Click <em>Set up</em>, scan the QR code with Authy (or Google / Microsoft Authenticator) and enter the 6-digit code. Save your recovery codes.</span>
                         </li>
-                        <li v-if="s.is_agency" :class="s.company_enforced ? 'is-done' : (s.enabled ? 'is-current' : '')">
+                        <li v-if="s.is_agency && !s.platform_required" :class="s.company_enforced ? 'is-done' : (s.enabled ? 'is-current' : '')">
                             <strong>Make it mandatory (optional)</strong>
                             <span>Turn on <em>2-Factor Authentication (My Company)</em>. Every agent in your company must then set up 2FA before using the portal.</span>
                         </li>

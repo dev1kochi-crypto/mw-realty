@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Morning-before reminder for subscriptions that auto-renew tomorrow (UAE time).
         $schedule->command('portal:remind-subscription-renewals')->dailyAt('09:00')->timezone(\App\Console\Commands\RemindSubscriptionRenewals::TIMEZONE)->withoutOverlapping();
         $schedule->command('properties:expire-featured')->everyFifteenMinutes();
+        // Lead follow-ups due in the next 15 minutes: bell + email to the responsible agent / agency.
+        $schedule->command('leads:send-follow-up-reminders')->everyFiveMinutes()->withoutOverlapping();
         // Credits past their validity (balances also expire on the spot whenever a wallet is read or used).
         $schedule->command('credits:expire')->hourly()->withoutOverlapping();
         // Client ads still unreviewed when their booked time ended: closed and refunded.

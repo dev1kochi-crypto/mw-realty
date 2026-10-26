@@ -142,10 +142,12 @@ return [
         'static_code' => env('OTP_STATIC_CODE', '1234'),
     ],
 
-    // Agency accounts must set up an authenticator app before using the CRM (ENH-SEC-01).
-    // Agents follow their agency's "Mandatory 2FA for my company" switch instead.
+    // ENH-SEC-01: every agency / agent account must set up an authenticator app before using the
+    // CRM (no Skip), and is asked for its code at every sign-in. false = optional again (an agency
+    // can still make it mandatory for its own agents). TWO_FACTOR_REQUIRED_FOR_AGENCIES is the
+    // older name of this setting and is still read.
     'two_factor' => [
-        'required_for_agencies' => env('TWO_FACTOR_REQUIRED_FOR_AGENCIES', true),
+        'required' => env('TWO_FACTOR_REQUIRED', env('TWO_FACTOR_REQUIRED_FOR_AGENCIES', true)),
     ],
 
 ];

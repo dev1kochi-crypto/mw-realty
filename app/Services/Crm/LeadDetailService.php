@@ -49,6 +49,7 @@ class LeadDetailService
         'details' => ['icon' => 'fa-pen', 'label' => 'Details edited', 'tone' => 'muted'],
         'assignment' => ['icon' => 'fa-user-check', 'label' => 'Assignment', 'tone' => 'success'],
         'sale' => ['icon' => 'fa-handshake', 'label' => 'Property sold / rented', 'tone' => 'success'],
+        'follow_up' => ['icon' => 'fa-calendar-check', 'label' => 'Follow-up', 'tone' => 'accent'],
         'created' => ['icon' => 'fa-inbox', 'label' => 'Lead received', 'tone' => 'accent'],
     ];
 
