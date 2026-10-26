@@ -1,0 +1,10 @@
+/* Floating bar while list rows are ticked (components/SelectionBar.vue) — same as Admin › Clients' .pa-selection. */
+.crm-selection { position: fixed; left: 50%; bottom: 1.4rem; z-index: 1040; transform: translate(-50%, 160%); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .9rem; padding: .65rem .7rem .65rem 1.1rem;
+    max-width: calc(100vw - 2rem); border-radius: 16px; background: #1c2340; color: #fff; box-shadow: 0 18px 40px rgba(28, 35, 64, .35); transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
+.crm-selection.is-open { transform: translate(-50%, 0); }
+.crm-selection strong { font-size: .88rem; white-space: nowrap; }
+.crm-selection .btn { font-weight: 700; font-size: .82rem; border-radius: 10px; white-space: nowrap; }
+.crm-selection .btn:disabled { opacity: .45; }
+@media (max-width: 575.98px) {
+    .crm-selection { gap: .5rem; padding: .6rem; bottom: .8rem; }
+}

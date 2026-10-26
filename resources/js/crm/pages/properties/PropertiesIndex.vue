@@ -35,13 +35,6 @@
                         <a href="#" :class="{ 'is-active': viewMode === 'grid' }" title="Grid view" aria-label="Grid view" :aria-current="viewMode === 'grid' ? 'true' : null" @click.prevent="setView('grid')"><i class="fas fa-grip"></i><span>Grid</span></a>
                         <a href="#" :class="{ 'is-active': viewMode === 'list' }" title="List view" aria-label="List view" :aria-current="viewMode === 'list' ? 'true' : null" @click.prevent="setView('list')"><i class="fas fa-list"></i><span>List</span></a>
                     </div>
-                    <CrmDropdown v-if="selected.size" button-class="btn btn-portal-danger btn-sm dropdown-toggle">
-                        <template #toggle>Bulk Actions (<span>{{ selected.size }}</span>)</template>
-                        <li><button class="dropdown-item" type="button" :disabled="bulkBusy" @click="bulk('active')"><i class="fas fa-check-circle text-success me-2"></i>Mark Active</button></li>
-                        <li><button class="dropdown-item" type="button" :disabled="bulkBusy" @click="bulk('inactive')"><i class="fas fa-times-circle text-secondary me-2"></i>Mark Inactive</button></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><button class="dropdown-item" type="button" :disabled="bulkBusy" @click="bulk('delete')"><i class="fas fa-trash text-danger me-2"></i>Delete Selected</button></li>
-                    </CrmDropdown>
                     <button type="button" class="btn btn-portal-primary btn-sm text-nowrap" @click="addListing">
                         <i class="fas fa-plus me-1"></i> Add {{ section.itemLabel }}
                     </button>
@@ -131,7 +124,7 @@
                     </thead>
                     <tbody>
                         <tr v-for="p in items" :key="p.id" class="portal-property-col" :data-id="p.id" data-property-row>
-                            <td class="pl-list__check"><input class="form-check-input property-select-checkbox" type="checkbox" :checked="selected.has(p.id)" aria-label="Select this property" @change="toggleSelect(p, $event.target.checked)"></td>
+                            <td class="pl-list__check"><input class="form-check-input property-select-checkbox" type="checkbox" :checked="isTicked(p)" aria-label="Select this property" @change="toggleSelect(p, $event.target.checked)"></td>
                             <td>
                                 <div class="pl-list__listing">
                                     <img :src="p.thumb || 'https://placehold.co/96x72?text=%20'" alt="" class="pl-list__thumb">
@@ -188,7 +181,7 @@
         <div v-else-if="items.length" id="propertyGrid" class="row g-4" @dragover="onDragOver" @drop.prevent>
             <div v-for="(p, index) in items" :key="p.id" class="col-sm-6 col-lg-4 col-xl-3 portal-property-col" :class="{ 'is-dragging': dragId === p.id, 'is-moved': movedId === p.id }"
                  :data-id="p.id" :draggable="armedId === p.id" @dragstart="onDragStart($event, p)" @dragend="onDragEnd">
-                <PropertyCard :p="p" :section="section" :is-admin="page.is_admin" :quota="page.featured_quota" :selected="selected.has(p.id)" :can-drag="canDrag"
+                <PropertyCard :p="p" :section="section" :is-admin="page.is_admin" :quota="page.featured_quota" :selected="isTicked(p)" :can-drag="canDrag"
                               :position="positionOffset !== null ? positionOffset + index + 1 : null" :total-listings="page.total_listings" :status-busy="statusBusy.has(p.id)"
                               @select="toggleSelect(p, $event)" @arm-drag="armedId = p.id" @insights="openInsights(p)"
                               @quality-enter="showQuality(p, $event)" @quality-leave="hideQuality" @toggle-status="toggleStatus(p, $event)"
@@ -246,6 +239,15 @@
                 </div>
             </form>
         </CrmModal>
+
+        <!-- The Select all checkbox ticks this page; "Select all N" widens it to every matching listing. -->
+        <SelectionBar :count="selectedCount" :total="page.meta.total" label="Selected listings"
+                      :can-select-all="!allMode && allSelected && page.meta.total > items.length"
+                      @select-all="selectAllMatching" @clear="clearSelection">
+            <button type="button" class="btn btn-success btn-sm" :disabled="bulkBusy" @click="bulk('active')"><i class="fas fa-check me-1"></i> Mark Active</button>
+            <button type="button" class="btn btn-light btn-sm" :disabled="bulkBusy" @click="bulk('inactive')"><i class="fas fa-eye-slash me-1"></i> Mark Inactive</button>
+            <button type="button" class="btn btn-danger btn-sm" :disabled="bulkBusy" @click="bulk('delete')"><i class="fas fa-trash me-1"></i> Delete ({{ number(selectedCount) }})</button>
+        </SelectionBar>
     </div>
 </template>
 
@@ -261,6 +263,7 @@ import http, { errorMessage } from '../../api/http';
 import CrmDropdown from '../../components/CrmDropdown.vue';
 import CrmModal from '../../components/CrmModal.vue';
 import CrmPagination from '../../components/CrmPagination.vue';
+import SelectionBar from '../../components/SelectionBar.vue';
 import FeatureModal from './components/FeatureModal.vue';
 import ListingPerformance from './components/ListingPerformance.vue';
 import PlanLimitModal from './components/PlanLimitModal.vue';
@@ -295,7 +298,10 @@ function addListing() {
 const items = ref([]);
 const loadError = ref('');
 const searchInput = ref('');
+// Ticked ids, or "all matching" (allMode) minus the ones unticked afterwards (excluded).
 const selected = ref(new Set());
+const allMode = ref(false);
+const excluded = ref(new Set());
 const bulkBusy = ref(false);
 const statusBusy = ref(new Set());
 const insightsId = ref(null);
@@ -330,8 +336,10 @@ const unfiltered = computed(() => page.value.search === '' && !page.value.filter
 const canDrag = computed(() => unfiltered.value && items.value.length > 1);
 const positionOffset = computed(() => (unfiltered.value ? (page.value.meta.current_page - 1) * page.value.meta.per_page : null));
 
-const allSelected = computed(() => items.value.length > 0 && items.value.every((p) => selected.value.has(p.id)));
-const someSelected = computed(() => selected.value.size > 0 && !allSelected.value);
+const isTicked = (p) => (allMode.value ? !excluded.value.has(p.id) : selected.value.has(p.id));
+const selectedCount = computed(() => (allMode.value ? Math.max(0, page.value.meta.total - excluded.value.size) : selected.value.size));
+const allSelected = computed(() => items.value.length > 0 && items.value.every(isTicked));
+const someSelected = computed(() => !allSelected.value && items.value.some(isTicked));
 
 // DLD permit review pills: [key, icon, hint, needs the account's action?]
 const REVIEW_ORDER = [
@@ -367,7 +375,7 @@ function load() {
             if (res.data.plan_usage) refreshNavigation().catch(() => {});
             items.value = res.data.data;
             searchInput.value = res.data.search;
-            selected.value = new Set();
+            clearSelection();
             highlightMoved();
         })
         .catch((e) => {
@@ -390,25 +398,43 @@ function goToPage(p) {
 
 /* ---------- selection + bulk ---------- */
 function toggleSelect(p, checked) {
-    const set = new Set(selected.value);
-    checked ? set.add(p.id) : set.delete(p.id);
-    selected.value = set;
+    // In "all matching" mode a tick removes the listing from the exclusions instead.
+    const set = new Set(allMode.value ? excluded.value : selected.value);
+    checked !== allMode.value ? set.add(p.id) : set.delete(p.id);
+    if (allMode.value) excluded.value = set;
+    else selected.value = set;
 }
+/** Header checkbox: the listings on this page. */
 function selectAll(checked) {
-    selected.value = checked ? new Set(items.value.map((p) => p.id)) : new Set();
+    items.value.forEach((p) => toggleSelect(p, checked));
+}
+function selectAllMatching() {
+    allMode.value = true;
+    excluded.value = new Set();
+    selected.value = new Set();
+}
+function clearSelection() {
+    allMode.value = false;
+    excluded.value = new Set();
+    selected.value = new Set();
 }
 
 async function bulk(action) {
-    const ids = [...selected.value];
-    if (!ids.length) return;
+    const count = selectedCount.value;
+    if (!count) return;
     if (action === 'delete' && !(await confirm({
-        title: `Delete ${ids.length} listing${ids.length === 1 ? '' : 's'}?`,
-        message: `The selected listing${ids.length === 1 ? '' : 's'} and all their photos will be removed. This can't be undone.`,
-        confirmText: `Delete ${ids.length}`,
+        title: `Delete ${count} listing${count === 1 ? '' : 's'}?`,
+        message: `The selected listing${count === 1 ? '' : 's'} and all their photos will be removed. This can't be undone.`,
+        confirmText: `Delete ${count}`,
         tone: 'danger',
     }))) return;
     bulkBusy.value = true;
-    http.post('/properties/bulk-action', { ids, action })
+    // "All matching" sends the list's own search / filters so the server picks the same listings.
+    const q = route.query;
+    const selection = allMode.value
+        ? { select_all: true, exclude_ids: [...excluded.value], segment: section.value.segment, q: q.q, agent: q.agent, listing: q.listing, status: q.status, premium: q.premium, review: q.review }
+        : { ids: [...selected.value] };
+    http.post('/properties/bulk-action', { ...selection, action })
         .then(() => load())
         .catch(() => toastError('Could not apply the bulk action. Please try again.'))
         .finally(() => { bulkBusy.value = false; });

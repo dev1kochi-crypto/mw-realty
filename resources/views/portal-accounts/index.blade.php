@@ -56,6 +56,8 @@
     .pa-pill.is-active { background: var(--pa-navy); border-color: var(--pa-navy); color: #fff; }
     .pa-pill.is-active span { background: rgba(255, 255, 255, .2); }
     .pa-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+    .pa-length { display: inline-flex; align-items: center; gap: .4rem; margin: 0; font-size: .82rem; font-weight: 700; color: var(--pa-muted); }
+    .pa-length select { width: auto; border-radius: 10px; font-size: .85rem; }
     .pa-search { position: relative; }
     .pa-search i { position: absolute; left: .8rem; top: 50%; transform: translateY(-50%); font-size: .78rem; color: var(--pa-muted); }
     .pa-search input { padding-left: 2.1rem; width: 250px; border-radius: 10px; font-size: .85rem; }
@@ -156,6 +158,13 @@
                 <button type="button" class="pa-pill pa-quick" data-status="rejected">Rejected <span>{{ $counts['rejected'] }}</span></button>
             </div>
             <div class="pa-actions">
+                <label class="pa-length">Show
+                    <select id="paPageLength" class="form-select form-select-sm" aria-label="Rows per page">
+                        @foreach([10, 25, 50, 100] as $size)
+                        <option value="{{ $size }}">{{ $size }}</option>
+                        @endforeach
+                    </select>
+                </label>
                 <div class="pa-search">
                     <i class="fas fa-search"></i>
                     <input type="search" id="paSearch" class="form-control form-control-sm" placeholder="Name, email or phone…">
@@ -217,6 +226,8 @@
 <!-- Floating bulk actions while rows are ticked -->
 <div class="pa-selection" id="paSelection" role="region" aria-label="Selected accounts">
     <strong><span id="paSelectedCount">0</span> selected</strong>
+    <!-- Shown once the whole page is ticked: widen to every matching account on every page. -->
+    <button type="button" id="paSelectAllMatching" class="btn btn-sm btn-outline-light d-none">Select all <span>0</span></button>
     @can('portal-accounts.edit')
     <button type="button" id="bulkApproveBtn" class="btn btn-success btn-sm" disabled><i class="fas fa-check me-1"></i> Approve (<span id="bulkApproveCount">0</span>)</button>
     @endcan
@@ -455,19 +466,25 @@
         }
         renderActiveFiltersBar(initialFilters);
 
+        // Selection: the ticked rows on this page, or "all matching" — every account the current
+        // type / filters / search match, on every page, minus the ones unticked afterwards.
+        let allMatching = false;
+        let excludedIds = new Set();
+
         const table = $('.premium-table').DataTable({
             processing: true,
             serverSide: true,
             ajax: buildUrl(baseAjaxUrl, initialFilters),
-            // Own search box and toolbar above; table, then length / info / pages below.
-            dom: 'rt<"d-flex flex-wrap justify-content-between align-items-center gap-2 px-2"li p>',
+            // Own search box, page size and toolbar above; table, then info / pages below.
+            dom: 'rt<"d-flex flex-wrap justify-content-between align-items-center gap-2 px-2"i p>',
+            pageLength: Number($('#paPageLength').val()),
             language: { lengthMenu: 'Show _MENU_', info: '_START_–_END_ of _TOTAL_', infoEmpty: 'Nothing here', zeroRecords: 'No accounts match.' },
             columns: [
                 {data: 'select_all', name: 'select_all', orderable: false, searchable: false},
                 {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
                 {data: 'contact', name: 'contact', orderable: false},
                 @if(!$type)
-                {data: 'type', name: 'type'},
+                {data: 'type', name: 'type', searchable: false},
                 @endif
                 @if($showCompanyColumn)
                 {data: 'company', name: 'company', orderable: false, searchable: false},
@@ -487,52 +504,109 @@
             // Newest first by default, on the Joined column so the header shows the active sort.
             order: [[{{ 9 + (int) !$type + (int) $showCompanyColumn + (int) $showAgentsColumn }}, 'desc']],
             drawCallback: function () {
-                $('#selectAllRows').prop('checked', false);
+                // In "all matching" mode every row on the new page starts ticked (minus ones unticked).
+                if (allMatching) {
+                    $('.row-checkbox').each(function () { this.checked = !excludedIds.has(this.value); });
+                }
                 updateBulkButtons();
             }
+        });
+
+        $('#paPageLength').on('change', function () {
+            table.page.len(Number(this.value)).draw();
         });
 
         let searchTimer = null;
         $('#paSearch').on('input', function () {
             clearTimeout(searchTimer);
             const value = this.value;
-            searchTimer = setTimeout(() => table.search(value).draw(), 300);
+            searchTimer = setTimeout(() => { clearSelection(); table.search(value).draw(); }, 300);
         });
 
         const base = "{{ url(config('cms-kit.common.auth.prefix', 'admin')) }}/portal-accounts/";
 
+        function selectedCount() {
+            return allMatching
+                ? Math.max(0, table.page.info().recordsDisplay - excludedIds.size)
+                : $('.row-checkbox:checked').length;
+        }
+
         function updateBulkButtons() {
-            const count = $('.row-checkbox:checked').length;
+            const count = selectedCount();
+            const rows = $('.row-checkbox');
+            const ticked = rows.filter(':checked').length;
+            const pageAll = rows.length > 0 && ticked === rows.length;
+            $('#selectAllRows').prop('checked', pageAll).prop('indeterminate', ticked > 0 && !pageAll);
+
             $('#bulkDeleteCount, #bulkApproveCount, #paSelectedCount').text(count);
             $('#bulkDeleteBtn, #bulkApproveBtn').prop('disabled', count === 0);
             $('#paSelection').toggleClass('is-open', count > 0);
+
+            const total = table.page.info().recordsDisplay;
+            $('#paSelectAllMatching').toggleClass('d-none', allMatching || !pageAll || total <= rows.length)
+                .find('span').text(total);
         }
 
-        $('#selectAllRows').on('change', function () {
-            $('.row-checkbox').prop('checked', $(this).is(':checked'));
-            updateBulkButtons();
-        });
-        $('#paClearSelection').on('click', function () {
+        function clearSelection() {
+            allMatching = false;
+            excludedIds = new Set();
             $('.row-checkbox, #selectAllRows').prop('checked', false);
             updateBulkButtons();
+        }
+
+        // Header checkbox: the rows on this page.
+        $('#selectAllRows').on('change', function () {
+            const checked = $(this).is(':checked');
+            $('.row-checkbox').each(function () {
+                this.checked = checked;
+                if (allMatching) checked ? excludedIds.delete(this.value) : excludedIds.add(this.value);
+            });
+            updateBulkButtons();
+        });
+        $('#paSelectAllMatching').on('click', function () {
+            allMatching = true;
+            excludedIds = new Set();
+            $('.row-checkbox').prop('checked', true);
+            updateBulkButtons();
+        });
+        $('#paClearSelection').on('click', clearSelection);
+
+        $(document).on('change', '.row-checkbox', function () {
+            if (allMatching) this.checked ? excludedIds.delete(this.value) : excludedIds.add(this.value);
+            updateBulkButtons();
         });
 
-        $(document).on('change', '.row-checkbox', updateBulkButtons);
+        /** Body for bulk-delete / bulk-approve: the ticked ids, or the list's own type / filters / search. */
+        function selectionPayload() {
+            if (!allMatching) {
+                return { ids: $('.row-checkbox:checked').map(function () { return $(this).val(); }).get() };
+            }
+            return {
+                ...currentFilters(),
+                @if($type) type: @json($type), @endif
+                select_all: 1,
+                exclude_ids: [...excludedIds],
+                search: table.search(),
+            };
+        }
+
+        function runBulk(endpoint) {
+            $.post(base + endpoint, { _token: '{{ csrf_token() }}', ...selectionPayload() })
+                .done(() => { clearSelection(); table.ajax.reload(null, false); });
+        }
 
         $('#bulkDeleteBtn').on('click', function () {
-            const ids = $('.row-checkbox:checked').map(function () { return $(this).val(); }).get();
-            if (!ids.length) return;
-            if (!confirm('Delete ' + ids.length + ' selected account(s) permanently? Their properties and CRM leads will be removed too.')) return;
-            $.post(base + 'bulk-delete', { _token: '{{ csrf_token() }}', ids: ids })
-                .done(() => table.ajax.reload(null, false));
+            const count = selectedCount();
+            if (!count) return;
+            if (!confirm('Delete ' + count + ' selected account(s) permanently? Their properties and CRM leads will be removed too.')) return;
+            runBulk('bulk-delete');
         });
 
         $('#bulkApproveBtn').on('click', function () {
-            const ids = $('.row-checkbox:checked').map(function () { return $(this).val(); }).get();
-            if (!ids.length) return;
-            if (!confirm('Approve ' + ids.length + ' selected account(s)? Each will get an approval email.')) return;
-            $.post(base + 'bulk-approve', { _token: '{{ csrf_token() }}', ids: ids })
-                .done(() => table.ajax.reload(null, false));
+            const count = selectedCount();
+            if (!count) return;
+            if (!confirm('Approve ' + count + ' selected account(s)? Each will get an approval email.')) return;
+            runBulk('bulk-approve');
         });
 
         // Inline edit toggling — shared by the Plan, Status and Payment columns
@@ -614,6 +688,7 @@
 
         function applyFilters() {
             const filters = currentFilters();
+            clearSelection();
             table.ajax.url(buildUrl(baseAjaxUrl, filters)).load();
             $('#openFiltersBtn').toggleClass('has-filters', Object.keys(filters).length > 0);
             renderActiveFiltersBar(filters);
@@ -633,6 +708,7 @@
 
         $('#resetFiltersBtn').on('click', function () {
             document.querySelectorAll('#filtersPanel select, #filtersPanel input').forEach(el => el.value = '');
+            clearSelection();
             table.ajax.url(baseAjaxUrl).load();
             $('#openFiltersBtn').removeClass('has-filters');
             renderActiveFiltersBar({});

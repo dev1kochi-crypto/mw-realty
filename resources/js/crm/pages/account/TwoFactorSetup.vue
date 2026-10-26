@@ -31,7 +31,7 @@
         </div>
 
         <template v-else-if="pending">
-            <div v-if="status.required && !reconfiguring" class="alert alert-warning d-flex gap-2 align-items-center"><i class="fas fa-building-shield"></i>Your company requires two-factor authentication. Set it up to continue using the portal.</div>
+            <div v-if="status.required && !reconfiguring" class="alert alert-warning d-flex gap-2 align-items-center"><i class="fas fa-building-shield"></i>{{ status.is_agency ? 'Agency accounts must use two-factor authentication.' : 'Your company requires two-factor authentication.' }} Set it up to continue using the portal.</div>
             <div v-else-if="flow.enforcing" class="alert alert-info d-flex gap-2 align-items-center"><i class="fas fa-building-shield"></i>Set up 2FA on your own account first. Mandatory 2FA for your company turns on automatically when you finish.</div>
 
             <div class="sec-card p-0">

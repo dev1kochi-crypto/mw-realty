@@ -82,6 +82,32 @@ class PropertyController extends Controller
         return $segment === Property::SEGMENT_COMMERCIAL ? 'Commercial Property' : 'Property';
     }
 
+    /** Filters: agent ("none" = agency's own, no agent), buy / rent, active / inactive, premium, permit review. */
+    private function listingFilters(Request $request): array
+    {
+        return [
+            'agent' => $request->input('agent') === 'none' ? 'none' : ($request->integer('agent') ?: null),
+            'listing' => in_array($request->input('listing'), ['sale', 'rent'], true) ? $request->input('listing') : null,
+            'status' => in_array($request->input('status'), ['active', 'inactive'], true) ? $request->input('status') : null,
+            'premium' => $request->boolean('premium'),
+            // DLD permit review state (see ListingComplianceService).
+            'review' => array_key_exists((string) $request->input('review'), Property::COMPLIANCE_LABELS) ? $request->input('review') : null,
+        ];
+    }
+
+    /** A menu's listings narrowed by the search box and filters — the list page and bulk "select all" share it. */
+    private function filteredListings(string $segment, string $search, array $filters)
+    {
+        return $this->orderedListings($segment)
+            ->when($search !== '', fn ($q) => $q->portalSearch($search, $this->isAdmin()))
+            ->when($filters['agent'] === 'none', fn ($q) => $q->whereNull('properties.agent_id'))
+            ->when(is_int($filters['agent']), fn ($q) => $q->where('properties.agent_id', $filters['agent']))
+            ->when($filters['listing'], fn ($q, $type) => $q->where('properties.listing_type', $type))
+            ->when($filters['status'], fn ($q, $status) => $q->where('properties.status', $status === 'active'))
+            ->when($filters['premium'], fn ($q) => $q->where('properties.featured', true))
+            ->when($filters['review'], fn ($q, $review) => $q->where('properties.compliance_status', $review));
+    }
+
     /**
      * List listings
      *
@@ -105,29 +131,12 @@ class PropertyController extends Controller
         $segment = $this->segment($request);
         $search = mb_substr(trim((string) $request->input('q', '')), 0, 100);
 
+        $filters = $this->listingFilters($request);
+
         // details / floorPlans feed the quality score (ListingQualityService), leads_count the Leads figure.
-        $query = $this->orderedListings($segment)->with(['owner', 'agent:id,name,avatar', 'details', 'floorPlans'])->withCount('leads');
-        if ($search !== '') {
-            $query->portalSearch($search, $this->isAdmin());
-        }
-
-        // Filters: agent ("none" = agency's own, no agent), buy / rent, active / inactive, premium.
-        $filters = [
-            'agent' => $request->input('agent') === 'none' ? 'none' : ($request->integer('agent') ?: null),
-            'listing' => in_array($request->input('listing'), ['sale', 'rent'], true) ? $request->input('listing') : null,
-            'status' => in_array($request->input('status'), ['active', 'inactive'], true) ? $request->input('status') : null,
-            'premium' => $request->boolean('premium'),
-            // DLD permit review state (see ListingComplianceService).
-            'review' => array_key_exists((string) $request->input('review'), Property::COMPLIANCE_LABELS) ? $request->input('review') : null,
-        ];
-        $query->when($filters['agent'] === 'none', fn ($q) => $q->whereNull('properties.agent_id'))
-            ->when(is_int($filters['agent']), fn ($q) => $q->where('properties.agent_id', $filters['agent']))
-            ->when($filters['listing'], fn ($q, $type) => $q->where('properties.listing_type', $type))
-            ->when($filters['status'], fn ($q, $status) => $q->where('properties.status', $status === 'active'))
-            ->when($filters['premium'], fn ($q) => $q->where('properties.featured', true))
-            ->when($filters['review'], fn ($q, $review) => $q->where('properties.compliance_status', $review));
-
-        $properties = $query->paginate(self::PER_PAGE);
+        $properties = $this->filteredListings($segment, $search, $filters)
+            ->with(['owner', 'agent:id,name,avatar', 'details', 'floorPlans'])->withCount('leads')
+            ->paginate(self::PER_PAGE);
         $viewer = $this->viewer();
         $editable = $featured->editableIds(
             $this->isAdmin() ? null : $viewer,
@@ -704,19 +713,30 @@ class PropertyController extends Controller
      * (and whose permit is still valid) can be switched on; sold / rented ones are skipped.
      *
      * @bodyParam action string required active | inactive | delete. Example: inactive
-     * @bodyParam ids integer[] required Example: [12, 13]
+     * @bodyParam ids integer[] The ticked listings (required unless select_all). Example: [12, 13]
+     * @bodyParam select_all boolean Every listing matching the list's segment / q / filters (sent alongside). Example: false
+     * @bodyParam exclude_ids integer[] With select_all, listings unticked afterwards. Example: []
      */
     public function bulkAction(Request $request)
     {
         $request->validate([
             'action' => 'required|in:active,inactive,delete',
-            'ids' => 'required|array|min:1',
+            'select_all' => 'nullable|boolean',
+            'ids' => 'required_unless:select_all,true,1|array',
             'ids.*' => 'integer',
+            'exclude_ids' => 'nullable|array',
+            'exclude_ids.*' => 'integer',
         ]);
 
+        $ids = $request->boolean('select_all')
+            ? $this->filteredListings($this->segment($request), mb_substr(trim((string) $request->input('q', '')), 0, 100), $this->listingFilters($request))
+                ->pluck('properties.id')->diff($request->input('exclude_ids', []))->values()
+            : $request->input('ids');
+
+        // Still owner-only, whatever the selection says.
         $query = Property::query()
             ->when($this->ownerId(), fn ($q, $ownerId) => $q->where('portal_user_id', $ownerId))
-            ->whereIn('id', $request->input('ids'));
+            ->whereIn('id', $ids);
 
         if ($request->input('action') === 'delete') {
             $properties = $query->with(['details', 'images', 'floorPlans'])->get();

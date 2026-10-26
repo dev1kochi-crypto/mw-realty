@@ -137,7 +137,9 @@ class TwoFactorController extends Controller
     {
         $portalUser = $this->portalUser();
         if ($portalUser->twoFactorRequired()) {
-            return response()->json(['message' => 'Your agency requires two-factor authentication.'], 422);
+            return response()->json(['message' => $portalUser->twoFactorRequiredForAgencies()
+                ? 'Agency accounts must use two-factor authentication.'
+                : 'Your agency requires two-factor authentication.'], 422);
         }
         $this->twoFactor->skip($portalUser);
 
@@ -177,9 +179,11 @@ class TwoFactorController extends Controller
         $this->confirmPassword($request, $portalUser);
 
         if ($portalUser->twoFactorRequired()) {
-            return response()->json(['message' => $portalUser->isAgency()
-                ? 'Turn off "Mandatory 2FA for my company" first.'
-                : 'Your agency requires two-factor authentication, so it can\'t be turned off.'], 422);
+            return response()->json(['message' => match (true) {
+                $portalUser->twoFactorRequiredForAgencies() => 'Agency accounts must use two-factor authentication, so it can\'t be turned off.',
+                $portalUser->isAgency() => 'Turn off "Mandatory 2FA for my company" first.',
+                default => 'Your agency requires two-factor authentication, so it can\'t be turned off.',
+            }], 422);
         }
 
         $this->twoFactor->disable($portalUser);

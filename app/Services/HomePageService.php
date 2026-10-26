@@ -268,6 +268,8 @@ class HomePageService
             'button_text' => $section?->getTranslation('button_name', $lang) ?: 'View More Details',
             // The view-all page for the curated list, unless the admin set a link of their own.
             'button_url' => $section?->getTranslation('button_url', $lang) ?: ($curated ? '/marketing-properties' : '/properties'),
+            // true = Super Admin's Marketing Properties list, kept in its order (never shuffled).
+            'curated' => $curated,
             'properties' => $properties,
         ];
     }

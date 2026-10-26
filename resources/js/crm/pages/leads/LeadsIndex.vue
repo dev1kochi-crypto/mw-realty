@@ -111,8 +111,8 @@
                     <table id="leadsDataTable" ref="leadsTable" class="table portal-table mb-0">
                         <thead>
                             <tr>
-                                <!-- Header checkbox = every matching lead on every page (the server resolves them from the filters); a dash when only some are. -->
-                                <th style="width: 2.5rem;"><input type="checkbox" class="form-check-input" :checked="allSelected" :indeterminate="someSelected" aria-label="Select all leads" @change="$event.target.checked ? selectAllMatching() : clearSelection()"></th>
+                                <!-- Header checkbox = the leads on this page; "Select all N" above widens it to every matching lead. A dash when only some are. -->
+                                <th style="width: 2.5rem;"><input type="checkbox" class="form-check-input" :disabled="!leads.length" :checked="pageChecked" :indeterminate="pageIndeterminate" aria-label="Select all leads on this page" @change="togglePage($event.target.checked)"></th>
                                 <th class="portal-lead-sn">#</th>
                                 <th v-for="(column, index) in shownColumns" :key="column" :data-column-key="column" :class="{ 'portal-th-draggable': column !== 'lead' }"
                                     :draggable="column !== 'lead'" :role="isSortable(column) ? 'button' : null"
@@ -159,6 +159,15 @@
 
         <LeadFormModal :open="modal === 'form'" :lead-id="formLeadId" :is-admin="meta.is_admin" @close="modal = null" @saved="afterChange" />
         <LeadTagsModal :open="modal === 'tags'" :lead="tagsLead" @close="modal = null" @saved="(tags) => { tagsLead.tags = tags; modal = null; }" />
+        <!-- Header checkbox ticks this page; "Select all N" widens it to every matching lead. -->
+        <SelectionBar :count="selectedCount" :total="page?.total ?? 0" label="Selected leads"
+                      :can-select-all="!selection.selectAll && pageChecked && (page?.total ?? 0) > leads.length"
+                      @select-all="selectAllMatching" @clear="clearSelection">
+            <button type="button" class="btn btn-light btn-sm" @click="openPicker('stages')"><i class="fas fa-layer-group me-1"></i> Assign Stage</button>
+            <button type="button" class="btn btn-light btn-sm" @click="openPicker('tags')"><i class="fas fa-tags me-1"></i> Assign Tag</button>
+            <button type="button" class="btn btn-light btn-sm" @click="modal = 'export'"><i class="fas fa-file-arrow-down me-1"></i> Export</button>
+            <button type="button" class="btn btn-danger btn-sm" @click="bulkDelete"><i class="fas fa-trash me-1"></i> Delete ({{ number(selectedCount) }})</button>
+        </SelectionBar>
         <BulkPickerModal :open="modal === 'picker'" :mode="pickerMode" :count="selectedCount" :selection="selectionPayload" @close="modal = null" @applied="afterChange" />
         <TableFieldsModal :open="modal === 'fields'" :columns="meta.columns" @close="modal = null" @saved="(columns) => { meta.columns.shown = columns; modal = null; refetch(); }" />
         <ImportModal :open="modal === 'import'" @close="modal = null" @refresh="() => { modal = null; refresh(); }" />
@@ -172,6 +181,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import http, { errorMessage } from '../../api/http';
 import RemoteSelect from '../../components/RemoteSelect.vue';
+import SelectionBar from '../../components/SelectionBar.vue';
 import LeadCell from './components/LeadCell.vue';
 import LeadFormModal from './components/LeadFormModal.vue';
 import LeadTagsModal from './components/LeadTagsModal.vue';
@@ -197,7 +207,7 @@ const importTracker = useLeadImport();
 const {
     meta, leads, page, unfilteredTotal, quickCounts, loading, filters, listing, selection,
     activeFilterCount, selectedCount, selectionPayload, loadMeta, fetchLeads,
-    clearSelection, isSelected, toggleLead, selectAllMatching,
+    clearSelection, isSelected, toggleLead, togglePage, selectAllMatching,
 } = useLeads();
 
 const loadError = ref('');
@@ -232,8 +242,8 @@ const quickChips = [
 
 const columnMeta = computed(() => Object.fromEntries(meta.value.columns.available.map((c) => [c.key, c])));
 const shownColumns = computed(() => meta.value.columns.shown);
-const allSelected = computed(() => selectedCount.value > 0 && selectedCount.value === (page.value?.total ?? 0));
-const someSelected = computed(() => selectedCount.value > 0 && !allSelected.value);
+const pageChecked = computed(() => leads.value.length > 0 && leads.value.every(isSelected));
+const pageIndeterminate = computed(() => !pageChecked.value && leads.value.some(isSelected));
 const importWorking = computed(() => isWorking(importTracker.current.value));
 
 const isSortable = (column) => column !== 'tags' && columnMeta.value[column]?.sortable;

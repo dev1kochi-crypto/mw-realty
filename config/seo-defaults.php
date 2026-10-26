@@ -37,7 +37,7 @@ return [
         'meta_description' => 'Browse verified residential listings across Dubai and the UAE. Find your next home or investment with MW Realty.',
     ],
     'marketing-properties' => [
-        'meta_title' => 'Realty Properties in Dubai | MW Realty',
+        'meta_title' => 'Realty Properties | MW Realty',
         'meta_description' => 'Hand-picked homes for sale and rent across Dubai and the UAE from trusted agencies and agents on MW Realty.',
     ],
     'premium-properties' => [
