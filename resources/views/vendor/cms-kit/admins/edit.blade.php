@@ -40,7 +40,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Password {{ isset($admin) ? '(Leave blank to keep current)' : '' }}</label>
                             <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" 
-                                   placeholder="Min 6 characters">
+                                   minlength="12" maxlength="255" placeholder="Min 12 characters">
                             @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6">

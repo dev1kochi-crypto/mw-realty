@@ -311,6 +311,7 @@
         },
         "hero": {
             "title": "عقارات في دبي",
+            "title_in": "عقارات في {place}",
             "breadcrumb_aria": "مسار التنقل",
             "breadcrumb_home": "الرئيسية"
         },
@@ -360,6 +361,7 @@
             "title": "عقارات للبيع في دبي",
             "count_suffix": "إعلان",
             "by_owner_title": "عقارات {name}",
+            "all_title_in": "جميع العقارات في {place}",
             "agent_label": "الوكيل",
             "agency_label": "الوكالة",
             "clear_owner_aria": "عرض جميع العقارات",

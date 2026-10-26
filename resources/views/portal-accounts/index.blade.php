@@ -484,7 +484,8 @@
                 {data: 'joined', name: 'joined', searchable: false},
                 {data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-end'},
             ],
-            order: [[1, 'desc']],
+            // Newest first by default, on the Joined column so the header shows the active sort.
+            order: [[{{ 9 + (int) !$type + (int) $showCompanyColumn + (int) $showAgentsColumn }}, 'desc']],
             drawCallback: function () {
                 $('#selectAllRows').prop('checked', false);
                 updateBulkButtons();
