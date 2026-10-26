@@ -76,7 +76,7 @@ class ListingFormData
                     'label' => $t['label'],
                     'number_label' => $t['number_label'],
                     'license_label' => $t['license_label'],
-                    'validates' => $t['validates'],
+                    'validates' => PermitRules::validates($key),
                     'needs_approval' => PermitRules::needsApproval($key),
                 ]),
                 'dubai_types' => PermitRules::DUBAI_TYPES,

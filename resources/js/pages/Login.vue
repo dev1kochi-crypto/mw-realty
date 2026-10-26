@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useFormErrors } from '../composables/useFormErrors';
 import { playAuthEntrance } from '../composables/useAuthEntrance';
 import { useAuthPageTransition } from '../composables/useAuthPageTransition';
@@ -8,6 +9,8 @@ import AuthGlassAmbient from '../components/auth/AuthGlassAmbient.vue';
 import PasswordField from '../components/auth/PasswordField.vue';
 
 const { t } = useStaticText();
+const route = useRoute();
+const router = useRouter();
 
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 // Still read once on mount for the one remaining full-reload path this page can land from:
@@ -15,11 +18,14 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 // with a flashed error — that's a real browser redirect, not an axios call, so it can't return
 // JSON). Login itself now submits via axios below and manages its own error state locally.
 const { messages: errorMessages, old: oldInput } = useFormErrors();
-const accountType = ref(oldInput.login_type || 'user');
+// ForgotPassword.vue lands here after a reset with ?reset=1&type=&email= — same tab, email prefilled.
+const accountType = ref(oldInput.login_type || (route.query.type === 'agent' ? 'agent' : 'user'));
+const showResetSuccess = ref(!!route.query.reset);
 const panelFormEl = ref(null);
 const { navigateWithEffect } = useAuthPageTransition(panelFormEl);
 const goToSignup = navigateWithEffect('/signup');
-const goToForgotPassword = navigateWithEffect('/forgot-password');
+// Opens Forgot Password on the same tab (customer vs agent/agency accounts reset separately).
+const goToForgotPassword = (e) => navigateWithEffect(`/forgot-password?type=${accountType.value}`)(e);
 
 const formAction = computed(() => (accountType.value === 'user' ? '/customer/login' : '/portal/login'));
 
@@ -30,13 +36,14 @@ const submitting = ref(false);
 // silently wiped whatever the user had typed the moment errorMessage/submitting changed and
 // triggered one. v-model keeps these in sync in both directions, so a re-render just reapplies
 // the same current value instead of stomping it.
-const email = ref(oldInput.email || '');
+const email = ref(oldInput.email || String(route.query.email || ''));
 const password = ref('');
 
 async function handleSubmit(e) {
     if (submitting.value) return;
     submitting.value = true;
     errorMessage.value = null;
+    showResetSuccess.value = false;
     const loginType = accountType.value;
     const loginAction = loginType === 'user' ? '/customer/login' : '/portal/login';
 
@@ -121,7 +128,11 @@ async function resendEmailCode() {
     }
 }
 
-onMounted(() => playAuthEntrance(panelFormEl.value));
+onMounted(() => {
+    playAuthEntrance(panelFormEl.value);
+    // Drop the one-off query so a refresh doesn't show the reset message again.
+    if (route.query.reset) router.replace({ path: '/login' });
+});
 </script>
 
 <template>
@@ -187,6 +198,7 @@ onMounted(() => playAuthEntrance(panelFormEl.value));
                             <h1 class="mw-login-form__title">{{ t('login.title') }}</h1>
                             <p class="mw-login-form__subtitle">{{ t('login.subtitle') }}</p>
 
+                            <p v-if="showResetSuccess" class="mw-form-feedback mw-form-feedback--success" role="status">{{ t('login.password_reset_success') }}</p>
                             <p v-if="errorMessage" class="mw-form-feedback mw-form-feedback--error" role="alert">
                                 {{ errorMessage }}
                                 <template v-if="accountType === 'user'"><br><a href="#" @click.prevent="accountType = 'agent'; errorMessage = null">{{ t('login.agent_tab_hint') }}</a></template>

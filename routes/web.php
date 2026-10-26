@@ -87,6 +87,7 @@ Route::post('/customer/login', [CustomerAuthController::class, 'login'])->name('
 Route::post('/customer/verify-otp', [CustomerAuthController::class, 'verifyOtp'])->name('customer.verify-otp')->middleware('throttle:otp-verify');
 Route::post('/customer/resend-otp', [CustomerAuthController::class, 'resendOtp'])->name('customer.resend-otp')->middleware('throttle:otp-verify');
 Route::post('/customer/forgot-password', [CustomerAuthController::class, 'forgotPassword'])->name('customer.forgot-password')->middleware('throttle:form-submit');
+Route::post('/customer/forgot-password/check-email', [CustomerAuthController::class, 'checkResetEmail'])->name('customer.forgot-password.check-email')->middleware('throttle:otp-verify');
 Route::post('/customer/reset-password', [CustomerAuthController::class, 'resetPassword'])->name('customer.reset-password')->middleware('throttle:form-submit');
 Route::post('/customer/logout', [CustomerAuthController::class, 'logout'])->name('customer.logout');
 
@@ -699,6 +700,9 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('/login/verify-email', [PortalAuthController::class, 'verifyLoginEmail'])->name('login.verify-email')->middleware('throttle:otp-verify');
         Route::post('/login/resend-email', [PortalAuthController::class, 'resendLoginEmail'])->name('login.resend-email')->middleware('throttle:otp-verify');
         Route::post('/login/two-factor', [PortalAuthController::class, 'verifyLoginTwoFactor'])->name('login.two-factor')->middleware('throttle:otp-verify');
+        // Forgot password (Agent / Agency tab of /forgot-password): verified email → new password.
+        Route::post('/forgot-password/check-email', [PortalAuthController::class, 'checkResetEmail'])->name('forgot-password.check-email')->middleware('throttle:otp-verify');
+        Route::post('/reset-password', [PortalAuthController::class, 'resetPassword'])->name('reset-password')->middleware('throttle:form-submit');
 
         // Set-password link for an agent account an agency created (emailed on admin approval).
         Route::get('/agent-setup/{agent}', [\App\Http\Controllers\Portal\AgentAccountSetupController::class, 'show'])->name('agent-setup.show')->middleware('signed');

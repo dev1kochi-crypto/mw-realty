@@ -121,7 +121,30 @@ class CustomerAuthController extends Controller
         return response()->json(['message' => 'If an account exists for that email, a reset link has been sent.']);
     }
 
-    /** Public — resources/js/pages/ResetPassword.vue. */
+    /**
+     * Public — step 1 of resources/js/pages/ForgotPassword.vue. The email must belong to an
+     * existing account that has already verified its email; it then gets a regular password
+     * broker token straight away, which step 2 sends to resetPassword() with the new password.
+     * No code/link is emailed (by request), so the throttle on this route is the only guard.
+     */
+    public function checkResetEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->input('email'))->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'No account found with this email.'], 422);
+        }
+
+        if (!$user->email_verified_at) {
+            return response()->json(['message' => 'This email is not verified yet — please complete sign-up first.'], 422);
+        }
+
+        return response()->json(['token' => PasswordBroker::createToken($user)]);
+    }
+
+    /** Public — step 2 of ForgotPassword.vue, and resources/js/pages/ResetPassword.vue (emailed link). */
     public function resetPassword(Request $request)
     {
         $request->validate([
