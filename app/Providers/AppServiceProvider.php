@@ -25,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\CMS\SiteManager\Services\LlmsTxtService::class, \App\Services\Seo\SiteLlmsTxtService::class);
         // Loop/chain-safe URL redirects (slug renames, deletions, manual rules).
         $this->app->bind(\CMS\SiteManager\Services\UrlRedirectService::class, \App\Services\Seo\SafeUrlRedirectService::class);
+        // Admin edits to static texts go to git-ignored storage, not the tracked JSON files.
+        $this->app->bind(\CMS\SiteManager\Services\StaticTranslationService::class, \App\Services\StaticTextOverrides::class);
 
         // Which concrete AI provider backs the chat widget — see config/chatbot.php's
         // 'provider' (CHATBOT_PROVIDER env). Both implementations ship regardless of which is

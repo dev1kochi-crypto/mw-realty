@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\CmsKit;
 
 use App\Models\CmsKit\Language;
-use CMS\SiteManager\Services\StaticTranslationService;
+use App\Services\StaticTextOverrides;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
@@ -11,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 class LanguageStaticTextController extends Controller
 {
     public function __construct(
-        protected StaticTranslationService $staticTranslations
+        protected StaticTextOverrides $staticTranslations
     ) {}
 
     public function index()
@@ -97,7 +97,7 @@ class LanguageStaticTextController extends Controller
         }
         ksort($flat);
 
-        $jsonFilePath = str_replace('\\', '/', $this->staticTranslations->pathForCode($code));
+        $jsonFilePath = str_replace('\\', '/', $this->staticTranslations->overridesPathForCode($code));
 
         return view('cms-kit::languages.static-texts.edit', [
             'language' => $language,
