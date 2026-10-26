@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-@php $showLanguageUi = config('cms-kit.common.modules.languages', true); @endphp
+@php $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1; @endphp
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3">
         <h6 class="mb-0 fw-bold text-primary">Contact Section Settings</h6>

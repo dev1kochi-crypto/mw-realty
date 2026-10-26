@@ -8,7 +8,7 @@
 
 @section('content')
 @php
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
     $fallback = config('app.fallback_locale', 'en');
 @endphp
 <div class="card">

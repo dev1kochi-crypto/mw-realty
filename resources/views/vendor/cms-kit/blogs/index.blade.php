@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-@php $showLanguageUi = config('cms-kit.common.modules.languages', true); @endphp
+@php $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1; @endphp
 <div class="row">
     <div class="col-12">
         <!-- Section Settings -->

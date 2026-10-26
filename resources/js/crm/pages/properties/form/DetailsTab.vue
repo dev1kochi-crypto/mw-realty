@@ -6,7 +6,7 @@
 
     <!-- Description (title, key features, description — per language) -->
     <div id="section-description" class="property-subsection-title"><i class="fas fa-align-left"></i> Description <span>Title, key features and description, per language</span></div>
-    <ul id="langTabs" class="nav property-lang-tabs mb-4" role="tablist">
+    <ul v-if="f.state.languages.length > 1" id="langTabs" class="nav property-lang-tabs mb-4" role="tablist">
         <li v-for="lang in f.state.languages" :key="lang.code" class="nav-item" role="presentation">
             <button :id="`${lang.code}-tab`" class="nav-link" :class="{ active: f.state.lang === lang.code }" type="button" role="tab" @click="f.state.lang = lang.code">{{ lang.name }}</button>
         </li>

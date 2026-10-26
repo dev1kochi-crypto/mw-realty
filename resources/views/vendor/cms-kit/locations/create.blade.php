@@ -9,7 +9,7 @@
 @php
     $locationConfig = config('cms-kit.database.locations.items', []);
     $locationRequired = $locationConfig['required'] ?? [];
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
     $sectionConfig = config('cms-kit.database.locations.section', []);
     $sectionRequired = $sectionConfig['required'] ?? [];
 @endphp

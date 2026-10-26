@@ -1,7 +1,7 @@
 @php
     $item = $testimonial ?? null;
     $itemRequired = config('cms-kit.database.testimonials.items.required', []);
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
     $currentType = old('type', $item->type ?? 'text');
 @endphp
 

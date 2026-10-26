@@ -1,6 +1,6 @@
 @php
     $isEdit = isset($plan);
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
     $currentCycle = old('billing_cycle', $plan->billing_cycle ?? 'monthly');
     $period = old('featured_period', $plan->featured_period ?? 'concurrent');
     $adMax = (int) old('ad_max_hours', $plan->ad_max_hours ?? 0);

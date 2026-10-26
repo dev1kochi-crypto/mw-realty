@@ -6,7 +6,7 @@
 
 @section('content')
 @php
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
 @endphp
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3">

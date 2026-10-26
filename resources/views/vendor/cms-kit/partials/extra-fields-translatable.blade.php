@@ -25,7 +25,7 @@
 
 @if($lang && $translatableFields->count())
 <div class="mb-4">
-    @php $showLanguageUi = config('cms-kit.common.modules.languages', true); @endphp
+    @php $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1; @endphp
     <h6 class="fw-bold mb-3">Additional Fields{{ $showLanguageUi ? ' (' . strtoupper($lang->code) . ')' : '' }}</h6>
     <div class="row g-3">
         @foreach($translatableFields as $fieldName => $fieldConfig)

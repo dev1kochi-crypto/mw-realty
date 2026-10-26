@@ -7,7 +7,7 @@
 
 @section('content')
 @php
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
     $fallbackLocale = config('app.fallback_locale');
 @endphp
 

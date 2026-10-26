@@ -6,7 +6,7 @@
 
 @section('content')
 @php
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
     $erroredSection = null;
     foreach ($errors->keys() as $errorKey) {
         if (preg_match('/^sections\.([^.]+)\.translations\.([^.]+)\./', $errorKey, $m)) {

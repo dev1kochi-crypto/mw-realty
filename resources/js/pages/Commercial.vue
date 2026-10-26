@@ -584,7 +584,7 @@ function amenityOverflow(amenities) {
                                     <img src="/frontend/assets/images/icons/verified.svg" alt="" width="16" height="16">
                                     {{ t('commercial.card.verified') }}
                                 </span>
-                                <span class="mw-commercial-card__cta-pill" :class="{ 'mw-commercial-card__cta-pill--sell': property.cta_variant === 'sell' }">{{ property.cta }}</span>
+                                <span class="mw-commercial-card__cta-pill" :class="{ 'mw-commercial-card__cta-pill--sell': property.cta_variant === 'sell' }">{{ property.listing_type === 'rent' ? t('commercial.card.for_rent', property.cta) : t('commercial.card.buy_now', property.cta) }}</span>
                             </div>
                             <button type="button" class="mw-projects__nav mw-projects__nav--prev" data-gallery-prev :aria-label="t('commercial.card.previous_photo_aria')" @click.stop>
                                 <img src="/frontend/assets/images/icons/chevron.svg" alt="">
@@ -601,7 +601,7 @@ function amenityOverflow(amenities) {
                         </div>
                         <div class="mw-commercial-card__body">
                             <div class="mw-commercial-card__price-row">
-                                <span v-if="property.service" class="mw-commercial-card__service">{{ property.service_value ? `+${formatPrice(property.service_value)} service` : property.service }}</span>
+                                <span v-if="property.service" class="mw-commercial-card__service">{{ property.service_value ? `+${formatPrice(property.service_value)} ${t('commercial.card.service', 'service')}` : property.service }}</span>
                                 <span class="mw-commercial-card__price">{{ formatPrice(property.price_value, property.price) }}</span>
                             </div>
                             <h3 class="mw-commercial-card__title"><router-link :to="`/property-details/${property.slug}`">{{ property.name }}</router-link></h3>

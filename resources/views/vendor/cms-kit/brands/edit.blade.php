@@ -9,7 +9,7 @@
 @php
     $brandConfig = config('cms-kit.database.brands.items', []);
     $brandRequired = $brandConfig['required'] ?? [];
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
     $brandExtraFields = config('cms-kit.database.brands.items.extra_fields', []);
     $hasTranslatableExtraFields = collect($brandExtraFields)->contains(fn($field) => $field['translatable'] ?? false);
 @endphp

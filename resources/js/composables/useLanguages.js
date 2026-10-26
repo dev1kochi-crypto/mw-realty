@@ -14,8 +14,10 @@ export function useLanguages() {
     if (!loaded) {
         loaded = true;
         window.axios.get('/api/languages').then((res) => {
-            languages.value = res.data;
-            selectedLanguage.value = res.data.find((lang) => lang.is_default) ?? res.data[0] ?? null;
+            // The envelope unwrap leaves a list at res.data.data.
+            const list = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
+            languages.value = list;
+            selectedLanguage.value = list.find((lang) => lang.is_default) ?? list[0] ?? null;
         }).catch(() => {
             languages.value = [{ id: 0, name: 'English', code: 'en', is_default: true, flag_url: null }];
             selectedLanguage.value = languages.value[0];

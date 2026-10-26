@@ -49,7 +49,7 @@
             <form method="post" action="{{ route('cms.languages.translations.update', $language) }}" id="static-translations-form">
                 @csrf
                 @method('PUT')
-                <div class="card glass-card border-0 shadow-sm">
+                <div class="card glass-card border-0 shadow-sm" style="margin-bottom: 90px;">
                     <div class="card-body border-bottom bg-white py-3">
                         <label class="form-label small fw-bold text-muted mb-1">Search keys</label>
                         <input type="search" class="form-control form-control-sm" id="static-text-key-search" autocomplete="off" placeholder="Type key name (e.g. listing.heroTitle)" style="max-width: 28rem;">
@@ -96,9 +96,11 @@
                             </table>
                         </div>
                     </div>
-                    <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
-                        <a href="{{ route('cms.languages.index') }}" class="btn btn-outline-secondary">Back to Languages</a>
-                        <button type="submit" class="btn btn-primary">
+                    {{-- Floating so Save is always on screen while editing a 1000+ key list. Moved to <body> by the
+                         script below — the glass card's backdrop-filter would otherwise pin "fixed" to the card. --}}
+                    <div id="static-translations-actions" class="d-flex align-items-center gap-2 bg-white rounded-4 p-2" style="position: fixed; right: 24px; bottom: 24px; z-index: 1030; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);">
+                        <a href="{{ route('cms.languages.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" form="static-translations-form" class="btn btn-primary">
                             <i class="fas fa-save me-1"></i> Save Translations
                         </button>
                     </div>
@@ -151,6 +153,29 @@
 @push('scripts')
 <script>
 (function() {
+    // PHP's max_input_vars (1000) would drop most of 2 fields × 1000+ keys, so send them as one JSON field.
+    var form = document.getElementById('static-translations-form');
+    var actions = document.getElementById('static-translations-actions');
+    if (actions) document.body.appendChild(actions);
+    if (form) {
+        form.addEventListener('submit', function() {
+            var entries = [];
+            form.querySelectorAll('[data-static-key-row]').forEach(function(row) {
+                var key = row.querySelector('[name$="[key]"]');
+                var value = row.querySelector('[name$="[value]"]');
+                if (!key || !value) return;
+                entries.push({ key: key.value, value: value.value });
+                key.removeAttribute('name');
+                value.removeAttribute('name');
+            });
+            var field = document.createElement('input');
+            field.type = 'hidden';
+            field.name = 'entries_json';
+            field.value = JSON.stringify(entries);
+            form.appendChild(field);
+        });
+    }
+
     var inputs = document.querySelectorAll('#static-text-key-search');
     inputs.forEach(function(input) {
         input.addEventListener('input', function() {

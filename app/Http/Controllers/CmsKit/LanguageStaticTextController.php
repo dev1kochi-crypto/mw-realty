@@ -79,9 +79,10 @@ class LanguageStaticTextController extends Controller
 
         $data = $this->staticTranslations->read($code);
         $flat = $this->staticTranslations->flatten($data);
-        if (is_array(old('entries'))) {
+        $oldEntries = $this->submittedEntries(old('entries_json'), old('entries'));
+        if (is_array($oldEntries)) {
             $fromOld = [];
-            foreach (old('entries') as $e) {
+            foreach ($oldEntries as $e) {
                 if (!is_array($e)) {
                     continue;
                 }
@@ -114,7 +115,7 @@ class LanguageStaticTextController extends Controller
         Language::query()->whereRaw('LOWER(code) = ?', [$code])->firstOrFail();
 
         $masterCode = $this->staticTranslations->masterCode();
-        $entries = $request->input('entries', []);
+        $entries = $this->submittedEntries($request->input('entries_json'), $request->input('entries', []));
         if (!is_array($entries)) {
             $entries = [];
         }
@@ -180,6 +181,21 @@ class LanguageStaticTextController extends Controller
         $tree = $this->staticTranslations->unflatten($normalized);
         $tree = $this->staticTranslations->mergeWithMaster($english, $tree);
         $this->staticTranslations->write($code, $tree);
+    }
+
+    /**
+     * The editor posts every row as one JSON field (entries_json) — 1000+ keys as separate
+     * entries[i][key]/[value] fields go past PHP's max_input_vars and get silently cut off.
+     */
+    protected function submittedEntries(mixed $json, mixed $fallback): mixed
+    {
+        if (is_string($json) && $json !== '') {
+            $decoded = json_decode($json, true);
+
+            return is_array($decoded) ? $decoded : [];
+        }
+
+        return $fallback;
     }
 
     /**

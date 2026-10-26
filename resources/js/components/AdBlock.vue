@@ -101,8 +101,7 @@ function onPointerUp(e) {
     startX = null;
     if (Math.abs(dx) > 40) {
         swiped = true;
-        const rtl = document.documentElement.classList.contains('is-rtl');
-        (dx < 0) !== rtl ? next() : prev();
+        dx < 0 ? next() : prev();
     }
 }
 function onSlideClick(e, ad) {
@@ -268,7 +267,6 @@ const dotClass = (i) => ({ 'is-active': i === index.value, 'is-done': i < index.
     content: ''; position: absolute; inset: 0; z-index: 1;
     background: linear-gradient(90deg, rgba(10, 15, 26, 0.88) 0%, rgba(10, 15, 26, 0.55) 45%, rgba(10, 15, 26, 0.05) 100%);
 }
-:global(html.is-rtl) .mw-ad-banner--text::after { background: linear-gradient(270deg, rgba(10, 15, 26, 0.88) 0%, rgba(10, 15, 26, 0.55) 45%, rgba(10, 15, 26, 0.05) 100%); }
 .mw-ad-banner__content {
     position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: center; gap: 6px;
     min-height: inherit; max-width: min(720px, 64%); padding: clamp(40px, 3.6vw, 52px) clamp(22px, 3vw, 44px) clamp(18px, 2vw, 26px);
@@ -310,10 +308,6 @@ const dotClass = (i) => ({ 'is-active': i === index.value, 'is-done': i < index.
 .mw-ad-slider.is-multi .mw-ad-slide.is-leaving { visibility: visible; z-index: 1; animation: mw-ad-out 0.7s cubic-bezier(0.45, 0, 0.15, 1) both; }
 .mw-ad-slider.is-multi .mw-ad-slide.is-active.is-back { animation-name: mw-ad-in-back; }
 .mw-ad-slider.is-multi .mw-ad-slide.is-leaving.is-back { animation-name: mw-ad-out-back; }
-:global(html.is-rtl) .mw-ad-slider.is-multi .mw-ad-slide.is-active { animation-name: mw-ad-in-back; }
-:global(html.is-rtl) .mw-ad-slider.is-multi .mw-ad-slide.is-leaving { animation-name: mw-ad-out-back; }
-:global(html.is-rtl) .mw-ad-slider.is-multi .mw-ad-slide.is-active.is-back { animation-name: mw-ad-in; }
-:global(html.is-rtl) .mw-ad-slider.is-multi .mw-ad-slide.is-leaving.is-back { animation-name: mw-ad-out; }
 
 /* Slow zoom-out on the image while its slide is up (Ken Burns), held while paused. */
 .mw-ad-slider.is-multi .mw-ad-slide.is-active .mw-ad-slide__img { animation: mw-ad-zoom calc(var(--mw-ad-seconds, 6s) + 1.5s) ease-out both; }
@@ -353,11 +347,9 @@ const dotClass = (i) => ({ 'is-active': i === index.value, 'is-done': i < index.
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25); transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .mw-ad-cta svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.2s ease; }
-:global(html.is-rtl) .mw-ad-cta svg { transform: scaleX(-1); }
 .mw-ad-slide:hover .mw-ad-cta { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0, 0, 0, 0.3); }
 .mw-ad-slide:hover .mw-ad-cta svg { transform: translateX(3px); }
 .mw-ad-cta--float { position: absolute; z-index: 4; left: clamp(14px, 1.4vw, 18px); bottom: clamp(12px, 1.2vw, 16px); margin: 0; }
-:global(html.is-rtl) .mw-ad-cta--float { left: auto; right: clamp(14px, 1.4vw, 18px); }
 /* Button and "Ad by …" side by side, so the text block stays short. */
 .mw-ad-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 10px; }
 .mw-ad-foot .mw-ad-cta { margin-top: 0; }
@@ -369,7 +361,6 @@ const dotClass = (i) => ({ 'is-active': i === index.value, 'is-done': i < index.
     position: absolute; z-index: 5; right: clamp(14px, 1.4vw, 18px); bottom: clamp(12px, 1.2vw, 16px);
     display: flex; align-items: center; gap: 6px; padding: 4px 5px; border-radius: 999px; background: rgba(10, 15, 26, 0.55); backdrop-filter: blur(4px);
 }
-:global(html.is-rtl) .mw-ad-slider__dots { right: auto; left: clamp(14px, 1.4vw, 18px); }
 .mw-ad-slider--card .mw-ad-slider__dots { top: clamp(10px, 1vw, 12px); bottom: auto; right: clamp(10px, 1vw, 12px); }
 .mw-ad-slider__dot {
     position: relative; width: 26px; height: 4px; padding: 0; border: 0; border-radius: 999px; overflow: hidden;
@@ -392,14 +383,12 @@ const dotClass = (i) => ({ 'is-active': i === index.value, 'is-done': i < index.
 }
 .mw-ad-slider__arrow svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .mw-ad-slider__arrow:hover, .mw-ad-slider__arrow:focus-visible { background: rgba(255, 255, 255, 0.22); outline: none; }
-:global(html.is-rtl) .mw-ad-slider__arrow svg { transform: scaleX(-1); }
 
 /* "2 / 4" — top right, so it's clear there are more ads to come. */
 .mw-ad-slider__count {
     position: absolute; z-index: 5; top: clamp(14px, 1.4vw, 18px); right: clamp(14px, 1.4vw, 18px); padding: 3px 9px; border-radius: 999px;
     background: rgba(10, 15, 26, 0.55); backdrop-filter: blur(4px); color: #fff; font-family: "Plus Jakarta Sans", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
 }
-:global(html.is-rtl) .mw-ad-slider__count { right: auto; left: clamp(14px, 1.4vw, 18px); }
 /* Narrow card: the bars already show the position. */
 .mw-ad-slider--card .mw-ad-slider__count { display: none; }
 

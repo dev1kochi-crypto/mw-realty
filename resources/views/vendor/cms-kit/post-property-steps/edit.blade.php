@@ -9,7 +9,7 @@
 @php
     $stepConfig = config('cms-kit.database.post-property-steps.items', []);
     $stepRequired = $stepConfig['required'] ?? [];
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
 @endphp
 <div class="card">
     <div class="card-header bg-white py-3">

@@ -9,7 +9,7 @@
     @php
         $siteInfoConfig = config('cms-kit.database.site-information', []);
         $siteInfoRequired = $siteInfoConfig['required'] ?? [];
-        $showLanguageUi = config('cms-kit.common.modules.languages', true);
+        $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
         $siteInfoExtraFields = config('cms-kit.database.site-information.extra_fields', []);
         $hasTranslatableExtraFields = collect($siteInfoExtraFields)->contains(fn($field) => $field['translatable'] ?? false);
         $translations = $siteInfo->translations ?? [];

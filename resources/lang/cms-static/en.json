@@ -21,7 +21,12 @@
         "blog": "Blog",
         "careers": "Careers",
         "currency_aria": "Currency",
-        "calculators": "Calculators"
+        "calculators": "Calculators",
+        "mortgage_calculator": "Mortgage Calculator",
+        "search": "Search",
+        "eligibility_calculator": "Eligibility Calculator",
+        "rent_vs_buy_calculator": "Rent vs Buy Calculator",
+        "refinance_calculator": "Refinance Calculator"
     },
     "footer": {
         "quick_links": {
@@ -235,6 +240,10 @@
                 "submit": "Contact Our Expert",
                 "sending": "Sending…"
             }
+        },
+        "projects": {
+            "loading": "Loading properties…",
+            "no_results": "No properties found in this city yet."
         }
     },
     "properties_listing": {
@@ -329,7 +338,8 @@
             "bathrooms_label": "Bathrooms",
             "select_bathrooms": "Select bathrooms",
             "more_filters_aria": "More filters",
-            "search": "Search"
+            "search": "Search",
+            "any_purpose": "Any"
         },
         "toolbar": {
             "all": "All",
@@ -373,7 +383,8 @@
             "next_photo_aria": "Next photo",
             "pagination_aria": "Properties pagination",
             "previous": "Previous",
-            "next": "Next"
+            "next": "Next",
+            "all_title": "All Properties in Dubai"
         },
         "empty_state": {
             "title": "No Properties Available",
@@ -542,7 +553,10 @@
             "email": "Email",
             "more_amenities_suffix": "more",
             "previous_photo_aria": "Previous photo",
-            "next_photo_aria": "Next photo"
+            "next_photo_aria": "Next photo",
+            "buy_now": "Buy Now",
+            "for_rent": "For Rent",
+            "service": "service"
         },
         "empty_state": {
             "title": "No Properties Available",
@@ -589,7 +603,16 @@
             "location": "Location",
             "size": "Size",
             "garage": "Garage",
-            "year_built": "Year Built"
+            "year_built": "Year Built",
+            "category": "Category",
+            "furnishing": "Furnishing",
+            "parking": "Parking",
+            "floor": "Floor",
+            "view": "View",
+            "developer": "Developer",
+            "years_old": "years old",
+            "direct_from_owner": "Direct from owner",
+            "emirate": "Emirate"
         },
         "agent_card": {
             "serves_in_dubai": "Serves in Dubai",
@@ -599,7 +622,17 @@
             "whatsapp_aria": "WhatsApp {name}",
             "email_aria": "Email {name}",
             "view_details": "View Details",
-            "agency_tag": "Agency"
+            "agency_tag": "Agency",
+            "listed_by": "Listed by",
+            "agent_tag": "Agent",
+            "years_short": "yrs experience",
+            "call": "Call",
+            "whatsapp": "WhatsApp",
+            "email": "Email",
+            "view_profile": "View profile",
+            "view_listings": "View listings",
+            "part_of": "Part of",
+            "agency_listings": "Agency listings"
         },
         "enquiry": {
             "title": "Enquire About This Property",
@@ -652,7 +685,42 @@
             "done_title": "Viewing requested",
             "done_text": "The agent will contact you shortly to confirm the exact time.",
             "close": "Done"
-        }
+        },
+        "map_aria": "Map of the property and nearby places",
+        "nearby_all": "All",
+        "watch_video": "Video tour",
+        "open_360": "360° virtual tour",
+        "price_rent": "Rent",
+        "regulatory": {
+            "permit_number_short": "permit number",
+            "title": "Regulatory information",
+            "verify": "Verify this ad",
+            "qr_alt": "Advertising permit QR code"
+        },
+        "premium": "Premium",
+        "upgraded": "Upgraded",
+        "open_house_short": "Open house",
+        "tab_availability": "Price & Availability",
+        "tab_location": "Location & Nearby",
+        "tab_mortgage": "Mortgage",
+        "key_features": "Key features",
+        "property_details": "Property details",
+        "cheques": "Number of cheques",
+        "security_deposit": "Security deposit",
+        "open_house": "Open house & viewing days",
+        "availability": "Availability",
+        "available_now": "Available immediately",
+        "book_viewing": "Book viewing",
+        "no_upcoming_dates": "No upcoming open house dates — ask the agent for a private viewing.",
+        "amenities": "Amenities",
+        "easy_access": "Easy access",
+        "highlights": "Highlights",
+        "gallery_more_photo": "photo",
+        "gallery_more_photos": "photos",
+        "location_title": "Location & Nearby",
+        "mortgage_title": "Mortgage Calculator",
+        "for_sale": "For Sale",
+        "for_rent": "For Rent"
     },
     "about": {
         "breadcrumb_aria": "Breadcrumb",
@@ -1428,7 +1496,13 @@
         }
     },
     "location_search": {
-        "type_property": "Property"
+        "type_property": "Property",
+        "type_city": "City",
+        "type_community": "Community",
+        "type_address": "Address",
+        "listing": "listing",
+        "listings": "listings",
+        "no_match": "No matching location, search will use your text"
     },
     "map": {
         "aria_label": "Properties on a map",
@@ -1546,7 +1620,27 @@
         "next": "Next",
         "eligibility": {
             "unlock": "Unlock your results",
-            "legal_prefix": "By continuing you accept our"
+            "legal_prefix": "By continuing you accept our",
+            "income": "Monthly income",
+            "income_hint": "Your fixed monthly salary or business income.",
+            "liabilities": "Total monthly liabilities",
+            "liabilities_hint": "Monthly repayments on car loans, personal loans and other finance.",
+            "card_limits": "Credit card limits",
+            "card_limits_hint": "The total limit of all your cards — banks count 5% of it as a monthly debt, even if unused.",
+            "first_time": "Is this your first time buying property in the UAE?",
+            "cta": "Get your eligibility certificate",
+            "changed": "You have changed your details — check again to update your eligibility.",
+            "check_again": "Check eligibility",
+            "result_title": "Your mortgage eligibility",
+            "over_limit": "Your monthly liabilities already use 50% or more of your income, so banks are unlikely to approve a new home loan.",
+            "purchase_price": "Property purchase price",
+            "loan_amount": "Mortgage loan amount",
+            "monthly": "Monthly payments",
+            "adjust_hint": "You can adjust your liabilities to increase the mortgage amount.",
+            "assumptions": "Based on {rate}% interest over {years} years and the UAE Central Bank’s 50% debt burden limit.",
+            "browse_cta": "See homes you can afford",
+            "modal_title": "Your eligibility certificate is ready!",
+            "modal_text": "Please share your contact details to unlock it."
         },
         "fees": {
             "mortgage_registration": "Mortgage registration fee (0.25% + AED 10)"
@@ -1564,14 +1658,106 @@
             "submit": "Get a mortgage quote",
             "point_banks": "Rates compared across leading UAE banks",
             "point_pre_approval": "Help with pre-approval and paperwork",
-            "point_free": "No cost and no obligation"
+            "point_free": "No cost and no obligation",
+            "error_name": "Please enter your name."
         },
         "breadcrumb_aria": "Breadcrumb",
         "breadcrumb_home": "Home",
-        "faq_title": "Frequently asked questions"
+        "faq_title": "Frequently asked questions",
+        "years": "yrs",
+        "yes": "Yes",
+        "no": "No",
+        "disclaimer": "Figures are estimates for guidance only and do not constitute a loan offer. Actual rates, fees and eligibility depend on your lender and circumstances.",
+        "purchase_price": "Purchase price",
+        "min_down_hint": "Minimum {pct}% for {who}",
+        "high_value_hint": "(homes above AED 5M)",
+        "loan_period": "Loan period",
+        "with_rate": "at {rate}% over {years} years",
+        "residency_national": "UAE National",
+        "residency_resident": "UAE Resident",
+        "residency_non_resident": "Non-resident",
+        "loan_duration": "Loan duration",
+        "upfront_title": "Estimated upfront costs",
+        "purchase_costs": "Total purchase costs",
+        "upfront_total": "Total amount required upfront",
+        "based_on": "Calculations based on",
+        "rent_vs_buy": {
+            "annual_rent": "Annual rent",
+            "residency_hint": "It affects the minimum down payment.",
+            "loan_period": "Mortgage loan period",
+            "assumptions": "Assumptions",
+            "mortgage_type": "Mortgage type",
+            "fixed": "Fixed",
+            "variable": "Variable",
+            "fixed_rate": "Fixed interest rate",
+            "fixed_period": "Fixed period",
+            "reversion_rate": "Rate after the fixed period",
+            "margin": "Margin over EIBOR",
+            "margin_hint": "Your rate = 3-month EIBOR (4.9%) + this margin.",
+            "rent_increase": "Yearly rent increase",
+            "appreciation": "Yearly property value growth",
+            "verdict_label": "Over {n} years",
+            "buy_wins": "Buying is cheaper",
+            "rent_wins": "Renting is cheaper",
+            "by": "by",
+            "why_buy": "Rent is money gone for good. Buying costs more up front, but at the end you own a home worth {value}.",
+            "why_rent": "With these numbers, the cost of owning (fees, interest, insurance and service charges) is more than the home you end up owning is worth, compared with renting.",
+            "breakeven": "Buying pays off after",
+            "never": "Not within the loan period",
+            "how": "How this is calculated",
+            "renting": "Renting",
+            "rent_agent": "Agent fees (5% + VAT each time you move, every 3 years)",
+            "rent_government": "Ejari registration & cancellation",
+            "rent_payments": "Rent payments",
+            "net_cost_n": "Net cost over {n} years",
+            "buying": "Buying",
+            "buy_agent": "Agent fees (2% + VAT)",
+            "buy_government": "Land Department & trustee fees",
+            "buy_bank": "Bank fees (processing, valuation, mortgage registration)",
+            "interest": "Interest",
+            "insurance": "Life & property insurance",
+            "community": "Community service charges (AED 15,000 / yr)",
+            "sale_price": "Estimated selling price",
+            "selling_fees": "Selling fees (2% agent + NOC)",
+            "comparison": "Comparison",
+            "monthly_title": "Monthly cost",
+            "compare_hint": "Year by year: what you save by buying instead of renting (above the line), and what renting costs you for good (below it).",
+            "compare_hint_rent": "Year by year: what you save by renting instead of buying (above the line), and what buying costs you (below it).",
+            "compare_aria": "Money saved by buying and rent lost by renting, year by year",
+            "year_n": "Year {n}",
+            "better_after": "becomes better than renting after {n}.",
+            "rent_better": "is a better option than buying.",
+            "view_table": "View as table",
+            "year": "Year",
+            "monthly_hint": "What you pay in the first month: rent, or the mortgage plus life and property insurance.",
+            "rent": "Rent",
+            "buy_cta": "Properties for sale",
+            "rent_cta": "Properties for rent",
+            "saved_buying": "Saved if buying",
+            "lost_buying": "Lost if buying",
+            "lost_renting": "Lost if renting",
+            "saved_renting": "Saved if renting"
+        },
+        "residency": "Residency status"
     },
     "mortgage_page": {
         "contact_cta": "Talk to an advisor",
-        "browse_cta": "Browse properties in budget"
+        "browse_cta": "Browse properties in budget",
+        "down_payment": "Down payment",
+        "loan_amount": "Loan amount",
+        "interest_rate": "Interest rate",
+        "monthly_payment": "Monthly payment",
+        "split_aria": "Principal versus interest",
+        "principal": "Principal",
+        "total_interest": "Total interest",
+        "total_repayment": "Total loan repayment"
+    },
+    "common": {
+        "previous": "Previous",
+        "next": "Next"
+    },
+    "marketing_listing": {
+        "hero_title": "Realty Properties",
+        "all_title": "All Realty Properties"
     }
 }
