@@ -9,7 +9,7 @@
 @php
     $faqConfig = config('cms-kit.database.faqs.items', []);
     $faqRequired = $faqConfig['required'] ?? [];
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
 @endphp
 <div class="card">
     <div class="card-header bg-white py-3">

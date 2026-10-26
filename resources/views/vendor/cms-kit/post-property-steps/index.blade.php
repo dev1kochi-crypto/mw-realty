@@ -6,7 +6,7 @@
 
 @section('content')
 @php
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
     $sectionConfig = config('cms-kit.database.post-property-steps.section', []);
     $sectionRequired = $sectionConfig['required'] ?? [];
     $imageConfig = config('cms-kit.images.post-property-steps.section_image', []);

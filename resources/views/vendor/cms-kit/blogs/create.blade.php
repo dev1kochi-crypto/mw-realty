@@ -9,7 +9,7 @@
 @php
     $blogConfig = config('cms-kit.database.blogs.items', []);
     $blogRequired = $blogConfig['required'] ?? [];
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
     $blogImageLabels = [
         'feature_image' => 'Listing Image',
         'detail_image' => 'Detail Image',

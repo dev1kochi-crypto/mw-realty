@@ -6,7 +6,7 @@
 
 @section('content')
 @php
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
     $careerSectionConfig = config('cms-kit.database.careers.section', []);
     $sectionTranslations = $section->translations ?? [];
     $existingFilters = old('section_filters', collect(data_get($section->extra_fields, 'filters', []))

@@ -195,7 +195,7 @@ function logout(e) {
                         <img src="/frontend/assets/images/icons/user.svg" alt="" width="18" height="18">
                         <span>{{ t('nav.login') }}</span>
                     </router-link>
-                    <div class="mw-dropdown" data-dropdown>
+                    <div v-if="languages.length > 1" class="mw-dropdown" data-dropdown>
                         <button type="button" class="mw-header__lang" data-dropdown-trigger>
                             <img v-if="selectedLanguage?.flag_url" :src="selectedLanguage.flag_url" alt="" class="mw-header__lang-flag" width="22" height="16">
                             <span>{{ selectedLanguage?.code?.toUpperCase() }}</span>
@@ -261,7 +261,7 @@ function logout(e) {
                     <router-link v-else to="/login" class="mw-mobile-nav__login-option">{{ t('nav.login') }}</router-link>
                 </div>
                 <div class="mw-mobile-nav__prefs">
-                    <div class="mw-dropdown" data-dropdown>
+                    <div v-if="languages.length > 1" class="mw-dropdown" data-dropdown>
                         <button type="button" class="mw-header__lang" data-dropdown-trigger>
                             <img v-if="selectedLanguage?.flag_url" :src="selectedLanguage.flag_url" alt="" class="mw-header__lang-flag" width="22" height="16">
                             <span>{{ selectedLanguage?.code?.toUpperCase() }}</span>

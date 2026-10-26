@@ -4,7 +4,7 @@
         <div class="property-tab-pane-hint">Area, address and map details, per language</div>
     </div>
 
-    <ul id="locationLangTabs" class="nav property-lang-tabs mb-4" role="tablist">
+    <ul v-if="f.state.languages.length > 1" id="locationLangTabs" class="nav property-lang-tabs mb-4" role="tablist">
         <li v-for="lang in f.state.languages" :key="lang.code" class="nav-item" role="presentation">
             <button :id="`loc-${lang.code}-tab`" class="nav-link" :class="{ active: f.state.lang === lang.code }" type="button" role="tab" @click="f.state.lang = lang.code">{{ lang.name }}</button>
         </li>

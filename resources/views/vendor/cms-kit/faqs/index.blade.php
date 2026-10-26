@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-@php $showLanguageUi = config('cms-kit.common.modules.languages', true); @endphp
+@php $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1; @endphp
 <!-- Section Settings -->
 <div class="card mb-4 shadow-sm border-0">
     <div class="card-body">

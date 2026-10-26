@@ -1,7 +1,7 @@
 @php
     $careerConfig = config('cms-kit.database.careers.items', []);
     $careerRequired = $careerConfig['required'] ?? [];
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
     $item = $career ?? null;
     $isEdit = (bool) $item;
     $fallbackLocale = config('app.fallback_locale', 'en');

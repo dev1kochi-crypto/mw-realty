@@ -2,7 +2,7 @@
     $departmentConfig = config('cms-kit.database.careers.departments', []);
     $item = $department ?? null;
     $isEdit = (bool) $item;
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
 @endphp
 
 <div class="card">

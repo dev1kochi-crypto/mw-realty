@@ -16,6 +16,10 @@
 .is-rtl [class*=card] :is(h1, h2, h3, h4, h5, h6, span, p, li, a, div) {
   text-align: right !important;
 }
+/* Order mixed Arabic/English text (e.g. "موثّق من MW", "الطابق: 21") by each line's first letter — the page itself stays LTR. */
+.is-rtl :is(h1, h2, h3, h4, h5, h6, p, li, span, a, button, label, td, th, dd, dt, small, strong) {
+  unicode-bidi: plaintext;
+}
 
 .is-rtl [data-builders-slider],
 .is-rtl [data-price-slider],
@@ -1626,6 +1630,7 @@ header .mw-header__login,
 header .mw-header__lang,
 header .mw-header__currency {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 8px;
   min-height: 44px;
@@ -16662,6 +16667,12 @@ body.property-details-page main {
   header .mw-header__lang,
   header .mw-header__currency {
     padding: 8px 12px;
+  }
+}
+/* Header buttons don't shrink (their text would spill out), so the menu gives up the space. */
+@media (min-width: 1440px) and (max-width: 1599px) {
+  header .mw-nav {
+    gap: 1.8vw;
   }
 }
 header .mw-nav__item--has-sub {

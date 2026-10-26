@@ -7,7 +7,7 @@
 @section('content')
 @php
     $sectionRequired = config('cms-kit.database.testimonials.section.required', []);
-    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $showLanguageUi = config('cms-kit.common.modules.languages', true) && count($languages) > 1;
 @endphp
 
 <div class="card mb-4">

@@ -458,7 +458,7 @@ function agentAria(template, name) {
                 <div class="mw-property__head" data-reveal>
                     <h2 class="sr-only">{{ property.name }}</h2>
                     <div class="mw-property__head-main">
-                        <span class="mw-property__status-badge">{{ property.listing_type_label }}</span>
+                        <span class="mw-property__status-badge">{{ property.listing_type === 'rent' ? t('property_details.for_rent', property.listing_type_label) : t('property_details.for_sale', property.listing_type_label) }}</span>
                         <span v-if="property.premium" class="mw-property__status-badge mw-property__status-badge--premium">{{ t('property_details.premium', 'Premium') }}</span>
                         <span v-if="property.upgraded" class="mw-property__status-badge mw-property__status-badge--upgraded">{{ t('property_details.upgraded', 'Upgraded') }}</span>
                         <a v-if="viewingDates.length" href="#availability" class="mw-property__openhouse-flag" @click.prevent="scrollToAvailability">
