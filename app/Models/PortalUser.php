@@ -281,14 +281,20 @@ class PortalUser extends Authenticatable
         return $this->two_factor_prompt_pending && !$this->hasTwoFactorEnabled();
     }
 
-    /** 2FA is mandatory for this account: its own company setting, or its agency's. */
+    /** 2FA is mandatory for this account: every agency (config), its own company setting, or its agency's. */
     public function twoFactorRequired(): bool
     {
         if ($this->isAgency()) {
-            return (bool) $this->two_factor_enforced;
+            return $this->twoFactorRequiredForAgencies() || (bool) $this->two_factor_enforced;
         }
 
         return $this->isAgencyAgent() && (bool) $this->company?->two_factor_enforced;
+    }
+
+    /** Platform rule (config auth.two_factor.required_for_agencies): agencies can't use the CRM without 2FA. */
+    public function twoFactorRequiredForAgencies(): bool
+    {
+        return $this->isAgency() && (bool) config('auth.two_factor.required_for_agencies');
     }
 
     public function scopeCompanies($query)

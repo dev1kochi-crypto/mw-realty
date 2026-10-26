@@ -31,6 +31,7 @@
                     </div>
                     <p class="sec-card__text">2-factor authentication adds an extra layer of security to your account. After your password, you'll enter a code from your phone.</p>
                     <div v-if="s.required && !s.is_agency" class="alert alert-info py-2 small"><i class="fas fa-building me-1"></i>Your agency has made 2FA mandatory, so it can't be turned off.</div>
+                    <div v-else-if="s.required && s.is_agency && !s.company_enforced" class="alert alert-info py-2 small"><i class="fas fa-building-shield me-1"></i>Agency accounts must use 2FA, so it can't be turned off.</div>
 
                     <div class="sec-methods">
                         <div class="sec-methods__label">2-factor authentication methods</div>

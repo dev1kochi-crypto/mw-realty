@@ -1,5 +1,9 @@
 <template>
-    <div>
+    <!-- Same gate as the Leads page when the list can't load (e.g. 403 while the account awaits approval). -->
+    <div v-if="loadError" class="text-center py-5">
+        <div class="text-muted">{{ loadError }} <button type="button" class="btn btn-link" @click="load()">Try again</button></div>
+    </div>
+    <div v-else>
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
                 <div class="portal-section-title mb-0">Deleted Leads</div>
@@ -8,16 +12,6 @@
             <RouterLink :to="{ name: 'leads.index' }" class="portal-btn-ghost btn btn-sm">Back to Leads</RouterLink>
         </div>
         <div class="portal-card p-3 p-md-4">
-            <!-- Bulk bar — shown while leads are ticked (or "select all" is on). -->
-            <div v-if="selectedCount" class="d-flex align-items-center flex-wrap gap-2 mb-3 p-2 rounded" style="background: rgba(0,0,0,.04);">
-                <span class="fw-semibold ms-1">{{ number(selectedCount) }} selected</span>
-                <button v-if="!selectAll && meta && meta.total > leads.length && pageAllTicked" type="button" class="btn btn-link btn-sm p-0" @click="selectAll = true; excluded = new Set()">Select all {{ number(meta.total) }}</button>
-                <div class="ms-auto d-flex gap-2">
-                    <button type="button" class="btn btn-sm portal-btn-ghost" @click="clear">Clear</button>
-                    <button type="button" class="btn btn-sm portal-btn-ghost" @click="bulk('restore')"><i class="fas fa-rotate-left me-1"></i>Restore</button>
-                    <button type="button" class="btn btn-sm btn-outline-danger" @click="bulk('force')"><i class="fas fa-trash me-1"></i>Delete Permanently</button>
-                </div>
-            </div>
             <div class="table-responsive">
                 <table class="table portal-table mb-0">
                     <thead>
@@ -59,6 +53,14 @@
                 <li class="page-item" :class="{ disabled: meta.current_page >= meta.last_page }"><button type="button" class="page-link" @click="load(meta.current_page + 1)">Next</button></li>
             </ul>
         </nav>
+
+        <!-- Header checkbox ticks this page; "Select all N" widens it to every deleted lead. -->
+        <SelectionBar :count="selectedCount" :total="meta?.total ?? 0" label="Selected deleted leads"
+                      :can-select-all="!selectAll && !!meta && meta.total > leads.length && pageAllTicked"
+                      @select-all="selectAll = true; excluded = new Set()" @clear="clear">
+            <button type="button" class="btn btn-success btn-sm" @click="bulk('restore')"><i class="fas fa-rotate-left me-1"></i> Restore ({{ number(selectedCount) }})</button>
+            <button type="button" class="btn btn-danger btn-sm" @click="bulk('force')"><i class="fas fa-trash me-1"></i> Delete Permanently</button>
+        </SelectionBar>
     </div>
 </template>
 
@@ -66,6 +68,7 @@
 /** Deleted Leads (resources/views/portal/crm/leads/trashed) — GET /leads/trashed, restore / delete permanently. */
 import { computed, onMounted, ref } from 'vue';
 import http, { errorMessage } from '../../api/http';
+import SelectionBar from '../../components/SelectionBar.vue';
 import { useToast } from '../../composables/useToast';
 import { useConfirm } from '../../composables/useConfirm';
 import { formatDateTime, number } from '../../utils/format';
@@ -77,6 +80,7 @@ const leads = ref([]);
 const meta = ref(null);
 const isAdmin = ref(false);
 const loading = ref(false);
+const loadError = ref('');
 const ticked = ref(new Set());
 const selectAll = ref(false);
 const excluded = ref(new Set());
@@ -89,11 +93,14 @@ function load(p = 1) {
     loading.value = true;
     return http.get('/leads/trashed', { params: { page: p } })
         .then((res) => {
+            loadError.value = '';
             leads.value = res.data.data;
             meta.value = res.data.meta;
             isAdmin.value = res.data.is_admin;
         })
-        .catch((e) => toastError(errorMessage(e)))
+        .catch((e) => {
+            loadError.value = errorMessage(e);
+        })
         .finally(() => {
             loading.value = false;
         });

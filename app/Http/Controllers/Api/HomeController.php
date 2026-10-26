@@ -31,7 +31,8 @@ class HomeController extends Controller
      *
      * Every home section in one request: banner, brands, ad, developments, premium properties,
      * luxury, why-choose-us, communities, popular places, testimonials, contact. Property lists
-     * inside are shuffled on each call.
+     * inside are shuffled on each call — except Realty Property while it shows Super Admin's
+     * Marketing Properties list (`realty.curated`), which keeps that list's order.
      *
      * `ad` is a single ad, kept for older clients. The home ad slider shows every running ad:
      * load it from **Ad slider** (`/api/ads/slides?placement=home`).
@@ -44,7 +45,7 @@ class HomeController extends Controller
 
         $data = $this->homePage->getHomeData($lang);
         foreach (['developments', 'premiumProperties', 'luxury', 'realty'] as $section) {
-            if (isset($data[$section]['properties'])) {
+            if (isset($data[$section]['properties']) && empty($data[$section]['curated'])) {
                 $data[$section]['properties'] = collect($data[$section]['properties'])->shuffle()->values()->all();
             }
         }

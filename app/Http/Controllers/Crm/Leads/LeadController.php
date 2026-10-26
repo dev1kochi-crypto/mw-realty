@@ -705,7 +705,7 @@ class LeadController extends Controller
         $data = $request->validate([
             'action' => ['required', Rule::in(['restore', 'force'])],
             'select_all' => ['nullable', 'boolean'],
-            'ids' => ['required_unless:select_all,1', 'array'],
+            'ids' => ['required_unless:select_all,true,1', 'array'],
             'ids.*' => ['integer'],
             'exclude_ids' => ['nullable', 'array'],
             'exclude_ids.*' => ['integer'],
@@ -846,7 +846,7 @@ class LeadController extends Controller
     {
         $request->validate([
             'select_all' => ['nullable', 'boolean'],
-            'ids' => ['required_unless:select_all,1', 'array', 'max:1000'],
+            'ids' => ['required_unless:select_all,true,1', 'array', 'max:1000'],
             'ids.*' => ['integer'],
             'exclude_ids' => ['nullable', 'array'],
             'exclude_ids.*' => ['integer'],

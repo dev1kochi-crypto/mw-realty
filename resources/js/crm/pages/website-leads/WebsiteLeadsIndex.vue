@@ -53,12 +53,9 @@
         </div>
 
         <div class="portal-card p-3 p-md-4">
-            <!-- "Select all matching" — offered once the whole page is ticked and there's more beyond it. -->
-            <div v-if="allMode || (pageChecked && page.meta.total > leads.length)" class="wl-select-all mb-3">
-                <span>{{ allMode
-                    ? `All ${selectedCount} matching leads are selected${page.meta.total > page.bulk_limit ? ` (up to ${page.bulk_limit} per transfer).` : '.'}`
-                    : `All ${leads.length} leads on this page are selected.` }}</span>
-                <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" @click="toggleAllMode">{{ allMode ? 'Clear selection' : `Select all ${page.meta.total} matching leads` }}</button>
+            <!-- "Select all" (in the floating bar) is capped per transfer — say so when more leads match. -->
+            <div v-if="allMode && page.meta.total > page.bulk_limit" class="wl-select-all mb-3">
+                {{ number(page.meta.total) }} leads match — a transfer takes up to {{ number(page.bulk_limit) }} at a time, so the first {{ number(selectedCount) }} are selected.
             </div>
 
             <div class="table-responsive">
@@ -116,6 +113,12 @@
             <div v-if="page.meta.last_page > 1" class="mt-3"><CrmPagination :meta="page.meta" @change="goToPage" /></div>
         </div>
 
+        <!-- Header checkbox ticks this page; "Select all N" widens it to every matching lead. -->
+        <SelectionBar :count="selectedCount" :total="page.meta.total" label="Selected website leads"
+                      :can-select-all="!allMode && pageChecked && page.meta.total > leads.length"
+                      @select-all="selectAllMatching" @clear="clearSelection">
+            <button type="button" class="btn btn-success btn-sm" @click="openTransfer"><i class="fas fa-share me-1"></i> Transfer ({{ number(selectedCount) }})</button>
+        </SelectionBar>
         <TransferModal :selection="transferSelection" :filters="filters" @close="transferSelection = null" @done="afterTransfer" />
     </div>
 </template>
@@ -130,6 +133,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import http, { errorMessage } from '../../api/http';
 import CrmPagination from '../../components/CrmPagination.vue';
+import SelectionBar from '../../components/SelectionBar.vue';
 import TransferModal from './TransferModal.vue';
 import { useToast } from '../../composables/useToast';
 import { useSession } from '../../composables/useSession';
@@ -208,10 +212,9 @@ function togglePage(checked) {
     leads.value.forEach((lead) => toggle(lead, checked));
 }
 
-function toggleAllMode() {
-    const on = !allMode.value;
+function selectAllMatching() {
     clearSelection();
-    allMode.value = on;
+    allMode.value = true;
 }
 
 function apply() {

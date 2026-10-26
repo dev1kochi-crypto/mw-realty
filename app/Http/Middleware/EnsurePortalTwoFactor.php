@@ -37,7 +37,9 @@ class EnsurePortalTwoFactor
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => $required
-                    ? 'Your company requires two-factor authentication. Please set it up to continue.'
+                    ? ($portalUser->twoFactorRequiredForAgencies()
+                        ? 'Agency accounts must set up two-factor authentication to continue.'
+                        : 'Your company requires two-factor authentication. Please set it up to continue.')
                     : 'Please set up two-factor authentication or skip it to continue.',
                 'redirect' => $setupUrl,
             ], 403);

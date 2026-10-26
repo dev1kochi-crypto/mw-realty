@@ -30,29 +30,79 @@ use Yajra\DataTables\Facades\DataTables;
  */
 class PortalUserController extends Controller
 {
+    /**
+     * The accounts the list shows for the type tab + filter panel — shared by the table, Export and
+     * the bulk actions' "select all matching".
+     */
+    private function filteredAccounts(Request $request)
+    {
+        $type = $request->input('type');
+
+        return PortalUser::query()
+            ->when(in_array($type, ['agent', 'company']), fn ($q) => $q->where('type', $type))
+            ->when($request->filled('company_id'), fn ($q) => $q->where('company_id', $request->input('company_id')))
+            ->when($request->filled('plan_id'), function ($q) use ($request) {
+                $request->input('plan_id') === 'none' ? $q->whereNull('plan_id') : $q->where('plan_id', $request->input('plan_id'));
+            })
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
+            ->when($request->filled('payment_status'), fn ($q) => $q->where('payment_status', $request->input('payment_status')))
+            ->when($request->filled('payment_month'), function ($q) use ($request) {
+                [$year, $month] = array_pad(explode('-', $request->input('payment_month')), 2, null);
+                $q->whereYear('last_payment_at', $year)->whereMonth('last_payment_at', $month);
+            })
+            ->when($request->filled('joined_from'), fn ($q) => $q->whereDate('created_at', '>=', $request->input('joined_from')))
+            ->when($request->filled('joined_to'), fn ($q) => $q->whereDate('created_at', '<=', $request->input('joined_to')))
+            ->when($request->filled('pending_days'), fn ($q) => $q->where('status', 'pending')
+                ->where('status_changed_at', '<=', now()->subDays((int) $request->input('pending_days'))))
+            ->when($request->filled('has_properties'), fn ($q) => $request->input('has_properties') === '1' ? $q->has('properties') : $q->doesntHave('properties'))
+            ->when($request->filled('has_leads'), fn ($q) => $request->input('has_leads') === '1' ? $q->has('leads') : $q->doesntHave('leads'));
+    }
+
+    /** The table's search box: name, agency name, email or phone. */
+    private function applyKeyword($query, string $keyword): void
+    {
+        $query->where(function ($q) use ($keyword) {
+            $q->where('name', 'like', "%{$keyword}%")
+                ->orWhere('company_name', 'like', "%{$keyword}%")
+                ->orWhere('email', 'like', "%{$keyword}%")
+                ->orWhere('phone', 'like', "%{$keyword}%");
+        });
+    }
+
+    /**
+     * The ids a bulk action applies to: the ticked `ids`, or — with `select_all` — every account
+     * matching the list's type / filters / `search`, minus `exclude_ids` unticked afterwards.
+     */
+    private function bulkIds(Request $request): array
+    {
+        $request->validate([
+            'select_all' => 'nullable|boolean',
+            'ids' => 'required_unless:select_all,true,1|array',
+            'ids.*' => 'integer|exists:portal_users,id',
+            'exclude_ids' => 'nullable|array',
+            'exclude_ids.*' => 'integer',
+        ]);
+
+        if (!$request->boolean('select_all')) {
+            return $request->input('ids');
+        }
+
+        $query = $this->filteredAccounts($request);
+        $keyword = trim((string) $request->input('search', ''));
+        if ($keyword !== '') {
+            $this->applyKeyword($query, $keyword);
+        }
+
+        return $query->pluck('id')->diff($request->input('exclude_ids', []))->values()->all();
+    }
+
     public function index(Request $request)
     {
         $type = $request->query('type');
 
         if ($request->ajax()) {
-            $data = PortalUser::withCount(['properties', 'leads', 'agents'])->with(['plan', 'company.plan', 'currentMembership'])
-                ->when(in_array($type, ['agent', 'company']), fn ($q) => $q->where('type', $type))
-                ->when($request->filled('company_id'), fn ($q) => $q->where('company_id', $request->query('company_id')))
-                ->when($request->filled('plan_id'), function ($q) use ($request) {
-                    $request->query('plan_id') === 'none' ? $q->whereNull('plan_id') : $q->where('plan_id', $request->query('plan_id'));
-                })
-                ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))
-                ->when($request->filled('payment_status'), fn ($q) => $q->where('payment_status', $request->query('payment_status')))
-                ->when($request->filled('payment_month'), function ($q) use ($request) {
-                    [$year, $month] = array_pad(explode('-', $request->query('payment_month')), 2, null);
-                    $q->whereYear('last_payment_at', $year)->whereMonth('last_payment_at', $month);
-                })
-                ->when($request->filled('joined_from'), fn ($q) => $q->whereDate('created_at', '>=', $request->query('joined_from')))
-                ->when($request->filled('joined_to'), fn ($q) => $q->whereDate('created_at', '<=', $request->query('joined_to')))
-                ->when($request->filled('pending_days'), fn ($q) => $q->where('status', 'pending')
-                    ->where('status_changed_at', '<=', now()->subDays((int) $request->query('pending_days'))))
-                ->when($request->filled('has_properties'), fn ($q) => $request->query('has_properties') === '1' ? $q->has('properties') : $q->doesntHave('properties'))
-                ->when($request->filled('has_leads'), fn ($q) => $request->query('has_leads') === '1' ? $q->has('leads') : $q->doesntHave('leads'));
+            $data = $this->filteredAccounts($request)
+                ->withCount(['properties', 'leads', 'agents'])->with(['plan', 'company.plan', 'currentMembership']);
 
             $plans = Plan::active()->orderBy('order_index')->get();
 
@@ -75,14 +125,7 @@ class PortalUserController extends Controller
                         . '<div class="text-muted contact-subline">' . e($row->phone ?: '-') . '</div>'
                         . '</div></div>';
                 })
-                ->filterColumn('contact', function ($query, $keyword) {
-                    $query->where(function ($q) use ($keyword) {
-                        $q->where('name', 'like', "%{$keyword}%")
-                            ->orWhere('company_name', 'like', "%{$keyword}%")
-                            ->orWhere('email', 'like', "%{$keyword}%")
-                            ->orWhere('phone', 'like', "%{$keyword}%");
-                    });
-                })
+                ->filterColumn('contact', fn ($query, $keyword) => $this->applyKeyword($query, $keyword))
                 ->addColumn('company', function ($row) {
                     if ($row->type !== 'agent') {
                         return '<span class="text-muted">-</span>';
@@ -227,24 +270,8 @@ class PortalUserController extends Controller
 
     public function export(Request $request)
     {
-        $type = $request->query('type');
-
-        $query = PortalUser::with(['plan', 'company'])
-            ->when(in_array($type, ['agent', 'company']), fn ($q) => $q->where('type', $type))
-            ->when($request->filled('company_id'), fn ($q) => $q->where('company_id', $request->query('company_id')))
-            ->when($request->filled('plan_id'), function ($q) use ($request) {
-                $request->query('plan_id') === 'none' ? $q->whereNull('plan_id') : $q->where('plan_id', $request->query('plan_id'));
-            })
-            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))
-            ->when($request->filled('payment_status'), fn ($q) => $q->where('payment_status', $request->query('payment_status')))
-            ->when($request->filled('payment_month'), function ($q) use ($request) {
-                [$year, $month] = array_pad(explode('-', $request->query('payment_month')), 2, null);
-                $q->whereYear('last_payment_at', $year)->whereMonth('last_payment_at', $month);
-            })
-            ->when($request->filled('joined_from'), fn ($q) => $q->whereDate('created_at', '>=', $request->query('joined_from')))
-            ->when($request->filled('joined_to'), fn ($q) => $q->whereDate('created_at', '<=', $request->query('joined_to')))
-            ->when($request->filled('has_properties'), fn ($q) => $request->query('has_properties') === '1' ? $q->has('properties') : $q->doesntHave('properties'))
-            ->when($request->filled('has_leads'), fn ($q) => $request->query('has_leads') === '1' ? $q->has('leads') : $q->doesntHave('leads'))
+        $query = $this->filteredAccounts($request)
+            ->with(['plan', 'company'])
             ->withCount(['properties', 'leads'])
             ->orderBy('id');
 
@@ -604,12 +631,7 @@ class PortalUserController extends Controller
 
     public function bulkApprove(Request $request)
     {
-        $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'integer|exists:portal_users,id',
-        ]);
-
-        $portalUsers = PortalUser::whereIn('id', $request->input('ids'))
+        $portalUsers = PortalUser::whereIn('id', $this->bulkIds($request))
             ->where('status', '!=', 'approved')
             ->where('kyc_review_status', 'submitted')
             ->whereNotNull('kyc_user_submitted_at')
@@ -916,12 +938,7 @@ class PortalUserController extends Controller
 
     public function bulkDelete(Request $request)
     {
-        $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'integer|exists:portal_users,id',
-        ]);
-
-        $portalUsers = PortalUser::with('properties.images')->whereIn('id', $request->input('ids'))->get();
+        $portalUsers = PortalUser::with('properties.images')->whereIn('id', $this->bulkIds($request))->get();
         foreach ($portalUsers as $portalUser) {
             $this->deleteWithConnectedData($portalUser);
         }
