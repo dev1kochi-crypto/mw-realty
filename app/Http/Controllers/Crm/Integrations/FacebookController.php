@@ -49,17 +49,20 @@ class FacebookController extends Controller
      * Facebook Lead Ads screen
      *
      * Connected Pages (Super Admin: every Page, searched and paged 20 at a time; otherwise the
-     * account's own), the Pages waiting to be picked after a Facebook Login, and — once — the
-     * outcome of that login (`notice`).
+     * account's own). With `selection` (the one-time id from connect-url, which only the screen
+     * that started the Facebook Login knows): the Pages from that login waiting to be picked, and —
+     * once — its outcome (`notice`). Without it — a reload, another browser — nothing is pending.
      *
      * @queryParam q string Super Admin: Page or account name. Example: marina
      * @queryParam page integer Example: 1
+     * @queryParam selection string The `selection` from connect-url, after the Facebook Login. Example: 8fQx…
      */
     public function show(Request $request)
     {
         $isAdmin = $this->isAdmin();
         $canManage = $this->canManage();
-        $pending = $canManage ? $this->pendingPages() : [];
+        $selection = $canManage ? (string) $request->query('selection', '') : '';
+        $pending = $this->pendingPages($selection);
         $search = mb_substr(trim((string) $request->query('q', '')), 0, 100);
 
         $connections = $isAdmin
@@ -76,7 +79,7 @@ class FacebookController extends Controller
             ? FacebookPageConnection::with('owner:id,type,name,company_name')->whereIn('page_id', array_column($pending, 'id'))->get()->keyBy('page_id')
             : collect();
 
-        $notice = $canManage ? Cache::pull(self::NOTICE_CACHE . $this->actorKey()) : null;
+        $notice = $selection !== '' && $this->ownsSelection($selection, self::NOTICE_CACHE) ? Cache::pull(self::NOTICE_CACHE . $selection)['notice'] : null;
 
         return response()->json([
             'is_admin' => $isAdmin,
@@ -103,6 +106,8 @@ class FacebookController extends Controller
                     'connected_to' => $connection && !$mine ? ($isAdmin ? ($connection->owner?->displayName() ?? 'another account') : 'another account') : null,
                 ];
             })->values(),
+            // Echoed back while its Pages are still waiting, so the screen sends it with Connect / Cancel.
+            'selection' => $pending ? $selection : null,
             'notice' => $notice,
             'setup' => $isAdmin && !$this->facebook->configured() ? [
                 'callback_url' => route('integrations.facebook.callback'),
@@ -176,8 +181,11 @@ class FacebookController extends Controller
      * Returns the Facebook Login address to open — in a popup over the screen (`popup=1`: the
      * callback closes it and tells the screen to reload), or the whole window / an in-app browser.
      *
+     * `selection` is this login's one-time id: keep it in memory and send it to the screen
+     * (`selection`) after the login, and with Connect / Cancel.
+     *
      * @queryParam popup boolean Example: true
-     * @response 200 {"url": "https://www.facebook.com/v19.0/dialog/oauth?..."}
+     * @response 200 {"url": "https://www.facebook.com/v19.0/dialog/oauth?...", "selection": "8fQx…"}
      */
     public function connectUrl(Request $request)
     {
@@ -187,7 +195,7 @@ class FacebookController extends Controller
         $state = Str::random(40);
         Cache::put(self::STATE_CACHE . $state, ['actor' => $this->actorKey(), 'popup' => $request->boolean('popup')], now()->addMinutes(self::PENDING_MINUTES));
 
-        return response()->json(['url' => $this->facebook->loginUrl(route('integrations.facebook.callback'), $state)]);
+        return response()->json(['url' => $this->facebook->loginUrl(route('integrations.facebook.callback'), $state), 'selection' => $state]);
     }
 
     /**
@@ -198,15 +206,18 @@ class FacebookController extends Controller
      */
     public function callback(Request $request)
     {
-        $started = $request->filled('state') ? Cache::pull(self::STATE_CACHE . $request->input('state')) : null;
+        $state = (string) $request->input('state', '');
+        $started = $state !== '' ? Cache::pull(self::STATE_CACHE . $state) : null;
         $actor = $started['actor'] ?? null;
         $popup = (bool) ($started['popup'] ?? false);
+        // The login's one-time id — what the starting screen asks for its Pages and notice with.
+        $selection = $actor ? $state : null;
 
         if ($request->filled('error')) {
-            return $this->finishLogin($actor, $popup, 'error', 'Facebook connection cancelled' . ($request->filled('error_description') ? ': ' . $request->input('error_description') : '.'));
+            return $this->finishLogin($actor, $selection, $popup, 'error', 'Facebook connection cancelled' . ($request->filled('error_description') ? ': ' . $request->input('error_description') : '.'));
         }
         if (!$actor || !$request->filled('code')) {
-            return $this->finishLogin($actor, $popup, 'error', 'The Facebook login could not be verified — please try connecting again.');
+            return $this->finishLogin($actor, $selection, $popup, 'error', 'The Facebook login could not be verified — please try connecting again.');
         }
 
         try {
@@ -218,29 +229,33 @@ class FacebookController extends Controller
         } catch (\Throwable $e) {
             Log::warning('Facebook connect failed: ' . $e->getMessage());
 
-            return $this->finishLogin($actor, $popup, 'error', 'Facebook connection failed: ' . $e->getMessage());
+            return $this->finishLogin($actor, $selection, $popup, 'error', 'Facebook connection failed: ' . $e->getMessage());
         }
 
         if (!$pages) {
-            return $this->finishLogin($actor, $popup, 'error', 'No Facebook Pages found. Log in with a Facebook account that manages the Page, and allow access to it.');
+            return $this->finishLogin($actor, $selection, $popup, 'error', 'No Facebook Pages found. Log in with a Facebook account that manages the Page, and allow access to it.');
         }
 
-        Cache::put(self::PAGES_CACHE . $actor, encrypt($pages), now()->addMinutes(self::PENDING_MINUTES));
+        // Under this login's id, not the account: only the screen that started it can pick from them.
+        Cache::put(self::PAGES_CACHE . $selection, encrypt(['actor' => $actor, 'pages' => $pages]), now()->addMinutes(self::PENDING_MINUTES));
 
-        return $this->finishLogin($actor, $popup, 'success', str_starts_with($actor, 'admin.') ? 'Choose the agency or agent each Facebook Page belongs to.' : 'Choose the Facebook Pages to connect.');
+        return $this->finishLogin($actor, $selection, $popup, 'success', str_starts_with($actor, 'admin.') ? 'Choose the agency or agent each Facebook Page belongs to.' : 'Choose the Facebook Pages to connect.');
     }
 
-    /** Back to the Facebook screen with a message: a popup closes itself and tells the screen that opened it. */
-    private function finishLogin(?string $actor, bool $popup, string $type, string $message)
+    /**
+     * Back to the Facebook screen with a message: a popup closes itself and tells the screen that
+     * opened it (with the login's id); a full-window login lands back on the screen with ?selection=.
+     */
+    private function finishLogin(?string $actor, ?string $selection, bool $popup, string $type, string $message)
     {
-        if ($actor) {
-            Cache::put(self::NOTICE_CACHE . $actor, ['type' => $type, 'message' => $message], now()->addMinutes(self::PENDING_MINUTES));
+        if ($actor && $selection) {
+            Cache::put(self::NOTICE_CACHE . $selection, ['actor' => $actor, 'notice' => ['type' => $type, 'message' => $message]], now()->addMinutes(self::PENDING_MINUTES));
         }
         $screen = route('crm.app', 'integrations/facebook');
 
         return $popup
-            ? response()->view('crm.integrations.facebook-popup-done', ['indexUrl' => $screen])
-            : redirect()->to($screen);
+            ? response()->view('crm.integrations.facebook-popup-done', ['indexUrl' => $screen, 'selection' => $selection])
+            : redirect()->to($selection ? $screen . '?selection=' . urlencode($selection) : $screen);
     }
 
     /**
@@ -253,11 +268,17 @@ class FacebookController extends Controller
      * @bodyParam page_ids string[] Agency / agent: the ticked Pages. Example: ["1029384756"]
      * @bodyParam import_existing boolean Also import the leads these Pages already have. Example: true
      * @bodyParam import_days string 7 | 30 | 90 | all. Example: all
+     * @bodyParam selection string required The Facebook Login's `selection` (from connect-url). Example: 8fQx…
      */
     public function storePages(Request $request)
     {
         $this->authorizeManage();
-        $pending = collect($this->pendingPages())->keyBy('id');
+        $selection = (string) $request->input('selection', '');
+        $pending = collect($this->pendingPages($selection))->keyBy('id');
+        if ($pending->isEmpty()) {
+            return response()->json(['success' => false, 'expired' => true,
+                'message' => 'This Facebook login has expired — Pages have to be connected within ' . self::PENDING_MINUTES . ' minutes. Click Connect another Page to log in again.'], 422);
+        }
 
         if ($this->isAdmin()) {
             $data = $request->validate(['owners' => 'required|array', 'owners.*' => 'nullable|integer']);
@@ -333,7 +354,7 @@ class FacebookController extends Controller
                 $importing++;
             }
         }
-        Cache::forget(self::PAGES_CACHE . $this->actorKey());
+        Cache::forget(self::PAGES_CACHE . $selection);
 
         return response()->json([
             'success' => (bool) $connected,
@@ -347,12 +368,17 @@ class FacebookController extends Controller
     /**
      * Cancel picking Pages
      *
-     * Forgets the Pages from the last Facebook Login.
+     * Forgets the Pages from that Facebook Login.
+     *
+     * @bodyParam selection string required The Facebook Login's `selection`. Example: 8fQx…
      */
-    public function cancelPages()
+    public function cancelPages(Request $request)
     {
         $this->authorizeManage();
-        Cache::forget(self::PAGES_CACHE . $this->actorKey());
+        $selection = (string) $request->input('selection', '');
+        if ($selection !== '' && $this->ownsSelection($selection, self::PAGES_CACHE)) {
+            Cache::forget(self::PAGES_CACHE . $selection);
+        }
 
         return response()->json(['success' => true]);
     }
@@ -482,12 +508,27 @@ class FacebookController extends Controller
         return $this->isAdmin() ? 'admin.' . Auth::guard('cms')->id() : 'owner.' . $this->ownerId();
     }
 
-    /** Pages from the last Facebook Login, still waiting to be picked. */
-    private function pendingPages(): array
+    /** Pages from that Facebook Login still waiting to be picked — only for whoever started it, within PENDING_MINUTES. */
+    private function pendingPages(string $selection): array
     {
-        $cached = Cache::get(self::PAGES_CACHE . $this->actorKey());
+        if ($selection === '' || !$this->canManage()) {
+            return [];
+        }
+        $cached = Cache::get(self::PAGES_CACHE . $selection);
+        $entry = $cached ? decrypt($cached) : null;
 
-        return $cached ? decrypt($cached) : [];
+        return ($entry['actor'] ?? null) === $this->actorKey() ? $entry['pages'] : [];
+    }
+
+    /** The login behind this one-time id was started by the signed-in account (Super Admin). */
+    private function ownsSelection(string $selection, string $prefix): bool
+    {
+        $entry = Cache::get($prefix . $selection);
+        if ($prefix === self::PAGES_CACHE && $entry) {
+            $entry = decrypt($entry);
+        }
+
+        return ($entry['actor'] ?? null) === $this->actorKey();
     }
 
     /**

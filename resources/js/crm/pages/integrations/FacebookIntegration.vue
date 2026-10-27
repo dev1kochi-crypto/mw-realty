@@ -305,8 +305,12 @@ const searchInput = ref('');
 const working = ref(null);
 const busy = ref(false);
 
-// Pages picker (after Facebook Login).
+// Pages picker (after Facebook Login). `selection` = that login's one-time id, kept in memory only:
+// a reload or another browser doesn't have it, so the server shows them no pending Pages.
 const pendingPages = ref([]);
+const selection = ref(null);
+// The id of the login this screen just opened in the popup (its message names it).
+let awaitingSelection = null;
 const picked = reactive({});
 const owners = reactive({});
 const importExisting = ref(false);
@@ -337,11 +341,13 @@ function importText(connection) {
 
 function load() {
     loadError.value = '';
-    return http.get('/integrations/facebook', { params: { q: route.query.q, page: route.query.page } })
+    return http.get('/integrations/facebook', { params: { q: route.query.q, page: route.query.page, selection: selection.value || undefined } })
         .then((res) => {
             data.value = res.data;
             searchInput.value = res.data.search;
             bulk.value = new Set();
+            // Echoed back only while that login's Pages are still waiting (else it expired / was used).
+            selection.value = res.data.selection || null;
             setPending(res.data.pending_pages);
             if (res.data.notice) {
                 if (res.data.notice.type === 'error') errorAlert.value = res.data.notice.message;
@@ -381,11 +387,13 @@ function removePage(page) {
 }
 
 function cancelPages() {
-    http.post('/integrations/facebook/pages/cancel').finally(load);
+    const id = selection.value;
+    selection.value = null;
+    http.post('/integrations/facebook/pages/cancel', { selection: id }).finally(load);
 }
 
 function storePages() {
-    const body = { import_existing: importExisting.value, import_days: importExisting.value ? importDays.value : undefined };
+    const body = { selection: selection.value, import_existing: importExisting.value, import_days: importExisting.value ? importDays.value : undefined };
     if (data.value.is_admin) {
         body.owners = Object.fromEntries(pendingPages.value.filter((p) => p.state !== 'blocked').map((p) => [p.id, owners[p.id] || null]));
     } else {
@@ -401,6 +409,11 @@ function storePages() {
         })
         .catch((e) => {
             errorAlert.value = errorMessage(e);
+            // The login's 15 minutes ran out: its Pages are gone on the server, so clear the picker too.
+            if (e.response?.data?.expired) {
+                selection.value = null;
+                setPending([]);
+            }
         })
         .finally(() => {
             busy.value = false;
@@ -418,6 +431,7 @@ function connectFacebook() {
     errorAlert.value = '';
     http.get('/integrations/facebook/connect-url', { params: { popup: popup ? 1 : 0 } })
         .then((res) => {
+            awaitingSelection = res.data.selection;
             if (popup && !popup.closed) {
                 popup.location.href = res.data.url;
                 popup.focus();
@@ -434,7 +448,14 @@ function connectFacebook() {
 let channel = null;
 try {
     channel = new BroadcastChannel('fb-connect');
-    channel.onmessage = () => load();
+    // Only the login this tab started: other open tabs (and other people's logins) are ignored.
+    channel.onmessage = (event) => {
+        const id = event.data?.selection;
+        if (!id || id !== awaitingSelection) return;
+        awaitingSelection = null;
+        selection.value = id;
+        load();
+    };
 } catch (e) {
     channel = null;
 }
@@ -510,8 +531,17 @@ function goToPage(p) {
     router.push({ query: { ...route.query, page: p } });
 }
 
-watch(() => route.query, () => {
-    if (route.name === 'integrations.facebook') load();
+watch(() => route.query, (query) => {
+    if (route.name !== 'integrations.facebook') return;
+    // Back from a full-window Facebook Login (?selection=…): keep its id in memory and drop it from
+    // the address bar, so a reload or a copied link shows no pending Pages. The replace re-runs this.
+    if (query.selection) {
+        selection.value = String(query.selection);
+        const { selection: _drop, ...rest } = query;
+        router.replace({ query: rest });
+        return;
+    }
+    load();
 }, { immediate: true });
 
 onBeforeUnmount(() => {
