@@ -60,12 +60,12 @@
                 </a>
 
                 <div class="nav-section-label">Leads</div>
-                <a href="{{ route('crm.app', 'leads') }}" class="nav-link">
+                <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'leads') }}" @endif @class(['nav-link', 'is-disabled' => $notApproved])>
                     <i class="fas fa-address-book"></i> Leads
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
                 {{-- Website activity of these leads (property views, time spent, AI chats…). --}}
-                <a href="{{ route('crm.app', 'lead-insights') }}" class="nav-link">
+                <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'lead-insights') }}" @endif @class(['nav-link', 'is-disabled' => $notApproved])>
                     <i class="fas fa-chart-line"></i> Lead Insights
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
@@ -94,9 +94,9 @@
                     <div class="collapse portal-nav-submenu @if(request()->routeIs('portal.crm.master.*')) show @endif" id="masterMenu">
                         <nav class="nav flex-column">
                             {{-- Moved to the new CRM web app (resources/js/crm). --}}
-                            <a class="nav-link py-2" href="{{ route('crm.app', 'master/stages') }}">Stage</a>
-                            <a class="nav-link py-2" href="{{ route('crm.app', 'master/tags') }}">Tag</a>
-                            <a class="nav-link py-2" href="{{ route('crm.app', 'master/sources') }}">Source</a>
+                            <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'master/stages') }}" @endif @class(['nav-link py-2', 'is-disabled' => $notApproved])>Stage</a>
+                            <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'master/tags') }}" @endif @class(['nav-link py-2', 'is-disabled' => $notApproved])>Tag</a>
+                            <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'master/sources') }}" @endif @class(['nav-link py-2', 'is-disabled' => $notApproved])>Source</a>
                             @if(!$owner && $cmsActor?->hasRole('superadmin'))
                             {{-- Property form dropdowns (type / listing / completion / furnishing) — Super Admin only. --}}
                             <a class="nav-link py-2" href="{{ route('crm.app', 'master/property-options') }}">Property Options</a>
@@ -105,13 +105,13 @@
                     </div>
                 </div>
 
-                <a href="{{ route('crm.app', 'integrations') }}" class="nav-link">
+                <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'integrations') }}" @endif @class(['nav-link', 'is-disabled' => $notApproved])>
                     <i class="fas fa-plug"></i> Integrations
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
 
                 <div class="nav-section-label">Listings</div>
-                <a href="{{ route('crm.app', 'properties') }}" class="nav-link">
+                <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'properties') }}" @endif @class(['nav-link', 'is-disabled' => $notApproved])>
                     <i class="fas fa-building"></i> Properties
                     @php
                         // Listings sent back or with an expired DLD permit — the agency / agent must act.
@@ -121,7 +121,7 @@
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>
                     @elseif($listingsNeedingAction > 0)<span class="portal-nav-badge" title="Listings that need changes or a renewed DLD permit">{{ $listingsNeedingAction }}</span>@endif
                 </a>
-                <a href="{{ route('crm.app', 'commercial') }}" class="nav-link">
+                <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'commercial') }}" @endif @class(['nav-link', 'is-disabled' => $notApproved])>
                     <i class="fas fa-store"></i> Commercial
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
@@ -131,7 +131,7 @@
                     <i class="fas fa-file-shield"></i> Listing Permits
                 </a>
                 @endif
-                <a href="{{ route('crm.app', 'premium') }}" class="nav-link">
+                <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'premium') }}" @endif @class(['nav-link', 'is-disabled' => $notApproved])>
                     <i class="fas fa-star"></i> Premium
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
@@ -157,26 +157,26 @@
                 @if($cmsActor || $owner?->type === 'company')
                 {{-- Join requests waiting for this agency to accept / decline. --}}
                 @php $joinRequests = $owner ? \App\Models\AgencyAgent::where('agency_id', $owner->id)->where('status', \App\Models\AgencyAgent::REQUESTED)->count() : 0; @endphp
-                <a href="{{ route('crm.app', 'agents') }}" class="nav-link">
+                <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'agents') }}" @endif @class(['nav-link', 'is-disabled' => $notApproved])>
                     <i class="fas fa-user-tie"></i> Agents
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>
                     @elseif($joinRequests > 0)<span class="portal-nav-badge" title="Join requests waiting for you">{{ $joinRequests }}</span>@endif
                 </a>
                 @endif
-                <a href="{{ route('crm.app', 'nearby-places') }}" class="nav-link">
+                <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'nearby-places') }}" @endif @class(['nav-link', 'is-disabled' => $notApproved])>
                     <i class="fas fa-map-marker-alt"></i> Nearby Places
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
                 @if($owner || $cmsActor?->hasRole('superadmin'))
                 {{-- Watermark — Super Admin: the default one + every agency / agent watermark. --}}
-                <a href="{{ route('crm.app', 'listing-settings') }}" class="nav-link">
+                <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'listing-settings') }}" @endif @class(['nav-link', 'is-disabled' => $notApproved])>
                     <i class="fas fa-stamp"></i> Listing Settings
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>@endif
                 </a>
                 @endif
 
                 <div class="nav-section-label">Insights</div>
-                <a href="{{ route('crm.app', 'reports') }}" class="nav-link">
+                <a @if($notApproved) role="link" aria-disabled="true" @else href="{{ route('crm.app', 'reports') }}" @endif @class(['nav-link', 'is-disabled' => $notApproved])>
                     <i class="fas fa-chart-pie"></i> Reports
                     @if($notApproved)<span class="portal-nav-lock" title="Unlocks after KYC approval"><i class="fas fa-lock"></i></span>
                     @elseif($owner && !$owner->hasReportsAccess())<span class="portal-nav-lock" title="Upgrade your plan to unlock reports"><i class="fas fa-lock"></i></span>@endif

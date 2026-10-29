@@ -72,7 +72,11 @@
                             <li><hr class="dropdown-divider"></li>
                             <template v-if="!user.is_super_admin">
                                 <li v-for="item in navigation.account" :key="item.key">
-                                    <component :is="item.route ? RouterLink : 'a'" class="dropdown-item" v-bind="item.route ? { to: { name: item.route } } : { href: item.legacy_url }">
+                                    <span v-if="item.disabled" class="dropdown-item is-disabled" role="link" aria-disabled="true" :title="item.lock_reason">
+                                        <i class="fas me-2" :class="item.icon"></i>{{ item.label }}
+                                        <i class="fas fa-lock ms-1 text-warning small"></i>
+                                    </span>
+                                    <component v-else :is="item.route ? RouterLink : 'a'" class="dropdown-item" v-bind="item.route ? { to: { name: item.route } } : { href: item.legacy_url }">
                                         <i class="fas me-2" :class="item.icon"></i>{{ item.label }}
                                         <i v-if="item.locked" class="fas fa-lock ms-1 text-warning small" :title="item.lock_reason"></i>
                                     </component>

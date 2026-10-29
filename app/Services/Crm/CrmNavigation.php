@@ -19,6 +19,9 @@ use Illuminate\Support\Facades\Auth;
  */
 class CrmNavigation
 {
+    /** KYC (and 2FA) locks shut the screen entirely, so those items can't be opened; plan locks stay clickable for the "Unlock …" card. */
+    public const KYC_LOCK = 'Unlocks after KYC approval';
+
     public function __construct(private OwnerContext $context)
     {
     }
@@ -28,7 +31,7 @@ class CrmNavigation
         $owner = $this->context->owner();
         $isSuperAdmin = $this->context->isAdmin();
         $notApproved = $owner && $owner->status !== 'approved';
-        $kycLock = $notApproved ? 'Unlocks after KYC approval' : null;
+        $kycLock = $notApproved ? self::KYC_LOCK : null;
         // Sections only paid plans include (Plan::GATED_FEATURES): padlock icon; the page shows the "Unlock …" card.
         $planLock = fn (string ...$features) => $kycLock
             ?? ($owner && !collect($features)->contains(fn ($f) => $owner->planAllows($f)) ? 'Upgrade your plan to unlock this' : null);
@@ -97,8 +100,9 @@ class CrmNavigation
         $lock = fn (array $item) => in_array($item['key'], $open, true) ? $item : [
             'locked' => true,
             'lock_reason' => 'Set up two-factor authentication first',
+            'disabled' => true,
             'badge' => 0,
-            'children' => array_map(fn ($child) => ['locked' => true, 'lock_reason' => 'Set up two-factor authentication first', 'badge' => 0] + $child, $item['children']),
+            'children' => array_map(fn ($child) => ['locked' => true, 'lock_reason' => 'Set up two-factor authentication first', 'disabled' => true, 'badge' => 0] + $child, $item['children']),
         ] + $item;
 
         return array_map($lock, $items);
@@ -153,7 +157,7 @@ class CrmNavigation
             return [$this->item('back-to-admin', 'Back to Admin', 'fa-shield-alt', null, 'cms.dashboard')];
         }
 
-        $kycLock = $owner->status !== 'approved' ? 'Unlocks after KYC approval' : null;
+        $kycLock = $owner->status !== 'approved' ? self::KYC_LOCK : null;
 
         // Security stays open while 2FA set-up is pending — it's where set-up happens.
         return $this->lockUntilTwoFactor(array_values(array_filter([
@@ -168,6 +172,11 @@ class CrmNavigation
 
     private function item(string $key, string $label, ?string $icon, ?string $section, ?string $legacyRoute, ?string $route = null, ?string $lock = null, int $badge = 0, array $children = []): array
     {
+        $disabled = $lock === self::KYC_LOCK;
+        if ($disabled) {
+            $children = array_map(fn ($child) => ['disabled' => true] + $child, $children);
+        }
+
         return [
             'key' => $key,
             'label' => $label,
@@ -177,6 +186,7 @@ class CrmNavigation
             'legacy_url' => $legacyRoute ? route($legacyRoute) : null,
             'locked' => $lock !== null,
             'lock_reason' => $lock,
+            'disabled' => $disabled,
             'badge' => $badge,
             'children' => $children,
         ];

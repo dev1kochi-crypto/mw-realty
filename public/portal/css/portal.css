@@ -1417,6 +1417,11 @@ body.portal-body {
 
 /* ---------- Locked nav badge (pending/rejected) ---------- */
 .portal-nav-lock { margin-left: auto; font-size: 0.68rem; color: #fbbf24; }
+/* Locked until KYC approval / 2FA set-up — visible, but not a link. */
+.nav-link.is-disabled,
+.dropdown-item.is-disabled { cursor: not-allowed; opacity: 0.6; }
+.nav-link.is-disabled:hover,
+.dropdown-item.is-disabled:hover { background: transparent; }
 
 /* Sidebar "needs your action" count (join requests, invitations, ticket replies). */
 .portal-nav-badge {
