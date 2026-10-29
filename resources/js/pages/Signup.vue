@@ -136,7 +136,17 @@ async function handleSubmit(e) {
     errorMessage.value = null;
 
     try {
-        const { data } = await window.axios.post(formAction.value, new FormData(e.target));
+        const { data, request } = await window.axios.post(formAction.value, new FormData(e.target));
+        // A signed-in agent/agency hits guest:portal on /portal/register, which redirects to the
+        // CRM; the browser follows it and hands back an HTML page with no user_id. Going on to
+        // /verify-email without one just bounces straight back here — a silent "refresh".
+        if (!data?.user_id) {
+            submitting.value = false;
+            errorMessage.value = String(request?.responseURL || '').includes('/crm')
+                ? t('signup.already_signed_in')
+                : t('signup.generic_error');
+            return;
+        }
         router.push({
             path: '/verify-email',
             query: { user_id: data.user_id, email_sent: data.email_sent ? '1' : '0', account_type: accountType.value },
