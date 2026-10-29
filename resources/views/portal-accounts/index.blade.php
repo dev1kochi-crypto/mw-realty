@@ -102,6 +102,7 @@
 
     .reject-modal-content { border: none; border-radius: 20px; box-shadow: 0 24px 60px rgba(28, 35, 64, .22); }
     .reject-modal-icon { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 1.1rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: rgba(220, 53, 69, .1); color: #dc3545; }
+    .reject-modal-icon.tone-success { background: rgba(25, 135, 84, .1); color: #198754; }
     .pa-note { display: flex; gap: .6rem; align-items: flex-start; font-size: .8rem; color: #4b5065; padding: .7rem 1.25rem; background: var(--pa-soft); border-radius: 0 0 18px 18px; border-top: 1px solid var(--pa-border); }
     .pa-note i { color: var(--pa-teal); margin-top: .15rem; }
 </style>
@@ -344,6 +345,23 @@
             <div class="modal-footer border-0 justify-content-center pb-4 pt-3">
                 <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger px-4" id="rejectReasonConfirmBtn">Reject Account</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Bulk Delete / Approve confirm popup — replaces the browser's confirm() --}}
+<div class="modal fade" id="bulkConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content reject-modal-content">
+            <div class="modal-body text-center p-4 pb-2">
+                <div class="reject-modal-icon" id="bulkConfirmIcon"></div>
+                <h5 class="fw-bold mb-2" id="bulkConfirmTitle"></h5>
+                <p class="text-muted mb-0" style="font-size: 0.85rem;" id="bulkConfirmMessage"></p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4 pt-3">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn px-4" id="bulkConfirmBtn"></button>
             </div>
         </div>
     </div>
@@ -595,18 +613,45 @@
                 .done(() => { clearSelection(); table.ajax.reload(null, false); });
         }
 
+        const bulkModalEl = document.getElementById('bulkConfirmModal');
+        const bulkModal = new bootstrap.Modal(bulkModalEl);
+        let bulkEndpoint = null;
+
+        function confirmBulk(opts) {
+            $('#bulkConfirmIcon').attr('class', 'reject-modal-icon ' + (opts.tone || '')).html('<i class="fas ' + opts.icon + '"></i>');
+            $('#bulkConfirmTitle').text(opts.title);
+            $('#bulkConfirmMessage').text(opts.message);
+            $('#bulkConfirmBtn').attr('class', 'btn px-4 ' + opts.buttonClass).text(opts.button).prop('disabled', false);
+            bulkEndpoint = opts.endpoint;
+            bulkModal.show();
+        }
+
+        $('#bulkConfirmBtn').on('click', function () {
+            if (!bulkEndpoint) return;
+            $(this).prop('disabled', true);
+            runBulk(bulkEndpoint);
+            bulkEndpoint = null;
+            bulkModal.hide();
+        });
+
         $('#bulkDeleteBtn').on('click', function () {
             const count = selectedCount();
             if (!count) return;
-            if (!confirm('Delete ' + count + ' selected account(s) permanently? Their properties and CRM leads will be removed too.')) return;
-            runBulk('bulk-delete');
+            confirmBulk({
+                endpoint: 'bulk-delete', icon: 'fa-trash', buttonClass: 'btn-danger', button: 'Delete (' + count + ')',
+                title: 'Delete ' + count + ' account(s)?',
+                message: 'They will be deleted permanently. Their properties and CRM leads will be removed too.',
+            });
         });
 
         $('#bulkApproveBtn').on('click', function () {
             const count = selectedCount();
             if (!count) return;
-            if (!confirm('Approve ' + count + ' selected account(s)? Each will get an approval email.')) return;
-            runBulk('bulk-approve');
+            confirmBulk({
+                endpoint: 'bulk-approve', tone: 'tone-success', icon: 'fa-check', buttonClass: 'btn-success', button: 'Approve (' + count + ')',
+                title: 'Approve ' + count + ' account(s)?',
+                message: 'Each account will get an approval email.',
+            });
         });
 
         // Inline edit toggling — shared by the Plan, Status and Payment columns

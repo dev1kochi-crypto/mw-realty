@@ -78,8 +78,10 @@ const agreeTerms = ref(false);
 const agentName = ref(oldInput.name || '');
 const agentEmail = ref(oldInput.email || '');
 const agentPhone = ref(oldInput.phone || '');
+const agentLicense = ref(oldInput.brn_number || '');
 
 const agencyName = ref(oldInput.company_name || '');
+const agencyLicense = ref(oldInput.trade_license_no || '');
 const agencyContactName = ref(oldInput.name || '');
 const agencyEmail = ref(oldInput.email || '');
 const agencyPhone = ref(oldInput.phone || '');
@@ -240,7 +242,7 @@ onMounted(() => playAuthEntrance(cardEl.value));
 
                                 <div class="mw-login-form__field">
                                     <label for="signup-agent-license">{{ t('signup.agent_license_label') }}</label>
-                                    <input type="text" id="signup-agent-license" name="brn_number" :value="oldInput.brn_number || ''" :placeholder="t('signup.agent_license_placeholder')">
+                                    <input type="text" id="signup-agent-license" name="brn_number" v-model="agentLicense" :placeholder="t('signup.agent_license_placeholder')">
                                 </div>
 
                                 <PasswordCreationField id-prefix="signup-agent" v-model:password="password" v-model:confirmPassword="confirmPassword" />
@@ -254,7 +256,7 @@ onMounted(() => playAuthEntrance(cardEl.value));
 
                                 <div class="mw-login-form__field">
                                     <label for="signup-agency-license">{{ t('signup.agency_license_label') }}</label>
-                                    <input type="text" id="signup-agency-license" name="trade_license_no" :value="oldInput.trade_license_no || ''" :placeholder="t('signup.agency_license_placeholder')">
+                                    <input type="text" id="signup-agency-license" name="trade_license_no" v-model="agencyLicense" :placeholder="t('signup.agency_license_placeholder')">
                                 </div>
 
                                 <div class="mw-login-form__field">
