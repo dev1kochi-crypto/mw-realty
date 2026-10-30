@@ -106,6 +106,12 @@ class GroqChatbotProvider implements ChatbotProvider
                 }
             }
 
+            // Groq rejects a tool call whose args miss the schema (e.g. bathrooms "5" instead of
+            // "5+") — the args are still in failed_generation, and sanitizeArgs() normalises them.
+            if ($response->status() === 400 && ($recovered = $this->recoverFailedToolCall($response->json()))) {
+                return $recovered;
+            }
+
             if (!$response->successful()) {
                 Log::error('Groq API error: ' . $response->status() . ' ' . $response->body());
                 return null;
@@ -116,6 +122,31 @@ class GroqChatbotProvider implements ChatbotProvider
             Log::error('Groq API request failed: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /** Rebuilds a normal chat-completion response from a `tool_use_failed` error's
+     *  failed_generation, or null when it isn't one / can't be parsed. */
+    private function recoverFailedToolCall(?array $body): ?array
+    {
+        if (($body['error']['code'] ?? null) !== 'tool_use_failed') {
+            return null;
+        }
+        $generation = json_decode($body['error']['failed_generation'] ?? '', true);
+        $args = $generation['arguments'] ?? null;
+        $args = is_string($args) ? json_decode($args, true) : $args;
+        if (!is_string($generation['name'] ?? null) || !is_array($args)) {
+            return null;
+        }
+
+        return ['choices' => [['message' => [
+            'role' => 'assistant',
+            'content' => null,
+            'tool_calls' => [[
+                'id' => 'call_' . bin2hex(random_bytes(6)),
+                'type' => 'function',
+                'function' => ['name' => $generation['name'], 'arguments' => json_encode($args)],
+            ]],
+        ]]]];
     }
 
     /** Gemini's declaration uses JSON-Schema `type` values in uppercase (its own quirk, e.g.

@@ -109,6 +109,10 @@ class ChatbotService
         foreach ($enums as $key => $values) {
             // Some models send 2 rather than "2" for bedrooms.
             $value = is_int($args[$key] ?? null) ? (string) $args[$key] : ($args[$key] ?? null);
+            // ...or "5"/"6" rather than "5+", "0" rather than "studio".
+            if ($values === self::ROOM_VALUES && is_numeric($value)) {
+                $value = (int) $value >= 5 ? '5+' : ((int) $value === 0 ? 'studio' : (string) (int) $value);
+            }
             if (in_array($value, $values, true)) {
                 $clean[$key] = $value;
             }
