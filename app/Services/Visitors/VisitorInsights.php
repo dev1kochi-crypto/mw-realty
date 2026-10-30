@@ -216,6 +216,8 @@ class VisitorInsights
             ],
             'chats' => [
                 'id' => $item->id,
+                // What they told the AI they're looking for ("Budget: up to AED 2,000,000", "Near: School").
+                'requirements' => \App\Services\Chatbot\PropertyMatcher::describe($item->requirements, \App\Services\Chatbot\PropertyMatcher::nearbyLabels('en')),
                 'message_count' => (int) $item->message_count,
                 'last_message_at' => ($item->last_message_at ?? $item->created_at)?->toIso8601String(),
             ],

@@ -46,7 +46,7 @@ class ChatbotController extends Controller
      *
      * Widget opened: is this visitor known yet, and the latest conversation to pick up from.
      *
-     * @response 200 {"identified": false, "details_required": false, "conversation_id": null, "messages": []}
+     * @response 200 {"identified": false, "details_required": false, "conversation_id": null, "requirements": null, "messages": []}
      */
     public function session(Request $request)
     {
@@ -58,7 +58,8 @@ class ChatbotController extends Controller
             'identified' => (bool) $lead,
             'details_required' => !$lead && $this->anonymousLimitReached($browser),
             'conversation_id' => $conversation?->id,
-            'messages' => $conversation ? $conversation->messages->map(fn ($m) => [
+            'requirements' => $conversation?->requirements,
+            'messages' => $conversation ?$conversation->messages->map(fn ($m) => [
                 'role' => $m->role,
                 'text' => $m->text,
                 'properties' => $m->properties ?? [],
@@ -127,7 +128,12 @@ class ChatbotController extends Controller
      * @bodyParam conversation_id integer From open chat / share details. No-example
      * @bodyParam lang string Reply language. Example: en
      *
-     * @response 200 {"reply": "Here are some 2-bedroom apartments in Dubai Marina:", "properties": [{"id": 111, "slug": "virella-2", "image": "https://.../photo.jpg", "...": "same card shape as GET /api/properties"}], "pagination": {"current_page": 1, "last_page": 3, "total": 41}, "error": false, "conversation_id": 44, "details_required": false}
+     * The buyer can describe what they want in their own words (budget, area, near schools,
+     * rental income, commute, …): `requirements` is everything captured so far in this
+     * conversation, and the cards are ranked against it — each has `match` with a 0-100 `score`
+     * (null when there's nothing to score on), `reasons` and `misses`.
+     *
+     * @response 200 {"reply": "Here are some 2-bedroom apartments in Dubai Marina:", "properties": [{"id": 111, "slug": "virella-2", "image": "https://.../photo.jpg", "match": {"score": 92, "reasons": ["Within budget", "2 bedrooms", "Near school"], "misses": []}, "...": "same card shape as GET /api/properties"}], "pagination": {"current_page": 1, "last_page": 1, "total": 6}, "requirements": {"location": "Dubai Marina", "bedrooms": "2", "max_price": 2000000, "nearby": ["school"], "purpose": "invest"}, "error": false, "conversation_id": 44, "details_required": false}
      * @response 422 scenario="Guest must share details first" {"details_required": true, "message": "Please share your details to keep chatting."}
      */
     public function send(Request $request)
@@ -153,7 +159,8 @@ class ChatbotController extends Controller
         $history = $conversation->messages()->reorder()->latest('id')->limit(self::HISTORY_LIMIT)->get()
             ->reverse()->map(fn ($m) => ['role' => $m->role, 'text' => $m->text])->values()->all();
 
-        $reply = $this->chatbot->reply($data['message'], $history, $data['lang'] ?? app()->getLocale());
+        // What they've described wanting so far — the reply carries it back with this turn's additions.
+        $reply = $this->chatbot->reply($data['message'], $history, $data['lang'] ?? app()->getLocale(), $conversation->requirements ?? []);
 
         DB::transaction(function () use ($conversation, $data, $reply, $request) {
             $conversation->messages()->create(['role' => 'user', 'text' => $data['message']]);
@@ -169,6 +176,7 @@ class ChatbotController extends Controller
             // A just-created conversation has no message_count attribute yet (DB default), hence the cast.
             $firstMessage = (int) $conversation->message_count === 0;
             $conversation->forceFill([
+                'requirements' => $reply['requirements'] ?: null,
                 'message_count' => $conversation->messages()->count(),
                 'last_message_at' => now(),
             ])->save();

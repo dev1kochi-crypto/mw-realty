@@ -251,6 +251,11 @@ async function submitEnquiry() {
                             <img :src="p.image" :alt="p.name" class="mw-chatbot__card-photo">
                             <div class="mw-chatbot__card-body">
                                 <h4 class="mw-chatbot__card-name">{{ p.name }}</h4>
+                                <!-- How well it fits what they described (PropertyMatcher). -->
+                                <p v-if="p.match && p.match.score !== null" class="mw-chatbot__card-match" :title="[...p.match.reasons, ...p.match.misses].join(' · ')">
+                                    <strong>{{ t('chat_widget.card.match', '{score}% match').replace('{score}', p.match.score) }}</strong>
+                                    <span v-if="p.match.reasons.length">{{ p.match.reasons.slice(0, 3).join(' · ') }}</span>
+                                </p>
                                 <p class="mw-chatbot__card-location">
                                     <img src="/frontend/assets/images/icons/location.svg" alt="">
                                     {{ p.location }}
@@ -346,6 +351,29 @@ async function submitEnquiry() {
 </template>
 
 <style>
+/* "92% match · Within budget · Near school" on a chat result card. */
+.mw-chatbot__card-match {
+    margin: 0 0 6px;
+    font-size: 10px;
+    line-height: 1.35;
+    color: #6a6a6a;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.mw-chatbot__card-match strong {
+    display: inline-block;
+    margin-right: 4px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(185, 35, 60, 0.1);
+    color: #b9233c;
+    font-weight: 700;
+}
+.mw-chatbot__panel--dark .mw-chatbot__card-match {
+    color: #b8bcc6;
+}
 /* Details form — shown after the visitor's free first question (see submitDetails). */
 .mw-chatbot__details {
     display: flex;

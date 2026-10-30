@@ -1268,6 +1268,7 @@
             "submit": "Continue chatting"
         },
         "card": {
+            "match": "{score}% match",
             "bed_suffix": "bed",
             "bath_suffix": "bath",
             "details": "Details",

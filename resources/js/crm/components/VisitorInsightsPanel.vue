@@ -97,6 +97,10 @@
                                 <span><strong>{{ formatDateTime(conversation.last_message_at) }}</strong> <span class="text-muted">· {{ conversation.message_count }} messages</span></span>
                                 <i class="fas fa-chevron-down"></i>
                             </summary>
+                            <div v-if="conversation.requirements?.length" class="vi-chips vi-chat-brief" title="What they told the AI they're looking for">
+                                <span class="vi-chip"><i class="fas fa-clipboard-list"></i><b>Looking for</b></span>
+                                <span v-for="item in conversation.requirements" :key="item" class="vi-chip">{{ item }}</span>
+                            </div>
                             <div class="vi-chat-body" @scroll="onChatScroll($event, conversation)">
                                 <template v-for="message in chats[conversation.id]?.items ?? []" :key="message.id">
                                     <div class="vi-msg" :class="{ 'is-user': message.role === 'user' }">

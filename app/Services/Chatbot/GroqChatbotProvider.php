@@ -146,6 +146,9 @@ class GroqChatbotProvider implements ChatbotProvider
                 $schema['enum'] = [...$schema['enum'], null];
             }
         }
+        if (isset($schema['items']) && is_array($schema['items'])) {
+            $schema['items'] = $this->lowercaseTypes($schema['items']);
+        }
         if (isset($schema['properties']) && is_array($schema['properties'])) {
             $schema['properties'] = array_map(fn ($prop) => is_array($prop) ? $this->lowercaseTypes($prop, true) : $prop, $schema['properties']);
         }
