@@ -41,6 +41,7 @@ const props = defineProps({
     ends: { type: Boolean, default: false },
     hint: { type: String, default: '' },
     badge: { type: String, default: '' }, // e.g. "20%" next to a money amount
+    uncapped: { type: Boolean, default: false }, // a typed amount may go above `max` (the slider then sits at its end)
 });
 const emit = defineEmits(['update:modelValue']);
 
@@ -50,14 +51,14 @@ const id = `mc-${Math.random().toString(36).slice(2, 9)}`;
 
 const unit = computed(() => ({ percent: '%', years: t('calculators.years', 'yrs') }[props.type] || ''));
 const endLabel = (n) => (props.type === 'money' ? formatCompact(n) : n);
-const fillStyle = computed(() => ({ '--mc-fill': `${((props.modelValue - props.min) / (props.max - props.min || 1)) * 100}%` }));
+const fillStyle = computed(() => ({ '--mc-fill': `${clamp(((props.modelValue - props.min) / (props.max - props.min || 1)) * 100, 0, 100)}%` }));
 
 // Money box shows the grouped amount in the selected currency; typed values commit on change/enter.
 const text = ref('');
 watch([() => props.modelValue, selectedCurrency], () => { text.value = formatAmount(props.modelValue); }, { immediate: true });
 function commitMoney() {
     const aed = parseToAed(text.value);
-    if (!Number.isNaN(aed)) emit('update:modelValue', clamp(aed, props.min, props.max));
+    if (!Number.isNaN(aed)) emit('update:modelValue', clamp(aed, props.min, props.uncapped ? Number.MAX_SAFE_INTEGER : props.max));
     text.value = formatAmount(props.modelValue);
 }
 

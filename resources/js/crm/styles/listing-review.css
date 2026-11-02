@@ -1,0 +1,70 @@
+/* Listing Review (duplicates / risk) — builds on listing-permits.css (la-*). */
+.lr-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 575.98px) { .lr-tabs { grid-template-columns: 1fr; } }
+.la-tone-duplicate { --tone: #b7791f; --tone-soft: #fdf3e1; }
+.la-tone-risk { --tone: #be123c; --tone-soft: #fde8ed; }
+.la-tone-resolved { --tone: #0f8a4f; --tone-soft: #e5f5ec; }
+
+.lr-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1399.98px) { .lr-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 767.98px) { .lr-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.lr-metric { padding: 14px 16px; border-radius: 14px; border: 1px solid var(--portal-border); background: var(--portal-surface); box-shadow: var(--portal-shadow); }
+.lr-metric__value { font-size: 1.35rem; font-weight: 800; line-height: 1.1; }
+.lr-metric__label { font-size: .8rem; font-weight: 700; margin: 2px 0; }
+
+.lr-row { grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(0, .9fr) auto; }
+@media (max-width: 991.98px) { .lr-row { grid-template-columns: 1fr 1fr; } }
+.lr-stack { display: flex; flex-shrink: 0; }
+.lr-stack img { width: 48px; height: 48px; object-fit: cover; border-radius: 10px; border: 2px solid var(--portal-surface); background: #eef1f6; }
+.lr-stack img + img { margin-left: -18px; }
+
+/* Side-by-side comparison: one column per listing. */
+/* The listing columns share the full width equally (--lr-col = 100% / listings). Each keeps at least
+   COLUMN_MIN_WIDTH (ListingReviewShow.vue), so when they no longer fit the table grows and slides
+   sideways, with the row names (first column) staying in place. */
+.lr-compare { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .85rem; }
+.lr-compare th, .lr-compare td { padding: 9px 12px; border-bottom: 1px solid var(--portal-border); vertical-align: top; width: var(--lr-col); min-width: 260px; overflow-wrap: anywhere; }
+.lr-compare th:first-child { min-width: 140px; width: 140px; position: sticky; left: 0; z-index: 2; background: var(--portal-surface); font-size: .75rem; color: var(--portal-muted); font-weight: 700; box-shadow: 1px 0 0 var(--portal-border); }
+.lr-compare tr.is-same th:first-child { background: #eef9f2; }
+.lr-compare tr.is-diff th:first-child { background: #fff8eb; }
+/* Wide columns: a shorter photo, so the page doesn't get too tall. */
+.lr-compare .lr-slider__frame { aspect-ratio: 16 / 10; max-height: 300px; }
+.lr-slide-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--portal-border); background: var(--portal-surface); color: var(--portal-text); display: grid; place-items: center; font-size: .75rem; }
+.lr-slide-btn:hover { border-color: var(--portal-primary); color: var(--portal-primary); }
+
+/* Photo slider: one photo at a time, arrows + counter. */
+.lr-slider { position: relative; }
+.lr-slider__frame { display: block; width: 100%; aspect-ratio: 4 / 3; border-radius: 10px; overflow: hidden; background: #eef1f6; }
+.lr-slider__frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lr-slider__empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--portal-muted); font-size: .8rem; }
+.lr-slider__empty i { font-size: 1.4rem; }
+.lr-slider__nav { position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .9); color: #1f2a44; box-shadow: 0 2px 8px rgba(0, 0, 0, .18); display: grid; place-items: center; font-size: .75rem; }
+.lr-slider__nav:hover { background: #fff; }
+.lr-slider__nav--prev { left: 8px; }
+.lr-slider__nav--next { right: 8px; }
+.lr-slider__count { position: absolute; right: 8px; bottom: 8px; padding: 2px 8px; border-radius: 999px; background: rgba(0, 0, 0, .6); color: #fff; font-size: .72rem; font-weight: 600; }
+/* Rows: green = the same in every listing, amber = different. */
+.lr-compare tr.is-same td { background: #eef9f2; }
+.lr-compare tr.is-same th:first-child { color: #0b6b3d; }
+.lr-compare tr.is-diff td { background: #fff8eb; }
+.lr-compare tr.is-diff th:first-child { color: #92590f; }
+.lr-row-icon { display: none; margin-right: 5px; font-style: normal; font-weight: 800; }
+.lr-compare tr.is-same .lr-row-icon, .lr-compare tr.is-diff .lr-row-icon { display: inline; }
+.lr-compare tr.is-same .lr-row-icon::before { content: '='; }
+.lr-compare tr.is-diff .lr-row-icon::before { content: '≠'; }
+.lr-compare td.is-out { opacity: .55; }
+/* The listing that was first (stays live): marked once, on its top cell. */
+.lr-compare thead td.is-kept { box-shadow: inset 0 3px 0 #0f8a4f; }
+.lr-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .78rem; color: var(--portal-muted); }
+.lr-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lr-legend__dot { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+.lr-legend__dot--same { background: #eef9f2; border: 1px solid #9fd8b6; }
+.lr-legend__dot--diff { background: #fff8eb; border: 1px solid #f0c987; }
+.lr-price-low { color: #0b6b3d; }
+.lr-price-high { color: #a3112f; }
+.lr-signal { padding: 12px 14px; border-radius: 12px; background: #fde8ed; margin-bottom: 8px; }
+.lr-signal:last-child { margin-bottom: 0; }
+
+/* Risk case: the listings the price was compared with. */
+.lr-comparables__self td { background: #fde8ed; font-weight: 600; }
+.lr-comparables__median td { background: #f1f3f8; color: var(--portal-muted); font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }

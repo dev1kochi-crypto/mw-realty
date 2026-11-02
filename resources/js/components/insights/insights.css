@@ -1,0 +1,81 @@
+/* Property Details › Investment / Rental costs / Market sections. Builds on calculators.css (.mc*),
+   with the same tokens, so these read as part of the same calculator family. */
+
+/* Figure source: verified closed deals vs asking-price estimates vs the visitor's assumptions. */
+.pi-source { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; line-height: 1.4; white-space: nowrap; vertical-align: middle; }
+.pi-source--verified { background: rgba(31, 157, 107, 0.12); color: #17774f; }
+.pi-source--asking { background: #eef1f6; color: #4c5568; }
+.pi-source--assumption { border: 1px dashed #c3cad8; color: #6b7080; }
+
+/* Assessment badge + the signals behind it. */
+.pi-verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.pi-badge { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; font-size: 15px; font-weight: 800; line-height: 1.2; }
+.pi-badge svg { flex-shrink: 0; }
+.pi-badge--positive { background: rgba(31, 157, 107, 0.12); color: #17774f; }
+.pi-badge--neutral { background: #eef1f6; color: #244373; }
+.pi-badge--caution { background: rgba(201, 40, 68, 0.09); color: #a91f39; }
+.pi-verdict__note { margin: 0; color: #6b7080; font-size: 13px; }
+.pi-signals { display: grid; gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
+.pi-signals li { display: flex; align-items: flex-start; gap: 10px; color: #35373c; font-size: 14px; line-height: 1.5; }
+.pi-signals__text { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding-top: 1px; }
+.pi-signals__icon { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; }
+.pi-signals__icon--positive { background: rgba(31, 157, 107, 0.12); color: #17774f; }
+.pi-signals__icon--neutral { background: #eef1f6; color: #244373; }
+.pi-signals__icon--caution { background: rgba(201, 40, 68, 0.09); color: #a91f39; }
+
+/* Stat tiles */
+.pi-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; margin-top: clamp(16px, 1.4vw, 24px); }
+.pi-stat { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border: 1px solid #e3e7f0; border-radius: 14px; background: #fff; }
+.pi-stat__label { color: #6b7080; font-size: 13px; font-weight: 600; }
+.pi-stat__value { color: #244373; font-size: 20px; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+.pi-stat__value small { color: #6b7080; font-size: 13px; font-weight: 600; }
+.pi-stat__value.is-good { color: #17774f; }
+.pi-stat__value.is-bad { color: #a91f39; }
+.pi-stat__empty { color: #8a8f9c; font-size: 14px; font-weight: 600; }
+.pi-stat .pi-source { align-self: flex-start; }
+
+/* Price trend chart */
+.pi-chart { position: relative; margin-top: 14px; }
+.pi-chart svg { display: block; max-width: 100%; overflow: visible; }
+.pi-chart__grid { stroke: #eef1f6; stroke-width: 1; }
+.pi-chart__axis { fill: #8a8f9c; font-size: 11px; font-family: "Plus Jakarta Sans", sans-serif; }
+.pi-chart__line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pi-chart__line--asking { stroke: #3563b0; stroke-dasharray: 6 5; }
+.pi-chart__line--verified { stroke: #c92844; }
+.pi-chart__dot { stroke: #fff; stroke-width: 2; }
+.pi-chart__dot--asking { fill: #3563b0; }
+.pi-chart__dot--verified { fill: #c92844; }
+.pi-chart__label { font-size: 11px; font-weight: 700; font-family: "Plus Jakarta Sans", sans-serif; fill: #35373c; }
+.pi-chart__cross { stroke: #c3cad8; stroke-width: 1; }
+.pi-chart__hit { fill: transparent; cursor: crosshair; }
+.pi-chart__tip { position: absolute; top: 0; z-index: 2; padding: 10px 12px; border: 1px solid #e3e7f0; border-radius: 10px; background: #fff; box-shadow: 0 10px 26px rgba(36, 67, 115, 0.14); color: #6b7080; font-size: 13px; white-space: nowrap; pointer-events: none; transform: translateX(-50%); }
+.pi-chart__tip strong { display: block; margin-bottom: 4px; color: #244373; }
+.pi-chart__tip p { display: flex; align-items: center; gap: 6px; margin: 2px 0 0; }
+.pi-chart__tip b { margin-inline-start: auto; padding-inline-start: 12px; color: #244373; }
+.pi-chart__tip i { display: inline-block; flex-shrink: 0; width: 12px; height: 2px; }
+.pi-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 10px 0 0; padding: 0; list-style: none; color: #6b7080; font-size: 13px; }
+.pi-legend li { display: inline-flex; align-items: center; gap: 8px; }
+.pi-legend__key { width: 18px; height: 0; border-top: 2px solid; }
+.pi-legend__key--asking { border-top: 2px dashed #3563b0; }
+.pi-legend__key--verified { border-color: #c92844; }
+
+/* Tables: recent deals, financing scenarios */
+.pi-table-wrap { overflow-x: auto; margin-top: 12px; }
+.pi-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.pi-table th { padding: 8px 10px; border-bottom: 1px solid #d6dce8; color: #6b7080; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-align: start; text-transform: uppercase; white-space: nowrap; }
+.pi-table td { padding: 10px; border-bottom: 1px dashed #e3e7f0; color: #35373c; white-space: nowrap; }
+.pi-table td:first-child { color: #244373; font-weight: 700; }
+.pi-table tr:last-child td { border-bottom: 0; }
+.pi-table tr.is-active td { background: rgba(36, 67, 115, 0.05); }
+.pi-table .is-good { color: #17774f; font-weight: 700; }
+.pi-table .is-bad { color: #a91f39; font-weight: 700; }
+.pi-table__num { text-align: end !important; }
+
+.pi-subtitle { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: clamp(24px, 2.4vw, 36px) 0 0; color: #244373; font-size: 17px; font-weight: 700; }
+.pi-empty { margin: 12px 0 0; padding: 14px 16px; border-radius: 10px; background: #f7f9fc; color: #6b7080; font-size: 14px; line-height: 1.6; }
+.pi-loading { display: grid; gap: 12px; }
+.pi-loading span { display: block; height: 64px; border-radius: 14px; background: linear-gradient(90deg, #f2f4f8 0%, #e8ecf3 50%, #f2f4f8 100%) 0 0 / 200% 100%; animation: pi-shimmer 1.4s ease-in-out infinite; }
+@keyframes pi-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .pi-loading span { animation: none; } }
+
+.pi-card-gap { margin-top: clamp(16px, 1.4vw, 24px); }

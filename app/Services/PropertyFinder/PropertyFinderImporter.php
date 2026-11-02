@@ -2,17 +2,15 @@
 
 namespace App\Services\PropertyFinder;
 
-use App\Models\FilterValue;
 use App\Models\PortalUser;
 use App\Models\Property;
 use App\Models\PropertyDetail;
 use App\Models\PropertyFinderConnection;
 use App\Models\PropertyFinderImport;
-use App\Services\PropertyGallery;
-use App\Services\Watermark;
+use App\Services\Properties\ListingOptionMatcher;
+use App\Services\Properties\RemoteListingImages;
 use App\Support\PermitRules;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -27,19 +25,16 @@ use Illuminate\Support\Str;
  * or whose permit number the account already lists is skipped. Imported properties are created
  * off the website (compliance draft, status off) and wait for Super Admin review
  * (PropertyFinderReview). Plan listing limits apply — the sync stops when the plan is full.
+ * Option matching and photo downloads are shared with the spreadsheet import (PropertiesImport).
  */
 class PropertyFinderImporter
 {
     private const MAX_PAGES = 200;
-    private const MAX_IMAGES = 30;
 
     /** Why the last sync stopped early (plan full), shown to the account. */
     public ?string $stoppedBecause = null;
 
-    /** Option lists by filter key, loaded once per run (optionMatching). */
-    private array $optionCache = [];
-
-    public function __construct(private readonly PropertyGallery $gallery, private readonly Watermark $watermark)
+    public function __construct(private readonly ListingOptionMatcher $options, private readonly RemoteListingImages $images)
     {
     }
 
@@ -136,18 +131,19 @@ class PropertyFinderImporter
             ]);
 
             $segment = $listing->category() === 'commercial' ? Property::SEGMENT_COMMERCIAL : Property::SEGMENT_RESIDENTIAL;
+            $referenceNo = Property::nextReferenceNo();
             $property = Property::create([
                 'portal_user_id' => $owner->id,
                 'agent_id' => $this->agentId($owner, $listing),
                 'created_by_type' => $owner->isAgency() ? 'agency' : 'agent',
                 'created_by_id' => $owner->id,
                 'translations' => $translations,
-                'slug' => $this->slug($title),
-                'reference_no' => Property::nextReferenceNo(),
+                'slug' => Property::makeSlug($title, $referenceNo),
+                'reference_no' => $referenceNo,
                 'listing_type' => $listing->purpose(),
                 'rental_period' => $listing->purpose() === 'rent' ? 'yearly' : null,
                 'completion_status' => $listing->completionStatus(),
-                'property_type' => $this->propertyType($listing->type()),
+                'property_type' => $this->options->propertyType($listing->type()),
                 'category' => $listing->category(),
                 'segment' => $segment,
                 ...$place['columns'],
@@ -172,7 +168,7 @@ class PropertyFinderImporter
 
             PropertyDetail::create([
                 'property_id' => $property->id,
-                'amenities' => $this->amenities($listing->amenities()),
+                'amenities' => $this->options->amenities($listing->amenities()),
                 'easy_access' => [],
                 'property_attributes' => [],
                 'furnished' => $listing->furnishing() ?? PropertyDetail::UNFURNISHED,
@@ -185,42 +181,9 @@ class PropertyFinderImporter
         });
 
         // Photos last, outside the transaction: a slow or broken image never loses the listing.
-        $this->storeImages($property, $listing->images());
+        $this->images->store($property, $listing->images());
 
         return true;
-    }
-
-    /** Downloads the listing's photos into the property's gallery (watermarked like uploads). */
-    private function storeImages(Property $property, array $urls): void
-    {
-        if (!$urls) {
-            return;
-        }
-        $folder = $this->gallery->folderValue('properties/' . $property->reference_no);
-        $watermark = $this->watermark->activeSettings($property->owner);
-        $sequence = [];
-        $number = 0;
-
-        foreach (array_slice($urls, 0, self::MAX_IMAGES) as $url) {
-            $tmp = tempnam(sys_get_temp_dir(), 'pf');
-            try {
-                $response = Http::timeout(30)->retry(1, 500, throw: false)->sink($tmp)->get($url);
-                if (!$response->successful()) {
-                    continue;
-                }
-                $number++;
-                $this->gallery->put($folder, $property->reference_no . '-' . $number . '.jpeg', PropertyGallery::jpeg($tmp, $watermark));
-                $sequence[] = $number;
-            } catch (\Throwable $e) {
-                Log::info("Property Finder image for {$property->reference_no} skipped: " . $e->getMessage());
-            } finally {
-                @unlink($tmp);
-            }
-        }
-
-        if ($sequence) {
-            $property->update(['image_path' => $folder, 'image_sequence' => implode(',', $sequence), 'image_next_number' => $number]);
-        }
     }
 
     /**
@@ -241,7 +204,7 @@ class PropertyFinderImporter
             'columns' => [
                 // The community picked in "Property location" (Master › Property Options) — added to
                 // that list when it isn't there yet, so an imported listing never has it empty.
-                'location' => $this->optionMatching('location', $names) ?? $this->addLocationOption($community),
+                'location' => $this->options->match('location', $names) ?? $this->options->addLocation($community),
                 'emirate' => $emirate,
                 'permit_type' => PermitRules::resolve($emirate, 'rera', $isAlAin ? 'al_ain' : 'other'),
                 'latitude' => $location['coordinates'][0] ?? null,
@@ -292,14 +255,8 @@ class PropertyFinderImporter
                 default => PermitRules::NORTHERN,
             };
         }
-        $all = Str::lower(implode(' | ', $names));
 
-        return match (true) {
-            str_contains($all, 'dubai') => PermitRules::DUBAI,
-            str_contains($all, 'abu dhabi'), str_contains($all, 'al ain') => PermitRules::ABU_DHABI,
-            (bool) preg_match('/sharjah|ajman|ras al khaimah|umm al quwain|fujairah/', $all) => PermitRules::NORTHERN,
-            default => null,
-        };
+        return $this->options->emirateFromNames($names);
     }
 
     private function cityName(?string $emirate, array $names): ?string
@@ -335,91 +292,5 @@ class PropertyFinderImporter
         $name = $listing->agentName();
 
         return $name ? $owner->eligibleAgentsQuery()->whereRaw('LOWER(TRIM(portal_users.name)) = ?', [Str::lower(trim($name))])->value('portal_users.id') : null;
-    }
-
-    private function propertyType(?string $type): ?string
-    {
-        if (!$type) {
-            return null;
-        }
-        $t = Str::lower($type);
-        $guess = match (true) {
-            str_contains($t, 'penthouse') => 'penthouse',
-            str_contains($t, 'townhouse') => 'townhouse',
-            str_contains($t, 'villa') => 'villa',
-            str_contains($t, 'apartment'), str_contains($t, 'flat'), str_contains($t, 'duplex'), str_contains($t, 'loft') => 'apartment',
-            str_contains($t, 'office') => 'office',
-            str_contains($t, 'retail'), str_contains($t, 'shop') => 'retail-shop',
-            str_contains($t, 'showroom') => 'showroom',
-            str_contains($t, 'warehouse') => 'warehouse',
-            str_contains($t, 'land'), str_contains($t, 'plot') => 'plot',
-            str_contains($t, 'building') => 'whole-building',
-            default => Str::slug($type),
-        };
-
-        return $this->optionMatching('property_type', [$guess, $type]);
-    }
-
-    /** The option value (Master › Property Options) whose value or label matches one of $names. */
-    private function optionMatching(string $filterKey, array $names): ?string
-    {
-        $options = $this->optionCache[$filterKey] ??= FilterValue::whereHas('filter', fn ($q) => $q->where('key', $filterKey))->get(['value', 'translations']);
-
-        foreach ($names as $name) {
-            $slug = Str::slug((string) $name);
-            foreach ($options as $option) {
-                $labels = collect($option->translations)->pluck('label')->filter()->map(fn ($l) => Str::slug($l));
-                if (Str::slug($option->value) === $slug || $labels->contains($slug)) {
-                    return $option->value;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /** Adds a community (e.g. "Arjan") to the Location options and returns its value. */
-    private function addLocationOption(?string $community): ?string
-    {
-        $filter = $community ? \App\Models\Filter::where('key', 'location')->first() : null;
-        if (!$filter || ($value = Str::slug($community)) === '') {
-            return null;
-        }
-
-        FilterValue::firstOrCreate(['filter_id' => $filter->id, 'value' => $value], [
-            'translations' => ['en' => ['label' => $community]],
-            'order_index' => (int) FilterValue::where('filter_id', $filter->id)->max('order_index') + 1,
-            'status' => true,
-        ]);
-        unset($this->optionCache['location']); // optionMatching() sees it from now on
-
-        return $value;
-    }
-
-    /** Property Finder amenity names → the matching Amenity options, stored like the form does. */
-    private function amenities(array $names): array
-    {
-        if (!$names) {
-            return [];
-        }
-        $slugs = array_map(fn ($n) => Str::slug($n), $names);
-
-        return FilterValue::whereHas('filter', fn ($q) => $q->where('key', 'amenity'))->orderBy('order_index')->orderBy('id')->get()
-            ->filter(fn ($o) => in_array(Str::slug($o->value), $slugs, true)
-                || collect($o->translations)->pluck('label')->filter()->contains(fn ($l) => in_array(Str::slug($l), $slugs, true)))
-            ->map(fn ($o) => [
-                'key' => $o->value,
-                'icon' => $o->icon,
-                'label' => collect($o->translations)->map(fn ($t) => $t['label'] ?? '')->filter()->all(),
-            ])->values()->all();
-    }
-
-    private function slug(string $title): string
-    {
-        do {
-            $slug = Str::slug(Str::limit($title, 80, '') . '-' . Str::random(5));
-        } while (Property::where('slug', $slug)->exists());
-
-        return $slug;
     }
 }

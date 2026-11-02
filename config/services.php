@@ -83,6 +83,14 @@ return [
         'model' => env('GROQ_MODEL', 'openai/gpt-oss-120b'),
     ],
 
+    // Live rates for the website currency switcher (`currencies:sync-rates`). Off by default so the
+    // rates Admin types in General Settings › Currencies aren't overwritten; when on, every active
+    // currency's rate is refreshed hourly from this free, keyless AED-based feed.
+    'exchange_rates' => [
+        'auto_sync' => (bool) env('CURRENCY_RATES_AUTO_SYNC', false),
+        'url' => env('CURRENCY_RATES_URL', 'https://open.er-api.com/v6/latest/AED'),
+    ],
+
     // Plan subscriptions (see App\Services\StripeBillingService). Without a secret key the portal
     // falls back to the manual "request upgrade → Super Admin approves" flow.
     // All public media (images/videos) — see App\Services\CloudinaryMedia. Blank = local disk.

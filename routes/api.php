@@ -119,6 +119,12 @@ Route::get('/properties/map', [\App\Http\Controllers\Api\PropertyMapController::
 
 // Public, read-only — the /property-details/{slug} page.
 Route::get('/properties/{slug}', [PropertyController::class, 'show']);
+// Its Market & Investment panel (comparables, yield, trend, assessment) — loaded after the page.
+Route::get('/properties/{slug}/insights', [PropertyController::class, 'insights'])->middleware('throttle:60,1');
+
+// Public, read-only — the /compare page: 2–5 listings side by side, then its written (AI) summary.
+Route::get('/compare', [\App\Http\Controllers\Api\PropertyCompareController::class, 'index'])->middleware('throttle:60,1');
+Route::get('/compare/summary', [\App\Http\Controllers\Api\PropertyCompareController::class, 'summary'])->middleware('throttle:ai-compare');
 
 // Public, read-only — site-wide footer content (address/phone/email/social links).
 Route::get('/site-information', [SiteInformationController::class, 'index']);

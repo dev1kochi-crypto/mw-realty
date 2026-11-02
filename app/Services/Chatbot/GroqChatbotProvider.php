@@ -71,6 +71,16 @@ class GroqChatbotProvider implements ChatbotProvider
         return $response['choices'][0]['message']['content'] ?? null;
     }
 
+    public function complete(string $systemInstruction, string $message, int $maxTokens = 1024): ?string
+    {
+        $response = $this->chatCompletion([
+            ['role' => 'system', 'content' => $systemInstruction],
+            ['role' => 'user', 'content' => $message],
+        ], [], $maxTokens);
+
+        return $response['choices'][0]['message']['content'] ?? null;
+    }
+
     /** @return array<int, array{role: string, content: string}> */
     private function historyToMessages(string $systemInstruction, array $history): array
     {
@@ -81,19 +91,17 @@ class GroqChatbotProvider implements ChatbotProvider
         return $messages;
     }
 
-    private function chatCompletion(array $messages, array $tools): ?array
+    private function chatCompletion(array $messages, array $tools, int $maxTokens = 512): ?array
     {
         try {
-            $send = fn () => Http::timeout(15)
+            $send = fn () => Http::timeout(20)
                 ->withToken($this->apiKey)
-                ->post(self::ENDPOINT, [
+                ->post(self::ENDPOINT, array_merge([
                     'model' => $this->model,
                     'messages' => $messages,
-                    'tools' => $tools,
-                    'tool_choice' => 'auto',
                     'temperature' => 0.3,
-                    'max_tokens' => 512,
-                ]);
+                    'max_tokens' => $maxTokens,
+                ], $tools ? ['tools' => $tools, 'tool_choice' => 'auto'] : []));
             $response = $send();
 
             // Free-tier per-minute token limit: Groq says how long to wait (usually ~1s) — wait

@@ -75,6 +75,7 @@ Route::post('/track/page/{event}/time', [\App\Http\Controllers\VisitorTrackingCo
 // Listing performance: cards seen on screen (useListingImpressions.js) and contact clicks on a listing.
 Route::post('/track/impressions', [\App\Http\Controllers\VisitorTrackingController::class, 'impressions'])->name('track.impressions')->middleware('throttle:120,1');
 Route::post('/track/lead-click', [\App\Http\Controllers\VisitorTrackingController::class, 'leadClick'])->name('track.lead-click')->middleware('throttle:60,1');
+Route::post('/track/insight-view', [\App\Http\Controllers\VisitorTrackingController::class, 'insightView'])->name('track.insight-view')->middleware('throttle:60,1');
 // Ad sliders (AdSlider.vue): slides seen on screen and clicks — CRM › Advertisements' reports.
 Route::post('/track/ad-impressions', [\App\Http\Controllers\PublicAdController::class, 'impressions'])->name('track.ad-impressions')->middleware('throttle:120,1');
 Route::post('/track/ad-click', [\App\Http\Controllers\PublicAdController::class, 'click'])->name('track.ad-click')->middleware('throttle:60,1');
@@ -890,6 +891,8 @@ Route::get('/premium-properties/map', [SpaController::class, 'staticPage'])->def
 Route::get('/marketing-properties', [SpaController::class, 'staticPage'])->defaults('pageKey', 'marketing-properties');
 Route::get('/marketing-properties/map', [SpaController::class, 'staticPage'])->defaults('pageKey', 'marketing-properties');
 Route::get('/property-details/{slug}', [SpaController::class, 'propertyDetails']);
+// The visitor's own pick of listings (?slugs=…) — nothing to index.
+Route::view('/compare', 'welcome');
 Route::get('/terms-and-conditions', [SpaController::class, 'staticPage'])->defaults('pageKey', 'terms');
 Route::get('/privacy-policy', [SpaController::class, 'staticPage'])->defaults('pageKey', 'privacy');
 // Status of a Facebook data deletion request (the URL the deletion callback hands back to Facebook).

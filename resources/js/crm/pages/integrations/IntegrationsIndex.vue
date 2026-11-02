@@ -27,7 +27,7 @@
                 </div>
                 <p class="intg-tile__desc">{{ integration.description }}</p>
                 <div class="intg-tile__foot">
-                    <span>{{ integration.status.tone === 'off' && !data.is_admin ? 'Connect' : 'Open' }}</span>
+                    <span>{{ integration.key === 'spreadsheet-import' ? 'Import' : (integration.status.tone === 'off' && !data.is_admin ? 'Connect' : 'Open') }}</span>
                     <i class="fas fa-arrow-right"></i>
                 </div>
             </RouterLink>
@@ -51,7 +51,7 @@ import PlanLockedCard from '../../components/PlanLockedCard.vue';
 import { planLocked } from '../../utils/planLocked';
 
 // Integration key (from the API) → its screen.
-const routes = { facebook: 'integrations.facebook', 'property-finder': 'integrations.property-finder' };
+const routes = { facebook: 'integrations.facebook', 'property-finder': 'integrations.property-finder', 'spreadsheet-import': 'properties.import' };
 
 const data = ref(null);
 const loadError = ref('');

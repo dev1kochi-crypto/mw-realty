@@ -192,6 +192,13 @@ const routes = [
         meta: { title: 'Property Details | MW Realty', bodyClass: 'agents-page property-details-page' },
     },
     {
+        // Up to five listings side by side (?slugs=a,b,c) — picked with "Compare" on cards / the property page.
+        path: '/compare',
+        name: 'compare',
+        component: () => import('../pages/Compare.vue'),
+        meta: { title: 'Compare Properties | MW Realty', bodyClass: 'agents-page compare-page' },
+    },
+    {
         path: '/terms-and-conditions',
         name: 'terms-and-conditions',
         component: () => import('../pages/LegalPage.vue'),

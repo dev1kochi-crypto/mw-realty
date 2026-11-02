@@ -59,7 +59,6 @@ class CrmNavigation
                 badge: $owner && !$notApproved ? Property::accessibleBy($owner)->whereNull('sold_at')
                     ->whereIn('compliance_status', [Property::COMPLIANCE_CHANGES_REQUESTED, Property::COMPLIANCE_EXPIRED])->count() : 0),
             $this->item('commercial', 'Commercial', 'fa-store', 'Listings', null, route: 'commercial.index', lock: $kycLock),
-            $isSuperAdmin ? $this->item('listing-approvals', 'Listing Permits', 'fa-file-shield', 'Listings', null, route: 'listing-permits.index') : null,
             $this->item('featured', 'Premium', 'fa-star', 'Listings', null, route: 'premium.index', lock: $kycLock),
             // Website ads belong to the account that owns the plan — not shown to an agency's agents.
             // Super Admin manages MW Realty's own ads here and reviews clients' (badge = waiting for review).
@@ -75,6 +74,12 @@ class CrmNavigation
                 badge: $owner && !$notApproved ? AgencyAgent::where('agency_id', $owner->id)->where('status', AgencyAgent::REQUESTED)->count() : 0) : null,
             $this->item('nearby-places', 'Nearby Places', 'fa-map-marker-alt', 'Listings', null, route: 'nearby-places.index', lock: $kycLock),
             $this->item('watermark', 'Listing Settings', 'fa-stamp', 'Listings', null, route: 'listing-settings', lock: $planLock('listing_settings')),
+
+            // Super Admin's own approval queues, apart from the listing screens.
+            $isSuperAdmin ? $this->item('listing-approvals', 'Listing Permits', 'fa-file-shield', 'Approvals', null, route: 'listing-permits.index') : null,
+            // Duplicates / suspicious listings held off the website (badge = open cases).
+            $isSuperAdmin ? $this->item('listing-review', 'Listing Review', 'fa-clone', 'Approvals', null, route: 'listing-review.index',
+                badge: \App\Models\ListingReview::open()->count()) : null,
 
             $this->item('reports', 'Reports', 'fa-chart-pie', 'Insights', null, route: 'reports.show',
                 lock: $kycLock ?? ($owner && !$owner->hasReportsAccess() ? 'Upgrade your plan to unlock reports' : null)),

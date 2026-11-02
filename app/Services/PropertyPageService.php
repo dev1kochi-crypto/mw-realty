@@ -38,11 +38,8 @@ class PropertyPageService
             $city = $property->getTranslation('city', $lang);
             $location = ($locality && $city && $locality !== $city) ? "{$locality}, {$city}" : ($locality ?: $city ?: '—');
 
-            $similar = Property::where('status', true)->where('id', '!=', $property->id)
-                ->where(function ($q) use ($property) {
-                    $q->where('property_type', $property->property_type)->orWhere('location', $property->location);
-                })
-                ->displayOrder()->take(6)->get();
+            // Same purpose / type / price band / bedrooms, closest first (PropertyInsightService::comparables).
+            $similar = app(PropertyInsightService::class)->comparables($property);
 
             return [
                 'id' => $property->id,
@@ -60,6 +57,10 @@ class PropertyPageService
                 'baths' => $property->bathrooms,
                 'area' => $property->sqft ? number_format($property->sqft) . ' sq.ft' : '—',
                 'type' => $property->filterLabel('property_type', $lang) ?: '—',
+                // Raw values for the investment / rental cost calculators.
+                'sqft' => $property->sqft ? (int) $property->sqft : null,
+                'property_type' => $property->property_type,
+                'emirate' => $property->emirate,
                 'listing_type' => $property->listing_type,
                 'listing_type_label' => $property->listing_type === 'rent' ? 'For Rent' : 'For Sale',
                 'completion_status_label' => $property->filterLabel('completion_status', $lang),

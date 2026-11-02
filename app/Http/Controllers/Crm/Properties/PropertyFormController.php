@@ -9,6 +9,7 @@ use App\Models\NearbyPlace;
 use App\Models\PortalUser;
 use App\Services\AutoTranslator;
 use App\Services\Permits\PermitVerifier;
+use App\Services\Properties\ListingCopywriter;
 use App\Services\Properties\ListingFormData;
 use App\Support\PermitRules;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ use Illuminate\Validation\Rule;
  * @group CRM Properties — Form helpers
  *
  * Lookups the property form and the listing filters use: the permit Validate button, auto-translate,
- * the Nearby Places type → place picker and the agent filter.
+ * Write with AI, the Nearby Places type → place picker and the agent filter.
  */
 class PropertyFormController extends Controller
 {
@@ -107,6 +108,52 @@ class PropertyFormController extends Controller
         }
 
         return response()->json(['translations' => $result]);
+    }
+
+    /**
+     * Write with AI
+     *
+     * Title, key features and description for one language, written from the form's current specs
+     * (`write`) or polished from the agent's own draft (`improve`) — see ListingCopywriter. Nothing
+     * is saved: the form shows it for the agent to use or discard. 503 when no AI is set up.
+     *
+     * @bodyParam lang string required Example: en
+     * @bodyParam mode string write | improve. Example: write
+     * @bodyParam tone string professional | luxury | friendly | concise. Example: professional
+     * @bodyParam specs object required The form's values (listing_type, property_type, bedrooms, sqft, price, amenities, community, notes…).
+     * @bodyParam draft string The current description (HTML), for `improve`.
+     *
+     * @response 200 {"title": "Bright 2 Bed Apartment with Marina View", "key_features": "Marina view\nHigh floor", "description": "<p>…</p>"}
+     */
+    public function writeCopy(Request $request, ListingCopywriter $copywriter)
+    {
+        $data = $request->validate([
+            'lang' => ['required', Rule::in(Language::active()->pluck('code')->all())],
+            'mode' => ['required', Rule::in(['write', 'improve'])],
+            'tone' => ['nullable', Rule::in(ListingCopywriter::TONES)],
+            'specs' => 'required|array',
+            'specs.*' => 'nullable',
+            'specs.amenities' => 'nullable|array|max:200',
+            'specs.amenities.*' => 'string|max:100',
+            'specs.notes' => 'nullable|string|max:2000',
+            'draft' => 'nullable|string|max:20000',
+        ]);
+        if (!$copywriter->available()) {
+            return response()->json(['message' => 'AI writing isn\'t set up yet (CHATBOT_PROVIDER and its API key). You can still write the description by hand.'], 503);
+        }
+        if ($data['mode'] === 'improve' && trim(strip_tags((string) ($data['draft'] ?? ''))) === '') {
+            return response()->json(['message' => 'There\'s no description to improve yet — write a few lines first, or choose "Write new".', 'errors' => ['draft' => ['Nothing to improve yet.']]], 422);
+        }
+
+        $specs = array_map(fn ($v) => is_scalar($v) ? mb_substr((string) $v, 0, 500) : $v, Arr::only($data['specs'], [
+            'listing_type', 'rental_period', 'property_type', 'category', 'completion_status', 'bedrooms', 'bathrooms', 'sqft', 'price', 'currency',
+            'location', 'community', 'address', 'city', 'emirate', 'furnished', 'view', 'floor', 'parking', 'year_built', 'developer', 'amenities', 'notes',
+        ]));
+        $copy = $copywriter->write($specs, $data['lang'], $data['mode'], $data['tone'] ?? 'professional', $data['draft'] ?? null);
+
+        return $copy
+            ? response()->json($copy)
+            : response()->json(['message' => 'The AI couldn\'t write this right now — please try again in a moment.'], 502);
     }
 
     /**

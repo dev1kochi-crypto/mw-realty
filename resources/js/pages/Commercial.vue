@@ -11,6 +11,7 @@ import { useSearchFilters, filterParams, quickSelect, PAGE_CONTROLS } from '../c
 import SearchFilterField from '../components/SearchFilterField.vue';
 import { useWishlist } from '../composables/useWishlist';
 import EmptyState from '../components/EmptyState.vue';
+import CompareToggle from '../components/compare/CompareToggle.vue';
 import LocationAutocomplete from '../components/LocationAutocomplete.vue';
 import { carryFilters, takeCarriedFilters } from '../composables/useListingCarry';
 // Leaflet only loads when the map view is actually opened.
@@ -618,6 +619,7 @@ function amenityOverflow(amenities) {
                                 <span v-if="property.beds" class="mw-commercial-card__stat"><img src="/frontend/assets/images/icons/bed.svg" alt="" width="16" height="16">{{ property.beds }}</span>
                                 <span v-if="property.baths" class="mw-commercial-card__stat"><img src="/frontend/assets/images/icons/bathroom.svg" alt="" width="16" height="16">{{ property.baths }}</span>
                                 <span class="mw-commercial-card__stat"><img src="/frontend/assets/images/icons/area.svg" alt="" width="16" height="16">{{ property.area }}</span>
+                                <CompareToggle :property="property" />
                             </div>
                             <div class="mw-commercial-card__amenities">
                                 <span v-for="amenity in property.amenities.slice(0, 4)" :key="amenity" class="mw-commercial-card__amenity">{{ amenity }}</span>

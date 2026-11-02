@@ -8,12 +8,26 @@
 /* Listing header panel: title · search · plan chips · actions, then filters + DLD permit pills. */
 .pl-panel { padding: 12px 14px; border-radius: var(--portal-radius); border: 1px solid var(--portal-border); background: var(--portal-surface); box-shadow: var(--portal-shadow); }
 .pl-panel__row { display: flex; align-items: center; gap: 10px 12px; flex-wrap: wrap; }
-.pl-panel__row--filters { justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--portal-border); }
+.pl-panel__row--filters { flex-wrap: nowrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--portal-border); }
+/* Search stretches over the free width; the filter group keeps its natural size beside it. */
+.pl-panel .pl-panel__row--filters .portal-list-search { flex: 1 1 auto; }
+.pl-panel__row--filters .pf-bar { flex: 0 0 auto; flex-wrap: nowrap; gap: 8px; padding: 0; border: 0; background: none; }
+.pl-panel__row--permits { margin-top: 10px; }
+@media (max-width: 1199.98px) {
+    .pl-panel__row--filters { flex-wrap: wrap; }
+    .pl-panel .pl-panel__row--filters .portal-list-search { flex-basis: 100%; }
+    .pl-panel__row--filters .pf-bar { flex-wrap: wrap; }
+}
 .pl-panel__title { display: flex; align-items: center; gap: 12px; }
 .pl-panel .portal-list-search { flex: 1 1 300px; min-width: 0; padding: 3px 3px 3px 2px; background: var(--portal-bg); border-color: transparent; box-shadow: none; }
 .pl-panel .portal-list-search__field .form-control { padding-top: 5px; padding-bottom: 5px; }
 .pl-panel .portal-list-toolbar__chips { margin-left: 0; }
 .pl-panel__actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+/* Add Property + caret menu (Import / Property Finder) as one split button. */
+.pl-add-group { flex-wrap: nowrap; }
+.pl-add-group > .btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.pl-add-group .dropdown { display: flex; }
+.pl-add-group__caret { padding-left: 9px; padding-right: 9px; border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid rgba(255, 255, 255, .28); font-size: .7rem; }
 .pl-panel__foot { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--portal-border); font-size: .78rem; color: var(--portal-muted); }
 .pl-panel .pf-select { height: 34px; }
 @media (max-width: 767.98px) {

@@ -27,8 +27,10 @@ class ListingPermitController extends Controller
 
     private const PER_PAGE = 20;
 
-    public function __construct(private readonly ListingComplianceService $compliance)
-    {
+    public function __construct(
+        private readonly ListingComplianceService $compliance,
+        private readonly \App\Services\ListingReview\ListingReviewService $reviews,
+    ) {
     }
 
     private function authorizeAdmin(): void
@@ -70,11 +72,16 @@ class ListingPermitController extends Controller
             ->orderByDesc('id')
             ->paginate(self::PER_PAGE);
 
+        // Listing Review cases (same unit as another agency / risk) — shown on the row, reviewed there.
+        $reviewCases = $this->reviews->openCasesFor(collect($listings->items())->pluck('id')->all());
+
         return response()->json([
-            'data' => collect($listings->items())->map(function (Property $p) use ($tab) {
+            'data' => collect($listings->items())->map(function (Property $p) use ($tab, $reviewCases) {
                 $when = $tab === Property::COMPLIANCE_APPROVED ? $p->compliance_reviewed_at : $p->compliance_submitted_at;
 
                 return [
+                    'review' => collect($reviewCases[$p->id] ?? [])->map(fn ($c) => array_intersect_key($c, array_flip(['id', 'type', 'waiting', 'held', 'label'])))->values(),
+                    'review_rejected' => (bool) $p->reviewRejection(),
                     'id' => $p->id,
                     'title' => $p->getTranslation('title'),
                     'thumb' => $p->galleryImages()[0]['url'] ?? null,
@@ -188,6 +195,11 @@ class ListingPermitController extends Controller
             ], fn ($v) => $v !== null) : ['No permit needed (' . (PermitRules::TYPES[$type]['label'] ?? 'not set') . ')' => (bool) $type])
                 ->map(fn ($ok, $label) => ['label' => $label, 'ok' => $ok])->values(),
             'missing' => $this->compliance->missingItems($property),
+            // Listing Review: open cases (same unit as another agency / risk) and a rejection, if any.
+            'review' => [
+                'cases' => $this->reviews->openCasesFor([$property->id])->get($property->id, collect())->values(),
+                'rejection' => $property->reviewRejection(),
+            ],
             'reviewed_at' => ($property->compliance_reviewed_at ?? $property->permit_verified_at)?->toIso8601String(),
             'logs' => $property->complianceLogs->map(fn ($log) => [
                 'status' => $log->to_status,
@@ -219,9 +231,14 @@ class ListingPermitController extends Controller
             return $this->failed('Cannot approve yet. Missing: ' . implode(', ', $missing) . '.');
         }
 
-        $this->compliance->approve($property);
+        if ($property->reviewRejection()) {
+            return $this->failed('This listing was rejected on Listing Review — the agency has to fix it and save it first.');
+        }
+        // One approval: it also clears the listing's waiting Listing Review cases (or it would stay off the site).
+        $reviewed = $this->reviews->approveEverywhere($property, 'Approved on Listing Permits.');
+        $this->compliance->approve($property->refresh());
 
-        return response()->json(['success' => true, 'message' => 'Listing approved — it is live on the website.']);
+        return response()->json(['success' => true, 'message' => 'Listing approved — it is live on the website.' . ($reviewed ? ' Its Listing Review check was approved too.' : '')]);
     }
 
     /**

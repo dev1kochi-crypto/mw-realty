@@ -7,11 +7,16 @@ import { useRecaptcha } from '../composables/useRecaptcha';
 import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
 import AdBlock from '../components/AdBlock.vue';
+import CompareToggle from '../components/compare/CompareToggle.vue';
 import PhoneInput from '../components/PhoneInput.vue';
 import PropertyNearbyMap from '../components/PropertyNearbyMap.vue';
 import MortgageCalculator from '../components/calculators/MortgageCalculator.vue';
+import InvestmentCalculator from '../components/insights/InvestmentCalculator.vue';
+import RentalCosts from '../components/insights/RentalCosts.vue';
+import MarketInsights from '../components/insights/MarketInsights.vue';
+import { badgeLabel } from '../components/insights/assessment';
 import { contactError, responseError } from '../composables/useContactValidation';
-import { trackLeadClick } from '../composables/useListingImpressions';
+import { trackInsightView, trackLeadClick } from '../composables/useListingImpressions';
 
 const route = useRoute();
 const router = useRouter();
@@ -302,6 +307,9 @@ const viewingDates = computed(() => (property.value?.availability?.dates || []).
 function scrollToAvailability() {
     document.querySelector('[data-property-tab="availability"]')?.click();
 }
+function scrollToMarket() {
+    document.querySelector('[data-property-tab="market"]')?.click();
+}
 
 // Floor plan price: "AED 240,000 – 264,000" in the visitor's currency, or null.
 function planPrice(plan) {
@@ -375,6 +383,48 @@ const hasPricing = computed(() => {
 });
 // Mortgage estimate: only for listings for sale with a known (AED) price.
 const hasMortgage = computed(() => !!(property.value && property.value.listing_type !== 'rent' && Number(property.value.price_value) > 0));
+// Rental costs: long-term rentals only (holiday lets priced per day / week don't have move-in costs).
+const hasRentalCosts = computed(() => !!(property.value && property.value.listing_type === 'rent' && Number(property.value.price_value) > 0
+    && ['yearly', 'monthly', null, undefined].includes(property.value.rental_period)));
+const hasMarket = computed(() => !!(property.value && Number(property.value.price_value) > 0));
+
+// Market & Investment figures (GET /api/properties/{slug}/insights) load after the page itself, so
+// the listing shows straight away; the sections are on the page from the start and fill in.
+const insights = ref(null);
+const insightsLoading = ref(false);
+let insightsRequest = 0;
+watch(() => property.value?.slug, (slug) => {
+    const id = ++insightsRequest;
+    insights.value = null;
+    if (!slug || !hasMarket.value) return;
+    insightsLoading.value = true;
+    window.axios.get(`/api/properties/${slug}/insights`)
+        .then(({ data }) => { if (id === insightsRequest) insights.value = data; })
+        .catch(() => {})
+        .finally(() => { if (id === insightsRequest) insightsLoading.value = false; });
+}, { immediate: true });
+const assessmentBadge = computed(() => insights.value?.assessment?.headline || null);
+
+// Mortgage & Investment section: which calculator is showing. Opening the investment one counts as
+// using the insights (report usage).
+const calcMode = ref('mortgage');
+watch(() => property.value?.slug, () => { calcMode.value = 'mortgage'; });
+watch(calcMode, (mode) => { if (mode === 'investment') trackInsightView(property.value?.id); });
+
+// Report usage: the Investment / Market sections came into view.
+let insightObserver = null;
+function watchInsightSections() {
+    insightObserver?.disconnect();
+    if (!('IntersectionObserver' in window) || !property.value) return;
+    const id = property.value.id;
+    insightObserver = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) { trackInsightView(id); insightObserver.disconnect(); }
+    }, { threshold: 0.25 });
+    document.querySelectorAll('[data-insight-section]').forEach((el) => insightObserver.observe(el));
+}
+watch(renderKey, () => nextTick(watchInsightSections));
+onMounted(() => nextTick(watchInsightSections));
+onBeforeUnmount(() => insightObserver?.disconnect());
 
 // Floor Plans: the selected row drives the drawing, its zoom link, the download and the caption.
 // Regulatory information rows (PropertyPageService::regulatory), labelled in the site language.
@@ -461,6 +511,7 @@ function agentAria(template, name) {
                         <span class="mw-property__status-badge">{{ property.listing_type === 'rent' ? t('property_details.for_rent', property.listing_type_label) : t('property_details.for_sale', property.listing_type_label) }}</span>
                         <span v-if="property.premium" class="mw-property__status-badge mw-property__status-badge--premium">{{ t('property_details.premium', 'Premium') }}</span>
                         <span v-if="property.upgraded" class="mw-property__status-badge mw-property__status-badge--upgraded">{{ t('property_details.upgraded', 'Upgraded') }}</span>
+                        <a v-if="assessmentBadge?.tone === 'positive'" href="#market" class="mw-property__insight-flag" @click.prevent="scrollToMarket">{{ badgeLabel(t, assessmentBadge.key) }}</a>
                         <a v-if="viewingDates.length" href="#availability" class="mw-property__openhouse-flag" @click.prevent="scrollToAvailability">
                             <span class="mw-property__openhouse-dot" aria-hidden="true"></span>{{ t('property_details.open_house_short', 'Open house') }} · {{ viewingDates[0].short }}<template v-if="viewingDates.length > 1"> +{{ viewingDates.length - 1 }}</template>
                         </a>
@@ -479,6 +530,7 @@ function agentAria(template, name) {
                         <button v-if="property.brochure_available" type="button" class="mw-brochure-button" @click="openDownload('brochure')">
                             <span class="mw-download-arrow" aria-hidden="true">↓</span> Download Brochure
                         </button>
+                        <CompareToggle :property="property" large />
                     </div>
                 </div>
 
@@ -490,7 +542,9 @@ function agentAria(template, name) {
                         <a v-if="property.floor_plans?.length" href="#floor-plans" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="floor-plans">{{ t('property_details.tab_floor_plans', 'Floor Plans') }}</a>
                         <a href="#gallery" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="gallery">{{ t('property_details.tab_gallery') }}</a>
                         <a v-if="property.map || property.full_address" href="#location" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="location">{{ t('property_details.tab_location', 'Location & Nearby') }}</a>
-                        <a v-if="hasMortgage" href="#mortgage" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="mortgage">{{ t('property_details.tab_mortgage', 'Mortgage') }}</a>
+                        <a v-if="hasMortgage" href="#mortgage" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="mortgage">{{ t('property_details.tab_finance', 'Mortgage & Investment') }}</a>
+                        <a v-if="hasRentalCosts" href="#rental-costs" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="rental-costs">{{ t('property_details.tab_rental_costs', 'Rental Costs') }}</a>
+                        <a v-if="hasMarket" href="#market" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="market">{{ t('property_details.tab_market', 'Market Insights') }}</a>
                     </nav>
 
                     <select class="mw-property__tabs-select" :aria-label="t('property_details.tabs_aria')" data-property-tabs-select>
@@ -500,7 +554,9 @@ function agentAria(template, name) {
                         <option v-if="property.floor_plans?.length" value="floor-plans">{{ t('property_details.tab_floor_plans', 'Floor Plans') }}</option>
                         <option value="gallery">{{ t('property_details.tab_gallery') }}</option>
                         <option v-if="property.map || property.full_address" value="location">{{ t('property_details.tab_location', 'Location & Nearby') }}</option>
-                        <option v-if="hasMortgage" value="mortgage">{{ t('property_details.tab_mortgage', 'Mortgage') }}</option>
+                        <option v-if="hasMortgage" value="mortgage">{{ t('property_details.tab_finance', 'Mortgage & Investment') }}</option>
+                        <option v-if="hasRentalCosts" value="rental-costs">{{ t('property_details.tab_rental_costs', 'Rental Costs') }}</option>
+                        <option v-if="hasMarket" value="market">{{ t('property_details.tab_market', 'Market Insights') }}</option>
                     </select>
                 </div>
 
@@ -667,9 +723,29 @@ function agentAria(template, name) {
                             <PropertyNearbyMap v-if="property.map" :key="property.id" :location="property.map" :groups="property.nearby || []" :title="property.name" :address="property.address || property.location" />
                         </section>
 
+                        <!-- One section, two calculators: home loan or buy-to-let returns, one at a time. Both stay
+                             mounted (v-show) so the visitor's inputs survive switching. -->
                         <section v-if="hasMortgage" id="mortgage" class="mw-property__section" data-reveal data-property-panel="mortgage">
-                            <h3 class="mw-property__section-title">{{ t('property_details.mortgage_title', 'Mortgage Calculator') }}</h3>
-                            <MortgageCalculator :price="Number(property.price_value)" />
+                            <div class="mw-property__calc-head">
+                                <h3 class="mw-property__section-title">{{ calcMode === 'investment' ? t('property_details.investment_title', 'Investment Calculator') : t('property_details.mortgage_title', 'Mortgage Calculator') }}</h3>
+                                <div class="mc__toggle mw-property__calc-switch" role="tablist" :aria-label="t('property_details.tab_finance', 'Mortgage & Investment')">
+                                    <button type="button" role="tab" :aria-selected="calcMode === 'mortgage' ? 'true' : 'false'" :class="{ 'is-active': calcMode === 'mortgage' }" @click="calcMode = 'mortgage'">{{ t('property_details.calc_switch_mortgage', 'Monthly payments') }}</button>
+                                    <button type="button" role="tab" :aria-selected="calcMode === 'investment' ? 'true' : 'false'" :class="{ 'is-active': calcMode === 'investment' }" @click="calcMode = 'investment'">{{ t('property_details.calc_switch_investment', 'Investment returns') }}</button>
+                                </div>
+                            </div>
+                            <div v-show="calcMode === 'mortgage'"><MortgageCalculator :price="Number(property.price_value)" /></div>
+                            <div v-show="calcMode === 'investment'"><InvestmentCalculator :price="Number(property.price_value)" :sqft="property.sqft || 0" :insights="insights" /></div>
+                        </section>
+
+                        <section v-if="hasRentalCosts" id="rental-costs" class="mw-property__section" data-reveal data-property-panel="rental-costs">
+                            <h3 class="mw-property__section-title">{{ t('property_details.rental_costs_title', 'Rental Cost Estimator') }}</h3>
+                            <RentalCosts :price="Number(property.price_value)" :rental-period="property.rental_period" :deposit="property.pricing?.security_deposit || 0"
+                                :cheques="property.pricing?.cheques" :emirate="property.emirate" :property-type="property.property_type" :furnished="property.furnished" />
+                        </section>
+
+                        <section v-if="hasMarket" id="market" class="mw-property__section" data-reveal data-property-panel="market" data-insight-section>
+                            <h3 class="mw-property__section-title">{{ t('property_details.market_title', 'Market Insights') }}</h3>
+                            <MarketInsights :insights="insights" :loading="insightsLoading" />
                         </section>
 
                         <!-- Regulatory information: reference, permit, broker / agent licenses + the permit QR buyers can scan. -->
@@ -1048,6 +1124,14 @@ function agentAria(template, name) {
 .mw-property__status-badge--upgraded{background:#203f68}
 .mw-property__openhouse-flag{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:999px;border:1px solid #f0d2d9;background:#fdf3f5;color:#b9233c;font-family:"Plus Jakarta Sans",sans-serif;font-size:13px;font-weight:700;line-height:1.2;text-decoration:none;white-space:nowrap;transition:background .2s,border-color .2s}
 .mw-property__openhouse-flag:hover{background:#fff;border-color:#b9233c}
+/* Mortgage & Investment: title + the calculator switch on one row (stacked on phones). */
+.mw-property__calc-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;margin-bottom:clamp(16px,1.6vw,24px)}
+.mw-property__calc-head .mw-property__section-title{margin:0}
+.mw-property__calc-switch{flex:0 1 380px;margin-top:0;font-family:"Plus Jakarta Sans",sans-serif}
+@media(max-width:560px){.mw-property__calc-switch{flex-basis:100%}}
+/* Automated market assessment ("High yield potential"…) — jumps to Market Insights. */
+.mw-property__insight-flag{display:inline-flex;align-items:center;padding:6px 13px;border-radius:999px;border:1px solid #bfe3d3;background:#edf8f3;color:#17774f;font-family:"Plus Jakarta Sans",sans-serif;font-size:13px;font-weight:700;line-height:1.2;text-decoration:none;white-space:nowrap;transition:background .2s,border-color .2s}
+.mw-property__insight-flag:hover{background:#fff;border-color:#17774f;color:#17774f}
 .mw-property__openhouse-dot{width:8px;height:8px;border-radius:50%;background:#b9233c;box-shadow:0 0 0 0 #b9233c66;animation:openhousePulse 1.8s ease-out infinite}
 @keyframes openhousePulse{0%{box-shadow:0 0 0 0 #b9233c66}100%{box-shadow:0 0 0 8px #b9233c00}}
 

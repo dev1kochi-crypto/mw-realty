@@ -15,11 +15,12 @@ export function useSpeech() {
     const listening = ref(false);
     let recognition = null;
 
-    function startListening(onResult) {
+    /** `lang`: BCP-47 locale to listen for (the chat language's), else the page's language. */
+    function startListening(onResult, lang = null) {
         if (!recognitionSupported || listening.value) return;
 
         recognition = new SpeechRecognition();
-        recognition.lang = document.documentElement.lang || 'en-US';
+        recognition.lang = lang || document.documentElement.lang || 'en-US';
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
 
@@ -39,10 +40,11 @@ export function useSpeech() {
         listening.value = false;
     }
 
-    function speak(text) {
+    function speak(text, lang = null) {
         if (!synthesisSupported || !text) return;
         window.speechSynthesis.cancel(); // don't let replies queue up and read out of order
         const utterance = new SpeechSynthesisUtterance(text);
+        if (lang) utterance.lang = lang; // picks a voice for the chat language, not the browser's default
         utterance.rate = 1;
         window.speechSynthesis.speak(utterance);
     }

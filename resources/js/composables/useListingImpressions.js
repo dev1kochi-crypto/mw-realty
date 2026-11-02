@@ -89,6 +89,16 @@ export const vTrackImpression = {
     },
 };
 
+/** The listing's Market & Investment panel came into view — counted once per listing per visit. */
+const insightsSeen = new Set();
+export function trackInsightView(propertyId) {
+    if (!propertyId || insightsSeen.has(propertyId)) return;
+    insightsSeen.add(propertyId);
+    const body = new FormData();
+    body.append('property_id', String(propertyId));
+    send('/track/insight-view', body, false);
+}
+
 /** kind: call | whatsapp | email | enquiry | viewing | brochure | floor_plan */
 export function trackLeadClick(propertyId, kind) {
     if (!propertyId) return;

@@ -60,6 +60,12 @@ const routes = [
                 meta: { title: `Add ${item}`, nav: base, segment, help: 'property-form' },
             },
             {
+                path: `/${base}/import`,
+                name: `${base}.import`,
+                component: () => import('../pages/properties/PropertyImport.vue'),
+                meta: { title: `Import ${title}`, nav: base, segment, help },
+            },
+            {
                 path: `/${base}/:id(\\d+)`,
                 name: `${base}.show`,
                 component: () => import('../pages/properties/PropertyShow.vue'),
@@ -263,6 +269,20 @@ const routes = [
         component: () => import('../pages/listing-permits/ListingPermitShow.vue'),
         props: (route) => ({ id: Number(route.params.id) }),
         meta: { title: 'Listing Permit', nav: 'listing-approvals', help: 'listing-approvals' },
+    },
+    // Listing Review (duplicates / risk) — Super Admin only (the API answers 403 for anyone else).
+    {
+        path: '/listing-review',
+        name: 'listing-review.index',
+        component: () => import('../pages/listing-review/ListingReviewIndex.vue'),
+        meta: { title: 'Listing Review', nav: 'listing-review', help: 'listing-approvals' },
+    },
+    {
+        path: '/listing-review/:id(\\d+)',
+        name: 'listing-review.show',
+        component: () => import('../pages/listing-review/ListingReviewShow.vue'),
+        props: (route) => ({ id: Number(route.params.id) }),
+        meta: { title: 'Listing Review', nav: 'listing-review', help: 'listing-approvals' },
     },
     // Website Leads — Super Admin only (the API answers 403 for anyone else).
     {

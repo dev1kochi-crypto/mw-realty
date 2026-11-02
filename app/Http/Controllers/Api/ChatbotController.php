@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\CmsKit\Language;
 use App\Models\Visitors\ChatConversation;
 use App\Models\Visitors\ChatMessage;
 use App\Models\Visitors\VisitorBrowser;
@@ -46,7 +47,11 @@ class ChatbotController extends Controller
      *
      * Widget opened: is this visitor known yet, and the latest conversation to pick up from.
      *
-     * @response 200 {"identified": false, "details_required": false, "conversation_id": null, "requirements": null, "messages": []}
+     * `languages` are the languages the assistant chats in (show them as "Choose your language");
+     * `language` is the one this conversation is in (null until the user picks one). Send the
+     * chosen code as `language` with each message.
+     *
+     * @response 200 {"identified": false, "details_required": false, "conversation_id": null, "requirements": null, "language": null, "default_language": "en", "languages": [{"code": "ar", "name": "Arabic", "native": "العربية", "dir": "rtl", "speech": "ar-AE", "strings": {"welcome": "…", "placeholder": "…", "switch_offer": "…", "switched": "…", "error": "…"}}], "messages": []}
      */
     public function session(Request $request)
     {
@@ -59,6 +64,9 @@ class ChatbotController extends Controller
             'details_required' => !$lead && $this->anonymousLimitReached($browser),
             'conversation_id' => $conversation?->id,
             'requirements' => $conversation?->requirements,
+            'language' => $conversation?->language,
+            'default_language' => config('chatbot.default_language'),
+            'languages' => ChatbotService::languages(),
             'messages' => $conversation ?$conversation->messages->map(fn ($m) => [
                 'role' => $m->role,
                 'text' => $m->text,
@@ -126,7 +134,8 @@ class ChatbotController extends Controller
      *
      * @bodyParam message string required Example: Show me 2 bedroom apartments in Dubai Marina under 2M
      * @bodyParam conversation_id integer From open chat / share details. No-example
-     * @bodyParam lang string Reply language. Example: en
+     * @bodyParam lang string Website language — the listing text on the cards. Example: en
+     * @bodyParam language string Chat language the user picked (a `languages` code from Open chat) — the assistant replies in it whatever language the message is in. Example: ar
      *
      * The buyer can describe what they want in their own words (budget, area, near schools,
      * rental income, commute, …): `requirements` is everything captured so far in this
@@ -142,6 +151,7 @@ class ChatbotController extends Controller
             'message' => 'required|string|max:1000',
             'conversation_id' => 'nullable|integer',
             'lang' => 'nullable|string|max:5',
+            'language' => 'nullable|string|max:10',
         ]);
 
         $lead = $this->tracker->currentLead($request);
@@ -159,10 +169,15 @@ class ChatbotController extends Controller
         $history = $conversation->messages()->reorder()->latest('id')->limit(self::HISTORY_LIMIT)->get()
             ->reverse()->map(fn ($m) => ['role' => $m->role, 'text' => $m->text])->values()->all();
 
-        // What they've described wanting so far — the reply carries it back with this turn's additions.
-        $reply = $this->chatbot->reply($data['message'], $history, $data['lang'] ?? app()->getLocale(), $conversation->requirements ?? []);
+        // Chat language: what they picked (kept on the conversation, so it carries on after a reload).
+        // The listing text on the cards follows it when the website has that language too.
+        $language = ChatbotService::language($data['language'] ?? $conversation->language);
+        $lang = Language::where('status', true)->where('code', $language)->exists() ? $language : ($data['lang'] ?? app()->getLocale());
 
-        DB::transaction(function () use ($conversation, $data, $reply, $request) {
+        // What they've described wanting so far — the reply carries it back with this turn's additions.
+        $reply = $this->chatbot->reply($data['message'], $history, $lang, $conversation->requirements ?? [], $language);
+
+        DB::transaction(function () use ($conversation, $data, $reply, $request, $language) {
             $conversation->messages()->create(['role' => 'user', 'text' => $data['message']]);
             // Provider failures ("something went wrong") aren't part of the conversation.
             if (filled($reply['reply'] ?? null) && empty($reply['error'])) {
@@ -177,6 +192,7 @@ class ChatbotController extends Controller
             $firstMessage = (int) $conversation->message_count === 0;
             $conversation->forceFill([
                 'requirements' => $reply['requirements'] ?: null,
+                'language' => $language,
                 'message_count' => $conversation->messages()->count(),
                 'last_message_at' => now(),
             ])->save();

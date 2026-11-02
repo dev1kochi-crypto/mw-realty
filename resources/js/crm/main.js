@@ -16,6 +16,7 @@ import './styles/integrations.css';
 import './styles/property-options.css';
 import './styles/properties.css';
 import './styles/listing-permits.css';
+import './styles/listing-review.css';
 import './styles/nearby-places.css';
 import './styles/watermark.css';
 import './styles/reports.css';

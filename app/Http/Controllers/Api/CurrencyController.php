@@ -33,6 +33,13 @@ class CurrencyController extends Controller
                 'is_default' => $c->is_default,
             ])->values()->all());
 
-        return response()->json(['base' => Currency::BASE, 'currencies' => $currencies]);
+        // When the rates were last changed (by Admin or `currencies:sync-rates`) — shown as "Rates as of".
+        $updatedAt = Cache::remember(Currency::CACHE_KEY . ':updated', 600, fn () => Currency::active()->max('updated_at'));
+
+        return response()->json([
+            'base' => Currency::BASE,
+            'currencies' => $currencies,
+            'rates_updated_at' => $updatedAt ? \Illuminate\Support\Carbon::parse($updatedAt)->toIso8601String() : null,
+        ]);
     }
 }

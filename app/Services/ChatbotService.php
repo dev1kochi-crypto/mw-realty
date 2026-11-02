@@ -41,22 +41,26 @@ class ChatbotService
      * @param  array<int, array{role: string, text: string}>  $history  prior visible turns only —
      *         function-call/response turns are reconstructed fresh below, never carried by the client.
      * @param  array  $brief  the buyer's brief captured so far in this conversation
+     * @param  string  $lang  language of the listing content on the result cards (a site language)
+     * @param  string|null  $language  the chat language the visitor picked — see self::language()
      * @return array{reply: string, properties: array, pagination: ?array, requirements: array, error: bool}
      */
-    public function reply(string $message, array $history, string $lang, array $brief = []): array
+    public function reply(string $message, array $history, string $lang, array $brief = [], ?string $language = null): array
     {
+        $language = self::language($language);
+
         if (!$this->provider->isConfigured()) {
-            return $this->fallback('The AI assistant isn\'t configured yet — please use the enquiry form on any listing instead.', $brief);
+            return $this->fallback(self::text($language, 'unavailable'), $brief, $language);
         }
 
-        $first = $this->provider->firstTurn($this->systemInstruction($brief), $history, $message, $this->searchPropertiesDeclaration());
+        $first = $this->provider->firstTurn($this->systemInstruction($brief, $language), $history, $message, $this->searchPropertiesDeclaration());
         if ($first === null) {
-            return $this->fallback(null, $brief);
+            return $this->fallback(null, $brief, $language);
         }
 
         if ($first['functionCall'] === null) {
             return [
-                'reply' => $first['text'] ?? 'Sorry, I didn\'t catch that — could you rephrase?',
+                'reply' => $first['text'] ?? self::text($language, 'error'),
                 'properties' => [],
                 'pagination' => null,
                 'requirements' => $brief,
@@ -78,9 +82,7 @@ class ChatbotService
         ]);
 
         return [
-            'reply' => $replyText ?? ($properties
-                ? 'Here are the closest matches I found:'
-                : 'I couldn\'t find any properties matching that — try broadening your search.'),
+            'reply' => $replyText ?? self::text($language, $properties ? 'matches' : 'no_matches'),
             'properties' => $properties,
             'pagination' => ['current_page' => 1, 'last_page' => 1, 'total' => count($properties)],
             'requirements' => $brief,
@@ -234,9 +236,46 @@ class ChatbotService
         ];
     }
 
-    private function systemInstruction(array $brief): string
+    /** A chat language from config('chatbot.languages'); anything else falls back to the default. */
+    public static function language(?string $code): string
+    {
+        $code = strtolower((string) $code);
+
+        return config("chatbot.languages.{$code}") ? $code : config('chatbot.default_language');
+    }
+
+    /** One of the fixed lines (`strings`) in the chat language, English when it's missing there. */
+    public static function text(string $language, string $key): string
+    {
+        return config("chatbot.languages.{$language}.strings.{$key}")
+            ?? config("chatbot.languages.en.strings.{$key}", '');
+    }
+
+    /**
+     * The picker's list: code, English and native name, text direction, speech locale and the
+     * widget's fixed lines (welcome with the persona name filled in, placeholder, switch offer …).
+     */
+    public static function languages(): array
     {
         $name = config('chatbot.persona_name');
+
+        return collect(config('chatbot.languages'))->map(fn ($l, $code) => [
+            'code' => $code,
+            'name' => $l['name'],
+            'native' => $l['native'],
+            'dir' => $l['dir'],
+            'speech' => $l['speech'],
+            'strings' => array_merge(
+                array_intersect_key($l['strings'], array_flip(['welcome', 'placeholder', 'switch_offer', 'switched', 'error'])),
+                ['welcome' => str_replace('{name}', $name, $l['strings']['welcome'])],
+            ),
+        ])->values()->all();
+    }
+
+    private function systemInstruction(array $brief, string $language): string
+    {
+        $name = config('chatbot.persona_name');
+        $languageName = config("chatbot.languages.{$language}.name");
 
         return "You are {$name}, MW Realty's property search assistant. Buyers describe what they want "
             . 'in their own words — budget, location, lifestyle, schools, commute, financing, investment goals. '
@@ -250,14 +289,23 @@ class ChatbotService
             . 'suggest which requirement to relax — do not suggest specific alternative properties from '
             . 'memory. Keep replies to 2-3 sentences; the actual property cards are rendered separately by '
             . "the app, so don't repeat every field for every result in prose."
+            . ' Base every fact on the listing data the search returns and say so when something is an estimate or '
+            . 'not in the data. You are not a lawyer, financial adviser or licensed real-estate broker: for legal, tax, '
+            . 'visa or financing decisions, give general information only and suggest the buyer confirm with a '
+            . 'qualified professional or the listing\'s licensed agency.'
+            . " LANGUAGE: the visitor chose {$languageName}. Write every reply entirely in {$languageName}, in a warm, "
+            . "natural tone that suits {$languageName} speakers — even when they write in another language, when earlier "
+            . 'messages in this conversation are in another language, or when listing data is in English. Understand '
+            . "messages in any language. Keep property names, community names and amounts as they are. Always call "
+            . 'search_properties with English values (locations as written in the listings, e.g. "Dubai Marina").'
             . ($brief ? ' The buyer\'s requirements captured so far in this conversation: ' . json_encode($brief)
                 . '. When they refine or add something, search again — earlier requirements are kept automatically.' : '');
     }
 
-    private function fallback(?string $message, array $brief): array
+    private function fallback(?string $message, array $brief, string $language): array
     {
         return [
-            'reply' => $message ?? 'Sorry, I\'m having trouble answering right now — please try again in a moment, or use the enquiry form on any listing.',
+            'reply' => $message ?? self::text($language, 'error'),
             'properties' => [],
             'pagination' => null,
             'requirements' => $brief,

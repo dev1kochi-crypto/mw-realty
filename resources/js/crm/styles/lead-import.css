@@ -22,9 +22,24 @@
     .limp-stat.added { background: #dcfce7; color: #15803d; }
     .limp-stat.updated { background: #dbeafe; color: #1d4ed8; }
     .limp-stat.skipped { background: #fee2e2; color: #b91c1c; }
+    .limp-stat.needs-info { background: #fef3c7; color: #b45309; }
     .limp-meta { font-size: .78rem; color: var(--portal-muted, #6b7280); }
     @keyframes limp-spin { to { transform: rotate(360deg); } }
     @keyframes limp-float { 0%, 100% { transform: translateY(2px); } 50% { transform: translateY(-3px); } }
     @keyframes limp-pop { 0% { transform: scale(.6); } 80% { transform: scale(1.08); } 100% { transform: scale(1); } }
     @keyframes limp-slide { 0% { margin-left: -30%; } 100% { margin-left: 100%; } }
     @media (prefers-reduced-motion: reduce) { .limp-icon.is-working::before, .limp-icon.is-working i, .limp-progress-queued .progress-bar, .limp-icon.is-done { animation: none; } }
+
+/* Listing import page (pages/properties/PropertyImport.vue) — the ways to add listings, steps, checklist. */
+.limp-ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.limp-way.is-current { border-color: var(--tile-color); box-shadow: 0 0 0 1px var(--tile-color) inset; }
+.limp-steps { display: flex; flex-wrap: wrap; gap: 8px 22px; list-style: none; padding: 0; margin: 0 0 18px; font-size: .84rem; color: var(--portal-muted, #6b7280); }
+.limp-steps li { display: inline-flex; align-items: center; gap: 8px; }
+.limp-steps__num { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--portal-border); font-size: .74rem; font-weight: 700; }
+.limp-steps li.is-active { color: var(--portal-text, #111827); font-weight: 600; }
+.limp-steps li.is-active .limp-steps__num { border-color: var(--portal-primary); background: var(--portal-primary); color: #fff; }
+.limp-steps li.is-done .limp-steps__num { border-color: #16a34a; background: #dcfce7; color: #15803d; }
+.limp-checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; font-size: .82rem; color: var(--portal-muted, #6b7280); }
+.limp-checks li { display: flex; gap: 10px; align-items: flex-start; }
+.limp-checks i { width: 28px; height: 28px; flex-shrink: 0; display: grid; place-items: center; border-radius: 8px; background: rgba(79, 70, 229, 0.1); color: var(--portal-primary); font-size: .8rem; }
+.limp-checks strong { color: var(--portal-text, #111827); font-weight: 600; }

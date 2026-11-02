@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Property extends Model
 {
@@ -30,6 +31,7 @@ class Property extends Model
         'compliance_submitted_at',
         'compliance_reviewed_at',
         'compliance_reviewed_by',
+        'review_hold',
         'listing_type',
         'rental_period',
         'available_dates',
@@ -126,6 +128,7 @@ class Property extends Model
         'last_open_house_date' => 'date',
         'permit_verified_at' => 'datetime',
         'permit_data' => 'array',
+        'review_hold' => 'boolean',
         'sold_at' => 'datetime',
         'sold_price' => 'decimal:2',
         'sold_commission' => 'decimal:2',
@@ -157,6 +160,23 @@ class Property extends Model
         return 'RERA' . $number;
     }
 
+    /**
+     * The listing's web address: the title (or a hand-typed slug) + its reference no, e.g.
+     * "elegant-2-bedroom-villa-rera70718". Two agencies can use the same title — the reference no keeps
+     * every slug unique. An existing "-rera70718" ending isn't added twice.
+     */
+    public static function makeSlug(?string $base, string $referenceNo): string
+    {
+        $suffix = Str::slug($referenceNo);
+        $slug = Str::slug(Str::limit((string) $base, 150, ''));
+        if ($slug === $suffix || str_ends_with($slug, '-' . $suffix)) {
+            $slug = substr($slug, 0, -strlen($suffix));
+        }
+        $slug = trim($slug, '-');
+
+        return $slug === '' ? $suffix : "{$slug}-{$suffix}";
+    }
+
     protected static function booted(): void
     {
         // Mirror the latest open house / viewing day into an indexed column for the "Open house" filter.
@@ -176,7 +196,9 @@ class Property extends Model
     {
         return $this->compliance_status === self::COMPLIANCE_APPROVED
             && !$this->isSold()
-            && (!$this->permit_expires_at || $this->permit_expires_at->gte(today()));
+            && (!$this->permit_expires_at || $this->permit_expires_at->gte(today()))
+            // Listing Review: waiting for Super Admin, or rejected until the agency resubmits it.
+            && !$this->review_hold;
     }
 
     public function complianceLabel(): string
@@ -219,7 +241,20 @@ class Property extends Model
     public function scopeCompliant($query)
     {
         return $query->where('properties.compliance_status', self::COMPLIANCE_APPROVED)
-            ->where(fn ($q) => $q->whereNull('properties.permit_expires_at')->orWhereDate('properties.permit_expires_at', '>=', today()));
+            ->where(fn ($q) => $q->whereNull('properties.permit_expires_at')->orWhereDate('properties.permit_expires_at', '>=', today()))
+            ->where('properties.review_hold', false);
+    }
+
+    /** Listing Review cases this listing is part of (App\Services\ListingReview\ListingReviewService). */
+    public function listingReviews()
+    {
+        return $this->belongsToMany(ListingReview::class, 'listing_review_property')->withPivot(['held', 'outcome', 'reasons', 'note']);
+    }
+
+    /** Super Admin rejected it on Listing Review: ['reason' => …, 'at' => …] until the agency resubmits. */
+    public function reviewRejection(): ?array
+    {
+        return $this->metadata['review_rejection'] ?? null;
     }
 
     public function complianceLogs()

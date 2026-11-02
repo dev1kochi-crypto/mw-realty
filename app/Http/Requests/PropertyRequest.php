@@ -26,7 +26,8 @@ class PropertyRequest extends FormRequest
             'translations.*.community' => 'nullable|string|max:255',
             'translations.*.city' => 'required|string|max:255',
             'translations.*.country' => 'required|string|max:255',
-            'slug' => ['required', 'alpha_dash', 'max:255', Rule::unique('properties', 'slug')->ignore($this->route('id'))],
+            // Unique by construction: the controller adds the reference no (Property::makeSlug).
+            'slug' => ['required', 'alpha_dash', 'max:200'],
             // Displayed read-only as a preview; the controller accepts only an unused RERA-prefixed value.
             'reference_no' => 'nullable|string|max:255',
             'rera_id' => 'nullable|string|max:255',

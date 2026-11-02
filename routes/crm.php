@@ -29,12 +29,14 @@ use App\Http\Controllers\Crm\Masters\TagController;
 use App\Http\Controllers\Crm\NavigationController;
 use App\Http\Controllers\Crm\NearbyPlaces\NearbyPlaceController;
 use App\Http\Controllers\Crm\Properties\ListingPermitController;
+use App\Http\Controllers\Crm\Properties\ListingReviewController;
 use App\Http\Controllers\Crm\Properties\PremiumController;
 use App\Http\Controllers\Crm\Properties\PropertyController;
 use App\Http\Controllers\Crm\Properties\SoldListingController;
 use App\Http\Controllers\Crm\Properties\PropertyFeatureController;
 use App\Http\Controllers\Crm\Properties\PropertyFormController;
 use App\Http\Controllers\Crm\Properties\PropertyGalleryController;
+use App\Http\Controllers\Crm\Properties\PropertyImportController;
 use App\Http\Controllers\Crm\Properties\PropertyInsightsController;
 use App\Http\Controllers\Crm\Properties\PropertySaleController;
 use App\Http\Controllers\Crm\Reports\ReportController;
@@ -217,7 +219,18 @@ Route::middleware('crm.auth')->group(function () {
                 Route::get('/agent-options', 'agentOptions')->name('agent-options')->middleware('throttle:120,1');
                 Route::get('/nearby-places', 'nearbyPlaces')->name('nearby-places');
                 Route::post('/translate', 'translate')->name('translate')->middleware('throttle:60,1');
+                Route::post('/write-copy', 'writeCopy')->name('write-copy')->middleware('throttle:20,1');
                 Route::post('/permit/validate', 'validatePermit')->name('permit.validate')->middleware('throttle:30,1');
+            });
+            // Spreadsheet import — upload + map columns, then a background import (next to the Property Finder sync).
+            Route::controller(PropertyImportController::class)->prefix('imports')->name('imports.')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('/', 'store')->name('store')->middleware('throttle:20,1');
+                Route::get('/template', 'template')->name('template');
+                Route::get('/latest', 'latest')->name('latest');
+                Route::post('/{propertyImport}/start', 'start')->name('start');
+                Route::get('/{propertyImport}', 'status')->name('status')->middleware('throttle:120,1');
+                Route::get('/{propertyImport}/result', 'result')->name('result');
             });
             Route::get('/{id}/insights', PropertyInsightsController::class)->name('insights')->whereNumber('id')->middleware(['throttle:120,1', 'plan.feature:property_insights']);
             Route::controller(PropertyFeatureController::class)->prefix('/{id}/feature')->name('feature.')->whereNumber('id')->group(function () {
@@ -360,6 +373,14 @@ Route::middleware('crm.auth')->group(function () {
             Route::get('/{id}', 'show')->name('show')->whereNumber('id');
             Route::post('/{id}/approve', 'approve')->name('approve')->whereNumber('id');
             Route::post('/{id}/take-down', 'takeDown')->name('take-down')->whereNumber('id');
+        });
+
+        // Listing Review (duplicates / risk screening) — Super Admin only (checked in the controller).
+        Route::prefix('listing-review')->name('listing-review.')->controller(ListingReviewController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/{id}', 'show')->name('show')->whereNumber('id');
+            Route::post('/{id}/approve', 'approve')->name('approve')->whereNumber('id');
+            Route::post('/{id}/reject', 'reject')->name('reject')->whereNumber('id');
         });
 
         // Integrations — hub, Facebook Lead Ads (Pages' leads arrive via /api/webhooks/facebook) and Property Finder.

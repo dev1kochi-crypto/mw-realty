@@ -75,6 +75,12 @@ class GeminiChatbotProvider implements ChatbotProvider
         return $response ? $this->extractText($response) : null;
     }
 
+    public function complete(string $systemInstruction, string $message, int $maxTokens = 1024): ?string
+    {
+        $response = $this->generateContent($systemInstruction, [['role' => 'user', 'parts' => [['text' => $message]]]], [], $maxTokens);
+        return $response ? $this->extractText($response) : null;
+    }
+
     /** @return array<int, array{role: string, parts: array}> */
     private function historyToContents(array $history): array
     {
@@ -84,18 +90,16 @@ class GeminiChatbotProvider implements ChatbotProvider
         );
     }
 
-    private function generateContent(string $systemInstruction, array $contents, array $tools): ?array
+    private function generateContent(string $systemInstruction, array $contents, array $tools, int $maxTokens = 512): ?array
     {
         try {
-            $response = Http::timeout(15)
+            $response = Http::timeout(20)
                 ->withHeaders(['x-goog-api-key' => $this->apiKey])
-                ->post(sprintf(self::ENDPOINT, $this->model), [
+                ->post(sprintf(self::ENDPOINT, $this->model), array_merge([
                     'system_instruction' => ['parts' => [['text' => $systemInstruction]]],
                     'contents' => $contents,
-                    'tools' => $tools,
-                    'tool_config' => ['function_calling_config' => ['mode' => 'AUTO']],
-                    'generation_config' => ['temperature' => 0.3, 'maxOutputTokens' => 512],
-                ]);
+                    'generation_config' => ['temperature' => 0.3, 'maxOutputTokens' => $maxTokens],
+                ], $tools ? ['tools' => $tools, 'tool_config' => ['function_calling_config' => ['mode' => 'AUTO']]] : []));
 
             if (!$response->successful()) {
                 Log::error('Gemini API error: ' . $response->status() . ' ' . $response->body());

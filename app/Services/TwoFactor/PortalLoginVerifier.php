@@ -65,6 +65,10 @@ class PortalLoginVerifier
     public function verifyTwoFactorCode(PortalUser $portalUser, string $code): bool
     {
         $code = trim($code);
+        // OTP_ENABLED=false (local testing): the static OTP_STATIC_CODE passes this step too — never in production.
+        if (!config('auth.otp.enabled') && !app()->isProduction() && hash_equals((string) config('auth.otp.static_code'), $code)) {
+            return true;
+        }
         $step = $this->totp->verify((string) $portalUser->two_factor_secret, $code, $portalUser->two_factor_last_step);
 
         if ($step !== null) {

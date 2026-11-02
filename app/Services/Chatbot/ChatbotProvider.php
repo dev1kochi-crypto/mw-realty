@@ -36,4 +36,10 @@ interface ChatbotProvider
      * Returns null on failure; the caller then falls back to a canned "here's what I found".
      */
     public function secondTurn(mixed $state, array $functionResult): ?string;
+
+    /**
+     * One plain request → reply text, no tools (e.g. the /compare page's summary, see
+     * PropertyCompareSummary). Null on failure.
+     */
+    public function complete(string $systemInstruction, string $message, int $maxTokens = 1024): ?string;
 }

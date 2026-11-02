@@ -156,6 +156,9 @@ class ListingComplianceService
             }
         }
 
+        // Duplicate / risk screening (Listing Review) — may hold the listing off the website.
+        app(\App\Services\ListingReview\ListingReviewService::class)->screen($property->refresh());
+
         if ($property->status && !$property->canGoLive()) {
             $property->update(['status' => false]);
         }

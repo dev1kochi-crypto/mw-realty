@@ -20,7 +20,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -451,6 +450,8 @@ class PropertyController extends Controller
             'can_go_live' => $property->canGoLive(),
             // Why this listing isn't live (permit not verified / expired / taken down): [tone, icon, text].
             'review_alert' => !$property->canGoLive() && !$property->isSold() ? (match (true) {
+                (bool) $property->reviewRejection() => ['danger', 'fa-ban', 'MW Realty rejected this listing: ' . ($property->reviewRejection()['reason'] ?? '') . ' Fix it and click Update — it goes back to MW Realty for review.'],
+                $property->review_hold => ['warning', 'fa-magnifying-glass', 'Not on the website yet: this unit is already listed by another agency, or a detail (price, permit) needs checking. MW Realty is reviewing it — you\'ll get a notification.'],
                 $property->awaitingImportReview() => ['info', 'fa-user-shield', 'Imported from Property Finder — MW Realty is reviewing it. After approval, validate the permit in Core details to put it on the website.'],
                 $property->awaitingApproval() => ['info', 'fa-user-shield', 'Not on the website yet: waiting for MW Realty to approve this listing. It goes live as soon as it is approved — you\'ll be told by email.'],
                 default => match ($property->compliance_status) {
@@ -527,7 +528,8 @@ class PropertyController extends Controller
 
         $title = $request->input('translations.' . config('app.fallback_locale', 'en') . '.title')
             ?? collect($request->input('translations', []))->first()['title'] ?? null;
-        $data['slug'] = $request->input('slug') ?: Str::slug($title . '-' . Str::random(5));
+        // Title + reference no — the same title from two agencies never clashes.
+        $data['slug'] = Property::makeSlug($request->input('slug') ?: $title, $data['reference_no']);
 
         $metadata = $request->input('metadata', []);
         if ($request->hasFile('metadata_og_image')) {
@@ -624,8 +626,9 @@ class PropertyController extends Controller
         $data['order_index'] = $request->input('order_index') ?: 0;
         // `featured` is deliberately not touched here: the form has no Featured switch (featuring
         // is booked with dates from the listing card / Featured menu).
-        if ($request->filled('slug')) {
-            $data['slug'] = $request->input('slug');
+        // Only when it was changed: an existing listing keeps its web address (links, Google).
+        if ($request->filled('slug') && $request->input('slug') !== $property->slug) {
+            $data['slug'] = Property::makeSlug($request->input('slug'), $property->reference_no);
         }
 
         $metadata = $request->input('metadata', []);
@@ -824,6 +827,11 @@ class PropertyController extends Controller
         abort_unless($this->isAdmin() || $this->viewer()->isApproved(), 403);
         if ($property->isSold()) {
             return response()->json(['message' => 'This listing is marked ' . $property->sold_type . '. Revert it to available first (Sold Listings).'], 422);
+        }
+        if (!$property->status && $property->review_hold) {
+            return response()->json(['message' => $property->reviewRejection()
+                ? 'MW Realty rejected this listing. Open it, fix what was flagged and click Update to send it for review again.'
+                : 'This listing is being reviewed by MW Realty — it goes live once it is approved.'], 422);
         }
         if (!$property->status && !$property->canGoLive()) {
             return response()->json(['message' => "This listing can't go live yet (" . strtolower($property->complianceLabel()) . ').' . ($property->awaitingApproval()

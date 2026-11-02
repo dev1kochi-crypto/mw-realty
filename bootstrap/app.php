@@ -26,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Client ads still unreviewed when their booked time ended: closed and refunded.
         $schedule->command('ads:settle')->everyFifteenMinutes()->withoutOverlapping();
         $schedule->command('visitors:prune')->dailyAt('03:30')->withoutOverlapping();
+        // Live currency rates for the switcher and /compare — only when CURRENCY_RATES_AUTO_SYNC=true.
+        $schedule->command('currencies:sync-rates')->hourly()->withoutOverlapping()->when(fn () => config('services.exchange_rates.auto_sync'));
         // DLD permits: unpublish listings whose permit expired, remind 7 days before (UAE midnight).
         $schedule->command('properties:expire-permits')->dailyAt('00:05')->timezone(\App\Console\Commands\RemindSubscriptionRenewals::TIMEZONE)->withoutOverlapping();
         $schedule->call(fn () => app(\App\Services\NewsletterCampaignService::class)->sendDueContent())->everyFifteenMinutes();

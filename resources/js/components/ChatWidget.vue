@@ -1,5 +1,6 @@
 <script setup>
-import { nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { detectLanguage } from '../utils/detectLanguage';
 import { useChatbot } from '../composables/useChatbot';
 import { useRecaptcha } from '../composables/useRecaptcha';
 import { useSpeech } from '../composables/useSpeech';
@@ -8,14 +9,17 @@ import { useCurrency } from '../composables/useCurrency';
 import PhoneInput from './PhoneInput.vue';
 import { contactError, responseError } from '../composables/useContactValidation';
 
-const { messages, loading, isOpen, identified, detailsRequired, open, startChat, sendMessage, clearMessages } = useChatbot();
+const {
+    messages, loading, isOpen, identified, detailsPrompt, open, startChat, dismissDetails, sendMessage, clearMessages,
+    languages, currentLanguage, chooseLanguage,
+} = useChatbot();
 const { getRecaptchaToken } = useRecaptcha();
 const { recognitionSupported, synthesisSupported, listening, startListening, stopListening, speak, cancelSpeech } = useSpeech();
 const { t } = useStaticText();
 // Prices arrive in AED (price_value) and are shown in the visitor's chosen currency.
 const { selectedCurrency, toAed } = useCurrency();
 
-const botName = window.MW_CHATBOT_NAME || 'Remi';
+const botName = window.MW_CHATBOT_NAME || 'Noor';
 const draft = ref('');
 const messageList = ref(null);
 const enquiryFor = ref(null);
@@ -25,6 +29,48 @@ const enquiryFeedback = ref(null);
 
 function toggle() {
     isOpen.value ? (isOpen.value = false) : open();
+}
+
+// --- Chat language — English by default; the header's language button (showing the current one)
+// opens a short dropdown to change it at any time.
+const languageMenuOpen = ref(false);
+const languageMenu = ref(null);
+
+function toggleLanguageMenu() {
+    languageMenuOpen.value = !languageMenuOpen.value;
+}
+
+function pickLanguage(code) {
+    chooseLanguage(code);
+    languageMenuOpen.value = false;
+    languageOffer.value = null;
+    scrollToBottom();
+}
+
+// Click anywhere else (or Escape) closes the dropdown.
+function closeLanguageMenu(event) {
+    if (languageMenuOpen.value && (event.key === 'Escape' || (event.type === 'click' && !languageMenu.value?.contains(event.target)))) {
+        languageMenuOpen.value = false;
+    }
+}
+document.addEventListener('click', closeLanguageMenu);
+document.addEventListener('keydown', closeLanguageMenu);
+
+// Typing in another of the assistant's languages offers to switch to it (asked once per language).
+const languageOffer = ref(null);
+const declinedOffers = new Set();
+const offeredLanguage = computed(() => languages.value.find((l) => l.code === languageOffer.value) || null);
+
+function offerSwitchFor(text) {
+    const detected = detectLanguage(text, languages.value.map((l) => l.code));
+    if (detected && detected !== currentLanguage.value?.code && !declinedOffers.has(detected)) {
+        languageOffer.value = detected;
+    }
+}
+
+function declineOffer() {
+    declinedOffers.add(languageOffer.value);
+    languageOffer.value = null;
 }
 
 // --- Details form — shown once the visitor's free first question has been answered: name, email and
@@ -81,7 +127,7 @@ watch(
     (length, previousLength) => {
         if (!voiceEnabled.value || length <= previousLength) return;
         const last = messages.value[messages.value.length - 1];
-        if (last?.role === 'model') speak(last.text);
+        if (last?.role === 'model') speak(last.text, currentLanguage.value?.speech);
     },
 );
 
@@ -92,7 +138,7 @@ function toggleMic() {
         stopListening();
         return;
     }
-    startListening((transcript) => { draft.value = transcript; });
+    startListening((transcript) => { draft.value = transcript; }, currentLanguage.value?.speech);
 }
 
 // --- Delete/clear conversation
@@ -101,7 +147,7 @@ function clearConversation() {
     clearMessages();
 }
 
-// --- Filters — a quick-fill panel over the raw text box; applying one just asks Remi the
+// --- Filters — a quick-fill panel over the raw text box; applying one just asks the assistant the
 // equivalent natural-language question, so no backend/API contract changes are needed.
 const showFilters = ref(false);
 const filters = reactive({ purpose: '', type: '', bedrooms: '', budget: '' });
@@ -127,6 +173,8 @@ function applyFilters() {
 }
 
 onBeforeUnmount(() => {
+    document.removeEventListener('click', closeLanguageMenu);
+    document.removeEventListener('keydown', closeLanguageMenu);
     stopListening();
     cancelSpeech();
 });
@@ -137,11 +185,12 @@ function scrollToBottom() {
     });
 }
 
-watch([messages, isOpen, detailsRequired], scrollToBottom, { deep: true });
+watch([messages, isOpen, detailsPrompt], scrollToBottom, { deep: true });
 
 function submit() {
     const text = draft.value;
     draft.value = '';
+    offerSwitchFor(text);
     sendMessage(text).then(scrollToBottom);
 }
 
@@ -220,6 +269,29 @@ async function submitEnquiry() {
                 </div>
 
                 <div class="mw-chatbot__header-actions">
+                    <!-- Chat language: shows the current one; the dropdown changes it. -->
+                    <div v-if="languages.length" ref="languageMenu" class="mw-chatbot__lang-switch">
+                        <button type="button" class="mw-chatbot__lang-btn" :class="{ 'is-open': languageMenuOpen }" :title="t('chat_widget.language.change_aria', 'Change chat language')" aria-haspopup="listbox" :aria-expanded="languageMenuOpen ? 'true' : 'false'" @click="toggleLanguageMenu">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                            <span class="mw-chatbot__lang-code">{{ (currentLanguage?.code || 'en').toUpperCase() }}</span>
+                            <svg class="mw-chatbot__lang-caret" width="9" height="9" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        <div v-if="languageMenuOpen" class="mw-chatbot__lang-menu">
+                            <p class="mw-chatbot__lang-menu-title">{{ t('chat_widget.language.title', 'Chat language') }}</p>
+                            <ul role="listbox" :aria-label="t('chat_widget.language.title', 'Chat language')">
+                                <li v-for="l in languages" :key="l.code" role="option" :aria-selected="l.code === currentLanguage?.code ? 'true' : 'false'">
+                                    <button type="button" class="mw-chatbot__lang-option" :class="{ 'is-current': l.code === currentLanguage?.code }" :lang="l.code" @click="pickLanguage(l.code)">
+                                        <span class="mw-chatbot__lang-option-text">
+                                            <strong :dir="l.dir">{{ l.native }}</strong>
+                                            <small>{{ l.name }}</small>
+                                        </span>
+                                        <svg v-if="l.code === currentLanguage?.code" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
                     <button type="button" class="mw-chatbot__icon-btn" :aria-label="theme === 'dark' ? t('chat_widget.theme_switch_light') : t('chat_widget.theme_switch_dark')" @click="toggleTheme">
                         <svg v-if="theme === 'dark'" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
                         <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
@@ -243,7 +315,7 @@ async function submitEnquiry() {
             <div class="mw-chatbot__messages" ref="messageList">
                 <template v-for="(m, i) in messages" :key="i">
                     <div class="mw-chatbot__bubble-row" :class="`mw-chatbot__bubble-row--${m.role}`">
-                        <p class="mw-chatbot__text">{{ m.text }}</p>
+                        <p class="mw-chatbot__text" dir="auto">{{ m.text }}</p>
                     </div>
 
                     <div v-if="m.properties && m.properties.length" class="mw-chatbot__results">
@@ -254,7 +326,8 @@ async function submitEnquiry() {
                                 <!-- How well it fits what they described (PropertyMatcher). -->
                                 <p v-if="p.match && p.match.score !== null" class="mw-chatbot__card-match" :title="[...p.match.reasons, ...p.match.misses].join(' · ')">
                                     <strong>{{ t('chat_widget.card.match', '{score}% match').replace('{score}', p.match.score) }}</strong>
-                                    <span v-if="p.match.reasons.length">{{ p.match.reasons.slice(0, 3).join(' · ') }}</span>
+                                    <!-- The reasons are worded in English; in other chat languages the reply explains the fit. -->
+                                    <span v-if="p.match.reasons.length && (currentLanguage?.code || 'en') === 'en'">{{ p.match.reasons.slice(0, 3).join(' · ') }}</span>
                                 </p>
                                 <p class="mw-chatbot__card-location">
                                     <img src="/frontend/assets/images/icons/location.svg" alt="">
@@ -293,7 +366,8 @@ async function submitEnquiry() {
                     </p>
                 </div>
 
-                <form v-if="detailsRequired && !loading" class="mw-chatbot__details" novalidate @submit.prevent="submitDetails">
+                <form v-if="detailsPrompt && !loading" class="mw-chatbot__details" novalidate @submit.prevent="submitDetails">
+                    <button type="button" class="mw-chatbot__details-close" :aria-label="t('chat_widget.details_form.close_aria', 'Not now')" @click="draft = dismissDetails()">&times;</button>
                     <p class="mw-chatbot__details-title">{{ t('chat_widget.details_form.title') }}</p>
                     <p class="mw-chatbot__details-sub">{{ t('chat_widget.details_form.subtitle') }}</p>
                     <input v-model="detailsForm.name" type="text" autocomplete="name" :placeholder="t('chat_widget.details_form.name_placeholder')" required>
@@ -306,7 +380,7 @@ async function submitEnquiry() {
                 </form>
             </div>
 
-            <div v-if="showFilters && !detailsRequired" class="mw-chatbot__filters">
+            <div v-if="showFilters && !detailsPrompt" class="mw-chatbot__filters">
                 <div class="mw-chatbot__filters-row">
                     <select v-model="filters.purpose" :aria-label="t('chat_widget.filters.purpose_aria')">
                         <option value="">{{ t('chat_widget.filters.purpose_placeholder') }}</option>
@@ -332,15 +406,24 @@ async function submitEnquiry() {
                 <button type="button" class="mw-chatbot__filters-apply" @click="applyFilters">{{ t('chat_widget.filters.apply') }}</button>
             </div>
 
+            <!-- They typed in another language: offer it, asked in that language. -->
+            <div v-if="offeredLanguage" class="mw-chatbot__lang-offer" role="status">
+                <p :dir="offeredLanguage.dir" :lang="offeredLanguage.code">{{ offeredLanguage.strings.switch_offer }}</p>
+                <div class="mw-chatbot__lang-offer-actions">
+                    <button type="button" class="mw-chatbot__card-btn mw-chatbot__card-btn--solid" :lang="offeredLanguage.code" @click="pickLanguage(offeredLanguage.code)">{{ offeredLanguage.native }}</button>
+                    <button type="button" class="mw-chatbot__card-btn mw-chatbot__card-btn--ghost" :lang="currentLanguage?.code" @click="declineOffer">{{ currentLanguage?.native }}</button>
+                </div>
+            </div>
+
             <form class="mw-chatbot__input-row" novalidate @submit.prevent="submit">
-                <button type="button" class="mw-chatbot__icon-btn mw-chatbot__icon-btn--muted" :class="{ 'is-active': showFilters }" :aria-label="t('chat_widget.input.filters_aria')" :disabled="detailsRequired" @click="toggleFilters">
+                <button type="button" class="mw-chatbot__icon-btn mw-chatbot__icon-btn--muted" :class="{ 'is-active': showFilters }" :aria-label="t('chat_widget.input.filters_aria')" :disabled="detailsPrompt" @click="toggleFilters">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
                 </button>
-                <button v-if="recognitionSupported" type="button" class="mw-chatbot__icon-btn mw-chatbot__icon-btn--muted" :class="{ 'is-listening': listening }" :aria-label="t('chat_widget.input.voice_aria')" :disabled="detailsRequired" @click="toggleMic">
+                <button v-if="recognitionSupported" type="button" class="mw-chatbot__icon-btn mw-chatbot__icon-btn--muted" :class="{ 'is-listening': listening }" :aria-label="t('chat_widget.input.voice_aria')" :disabled="detailsPrompt" @click="toggleMic">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                 </button>
-                <input v-model="draft" type="text" :placeholder="detailsRequired ? t('chat_widget.input.details_placeholder') : (listening ? t('chat_widget.input.listening_placeholder') : t('chat_widget.input.ask_placeholder'))" :disabled="loading || detailsRequired">
-                <button type="submit" class="mw-chatbot__send" :aria-label="t('chat_widget.input.send_aria')" :disabled="loading || detailsRequired || !draft.trim()">
+                <input v-model="draft" type="text" dir="auto" :lang="currentLanguage?.code" :placeholder="detailsPrompt ? t('chat_widget.input.details_placeholder') : (listening ? t('chat_widget.input.listening_placeholder') : (currentLanguage?.strings?.placeholder || t('chat_widget.input.ask_placeholder')))" :disabled="loading || detailsPrompt">
+                <button type="submit" class="mw-chatbot__send" :aria-label="t('chat_widget.input.send_aria')" :disabled="loading || detailsPrompt || !draft.trim()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="m3 11 18-8-8 18-2-8-8-2Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
                     </svg>
@@ -564,5 +647,189 @@ async function submitEnquiry() {
     .mw-chatbot__bubble.is-idle::after {
         display: none;
     }
+}
+
+/* Chat language — header pill ("🌐 EN ▾") with its dropdown, and the switch offer above the input. */
+.mw-chatbot__header {
+    position: relative;
+}
+.mw-chatbot__lang-switch {
+    position: relative;
+    margin-right: 6px;
+}
+.mw-chatbot__header .mw-chatbot__lang-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 28px;
+    padding: 0 9px 0 8px;
+    border: 0;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+.mw-chatbot__header .mw-chatbot__lang-btn:hover,
+.mw-chatbot__header .mw-chatbot__lang-btn.is-open {
+    background: rgba(255, 255, 255, 0.26);
+}
+.mw-chatbot__header .mw-chatbot__lang-btn svg,
+.mw-chatbot__header .mw-chatbot__lang-btn svg * {
+    color: #fff;
+    stroke: #fff;
+}
+/* Set on the label itself — a site-wide span style otherwise makes it 13.5px regular. */
+.mw-chatbot__header .mw-chatbot__lang-btn .mw-chatbot__lang-code {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.06em;
+}
+.mw-chatbot__lang-caret {
+    transition: transform 0.2s ease;
+}
+.mw-chatbot__lang-btn.is-open .mw-chatbot__lang-caret {
+    transform: rotate(180deg);
+}
+.mw-chatbot__lang-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: -60px;
+    z-index: 5;
+    width: 230px;
+    padding: 6px;
+    border: 1px solid #e6ebf2;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 18px 40px rgba(31, 35, 64, 0.22);
+    animation: mw-chatbot-lang-in 0.16s ease-out;
+}
+@keyframes mw-chatbot-lang-in {
+    from { opacity: 0; transform: translateY(-4px); }
+}
+.mw-chatbot__lang-menu-title {
+    margin: 4px 10px 6px;
+    color: #8a8fa6;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.mw-chatbot__lang-menu ul {
+    max-height: 280px;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.mw-chatbot__lang-option {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #1f2340;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    text-align: start;
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+.mw-chatbot__lang-option-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* right-to-left names (العربية, اردو) line up with the rest */
+    gap: 1px;
+}
+.mw-chatbot__lang-option-text strong {
+    font-size: 13px;
+    font-weight: 700;
+}
+.mw-chatbot__lang-option-text small {
+    color: #8a8fa6;
+    font-size: 11px;
+    font-weight: 500;
+}
+.mw-chatbot__lang-option:hover {
+    background: #f4f6fb;
+}
+.mw-chatbot__lang-option.is-current {
+    background: rgba(36, 67, 115, 0.08);
+    color: #244373;
+}
+.mw-chatbot__lang-offer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-top: 1px solid #e1e8ed;
+    background: #fff8e8;
+}
+.mw-chatbot__lang-offer p {
+    flex: 1 1 100%;
+    margin: 0;
+    font-size: 12px;
+    color: #1f2340;
+}
+.mw-chatbot__lang-offer-actions {
+    display: flex;
+    gap: 8px;
+}
+.mw-chatbot__panel--dark .mw-chatbot__lang-offer p {
+    color: #e8eaed;
+}
+.mw-chatbot__panel--dark .mw-chatbot__lang-menu {
+    background: #262a33;
+    border-color: #343841;
+}
+.mw-chatbot__panel--dark .mw-chatbot__lang-option {
+    color: #e8eaed;
+}
+.mw-chatbot__panel--dark .mw-chatbot__lang-option:hover {
+    background: #2f343e;
+}
+.mw-chatbot__panel--dark .mw-chatbot__lang-option.is-current {
+    background: rgba(127, 227, 255, 0.1);
+    color: #9fdcff;
+}
+.mw-chatbot__panel--dark .mw-chatbot__lang-offer {
+    background: #2a2618;
+    border-color: #343841;
+}
+
+/* "Not now" on the details form — the message goes back into the input box. */
+.mw-chatbot__details {
+    position: relative;
+}
+.mw-chatbot__details-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #8a8fa6;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+.mw-chatbot__details-close:hover {
+    background: #f4f6fb;
+    color: #b9233c;
 }
 </style>

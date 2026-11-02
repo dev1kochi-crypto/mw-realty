@@ -15,16 +15,6 @@
                     <div class="portal-section-title mb-0 text-nowrap">{{ page.is_admin ? `All ${section.title}` : `My ${section.title}` }}</div>
                 </div>
 
-                <form class="portal-list-search" role="search" @submit.prevent="applySearch">
-                    <div class="portal-list-search__field">
-                        <i class="fas fa-search" aria-hidden="true"></i>
-                        <input v-model="searchInput" type="search" class="form-control" maxlength="100"
-                               :placeholder="`Search by title, ref no, RERA, address, community or city${page.is_admin ? ', agent / agency' : ''}`" :aria-label="`Search ${section.title.toLowerCase()}`">
-                    </div>
-                    <RouterLink v-if="page.search !== ''" :to="{ query: { ...cleanFilters() } }" class="portal-list-search__clear" title="Clear search" aria-label="Clear search"><i class="fas fa-times"></i></RouterLink>
-                    <button type="submit" class="btn btn-portal-primary btn-sm px-3">Search</button>
-                </form>
-
                 <div v-if="page.plan_usage || page.featured_quota" class="portal-list-toolbar__chips">
                     <UsageChips :plan-usage="page.plan_usage" :quota="page.featured_quota" />
                 </div>
@@ -35,13 +25,32 @@
                         <a href="#" :class="{ 'is-active': viewMode === 'grid' }" title="Grid view" aria-label="Grid view" :aria-current="viewMode === 'grid' ? 'true' : null" @click.prevent="setView('grid')"><i class="fas fa-grip"></i><span>Grid</span></a>
                         <a href="#" :class="{ 'is-active': viewMode === 'list' }" title="List view" aria-label="List view" :aria-current="viewMode === 'list' ? 'true' : null" @click.prevent="setView('list')"><i class="fas fa-list"></i><span>List</span></a>
                     </div>
-                    <button type="button" class="btn btn-portal-primary btn-sm text-nowrap" @click="addListing">
-                        <i class="fas fa-plus me-1"></i> Add {{ section.itemLabel }}
-                    </button>
+                    <!-- Add + a caret for the bulk ways in (spreadsheet import, Property Finder sync) — one button wide, so the toolbar doesn't wrap. -->
+                    <div class="btn-group pl-add-group">
+                        <button type="button" class="btn btn-portal-primary btn-sm text-nowrap" @click="addListing">
+                            <i class="fas fa-plus me-1"></i> Add {{ section.itemLabel }}
+                        </button>
+                        <CrmDropdown v-if="!page.is_admin" button-class="btn btn-portal-primary btn-sm pl-add-group__caret" title="More ways to add listings" aria-label="More ways to add listings">
+                            <template #toggle><i class="fas fa-chevron-down"></i></template>
+                            <li><button type="button" class="dropdown-item" @click="addListing"><i class="fas fa-plus me-2"></i>Add one by one</button></li>
+                            <li><RouterLink class="dropdown-item" :to="{ name: section.routes.import }"><i class="fas fa-file-import me-2"></i>Import from Excel / CSV</RouterLink></li>
+                            <li><RouterLink class="dropdown-item" :to="{ name: 'integrations.property-finder' }"><i class="fas fa-plug me-2"></i>Sync from Property Finder</RouterLink></li>
+                        </CrmDropdown>
+                    </div>
                 </div>
             </div>
 
+            <!-- Search (takes the free width) + filters on one row. -->
             <div class="pl-panel__row pl-panel__row--filters">
+                <form class="portal-list-search" role="search" @submit.prevent="applySearch">
+                    <div class="portal-list-search__field">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        <input v-model="searchInput" type="search" class="form-control" maxlength="100"
+                               :placeholder="`Search by title, ref no, RERA, address, community or city${page.is_admin ? ', agent / agency' : ''}`" :aria-label="`Search ${section.title.toLowerCase()}`">
+                    </div>
+                    <RouterLink v-if="page.search !== ''" :to="{ query: { ...cleanFilters() } }" class="portal-list-search__clear" title="Clear search" aria-label="Clear search"><i class="fas fa-times"></i></RouterLink>
+                    <button type="submit" class="btn btn-portal-primary btn-sm px-3">Search</button>
+                </form>
                 <!-- Filters — applied on change. -->
                 <div class="pf-bar">
                     <span class="pf-bar__label"><i class="fas fa-filter me-1"></i>Filter</span>
@@ -79,9 +88,11 @@
                     </label>
                     <RouterLink v-if="page.filtered" :to="{ query: page.search ? { q: page.search } : {} }" class="pf-clear"><i class="fas fa-times me-1"></i>Clear filters</RouterLink>
                 </div>
+            </div>
 
-                <!-- DLD permit review: each pill filters the grid (click again to clear). -->
-                <div v-if="reviewTotal > 0" class="pr-review" aria-label="DLD permit review">
+            <!-- DLD permit review: each pill filters the grid (click again to clear). -->
+            <div v-if="reviewTotal > 0" class="pl-panel__row pl-panel__row--permits">
+                <div class="pr-review" aria-label="DLD permit review">
                     <span class="pr-review__title" title="A listing goes live once its advertising permit is verified (Validate in Core details).">
                         <i class="fas fa-file-shield"></i> Permit
                         <span v-if="!page.is_admin && needsAction > 0" class="pr-review__alert" title="Listings that need your action">{{ needsAction }}</span>
@@ -103,6 +114,12 @@
                 <strong>{{ page.meta.total }}</strong> result{{ page.meta.total === 1 ? '' : 's' }}<template v-if="page.search !== ''"> for &ldquo;<strong>{{ page.search }}</strong>&rdquo;</template> · drag to reorder is off while searching or filtering &mdash; use <i class="fas fa-sort"></i> <strong>Move to</strong> on a card instead.
             </div>
             <div v-else-if="canDrag" class="pl-panel__foot"><i class="fas fa-grip-vertical me-1"></i> Drag a card by its handle to reorder this page, or use <i class="fas fa-sort"></i> <strong>Move to</strong> to send it to any position.</div>
+        </div>
+
+        <!-- A background listing import (running, or opened from its "finished" notification). -->
+        <div v-if="importTracker.current.value" class="portal-card p-3 mb-3 position-relative">
+            <button v-if="!importWorking" type="button" class="btn-close position-absolute top-0 end-0 m-2" aria-label="Dismiss" @click="importTracker.dismiss()"></button>
+            <PropertyImportProgress :progress="importTracker.current.value" @refresh="load" />
         </div>
 
         <!-- List view -->
@@ -265,6 +282,7 @@ import CrmModal from '../../components/CrmModal.vue';
 import CrmPagination from '../../components/CrmPagination.vue';
 import SelectionBar from '../../components/SelectionBar.vue';
 import FeatureModal from './components/FeatureModal.vue';
+import PropertyImportProgress from './components/PropertyImportProgress.vue';
 import ListingPerformance from './components/ListingPerformance.vue';
 import PlanLimitModal from './components/PlanLimitModal.vue';
 import PropertyCard from './components/PropertyCard.vue';
@@ -272,6 +290,8 @@ import QualityBreakdown from './components/QualityBreakdown.vue';
 import SoldModal from './components/SoldModal.vue';
 import UsageChips from './components/UsageChips.vue';
 import { useConfirm } from '../../composables/useConfirm';
+import { isWorking } from '../../composables/useLeadImport';
+import { usePropertyImport } from '../../composables/usePropertyImport';
 import { useSession } from '../../composables/useSession';
 import { useToast } from '../../composables/useToast';
 import { number, ucfirst } from '../../utils/format';
@@ -286,6 +306,10 @@ const section = computed(() => sectionFor(route.meta.segment));
 const page = ref(null);
 const { navigation, refreshNavigation } = useSession();
 const limitOpen = ref(false);
+const importTracker = usePropertyImport();
+const importWorking = computed(() => isWorking(importTracker.current.value));
+// A running / just-finished import, or the one a "finished" notification links to (?import=id).
+importTracker.restore(route.query.import);
 
 /** Plan allowance used up: offer credits / upgrade in a popup instead of opening the Add form. */
 function addListing() {
@@ -673,6 +697,7 @@ onBeforeUnmount(() => {
     document.removeEventListener('pointerdown', onPointerDown);
     clearTimeout(hideTimer);
     clearTimeout(agentTimer);
+    importTracker.stop();
 });
 
 // Filters / page in the URL (and the menu: Properties ⇄ Commercial) → reload.

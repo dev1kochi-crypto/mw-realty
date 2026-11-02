@@ -6,6 +6,12 @@
 
     <!-- Description (title, key features, description — per language) -->
     <div id="section-description" class="property-subsection-title"><i class="fas fa-align-left"></i> Description <span>Title, key features and description, per language</span></div>
+    <div class="d-flex justify-content-end mb-2">
+        <button type="button" class="btn btn-sm portal-btn-ghost" title="Draft or polish the title, key features and description from this listing's details" @click="aiOpen = true">
+            <i class="fas fa-wand-magic-sparkles me-1"></i> Write with AI
+        </button>
+    </div>
+    <AiCopyModal :open="aiOpen" :lang="f.state.lang" @close="aiOpen = false" />
     <ul v-if="f.state.languages.length > 1" id="langTabs" class="nav property-lang-tabs mb-4" role="tablist">
         <li v-for="lang in f.state.languages" :key="lang.code" class="nav-item" role="presentation">
             <button :id="`${lang.code}-tab`" class="nav-link" :class="{ active: f.state.lang === lang.code }" type="button" role="tab" @click="f.state.lang = lang.code">{{ lang.name }}</button>
@@ -45,7 +51,7 @@
             <input id="slugInput" v-model="form.slug" name="slug" type="text" class="form-control" :class="{ 'is-invalid': f.fieldError('slug') || f.state.invalid === 'slug' }"
                    placeholder="Fills in from the title" @input="f.state.slugTouched = true; f.state.invalid = null">
             <div v-if="f.fieldError('slug')" class="invalid-feedback">{{ f.fieldError('slug') }}</div>
-            <div v-else class="form-text">Web address: /property-details/<strong>{{ form.slug || 'your-title-here' }}</strong></div>
+            <div v-else class="form-text">Web address: /property-details/<strong>{{ form.slug ? f.finalSlug() : 'your-title-here' }}</strong> — the reference no is added so it is always unique.</div>
         </div>
     </div>
 
@@ -150,13 +156,15 @@
 
 <script setup>
 /** Property form › Property Details: description per language, specifications and price. */
-import { inject } from 'vue';
+import { inject, ref } from 'vue';
+import AiCopyModal from './AiCopyModal.vue';
 import OptionSelectField from './OptionSelectField.vue';
 import RichEditor from './RichEditor.vue';
 
 const f = inject('listingForm');
 const form = f.form;
 const auto = (code, field) => !!f.state.autoFilled[code]?.[field];
+const aiOpen = ref(false);
 
 function typed(code, field) {
     if (f.state.invalid === `translations.${code}.${field}`) f.state.invalid = null;

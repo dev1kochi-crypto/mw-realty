@@ -113,6 +113,35 @@
 
             <div class="col-xl-4">
                 <div class="la-sticky">
+                    <!-- Listing Review (its own section): the same unit from another agency, risk flags, a rejection. -->
+                    <div v-if="p.review.rejection" class="portal-card p-4 mb-3" style="border-color: #be123c;">
+                        <div class="fw-bold mb-1 text-danger"><i class="fas fa-ban me-1"></i>Rejected on Listing Review</div>
+                        <p class="small mb-1">{{ p.review.rejection.reason }}</p>
+                        <p class="small la-sub mb-0">Off the website until the agency fixes it and saves it — it then goes back to Listing Review.</p>
+                    </div>
+                    <div v-for="r in p.review.cases" :key="r.id" class="portal-card p-4 mb-3" style="border-color: #b7791f;">
+                        <div class="fw-bold mb-1" style="color: #92590f;"><i class="fas me-1" :class="r.type === 'duplicate' ? 'fa-clone' : 'fa-triangle-exclamation'"></i>{{ r.type === 'duplicate' ? 'Same unit listed by another agency' : 'Flagged on Listing Review' }}</div>
+                        <template v-if="r.type === 'duplicate'">
+                            <div v-for="o in r.others" :key="o.reference_no" class="small d-flex justify-content-between gap-2 py-1 border-bottom">
+                                <span class="min-w-0 text-truncate"><strong>{{ o.reference_no }}</strong> · {{ o.owner }}<span v-if="o.first" class="la-sub"> · listed first</span></span>
+                                <span class="text-nowrap">{{ o.price }} <span class="la-chip ms-1" :class="o.live ? 'la-chip--ok' : ''">{{ o.live ? 'Live' : 'Off' }}</span></span>
+                            </div>
+                        </template>
+                        <div v-for="s in r.signals" :key="s.code" class="small mb-1"><strong>{{ s.label }}:</strong> {{ s.detail }}</div>
+                        <p class="small la-sub mt-2 mb-2">
+                            <template v-if="r.held">This listing is off the website until it is approved here or on Listing Review.</template>
+                            <template v-else-if="r.waiting">This listing stays on the website while Listing Review checks it — Reject takes it down.</template>
+                            <template v-else>This listing was listed first and stays on the website; the other one waits on Listing Review.</template>
+                        </p>
+                        <div class="d-grid gap-2">
+                            <RouterLink :to="{ name: 'listing-review.show', params: { id: r.id } }" class="btn btn-sm portal-btn-ghost"><i class="fas fa-table-columns me-1"></i>Compare side by side</RouterLink>
+                            <template v-if="r.waiting && !p.is_sold">
+                                <button type="button" class="btn btn-sm btn-success" :disabled="busy" @click="openReview('approve', r)"><i class="fas fa-check me-1"></i>Approve listing</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" :disabled="busy" @click="openReview('reject', r)"><i class="fas fa-ban me-1"></i>Reject</button>
+                            </template>
+                        </div>
+                    </div>
+
                     <div class="portal-card p-4 mb-3">
                         <div class="la-section-title"><i class="fas fa-list-check"></i>Checklist</div>
                         <ul class="la-checklist">
@@ -141,6 +170,7 @@
                                 <template v-else-if="permit.validates">The permit isn't verified with {{ permit.issuer }}. Check it on the {{ permit.issuer }} website (or the QR) before approving.</template>
                                 <template v-else>{{ permit.issuer }} permits can't be validated online — check the permit number and expiry against the permit before approving.</template>
                                 Approving publishes the listing on the website.
+                                <template v-if="p.review.cases.some((r) => r.waiting)"> It also approves its Listing Review check above.</template>
                             </p>
                             <button type="button" class="btn btn-success btn-sm w-100" :disabled="busy" @click="approve"><i class="fas fa-check me-1"></i>Approve &amp; publish</button>
                         </div>
@@ -164,6 +194,19 @@
                 </div>
             </div>
         </div>
+
+        <CrmModal :open="reviewAction.open" :title="reviewAction.kind === 'approve' ? 'Approve listing' : 'Reject listing'" @close="reviewAction.open = false">
+            <p class="small la-sub">
+                <template v-if="reviewAction.kind === 'approve'">The Listing Review check is approved{{ reviewAction.type === 'duplicate' ? ' — both agencies can advertise this unit' : '' }}. It goes on the website once its permit is verified too.</template>
+                <template v-else>It stays off the website. The agency sees this reason; once they fix the listing and save it, it goes back to Listing Review.</template>
+            </p>
+            <label class="form-label small fw-semibold">{{ reviewAction.kind === 'reject' ? 'Reason (sent to the agency)' : 'Note (optional, for the record)' }}</label>
+            <textarea v-model="reviewAction.note" class="form-control form-control-sm" rows="3" maxlength="1000"></textarea>
+            <template #footer>
+                <button type="button" class="btn btn-sm portal-btn-ghost" @click="reviewAction.open = false">Cancel</button>
+                <button type="button" class="btn btn-sm" :class="reviewAction.kind === 'reject' ? 'btn-danger' : 'btn-success'" :disabled="busy || (reviewAction.kind === 'reject' && !reviewAction.note.trim())" @click="submitReview">{{ reviewAction.kind === 'reject' ? 'Reject' : 'Approve' }}</button>
+            </template>
+        </CrmModal>
     </div>
 </template>
 
@@ -172,9 +215,10 @@
  * A listing's permit review (Super Admin) — resources/views/portal/listing-approvals/show: the permit,
  * the authority's record next to the ad, checklist, history, and Approve & publish / Take down.
  */
-import { computed, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import http, { errorMessage } from '../../api/http';
+import CrmModal from '../../components/CrmModal.vue';
 import { useConfirm } from '../../composables/useConfirm';
 import { useToast } from '../../composables/useToast';
 import { formatDate, formatDateTime, timeAgo } from '../../utils/format';
@@ -225,6 +269,25 @@ async function takeDown() {
         .then((res) => {
             success(res.data.message);
             router.push({ name: 'listing-permits.index' });
+        })
+        .catch((e) => toastError(errorMessage(e)))
+        .finally(() => { busy.value = false; });
+}
+
+/* Listing Review check on this listing (approved / rejected through Listing Review's own API). */
+const reviewAction = reactive({ open: false, kind: 'approve', id: null, type: null, note: '' });
+
+function openReview(kind, review) {
+    Object.assign(reviewAction, { open: true, kind, id: review.id, type: review.type, note: '' });
+}
+
+function submitReview() {
+    busy.value = true;
+    http.post(`/listing-review/${reviewAction.id}/${reviewAction.kind}`, { property_id: props.id, note: reviewAction.note.trim() || null })
+        .then((res) => {
+            success(res.data.message);
+            reviewAction.open = false;
+            load();
         })
         .catch((e) => toastError(errorMessage(e)))
         .finally(() => { busy.value = false; });

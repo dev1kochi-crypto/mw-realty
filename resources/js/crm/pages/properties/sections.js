@@ -8,14 +8,14 @@ export const SECTIONS = {
         title: 'Properties',
         itemLabel: 'Property',
         nav: 'properties',
-        routes: { index: 'properties.index', create: 'properties.create', show: 'properties.show', edit: 'properties.edit' },
+        routes: { index: 'properties.index', create: 'properties.create', import: 'properties.import', show: 'properties.show', edit: 'properties.edit' },
     },
     commercial: {
         segment: 'commercial',
         title: 'Commercial',
         itemLabel: 'Commercial Property',
         nav: 'commercial',
-        routes: { index: 'commercial.index', create: 'commercial.create', show: 'commercial.show', edit: 'commercial.edit' },
+        routes: { index: 'commercial.index', create: 'commercial.create', import: 'commercial.import', show: 'commercial.show', edit: 'commercial.edit' },
     },
 };
 

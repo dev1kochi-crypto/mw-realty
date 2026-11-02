@@ -72,6 +72,11 @@
                         <span v-else-if="p.no_permit_needed" class="la-chip"><i class="fas fa-circle-info"></i>No permit needed</span>
                         <span v-else class="la-chip la-chip--warn"><i class="fas fa-triangle-exclamation"></i>No permit</span>
                         <span v-if="p.awaiting_approval" class="la-chip la-chip--warn mt-1"><i class="fas fa-user-shield"></i>Awaiting approval</span>
+                        <!-- Listing Review (its own section): same unit as another agency / risk / rejected. -->
+                        <RouterLink v-for="r in p.review" :key="r.id" :to="{ name: 'listing-review.show', params: { id: r.id } }" class="la-chip la-chip--bad mt-1 text-decoration-none" :title="r.label">
+                            <i class="fas" :class="r.type === 'duplicate' ? 'fa-clone' : 'fa-triangle-exclamation'"></i>{{ r.type === 'duplicate' ? 'Same unit as another agency' : 'Risk flag' }}{{ r.held ? ' · off the website' : '' }}
+                        </RouterLink>
+                        <span v-if="p.review_rejected" class="la-chip la-chip--bad mt-1"><i class="fas fa-ban"></i>Rejected on Listing Review</span>
                     </div>
                     <div class="small">
                         <template v-if="p.when">

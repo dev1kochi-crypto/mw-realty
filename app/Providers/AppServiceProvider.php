@@ -68,6 +68,12 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Cache\RateLimiting\Limit::perMinute(8)->by($request->ip()),
             \Illuminate\Cache\RateLimiting\Limit::perDay(150)->by($request->ip()),
         ]);
+        // /compare summaries — repeats of the same listings + currency come from cache, so this only
+        // limits fresh AI calls in practice.
+        \Illuminate\Support\Facades\RateLimiter::for('ai-compare', fn ($request) => [
+            \Illuminate\Cache\RateLimiting\Limit::perMinute(10)->by($request->ip()),
+            \Illuminate\Cache\RateLimiting\Limit::perDay(100)->by($request->ip()),
+        ]);
         // Covers both verify (a 4-digit code is brute-forceable) and resend (don't let one
         // signup spam its own inbox) — keyed by IP, same as the other auth limiters above.
         \Illuminate\Support\Facades\RateLimiter::for('otp-verify', fn ($request) => [

@@ -10,6 +10,7 @@ import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
 import { useSearchFilters, filterParams, quickSelect, PAGE_CONTROLS } from '../composables/useSearchFilters';
 import EmptyState from '../components/EmptyState.vue';
+import CompareToggle from '../components/compare/CompareToggle.vue';
 import SearchFilterField from '../components/SearchFilterField.vue';
 import LocationAutocomplete from '../components/LocationAutocomplete.vue';
 import { carryFilters, takeCarriedFilters } from '../composables/useListingCarry';
@@ -816,6 +817,7 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                         <div class="mw-dubai-card__body">
                             <div class="mw-dubai-card__price-row">
                                 <span class="mw-dubai-card__price">{{ formatPrice(property.price_value, property.price) }}</span>
+                                <CompareToggle :property="property" />
                             </div>
                             <h3 class="mw-dubai-card__title"><router-link :to="`/property-details/${property.slug}`">{{ property.name }}</router-link></h3>
                             <p class="mw-dubai-card__location">

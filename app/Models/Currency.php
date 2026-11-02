@@ -26,8 +26,12 @@ class Currency extends Model
     protected static function booted(): void
     {
         // The public list is cached; any admin change clears it.
-        static::saved(fn () => Cache::forget(self::CACHE_KEY));
-        static::deleted(fn () => Cache::forget(self::CACHE_KEY));
+        $forget = function () {
+            Cache::forget(self::CACHE_KEY);
+            Cache::forget(self::CACHE_KEY . ':updated');
+        };
+        static::saved($forget);
+        static::deleted($forget);
     }
 
     public function scopeActive($query)

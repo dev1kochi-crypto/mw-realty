@@ -116,6 +116,26 @@ class VisitorTrackingController extends Controller
     }
 
     /**
+     * Insights view
+     *
+     * The listing's Market & Investment panel came into view (once per listing per visit).
+     *
+     * @bodyParam property_id integer required Example: 111
+     *
+     * @response 204 scenario="Recorded" {}
+     */
+    public function insightView(Request $request)
+    {
+        $data = $request->validate(['property_id' => 'required|integer']);
+
+        if (!$this->tracker->isBot($request) && Property::where('status', true)->whereKey($data['property_id'])->exists()) {
+            PropertyDailyStat::bump([$data['property_id']], PropertyDailyStat::INSIGHT_VIEWS);
+        }
+
+        return response()->noContent();
+    }
+
+    /**
      * Contact click
      *
      * The user tapped a contact button on a listing (before the call/WhatsApp/email app opens).

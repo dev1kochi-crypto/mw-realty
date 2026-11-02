@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import SiteHeader from './layouts/SiteHeader.vue';
 import SiteFooter from './layouts/SiteFooter.vue';
 import ChatWidget from './components/ChatWidget.vue';
+import CompareTray from './components/compare/CompareTray.vue';
 
 const route = useRoute();
 
@@ -26,5 +27,6 @@ watch(
         <component :is="Component" :key="current.name" />
     </router-view>
     <SiteFooter />
+    <CompareTray />
     <ChatWidget />
 </template>

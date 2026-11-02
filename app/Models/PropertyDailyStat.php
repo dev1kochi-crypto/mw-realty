@@ -11,8 +11,9 @@ class PropertyDailyStat extends Model
     public const IMPRESSIONS = 'impressions';
     public const CLICKS = 'clicks';
     public const LEAD_CLICKS = 'lead_clicks';
+    public const INSIGHT_VIEWS = 'insight_views'; // the Market & Investment panel was looked at
 
-    protected $fillable = ['property_id', 'date', 'impressions', 'clicks', 'lead_clicks'];
+    protected $fillable = ['property_id', 'date', 'impressions', 'clicks', 'lead_clicks', 'insight_views'];
 
     protected $casts = [
         'date' => 'date',
@@ -22,7 +23,7 @@ class PropertyDailyStat extends Model
     public static function bump(array $propertyIds, string $counter): void
     {
         $propertyIds = array_values(array_unique(array_map('intval', $propertyIds)));
-        if (!$propertyIds || !in_array($counter, [self::IMPRESSIONS, self::CLICKS, self::LEAD_CLICKS], true)) {
+        if (!$propertyIds || !in_array($counter, [self::IMPRESSIONS, self::CLICKS, self::LEAD_CLICKS, self::INSIGHT_VIEWS], true)) {
             return;
         }
 

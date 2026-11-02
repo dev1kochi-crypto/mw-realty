@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Crm\Integrations;
 
 use App\Http\Controllers\Crm\Concerns\ScopesPortalOwner;
 use App\Models\FacebookPageConnection;
+use App\Models\PropertyImport;
 use App\Services\Integrations\FacebookLeadAds;
 use Illuminate\Routing\Controller;
 
@@ -11,7 +12,7 @@ use Illuminate\Routing\Controller;
  * @group CRM Integrations
  *
  * The Integrations hub: one card per integration with its status; each opens its own screen
- * (FacebookController, PropertyFinderController). A new integration is a new entry here plus its screen.
+ * (FacebookController, PropertyFinderController, the listing import page). A new integration is a new entry here plus its screen.
  */
 class IntegrationController extends Controller
 {
@@ -65,8 +66,31 @@ class IntegrationController extends Controller
                         default => ['off', 'Not connected'],
                     }),
                 ],
+                // Accounts only — Super Admin has no listings of its own to import.
+                ...($isAdmin ? [] : [$this->spreadsheetImport()]),
             ],
         ]);
+    }
+
+    /** The listing spreadsheet import (CRM › Properties › Import) — any plan; listing limits apply. */
+    private function spreadsheetImport(): array
+    {
+        $owner = $this->owner()?->listingOwner();
+        $last = $owner ? PropertyImport::where('portal_user_id', $owner->id)->where('status', '!=', PropertyImport::STATUS_MAPPING)->latest('id')->first() : null;
+
+        return [
+            'key' => 'spreadsheet-import',
+            'name' => 'Excel / CSV import',
+            'category' => 'Listings',
+            'icon' => 'fas fa-file-excel',
+            'color' => '#16a34a',
+            'description' => 'Bulk-add listings from your own inventory sheet or another CRM\'s export — columns matched, duplicates skipped, descriptions written by AI.',
+            'status' => $this->status(match (true) {
+                $last?->inProgress() => ['warn', 'Importing…'],
+                $last !== null => ['ok', 'Last import ' . $last->created_at->diffForHumans()],
+                default => ['off', 'Not used yet'],
+            }),
+        ];
     }
 
     private function status(array $status): array

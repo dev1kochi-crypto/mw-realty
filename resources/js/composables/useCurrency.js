@@ -14,6 +14,7 @@ const STORAGE_KEY = 'mw-currency';
 const BASE = { code: 'AED', name: 'UAE Dirham', symbol: 'AED', rate: 1, is_default: true };
 
 const currencies = ref([BASE]);
+const ratesUpdatedAt = ref(null); // ISO time the rates last changed (shown as "Rates as of" on /compare)
 const chosenCode = ref(readStored());
 let initialized = false;
 
@@ -101,11 +102,12 @@ export function useCurrency() {
         window.axios.get('/api/currencies').then((res) => {
             const list = res.data?.currencies || [];
             if (list.length) currencies.value = list;
+            ratesUpdatedAt.value = res.data?.rates_updated_at || null;
         }).catch(() => { /* keep AED */ });
         watch(() => selectedCurrency.value.code + ':' + selectedCurrency.value.rate, () => {
             window.dispatchEvent(new CustomEvent('mw:currency-change', { detail: { code: selectedCurrency.value.code } }));
         });
     }
 
-    return { currencies, selectedCurrency, selectCurrency, convert, toAed, formatAmount, formatPrice, formatCompact, parseToAed, presetLabel };
+    return { currencies, ratesUpdatedAt, selectedCurrency, selectCurrency, convert, toAed, formatAmount, formatPrice, formatCompact, parseToAed, presetLabel };
 }

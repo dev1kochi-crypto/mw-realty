@@ -109,6 +109,8 @@ export function useListingForm(options, property, segment) {
         banner: '',
         saving: false,
         slugTouched: !!form.slug,
+        // An existing listing keeps its saved web address unless the slug is changed.
+        savedSlug: form.slug || '',
     });
 
     const isLocked = (field) => state.serverLocked.has(field) || state.permitLocked.has(field);
@@ -221,6 +223,14 @@ export function useListingForm(options, property, segment) {
         state.slugTouched = false;
         state.invalid = null;
         form.slug = slugify(form.translations[langs[0]].title || '');
+    }
+    /** The web address as it will be saved: the slug + "-" + the reference no (Property::makeSlug), never twice. */
+    function finalSlug() {
+        if (state.savedSlug && form.slug === state.savedSlug) return form.slug;
+        const suffix = slugify(form.reference_no || '');
+        const base = slugify(form.slug || '').replace(new RegExp(`(^|-)${suffix}$`), '');
+        if (!suffix) return base;
+        return base ? `${base}-${suffix}` : suffix;
     }
 
     /* ------------------------------------------------------------------ auto-translate */
@@ -387,7 +397,7 @@ export function useListingForm(options, property, segment) {
         creditListing: property ? null : (options.credit_listing ?? null),
         state, form, isLocked, lockTitle, isRent, fieldError,
         permitType, permitInfo, permitShow, license, licenseMissing, rentOnly, validatePermit, onPermitInputsChanged, resetVerification,
-        onTitleInput, resetSlug, onTranslatedInput, translate, schedule, langState, anyManualTargets,
+        onTitleInput, resetSlug, finalSlug, onTranslatedInput, translate, schedule, langState, anyManualTargets,
         missingRequired, save,
     };
 }

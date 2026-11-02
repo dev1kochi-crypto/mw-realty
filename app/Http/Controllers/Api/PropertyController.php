@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Services\PropertyInsightService;
 use App\Services\PropertyPageService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -39,5 +40,25 @@ class PropertyController extends Controller
         }
 
         return response()->json($data);
+    }
+
+    /**
+     * Market & investment insights
+     *
+     * The listing's Market & Investment panel: asking and verified (closed-deal) price summaries for
+     * the same type in the same area, estimated value / annual rent, gross yield, price vs market,
+     * year-on-year growth, a quarterly price-per-sq.ft trend, recent closed deals, the automated
+     * assessment badge and the starting assumptions for the investment calculator. Every estimate
+     * carries `source` (verified | asking) and `count`. Amounts in AED; rents annual.
+     *
+     * @urlParam slug string required Example: virella-2
+     *
+     * @response 404 {"message": "Not found"}
+     */
+    public function insights(string $slug, PropertyInsightService $insights)
+    {
+        $data = $insights->forSlug($slug);
+
+        return $data ? response()->json($data) : response()->json(['message' => 'Not found'], 404);
     }
 }
