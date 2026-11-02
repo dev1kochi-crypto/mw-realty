@@ -21,3 +21,51 @@
         .notif-message { display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 0.78rem; color: #6b7185; line-height: 1.4; }
         .notif-time { font-size: 0.68rem; color: #a3a8bb; margin-top: 0.2rem; }
         .notif-empty { padding: 2.5rem 1rem; text-align: center; color: #a3a8bb; font-size: 0.85rem; }
+
+/* ---------- Laptop / small-window layout ----------
+   1400px+: unchanged. 1200–1399px: narrower sidebar. Below 1200px: the sidebar slides in from the
+   menu button, so pages get the full width; top-bar buttons drop their text. */
+.portal-nav-toggle { display: none; border: none; background: #f4f6fb; width: 42px; height: 42px; border-radius: 12px; color: #4b5065; font-size: 1.05rem; flex-shrink: 0; margin-right: 0.75rem; }
+.portal-nav-toggle:hover { background: #e9ecf6; }
+.portal-topbar-user { margin-right: auto; min-width: 0; }
+.portal-topbar .portal-account-type, .portal-admin-pill, .portal-view-site, .btn-portal-upgrade-cta { white-space: nowrap; }
+.portal-sidebar-backdrop { display: none; }
+
+/* Stat cards: long amounts shrink instead of running out of the card. */
+.portal-stat-card > div:not(.portal-stat-icon) { min-width: 0; }
+/* The amount stays on one line; a growth badge after it drops below when there is no room. */
+.portal-stat-value { font-size: clamp(1.2rem, 0.75rem + 0.9vw, 1.6rem); white-space: nowrap; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.35rem; }
+
+@media (max-width: 1399.98px) {
+    .portal-sidebar { width: 236px; padding: 1.5rem 1rem; }
+    .portal-sidebar .nav-link { padding: 0.62rem 0.85rem; }
+    .portal-content { padding: 1.5rem; }
+    .portal-topbar { padding: 1rem 1.5rem; }
+    .portal-stat-card { padding: 1.15rem 1.1rem; gap: 0.8rem; }
+    .portal-stat-icon { width: 44px; height: 44px; font-size: 1.1rem; }
+}
+
+@media (max-width: 1199.98px) {
+    .portal-nav-toggle { display: inline-flex; align-items: center; justify-content: center; }
+    .portal-sidebar {
+        position: fixed; left: 0; top: 0; z-index: 1045; width: 264px; max-width: 85vw;
+        transform: translateX(-100%); transition: transform 0.22s ease; box-shadow: none;
+    }
+    .portal-shell.is-nav-open .portal-sidebar { transform: none; box-shadow: 0 0 40px rgba(28, 35, 64, 0.35); }
+    .portal-shell.is-nav-open .portal-sidebar-backdrop { display: block; position: fixed; inset: 0; z-index: 1044; background: rgba(28, 35, 64, 0.45); }
+    .portal-topbar .portal-topbar-label { display: none; }
+    .portal-topbar .portal-admin-pill, .portal-topbar .portal-view-site { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .portal-content { padding: 1.25rem; }
+    .portal-topbar { padding: 0.85rem 1.25rem; }
+    /* Properties / Commercial filter row: let the filter group wrap inside the row. */
+    .pl-panel__row--filters .pf-bar { flex: 1 1 100%; min-width: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .portal-sidebar { transition: none; }
+}
+
+/* Properties / Commercial grid: four cards only from 1600px; on laptops three keep the card actions and prices on one line. */
+@media (min-width: 1200px) and (max-width: 1599.98px) {
+    .portal-property-col.col-xl-3 { width: 33.33333333%; }
+}

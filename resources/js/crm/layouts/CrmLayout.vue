@@ -1,6 +1,8 @@
 <template>
-    <div class="portal-shell">
-        <aside class="portal-sidebar">
+    <div class="portal-shell" :class="{ 'is-nav-open': navOpen }">
+        <!-- Below 1200px the sidebar slides in over the page (menu button in the top bar). -->
+        <div class="portal-sidebar-backdrop" aria-hidden="true" @click="navOpen = false"></div>
+        <aside id="crm-sidebar" class="portal-sidebar">
             <div class="portal-brand portal-brand--sidebar">
                 <img :src="logoUrl" alt="MW Realty" class="portal-brand__icon portal-brand__icon--only">
             </div>
@@ -31,16 +33,20 @@
 
         <div class="portal-main">
             <header class="portal-topbar" :class="{ 'is-scrolled': scrolled }">
-                <div>
+                <button type="button" class="portal-nav-toggle" aria-controls="crm-sidebar" :aria-expanded="navOpen"
+                        aria-label="Menu" @click.stop="navOpen = !navOpen">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="portal-topbar-user">
                     <div class="fw-bold">{{ user.name }}</div>
                     <span class="portal-account-type">
                         <i class="fas fa-circle" style="font-size:6px;"></i>
                         {{ user.is_super_admin ? 'Super Admin · Global View' : `${ucfirst(user.type)} Account` }}
                     </span>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    <a v-if="user.is_super_admin" :href="backToAdminUrl" class="portal-admin-pill">
-                        <i class="fas fa-shield-alt"></i> Back to Admin
+                <div class="portal-topbar-actions d-flex align-items-center gap-2">
+                    <a v-if="user.is_super_admin" :href="backToAdminUrl" class="portal-admin-pill" title="Back to Admin">
+                        <i class="fas fa-shield-alt"></i> <span class="portal-topbar-label">Back to Admin</span>
                     </a>
                     <template v-if="user.can_upgrade">
                         <span v-if="!user.approved" class="btn-portal-upgrade-cta is-locked" title="Unlocks after KYC approval" aria-disabled="true">
@@ -51,8 +57,8 @@
                             <i class="fas fa-rocket"></i> Upgrade Plan
                         </RouterLink>
                     </template>
-                    <a href="/" target="_blank" class="portal-btn-ghost btn btn-sm">
-                        <i class="fas fa-external-link-alt me-1"></i> View Site
+                    <a href="/" target="_blank" class="portal-btn-ghost btn btn-sm portal-view-site" title="View Site">
+                        <i class="fas fa-external-link-alt"></i> <span class="portal-topbar-label">View Site</span>
                     </a>
 
                     <HelpButton v-if="route.meta.help" :key="route.meta.help" :topic="route.meta.help" />
@@ -133,6 +139,7 @@ const accountOpen = ref(false);
 const accountMenu = ref(null);
 const openGroups = ref({});
 const scrolled = ref(false);
+const navOpen = ref(false);
 
 const accountLink = (key) => navigation.value.account.find((item) => item.key === key)?.legacy_url;
 const backToAdminUrl = computed(() => accountLink('back-to-admin'));
@@ -157,6 +164,7 @@ const kycBanner = computed(() => ({
 
 watch(() => route.fullPath, () => {
     accountOpen.value = false;
+    navOpen.value = false;
 });
 
 /** A section label is shown above the first item of each section. */
@@ -194,12 +202,18 @@ function onScroll() {
     scrolled.value = window.scrollY > 4;
 }
 
+function onKeydown(event) {
+    if (event.key === 'Escape') navOpen.value = false;
+}
+
 onMounted(() => {
     document.addEventListener('click', onDocumentClick);
+    document.addEventListener('keydown', onKeydown);
     window.addEventListener('scroll', onScroll, { passive: true });
 });
 onBeforeUnmount(() => {
     document.removeEventListener('click', onDocumentClick);
+    document.removeEventListener('keydown', onKeydown);
     window.removeEventListener('scroll', onScroll);
 });
 </script>
