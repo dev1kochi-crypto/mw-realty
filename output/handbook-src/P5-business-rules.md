@@ -2,11 +2,11 @@
 
 Where to find the business rules and the expected application behaviour for every module, and how they are written.
 
-**Scope:** All modules of the website, Admin and CRM. The rules and expected results themselves live in the module test guides (00–26); this page is the index to them. About 900 test scenarios exist across the guides.
+**Scope:** All modules of the website, Admin and CRM. The rules and expected results themselves live in the module test guides (00–25, W1–W5); this page is the index to them. About 900 test scenarios exist across the guides.
 
 ## 1. How each module guide is organised
 
-Every module guide (01–26) follows the same eight sections, so a tester always knows where to look.
+Every module guide (01–25, W1–W5) follows the same eight sections, so a tester always knows where to look.
 
 | Section | What it holds | Use it for |
 | --- | --- | --- |
@@ -50,9 +50,12 @@ Priority in section 5: **High** = core flow, data loss or access; **Medium** = i
 | 22 | Security | SEC-xx | 40 | Two-factor authentication, new-device email check, recovery codes, recognised devices |
 | 23 | Plans | PL-xx | 38 | Payment modes, upgrade / downgrade / cancel, coupons, limits and what a plan unlocks, automatic behaviour |
 | 24 | Listing Review | LR-xx | 25 | Duplicate and risk screening, approve / reject, holds |
+| W1 | Website: Home, Header & Account | HD-, HM-, AU-, CH-, CU-, OT-xx | 36 | Home sections, header and footer, language and currency, AI chat, sign-up, login and My Account |
+| W2 | Website: Buy, Rent & Commercial | PS-, PD-, CP-, IN-xx | 42 | Filters and map, property page forms, compare limits and fees, market insight formulas |
+| W3 | Website: Agents & Agencies | AG-, AC-xx | 6 | Directories, profiles, Custom Property Request routing |
+| W4 | Website: Calculators | CA-xx | 9 | Calculator formulas matching Property Finder, unlock popups, enquiries |
+| W5 | Website: Explore & Market Insights | MI-, EX-xx | 9 | Contact and career forms, blog, legal, landing and 404 pages |
 | 25 | Property Import & AI Copy | PI-xx, AC-xx | 30 | Excel import rules, duplicates, Write with AI |
-| 27 | Website pages (Home, search, agents, agencies, calculators, Explore) | HD-, HM-, PS-, PD-, AG-, AC-, MI-, CA-, EX-, AU-xx | 67 | Home sections, filters and map, property page forms, profile request forms, calculator formulas, Explore pages, sign-up and login |
-| 26 | Compare, Insights & AI Chat | CP-, IN-, CU-, CH-, OT-xx | 35 | Compare limits and fees, market insight formulas, currency sync, chat languages |
 
 > Scenario counts for guides 01–23 are taken from the published PDFs and may be off by one or two where a table spans pages.
 

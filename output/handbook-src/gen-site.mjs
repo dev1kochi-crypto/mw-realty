@@ -20,16 +20,17 @@ const G = [
   ['P7', 'apis-batch-jobs', 'APIs & Batch Jobs', 'Project', 'API endpoints, webhooks, scheduled and queued jobs, sample logs'],
   ['P8', 'automation-tools', 'Test Automation Tools', 'Project', 'What exists today and the recommended tool stack'],
   ['00', 'mw-realty-project-overview', 'Project overview', 'Start here', 'What the product is, who uses it, how the parts work together'],
-  ['27', 'website-pages', 'Home, Search, Agents, Agencies, Calculators & Explore', 'Website', 'Every page in the website menu'],
-  ['26', 'website-compare-insights-chat', 'Compare, Insights & AI Chat', 'Website', 'Property compare, market insights on listings, currency rates, multilingual AI chat'],
+  ['W1', 'home', 'Home, Header & Account', 'Website', 'Home page, header and footer, AI chat, language and currency, sign-up and My Account'],
+  ['W2', 'buy-rent-commercial', 'Buy, Rent & Commercial', 'Website', 'Property search, map views, property details, Compare and market insights'],
+  ['W3', 'agents-agencies', 'Agents & Agencies', 'Website', 'Directories, profiles and the Custom Property Request form'],
+  ['W4', 'calculators', 'Calculators', 'Website', 'Mortgage, eligibility, rent-vs-buy and refinance calculators'],
+  ['W5', 'explore', 'Explore & Market Insights', 'Website', 'About, Contact, Blog, Careers, Market Insights, legal and 404 pages'],
   ['01', 'dashboard-test-guide', 'Dashboard', 'CRM'], ['02', 'leads-test-guide', 'Leads', 'CRM'],
   ['03', 'lead-insights-test-guide', 'Lead Insights', 'CRM'], ['04', 'website-leads-test-guide', 'Website Leads', 'CRM'],
   ['05', 'master-data-test-guide', 'Master Data', 'CRM'], ['06', 'integrations-test-guide', 'Integrations', 'CRM'],
   ['07', 'properties-test-guide', 'Properties', 'CRM', 'Bulk import and Write with AI: see 25'],
-  ['25', 'property-import-ai-copy', 'Property Import & AI Copy', 'CRM', 'Excel bulk import, Write with AI, Property Finder changes (add-on to 07)'],
   ['08', 'commercial-test-guide', 'Commercial', 'CRM'],
   ['09', 'listing-permits-test-guide', 'Listing Permits', 'CRM', 'Links to Listing Review: see 24'],
-  ['24', 'listing-review', 'Listing Review', 'CRM', 'Super Admin queue for duplicate and risk-flagged listings'],
   ['10', 'premium-test-guide', 'Premium', 'CRM'], ['11', 'advertisements-test-guide', 'Advertisements', 'CRM'],
   ['12', 'sold-listings-test-guide', 'Sold Listings', 'CRM'], ['13', 'marketing-properties-test-guide', 'Marketing Properties', 'CRM'],
   ['14', 'agents-test-guide', 'Agents', 'CRM'], ['15', 'nearby-places-test-guide', 'Nearby Places', 'CRM'],
@@ -37,9 +38,11 @@ const G = [
   ['18', 'help-desk-test-guide', 'Help Desk', 'CRM'], ['19', 'contact-us-test-guide', 'Contact Us', 'CRM'],
   ['20', 'credits-test-guide', 'Credits', 'CRM'], ['21', 'my-profile-test-guide', 'My Profile', 'CRM'],
   ['22', 'security-test-guide', 'Security', 'CRM'], ['23', 'plans-test-guide', 'Plans', 'CRM'],
+  ['24', 'listing-review', 'Listing Review', 'CRM', 'Super Admin queue for duplicate and risk-flagged listings'],
+  ['25', 'property-import-ai-copy', 'Property Import & AI Copy', 'CRM', 'Excel bulk import, Write with AI, Property Finder changes (add-on to 07)'],
 ].map(([n, slug, title, group, note]) => ({ n, file: `${n}-${slug}`, title, group, note }))
   // a project document appears only once its page has been built
-  .filter((d) => (d.group !== 'Project' && d.n !== '27') || existsSync(join(SCRATCH, 'html', `${d.file}.html`)));
+  .filter((d) => (d.group !== 'Project' && d.group !== 'Website') || existsSync(join(SCRATCH, 'html', `${d.file}.html`)));
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const GROUPS = ['Start here', 'Project', 'Website', 'CRM'];
@@ -212,6 +215,6 @@ for (const g of GROUPS) {
   }
   home += '</ul>';
 }
-home += `<p style="color:var(--muted);font-size:14px">Guides 24–26 were written from the code as of 2 November 2026. If a guide and the app disagree, report it to the team.</p></div>`;
+home += `<p style="color:var(--muted);font-size:14px">Guides 24–25 and the website guides W1–W5 were written from the code as of 2 November 2026. If a guide and the app disagree, report it to the team.</p></div>`;
 writeFileSync(join(OUT, 'index.html'), page('Home', 'index', home));
 console.log('pages:', G.length + 1);
