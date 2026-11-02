@@ -272,6 +272,7 @@ class LeadsImport
             tagIds: $this->leadService->resolveTagIds($this->ownerId, $tagNames),
             notify: false,
             noteAuthor: 'Excel import',
+            assignOnMerge: false,
         );
 
         return $this->saved($lead, $source?->name ?? 'Excel import');
@@ -353,7 +354,7 @@ class LeadsImport
                 'facebook_form_id' => $this->stripPrefix($this->value($row, 'form_id')),
                 'facebook_created_time' => $this->value($row, 'created_time'),
             ]),
-        ], ownerId: $this->ownerId, notify: false, noteAuthor: 'Facebook leads import');
+        ], ownerId: $this->ownerId, notify: false, noteAuthor: 'Facebook leads import', assignOnMerge: false);
 
         return $this->saved($lead, $sourceName);
     }

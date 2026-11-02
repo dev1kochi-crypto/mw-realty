@@ -227,13 +227,16 @@ class LeadFollowUpService
 
                     $recipient = $this->responsibleFor($followUp->lead);
                     if (!$recipient) {
-                        continue; // Super Admin's own unassigned lead, or a disabled account — nobody to remind.
+                        // Super Admin's own unassigned lead, or a disabled account — nobody to remind.
+                        Log::info("Follow-up reminder #{$followUp->id} (lead #{$followUp->lead_id}) skipped: no active agent or owner to remind.");
+                        continue;
                     }
 
                     try {
                         $recipient->notify(new LeadFollowUpReminderNotification($followUp));
                         Mail::to($recipient->email)->queue(new LeadFollowUpReminderMail($followUp, $recipient));
                         $followUp->update(['reminded_to' => $recipient->id]);
+                        Log::info("Follow-up reminder #{$followUp->id} (lead #{$followUp->lead_id}) sent to account #{$recipient->id}: bell now, email queued.");
                         $sent++;
                     } catch (\Throwable $e) {
                         Log::error("Follow-up reminder #{$followUp->id} failed: " . $e->getMessage());

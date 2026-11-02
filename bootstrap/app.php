@@ -20,7 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('portal:remind-subscription-renewals')->dailyAt('09:00')->timezone(\App\Console\Commands\RemindSubscriptionRenewals::TIMEZONE)->withoutOverlapping();
         $schedule->command('properties:expire-featured')->everyFifteenMinutes();
         // Lead follow-ups due in the next 15 minutes: bell + email to the responsible agent / agency.
-        $schedule->command('leads:send-follow-up-reminders')->everyFiveMinutes()->withoutOverlapping();
+        // The overlap lock expires after 10 minutes (default 24 h), so one crashed run can't silence reminders for a day.
+        $schedule->command('leads:send-follow-up-reminders')->everyFiveMinutes()->withoutOverlapping(10);
         // Credits past their validity (balances also expire on the spot whenever a wallet is read or used).
         $schedule->command('credits:expire')->hourly()->withoutOverlapping();
         // Client ads still unreviewed when their booked time ended: closed and refunded.

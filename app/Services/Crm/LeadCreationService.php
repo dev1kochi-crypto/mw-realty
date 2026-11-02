@@ -52,6 +52,8 @@ class LeadCreationService
      * @param  int[]  $tagIds
      * @param  bool  $notify  Bell + email the owner / agent (website enquiries).
      * @param  string|null  $noteAuthor  Shown on the "Repeat enquiry" history entry.
+     * @param  bool  $assignOnMerge  Route a matched lead that has no agent yet (website enquiries). File
+     *                               imports pass false: a matched lead keeps its assignment as it is.
      * @return Lead  The new lead, or the existing one it was merged into ($lead->wasMerged).
      */
     public function create(
@@ -62,6 +64,7 @@ class LeadCreationService
         array $tagIds = [],
         bool $notify = true,
         ?string $noteAuthor = null,
+        bool $assignOnMerge = true,
     ): Lead {
         $property = !empty($attributes['property_id']) ? Property::find($attributes['property_id']) : null;
         $ownerId ??= $property ? $this->assignment->resolveOwnerId($property, $property->portal_user_id) : null;
@@ -69,7 +72,7 @@ class LeadCreationService
         // This enquiry's kind (Facebook / property / generic) — the agency's round-robin options go by it.
         $kind = LeadAssignmentService::leadKind($attributes['page_source'] ?? null, (bool) $property);
 
-        $lead = DB::transaction(function () use ($attributes, $ownerId, $preferredAgentId, $autoAssign, $tagIds, $noteAuthor, $property, $kind) {
+        $lead = DB::transaction(function () use ($attributes, $ownerId, $preferredAgentId, $autoAssign, $tagIds, $noteAuthor, $property, $kind, $assignOnMerge) {
             if ($existing = $this->findDuplicate($ownerId, $attributes['email'] ?? null, $attributes['phone'] ?? null)) {
                 if ($existing->trashed()) {
                     $existing->restore();
@@ -81,7 +84,7 @@ class LeadCreationService
                 }
                 // It keeps the agent already working it; an unworked lead is routed like a new one
                 // (chosen agent, else the listing just enquired about / round robin) so it reaches an agent.
-                if (!$existing->agent_id) {
+                if (!$existing->agent_id && $assignOnMerge) {
                     if ($preferredAgentId) {
                         $this->assignment->assignManually($existing, $preferredAgentId, AssignmentActor::system(), 'Repeat request from agent profile');
                     } elseif ($autoAssign) {
