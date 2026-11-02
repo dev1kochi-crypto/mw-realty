@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow"><title>Agents · MW Realty Tester Handbook</title>
+<link rel="stylesheet" href="assets/handbook.css"></head>
+<body><div class="layout"><nav class="side" id="side"><a class="brand" href="index.html"><small>MW Realty</small><strong>Tester Handbook</strong></a><button class="menu-btn" type="button" onclick="document.getElementById('side').classList.toggle('open')">All guides</button><div class="groups"><h4>Start here</h4><a class="item" href="00-mw-realty-project-overview.html"><span>00</span>Project overview</a><h4>Project documents</h4><a class="item" href="P1-brd-frd.html"><span>P1</span>Business &amp; Functional Requirements (BRD / FRD)</a><a class="item" href="P2-srs-fsd.html"><span>P2</span>Functional Specification (SRS / FSD)</a><a class="item" href="P3-access-roles.html"><span>P3</span>Application Access, Roles &amp; Permissions</a><a class="item" href="P4-test-data.html"><span>P4</span>Test Data</a><a class="item" href="P5-business-rules.html"><span>P5</span>Business Rules &amp; Expected Results</a><a class="item" href="P6-environment.html"><span>P6</span>Environment &amp; Setup</a><a class="item" href="P7-apis-batch-jobs.html"><span>P7</span>APIs &amp; Batch Jobs</a><a class="item" href="P8-automation-tools.html"><span>P8</span>Test Automation Tools</a><h4>Website modules</h4><a class="item" href="26-website-compare-insights-chat.html"><span>26</span>Compare, Insights &amp; AI Chat</a><h4>CRM modules</h4><a class="item" href="01-dashboard-test-guide.html"><span>01</span>Dashboard</a><a class="item" href="02-leads-test-guide.html"><span>02</span>Leads</a><a class="item" href="03-lead-insights-test-guide.html"><span>03</span>Lead Insights</a><a class="item" href="04-website-leads-test-guide.html"><span>04</span>Website Leads</a><a class="item" href="05-master-data-test-guide.html"><span>05</span>Master Data</a><a class="item" href="06-integrations-test-guide.html"><span>06</span>Integrations</a><a class="item" href="07-properties-test-guide.html"><span>07</span>Properties</a><a class="item" href="25-property-import-ai-copy.html"><span>25</span>Property Import &amp; AI Copy</a><a class="item" href="08-commercial-test-guide.html"><span>08</span>Commercial</a><a class="item" href="09-listing-permits-test-guide.html"><span>09</span>Listing Permits</a><a class="item" href="24-listing-review.html"><span>24</span>Listing Review</a><a class="item" href="10-premium-test-guide.html"><span>10</span>Premium</a><a class="item" href="11-advertisements-test-guide.html"><span>11</span>Advertisements</a><a class="item" href="12-sold-listings-test-guide.html"><span>12</span>Sold Listings</a><a class="item" href="13-marketing-properties-test-guide.html"><span>13</span>Marketing Properties</a><a class="item on" href="14-agents-test-guide.html"><span>14</span>Agents</a><a class="item" href="15-nearby-places-test-guide.html"><span>15</span>Nearby Places</a><a class="item" href="16-listing-settings-test-guide.html"><span>16</span>Listing Settings</a><a class="item" href="17-reports-test-guide.html"><span>17</span>Reports</a><a class="item" href="18-help-desk-test-guide.html"><span>18</span>Help Desk</a><a class="item" href="19-contact-us-test-guide.html"><span>19</span>Contact Us</a><a class="item" href="20-credits-test-guide.html"><span>20</span>Credits</a><a class="item" href="21-my-profile-test-guide.html"><span>21</span>My Profile</a><a class="item" href="22-security-test-guide.html"><span>22</span>Security</a><a class="item" href="23-plans-test-guide.html"><span>23</span>Plans</a></div></nav><main><div class="doc"><div class="bar"><span>Module 14 · Agents</span><a class="btn" href="14-agents-test-guide.pdf" download>Download PDF</a></div>
+<div class="pages" id="pages" data-src="14-agents-test-guide.pdf"><div class="loading">Loading the guide…</div></div><div class="pager"><a href="13-marketing-properties-test-guide.html">&larr; 13 Marketing Properties</a><a href="15-nearby-places-test-guide.html">15 Nearby Places &rarr;</a></div>
+<script src="assets/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/pdf.worker.min.js';
+(async function () {
+  const box = document.getElementById('pages');
+  try {
+    const doc = await pdfjsLib.getDocument(box.dataset.src).promise;
+    box.innerHTML = '';
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    const width = Math.min(box.clientWidth || 900, 900);
+    for (let n = 1; n <= doc.numPages; n++) {
+      const pg = await doc.getPage(n);
+      const base = pg.getViewport({ scale: 1 });
+      const vp = pg.getViewport({ scale: (width / base.width) * ratio });
+      const c = document.createElement('canvas');
+      c.width = vp.width; c.height = vp.height;
+      c.setAttribute('aria-label', 'Page ' + n + ' of ' + doc.numPages);
+      box.appendChild(c);
+      await pg.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    }
+  } catch (e) {
+    box.innerHTML = '<div class="loading">This guide could not be shown. Use Download PDF above.</div>';
+  }
+})();
+</script></div></main></div></body></html>

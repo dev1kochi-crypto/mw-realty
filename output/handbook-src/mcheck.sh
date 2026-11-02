@@ -1,0 +1,3 @@
+# mcheck.sh <name>: report mermaid diagrams rendered vs failed in html/<name>.html
+S=/c/Users/User/AppData/Local/Temp/claude/c--Laravel-mw-realty/e2285a8f-4858-45a7-83e5-c35fa6db4434/scratchpad
+cd $S && EXPR='JSON.stringify({total:document.querySelectorAll(".mermaid").length, ok:document.querySelectorAll(".mermaid svg").length, errors:[...document.querySelectorAll(".mermaid")].filter(e=>/Syntax error|Parse error/i.test(e.textContent)||!e.querySelector("svg")).map(e=>[...document.querySelectorAll(".mermaid")].indexOf(e))})' node cdp.mjs "file:///C:/Users/User/AppData/Local/Temp/claude/c--Laravel-mw-realty/e2285a8f-4858-45a7-83e5-c35fa6db4434/scratchpad/html/$1.html" x eval
