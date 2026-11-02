@@ -51,6 +51,7 @@ Priority in section 5: **High** = core flow, data loss or access; **Medium** = i
 | 23 | Plans | PL-xx | 38 | Payment modes, upgrade / downgrade / cancel, coupons, limits and what a plan unlocks, automatic behaviour |
 | 24 | Listing Review | LR-xx | 25 | Duplicate and risk screening, approve / reject, holds |
 | 25 | Property Import & AI Copy | PI-xx, AC-xx | 30 | Excel import rules, duplicates, Write with AI |
+| 27 | Website pages (Home, search, agents, agencies, calculators, Explore) | HD-, HM-, PS-, PD-, AG-, AC-, MI-, CA-, EX-, AU-xx | 67 | Home sections, filters and map, property page forms, profile request forms, calculator formulas, Explore pages, sign-up and login |
 | 26 | Compare, Insights & AI Chat | CP-, IN-, CU-, CH-, OT-xx | 35 | Compare limits and fees, market insight formulas, currency sync, chat languages |
 
 > Scenario counts for guides 01–23 are taken from the published PDFs and may be off by one or two where a table spans pages.
