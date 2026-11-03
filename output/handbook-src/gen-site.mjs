@@ -74,8 +74,8 @@ nav.side a.item span { font-family: var(--mono); color: var(--muted); font-size:
 nav.side a.item:hover { background: var(--stripe); }
 nav.side a.item.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .menu-btn { display: none; }
-main { padding: 32px 40px 64px; min-width: 0; }
-.doc { max-width: 920px; margin: 0 auto; }
+main { padding: 28px 32px 64px; min-width: 0; }
+.doc { width: 100%; }
 .title { border-left: 5px solid var(--accent); padding: 2px 0 4px 18px; margin: 0 0 20px; }
 .kicker { font-size: 12px; font-weight: 700; letter-spacing: .16em; color: var(--accent); text-transform: uppercase; }
 h1 { font-size: 30px; line-height: 1.2; margin: 6px 0 8px; text-wrap: balance; }
@@ -111,7 +111,7 @@ pre.code { font-family: var(--mono); font-size: 13px; background: var(--code); p
 .bar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; margin: 0 0 18px; color: var(--muted); font-size: 14px; }
 .bar a.btn { border: 1px solid var(--line); border-radius: 6px; padding: 5px 12px; text-decoration: none; font-weight: 600; background: var(--card); }
 .pages { display: grid; gap: 18px; justify-items: center; }
-.pages canvas { width: 100%; max-width: 900px; height: auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.18); border-radius: 2px; }
+.pages canvas { display: block; width: 100%; height: auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.18); border-radius: 2px; }
 .loading { color: var(--muted); padding: 40px 0; text-align: center; }
 .pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); }
 .pager a { text-decoration: none; font-weight: 600; }
@@ -122,6 +122,9 @@ pre.code { font-family: var(--mono); font-size: 13px; background: var(--code); p
 .list a:hover { background: var(--stripe); }
 .list .num { font-family: var(--mono); font-weight: 700; color: var(--accent); }
 .list small { display: block; color: var(--muted); }
+.home .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; background: none; border: 0; }
+.home .list li, .home .list li:first-child { border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+.home .list a { height: 100%; border-radius: 8px; }
 .home h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); border: 0; margin: 24px 0 8px; padding: 0; }
 @media (max-width: 860px) {
   .layout { grid-template-columns: 1fr; }
@@ -186,7 +189,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/pdf.worker.min.js';
     const doc = await pdfjsLib.getDocument(box.dataset.src).promise;
     box.innerHTML = '';
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    const width = Math.min(box.clientWidth || 900, 900);
+    const width = box.clientWidth || 900;
     for (let n = 1; n <= doc.numPages; n++) {
       const pg = await doc.getPage(n);
       const base = pg.getViewport({ scale: 1 });
