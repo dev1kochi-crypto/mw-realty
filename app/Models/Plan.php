@@ -55,6 +55,7 @@ class Plan extends Model
         'listing_settings' => 'Listing settings (watermark)',
         'facebook' => 'Facebook Lead Ads integration',
         'property_finder' => 'Property Finder integration',
+        'agent_insights' => 'Agent insights (team performance)',
     ];
 
     public function allows(string $feature): bool

@@ -30,6 +30,23 @@
 .portal-topbar-user { margin-right: auto; min-width: 0; }
 .portal-topbar .portal-account-type, .portal-admin-pill, .portal-view-site, .btn-portal-upgrade-cta { white-space: nowrap; }
 .portal-sidebar-backdrop { display: none; }
+/* Compact sidebar: tighter rows and section gaps so the whole menu fits with less scrolling.
+   Bottom padding stays 1.75rem — the sticky Credits box (credits.css) is offset by it. */
+.portal-sidebar { --sb-pad-y: 1.25rem; --sb-pad-x: 1rem; padding: var(--sb-pad-y) var(--sb-pad-x) 1.75rem; overflow-x: hidden; }
+/* Logo stays fixed at the top while the menu scrolls under it. */
+.portal-sidebar .portal-brand--sidebar { position: sticky; top: calc(-1 * var(--sb-pad-y)); z-index: 3; margin: calc(-1 * var(--sb-pad-y)) calc(-1 * var(--sb-pad-x)) 0.6rem;
+    padding: var(--sb-pad-y) calc(var(--sb-pad-x) + 0.25rem) 0.85rem; background: var(--portal-accent-dark); box-shadow: 0 8px 14px -12px rgba(0, 0, 0, 0.45); }
+.portal-sidebar .portal-brand__icon--only { height: 48px; }
+.portal-sidebar .nav-link { padding: 0.5rem 0.85rem; margin-bottom: 0.1rem; font-size: 0.88rem; border-radius: 10px; gap: 0.65rem; }
+.portal-sidebar .nav-section-label { margin: 1rem 0 0.3rem 0.75rem; font-size: 0.66rem; }
+/* Collapsible group (Master): children indented under a guide line, smaller, with a dot that lights up when active. */
+.portal-sidebar .portal-nav-group-toggle[aria-expanded="true"]:not(.active) { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.portal-sidebar .portal-nav-submenu .nav { position: relative; margin: 0.15rem 0 0.35rem 1.45rem; padding-left: 0.6rem; border-left: 1px solid rgba(255, 255, 255, 0.22); }
+.portal-sidebar .portal-nav-submenu .nav-link { padding: 0.38rem 0.75rem !important; margin-bottom: 0.05rem; font-size: 0.83rem; font-weight: 500; color: #f0cdd4; gap: 0.55rem; }
+.portal-sidebar .portal-nav-submenu .nav-link::before { content: ""; width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.35); }
+.portal-sidebar .portal-nav-submenu .nav-link:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.portal-sidebar .portal-nav-submenu .nav-link.active { background: rgba(255, 255, 255, 0.14); color: #fff; font-weight: 700; box-shadow: none; }
+.portal-sidebar .portal-nav-submenu .nav-link.active::before { background: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25); }
 
 /* Stat cards: long amounts shrink instead of running out of the card. */
 .portal-stat-card > div:not(.portal-stat-icon) { min-width: 0; }
@@ -37,8 +54,8 @@
 .portal-stat-value { font-size: clamp(1.2rem, 0.75rem + 0.9vw, 1.6rem); white-space: nowrap; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.35rem; }
 
 @media (max-width: 1399.98px) {
-    .portal-sidebar { width: 236px; padding: 1.5rem 1rem; }
-    .portal-sidebar .nav-link { padding: 0.62rem 0.85rem; }
+    .portal-sidebar { width: 236px; --sb-pad-y: 1.1rem; --sb-pad-x: 0.85rem; }
+    .portal-sidebar .nav-link { padding: 0.45rem 0.8rem; }
     .portal-content { padding: 1.5rem; }
     .portal-topbar { padding: 1rem 1.5rem; }
     .portal-stat-card { padding: 1.15rem 1.1rem; gap: 0.8rem; }

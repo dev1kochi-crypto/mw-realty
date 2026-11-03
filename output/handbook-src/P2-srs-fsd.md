@@ -92,7 +92,7 @@ An agent account created by an agency receives a signed set-password link by ema
 
 - Admin: role and permission per menu and action (User Management > Admins, Roles, Permissions). A missing menu item can mean a missing permission.
 - CRM data scope: an agency sees its own and its team's data; an agent sees their own data and what is assigned to them; the Super Admin sees everything. A record of another account must never open, even by typing its ID in the URL.
-- CRM locks: until KYC approval most modules show a padlock "Unlocks after KYC approval" and the server refuses the URL ("Your account is pending Super Admin approval."). Plan-gated features show "Upgrade your plan to unlock this" and an "Unlock ..." card. Gated features in the code (Plan::GATED_FEATURES): Lead insights, Property insights, Listing settings (watermark), Facebook Lead Ads, Property Finder; Reports and Advertisements are plan-based as well.
+- CRM locks: until KYC approval most modules show a padlock "Unlocks after KYC approval" and the server refuses the URL ("Your account is pending Super Admin approval."). Plan-gated features show "Upgrade your plan to unlock this" and an "Unlock ..." card. Gated features in the code (Plan::GATED_FEATURES): Lead insights, Property insights, Listing settings (watermark), Facebook Lead Ads, Property Finder, Agent insights (team performance); Reports and Advertisements are plan-based as well.
 - Available before KYC approval: Dashboard, My Profile, Security, Contact Us, Help Desk, notifications, plan payment history and invoices.
 
 ### 2.3 Notifications
@@ -556,6 +556,38 @@ Each subsection follows the same pattern: Purpose, Actors, Preconditions, Main f
 - **Validation rules:** file .xlsx, .xls, .csv, .tsv or .txt max 10 MB; up to 30 photo URLs per listing; permit number 3 to 64 characters; a permit used by another account skips the row; AI notes max 2,000 characters.
 - **Outputs / notifications:** bell only: Listing import finished / failed; status file kept 30 days.
 - **Reference:** guide 25.
+
+### 3.29a CRM 26: Agent Insights
+
+- **Purpose:** show an agency how well each agent handles the leads and listings assigned to them.
+- **Actors:** Agency (own current agents), Super Admin (agents of every agency). Agents have no access.
+- **Preconditions:** KYC approved; plan includes Agent insights (`agent_insights`; Business and Enterprise at release).
+- **Main flow:**
+  1. User opens /crm/agent-insights (Insights > Agent Insights).
+  2. Cards show agents, leads received in the period, untouched leads, overdue follow-ups and live listings.
+  3. The table lists each agent with Agent score, leads received, response rate (acted on within 24 hours), median response time, untouched leads, overdue follow-ups, live listings, average listing quality and closed; default sort Needs attention first; period 7 / 30 / 90 days.
+  4. User opens an agent: score breakdown with tips, and the untouched leads, overdue follow-ups and listings needing work, each linked to the lead or listing.
+- **Business rules:** only agency-owned leads and listings assigned to the agent count; acting on a lead = note, stage or status change, or follow-up after the lead reached the agent; leads under 24 hours with no action are not judged; Agent score = points of the parts that apply (response rate 25, response time 15, no untouched leads 10, follow-ups on time 15, listing quality 20, live listings 15) scaled to 100.
+- **Alternate / error flows:** plan without the feature shows "Unlock agent insights"; another agency's agent ID returns not found; an Agent login is refused.
+- **Validation rules:** days 7, 30 or 90 (else 30); sort attention or name; search max 100 characters; 20 agents per page, 10 per attention list.
+- **Outputs / notifications:** none (read-only, calculated live).
+- **Reference:** guide 26.
+
+### 3.29b CRM 27: Property Insights
+
+- **Purpose:** show how every listing performs on the website over a period, so weak or unseen listings stand out.
+- **Actors:** Agent, Agency (own listings; an agency agent also the agency listings assigned to them), Super Admin (every listing).
+- **Preconditions:** KYC approved; plan includes Property insights (`property_insights`).
+- **Main flow:**
+  1. User opens /crm/property-insights (Insights > Property Insights). The sidebar group Insights holds Property Insights, Agent Insights, Lead Insights and Reports.
+  2. Cards show listings (and live), impressions, listing clicks, lead clicks, leads in the period and listings with no impressions; a chart shows impressions and clicks per day.
+  3. The table lists each listing with agent, impressions, clicks, lead clicks, leads and quality score; default sort Most impressions; period 7 / 30 / 90 days; Residential / Commercial filter; search.
+  4. User clicks a row: the Listing Performance panel opens (same as Properties).
+- **Business rules:** only listings on the market (not sold / rented); figures are sums of the daily listing counters for the period; leads = leads created for the listing in the period; quality is the current score.
+- **Alternate / error flows:** plan without the feature shows "Unlock property insights"; KYC not approved is refused.
+- **Validation rules:** days 7, 30 or 90 (else 30); sort impressions, clicks, leads, no_views or newest (else impressions); segment residential, commercial or empty; search max 100 characters; 20 listings per page.
+- **Outputs / notifications:** none (read-only).
+- **Reference:** guide 27.
 
 ### 3.30 Website 26a: Compare and Property Insights
 

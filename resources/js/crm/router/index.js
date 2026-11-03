@@ -44,6 +44,12 @@ const routes = [
         component: () => import('../pages/lead-insights/LeadInsightsIndex.vue'),
         meta: { title: 'Lead Insights', nav: 'lead-insights', help: 'lead-insights' },
     },
+    {
+        path: '/property-insights',
+        name: 'property-insights.index',
+        component: () => import('../pages/property-insights/PropertyInsightsIndex.vue'),
+        meta: { title: 'Property Insights', nav: 'property-insights', help: 'property-insights' },
+    },
     // Properties / Commercial — the same screens over one table, split by segment (pages/properties/sections.js).
     ...[['properties', 'residential', 'Properties', 'Property', 'properties'], ['commercial', 'commercial', 'Commercial', 'Commercial Property', 'commercial']]
         .flatMap(([base, segment, title, item, help]) => [
@@ -150,6 +156,19 @@ const routes = [
         component: () => import('../pages/agents/AgentShow.vue'),
         props: (route) => ({ id: Number(route.params.id) }),
         meta: { title: 'Agent', nav: 'agents', help: 'agents' },
+    },
+    {
+        path: '/agent-insights',
+        name: 'agent-insights.index',
+        component: () => import('../pages/agent-insights/AgentInsightsIndex.vue'),
+        meta: { title: 'Agent Insights', nav: 'agent-insights', help: 'agent-insights' },
+    },
+    {
+        path: '/agent-insights/:id(\\d+)',
+        name: 'agent-insights.show',
+        component: () => import('../pages/agent-insights/AgentInsightsShow.vue'),
+        props: (route) => ({ id: Number(route.params.id) }),
+        meta: { title: 'Agent Insights', nav: 'agent-insights', help: 'agent-insights' },
     },
     {
         path: '/nearby-places',

@@ -1,0 +1,1 @@
+function n(o){if(o==null)return"—";if(o<1)return"< 1 min";if(o<60)return`${o} min`;if(o<1440)return`${Math.round(o/60)} h`;const r=Math.round(o/1440);return`${r} ${r===1?"day":"days"}`}const a=o=>o>=80?"is-good":o>=50?"is-fair":"is-poor",d=o=>o>=80?"good":o>=50?"fair":"poor";export{d as q,n as r,a as t};

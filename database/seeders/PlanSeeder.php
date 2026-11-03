@@ -18,7 +18,7 @@ class PlanSeeder extends Seeder
     public function run(): void
     {
         // Lead / property insights, listing settings, Facebook & Property Finder: paid plans only.
-        // Gated CRM sections: Basic = watermark + Property Finder, Pro = + lead insights, Business and Enterprise = everything.
+        // Gated CRM sections: Basic = watermark + Property Finder, Pro = + lead insights, Business and Enterprise = everything (incl. agent insights).
         $allFeatures = array_keys(Plan::GATED_FEATURES);
 
         $plans = [

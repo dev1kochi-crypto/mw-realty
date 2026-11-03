@@ -68,7 +68,7 @@ Named limiters are defined in app/Providers/AppServiceProvider.php. Plain `throt
 
 - How they are served: plain static files in public/docs. Each `/docs/{name}/index.html` loads the Scalar API viewer from cdn.jsdelivr.net and points it at the matching `openapi.yaml`. There is no Laravel route for `/docs`, so the docs work on any web server that serves public/.
 - Postman: each folder has a Postman v2 collection (`collection.json`) and an OpenAPI 3 spec (`openapi.yaml`). Import either into Postman, Bruno or Insomnia, then set the `baseUrl` variable to the QA host.
-- Regenerate with `php artisan docs:generate` (developer task; it clears config and rewrites public/docs/_scribe). At the time of writing the CRM collection holds 230 requests while the route list has 248 CRM routes, so ask a developer to regenerate before importing if an endpoint is missing.
+- Regenerate with `php artisan docs:generate` (developer task; it clears config and rewrites public/docs/_scribe). At the time of writing the CRM collection holds 230 requests while the route list has 251 CRM routes, so ask a developer to regenerate before importing if an endpoint is missing.
 
 ## 2. Endpoint list
 
@@ -175,7 +175,7 @@ Auth column legend: Public = no login; Token = Sanctum Bearer token; Session = w
 | GET | `/integrations/facebook/callback` | Facebook Login return (CRM connect Pages) | Public (OAuth state) | Limit 30/min |
 | GET | `/facebook/data-deletion` | Data deletion status page (`?code=`) | Public | Limit 60/min |
 
-The CRM API tables below list all 248 /api/crm routes, grouped by CRM module. Every route except the four sign-in steps needs crm.auth. Super Admin only means the controller returns 403 for agents and agencies.
+The CRM API tables below list all 251 /api/crm routes, grouped by CRM module. Every route except the four sign-in steps needs crm.auth. Super Admin only means the controller returns 403 for agents and agencies.
 
 ### 2.5 CRM API: Sign-in (6)
 
@@ -201,7 +201,7 @@ The CRM API tables below list all 248 /api/crm routes, grouped by CRM module. Ev
 | POST | `/api/crm/account/two-factor/setup` | Start 2FA set-up (QR secret) | CRM | Limit: otp-verify; Agent app |
 | POST | `/api/crm/account/two-factor/skip` | Skip the optional 2FA prompt | CRM | Agent app |
 
-### 2.7 CRM API: Dashboard, navigation, help, notifications, lead insights (9)
+### 2.7 CRM API: Dashboard, navigation, help, notifications, lead and property insights (10)
 
 | Method | Path | Purpose | Auth | Notes |
 |---|---|---|---|---|
@@ -210,6 +210,7 @@ The CRM API tables below list all 248 /api/crm routes, grouped by CRM module. Ev
 | POST | `/api/crm/help/seen` | Mark help as seen | CRM |  |
 | GET | `/api/crm/help/{topic}` | One help topic | CRM |  |
 | GET | `/api/crm/lead-insights` | Lead insights report | CRM + 2FA + Approved | Plan feature: lead_insights |
+| GET | `/api/crm/property-insights` | Property insights: every listing on the market with impressions, clicks, lead clicks, leads and quality for the period; totals; day-by-day series. Query: days (7/30/90), sort (impressions/clicks/leads/no_views/newest), segment, search, page | CRM + 2FA + Approved | Plan feature: property_insights |
 | GET | `/api/crm/navigation` | Sidebar menu for this account | CRM |  |
 | GET | `/api/crm/notifications` | Bell notifications | CRM | Agent app |
 | POST | `/api/crm/notifications/read-all` | Mark all read | CRM | Agent app |
@@ -415,7 +416,7 @@ The CRM API tables below list all 248 /api/crm routes, grouped by CRM module. Ev
 | POST | `/api/crm/marketing-properties/reorder` | Reorder | CRM + 2FA | Super Admin only |
 | DELETE | `/api/crm/marketing-properties/{propertyId}` | Remove a listing | CRM + 2FA | Super Admin only |
 
-### 2.19 CRM API: Agents (agency team) (11)
+### 2.19 CRM API: Agents (agency team) and Agent Insights (13)
 
 | Method | Path | Purpose | Auth | Notes |
 |---|---|---|---|---|
@@ -430,6 +431,8 @@ The CRM API tables below list all 248 /api/crm routes, grouped by CRM module. Ev
 | POST | `/api/crm/agents/{id}/reactivate` | Reactivate a suspended agent | CRM + 2FA + Approved |  |
 | POST | `/api/crm/agents/{id}/remove` | Remove agent from agency | CRM + 2FA + Approved |  |
 | POST | `/api/crm/agents/{id}/suspend` | Suspend an agent | CRM + 2FA + Approved |  |
+| GET | `/api/crm/agent-insights` | Agent insights: agents with response rate / time, untouched leads, overdue follow-ups, listings, Agent score; team totals. Query: days (7/30/90), sort (attention/name), search, page | CRM + 2FA + Approved | Agency or Super Admin; plan feature: agent_insights |
+| GET | `/api/crm/agent-insights/{id}` | One agent (agent ID): score breakdown, untouched leads, overdue follow-ups, listings needing work. Query: days, leads_page, follow_ups_page, listings_page | CRM + 2FA + Approved | Agency (own agents only, else 404) or Super Admin; plan feature: agent_insights |
 
 ### 2.20 CRM API: Nearby places (7)
 

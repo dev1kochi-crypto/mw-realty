@@ -43,7 +43,6 @@ class CrmNavigation
             // Badge = overdue follow-ups on the leads this account can see.
             $this->item('follow-ups', 'Follow-ups', 'fa-calendar-check', 'Leads', null, route: 'follow-ups.index', lock: $kycLock,
                 badge: $kycLock ? 0 : app(LeadFollowUpService::class)->visibleTo($this->context->ownerId())->open()->where('due_at', '<', now())->count()),
-            $this->item('lead-insights', 'Lead Insights', 'fa-chart-line', 'Leads', null, route: 'lead-insights.index', lock: $planLock('lead_insights')),
             $isSuperAdmin ? $this->item('website-leads', 'Website Leads', 'fa-user-clock', 'Leads', null, route: 'website-leads.index',
                 badge: VisitorLead::inPool()->where('created_at', '>=', now()->subDays(7))->count()) : null,
             $this->item('master', 'Master', 'fa-layer-group', 'Leads', null, lock: $kycLock, children: array_values(array_filter([
@@ -81,6 +80,12 @@ class CrmNavigation
             $isSuperAdmin ? $this->item('listing-review', 'Listing Review', 'fa-clone', 'Approvals', null, route: 'listing-review.index',
                 badge: \App\Models\ListingReview::open()->count()) : null,
 
+            // Insights — each one its own plan feature (Plan::GATED_FEATURES).
+            $this->item('property-insights', 'Property Insights', 'fa-magnifying-glass-chart', 'Insights', null, route: 'property-insights.index', lock: $planLock('property_insights')),
+            // How the agency's agents handle their leads and listings — agencies (and Super Admin) only.
+            $isSuperAdmin || $owner?->type === 'company' ? $this->item('agent-insights', 'Agent Insights', 'fa-user-check', 'Insights', null, route: 'agent-insights.index',
+                lock: $planLock('agent_insights')) : null,
+            $this->item('lead-insights', 'Lead Insights', 'fa-chart-line', 'Insights', null, route: 'lead-insights.index', lock: $planLock('lead_insights')),
             $this->item('reports', 'Reports', 'fa-chart-pie', 'Insights', null, route: 'reports.show',
                 lock: $kycLock ?? ($owner && !$owner->hasReportsAccess() ? 'Upgrade your plan to unlock reports' : null)),
 

@@ -118,6 +118,7 @@ Legend: Yes = full use within the role's data scope; Own = only the account's ow
 | Integrations (Facebook, Property Finder, Excel / CSV tile) | All Pages, assigns owner; Property Finder import review | Own | Own | Own Facebook Pages (personal); can sync the agency's Property Finder connection but not change it | KYC, plan `facebook` or `property_finder` (hub opens if either is included) |
 | Properties, Commercial | All listings, no plan limit | Own + team; plan slots or credits | Own; plan slots or credits | Own + assigned; agency plan | KYC |
 | Property insights (on a listing) | Yes | Yes | Yes | Yes (agency plan) | Plan `property_insights` |
+| Property Insights (`/crm/property-insights`) | Every listing, never plan-locked | Own listings | Own listings | Own + assigned agency listings (agency plan) | KYC, plan `property_insights` |
 | Import from Excel / CSV (`/crm/properties/import`) | No (page opens, upload refused) | Into own account | Into own account | Into the agency's account | KYC; free listing slots on the plan |
 | Write with AI (listing form) | Yes | Yes | Yes | Yes | AI provider configured on the server |
 | Premium | Any listing, no limits | Own listings: plan quota or credits | Own listings: plan quota or credits | Own listings only, agency plan quota; no credits | KYC |
@@ -130,6 +131,7 @@ Legend: Yes = full use within the role's data scope; Own = only the account's ow
 | Listing Settings (watermark) | Default watermark; sees all accounts' | Own | Own | Read-only (agency's) | KYC, plan `listing_settings` |
 | Listing Permits | Yes | No (403) | No (403) | No (403) | Super Admin only |
 | Listing Review | Yes | No (403) | No (403) | No (403) | Super Admin only |
+| Agent Insights (`/crm/agent-insights`) | Agents of every agency, never plan-locked | Own current agents (active, suspended); agency records only | No (refused) | No (refused) | KYC, plan `agent_insights` |
 | Reports | Always, all tabs, plan sales | Leads, Properties, Sales, Agents tabs | Leads, Properties, Sales | No Agents tab | KYC, plan reports access |
 | Contact Us (support tickets) | No (Admin > Support Tickets) | Own tickets | Own tickets | Own tickets (the agency does not see them) | None |
 | Help Desk | Yes | Yes | Yes | Yes | None |
@@ -142,11 +144,12 @@ Legend: Yes = full use within the role's data scope; Own = only the account's ow
 
 | Plan setting | Unlocks | Lock text in the menu |
 | --- | --- | --- |
-| Gated feature `lead_insights` | Leads > Lead Insights | Upgrade your plan to unlock this |
-| Gated feature `property_insights` | Property insights on a CRM listing | (card on the listing) |
+| Gated feature `lead_insights` | Insights > Lead Insights | Upgrade your plan to unlock this |
+| Gated feature `property_insights` | Insights > Property Insights; Listing Performance on a CRM listing | Upgrade your plan to unlock this (page shows "Unlock property insights") |
 | Gated feature `listing_settings` | Listings > Listing Settings (watermark) | Upgrade your plan to unlock this |
 | Gated feature `facebook` | Integrations > Facebook Lead Ads | Upgrade your plan to unlock this (hub locked only if neither integration is included) |
 | Gated feature `property_finder` | Integrations > Property Finder | Same as above |
+| Gated feature `agent_insights` | Insights > Agent Insights (agencies) | Upgrade your plan to unlock this |
 | Reports access (on / off) | Insights > Reports | Upgrade your plan to unlock reports |
 | Ads per month and longest booking | Listings > Advertisements | Upgrade your plan to advertise on the website |
 | Agent limit | Adding agents in Agents; agency agents inheriting the plan | Offer to upgrade when the limit is reached |
@@ -159,8 +162,8 @@ Default plans (Admin can change every value in Admin > Plans, so confirm the cur
 | Free | 0 | 3 at once | None | None | 0 | No | None |
 | Basic | 49 / 490 | 10 per month | 1 per month, max 5 days | None | 0 | Yes | Listing settings, Property Finder |
 | Pro | 149 / 1,490 | 25 per month | 3 per month, max 15 days | 4, 24 hours | 3 | Yes | Listing settings, Lead insights, Property Finder |
-| Business | 299 / 2,990 | 50 per month | 5 per month, max 20 days | 6, 48 hours | 10 | Yes | All five |
-| Enterprise | 499 / 4,990 | 100 per month | 10 per month, no day limit | 10, 72 hours | Unlimited | Yes | All five |
+| Business | 299 / 2,990 | 50 per month | 5 per month, max 20 days | 6, 48 hours | 10 | Yes | All six (incl. Agent insights) |
+| Enterprise | 499 / 4,990 | 100 per month | 10 per month, no day limit | 10, 72 hours | Unlimited | Yes | All six (incl. Agent insights) |
 
 ## 5. Admin permissions
 

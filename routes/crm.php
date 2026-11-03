@@ -7,6 +7,7 @@ use App\Http\Controllers\Crm\Account\TwoFactorController;
 use App\Http\Controllers\Crm\Ads\AdController as CrmAdController;
 use App\Http\Controllers\Crm\Ads\ManageAdController;
 use App\Http\Controllers\Crm\Agents\AgentController;
+use App\Http\Controllers\Crm\Agents\AgentInsightsController;
 use App\Http\Controllers\Crm\Auth\AuthController;
 use App\Http\Controllers\Crm\Credits\CreditController;
 use App\Http\Controllers\Crm\Dashboard\DashboardController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\Crm\Properties\PropertyFormController;
 use App\Http\Controllers\Crm\Properties\PropertyGalleryController;
 use App\Http\Controllers\Crm\Properties\PropertyImportController;
 use App\Http\Controllers\Crm\Properties\PropertyInsightsController;
+use App\Http\Controllers\Crm\Properties\PropertyInsightsIndexController;
 use App\Http\Controllers\Crm\Properties\PropertySaleController;
 use App\Http\Controllers\Crm\Reports\ReportController;
 use App\Http\Controllers\Crm\Support\TicketController;
@@ -187,6 +189,7 @@ Route::middleware('crm.auth')->group(function () {
         });
 
         Route::get('/lead-insights', [LeadInsightsController::class, 'index'])->name('lead-insights.index')->middleware(['portal.approved', 'plan.feature:lead_insights']);
+        Route::get('/property-insights', PropertyInsightsIndexController::class)->name('property-insights.index')->middleware(['portal.approved', 'plan.feature:property_insights']);
 
         // Website Leads — AI chat / form / customer-account visitors and the pool not routed to an
         // agency / agent yet. Super Admin only (checked in the controller).
@@ -329,6 +332,12 @@ Route::middleware('crm.auth')->group(function () {
             Route::post('/{id}/remove', 'remove')->name('remove')->whereNumber('id');
             Route::post('/{id}/offer-plan', 'offerPlan')->name('offer-plan')->whereNumber('id');
             Route::post('/{id}/withdraw-plan-offer', 'withdrawPlanOffer')->name('withdraw-plan-offer')->whereNumber('id');
+        });
+
+        // Agent Insights — how an agency's agents handle their leads and listings (Super Admin: every agency).
+        Route::prefix('agent-insights')->name('agent-insights.')->middleware(['portal.approved', 'plan.feature:agent_insights'])->controller(AgentInsightsController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/{id}', 'show')->name('show')->whereNumber('id');
         });
 
         // Nearby Places — shared list managed by Super Admin, plus each Agent/Company's own places.

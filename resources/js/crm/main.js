@@ -10,6 +10,7 @@ import './styles/lead-import.css';
 import './styles/lead-table-fields.css';
 import './styles/lead-assignment.css';
 import './styles/lead-insights.css';
+import './styles/agent-insights.css';
 import './styles/visitor-insights.css';
 import './styles/website-leads.css';
 import './styles/integrations.css';

@@ -216,6 +216,7 @@
         'listing_settings' => 'fas fa-stamp',
         'facebook' => 'fab fa-facebook-f',
         'property_finder' => 'fas fa-house-chimney',
+        'agent_insights' => 'fas fa-user-check',
     ];
 @endphp
 <div id="plansGrid">

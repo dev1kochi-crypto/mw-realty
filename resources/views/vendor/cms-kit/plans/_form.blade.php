@@ -7,7 +7,7 @@
     $planFeatures = old('plan_features', $plan->plan_features ?? []);
     $featureIcons = [
         'lead_insights' => 'fa-chart-line', 'property_insights' => 'fa-magnifying-glass-chart', 'listing_settings' => 'fa-stamp',
-        'facebook' => 'fa-facebook-f', 'property_finder' => 'fa-building',
+        'facebook' => 'fa-facebook-f', 'property_finder' => 'fa-building', 'agent_insights' => 'fa-user-check',
     ];
     $featureHelp = [
         'lead_insights' => 'Charts of where leads come from and how they convert.',
@@ -15,6 +15,7 @@
         'listing_settings' => 'Their own watermark on listing photos.',
         'facebook' => 'Leads from Facebook Lead Ads arrive in the CRM.',
         'property_finder' => 'Import and sync listings from Property Finder.',
+        'agent_insights' => 'Agencies see how each agent handles assigned leads and listings, with an agent score.',
     ];
 @endphp
 

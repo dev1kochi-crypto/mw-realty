@@ -60,3 +60,27 @@
 
 /* Lead follow-ups (LeadFollowUpsCard / FollowUpsIndex): overdue icons, next to portal.css's is-success / is-warning tones. */
 .portal-lead-page .is-danger { --tone: #dc2626; }
+
+/* Leads › Follow-ups table (.fu-*) — compact rows; icon actions so the table fits without sideways scrolling. */
+.fu-table td { vertical-align: middle; }
+.fu-table tbody tr.is-overdue td:first-child { box-shadow: inset 3px 0 0 #dc2626; }
+.fu-id { width: 1%; white-space: nowrap; color: var(--portal-muted); font-size: 0.8rem; font-weight: 600; }
+.fu-lead { display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.fu-sub { font-size: 0.74rem; color: var(--portal-muted); white-space: nowrap; }
+.fu-when { font-size: 0.85rem; font-weight: 600; color: var(--portal-text); }
+.fu-type { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; background: #eef2fb; color: var(--portal-primary); }
+.fu-type.is-whatsapp { background: #e7f8ee; color: #15803d; }
+.fu-type.is-email { background: #fdf3e2; color: #b45309; }
+.fu-status { display: inline-block; margin-left: 0.35rem; padding: 0.1rem 0.45rem; border-radius: 6px; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+.fu-status.is-overdue { background: #fde2e2; color: #b91c1c; }
+.fu-status.is-done { background: #dcfce7; color: #15803d; }
+.fu-status.is-cancelled { background: #eef0f4; color: #6b7185; }
+.fu-note { max-width: 300px; font-size: 0.82rem; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.fu-avatar { width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; color: #fff; background: linear-gradient(135deg, var(--portal-primary), var(--portal-accent)); }
+.fu-assignee { font-size: 0.82rem; max-width: 150px; }
+.fu-actions { display: inline-flex; gap: 0.3rem; }
+.fu-act { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid var(--portal-border); background: var(--portal-surface, #fff); color: #4b5065; font-size: 0.8rem; text-decoration: none; transition: all 0.15s ease; }
+.fu-act:hover { background: var(--portal-bg); color: var(--portal-primary); border-color: var(--portal-primary); }
+.fu-act.is-complete { background: #16a34a; border-color: #16a34a; color: #fff; }
+.fu-act.is-complete:hover { background: #15803d; border-color: #15803d; color: #fff; }
+.fu-act.is-cancel:hover { color: #dc2626; border-color: #dc2626; background: #fef2f2; }

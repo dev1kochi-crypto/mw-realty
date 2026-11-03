@@ -26,7 +26,7 @@ const G = [
   ['W4', 'calculators', 'Calculators', 'Website', 'Mortgage, eligibility, rent-vs-buy and refinance calculators'],
   ['W5', 'explore', 'Explore & Market Insights', 'Website', 'About, Contact, Blog, Careers, Market Insights, legal and 404 pages'],
   ['01', 'dashboard-test-guide', 'Dashboard', 'CRM'], ['02', 'leads-test-guide', 'Leads', 'CRM'],
-  ['03', 'lead-insights-test-guide', 'Lead Insights', 'CRM'], ['04', 'website-leads-test-guide', 'Website Leads', 'CRM'],
+  ['03', 'lead-insights-test-guide', 'Lead Insights', 'CRM', 'Menu now under Insights: see 27'], ['04', 'website-leads-test-guide', 'Website Leads', 'CRM'],
   ['05', 'master-data-test-guide', 'Master Data', 'CRM'], ['06', 'integrations-test-guide', 'Integrations', 'CRM'],
   ['07', 'properties-test-guide', 'Properties', 'CRM', 'Bulk import and Write with AI: see 25'],
   ['08', 'commercial-test-guide', 'Commercial', 'CRM'],
@@ -40,6 +40,8 @@ const G = [
   ['22', 'security-test-guide', 'Security', 'CRM'], ['23', 'plans-test-guide', 'Plans', 'CRM'],
   ['24', 'listing-review', 'Listing Review', 'CRM', 'Super Admin queue for duplicate and risk-flagged listings'],
   ['25', 'property-import-ai-copy', 'Property Import & AI Copy', 'CRM', 'Excel bulk import, Write with AI, Property Finder changes (add-on to 07)'],
+  ['26', 'agent-insights', 'Agent Insights', 'CRM', 'How each agency agent handles assigned leads and listings, Agent score'],
+  ['27', 'property-insights', 'Property Insights', 'CRM', 'Website performance of every listing; the Insights menu group'],
 ].map(([n, slug, title, group, note]) => ({ n, file: `${n}-${slug}`, title, group, note }))
   // a project document appears only once its page has been built
   .filter((d) => (d.group !== 'Project' && d.group !== 'Website') || existsSync(join(SCRATCH, 'html', `${d.file}.html`)));
@@ -218,6 +220,6 @@ for (const g of GROUPS) {
   }
   home += '</ul>';
 }
-home += `<p style="color:var(--muted);font-size:14px">Guides 24–25 and the website guides W1–W5 were written from the code as of 2 November 2026. If a guide and the app disagree, report it to the team.</p></div>`;
+home += `<p style="color:var(--muted);font-size:14px">Guides 24–25 and the website guides W1–W5 were written from the code as of 2 November 2026; guide 26 as of 3 November 2026. If a guide and the app disagree, report it to the team.</p></div>`;
 writeFileSync(join(OUT, 'index.html'), page('Home', 'index', home));
 console.log('pages:', G.length + 1);

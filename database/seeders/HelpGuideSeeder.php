@@ -201,6 +201,51 @@ class HelpGuideSeeder extends Seeder
                     'For Super Admin, the cards show totals across all accounts, such as Property Finder listings waiting for review.',
                 ],
             ],
+            'agent-insights' => [
+                'title' => 'Agent Insights',
+                'icon' => 'fa-user-check',
+                'intro' => 'See how well each of your agents handles the leads and listings you assign to them: how fast they act on new leads, which leads they have left untouched, overdue follow-ups, and the quality of their listings. Each agent gets an Agent score out of 100.',
+                'features' => [
+                    ['icon' => 'fa-gauge-high', 'title' => 'Team cards', 'text' => 'The top cards show your agents, leads received in the period, open leads nobody has touched, overdue follow-ups and live listings.'],
+                    ['icon' => 'fa-bolt', 'title' => 'Response rate and time', 'text' => 'Response rate is the share of new leads an agent acted on within 24 hours. Acting means adding a note, changing the stage or status, or adding a follow-up. Response time is the typical (median) time to that first action.'],
+                    ['icon' => 'fa-triangle-exclamation', 'title' => 'Needs attention', 'text' => 'Untouched leads are open leads with no activity for more than 24 hours since the agent got them. Overdue follow-ups are scheduled follow-ups past their due time.'],
+                    ['icon' => 'fa-building', 'title' => 'Listings', 'text' => 'How many of the agent\'s agency listings are live on the website and their average quality score (the same score shown on property cards).'],
+                    ['icon' => 'fa-award', 'title' => 'Agent score', 'text' => 'One number out of 100 built from response rate, response time, untouched leads, follow-ups on time, listing quality and live listings. Open an agent to see the points for each part and how to improve.'],
+                ],
+                'steps' => [
+                    ['title' => 'Pick a period', 'text' => 'Choose Last 7, 30 or 90 days. It sets which new leads count for response rate, response time and closed leads.'],
+                    ['title' => 'Start with Needs attention', 'text' => 'The default sort puts the agents with the most untouched leads and overdue follow-ups at the top.'],
+                    ['title' => 'Open an agent', 'text' => 'Click an agent. Their page shows the score and key numbers at the top, and tabs for the Score breakdown, Untouched leads, Overdue follow-ups and Listings needing work, with links to open each one.'],
+                    ['title' => 'Act on it', 'text' => 'Reassign untouched leads, remind the agent about overdue follow-ups, or ask them to fix listings with low quality or permit problems.'],
+                ],
+                'tips' => [
+                    'Only your agency\'s own leads and listings count, not an agent\'s personal ones.',
+                    'A part with nothing to measure, such as no new leads in the period, is left out of the score instead of counting as zero.',
+                    'Suspended agents are still listed so you can see what they left behind.',
+                ],
+            ],
+            'property-insights' => [
+                'title' => 'Property Insights',
+                'icon' => 'fa-magnifying-glass-chart',
+                'intro' => 'See how all your listings perform on the website in one place: how often each one is shown, opened and contacted, how many leads it brought and its quality score. Use it to find the listings nobody is seeing.',
+                'features' => [
+                    ['icon' => 'fa-gauge-high', 'title' => 'Summary cards', 'text' => 'The top cards show your listings (and how many are live), impressions, listing clicks, lead clicks and leads in the period, and how many listings had no impressions at all.'],
+                    ['icon' => 'fa-chart-line', 'title' => 'Trend chart', 'text' => 'Impressions and clicks day by day across all your listings.'],
+                    ['icon' => 'fa-table-list', 'title' => 'Every listing', 'text' => 'Each row shows the listing, its agent, impressions, clicks, lead clicks (Call, WhatsApp and Email buttons), leads and quality score. A listing with no impressions is shown in red.'],
+                    ['icon' => 'fa-filter', 'title' => 'Filter and sort', 'text' => 'Search by title, reference or address, show Residential or Commercial only, pick Last 7, 30 or 90 days, and sort by most impressions, clicks or leads, no impressions first, or newest.'],
+                    ['icon' => 'fa-chart-simple', 'title' => 'Listing details', 'text' => 'Click a row or Details to open the listing\'s performance panel: its funnel, last 30 days, quality score with what to improve, and its leads.'],
+                ],
+                'steps' => [
+                    ['title' => 'Pick a period', 'text' => 'Choose Last 7, 30 or 90 days. The cards, chart and every row use that period.'],
+                    ['title' => 'Sort by No impressions first', 'text' => 'These listings are not being seen. Check they are active, have an approved permit and a good quality score.'],
+                    ['title' => 'Open a listing', 'text' => 'Click Details to see the quality tips, then edit the listing to add photos, a fuller description or a map pin.'],
+                ],
+                'tips' => [
+                    'Only listings still on the market are shown. Sold and rented listings are in Sold Listings.',
+                    'Leads counts every lead for the listing in the period, including ones assigned to other agents.',
+                    'Super Admin sees every account\'s listings, with the owner under the title.',
+                ],
+            ],
             'lead-insights' => [
                 'title' => 'Lead Insights',
                 'icon' => 'fa-chart-line',

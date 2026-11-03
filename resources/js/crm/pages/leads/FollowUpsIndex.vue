@@ -19,37 +19,58 @@
         <div class="portal-card p-3 p-md-4">
             <div v-if="loadError" class="text-center py-4 text-muted">{{ loadError }} <button type="button" class="btn btn-link" @click="load">Try again</button></div>
             <div v-else class="table-responsive">
-                <table class="table portal-table mb-0">
+                <table class="table portal-table fu-table mb-0">
                     <thead>
                         <tr>
+                            <th class="fu-id">ID</th>
                             <th>Lead</th>
                             <th>Follow-up</th>
                             <th>{{ tab === 'done' ? 'Done' : 'Due (UAE)' }}</th>
                             <th>{{ tab === 'done' ? 'Outcome' : 'Note' }}</th>
                             <th>Assigned</th>
-                            <th v-if="tab !== 'done'" class="text-end">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody :class="{ 'opacity-50': loading }">
-                        <tr v-for="f in rows" :key="f.id">
-                            <td><RouterLink :to="{ name: 'leads.show', params: { id: f.lead_id } }" class="fw-semibold text-decoration-none">{{ f.lead?.name || 'Unknown' }}</RouterLink></td>
-                            <td class="text-nowrap">
-                                <i class="fas me-1" :class="TYPE_ICONS[f.type]" aria-hidden="true"></i>{{ f.type_label }}
-                                <span v-if="f.status === 'cancelled'" class="badge bg-secondary ms-1">Cancelled</span>
-                                <span v-else-if="f.status === 'completed'" class="badge bg-success ms-1">Done</span>
-                                <span v-else-if="f.is_overdue" class="badge bg-danger ms-1">Overdue</span>
+                        <tr v-for="(f, index) in rows" :key="f.id" :class="{ 'is-overdue': f.is_overdue && f.status === 'scheduled' }">
+                            <td class="fu-id">{{ (meta?.from ?? 1) + index }}</td>
+                            <td>
+                                <RouterLink :to="{ name: 'leads.show', params: { id: f.lead_id } }" class="fu-lead text-decoration-none" :title="f.lead?.name">{{ f.lead?.name || 'Unknown' }}</RouterLink>
+                                <div v-if="f.created_by_name" class="fu-sub">Added by {{ f.created_by_name }}</div>
                             </td>
-                            <td class="text-nowrap">{{ tab === 'done' ? f.done_label : f.due_label }}</td>
-                            <td class="small" style="max-width: 320px;">{{ (tab === 'done' ? f.outcome : f.note) || '—' }}</td>
-                            <td class="small">{{ f.lead?.agent || f.lead?.owner || '—' }}</td>
-                            <td v-if="tab !== 'done'" class="text-end text-nowrap">
-                                <button type="button" class="btn btn-sm btn-success" @click="open('complete', f)"><i class="fas fa-check me-1"></i>Complete</button>
-                                <button type="button" class="btn btn-sm portal-btn-ghost ms-1" @click="open('reschedule', f)">Reschedule</button>
-                                <button type="button" class="btn btn-sm portal-btn-ghost text-danger ms-1" @click="open('cancel', f)">Cancel</button>
+                            <td class="text-nowrap">
+                                <span class="fu-type" :class="`is-${f.type}`"><i class="fas" :class="TYPE_ICONS[f.type]" aria-hidden="true"></i>{{ f.type_label }}</span>
+                                <span v-if="f.status === 'cancelled'" class="fu-status is-cancelled">Cancelled</span>
+                                <span v-else-if="f.status === 'completed'" class="fu-status is-done">Done</span>
+                                <span v-else-if="f.is_overdue" class="fu-status is-overdue">Overdue</span>
+                            </td>
+                            <td class="text-nowrap">
+                                <template v-if="tab === 'done'"><div class="fu-when">{{ when(f.done_label) }}</div></template>
+                                <template v-else>
+                                    <div class="fu-when">{{ when(f.due_label) }}</div>
+                                    <div class="fu-sub" :class="{ 'text-danger': f.is_overdue }">{{ timeAgo(f.due_at) }}</div>
+                                </template>
+                            </td>
+                            <td><div class="fu-note" :title="(tab === 'done' ? f.outcome : f.note) || ''">{{ (tab === 'done' ? f.outcome : f.note) || '—' }}</div></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2 min-w-0">
+                                    <span class="fu-avatar" aria-hidden="true">{{ initials(assignee(f), 1) }}</span>
+                                    <span class="fu-assignee text-truncate" :title="assignee(f)">{{ assignee(f) }}</span>
+                                </div>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <div class="fu-actions">
+                                    <template v-if="f.status === 'scheduled'">
+                                        <button type="button" class="fu-act is-complete" title="Complete" aria-label="Complete" @click="open('complete', f)"><i class="fas fa-check"></i></button>
+                                        <button type="button" class="fu-act" title="Reschedule" aria-label="Reschedule" @click="open('reschedule', f)"><i class="fas fa-calendar-days"></i></button>
+                                        <button type="button" class="fu-act is-cancel" title="Cancel" aria-label="Cancel" @click="open('cancel', f)"><i class="fas fa-xmark"></i></button>
+                                    </template>
+                                    <RouterLink :to="{ name: 'leads.show', params: { id: f.lead_id } }" class="fu-act" title="Open lead" aria-label="Open lead"><i class="fas fa-arrow-up-right-from-square"></i></RouterLink>
+                                </div>
                             </td>
                         </tr>
                         <tr v-if="!loading && !rows.length">
-                            <td :colspan="tab === 'done' ? 5 : 6" class="portal-empty">{{ empty[tab] }}</td>
+                            <td colspan="7" class="portal-empty">{{ empty[tab] }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -70,7 +91,7 @@ import CrmPagination from '../../components/CrmPagination.vue';
 import FollowUpModal from './components/FollowUpModal.vue';
 import { TYPE_ICONS } from './components/followUps';
 import { useSession } from '../../composables/useSession';
-import { number } from '../../utils/format';
+import { initials, number, timeAgo } from '../../utils/format';
 
 const route = useRoute();
 const router = useRouter();
@@ -122,6 +143,10 @@ function setTab(key) {
     router.replace({ query: key === 'overdue' ? {} : { tab: key } });
     load();
 }
+
+// The column header already says UAE, so the label drops its "(UAE)" suffix.
+const when = (label) => (label ? label.replace(/\s*\(UAE\)$/, '') : '—');
+const assignee = (f) => f.lead?.agent || f.lead?.owner || '—';
 
 function open(mode, followUp) {
     selected.value = followUp;

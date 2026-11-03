@@ -20,7 +20,7 @@
                         </a>
                         <div class="collapse portal-nav-submenu" :class="{ show: isOpen(item) }">
                             <nav class="nav flex-column">
-                                <NavLink v-for="child in item.children" :key="child.key" :item="child" class="py-2" />
+                                <NavLink v-for="child in item.children" :key="child.key" :item="child" />
                             </nav>
                         </div>
                     </div>

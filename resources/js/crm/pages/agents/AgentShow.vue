@@ -20,6 +20,7 @@
                     <div class="small portal-muted">Agency listings assigned</div><div class="mb-2">{{ data.properties.meta.total }}</div>
                     <div class="small portal-muted">Agency leads assigned (all time)</div><div class="mb-3">{{ data.lead_count }}</div>
                     <RouterLink :to="{ name: 'leads.index', query: { agent_id: data.agent.id } }" class="btn btn-sm portal-btn-ghost">View their leads</RouterLink>
+                    <RouterLink v-if="data.membership.is_member" :to="{ name: 'agent-insights.show', params: { id: data.agent.id } }" class="btn btn-sm portal-btn-ghost ms-1">Agent insights</RouterLink>
                 </div>
             </div>
 

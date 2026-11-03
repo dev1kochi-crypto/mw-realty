@@ -56,6 +56,8 @@ Priority in section 5: **High** = core flow, data loss or access; **Medium** = i
 | W4 | Website: Calculators | CA-xx | 9 | Calculator formulas matching Property Finder, unlock popups, enquiries |
 | W5 | Website: Explore & Market Insights | MI-, EX-xx | 9 | Contact and career forms, blog, legal, landing and 404 pages |
 | 25 | Property Import & AI Copy | PI-xx, AC-xx | 30 | Excel import rules, duplicates, Write with AI |
+| 26 | Agent Insights | AI-xx | 22 | What counts as acting on a lead, 24-hour response rule, untouched leads, overdue follow-ups, listing quality / live, Agent score and Not applicable parts, plan feature `agent_insights` |
+| 27 | Property Insights | PI-xx | 16 | Insights menu group, which listings count, impressions / clicks / lead clicks / leads per period, No impressions, plan feature `property_insights` |
 
 > Scenario counts for guides 01–23 are taken from the published PDFs and may be off by one or two where a table spans pages.
 

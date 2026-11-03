@@ -68,7 +68,7 @@ Old links /agent-login, /agency-login and /portal/login lead to /login; /agent-s
 | --- | --- |
 | Public website | Home, property search (list and map), commercial, Premium and marketing pages, property details (with insights tabs), compare, agents and agencies, blogs, market insights, careers, landing pages, calculators, contact, legal pages, sign up and log in, customer profile, AI chat, language (English and Arabic, right-to-left) and currency switching, visitor tracking, ad slider |
 | Admin / CMS | Clients (KYC, memberships, plan requests), plans, payments, coupons, credits and credit history, support tickets, Help Desk content, website content, filters and locations, enquiries, newsletter, unassigned leads, languages and translations, currencies, site information, SEO, sitemap, robots.txt, redirects, 404 logs, staff roles and permissions |
-| Partner CRM | Modules 01 to 26 of the tester handbook (Dashboard, Leads, Follow-ups, Lead Insights, Website Leads, Master, Integrations, Properties, Commercial, Import and Write with AI, Listing Permits, Listing Review, Premium, Advertisements, Sold Listings, Marketing Properties, Agents and My Agency, Nearby Places, Listing Settings, Reports, Help Desk, Contact Us, Credits, My Profile, Security, Plans) |
+| Partner CRM | Modules 01 to 27 of the tester handbook (Dashboard, Leads, Follow-ups, Lead Insights, Website Leads, Master, Integrations, Properties, Commercial, Import and Write with AI, Listing Permits, Listing Review, Premium, Advertisements, Sold Listings, Marketing Properties, Agents and My Agency, Agent Insights, Property Insights, Nearby Places, Listing Settings, Reports, Help Desk, Contact Us, Credits, My Profile, Security, Plans) |
 | Mobile and public APIs | /api endpoints used by the website and the mobile app: content, search, property details, compare, lead capture, AI chat, tracking, customer token auth and customer account. /api/crm serves the CRM screens. |
 | Integrations | Stripe (plans, credits, webhooks), Facebook Lead Ads (login, Pages, webhook, sync), Property Finder (listing import), DLD / ADREC permit check (when connected), Google sign-in (customers), AI provider (chat, compare summary, Write with AI, import descriptions), email, Cloudinary media, currency rate feed |
 | Background jobs | Email and notification queue, permit expiry, Premium start / end, ad settlement, credit expiry, renewal reminders, document expiry, Facebook Page check, tracking clean-up, imports, photo screening |
@@ -101,7 +101,7 @@ Old links /agent-login, /agency-login and /portal/login lead to /login; /agent-s
 | BR-11 | Partners can promote listings as Premium and book banner ads on website pages, with MW Realty approval of ads and impression / click reporting. | CRM, Website | Medium |
 | BR-12 | Agencies can build a team (add, invite, accept join requests), with MW Realty approving every membership. | CRM, Admin | Medium |
 | BR-13 | Partners can bring in leads from Facebook Lead Ads and listings from Property Finder or an Excel / CSV file. | CRM, Integrations | Medium |
-| BR-14 | Partners see performance: dashboard, reports, lead insights, listing performance and ad reports. | CRM | Medium |
+| BR-14 | Partners see performance: dashboard, reports, lead insights, listing performance and ad reports; agencies also see how each agent handles the leads and listings assigned to them (agent insights). | CRM | Medium |
 | BR-15 | MW Realty staff manage all website content, filters, locations, translations, currencies and SEO without code changes. | Admin | High |
 | BR-16 | Staff access is controlled by roles and permissions; data of one partner is never visible to another. | Admin, CRM | High |
 | BR-17 | Partner accounts are protected by optional or agency-enforced 2FA and a new-device email check. | CRM | High |
@@ -212,6 +212,8 @@ General rules for every CRM module:
 | FR-333 | Property import: upload Excel / CSV, match columns, import in the background (one per account), row results Added / Needs details / Duplicate / Skipped, status file kept 30 days; listings created Inactive; plan limit checked per row; credits never used. | Module 25 |
 | FR-334 | Write with AI in the listing form drafts or improves title, key features and description in the selected language from the form's details; nothing is saved until Save / Update; 20 requests per minute per user. | Module 25 |
 | FR-335 | Super Admin opens the CRM in a global view and returns with Back to Admin; the sidebar shows Super Admin-only modules. | Overview s.4; Module 01 |
+| FR-336 | Agent Insights (agency, Super Admin): per agent leads received, response rate within 24 hours, median response time, untouched leads, overdue follow-ups, live listings, average listing quality, closed leads and deals, and an Agent score out of 100 with a breakdown; agent page lists the untouched leads, overdue follow-ups and listings needing work; period 7 / 30 / 90 days; plan-gated (`agent_insights`). | Module 26 |
+| FR-337 | Property Insights (all accounts, Super Admin): every listing on the market the account can see with impressions, listing clicks, lead clicks and leads for 7 / 30 / 90 days, quality score, totals, a day-by-day chart, No impressions count, search, Residential / Commercial filter and sorts; a row opens Listing Performance; plan-gated (`property_insights`). The CRM sidebar groups Property Insights, Agent Insights, Lead Insights and Reports under Insights. | Module 27 |
 
 ### 5.5 Integrations
 
@@ -535,6 +537,8 @@ URL: /crm/listing-review/{id} (list at /crm/listing-review). Purpose: Super Admi
 | Nearby Places | FR-323 | BR-01 | 15 |
 | Listing Settings (watermark) | FR-324, FR-408 | BR-09 | 16 |
 | Reports | FR-325 | BR-14 | 17 |
+| Agent Insights | FR-336 | BR-12, BR-14 | 26 |
+| Property Insights | FR-337 | BR-14 | 27 |
 | Help Desk | FR-207, FR-326 | BR-22 | 18 |
 | Contact Us (tickets) | FR-207, FR-327 | BR-22 | 19 |
 | Credits | FR-206, FR-328, FR-404 | BR-10 | 20 |

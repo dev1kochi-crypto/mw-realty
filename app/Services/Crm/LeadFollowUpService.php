@@ -159,6 +159,8 @@ class LeadFollowUpService
                 'current_page' => $rows->currentPage(),
                 'last_page' => $rows->lastPage(),
                 'total' => $rows->total(),
+                'from' => $rows->firstItem(),
+                'to' => $rows->lastItem(),
             ],
         ];
     }
