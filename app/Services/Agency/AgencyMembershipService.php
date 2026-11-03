@@ -318,6 +318,75 @@ class AgencyMembershipService
     }
 
     /**
+     * Agency offers its plan to a member who isn't on it (Super Admin linked them, so they kept their
+     * own). Nothing changes until the agent accepts on My Agency — respondToPlanOffer().
+     */
+    public function offerAgencyPlan(AgencyAgent $membership): AgencyAgent
+    {
+        $agent = $membership->agent;
+
+        if ($membership->status !== AgencyAgent::APPROVED || (int) $agent->company_id !== (int) $membership->agency_id) {
+            throw ValidationException::withMessages(['plan' => 'Only active agents can be offered your plan.']);
+        }
+        if (!$agent->agencyPlanIncludesTeam()) {
+            throw ValidationException::withMessages(['plan' => 'Your plan does not include team agents. Upgrade your plan first.']);
+        }
+        if ($agent->isOnAgencyPlan()) {
+            throw ValidationException::withMessages(['plan' => 'This agent is already on your plan.']);
+        }
+        if ($membership->hasPendingPlanOffer()) {
+            throw ValidationException::withMessages(['plan' => 'Your offer is already waiting for the agent.']);
+        }
+
+        $membership->update(['plan_offer_status' => AgencyAgent::PLAN_OFFERED, 'plan_offered_at' => now(), 'plan_offer_responded_at' => null]);
+
+        $agencyName = $membership->agency->displayName();
+        $this->tell($agent, 'Agency plan offered', "{$agencyName} offered to put you on its " . $agent->company->plan->getTranslation('name')
+            . ' plan. Review it on My Agency — nothing changes until you accept.',
+            route('portal.agency.index'), 'fa-layer-group', mail: true, actionLabel: 'Review Offer');
+
+        return $membership;
+    }
+
+    /** Agency takes back an offer the agent hasn't answered yet. */
+    public function withdrawPlanOffer(AgencyAgent $membership): AgencyAgent
+    {
+        if (!$membership->hasPendingPlanOffer()) {
+            throw ValidationException::withMessages(['plan' => 'There is no open plan offer to withdraw.']);
+        }
+
+        $membership->update(['plan_offer_status' => null, 'plan_offered_at' => null, 'plan_offer_responded_at' => null]);
+
+        return $membership;
+    }
+
+    /**
+     * The agent's answer to the agency's plan offer. Accept → on the agency's plan from now on, exactly
+     * like an agency-brought agent: own plan dropped (paid Stripe plan not renewed, no refund), recorded.
+     */
+    public function respondToPlanOffer(PortalUser $agent, AgencyAgent $membership, bool $accept): AgencyAgent
+    {
+        abort_unless($membership->agent_id === $agent->id && $membership->hasPendingPlanOffer()
+            && in_array($membership->status, AgencyAgent::MEMBER_STATUSES, true), 404);
+
+        $membership->update([
+            'plan_offer_status' => $accept ? AgencyAgent::PLAN_ACCEPTED : AgencyAgent::PLAN_DECLINED,
+            'plan_offer_responded_at' => now(),
+        ]);
+
+        $agent = $agent->fresh();
+        if ($accept && $agent->isOnAgencyPlan()) {
+            $this->moveOntoAgencyPlan($agent);
+        }
+
+        $this->tell($membership->agency, $accept ? 'Plan offer accepted' : 'Plan offer declined',
+            $agent->name . ($accept ? ' accepted — they are now on your plan.' : ' declined — they stay on their own plan.'),
+            route('crm.app', 'agents'), $accept ? 'fa-circle-check' : 'fa-circle-xmark', $accept ? 'green' : 'amber');
+
+        return $membership;
+    }
+
+    /**
      * Agent leaves / is removed. The account, their personal listings and every historical lead
      * assignment stay exactly as they are. Agency-owned listings assigned to them stay with the
      * agency — handed to $reassignToAgentId, or left unassigned so new enquiries round-robin.

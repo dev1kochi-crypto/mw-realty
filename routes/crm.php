@@ -327,6 +327,8 @@ Route::middleware('crm.auth')->group(function () {
             Route::post('/{id}/suspend', 'suspend')->name('suspend')->whereNumber('id');
             Route::post('/{id}/reactivate', 'reactivate')->name('reactivate')->whereNumber('id');
             Route::post('/{id}/remove', 'remove')->name('remove')->whereNumber('id');
+            Route::post('/{id}/offer-plan', 'offerPlan')->name('offer-plan')->whereNumber('id');
+            Route::post('/{id}/withdraw-plan-offer', 'withdrawPlanOffer')->name('withdraw-plan-offer')->whereNumber('id');
         });
 
         // Nearby Places — shared list managed by Super Admin, plus each Agent/Company's own places.

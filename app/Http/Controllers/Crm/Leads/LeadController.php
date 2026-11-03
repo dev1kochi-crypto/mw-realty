@@ -480,6 +480,7 @@ class LeadController extends Controller
      * load the `next_page` on scroll).
      *
      * @urlParam type string required stages, sources or tags. Example: stages
+     * @queryParam id integer Only this item — resolves a preset filter's label. Example: 23
      * @queryParam search string Example: view
      * @queryParam page integer Example: 1
      *
@@ -501,6 +502,7 @@ class LeadController extends Controller
         };
 
         $page = $query->withCount('leads')
+            ->when($request->filled('id'), fn ($q) => $q->whereKey((int) $request->input('id')))
             ->when($search !== '', fn ($q) => $q->where('name', 'like', '%' . $search . '%'))
             ->paginate(20, ['*'], 'page', max(1, (int) $request->input('page', 1)));
 
@@ -518,6 +520,7 @@ class LeadController extends Controller
      *
      * Super Admin only — accounts to filter by or transfer a lead to, searched and paged on the server.
      *
+     * @queryParam id integer Only this account — resolves a preset filter's label. Example: 12
      * @queryParam search string Example: acme
      * @queryParam page integer Example: 1
      *
@@ -529,7 +532,8 @@ class LeadController extends Controller
 
         $search = trim((string) $request->input('search'));
         $page = PortalUser::query()
-            ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$search}%")
+            ->when($request->filled('id'), fn ($q) => $q->whereKey((int) $request->input('id')))
+            ->when($search !== '',fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$search}%")
                 ->orWhere('company_name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")))
             ->orderBy('name')
             ->paginate(20, ['id', 'name', 'company_name', 'type'], 'page', max(1, (int) $request->input('page', 1)));

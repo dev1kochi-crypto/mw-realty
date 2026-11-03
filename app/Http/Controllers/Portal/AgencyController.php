@@ -125,6 +125,27 @@ class AgencyController extends Controller
         return redirect()->route('portal.agency.index')->with('success', 'You have left ' . $membership->agency->displayName() . '. You are now an independent agent.');
     }
 
+    /** Accept the current agency's plan offer — on its plan from now on, own plan dropped. */
+    public function acceptPlanOffer()
+    {
+        $agent = $this->agent();
+        $membership = $agent->currentMembership;
+        abort_unless($membership, 404);
+        $this->memberships->respondToPlanOffer($agent, $membership, true);
+
+        return back()->with('success', "You're now on {$membership->agency->displayName()}'s plan.");
+    }
+
+    public function declinePlanOffer()
+    {
+        $agent = $this->agent();
+        $membership = $agent->currentMembership;
+        abort_unless($membership, 404);
+        $this->memberships->respondToPlanOffer($agent, $membership, false);
+
+        return back()->with('success', 'Plan offer declined — you stay on your own plan.');
+    }
+
     public function transferProperty($id)
     {
         $agent = $this->agent();

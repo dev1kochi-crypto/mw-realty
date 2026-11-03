@@ -16,7 +16,7 @@
             <div class="overflow-auto" style="max-height: 240px;" @scroll="onScroll">
                 <button v-if="clearable && selected" type="button" class="dropdown-item text-muted" @click="choose(null)">{{ placeholder }}</button>
                 <button v-for="option in options" :key="option.id" type="button" class="dropdown-item d-flex align-items-center gap-2"
-                        :class="{ active: option.id === modelValue }" @click="choose(option)">
+                        :class="{ active: sameId(option.id, modelValue) }" @click="choose(option)">
                     <span v-if="option.color" class="rounded-circle d-inline-block flex-shrink-0" :style="{ background: option.color, width: '8px', height: '8px' }"></span>
                     <span class="text-truncate">{{ option.name }}</span>
                 </button>
@@ -70,6 +70,27 @@ let requestId = 0;
 watch(() => props.initial, (value) => {
     selected.value = value;
 });
+
+const sameId = (a, b) => a !== null && a !== '' && b !== null && b !== '' && String(a) === String(b);
+
+/**
+ * A value set from outside with no label yet (e.g. a filter restored from the address bar after a
+ * reload): ask the endpoint for that one item (`?id=`) so the trigger shows its name, not the placeholder.
+ */
+function resolveSelected(value) {
+    if (value === null || value === '' || value === undefined) {
+        selected.value = null;
+        return;
+    }
+    if (selected.value && sameId(selected.value.id, value)) return;
+    http.get(props.endpoint, { params: { id: value } })
+        .then((res) => {
+            const match = (res.data.data || []).find((option) => sameId(option.id, value));
+            if (match && sameId(props.modelValue, value)) selected.value = match;
+        })
+        .catch(() => {});
+}
+watch(() => props.modelValue, resolveSelected, { immediate: true });
 
 function fetchPage(reset = false) {
     if (reset) {

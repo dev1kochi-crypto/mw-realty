@@ -356,6 +356,30 @@ class AgentController extends Controller
         return response()->json(['success' => true, 'message' => "{$membership->agent->name} was removed from your agency."]);
     }
 
+    /**
+     * Offer your plan to an agent
+     *
+     * For an active agent on their own plan (Super Admin linked them). Nothing changes until the agent
+     * accepts on My Agency; then they're on your plan and their own drops to Free.
+     */
+    public function offerPlan($id)
+    {
+        $agency = $this->agency();
+        $membership = $this->findMembership($agency, $id);
+        $this->memberships->offerAgencyPlan($membership);
+
+        return response()->json(['success' => true, 'message' => "Plan offer sent — {$membership->agent->name} moves onto your plan once they accept."]);
+    }
+
+    /** Withdraw a plan offer the agent hasn't answered */
+    public function withdrawPlanOffer($id)
+    {
+        $agency = $this->agency();
+        $this->memberships->withdrawPlanOffer($this->findMembership($agency, $id));
+
+        return response()->json(['success' => true, 'message' => 'Plan offer withdrawn.']);
+    }
+
     private function company(): ?PortalUser
     {
         $user = $this->owner();
@@ -386,6 +410,7 @@ class AgentController extends Controller
     {
         $agent = $membership->agent;
         $isMember = in_array($membership->status, AgencyAgent::MEMBER_STATUSES, true);
+        $onAgencyPlan = $isMember && $agent->isOnAgencyPlan();
         $ownPlan = $agent->plan;
         $date = $tab === 'history'
             ? ($membership->left_at ?? $membership->responded_at ?? $membership->updated_at)
@@ -399,13 +424,23 @@ class AgentController extends Controller
             'rejection_reason' => $membership->rejection_reason,
             'is_member' => $isMember,
             'agent' => ['id' => $agent->id, 'name' => $agent->name, 'email' => $agent->email, 'phone' => $agent->phone],
-            // Plan column — member: on the agency's plan (and which one they dropped) or still their own;
-            // not yet a member: the plan they're on now, which the agency's replaces on approval.
+            // Plan column — member: on the agency's plan (and which one they dropped) or still their own
+            // (why: `reason`, and whether it can be offered); not yet a member: the plan they're on now,
+            // which the agency's replaces on approval.
             'plan' => [
-                'on_agency_plan' => $isMember && $agent->isOnAgencyPlan(),
+                'on_agency_plan' => $onAgencyPlan,
                 'previous' => $membership->previousPlan?->getTranslation('name'),
                 'own' => $ownPlan?->getTranslation('name') ?? 'Free',
                 'own_paid' => $ownPlan && (float) $ownPlan->price > 0,
+                // no_team_plan | offered | declined | not_offered (null when on the agency's plan / not a member)
+                'reason' => $isMember && !$onAgencyPlan ? match (true) {
+                    !$agent->agencyPlanIncludesTeam() => 'no_team_plan',
+                    $membership->hasPendingPlanOffer() => 'offered',
+                    $membership->plan_offer_status === AgencyAgent::PLAN_DECLINED => 'declined',
+                    default => 'not_offered',
+                } : null,
+                'can_offer' => $membership->status === AgencyAgent::APPROVED && !$onAgencyPlan
+                    && $agent->agencyPlanIncludesTeam() && !$membership->hasPendingPlanOffer(),
             ],
             'date' => $date?->toIso8601String(),
         ];

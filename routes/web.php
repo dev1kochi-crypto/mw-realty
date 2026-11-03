@@ -749,6 +749,8 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::post('/invitations/{id}/accept', 'acceptInvitation')->name('invitations.accept')->middleware('portal.approved');
             Route::post('/invitations/{id}/decline', 'declineInvitation')->name('invitations.decline');
             Route::post('/leave', 'leave')->name('leave');
+            Route::post('/plan-offer/accept', 'acceptPlanOffer')->name('plan-offer.accept');
+            Route::post('/plan-offer/decline', 'declinePlanOffer')->name('plan-offer.decline');
             Route::post('/properties/{id}/transfer', 'transferProperty')->name('properties.transfer')->middleware('portal.approved');
         });
 

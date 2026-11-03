@@ -468,32 +468,32 @@ class PortalUser extends Authenticatable
 
     /**
      * Covered by the agency's plan when connected through My Agency / Agents — the agency created the
-     * account, invited them, or accepted their join request (then admin approved) — AND that agency has
-     * an active plan that includes team agents. Only naming a brokerage in the profile, an admin link, or
-     * an old backfilled brokerage link — or an agency without such a plan — leaves them on their own plan.
+     * account, invited them, or accepted their join request (then admin approved) — or, for an admin
+     * link, once the agent accepted the agency's plan offer; AND that agency has an active plan that
+     * includes team agents. Only naming a brokerage in the profile, an admin link without an accepted
+     * offer, or an agency without such a plan leaves them on their own plan.
      */
     public function isOnAgencyPlan(): bool
     {
-        if (!$this->isAgencyAgent() || !$this->company) {
-            return false;
-        }
-        // Nothing to be covered by: the agency needs an active plan that includes team agents.
-        $agencyPlan = $this->company->plan;
-        if (!$agencyPlan?->status || !($agencyPlan->agentsUnlimited() || (int) $agencyPlan->agent_limit > 0)) {
+        if (!$this->isAgencyAgent() || !$this->company || !$this->agencyPlanIncludesTeam()) {
             return false;
         }
 
         $membership = $this->currentMembership;
 
-        if ($membership === null || $membership->agency_id !== $this->company_id) {
+        if ($membership === null || (int) $membership->agency_id !== (int) $this->company_id) {
             return false;
         }
 
-        // Connected through My Agency / Agents: the agent's request the agency accepted, or the
-        // agency's invitation / new account. Admin links and old backfilled brokerage links don't count.
-        return $membership->initiated_by === \App\Services\Agency\AssignmentActor::AGENT
-            || ($membership->initiated_by === \App\Services\Agency\AssignmentActor::AGENCY
-                && ($membership->account_created_by_agency || $membership->invited_at !== null));
+        return $membership->isAgencyBrought() || $membership->plan_offer_status === AgencyAgent::PLAN_ACCEPTED;
+    }
+
+    /** The current agency has an active plan that includes team agents (something to be covered by). */
+    public function agencyPlanIncludesTeam(): bool
+    {
+        $agencyPlan = $this->company?->plan;
+
+        return (bool) ($agencyPlan?->status && ($agencyPlan->agentsUnlimited() || (int) $agencyPlan->agent_limit > 0));
     }
 
     /** The plan whose entitlements apply: the agency's when covered by it, otherwise the account's own. */

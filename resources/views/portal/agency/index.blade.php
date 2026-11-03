@@ -7,16 +7,16 @@
     // What joining does to the agent's own plan (their request, or an agency's invitation — both switch).
     $ownPlan = $agent->plan;
     $ownIsPaid = $ownPlan && (float) $ownPlan->price > 0;
-    $planNote = function (?string $agencyName = null) use ($agent, $ownPlan, $ownIsPaid) {
+    $planNote = function (?string $agencyName = null, string $when = 'Once approved') use ($agent, $ownPlan, $ownIsPaid) {
         $agencyPart = $agencyName ? e($agencyName) . "'s plan" : "the agency's plan";
         if (!$ownIsPaid) {
-            return "Once approved you move onto {$agencyPart} — no plan to buy.";
+            return "{$when} you move onto {$agencyPart} — no plan to buy.";
         }
         $ends = $agent->hasStripeSubscription() && $agent->subscription_renews_at
             ? ' It won\'t renew — it ends ' . $agent->subscription_renews_at->format('d M Y') . ' and you won\'t be charged again.'
             : '';
 
-        return "Once approved you move onto {$agencyPart}. Your own <strong>" . e($ownPlan->getTranslation('name')) . '</strong> plan stops — <strong>no refund</strong> for the current period.' . $ends;
+        return "{$when} you move onto {$agencyPart}. Your own <strong>" . e($ownPlan->getTranslation('name')) . '</strong> plan stops — <strong>no refund</strong> for the current period.' . $ends;
     };
 @endphp
 <div class="portal-section-title mb-3">My Agency</div>
@@ -54,10 +54,26 @@
                     @if($agent->isOnAgencyPlan())
                         On <strong>{{ $current->agency->displayName() }}'s {{ $agencyPlan?->getTranslation('name') }}</strong> plan
                         @if($current->previousPlan) · switched from your own <strong>{{ $current->previousPlan->getTranslation('name') }}</strong> plan on {{ $current->plan_switched_at?->format('d M Y') }} (no refund)@endif
-                    @else
+                    @elseif(!$agent->agencyPlanIncludesTeam())
                         On your own <strong>{{ $ownPlan?->getTranslation('name') ?? 'Free' }}</strong> plan — {{ $current->agency->displayName() }}'s plan doesn't include team agents.
+                    @else
+                        On your own <strong>{{ $ownPlan?->getTranslation('name') ?? 'Free' }}</strong> plan — Super Admin linked you to {{ $current->agency->displayName() }}, so you keep your own plan unless you accept the agency's plan offer.
                     @endif
                 </div>
+                @if(!$agent->isOnAgencyPlan() && $agent->agencyPlanIncludesTeam() && $current->hasPendingPlanOffer())
+                    <div class="alert alert-info small">
+                        <i class="fas fa-layer-group me-1"></i><strong>{{ $current->agency->displayName() }}</strong> offered to put you on its <strong>{{ $agencyPlan?->getTranslation('name') }}</strong> plan ({{ $current->plan_offered_at?->diffForHumans() }}).
+                        <div class="mt-1">{!! $planNote($current->agency->displayName(), 'Once you accept') !!}</div>
+                        <div class="d-flex gap-2 mt-2">
+                            <form method="POST" action="{{ route('portal.agency.plan-offer.accept') }}" class="m-0">@csrf
+                                <button class="btn btn-sm btn-success">Accept</button>
+                            </form>
+                            <form method="POST" action="{{ route('portal.agency.plan-offer.decline') }}" class="m-0">@csrf
+                                <button class="btn btn-sm btn-outline-danger">Decline</button>
+                            </form>
+                        </div>
+                    </div>
+                @endif
                 <p class="portal-muted small">You work the agency's listings assigned to you and the enquiries routed to you. Listings you add now belong to the agency and use its plan.</p>
                 <form method="POST" action="{{ route('portal.agency.leave') }}" onsubmit="return confirm('Leave {{ e($current->agency->displayName()) }}? You will become an independent agent. The agency keeps its listings and leads.');">
                     @csrf

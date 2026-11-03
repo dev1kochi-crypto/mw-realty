@@ -188,7 +188,15 @@
                                     </template>
                                     <template v-else>
                                         <span class="badge bg-light text-dark border">Own plan · {{ m.plan.own }}</span>
-                                        <div class="text-muted mt-1">your plan doesn't include team agents</div>
+                                        <div v-if="m.plan.reason === 'no_team_plan'" class="text-muted mt-1">your plan doesn't include team agents</div>
+                                        <div v-else-if="m.plan.reason === 'offered'" class="text-muted mt-1">
+                                            <i class="far fa-clock me-1"></i>plan offer sent · awaiting agent
+                                            <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" :disabled="busy === m.id" @click="withdrawOffer(m)">Withdraw</button>
+                                        </div>
+                                        <div v-else class="text-muted mt-1">{{ m.plan.reason === 'declined' ? 'agent declined your plan offer' : 'linked by Super Admin · on their own plan' }}</div>
+                                        <button v-if="m.plan.can_offer" type="button" class="btn btn-sm btn-outline-primary mt-1" :disabled="busy === m.id" @click="offerPlan(m)">
+                                            <i class="fas fa-layer-group me-1"></i>{{ m.plan.reason === 'declined' ? 'Offer again' : 'Offer your plan' }}
+                                        </button>
                                     </template>
                                 </template>
                                 <template v-else>
@@ -298,6 +306,23 @@ async function cancel(membership) {
         tone: 'warning',
     }))) return;
     act(membership, 'cancel');
+}
+
+/** Admin-linked agent on their own plan: offer the agency's — it applies once they accept on My Agency. */
+async function offerPlan(membership) {
+    if (!(await confirm({
+        title: `Offer your plan to ${membership.agent.name}?`,
+        message: `They'll be asked on My Agency. Once they accept they use your plan, and their own ${membership.plan.own} plan`
+            + (membership.plan.own_paid ? ' stops (no refund for the current period).' : ' is no longer used.'),
+        confirmText: 'Send offer',
+        tone: 'primary',
+    }))) return;
+    act(membership, 'offer-plan');
+}
+
+async function withdrawOffer(membership) {
+    if (!(await confirm({ title: 'Withdraw the plan offer?', confirmText: 'Withdraw', cancelText: 'Keep', tone: 'warning' }))) return;
+    act(membership, 'withdraw-plan-offer');
 }
 
 async function distribute() {

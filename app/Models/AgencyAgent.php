@@ -28,15 +28,23 @@ class AgencyAgent extends Model
     /** Statuses that make the agent part of the agency right now. */
     public const MEMBER_STATUSES = [self::APPROVED, self::SUSPENDED];
 
+    // The agency's offer to put an admin-linked agent on its plan (plan_offer_status).
+    public const PLAN_OFFERED = 'offered';
+    public const PLAN_ACCEPTED = 'accepted';
+    public const PLAN_DECLINED = 'declined';
+
     protected $fillable = [
         'agency_id', 'agent_id', 'status', 'initiated_by', 'account_created_by_agency',
         'invited_at', 'responded_at', 'approved_at', 'approved_by', 'joined_at', 'left_at',
         'ended_by', 'rejection_reason', 'previous_plan_id', 'plan_switched_at',
+        'plan_offer_status', 'plan_offered_at', 'plan_offer_responded_at',
     ];
 
     protected $casts = [
         'account_created_by_agency' => 'boolean',
         'plan_switched_at' => 'datetime',
+        'plan_offered_at' => 'datetime',
+        'plan_offer_responded_at' => 'datetime',
         'invited_at' => 'datetime',
         'responded_at' => 'datetime',
         'approved_at' => 'datetime',
@@ -68,6 +76,23 @@ class AgencyAgent extends Model
     public function scopeMember($query)
     {
         return $query->whereIn('agency_agents.status', self::MEMBER_STATUSES);
+    }
+
+    /**
+     * Brought in through My Agency / Agents (agency-created account, agency invitation, or the agent's
+     * request the agency accepted) — such members move onto the agency's plan on approval by themselves.
+     * Admin links and old backfilled brokerage links don't; those need an accepted plan offer.
+     */
+    public function isAgencyBrought(): bool
+    {
+        return $this->initiated_by === \App\Services\Agency\AssignmentActor::AGENT
+            || ($this->initiated_by === \App\Services\Agency\AssignmentActor::AGENCY
+                && ($this->account_created_by_agency || $this->invited_at !== null));
+    }
+
+    public function hasPendingPlanOffer(): bool
+    {
+        return $this->plan_offer_status === self::PLAN_OFFERED;
     }
 
     public function isOpen(): bool
