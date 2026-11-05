@@ -121,7 +121,7 @@ class MarketingPropertyService
     /** Home "Realty Property" — the first HOME_LIMIT still-active listings of the list. */
     public function homeProperties(): Collection
     {
-        return Property::where('status', true)->marketing()->marketingOrder()->take(self::HOME_LIMIT)->get();
+        return Property::with(['agent', 'owner', 'details'])->where('status', true)->marketing()->marketingOrder()->take(self::HOME_LIMIT)->get();
     }
 
     public function hasAny(): bool

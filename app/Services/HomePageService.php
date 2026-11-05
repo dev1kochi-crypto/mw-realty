@@ -43,6 +43,9 @@ class HomePageService
     /** Most listings in each Home slider (Premium Properties, Luxury Project, Realty Property). */
     private const HOME_SLIDER_LIMIT = 12;
 
+    /** What each listing card reads (contact agent/agency, furnished flag) — loaded up front, not per card. */
+    private const CARD_RELATIONS = ['agent', 'owner', 'details'];
+
     /**
      * Drop the cached home / contact / footer / about payloads for every language, so a CMS
      * edit (Common Titles, section settings…) or a Marketing Properties change shows straight
@@ -61,7 +64,9 @@ class HomePageService
 
     public function getHomeData(string $lang): array
     {
-        return Cache::remember("home-page:{$lang}", self::CACHE_TTL, fn () => [
+        // Fresh for CACHE_TTL; after that the last copy is still served (for up to a day) while it
+        // rebuilds after the response — nobody, crawler or visitor, waits for the ~50 queries.
+        return Cache::flexible("home-page:{$lang}", [self::CACHE_TTL, 86400], fn () => [
             'banner' => $this->banner($lang),
             'brands' => $this->brands(),
             'ad' => $this->ad('home'),
@@ -148,7 +153,7 @@ class HomePageService
         $city = $city !== null && trim($city) !== '' ? trim($city) : null;
 
         return Cache::remember('home-developments:' . $lang . ':' . md5((string) $city), self::CACHE_TTL, function () use ($lang, $city) {
-            $query = Property::where('status', true);
+            $query = Property::with(self::CARD_RELATIONS)->where('status', true);
             if ($city) {
                 LocationFilter::apply($query, null, null, $city);
             }
@@ -174,7 +179,7 @@ class HomePageService
             // "View More Details" opens the full Premium listing page unless the admin set another link.
             'button_url' => $section?->getTranslation('button_url', $lang) ?: '/premium-properties',
             // Premium = listings featured from the CRM (Properties and Commercial), in the CRM order.
-            'properties' => Property::where('status', true)->where('featured', true)->displayOrder()
+            'properties' => Property::with(self::CARD_RELATIONS)->where('status', true)->where('featured', true)->displayOrder()
                 ->take(self::HOME_SLIDER_LIMIT)->get()
                 ->map(fn ($p) => $this->mapProperty($p, $lang, true))->values(),
         ];
@@ -230,7 +235,7 @@ class HomePageService
     protected function luxuryQuery()
     {
         [$min, $max] = $this->luxuryPriceRange();
-        $query = Property::where('status', true)->residential();
+        $query = Property::with(self::CARD_RELATIONS)->where('status', true)->residential();
 
         if ($min === null && $max === null) {
             return $query->orderByDesc('price')->orderByDesc('id');
@@ -253,7 +258,7 @@ class HomePageService
         $curated = $marketing->hasAny();
         $properties = ($curated
             ? $marketing->homeProperties()
-            : Property::where('status', true)
+            : Property::with(self::CARD_RELATIONS)->where('status', true)
                 ->whereNotIn('id', $this->luxuryQuery()->take(self::HOME_SLIDER_LIMIT)->pluck('id'))
                 ->displayOrder()
                 ->take(self::HOME_SLIDER_LIMIT)

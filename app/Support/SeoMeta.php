@@ -153,9 +153,21 @@ class SeoMeta
                 '@type' => 'PostalAddress',
                 'streetAddress' => $info->address,
                 'addressLocality' => 'Dubai',
+                'addressRegion' => 'Dubai',
                 'addressCountry' => 'AE',
             ] : null,
-            'areaServed' => ['@type' => 'Country', 'name' => 'United Arab Emirates'],
+            'areaServed' => [
+                ['@type' => 'Country', 'name' => 'United Arab Emirates'],
+                ['@type' => 'City', 'name' => 'Dubai'],
+            ],
+            'contactPoint' => $info->phone_1 || $info->email_1 ? array_filter([
+                '@type' => 'ContactPoint',
+                'contactType' => 'customer service',
+                'telephone' => $info->phone_1,
+                'email' => $info->email_1,
+                'areaServed' => 'AE',
+                'availableLanguage' => ['English', 'Arabic'],
+            ]) : null,
             'sameAs' => array_values(array_filter([
                 $info->facebook, $info->instagram, $info->linkedin, $info->twitter,
                 $info->youtube, $info->tiktok, $info->pinterest, $info->snapchat,

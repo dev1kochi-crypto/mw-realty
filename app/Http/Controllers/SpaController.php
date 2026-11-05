@@ -44,6 +44,8 @@ class SpaController extends Controller
                 'home' => $home,
                 'siteName' => $siteInfo?->company_name ?: config('app.name', 'MW Realty'),
                 'seoDescription' => $resolved['meta_description'] ?? null,
+                'siteInfo' => $siteInfo,
+                'listingCount' => Property::where('status', true)->count(),
             ])->render(), null, report: true) : null,
             'structuredData' => SeoMeta::businessSchema($siteInfo, $resolved),
         ]);
