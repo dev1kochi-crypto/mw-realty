@@ -50,7 +50,9 @@ Named limiters are defined in app/Providers/AppServiceProvider.php. Plain `throt
 ### 1.4 Response format
 
 - Every `/api/*` response (success and error, including unknown-route 404s) is wrapped by App\Support\ApiEnvelope: `{ "success": true|false, "message": "...", "data": ... }`.
-- Paginated lists come back as `data: { items, meta, links }`.
+- Paginated lists come in two shapes:
+  - Lists returned as a Laravel paginated resource collection come back as `data: { items, meta, links }`.
+  - The public website page endpoints (for example `GET /api/properties`, `/api/commercial`, `/api/blogs`, `/api/market-insights`) return their own list key plus a `pagination` object. For example, `GET /api/properties` returns `data: { properties: [...], pagination: { current_page, last_page, total }, filters, seo, ... }`. The website and the mobile app read this shape.
 - Validation errors: HTTP 422 with `success: false`, `data: null` and `errors: { field: [messages] }`.
 - `/api/*` always answers in JSON even without an `Accept: application/json` header. The CRM group also forces JSON.
 - Webhook endpoints are excluded from the envelope (third parties expect plain replies such as `OK` or `EVENT_RECEIVED`).

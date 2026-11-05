@@ -495,18 +495,18 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                                 <div class="mw-hero__price-readout">
                                     <label class="mw-hero__price-input">
                                         <span>{{ t('home.hero.price.min_label') }}</span>
-                                        <input type="text" inputmode="decimal" data-price-min-input :aria-label="t('home.hero.price.min_aria')" :value="formatCompact(0)">
+                                        <input type="text" inputmode="decimal" data-price-min-input :aria-label="t('home.hero.price.min_aria')" :value.attr="formatCompact(0)">
                                     </label>
                                     <label class="mw-hero__price-input">
                                         <span>{{ t('home.hero.price.max_label') }}</span>
-                                        <input type="text" inputmode="decimal" data-price-max-input :aria-label="t('home.hero.price.max_aria')" :value="formatCompact(priceMax)">
+                                        <input type="text" inputmode="decimal" data-price-max-input :aria-label="t('home.hero.price.max_aria')" :value.attr="formatCompact(priceMax)">
                                     </label>
                                 </div>
                                 <div class="mw-hero__price-slider" data-price-slider>
                                     <div class="mw-hero__price-track"></div>
                                     <div class="mw-hero__price-fill" data-price-range></div>
                                     <input ref="heroPriceMin" type="range" name="min_price" min="0" :max="priceMax" :step="priceFilter.step || 50000" value="0" data-price-min :aria-label="t('home.hero.price.min_aria')">
-                                    <input ref="heroPriceMax" type="range" name="max_price" min="0" :max="priceMax" :step="priceFilter.step || 50000" :value="priceMax" data-price-max :aria-label="t('home.hero.price.max_aria')">
+                                    <input ref="heroPriceMax" type="range" name="max_price" min="0" :max="priceMax" :step="priceFilter.step || 50000" :value.attr="priceMax" data-price-max :aria-label="t('home.hero.price.max_aria')">
                                 </div>
                                 <p class="mw-hero__price-presets-title">{{ t('home.hero.price.quick_select') }}</p>
                                 <div class="mw-hero__price-presets">

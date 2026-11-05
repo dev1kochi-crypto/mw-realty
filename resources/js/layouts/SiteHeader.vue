@@ -83,8 +83,12 @@ function onMenuLinkClick(e, key) {
     document.activeElement?.blur?.();
 }
 // Cleared on a real pointer move outside the item — not on mouseleave, which also fires when the
-// page swap re-lays out the screen under a pointer that has not moved.
+// page swap re-lays out the screen under a pointer that has not moved — or when focus moves out of it.
 function onPointerMove(e) {
+    const el = menuEls[suppressedMenu.value];
+    if (el && !el.contains(e.target)) suppressedMenu.value = null;
+}
+function onFocusIn(e) {
     const el = menuEls[suppressedMenu.value];
     if (el && !el.contains(e.target)) suppressedMenu.value = null;
 }
@@ -94,23 +98,31 @@ function onDocumentClick(e) {
     if (el && !el.contains(e.target)) openMenu.value = null;
 }
 
+// Esc closes whichever menu is showing — held open by a click (openMenu), or only by the CSS
+// :hover / :focus-within rules — and keeps it shut (like after a link click) until the pointer
+// or focus leaves it, with focus back on its trigger.
 function onKeydown(e) {
-    if (e.key === 'Escape' && openMenu.value) {
-        menuEls[openMenu.value]?.querySelector('.mw-nav__trigger')?.focus();
-        openMenu.value = null;
-    }
+    if (e.key !== 'Escape') return;
+    const key = openMenu.value
+        || Object.keys(menuEls).find((k) => menuEls[k]?.matches(':hover, :focus-within'));
+    if (!key) return;
+    openMenu.value = null;
+    suppressedMenu.value = key;
+    menuEls[key]?.querySelector('.mw-nav__trigger')?.focus();
 }
 
 onMounted(() => {
     document.addEventListener('click', onDocumentClick);
     document.addEventListener('keydown', onKeydown);
     document.addEventListener('pointermove', onPointerMove, { passive: true });
+    document.addEventListener('focusin', onFocusIn);
 });
 
 onBeforeUnmount(() => {
     document.removeEventListener('click', onDocumentClick);
     document.removeEventListener('keydown', onKeydown);
     document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('focusin', onFocusIn);
 });
 
 const { authenticated, user } = useWishlist();

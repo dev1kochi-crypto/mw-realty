@@ -137,13 +137,26 @@ class PropertiesImport
         return collect(self::FIELDS)->map(fn ($f, $key) => ['key' => $key, 'label' => $f[0], 'required' => $f[1], 'hint' => $f[3]])->values()->all();
     }
 
-    /** Field => column index for the headings we recognise (each column used once). */
+    /**
+     * Field => column index for the headings we recognise (each column used once). Our own labels
+     * — the template's headings, e.g. "Purpose (sale / rent)" — are matched first, then the aliases
+     * for other systems' exports.
+     */
     public static function suggestMapping(array $headers): array
     {
         $keys = array_map([LeadImportReader::class, 'key'], $headers);
         $used = [];
         $mapping = [];
+        foreach (self::FIELDS as $field => [$label]) {
+            $index = array_search(LeadImportReader::key($label), $keys, true);
+            if ($index !== false && !isset($used[$index])) {
+                $mapping[$field] = $used[$index] = $index;
+            }
+        }
         foreach (self::FIELDS as $field => [, , $aliases]) {
+            if (isset($mapping[$field])) {
+                continue;
+            }
             foreach ($aliases as $alias) {
                 $index = array_search($alias, $keys, true);
                 if ($index !== false && !isset($used[$index])) {

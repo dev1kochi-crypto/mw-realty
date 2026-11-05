@@ -26,7 +26,7 @@ watch(
 );
 
 // Gated behind v-if="job" — re-run the legacy reveal-on-scroll scan once it renders (see Blogs.vue).
-watch(careerJob, () => {
+watch([careerJob, jobNotFound], () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
 

@@ -35,7 +35,7 @@ watch(
 // doesn't exist in the DOM for the legacy assets/js/script.js reveal-on-scroll scan to find
 // until this async fetch resolves — re-run it once the post arrives (window.MWRealty.refresh
 // is idempotent, safe to call repeatedly).
-watch(blogPost, () => {
+watch([blogPost, notFound], () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
 

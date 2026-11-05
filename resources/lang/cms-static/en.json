@@ -1096,8 +1096,8 @@
         "pager_aria": "Post navigation",
         "previous_post": "Previous Post",
         "next_post": "Next Post",
-        "earliest_article": "You're on the earliest article",
-        "latest_article": "You're on the latest article",
+        "earliest_article": "You're on the first article",
+        "latest_article": "You're on the last article",
         "recent_blogs_title": "Recent Blogs",
         "categories_title": "Categories",
         "not_found": {

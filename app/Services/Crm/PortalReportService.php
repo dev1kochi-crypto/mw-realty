@@ -174,6 +174,18 @@ class PortalReportService
     public const DEAL_VALUE = 'CASE WHEN properties.sold_lead_id = leads.id AND properties.sold_price IS NOT NULL THEN properties.sold_price ELSE properties.price END';
 
     /**
+     * A deal's property: the listing this lead bought / rented ("Mark as sold" sets sold_lead_id),
+     * else the one the lead enquired about. An existing buyer picked at "Mark as sold" often enquired
+     * about another listing (or none), and would otherwise be missing from Sales.
+     */
+    private function joinDealProperty($query)
+    {
+        return $query->join('properties', 'properties.id', '=', DB::raw(
+            'COALESCE((SELECT sold.id FROM properties sold WHERE sold.sold_lead_id = leads.id ORDER BY sold.sold_at DESC LIMIT 1), leads.property_id)'
+        ));
+    }
+
+    /**
      * Sales for everyone (a won lead is worth its property's price, AED), plus MW Realty's own plan
      * sales for Super Admin. Won/lost = closed stage, split by LeadStage::nameIsLost(). `deals` is the
      * full, paginated list of every closed deal in the range (filters: q, outcome, listing).
@@ -185,7 +197,7 @@ class PortalReportService
 
         [$closedIds, $wonIds, $lostIds] = $this->closedStageIds();
 
-        $deals = fn () => Lead::forOwner($viewer?->id)->join('properties', 'properties.id', '=', 'leads.property_id');
+        $deals = fn () => $this->joinDealProperty(Lead::forOwner($viewer?->id));
         $won = fn () => $deals()->whereIn('leads.stage_id', $wonIds);
         $wonInRange = fn () => $won()->where('leads.closed_at', '>=', $since);
         $lostInRange = fn () => $deals()->whereIn('leads.stage_id', $lostIds)->where('leads.closed_at', '>=', $since);
@@ -278,8 +290,7 @@ class PortalReportService
         $search = trim((string) ($filters['q'] ?? ''));
         $listing = in_array($filters['listing'] ?? '', ['sale', 'rent'], true) ? $filters['listing'] : null;
 
-        return Lead::forOwner($viewer?->id)
-            ->join('properties', 'properties.id', '=', 'leads.property_id')
+        return $this->joinDealProperty(Lead::forOwner($viewer?->id))
             ->whereIn('leads.stage_id', match ($outcome) {
                 'won' => $wonIds,
                 'lost' => $lostIds,

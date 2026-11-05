@@ -9,7 +9,7 @@
                     <strong v-if="badge" class="mc__badge">{{ badge }}</strong>
                 </template>
                 <template v-else>
-                    <input :id="id" type="number" :min="min" :max="max" :step="inputStep || step" :value="modelValue" @input="onNumberInput" @change="commitNumber">
+                    <input :id="id" type="number" :min="min" :max="max" :step="inputStep || step" :value="modelValue" @input="onNumberInput" @change="commitNumber" @blur="commitNumber" @keyup.enter="commitNumber">
                     <span>{{ unit }}</span>
                 </template>
             </div>
@@ -66,10 +66,13 @@ function onNumberInput(e) {
     const n = parseFloat(e.target.value);
     if (!Number.isNaN(n) && n >= props.min && n <= props.max) emit('update:modelValue', n);
 }
+// Also run on blur / Enter: an out-of-range value typed (e.g. "15" for a 1–10% rate) is never
+// emitted by onNumberInput, so if `change` doesn't fire the box would show 15 while the sums used
+// the last in-range value ("1"). Committing on leave always snaps the box and the sums together.
 function commitNumber(e) {
     let n = clamp(e.target.value, props.min, props.max);
     if (props.type === 'years') n = Math.round(n);
     e.target.value = n;
-    emit('update:modelValue', n);
+    if (n !== props.modelValue) emit('update:modelValue', n);
 }
 </script>

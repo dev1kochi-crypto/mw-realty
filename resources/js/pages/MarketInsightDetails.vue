@@ -25,7 +25,7 @@ watch(() => insightPost.value?.post?.title, (title) => {
 });
 
 // Gated behind v-if="post" — re-run the legacy reveal-on-scroll scan once it renders.
-watch(insightPost, () => {
+watch([insightPost, postNotFound], () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
 

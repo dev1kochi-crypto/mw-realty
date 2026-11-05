@@ -103,7 +103,7 @@ class ReportController extends Controller
                         $deal->stage?->name,
                         $deal->name,
                         $deal->email,
-                        trim(($deal->phone_country_code ? $deal->phone_country_code . ' ' : '') . $deal->phone),
+                        $deal->formatted_phone, // blank when there's no number — never a bare "+971"
                         $this->dealTitle($deal, ''),
                         $deal->reference_no,
                         ucfirst((string) $deal->listing_type),

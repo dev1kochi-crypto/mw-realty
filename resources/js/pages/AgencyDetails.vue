@@ -32,7 +32,7 @@ watch(
 );
 
 // See Blogs.vue for why this re-run is needed after the async fetch populates the page.
-watch(agency, () => {
+watch([agency, notFound], () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
 

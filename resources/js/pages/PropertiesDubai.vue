@@ -13,7 +13,6 @@ import EmptyState from '../components/EmptyState.vue';
 import CompareToggle from '../components/compare/CompareToggle.vue';
 import SearchFilterField from '../components/SearchFilterField.vue';
 import LocationAutocomplete from '../components/LocationAutocomplete.vue';
-import { carryFilters, takeCarriedFilters } from '../composables/useListingCarry';
 // Leaflet only loads when the map view is actually opened.
 const PropertyMap = defineAsyncComponent(() => import('../components/PropertyMap.vue'));
 
@@ -45,11 +44,6 @@ const mapView = computed(() => !!route.meta.mapView);
 const listPath = premium ? '/premium-properties' : (marketing ? '/marketing-properties' : '/properties');
 const mapPath = listPath + '/map';
 const mapParams = ref({});
-const carryKey = premium ? 'premium' : (marketing ? 'marketing' : 'properties');
-// List ⇄ map toggle: hand the current filters to the other view (they aren't in the URL).
-function carryToOtherView() {
-    carryFilters(carryKey, currentQuery());
-}
 // Set while we write the applied filters to the URL ourselves, so the route.query watcher ignores that change.
 let clearingUrl = false;
 // /premium-properties has its own filter set; /properties, /marketing-properties and agent / agency
@@ -502,10 +496,9 @@ const pagination = computed(() => propertiesListing.value?.pagination || null);
 const pageNumbers = usePageWindow(currentPage, computed(() => pagination.value?.last_page));
 
 onMounted(() => {
-    // Filters arrive either in the URL (Home search, header Buy/Rent, ticker, saved searches) or
-    // carried over from the list/map toggle; after that they live in memory only.
-    const incoming = Object.keys(route.query).length ? route.query : (takeCarriedFilters(carryKey) || {});
-    readQuery(incoming);
+    // Filters arrive in the URL (Home search, header Buy/Rent, ticker, saved searches, the list/map
+    // toggle) — so browser Back to the list or map (e.g. from a property) restores them too.
+    readQuery(route.query);
     load();
 });
 // Links that land on this same page with a new ?query (header Buy/Rent, ticker "N Bedroom",
@@ -723,14 +716,14 @@ const bedroomLinks = [1, 2, 3, 4, 5, 6];
                                 </button>
                             </template>
                             <template v-else>
-                                <router-link :to="listPath" class="mw-dubai-toolbar__view-btn" :aria-label="t('properties_listing.toolbar.grid_view_aria')" @click="carryToOtherView">
+                                <router-link :to="{ path: listPath, query: currentQuery() }" class="mw-dubai-toolbar__view-btn" :aria-label="t('properties_listing.toolbar.grid_view_aria')">
                                     <img src="/frontend/assets/images/agencies/icon-grid-view.svg" alt="" width="24" height="24">
                                 </router-link>
-                                <router-link :to="listPath" class="mw-dubai-toolbar__view-btn" :aria-label="t('properties_listing.toolbar.list_view_aria')" @click="carryToOtherView">
+                                <router-link :to="{ path: listPath, query: currentQuery() }" class="mw-dubai-toolbar__view-btn" :aria-label="t('properties_listing.toolbar.list_view_aria')">
                                     <img src="/frontend/assets/images/agencies/icon-list-view.svg" alt="" width="24" height="24">
                                 </router-link>
                             </template>
-                            <router-link :to="mapPath" @click="carryToOtherView" class="mw-dubai-toolbar__view-btn mw-map-toggle" :class="{ 'is-active': mapView }" :aria-label="t('map.map_view_aria', 'Map view')" :aria-pressed="mapView" :title="t('map.map_view_aria', 'Map view')">
+                            <router-link :to="{ path: mapPath, query: currentQuery() }" class="mw-dubai-toolbar__view-btn mw-map-toggle" :class="{ 'is-active': mapView }" :aria-label="t('map.map_view_aria', 'Map view')" :aria-pressed="mapView" :title="t('map.map_view_aria', 'Map view')">
                                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5V4l-6 2.5z" /><path d="M9 4v13M15 6.5v13" /></svg>
                             </router-link>
                         </div>

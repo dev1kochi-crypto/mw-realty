@@ -1096,8 +1096,8 @@
         "pager_aria": "التنقل بين المقالات",
         "previous_post": "المقال السابق",
         "next_post": "المقال التالي",
-        "earliest_article": "أنت على أقدم مقال",
-        "latest_article": "أنت على أحدث مقال",
+        "earliest_article": "أنت على المقال الأول",
+        "latest_article": "أنت على المقال الأخير",
         "recent_blogs_title": "أحدث المقالات",
         "categories_title": "التصنيفات",
         "not_found": {

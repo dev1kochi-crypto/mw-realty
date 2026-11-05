@@ -72,7 +72,8 @@ function destroySliders() {
     $(SLIDERS).filter('.slick-initialized').slick('unslick');
 }
 watch(property, destroySliders, { flush: 'pre' });
-watch(property, () => {
+// Also on "not found": its data-reveal heading stays hidden until refresh() scans it.
+watch([property, notFound], () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
 onBeforeUnmount(destroySliders);
