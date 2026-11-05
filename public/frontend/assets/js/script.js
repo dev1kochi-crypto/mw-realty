@@ -609,10 +609,12 @@
     });
   }
 
-  function initCardGalleries() {
+  // roots: optional list of [data-card-gallery] elements (a slider started late binds only the
+  // copies slick just cloned); omitted, every gallery on the page is bound.
+  function initCardGalleries(roots) {
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    document.querySelectorAll('[data-card-gallery]').forEach(function (root, galleryIndex) {
+    Array.prototype.forEach.call(roots || document.querySelectorAll('[data-card-gallery]'), function (root, galleryIndex) {
       var track = root.querySelector('[data-gallery-track]');
       if (!track) return;
 
@@ -1787,6 +1789,70 @@
     });
   }
 
+  // Slick setup is the heaviest part of the init pass (hundreds of ms on a phone) and these
+  // sliders all sit below the first screen — start each one only when its slider comes within
+  // ~one screen of the viewport. Sliders already near the viewport start straight away.
+  var lazySliderInits = [
+    [initPopularPlacesSlider, '[data-places-slider]'],
+    [initLuxurySlider, '[data-luxury-slider]'],
+    [initHighlightSlider, '[data-highlight-slider]'],
+    [initProjectsSlider, '[data-projects-slider]'],
+    [initRealtySlider, '[data-realty-slider]'],
+    [initTestimonialsSlider, '[data-testimonials-slider]'],
+  ];
+  // One observer per slider type — a later refresh (new cards rendered) replaces it.
+  var sliderObservers = {};
+
+  function runWhenNear(init, selector) {
+    if (sliderObservers[selector]) {
+      sliderObservers[selector].disconnect();
+      delete sliderObservers[selector];
+    }
+    var els = document.querySelectorAll(selector);
+    if (!els.length || !('IntersectionObserver' in window)) {
+      init();
+      return;
+    }
+    var margin = window.innerHeight || 800;
+    var near = Array.prototype.some.call(els, function (el) {
+      var rect = el.getBoundingClientRect();
+      return rect.bottom > -margin && rect.top < margin * 2;
+    });
+    if (near) {
+      init();
+      return;
+    }
+    var observer = new IntersectionObserver(function (entries) {
+      if (!entries.some(function (entry) { return entry.isIntersecting; })) return;
+      observer.disconnect();
+      delete sliderObservers[selector];
+      try {
+        init();
+        // Started after the init pass, so the card galleries inside slick's clones weren't bound.
+        var cloned = [];
+        document.querySelectorAll(selector + ' .slick-cloned').forEach(function (clone) {
+          if (clone.matches('[data-card-gallery]')) cloned.push(clone);
+          clone.querySelectorAll('[data-card-gallery]').forEach(function (g) { cloned.push(g); });
+        });
+        if (cloned.length) initCardGalleries(cloned);
+      } catch (e) {
+        if (window.console) console.warn('[MWRealty] ' + init.name + ' failed:', e);
+      }
+    }, { rootMargin: margin + 'px 0px' });
+    Array.prototype.forEach.call(els, function (el) { observer.observe(el); });
+    sliderObservers[selector] = observer;
+  }
+
+  function lazySliders() {
+    lazySliderInits.forEach(function (pair) {
+      try {
+        runWhenNear(pair[0], pair[1]);
+      } catch (e) {
+        if (window.console) console.warn('[MWRealty] ' + pair[0].name + ' failed:', e);
+      }
+    });
+  }
+
   // Runs the full init pass. Called once on the initial DOMContentLoaded, and
   // again (via window.MWRealty.refresh) after every client-side route change,
   // since this script only ever scans the DOM once by default — a page
@@ -1801,9 +1867,8 @@
     [
       initHeaderScroll, initMobileNav, initBottomNav, initCommunityPanels, initTabGroups,
       initDashboardRemovable, initStickySidebars, initPillTabDropdowns, initCarousels,
-      initPopularPlacesSlider, initLuxurySlider, initHighlightSlider, initProjectsSlider,
-      initCardGalleries, initRealtySlider, initAgentDetailTabs, initAgenciesPage, initPropertiesView,
-      initTestimonialsSlider, initAboutBuildersSlider, initAboutPage, initPricingCycle, initProjectSaves,
+      lazySliders, initCardGalleries, initAgentDetailTabs, initAgenciesPage, initPropertiesView,
+      initAboutBuildersSlider, initAboutPage, initPricingCycle, initProjectSaves,
       initForms, initDropdowns, initLanguageSwitch, initPriceRange, initPropertyTabs,
       initStickyPropertyTabsBar, initFloorPlanTabs, initFancybox
     ].forEach(function (init) {

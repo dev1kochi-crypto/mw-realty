@@ -1,0 +1,1 @@
+import{d as n}from"./preload-helper-CB4BxyV6.js";const e=n({pending:null,reconfiguring:!1,recoveryCodes:null});function o(){Object.assign(e,{pending:null,reconfiguring:!1,recoveryCodes:null})}function l(){return{flow:e,reset:o}}export{l as u};

@@ -1,12 +1,17 @@
 <script setup>
-import { watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import SiteHeader from './layouts/SiteHeader.vue';
 import SiteFooter from './layouts/SiteFooter.vue';
 import ChatWidget from './components/ChatWidget.vue';
 import CompareTray from './components/compare/CompareTray.vue';
 
 const route = useRoute();
+
+// Pages are lazy chunks: a footer drawn before the page arrives sits mid-screen and then jumps
+// down (the home page's whole layout shift) — show it once the first page has loaded.
+const pageReady = ref(false);
+useRouter().isReady().then(() => { pageReady.value = true; });
 
 watch(
     () => route.meta,
@@ -26,7 +31,7 @@ watch(
     <router-view v-slot="{ Component, route: current }">
         <component :is="Component" :key="current.name" />
     </router-view>
-    <SiteFooter />
+    <SiteFooter v-if="pageReady" />
     <CompareTray />
     <ChatWidget />
 </template>

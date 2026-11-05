@@ -41,10 +41,40 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="icon" type="image/png" sizes="32x32" href="/frontend/assets/images/fav.png">
 
-        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+        {{-- Home hero poster is the page's largest paint — fetch it with the CSS instead of after the
+             JS has built the page (Home.vue picks the same file by the same 768px breakpoint). --}}
+        @if(request()->is('/'))
+        <link rel="preload" as="image" href="/frontend/assets/images/home/hero-bg-mobile.jpg" media="(max-width: 767.98px)" fetchpriority="high">
+        <link rel="preload" as="image" href="/frontend/assets/images/home/hero-bg.jpg" media="(min-width: 768px)" fetchpriority="high">
+        {{-- The home page's own JS chunks, which the router would only request after app.js has run
+             (the entry's own chunks are already preloaded by @vite). --}}
+        @php
+            $viteManifest = is_file(public_path('build/manifest.json')) ? json_decode(file_get_contents(public_path('build/manifest.json')), true) : [];
+            $homeChunk = $viteManifest['resources/js/pages/Home.vue'] ?? null;
+            $homeChunkFiles = $homeChunk ? array_merge([$homeChunk['file']], array_map(
+                fn ($key) => $viteManifest[$key]['file'] ?? null,
+                array_diff($homeChunk['imports'] ?? [], ['resources/js/app.js'], $viteManifest['resources/js/app.js']['imports'] ?? [])
+            )) : [];
+        @endphp
+        @foreach(array_filter($homeChunkFiles) as $chunkFile)
+        <link rel="modulepreload" href="{{ asset('build/' . $chunkFile) }}">
+        @endforeach
+        @endif
+
+        {{-- Fonts (font-display: swap), slick and fancybox aren't needed for the first paint — the page
+             is drawn by the JS bundle anyway — so they load without blocking rendering. --}}
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
         <link rel="stylesheet" href="/frontend/assets/scss/style.css?v={{ file_exists(public_path('frontend/assets/scss/style.css')) ? filemtime(public_path('frontend/assets/scss/style.css')) : 1 }}">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.15/dist/fancybox/fancybox.css">
+        <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css" onload="this.onload=null;this.rel='stylesheet'">
+        <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.15/dist/fancybox/fancybox.css" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css">
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.15/dist/fancybox/fancybox.css">
+        </noscript>
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>

@@ -3,6 +3,8 @@ import { useLanguages } from './useLanguages';
 import { useDocumentHead } from './useDocumentHead';
 
 const homePage = ref(null);
+// True once the first /api/home reply (or failure) is in — sections can show without jumping.
+const homeLoaded = ref(false);
 let initialized = false;
 
 function fetchHomePage(langCode) {
@@ -11,6 +13,8 @@ function fetchHomePage(langCode) {
         useDocumentHead().setSeo(res.data.seo);
     }).catch(() => {
         homePage.value = null;
+    }).finally(() => {
+        homeLoaded.value = true;
     });
 }
 
@@ -30,5 +34,5 @@ export function useHomePage() {
         });
     }
 
-    return { homePage };
+    return { homePage, homeLoaded };
 }

@@ -1,6 +1,21 @@
 # llms.txt / robots.txt / sitemap.xml are UTF-8 — say so, or browsers show "—" as "â€”".
-AddType "text/plain; charset=UTF-8" .txt
-AddType "application/xml; charset=UTF-8" .xml
+# (LiteSpeed ignores a charset inside AddType, so set it with AddDefaultCharset / AddCharset.)
+AddDefaultCharset UTF-8
+<IfModule mod_mime.c>
+    AddCharset UTF-8 .txt .xml
+</IfModule>
+
+# The host already caches CSS/images for 7 days but sends no cache header for JS (served as
+# text/javascript) or video — give them the same lifetime. Build files are content-hashed and
+# script.js carries ?v=<mtime>, so a deploy still reaches visitors straight away.
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/javascript "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType video/mp4 "access plus 7 days"
+    ExpiresByType video/webm "access plus 7 days"
+    ExpiresByType font/woff2 "access plus 30 days"
+</IfModule>
 
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>

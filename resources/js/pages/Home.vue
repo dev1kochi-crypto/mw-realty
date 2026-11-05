@@ -11,11 +11,18 @@ import { useLanguages } from '../composables/useLanguages';
 import { useRecaptcha } from '../composables/useRecaptcha';
 import AdBlock from '../components/AdBlock.vue';
 import PhoneInput from '../components/PhoneInput.vue';
+import { cloudinaryUrl } from '../utils/cloudinary';
 import { contactError as findContactProblem } from '../composables/useContactValidation';
 
 // One fetch for the whole page (see routes/api.php -> Api\HomeController) instead of a
 // request per section — every section below just reads its own slice of `homePage.value`.
-const { homePage } = useHomePage();
+const { homePage, homeLoaded } = useHomePage();
+// The sections further down render one task after the top ones: one /api/home reply otherwise
+// builds the whole page (and its sliders) in a single long main-thread block on phones.
+const restReady = ref(false);
+watch(homeLoaded, (loaded) => {
+    if (loaded) setTimeout(() => { restReady.value = true; }, 0);
+}, { immediate: true });
 const { isWishlisted, toggleWishlist } = useWishlist();
 const { t } = useStaticText();
 // Prices arrive in AED (price_value) and are shown in the visitor's chosen currency.
@@ -52,6 +59,8 @@ async function submitContactForm() {
 }
 
 const banner = computed(() => homePage.value?.banner || null);
+// Cards show at ~400px wide — ask Cloudinary for that size, not the full-width default.
+const cardImage = (url) => cloudinaryUrl(url, 800);
 const brands = computed(() => homePage.value?.brands || []);
 const developments = computed(() => homePage.value?.developments || null);
 const premiumProperties = computed(() => homePage.value?.premiumProperties || null);
@@ -67,7 +76,16 @@ const contactInfo = computed(() => homePage.value?.contact || null);
 
 const heroLine1 = computed(() => banner.value?.line_1 || 'Your Trusted Partner in');
 const heroLine2 = computed(() => banner.value?.line_2 || 'Finding the Best Properties');
-const heroVideoUrl = computed(() => banner.value?.video_url || '/frontend/assets/video/banner.mp4');
+// Wait for /api/home before picking a video — starting the bundled fallback first downloads two videos.
+const heroVideoUrl = computed(() => (homeLoaded.value ? banner.value?.video_url || '/frontend/assets/video/banner.mp4' : ''));
+// Phones get a lighter poster (the LCP image) — welcome.blade.php preloads the same file per width.
+const heroPoster = window.innerWidth < 768 ? '/frontend/assets/images/home/hero-bg-mobile.jpg' : '/frontend/assets/images/home/hero-bg.jpg';
+// The video starts empty (poster only) and its first <source> loads by itself — re-creating the
+// element then would repaint the hero late. Only a later URL change (language switch) re-mounts it.
+const heroVideoKey = ref(0);
+watch(heroVideoUrl, (url, previous) => {
+    if (previous) heroVideoKey.value++;
+});
 const heroNoteText = computed(() => banner.value?.note_text || t('home.hero.note_text_default'));
 const heroNoteBadge = computed(() => banner.value?.note_badge || t('home.hero.note_badge_default'));
 const heroGuideText = computed(() => banner.value?.note_link_text || t('home.hero.guide_text_default'));
@@ -107,12 +125,28 @@ const pricePresets = computed(() => quickSelect(heroFilter('price'), priceMax.va
 // `place` is the picked location suggestion (city / community / address), null for free text.
 const heroSearch = reactive({ tab: 'listing_type:sale', location: '', place: null, bedrooms: '', propertyType: '' });
 const tabId = (tab) => `${tab.key}:${tab.value}`;
+// Every section watcher below fires on the same /api/home reply — run the legacy script.js binding
+// (all sliders, dropdowns…) once for that render, not once per section.
+let refreshQueued = false;
+function refreshLegacyScripts() {
+    if (refreshQueued) return;
+    refreshQueued = true;
+    nextTick(() => {
+        refreshQueued = false;
+        window.MWRealty && window.MWRealty.refresh();
+    });
+}
+// The lower sections mount a task after their data arrived — bind their sliders then.
+watch(restReady, (ready) => {
+    if (ready) refreshLegacyScripts();
+});
+
 const heroPriceMin = ref(null);
 const heroPriceMax = ref(null);
 // The hero dropdowns + price slider are wired by the legacy script.js; the fields only render once
 // the admin filters arrive, so bind them after that (MWRealty.refresh is idempotent for dropdowns).
 watch(priceFilter, () => {
-    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+    refreshLegacyScripts();
 });
 // Nothing picked: the admin's hint text for that filter, else the default wording.
 const heroBedroomLabel = computed(() => bedroomOptions.value.find((o) => o.value === heroSearch.bedrooms)?.label || heroFilter('bedrooms')?.placeholder || t('home.hero.search.bedroom_label'));
@@ -196,7 +230,7 @@ const projectCards = computed(() => {
     return properties.map((p) => ({
         id: p.id,
         slug: p.slug,
-        images: p.images,
+        images: (p.images || []).map(cardImage),
         images_count: p.images_count,
         isAbsoluteImage: true,
         name: p.name,
@@ -230,7 +264,7 @@ watch(projectCards, () => {
     const $ = window.jQuery;
     const $slider = $ && $('[data-projects-slider]');
     if ($slider && $slider.hasClass('slick-initialized')) $slider.slick('unslick');
-    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+    refreshLegacyScripts();
 });
 
 const premiumEyebrow = computed(() => premiumProperties.value?.eyebrow || 'Exclusive selection');
@@ -244,7 +278,7 @@ const highlightCards = computed(() => {
     return properties.map((p) => ({
         id: p.id,
         slug: p.slug,
-        images: p.images,
+        images: (p.images || []).map(cardImage),
         images_count: p.images_count,
         isAbsoluteImage: true,
         name: p.name,
@@ -261,7 +295,7 @@ const highlightCards = computed(() => {
 const showPremiumProperties = computed(() => highlightCards.value.length > 0);
 
 watch(highlightCards, () => {
-    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+    refreshLegacyScripts();
 });
 
 const postPropertyEyebrow = computed(() => postPropertySection.value?.eyebrow || 'List with MW Realty');
@@ -295,7 +329,7 @@ const popularPlaces = computed(() => {
     // Each card opens the listing page filtered to that place (free-text location match, so an
     // admin label like "Sharja" still finds "Sharjah" listings).
     return places.map((p) => ({
-        imageSrc: p.image_url,
+        imageSrc: cardImage(p.image_url),
         name: p.name,
         to: { path: '/properties', query: p.name ? { location: p.name } : {} },
     }));
@@ -305,7 +339,7 @@ const popularPlaces = computed(() => {
 const showPopularPlaces = computed(() => popularPlaces.value.length > 0);
 
 watch(popularPlaces, () => {
-    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+    refreshLegacyScripts();
 });
 
 // --- Luxury Project ---
@@ -319,7 +353,7 @@ const luxuryCards = computed(() => {
     return properties.map((p) => ({
         id: p.id,
         slug: p.slug,
-        image: p.images?.[0],
+        image: cardImage(p.images?.[0]),
         villa: String(p.type || '').toLowerCase().includes('villa'),
         name: p.name,
         location: p.location,
@@ -365,7 +399,7 @@ const realtyCards = computed(() => {
     return properties.map((p) => ({
         id: p.id,
         slug: p.slug,
-        image: p.image,
+        image: cardImage(p.image),
         name: p.name,
         location: p.location,
         beds: p.beds,
@@ -423,7 +457,7 @@ const findPropertiesCards = computed(() => {
     const items = findPropertiesSection.value?.items || [];
     return items.map((item, i) => ({
         modifier: findPropertiesModifiers[i % findPropertiesModifiers.length],
-        image: item.image_url,
+        image: cardImage(item.image_url),
         type: item.title,
         // Each card is a shortcut into the listing page pre-filtered to its property type.
         link: item.property_type ? { path: '/properties', query: { property_type: item.property_type } } : '/properties',
@@ -443,7 +477,7 @@ const showTestimonials = computed(() => testimonials.value.length > 0);
 // which only scans the DOM once — once real data replaces the placeholder cards, the freshly
 // rendered elements need that binding run again (window.MWRealty.refresh is idempotent).
 watch([luxuryCards, realtyCards, testimonials], () => {
-    nextTick(() => window.MWRealty && window.MWRealty.refresh());
+    refreshLegacyScripts();
 });
 
 // --- Contact ---
@@ -457,10 +491,10 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
 </script>
 
 <template>
-    <main>
+    <main :style="restReady ? null : { minHeight: '100vh' }">
         <section class="mw-hero">
-            <video :key="heroVideoUrl" class="mw-hero__video" autoplay muted loop playsinline poster="/frontend/assets/images/home/hero-bg.jpg" aria-hidden="true">
-                <source :src="heroVideoUrl" type="video/mp4">
+            <video :key="heroVideoKey" class="mw-hero__video" autoplay muted loop playsinline :poster="heroPoster" aria-hidden="true">
+                <source v-if="heroVideoUrl" :src="heroVideoUrl" type="video/mp4">
             </video>
             <div class="container-ctn mw-hero__inner">
                 <div class="mw-hero__panel">
@@ -637,7 +671,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             </div>
         </section>
 
-        <section class="mw-highlight mw-section" id="premium-properties" v-if="showPremiumProperties">
+        <section class="mw-highlight mw-section" id="premium-properties" v-if="restReady && showPremiumProperties">
             <div class="container-ctn">
                 <div class="mw-highlight__head">
                     <p class="mw-eyebrow">{{ premiumEyebrow }}</p>
@@ -714,7 +748,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
         <!-- Admin › Ads, placement "Home" — loaded live so several ads take turns. -->
         <AdBlock placement="home" />
 
-        <section class="mw-post-property mw-section mw-section--alt" id="post-property" v-if="showPostProperty">
+        <section class="mw-post-property mw-section mw-section--alt" id="post-property" v-if="restReady && showPostProperty">
             <div class="container-ctn">
                 <div class="mw-post-property__inner">
                     <div class="mw-post-property__intro">
@@ -751,7 +785,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             </div>
         </section>
 
-        <section class="mw-popular-places mw-section" id="popular-places" v-if="showPopularPlaces">
+        <section class="mw-popular-places mw-section" id="popular-places" v-if="restReady && showPopularPlaces">
             <div class="container-ctn">
                 <div class="mw-popular-places__head">
                     <div class="mw-popular-places__heading">
@@ -784,7 +818,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             </div>
         </section>
 
-        <section class="mw-luxury mw-section" id="luxury" v-if="showLuxury">
+        <section class="mw-luxury mw-section" id="luxury" v-if="restReady && showLuxury">
             <div class="mw-luxury__mark" aria-hidden="true">
                 <img src="/frontend/assets/images/home/luxury-logo.png" alt="">
             </div>
@@ -862,7 +896,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             </div>
         </section>
 
-        <section class="mw-why-choose-us mw-section" id="why-choose-us" v-if="showWhyChooseUs">
+        <section class="mw-why-choose-us mw-section" id="why-choose-us" v-if="restReady && showWhyChooseUs">
             <div class="container-ctn">
                 <div class="mw-why-choose-us__inner">
                     <div class="mw-why-choose-us__visual">
@@ -894,7 +928,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             </div>
         </section>
 
-        <section class="mw-realty mw-section" id="realty-property" v-if="showRealty">
+        <section class="mw-realty mw-section" id="realty-property" v-if="restReady && showRealty">
             <div class="container-ctn">
                 <div class="mw-realty__head">
                     <p class="mw-eyebrow">{{ realtyEyebrow }}</p>
@@ -959,7 +993,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             </div>
         </section>
 
-        <section class="mw-communities mw-section" id="communities" v-if="showCommunities">
+        <section class="mw-communities mw-section" id="communities" v-if="restReady && showCommunities">
             <div class="container-ctn">
                 <div class="mw-section-head">
                     <p class="mw-eyebrow">{{ communitiesEyebrow }}</p>
@@ -985,7 +1019,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             </div>
         </section>
 
-        <section class="mw-find-properties mw-section mw-section--alt" id="find-properties" v-if="showFindProperties">
+        <section class="mw-find-properties mw-section mw-section--alt" id="find-properties" v-if="restReady && showFindProperties">
             <div class="container-ctn">
                 <div class="mw-section-head">
                     <p class="mw-eyebrow">{{ findPropertiesEyebrow }}</p>
@@ -1013,7 +1047,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             </div>
         </section>
 
-        <section class="mw-testimonials mw-section" id="testimonials" v-if="showTestimonials">
+        <section class="mw-testimonials mw-section" id="testimonials" v-if="restReady && showTestimonials">
             <div class="container-ctn">
                 <div class="mw-testimonials__header">
                     <div class="mw-section-head">
@@ -1036,7 +1070,7 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
                         <article v-if="item.type === 'video'" class="mw-testimonials__card mw-testimonials__card--video">
                             <div class="mw-testimonials__media">
                                 <img class="mw-testimonials__photo" :src="item.image_url" :alt="item.name" loading="lazy">
-                                <video v-if="item.video_url" class="mw-testimonials__video" :poster="item.image_url" preload="metadata" playsinline>
+                                <video v-if="item.video_url" class="mw-testimonials__video" :poster="item.image_url" preload="none" playsinline>
                                     <source :src="item.video_url">
                                 </video>
                                 <button type="button" class="mw-testimonials__play" :aria-label="`Play ${item.name}'s video testimonial`">
@@ -1075,7 +1109,8 @@ const contactEmail = computed(() => contactInfo.value?.email || 'info@mightywarn
             </div>
         </section>
 
-        <section class="mw-contact" id="contact">
+        <!-- Below the sections — shown with them, or it paints under the hero and jumps down. -->
+        <section v-if="restReady" class="mw-contact" id="contact">
             <div class="mw-contact__inner">
                 <div class="mw-contact__visual">
                     <div class="mw-contact__photo">
