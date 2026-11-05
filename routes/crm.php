@@ -87,8 +87,6 @@ Route::middleware('crm.auth')->group(function () {
         Route::post('/confirm', 'confirm')->name('confirm')->middleware('throttle:otp-verify');
         Route::post('/skip', 'skip')->name('skip');
         Route::post('/recovery-codes', 'regenerateRecoveryCodes')->name('recovery-codes')->middleware('throttle:otp-verify');
-        Route::post('/disable', 'disable')->name('disable')->middleware('throttle:otp-verify');
-        Route::post('/enforce', 'enforce')->name('enforce');
         Route::post('/forget-devices', 'forgetDevices')->name('forget-devices');
     });
 

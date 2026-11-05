@@ -68,7 +68,7 @@ class PortalTwoFactor
         ])->save();
     }
 
-    /** "Skip for now" after sign-up — only when nobody (their agency) requires it. */
+    /** "Skip for now" after sign-up — only when config doesn't require it. */
     public function skip(PortalUser $portalUser): void
     {
         if (!$portalUser->twoFactorRequired()) {

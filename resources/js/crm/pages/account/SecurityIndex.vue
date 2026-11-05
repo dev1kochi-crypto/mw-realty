@@ -14,25 +14,13 @@
 
         <div class="sec-layout">
             <div class="sec-main">
-                <!-- Not shown while MW Realty requires 2FA on every account (ENH-SEC-01): the switch would change nothing. -->
-                <div v-if="s.is_agency && !s.platform_required" class="sec-card">
-                    <div class="sec-card__title"><span>2-Factor Authentication (My Company)</span></div>
-                    <div class="sec-row">
-                        <div class="sec-method__desc">Enable mandatory 2FA for all users in my company. Agents without it will be asked to set it up before they can use the portal.</div>
-                        <div class="form-check form-switch m-0">
-                            <input class="form-check-input sec-switch" type="checkbox" role="switch" :checked="s.company_enforced" :disabled="busy" aria-label="Mandatory 2FA for my company" @change="toggleEnforce($event.target)">
-                        </div>
-                    </div>
-                </div>
-
                 <div class="sec-card">
                     <div class="sec-card__title">
                         <span>2-Factor Authentication</span>
                         <span class="sec-pill" :class="s.enabled ? 'is-on' : 'is-off'">{{ s.enabled ? 'Enabled' : 'Disabled' }}</span>
                     </div>
                     <p class="sec-card__text">2-factor authentication adds an extra layer of security to your account. After your password, you'll enter a code from your phone.</p>
-                    <div v-if="s.platform_required" class="alert alert-info py-2 small"><i class="fas fa-building-shield me-1"></i>MW Realty requires 2FA on every account, so it can't be turned off.</div>
-                    <div v-else-if="s.required && !s.is_agency" class="alert alert-info py-2 small"><i class="fas fa-building me-1"></i>Your agency has made 2FA mandatory, so it can't be turned off.</div>
+                    <div v-if="s.platform_required" class="alert alert-info py-2 small"><i class="fas fa-building-shield me-1"></i>MW Realty requires 2FA on every account.</div>
 
                     <div class="sec-methods">
                         <div class="sec-methods__label">2-factor authentication methods</div>
@@ -59,7 +47,6 @@
                     <div v-if="s.enabled" class="sec-row flex-wrap mt-3">
                         <div class="sec-method__desc"><i class="fas fa-key me-1"></i>{{ s.recovery_codes_left }} of 8 recovery codes left
                             · <a href="#" @click.prevent="ask('recovery')">Generate new codes</a></div>
-                        <button v-if="!s.required" type="button" class="btn btn-portal-danger btn-sm" @click="ask('disable')">Disable 2FA</button>
                     </div>
                 </div>
 
@@ -87,10 +74,6 @@
                             <strong>Set up the authenticator app</strong>
                             <span>Click <em>Set up</em>, scan the QR code with Authy (or Google / Microsoft Authenticator) and enter the 6-digit code. Save your recovery codes.</span>
                         </li>
-                        <li v-if="s.is_agency && !s.platform_required" :class="s.company_enforced ? 'is-done' : (s.enabled ? 'is-current' : '')">
-                            <strong>Make it mandatory (optional)</strong>
-                            <span>Turn on <em>2-Factor Authentication (My Company)</em>. Every agent in your company must then set up 2FA before using the portal.</span>
-                        </li>
                         <li :class="{ 'is-done': s.enabled }">
                             <strong>Sign in with password + code</strong>
                             <span>Each login asks for your password, then the current code from the app.</span>
@@ -108,7 +91,7 @@
             </aside>
         </div>
 
-        <!-- Password confirmation for reconfigure / new recovery codes / disable. -->
+        <!-- Password confirmation for reconfigure / new recovery codes. -->
         <CrmModal :open="!!pwd.action" bare content-class="border-0" @close="pwd.action = null">
             <template #header><span></span></template>
             <form style="border-radius: 18px;" @submit.prevent="confirmPassword">
@@ -121,7 +104,7 @@
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-portal-light" @click="pwd.action = null">Cancel</button>
-                    <button type="submit" class="btn" :class="pwd.action === 'disable' ? 'btn-portal-danger' : 'btn-portal-primary'" :disabled="busy">{{ actions[pwd.action]?.button }}</button>
+                    <button type="submit" class="btn btn-portal-primary" :disabled="busy">{{ actions[pwd.action]?.button }}</button>
                 </div>
             </form>
         </CrmModal>
@@ -130,8 +113,8 @@
 
 <script setup>
 /**
- * Security (resources/views/portal/security/index) — authenticator-app 2FA, a company's
- * "mandatory for my company" switch, recognised devices. Set-up itself is TwoFactorSetup.vue.
+ * Security (resources/views/portal/security/index) — authenticator-app 2FA and recognised devices.
+ * 2FA has no on/off here: required or optional comes from .env. Set-up itself is TwoFactorSetup.vue.
  */
 import { nextTick, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -154,7 +137,6 @@ const pwd = reactive({ action: null, password: '', error: '' });
 const actions = {
     reconfigure: { title: 'Move to a new phone', text: "You'll scan a new QR code. Your current app keeps working until the new one is verified.", button: 'Continue' },
     recovery: { title: 'Generate new recovery codes', text: 'Your old recovery codes will stop working.', button: 'Generate' },
-    disable: { title: 'Disable 2FA', text: 'Signing in will only need your password (plus the email code on new devices).', button: 'Disable 2FA' },
 };
 
 const limit = (text, max) => (text.length > max ? `${text.slice(0, max)}...` : text);
@@ -187,11 +169,6 @@ function confirmPassword() {
             success('New recovery codes generated — the old ones no longer work.');
             router.push({ name: 'two-factor.setup' });
         }),
-        disable: () => http.post('/account/two-factor/disable', { password }).then((res) => {
-            success(res.data.message);
-            pwd.action = null;
-            return load();
-        }),
     }[pwd.action];
 
     request()
@@ -201,28 +178,6 @@ function confirmPassword() {
                 pwd.action = null;
                 toastError(errorMessage(e));
             }
-        })
-        .finally(() => { busy.value = false; });
-}
-
-function toggleEnforce(input) {
-    const enforce = input.checked;
-    busy.value = true;
-    http.post('/account/two-factor/enforce', { enforce })
-        .then((res) => {
-            success(res.data.message);
-            return load();
-        })
-        .catch((e) => {
-            input.checked = !enforce;
-            // The company account needs 2FA itself first — set it up, and enforcement switches on right after.
-            if (e.response?.data?.setup_first) {
-                reset();
-                flow.enforcing = true;
-                router.push({ name: 'two-factor.setup' });
-                return;
-            }
-            toastError(errorMessage(e));
         })
         .finally(() => { busy.value = false; });
 }
@@ -238,7 +193,5 @@ function forgetDevices() {
         .finally(() => { busy.value = false; });
 }
 
-// Back here without finishing set-up = the "make it mandatory" request was abandoned.
-flow.enforcing = false;
 load();
 </script>

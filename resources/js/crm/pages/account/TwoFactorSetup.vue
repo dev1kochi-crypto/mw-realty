@@ -31,8 +31,7 @@
         </div>
 
         <template v-else-if="pending">
-            <div v-if="status.required && !reconfiguring" class="alert alert-warning d-flex gap-2 align-items-center"><i class="fas fa-building-shield"></i>{{ status.platform_required ? 'Two-factor authentication is required on every MW Realty account.' : 'Your company requires two-factor authentication.' }} Set it up to continue using the portal.</div>
-            <div v-else-if="flow.enforcing" class="alert alert-info d-flex gap-2 align-items-center"><i class="fas fa-building-shield"></i>Set up 2FA on your own account first. Mandatory 2FA for your company turns on automatically when you finish.</div>
+            <div v-if="status.required && !reconfiguring" class="alert alert-warning d-flex gap-2 align-items-center"><i class="fas fa-building-shield"></i>Two-factor authentication is required on every MW Realty account. Set it up to continue using the portal.</div>
 
             <div class="sec-card p-0">
                 <div class="tfa-grid">
@@ -191,10 +190,9 @@ function confirm() {
     if (busy.value) return;
     busy.value = true;
     codeError.value = '';
-    http.post('/account/two-factor/confirm', { code, enforce: flow.enforcing })
+    http.post('/account/two-factor/confirm', { code })
         .then((res) => {
             success(reconfiguring.value ? 'Your new authenticator app is set up. The old one no longer works.' : res.data.message);
-            flow.enforcing = false;
             recoveryCodes.value = res.data.recovery_codes;
             pending.value = null;
         })

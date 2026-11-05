@@ -33,7 +33,7 @@ class TwoFactorController extends Controller
     /**
      * Two-factor status
      *
-     * @response 200 {"enabled": false, "required": false, "setup_required": true, "can_skip": true, "company_enforced": false, "recovery_codes_left": 0, "trusted_devices": []}
+     * @response 200 {"enabled": false, "required": false, "setup_required": true, "can_skip": true, "recovery_codes_left": 0, "trusted_devices": []}
      */
     public function show()
     {
@@ -45,11 +45,10 @@ class TwoFactorController extends Controller
             'is_agency' => $portalUser->isAgency(),
             'enabled' => $enabled,
             'required' => $portalUser->twoFactorRequired(),
-            // ENH-SEC-01: required on every account (so no Skip, no Disable, no per-company switch).
+            // Required or optional is set in .env only (TWO_FACTOR_REQUIRED) — the CRM has no on/off switch.
             'platform_required' => $portalUser->twoFactorRequiredByPlatform(),
-            'setup_required' => !$enabled && ($portalUser->twoFactorRequired() || $portalUser->needsTwoFactorPrompt()),
+            'setup_required' => $portalUser->mustSetUpTwoFactor(),
             'can_skip' => !$enabled && !$portalUser->twoFactorRequired() && $portalUser->needsTwoFactorPrompt(),
-            'company_enforced' => $portalUser->isAgency() ? (bool) $portalUser->two_factor_enforced : null,
             'recovery_codes_left' => $enabled ? count($portalUser->two_factor_recovery_codes ?? []) : 0,
             'trusted_devices' => DB::table('portal_trusted_devices')->where('portal_user_id', $portalUser->id)
                 ->orderByDesc('last_used_at')->get(['user_agent', 'ip_address', 'last_used_at']),
@@ -89,18 +88,16 @@ class TwoFactorController extends Controller
      * Confirm set-up
      *
      * The first code the authenticator app shows. Switches 2FA on and returns the recovery
-     * codes — show them once and ask the user to keep them safe. A company can pass
-     * `enforce: true` to make 2FA mandatory for every agent right away.
+     * codes — show them once and ask the user to keep them safe.
      *
      * @bodyParam code string required Example: 123456
-     * @bodyParam enforce boolean Company only. Example: false
      *
      * @response 200 {"success": true, "message": "Two-factor authentication is now enabled.", "recovery_codes": ["A1B2C-D3E4F"]}
      * @response 422 {"message": "That code is not valid. Make sure you scanned the latest QR code and that your phone's time is correct."}
      */
     public function confirm(Request $request)
     {
-        $request->validate(['code' => 'required|string|max:20', 'enforce' => 'nullable|boolean']);
+        $request->validate(['code' => 'required|string|max:20']);
         $portalUser = $this->portalUser();
         $secret = Cache::get($this->pendingKey($portalUser));
 
@@ -114,16 +111,9 @@ class TwoFactorController extends Controller
         }
         Cache::forget($this->pendingKey($portalUser));
 
-        $enforced = $request->boolean('enforce') && $portalUser->isAgency();
-        if ($enforced) {
-            $portalUser->forceFill(['two_factor_enforced' => true])->save();
-        }
-
         return response()->json([
             'success' => true,
-            'message' => $enforced
-                ? 'Two-factor authentication is enabled, and is now mandatory for all agents in your company.'
-                : 'Two-factor authentication is now enabled.',
+            'message' => 'Two-factor authentication is now enabled.',
             'recovery_codes' => $codes,
         ]);
     }
@@ -131,7 +121,7 @@ class TwoFactorController extends Controller
     /**
      * Skip for now
      *
-     * After sign-up, when 2FA isn't required by the agency — it can be turned on later.
+     * After sign-up, when 2FA isn't required (TWO_FACTOR_REQUIRED=false) — it can be set up later.
      *
      * @response 200 {"success": true}
      */
@@ -139,9 +129,7 @@ class TwoFactorController extends Controller
     {
         $portalUser = $this->portalUser();
         if ($portalUser->twoFactorRequired()) {
-            return response()->json(['message' => $portalUser->twoFactorRequiredByPlatform()
-                ? 'Two-factor authentication is required on every MW Realty account.'
-                : 'Your agency requires two-factor authentication.'], 422);
+            return response()->json(['message' => 'Two-factor authentication is required on every MW Realty account.'], 422);
         }
         $this->twoFactor->skip($portalUser);
 
@@ -164,61 +152,6 @@ class TwoFactorController extends Controller
         abort_unless($portalUser->hasTwoFactorEnabled(), 404);
 
         return response()->json(['success' => true, 'recovery_codes' => $this->twoFactor->regenerateRecoveryCodes($portalUser)]);
-    }
-
-    /**
-     * Turn off
-     *
-     * Not possible while the agency (or, for a company, its own "mandatory" switch) requires it.
-     *
-     * @bodyParam password string required Example: secret123
-     *
-     * @response 200 {"success": true, "message": "Two-factor authentication has been turned off."}
-     */
-    public function disable(Request $request)
-    {
-        $portalUser = $this->portalUser();
-        $this->confirmPassword($request, $portalUser);
-
-        if ($portalUser->twoFactorRequired()) {
-            return response()->json(['message' => match (true) {
-                $portalUser->twoFactorRequiredByPlatform() => 'Two-factor authentication is required on every MW Realty account, so it can\'t be turned off.',
-                $portalUser->isAgency() => 'Turn off "Mandatory 2FA for my company" first.',
-                default => 'Your agency requires two-factor authentication, so it can\'t be turned off.',
-            }], 422);
-        }
-
-        $this->twoFactor->disable($portalUser);
-
-        return response()->json(['success' => true, 'message' => 'Two-factor authentication has been turned off.']);
-    }
-
-    /**
-     * Mandatory for my company
-     *
-     * Company only. The company account needs 2FA itself first — set it up with `enforce: true`
-     * on Confirm set-up instead.
-     *
-     * @bodyParam enforce boolean required Example: true
-     *
-     * @response 200 {"success": true, "message": "Two-factor authentication is now mandatory for all agents in your company."}
-     */
-    public function enforce(Request $request)
-    {
-        $request->validate(['enforce' => 'required|boolean']);
-        $portalUser = $this->portalUser();
-        abort_unless($portalUser->isAgency(), 403);
-
-        $enforce = $request->boolean('enforce');
-        if ($enforce && !$portalUser->hasTwoFactorEnabled()) {
-            return response()->json(['message' => 'Set up two-factor authentication for your own account first.', 'setup_first' => true], 422);
-        }
-
-        $portalUser->forceFill(['two_factor_enforced' => $enforce])->save();
-
-        return response()->json(['success' => true, 'message' => $enforce
-            ? 'Two-factor authentication is now mandatory for all agents in your company. They\'ll be asked to set it up on their next visit.'
-            : 'Two-factor authentication is no longer mandatory for your company.']);
     }
 
     /**

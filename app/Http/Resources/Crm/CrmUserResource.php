@@ -59,7 +59,7 @@ class CrmUserResource extends JsonResource
             'two_factor' => [
                 'enabled' => $this->hasTwoFactorEnabled(),
                 // true = every CRM call answers 403 until 2FA is set up (or, when not required, skipped).
-                'setup_required' => !$this->hasTwoFactorEnabled() && ($this->twoFactorRequired() || $this->needsTwoFactorPrompt()),
+                'setup_required' => $this->mustSetUpTwoFactor(),
             ],
         ];
     }

@@ -143,10 +143,14 @@ return [
     ],
 
     // ENH-SEC-01: every agency / agent account must set up an authenticator app before using the
-    // CRM (no Skip), and is asked for its code at every sign-in. false = optional again (an agency
-    // can still make it mandatory for its own agents). TWO_FACTOR_REQUIRED_FOR_AGENCIES is the
+    // CRM (no Skip), and is asked for its code at every sign-in. false = optional (Skip allowed).
+    // Only these settings switch 2FA — the CRM has no on/off option. TWO_FACTOR_REQUIRED_FOR_AGENCIES is the
     // older name of this setting and is still read.
+    // TWO_FACTOR_ENABLED=false (testing only): sign-in never asks for the authenticator-app or
+    // new-device email code, and no one is held at the 2FA set-up screen. Accounts keep their
+    // saved 2FA, so switching it back to true brings the checks back as they were.
     'two_factor' => [
+        'enabled' => env('TWO_FACTOR_ENABLED', true),
         'required' => env('TWO_FACTOR_REQUIRED', env('TWO_FACTOR_REQUIRED_FOR_AGENCIES', true)),
     ],
 

@@ -259,7 +259,7 @@ class PortalAuthController extends Controller
         // Password is right — now the extra checks: an emailed code when this browser hasn't been
         // verified for this account before, then the authenticator-app code if 2FA is on.
         // Both only apply once the account has 2FA on — without it, the password alone signs in.
-        $needsTotp = $portalUser->hasTwoFactorEnabled();
+        $needsTotp = $portalUser->needsTwoFactorAtLogin();
         $needsEmail = $needsTotp && !$this->devices->isTrusted($request, $portalUser);
 
         if (!$needsEmail && !$needsTotp) {
@@ -303,7 +303,7 @@ class PortalAuthController extends Controller
         unset($challenge['email_code']);
         $request->session()->put(self::CHALLENGE_KEY, $challenge);
 
-        if ($portalUser->hasTwoFactorEnabled()) {
+        if ($portalUser->needsTwoFactorAtLogin()) {
             return response()->json(['challenge' => 'totp']);
         }
 

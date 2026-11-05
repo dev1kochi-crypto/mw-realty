@@ -275,23 +275,22 @@ class PortalUser extends Authenticatable
         return $this->two_factor_confirmed_at !== null && !empty($this->two_factor_secret);
     }
 
+    /** Sign-in asks for the authenticator-app code: 2FA is set up and not switched off by config (TWO_FACTOR_ENABLED). */
+    public function needsTwoFactorAtLogin(): bool
+    {
+        return $this->hasTwoFactorEnabled() && config('auth.two_factor.enabled');
+    }
+
     /** New account that hasn't yet set up 2FA or chosen "Skip for now" on the sign-up step. */
     public function needsTwoFactorPrompt(): bool
     {
         return $this->two_factor_prompt_pending && !$this->hasTwoFactorEnabled();
     }
 
-    /** 2FA is mandatory for this account: the platform rule (config), its own company setting, or its agency's. */
+    /** 2FA is mandatory for this account — set only by config (TWO_FACTOR_REQUIRED), never from the CRM. */
     public function twoFactorRequired(): bool
     {
-        if ($this->twoFactorRequiredByPlatform()) {
-            return true;
-        }
-        if ($this->isAgency()) {
-            return (bool) $this->two_factor_enforced;
-        }
-
-        return $this->isAgencyAgent() && (bool) $this->company?->two_factor_enforced;
+        return $this->twoFactorRequiredByPlatform();
     }
 
     /** Platform rule (config auth.two_factor.required, ENH-SEC-01): no agency or agent uses the CRM without 2FA. */
@@ -303,7 +302,9 @@ class PortalUser extends Authenticatable
     /** Held at the 2FA set-up screen right now (EnsurePortalTwoFactor): not set up, and required or not yet skipped. */
     public function mustSetUpTwoFactor(): bool
     {
-        return !$this->hasTwoFactorEnabled() && ($this->twoFactorRequired() || $this->needsTwoFactorPrompt());
+        return config('auth.two_factor.enabled')
+            && !$this->hasTwoFactorEnabled()
+            && ($this->twoFactorRequired() || $this->needsTwoFactorPrompt());
     }
 
     public function scopeCompanies($query)

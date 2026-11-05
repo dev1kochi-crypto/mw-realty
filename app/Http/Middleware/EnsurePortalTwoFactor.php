@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 /**
  * Keeps a portal user on the 2FA set-up page when:
- *  - their company makes 2FA mandatory (PortalUser::twoFactorRequired()) and it isn't set up, or
+ *  - config makes 2FA mandatory (PortalUser::twoFactorRequired(), TWO_FACTOR_REQUIRED) and it isn't set up, or
  *  - it's a new account that hasn't set it up or chosen "Skip for now" yet (needsTwoFactorPrompt()).
  */
 class EnsurePortalTwoFactor
@@ -37,9 +37,7 @@ class EnsurePortalTwoFactor
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => $required
-                    ? ($portalUser->twoFactorRequiredByPlatform()
-                        ? 'Two-factor authentication is required on every MW Realty account. Please set it up to continue.'
-                        : 'Your company requires two-factor authentication. Please set it up to continue.')
+                    ? 'Two-factor authentication is required on every MW Realty account. Please set it up to continue.'
                     : 'Please set up two-factor authentication or skip it to continue.',
                 'redirect' => $setupUrl,
             ], 403);

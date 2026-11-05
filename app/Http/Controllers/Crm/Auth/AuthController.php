@@ -75,7 +75,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Your account has been disabled. Contact the site administrator.'], 422);
         }
 
-        $needsTotp = $portalUser->hasTwoFactorEnabled();
+        $needsTotp = $portalUser->needsTwoFactorAtLogin();
         $needsEmail = $needsTotp && !$this->devices->isTrustedToken($portalUser, $request->input('device_token'));
 
         $challenge = [
@@ -140,7 +140,7 @@ class AuthController extends Controller
         $challenge['email_verified'] = true;
         unset($challenge['email_code']);
 
-        if ($portalUser->hasTwoFactorEnabled()) {
+        if ($portalUser->needsTwoFactorAtLogin()) {
             $this->putChallenge($challengeToken, $challenge);
 
             return response()->json(['challenge' => 'totp', 'challenge_token' => $challengeToken]);
