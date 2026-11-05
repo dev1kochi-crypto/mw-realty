@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\CmsKit\Blog;
 use App\Models\CmsKit\Career;
 use App\Models\CmsKit\MarketInsight;
+use App\Models\CmsKit\SiteInformation;
 use App\Services\CareerPageService;
+use App\Services\HomePageService;
 use App\Models\Property;
 use App\Models\PortalUser;
 use App\Support\SeoMeta;
@@ -24,9 +26,27 @@ class SpaController extends Controller
     /** Static pages backed by a Metadata row (see config/cms/pages.php + config/seo-defaults.php). */
     public function staticPage(Request $request, string $pageKey): Response
     {
-        $resolved = SeoMeta::forStaticPage($pageKey, app()->getLocale(), $request->url());
+        // The home page is served (and linked) as ".../" — its canonical keeps that trailing slash.
+        $canonical = $pageKey === 'home' ? rtrim(url('/'), '/') . '/' : $request->url();
+        $resolved = SeoMeta::forStaticPage($pageKey, app()->getLocale(), $canonical);
 
-        return $this->renderWithSeo($resolved);
+        if ($pageKey !== 'home') {
+            return $this->renderWithSeo($resolved);
+        }
+
+        // The home page also gets its content as plain HTML and the business as schema.org data —
+        // crawlers that don't run JavaScript (audit tools, AI assistants) otherwise see an empty page.
+        $home = rescue(fn () => app(HomePageService::class)->getHomeData(app()->getLocale()), [], report: true);
+        $siteInfo = SiteInformation::first();
+
+        return $this->renderWithSeo($resolved, 200, [
+            'homeSnapshot' => $home ? rescue(fn () => view('partials.home-snapshot', [
+                'home' => $home,
+                'siteName' => $siteInfo?->company_name ?: config('app.name', 'MW Realty'),
+                'seoDescription' => $resolved['meta_description'] ?? null,
+            ])->render(), null, report: true) : null,
+            'structuredData' => SeoMeta::businessSchema($siteInfo, $resolved),
+        ]);
     }
 
     public function propertyDetails(Request $request, string $slug): Response
@@ -138,10 +158,10 @@ class SpaController extends Controller
         return $this->renderWithSeo($resolved, 404);
     }
 
-    private function renderWithSeo(array $resolved, int $status = 200): Response
+    private function renderWithSeo(array $resolved, int $status = 200, array $extra = []): Response
     {
         return response()
-            ->view('welcome', ['seoTags' => SeoMeta::tagsHtml($resolved)])
+            ->view('welcome', ['seoTags' => SeoMeta::tagsHtml($resolved)] + $extra)
             ->setStatusCode($status);
     }
 }

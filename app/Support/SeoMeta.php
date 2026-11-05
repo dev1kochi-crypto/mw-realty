@@ -40,6 +40,9 @@ class SeoMeta
         // admin fills in SEO basics but skips the separate Open Graph fields entirely.
         $resolved['og_title'] = $resolved['og_title'] ?: $resolved['meta_title'];
         $resolved['og_description'] = $resolved['og_description'] ?: $resolved['meta_description'];
+        // No page/listing photo set — share previews still get a picture (the home hero, 1920×934).
+        // Admins can set a page's own one in SEO › Metadata (Open Graph image).
+        $resolved['og_image'] = $resolved['og_image'] ?: asset('frontend/assets/images/home/hero-bg.jpg');
 
         return $resolved;
     }
@@ -99,6 +102,22 @@ class SeoMeta
         if (!empty($resolved['og_image'])) {
             $tags[] = '<meta property="og:image" content="' . e($resolved['og_image']) . '">';
         }
+        $tags[] = '<meta property="og:type" content="website">';
+        $tags[] = '<meta property="og:site_name" content="' . e(config('app.name', 'MW Realty')) . '">';
+        if (!empty($resolved['canonical_url'])) {
+            $tags[] = '<meta property="og:url" content="' . e($resolved['canonical_url']) . '">';
+        }
+        // Twitter/X reuses the same title, description and image.
+        $tags[] = '<meta name="twitter:card" content="' . (!empty($resolved['og_image']) ? 'summary_large_image' : 'summary') . '">';
+        if (!empty($resolved['og_title'])) {
+            $tags[] = '<meta name="twitter:title" content="' . e($resolved['og_title']) . '">';
+        }
+        if (!empty($resolved['og_description'])) {
+            $tags[] = '<meta name="twitter:description" content="' . e($resolved['og_description']) . '">';
+        }
+        if (!empty($resolved['og_image'])) {
+            $tags[] = '<meta name="twitter:image" content="' . e($resolved['og_image']) . '">';
+        }
         if (!empty($resolved['other_meta_tags'])) {
             // Admin-typed raw HTML (e.g. <meta name="robots" ...>) — trusted the same way
             // LandingPage's custom_html/custom_css/custom_js already are, not user input.
@@ -106,6 +125,46 @@ class SeoMeta
         }
 
         return implode("\n", $tags);
+    }
+
+    /**
+     * schema.org RealEstateAgent JSON-LD for the home page, from Site Information (name, logo,
+     * address, phones, email, hours, social links) — so search engines and AI assistants can
+     * identify the business. Returns a ready <script> tag, or null with no Site Information row.
+     */
+    public static function businessSchema(?\App\Models\CmsKit\SiteInformation $info, array $resolved): ?string
+    {
+        if (!$info) {
+            return null;
+        }
+
+        $schema = array_filter([
+            '@context' => 'https://schema.org',
+            '@type' => 'RealEstateAgent',
+            'name' => $info->company_name ?: config('app.name', 'MW Realty'),
+            'url' => rtrim(url('/'), '/') . '/',
+            'description' => $resolved['meta_description'] ?? null,
+            'logo' => $info->logo ? media_url($info->logo) : null,
+            'image' => $resolved['og_image'] ?? null,
+            'telephone' => $info->phone_1,
+            'email' => $info->email_1,
+            'openingHours' => $info->working_hours,
+            'address' => $info->address ? [
+                '@type' => 'PostalAddress',
+                'streetAddress' => $info->address,
+                'addressLocality' => 'Dubai',
+                'addressCountry' => 'AE',
+            ] : null,
+            'areaServed' => ['@type' => 'Country', 'name' => 'United Arab Emirates'],
+            'sameAs' => array_values(array_filter([
+                $info->facebook, $info->instagram, $info->linkedin, $info->twitter,
+                $info->youtube, $info->tiktok, $info->pinterest, $info->snapchat,
+            ], fn ($link) => is_string($link) && str_starts_with($link, 'http'))) ?: null,
+        ], fn ($value) => $value !== null && $value !== '');
+
+        return '<script type="application/ld+json">'
+            . json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG)
+            . '</script>';
     }
 
     /** Truncates plain text to an SEO-friendly meta description length without cutting mid-word. */

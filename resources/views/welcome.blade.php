@@ -76,13 +76,19 @@
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.15/dist/fancybox/fancybox.css">
         </noscript>
 
+        {!! $structuredData ?? '' !!}
+        {{-- Crawler-only copy of the page inside #app (see partials/home-snapshot) — never shown. --}}
+        <style>.mw-snapshot{display:none}</style>
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body>
         {!! $siteInfo?->gtmNoscriptTags() !!}
         {!! $siteInfo?->custom_body_script !!}
 
-        <div id="app"></div>
+        {{-- Vue mounts here and replaces whatever is inside — the home page puts a plain-HTML copy
+             of its content in it first (partials/home-snapshot) for crawlers that don't run JS. --}}
+        <div id="app">{!! $homeSnapshot ?? '' !!}</div>
 
         {{-- defer (not async) — script.js depends on jQuery/slick/bootstrap already being loaded,
              and defer preserves this relative execution order while letting the browser fetch
