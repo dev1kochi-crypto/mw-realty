@@ -16,12 +16,12 @@ return new class extends Migration
     /** Home Banner — line 1 is the hero's <h1>, line 2 the subtitle under it. */
     private const BANNER = [
         'en' => [
-            'line_1' => ['Your Trusted Partner in', 'Buy, Rent & Invest in UAE Real Estate'],
-            'line_2' => ['Finding the Best Properties', 'with MW Realty — Your Trusted Property Partner'],
+            'line_1' => ['Your Trusted Partner in', 'Your Trusted UAE Property Partner'],
+            'line_2' => ['Finding the Best Properties', 'Buy, Rent & Invest with MW Realty'],
         ],
         'ar' => [
-            'line_1' => ['شريكك الموثوق في', 'اشترِ واستأجر واستثمر في عقارات الإمارات'],
-            'line_2' => ['العثور على أفضل العقارات', 'مع إم دبليو ريالتي — شريكك العقاري الموثوق'],
+            'line_1' => ['شريكك الموثوق في', 'شريكك العقاري الموثوق في الإمارات'],
+            'line_2' => ['العثور على أفضل العقارات', 'اشترِ واستأجر واستثمر مع إم دبليو ريالتي'],
         ],
     ];
 
