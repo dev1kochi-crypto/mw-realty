@@ -51,7 +51,7 @@ Priority in section 5: **High** = core flow, data loss or access; **Medium** = i
 | 23 | Plans | PL-xx | 38 | Payment modes, upgrade / downgrade / cancel, coupons, limits and what a plan unlocks, automatic behaviour |
 | 24 | Listing Review | LR-xx | 25 | Duplicate and risk screening, approve / reject, holds |
 | W1 | Website: Home, Header & Account | HD-, HM-, AU-, CH-, CU-, OT-xx | 36 | Home sections, header and footer, language and currency, AI chat, sign-up, login and My Account |
-| W2 | Website: Buy, Rent & Commercial | PS-, PD-, CP-, IN-xx | 42 | Filters and map, property page forms, compare limits and fees, market insight formulas |
+| W2 | Website: Buy, Rent & Commercial | PS-, PD-, CP-, IN-xx | 46 | Filters and map, property page forms, compare limits, fees and unlock form, market insight formulas |
 | W3 | Website: Agents & Agencies | AG-, AC-xx | 6 | Directories, profiles, Custom Property Request routing |
 | W4 | Website: Calculators | CA-xx | 9 | Calculator formulas matching Property Finder, unlock popups, enquiries |
 | W5 | Website: Explore & Market Insights | MI-, EX-xx | 9 | Contact and career forms, blog, legal, landing and 404 pages |
@@ -69,6 +69,7 @@ These rules affect several modules. Test them end to end, not only inside one mo
 | --- | --- | --- |
 | A listing is on the website only when it is Active, its permit status allows it (Module 09) and it is not held by Listing Review (Module 24) | 07, 08, 09, 24, website | Hidden listings do not appear in search, Premium, Marketing or compare |
 | Every website enquiry, viewing request, property request and chat contact becomes a lead for the listing's owner or the profile owner | Website, 02, 04, 26 | Lead appears in the right account with its source |
+| /compare hides buying / move-in costs, total cash needed, price vs area and the investment figures until the visitor sends the unlock form; the server leaves them out of the API response. Each unlock is an Enquiry (page source Property Comparison) and a Website Lead in Super Admin's pool; the unlock lasts 365 days in that browser | Website (W2), 04 | Locked rows show blurred dummies; after unlocking the real figures appear and the lead is in Enquiries and Website Leads |
 | Plan features lock modules and limits (listings, Premium quota, integrations) | 06, 07, 10, 11, 23, 25 | Locked modules show the plan card; limits refuse with a message |
 | Credits pay for Premium and ads when the plan quota is used up | 10, 11, 20 | Balance falls by the stated amount; history records it |
 | Agency agents work with the agency's plan and credits; independent agents have their own | 14, 20, 23 | Agent sees only own and assigned records |

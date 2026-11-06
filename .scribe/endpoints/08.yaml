@@ -658,3 +658,195 @@ endpoints:
     controller: null
     method: null
     route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/properties/{slug}/insights'
+    metadata:
+      custom: []
+      groupName: Properties
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Market & investment insights'
+      description: |-
+        The listing's Market & Investment panel: asking and verified (closed-deal) price summaries for
+        the same type in the same area, estimated value / annual rent, gross yield, price vs market,
+        year-on-year growth, a quarterly price-per-sq.ft trend, recent closed deals, the automated
+        assessment badge and the starting assumptions for the investment calculator. Every estimate
+        carries `source` (verified | asking) and `count`. Amounts in AED; rents annual.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      slug:
+        custom: []
+        name: slug
+        description: ''
+        required: true
+        example: virella-2
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      slug: virella-2
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 404
+        content: '{"message": "Not found"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/compare
+    metadata:
+      custom: []
+      groupName: Properties
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Compare properties'
+      description: |-
+        Two to five listings side by side in one shape, whichever emirate they are in: price (rent per
+        year), size and price per sq.ft, specs, amenities, nearest place of each type, buying costs
+        under that emirate's fees (move-in costs for rentals), market estimates (rent, gross / net
+        yield, price vs area, growth), ownership rules and Golden Visa eligibility. `notes` carries the
+        cross-border notes (FX margin, UAE tax, notes per buyer currency). Amounts in AED.
+
+        The money & investment figures (`costs`, `total_outlay`, `market`) come back null with
+        `locked: true` until the visitor has left their contact details — send the token from
+        `POST /api/contact` (source=compare) as the `X-Compare-Unlock` header.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      slugs:
+        custom: []
+        name: slugs
+        description: 'Comma-separated listing slugs, in display order.'
+        required: true
+        example: 'virella-2,marina-gate-1'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      slugs: 'virella-2,marina-gate-1'
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/compare/summary
+    metadata:
+      custom: []
+      groupName: Properties
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Comparison summary'
+      description: |-
+        A written summary of the same listings — the main trade-off, 4–6 key differences and who each
+        listing suits (`best_for`, keyed by position 1..n) — with amounts in `currency`. `source` is
+        `ai`, or `rules` when the AI isn't available. Without the `X-Compare-Unlock` header it is
+        written without the locked money & investment figures.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      slugs:
+        custom: []
+        name: slugs
+        description: ''
+        required: true
+        example: 'virella-2,marina-gate-1'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      currency:
+        custom: []
+        name: currency
+        description: 'A code from GET /api/currencies.'
+        required: false
+        example: USD
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      slugs: 'virella-2,marina-gate-1'
+      currency: USD
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

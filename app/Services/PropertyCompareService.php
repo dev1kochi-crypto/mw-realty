@@ -59,6 +59,18 @@ class PropertyCompareService
         ];
     }
 
+    /**
+     * The comparison without its money & investment figures, for visitors who haven't left their
+     * contact details yet (see CompareUnlock): buying / move-in costs and their breakdown, total
+     * cash needed and every market estimate are removed, so they never reach the browser.
+     */
+    public static function locked(array $data): array
+    {
+        $data['properties'] = array_map(fn ($p) => ['costs' => null, 'total_outlay' => null, 'market' => null] + $p, $data['properties']);
+
+        return $data;
+    }
+
     private function item(array $d, ?array $insights): array
     {
         $isRent = $d['listing_type'] === 'rent';

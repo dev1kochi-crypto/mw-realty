@@ -68,6 +68,10 @@ return [
     // A yield above this comes from a mistyped price (e.g. AED 1), not the market — it's left out.
     'max_plausible_yield_pct' => 30,
 
+    // How long a visitor's unlock lasts (days) once they leave their contact details on /compare —
+    // until then costs, total cash needed and the investment figures are hidden (App\Services\CompareUnlock).
+    'unlock_days' => 365,
+
     // How long one AI summary is reused for the same listings + currency + language (seconds).
     'summary_cache_ttl' => 3600,
 ];

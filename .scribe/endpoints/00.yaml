@@ -81,7 +81,7 @@ endpoints:
         name: page
         description: ''
         required: false
-        example: home
+        example: listing
         type: string
         enumValues:
           - home
@@ -94,7 +94,7 @@ endpoints:
         name: lang
         description: 'Must not be greater than 10 characters.'
         required: false
-        example: vmqeopfuu
+        example: bngzmi
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -116,8 +116,8 @@ endpoints:
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      page: home
-      lang: vmqeopfuu
+      page: listing
+      lang: bngzmi
       scope: marketing
     fileParameters: []
     responses: []
@@ -186,14 +186,14 @@ endpoints:
         name: lang
         description: 'Must not be greater than 10 characters.'
         required: false
-        example: vmqeopfuu
+        example: bngzmi
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      lang: vmqeopfuu
+      lang: bngzmi
     fileParameters: []
     responses:
       -
@@ -289,7 +289,7 @@ endpoints:
         name: q
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: vmqeopfuudtdsufvyvddq
+        example: b
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -300,7 +300,7 @@ endpoints:
         name: lang
         description: 'Must not be greater than 10 characters.'
         required: false
-        example: amniihfqc
+        example: ngzmiy
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -320,8 +320,8 @@ endpoints:
         nullable: true
         deprecated: false
     cleanBodyParameters:
-      q: vmqeopfuudtdsufvyvddq
-      lang: amniihfqc
+      q: b
+      lang: ngzmiy
       scope: commercial
     fileParameters: []
     responses: []

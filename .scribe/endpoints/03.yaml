@@ -16,7 +16,8 @@ endpoints:
       description: |-
         Every home section in one request: banner, brands, ad, developments, premium properties,
         luxury, why-choose-us, communities, popular places, testimonials, contact. Property lists
-        inside are shuffled on each call.
+        inside are shuffled on each call — except Realty Property while it shows Super Admin's
+        Marketing Properties list (`realty.curated`), which keeps that list's order.
 
         `ad` is a single ad, kept for older clients. The home ad slider shows every running ad:
         load it from **Ad slider** (`/api/ads/slides?placement=home`).

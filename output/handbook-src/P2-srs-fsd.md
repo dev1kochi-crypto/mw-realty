@@ -596,12 +596,13 @@ Each subsection follows the same pattern: Purpose, Actors, Preconditions, Main f
 - **Preconditions:** listings live and priced.
 - **Main flow:**
   1. Visitor ticks Compare on 2 to 5 listings and opens /compare?slugs=...
-  2. The page shows prices, buying or move-in costs per emirate, yields, specs, nearest places, amenities and an AI or rule-based summary.
-  3. On the property page, Mortgage & Investment, Rental Costs and Market Insights tabs show calculators and area figures.
+  2. The page shows prices, specs, nearest places, amenities and an AI or rule-based summary. Buying or move-in costs per emirate, total cash needed, price vs area and the investment figures (rent, yields, service charge, growth) are locked: blurred dummies with an **Unlock full comparison** button.
+  3. The visitor sends the unlock popup (Name, Email, Phone). The figures and summary reload unlocked, and the browser stays unlocked for 365 days.
+  4. On the property page, Mortgage & Investment, Rental Costs and Market Insights tabs show calculators and area figures.
 - **Alternate / error flows:** a 6th pick is refused; with no AI the rule-based Quick summary is shown; figures with fewer than 3 samples show "Not enough data yet".
-- **Validation rules:** compare list stored in the browser (localStorage mw-compare); compare 60 per minute, AI summary 10 per minute and 100 per day.
-- **Outputs / notifications:** insight views counted per listing per page load.
-- **Reference:** guide 26.
+- **Validation rules:** compare list stored in the browser (localStorage mw-compare); compare 60 per minute, AI summary 10 per minute and 100 per day. Unlock form: shared contact rules, reCAPTCHA, form-submit limit (20 per hour). The lock is enforced by the server: without a valid `X-Compare-Unlock` token, GET /api/compare returns `locked: true` with no costs, totals or market figures, and the summary is written without them.
+- **Outputs / notifications:** insight views counted per listing per page load. Each unlock saves an Enquiry (page source Property Comparison, with the compared listings and currency), emails the admin and creates or updates a Website Lead in Super Admin's pool; the server returns the unlock token (stored as localStorage mw-compare-unlock).
+- **Reference:** guide 26; W2 section 2.3 (CP-12 to CP-15).
 
 ### 3.31 Website 26b: AI chat (Noor)
 

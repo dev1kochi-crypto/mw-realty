@@ -87,7 +87,7 @@ endpoints:
         name: company
         description: 'Must not be greater than 255 characters.'
         required: false
-        example: mniihfqcoynlazghdtqtq
+        example: g
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -98,7 +98,7 @@ endpoints:
         name: country
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: xbajwbpilpmufinllwloa
+        example: z
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -143,8 +143,8 @@ endpoints:
       email: buyer@example.com
       phone: '501234567'
       phone_country_code: '+971'
-      company: mniihfqcoynlazghdtqtq
-      country: xbajwbpilpmufinllwloa
+      company: g
+      country: z
       message: "Is this still available? I'd like to view it this week."
       page_source: mobile-app
     fileParameters: []
@@ -640,7 +640,7 @@ endpoints:
         name: specification
         description: 'Must not be greater than 255 characters.'
         required: false
-        example: auydlsmsjuryvojcybzvr
+        example: z
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -662,7 +662,7 @@ endpoints:
         name: area
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: vazjrcnfbaqywuxhgjjmz
+        example: i
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -695,7 +695,7 @@ endpoints:
         name: move_in_timeline
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: sedyghenqcopwvownkbam
+        example: d
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -706,7 +706,7 @@ endpoints:
         name: furnishing_status
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: lnfngefbeilfzsyuxoezb
+        example: l
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -730,13 +730,13 @@ endpoints:
       phone: '501234567'
       phone_country_code: '+971'
       property_category: Apartment
-      specification: auydlsmsjuryvojcybzvr
+      specification: z
       price_range: 'AED 1M – 2M'
-      area: vazjrcnfbaqywuxhgjjmz
+      area: i
       preferred_location: 'Dubai Marina'
       additional_details: 'Sea view, high floor.'
-      move_in_timeline: sedyghenqcopwvownkbam
-      furnishing_status: lnfngefbeilfzsyuxoezb
+      move_in_timeline: d
+      furnishing_status: l
     fileParameters: []
     responses:
       -
@@ -815,7 +815,7 @@ endpoints:
         name: last_name
         description: 'Must not be greater than 255 characters.'
         required: false
-        example: qxbajwbpilpmufinllwlo
+        example: g
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -859,7 +859,7 @@ endpoints:
         name: property_category
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: auydlsmsjuryvojcybzvr
+        example: z
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -870,7 +870,7 @@ endpoints:
         name: specification
         description: 'Must not be greater than 255 characters.'
         required: false
-        example: byickznkygloigmkwxphl
+        example: m
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -881,7 +881,7 @@ endpoints:
         name: price_range
         description: 'Must not be greater than 255 characters.'
         required: false
-        example: vazjrcnfbaqywuxhgjjmz
+        example: i
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -892,7 +892,7 @@ endpoints:
         name: area
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: uxjubqouzswiwxtrkimfc
+        example: 'y'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -903,7 +903,7 @@ endpoints:
         name: preferred_location
         description: 'Must not be greater than 255 characters.'
         required: false
-        example: atbxspzmrazsroyjpxmqe
+        example: v
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -914,7 +914,7 @@ endpoints:
         name: additional_details
         description: 'Must not be greater than 2000 characters.'
         required: false
-        example: sedyghenqcopwvownkbam
+        example: d
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -925,7 +925,7 @@ endpoints:
         name: move_in_timeline
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: lnfngefbeilfzsyuxoezb
+        example: l
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -936,7 +936,7 @@ endpoints:
         name: furnishing_status
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: dtabptcyyerevrljcbwkt
+        example: j
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -957,18 +957,18 @@ endpoints:
       profile_type: agent
       profile_slug: sruthi-raveendran-m
       first_name: Sara
-      last_name: qxbajwbpilpmufinllwlo
+      last_name: g
       email: buyer@example.com
       phone: '501234567'
       phone_country_code: '+971'
-      property_category: auydlsmsjuryvojcybzvr
-      specification: byickznkygloigmkwxphl
-      price_range: vazjrcnfbaqywuxhgjjmz
-      area: uxjubqouzswiwxtrkimfc
-      preferred_location: atbxspzmrazsroyjpxmqe
-      additional_details: sedyghenqcopwvownkbam
-      move_in_timeline: lnfngefbeilfzsyuxoezb
-      furnishing_status: dtabptcyyerevrljcbwkt
+      property_category: z
+      specification: m
+      price_range: i
+      area: 'y'
+      preferred_location: v
+      additional_details: d
+      move_in_timeline: l
+      furnishing_status: j
     fileParameters: []
     responses:
       -

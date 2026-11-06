@@ -92,7 +92,7 @@ endpoints:
         name: name
         description: 'Must not be greater than 255 characters.'
         required: true
-        example: mqeopfuudtdsufvyvddqa
+        example: 'n'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -103,7 +103,7 @@ endpoints:
         name: email
         description: 'Must be a valid email address. Must not be greater than 255 characters.'
         required: true
-        example: eloisa.harber@example.com
+        example: ashly64@example.com
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -114,7 +114,7 @@ endpoints:
         name: phone
         description: 'Must not be greater than 50 characters.'
         required: true
-        example: fqcoynlazghdtqtqxbajw
+        example: v
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -125,7 +125,7 @@ endpoints:
         name: country
         description: 'Must not be greater than 100 characters.'
         required: false
-        example: bpilpmufinllwloauydls
+        example: d
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -136,7 +136,7 @@ endpoints:
         name: experience
         description: 'Must not be greater than 50 characters.'
         required: false
-        example: msjuryvojcybzvrbyickz
+        example: l
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -147,7 +147,7 @@ endpoints:
         name: designation
         description: 'Must not be greater than 255 characters.'
         required: false
-        example: nkygloigmkwxphlvazjrc
+        example: j
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -158,7 +158,7 @@ endpoints:
         name: additional_information
         description: 'Must not be greater than 2000 characters.'
         required: false
-        example: nfbaqywuxhgjjmzuxjubq
+        example: 'n'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -199,13 +199,13 @@ endpoints:
         deprecated: false
     cleanBodyParameters:
       career: senior-property-consultant
-      name: mqeopfuudtdsufvyvddqa
-      email: eloisa.harber@example.com
-      phone: fqcoynlazghdtqtqxbajw
-      country: bpilpmufinllwloauydls
-      experience: msjuryvojcybzvrbyickz
-      designation: nkygloigmkwxphlvazjrc
-      additional_information: nfbaqywuxhgjjmzuxjubq
+      name: 'n'
+      email: ashly64@example.com
+      phone: v
+      country: d
+      experience: l
+      designation: j
+      additional_information: 'n'
       privacy: true
     fileParameters:
       attachment: null

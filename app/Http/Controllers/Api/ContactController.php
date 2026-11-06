@@ -60,14 +60,16 @@ class ContactController extends Controller
      * @bodyParam interest string buy, rent, sell or management. Example: buy
      * @bodyParam message string Required unless `interest` is sent. Example: I'd like a call about 2BR apartments in Marina.
      * @bodyParam calculation object Calculator pages (`source=calculator`): the figures the visitor worked out, label => value, e.g. {"Calculator": "Mortgage", "Loan amount": "AED 1,402,500"}. Saved with the enquiry; the message is then optional. No-example
-     * @bodyParam source string contact, home or calculator. Example: contact
+     * @bodyParam source string contact, home, calculator or compare. `compare` is the /compare page's unlock form: `calculation` lists the compared listings and the reply carries `compare_unlock`, the token for the `X-Compare-Unlock` header of GET /api/compare. Example: contact
      * @bodyParam recaptcha_token string See "Forms & reCAPTCHA" in the introduction. No-example
      *
      * @response 200 {"message": "Thanks — we've received your message and will be in touch soon."}
      */
     public function store(Request $request)
     {
-        $fromCalculator = $request->input('source') === 'calculator';
+        $fromCompare = $request->input('source') === 'compare';
+        // Calculator and compare leads carry their figures / listings in `calculation`; no message needed.
+        $fromCalculator = $request->input('source') === 'calculator' || $fromCompare;
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -76,7 +78,7 @@ class ContactController extends Controller
             'phone_country_code' => \App\Rules\PhoneNumber::countryCodeRules(),
             'interest' => 'nullable|in:' . implode(',', array_keys(self::INTERESTS)),
             'message' => $fromCalculator ? 'nullable|string|max:2000' : 'required_without:interest|nullable|string|max:2000',
-            'source' => 'nullable|in:contact,home,calculator',
+            'source' => 'nullable|in:contact,home,calculator,compare',
             'calculation' => 'nullable|array|max:20',
             'calculation.*' => 'nullable|string|max:150',
             'recaptcha_token' => ['nullable', new RecaptchaRule()],
@@ -92,6 +94,7 @@ class ContactController extends Controller
             $message = trim($message . "\n\n" . $lines);
         }
         $pageSource = match (true) {
+            $fromCompare => 'Property Comparison',
             $fromCalculator => trim(($calculation['Calculator'] ?? '') . ' Calculator'),
             $request->input('source') === 'home' => 'Home Page',
             default => 'Contact Page',
@@ -122,6 +125,8 @@ class ContactController extends Controller
             ['form' => $enquiry->page_source . ' form', 'enquiry_id' => $enquiry->id, 'message' => \Illuminate\Support\Str::limit((string) $enquiry->message, 500)],
         );
 
-        return response()->json(['message' => "Thanks — we've received your message and will be in touch soon."]);
+        return response()->json(['message' => "Thanks — we've received your message and will be in touch soon."]
+            // The /compare page: this token shows its hidden money & investment figures (X-Compare-Unlock).
+            + ($fromCompare ? ['compare_unlock' => \App\Services\CompareUnlock::issue()] : []));
     }
 }

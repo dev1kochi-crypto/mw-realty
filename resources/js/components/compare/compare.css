@@ -113,6 +113,14 @@
 .mw-compare__empty p { margin: 0 0 16px; color: #6b7080; font-size: 16px; }
 .mw-compare__btn { display: inline-block; padding: 12px 20px; border-radius: 10px; background: linear-gradient(90deg, #b9233c 0%, #244373 100%); color: #fff; font-weight: 700; text-decoration: none; }
 .mw-compare__btn:hover { color: #fff; opacity: 0.92; }
+/* Locked money & investment figures (Compare.vue): a bar above the summary + blurred dummy cells. */
+.mw-compare__unlock { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-bottom: 20px; padding: 14px 18px; border: 1px solid rgba(201, 40, 68, 0.25); border-radius: 14px; background: linear-gradient(135deg, rgba(201, 40, 68, 0.05), rgba(36, 67, 115, 0.06)), #fff; color: var(--cmp-navy); }
+.mw-compare__unlock p { flex: 1 1 260px; margin: 0; font-size: 14px; font-weight: 700; }
+.mw-compare__unlock .mw-compare__btn { border: 0; font: inherit; font-weight: 700; cursor: pointer; }
+.mw-compare__locked { display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; color: var(--cmp-navy); font: inherit; cursor: pointer; }
+.mw-compare__locked-value { filter: blur(6px); user-select: none; transition: filter 0.2s ease; }
+.mw-compare__locked:hover .mw-compare__locked-value { filter: blur(4px); }
+.mw-compare__locked svg { flex: none; color: var(--cmp-red); }
 
 @media (max-width: 767px) {
     .mw-compare__table tbody th { width: 120px; min-width: 120px; padding: 10px; font-size: 13px; }

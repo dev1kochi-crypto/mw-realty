@@ -26,7 +26,7 @@
             </style>
 
     <script>
-        var tryItOutBaseUrl = "http://127.0.0.1:8000";
+        var tryItOutBaseUrl = "https://mw.realty.mightywarnersdemo.com/";
         var useCsrf = Boolean();
         var csrfUrl = "/sanctum/csrf-cookie";
     </script>
@@ -130,6 +130,15 @@
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="properties-GETapi-properties--slug-">
                                 <a href="#properties-GETapi-properties--slug-">Property details</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="properties-GETapi-properties--slug--insights">
+                                <a href="#properties-GETapi-properties--slug--insights">Market & investment insights</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="properties-GETapi-compare">
+                                <a href="#properties-GETapi-compare">Compare properties</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="properties-GETapi-compare-summary">
+                                <a href="#properties-GETapi-compare-summary">Comparison summary</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -319,6 +328,12 @@
                                                                                 <li class="tocify-item level-2" data-unique="content-GETapi-legal--key-">
                                 <a href="#content-GETapi-legal--key-">Legal page</a>
                             </li>
+                                                                                <li class="tocify-item level-2" data-unique="content-GETapi-calculators">
+                                <a href="#content-GETapi-calculators">Calculators menu</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="content-GETapi-calculators--key-">
+                                <a href="#content-GETapi-calculators--key-">Calculator page</a>
+                            </li>
                                                                         </ul>
                             </ul>
                     <ul id="tocify-header-careers" class="tocify-header">
@@ -356,6 +371,16 @@
                             </li>
                                                                         </ul>
                             </ul>
+                    <ul id="tocify-header-endpoints" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="endpoints">
+                    <a href="#endpoints">Endpoints</a>
+                </li>
+                                    <ul id="tocify-subheader-endpoints" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="endpoints-POSTapi-webhooks-facebook-data-deletion">
+                                <a href="#endpoints-POSTapi-webhooks-facebook-data-deletion">POST api/webhooks/facebook/data-deletion</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
             </div>
 
     <ul class="toc-footer" id="toc-footer">
@@ -365,7 +390,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: October 14, 2026</li>
+        <li>Last updated: November 6, 2026</li>
     </ul>
 </div>
 
@@ -375,7 +400,7 @@
         <h1 id="introduction">Introduction</h1>
 <p>REST API for the MW Realty mobile app: property search, listings, agents, content, customer accounts, enquiries and the AI assistant.</p>
 <aside>
-    <strong>Base URL</strong>: <code>http://127.0.0.1:8000</code>
+    <strong>Base URL</strong>: <code>https://mw.realty.mightywarnersdemo.com/</code>
 </aside>
 <pre><code>The same API the website uses. All responses are JSON. Example responses for `GET` endpoints were recorded from real data, so field names and nesting are exact.
 
@@ -457,7 +482,7 @@ Image fields (`image`, `images`, `avatar_url`, `logo_url` …) are absolute URLs
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/languages" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/languages" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -465,7 +490,7 @@ Image fields (`image`, `images`, `avatar_url`, `logo_url` …) are absolute URLs
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/languages"
+    "https://mw.realty.mightywarnersdemo.com/api/languages"
 );
 
 const headers = {
@@ -583,7 +608,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/currencies" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/currencies" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -591,7 +616,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/currencies"
+    "https://mw.realty.mightywarnersdemo.com/api/currencies"
 );
 
 const headers = {
@@ -709,7 +734,7 @@ device per language.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/static-translations?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/static-translations?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -717,7 +742,7 @@ device per language.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/static-translations"
+    "https://mw.realty.mightywarnersdemo.com/api/static-translations"
 );
 
 const params = {
@@ -853,7 +878,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/site-information?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/site-information?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -861,7 +886,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/site-information"
+    "https://mw.realty.mightywarnersdemo.com/api/site-information"
 );
 
 const params = {
@@ -995,7 +1020,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <p>Every home section in one request: banner, brands, ad, developments, premium properties,
 luxury, why-choose-us, communities, popular places, testimonials, contact. Property lists
-inside are shuffled on each call.</p>
+inside are shuffled on each call — except Realty Property while it shows Super Admin's
+Marketing Properties list (<code>realty.curated</code>), which keeps that list's order.</p>
 <p><code>ad</code> is a single ad, kept for older clients. The home ad slider shows every running ad:
 load it from <strong>Ad slider</strong> (<code>/api/ads/slides?placement=home</code>).</p>
 
@@ -1005,7 +1031,7 @@ load it from <strong>Ad slider</strong> (<code>/api/ads/slides?placement=home</c
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/home?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/home?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -1013,7 +1039,7 @@ load it from <strong>Ad slider</strong> (<code>/api/ads/slides?placement=home</c
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/home"
+    "https://mw.realty.mightywarnersdemo.com/api/home"
 );
 
 const params = {
@@ -1149,7 +1175,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/home/new-projects?city=Dubai&amp;lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/home/new-projects?city=Dubai&amp;lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -1157,7 +1183,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/home/new-projects"
+    "https://mw.realty.mightywarnersdemo.com/api/home/new-projects"
 );
 
 const params = {
@@ -1316,13 +1342,13 @@ under each filter's <code>key</code>.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/property-filters?page=listing&amp;scope=residential&amp;lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/property-filters?page=listing&amp;scope=residential&amp;lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
     --data "{
-    \"page\": \"home\",
-    \"lang\": \"vmqeopfuu\",
+    \"page\": \"listing\",
+    \"lang\": \"bngzmi\",
     \"scope\": \"marketing\"
 }"
 </code></pre></div>
@@ -1330,7 +1356,7 @@ under each filter's <code>key</code>.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/property-filters"
+    "https://mw.realty.mightywarnersdemo.com/api/property-filters"
 );
 
 const params = {
@@ -1348,8 +1374,8 @@ const headers = {
 };
 
 let body = {
-    "page": "home",
-    "lang": "vmqeopfuu",
+    "page": "listing",
+    "lang": "bngzmi",
     "scope": "marketing"
 };
 
@@ -1491,10 +1517,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="page"                data-endpoint="GETapi-property-filters"
-               value="home"
+               value="listing"
                data-component="body">
     <br>
-<p>Example: <code>home</code></p>
+<p>Example: <code>listing</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>home</code></li> <li><code>listing</code></li></ul>
         </div>
@@ -1505,10 +1531,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="lang"                data-endpoint="GETapi-property-filters"
-               value="vmqeopfuu"
+               value="bngzmi"
                data-component="body">
     <br>
-<p>Must not be greater than 10 characters. Example: <code>vmqeopfuu</code></p>
+<p>Must not be greater than 10 characters. Example: <code>bngzmi</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>scope</code></b>&nbsp;&nbsp;
@@ -1542,19 +1568,19 @@ comma-separated. <code>order</code> / <code>options_order</code> give the admin'
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/search-filters/properties?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/search-filters/properties?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
     --data "{
-    \"lang\": \"vmqeopfuu\"
+    \"lang\": \"bngzmi\"
 }"
 </code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/search-filters/properties"
+    "https://mw.realty.mightywarnersdemo.com/api/search-filters/properties"
 );
 
 const params = {
@@ -1570,7 +1596,7 @@ const headers = {
 };
 
 let body = {
-    "lang": "vmqeopfuu"
+    "lang": "bngzmi"
 };
 
 fetch(url, {
@@ -1782,10 +1808,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="lang"                data-endpoint="GETapi-search-filters--page-"
-               value="vmqeopfuu"
+               value="bngzmi"
                data-component="body">
     <br>
-<p>Must not be greater than 10 characters. Example: <code>vmqeopfuu</code></p>
+<p>Must not be greater than 10 characters. Example: <code>bngzmi</code></p>
         </div>
         </form>
 
@@ -1804,13 +1830,13 @@ returns an empty list). Pass a picked suggestion back as <code>city=</code> / <c
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/location-suggestions?q=mar&amp;scope=all&amp;lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/location-suggestions?q=mar&amp;scope=all&amp;lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
     --data "{
-    \"q\": \"vmqeopfuudtdsufvyvddq\",
-    \"lang\": \"amniihfqc\",
+    \"q\": \"b\",
+    \"lang\": \"ngzmiy\",
     \"scope\": \"commercial\"
 }"
 </code></pre></div>
@@ -1818,7 +1844,7 @@ returns an empty list). Pass a picked suggestion back as <code>city=</code> / <c
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/location-suggestions"
+    "https://mw.realty.mightywarnersdemo.com/api/location-suggestions"
 );
 
 const params = {
@@ -1836,8 +1862,8 @@ const headers = {
 };
 
 let body = {
-    "q": "vmqeopfuudtdsufvyvddq",
-    "lang": "amniihfqc",
+    "q": "b",
+    "lang": "ngzmiy",
     "scope": "commercial"
 };
 
@@ -1979,10 +2005,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="q"                data-endpoint="GETapi-location-suggestions"
-               value="vmqeopfuudtdsufvyvddq"
+               value="b"
                data-component="body">
     <br>
-<p>Must not be greater than 100 characters. Example: <code>vmqeopfuudtdsufvyvddq</code></p>
+<p>Must not be greater than 100 characters. Example: <code>b</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>lang</code></b>&nbsp;&nbsp;
@@ -1991,10 +2017,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="lang"                data-endpoint="GETapi-location-suggestions"
-               value="amniihfqc"
+               value="ngzmiy"
                data-component="body">
     <br>
-<p>Must not be greater than 10 characters. Example: <code>amniihfqc</code></p>
+<p>Must not be greater than 10 characters. Example: <code>ngzmiy</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>scope</code></b>&nbsp;&nbsp;
@@ -2029,7 +2055,7 @@ Must be one of:
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/commercial?lang=en&amp;page=1" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/commercial?lang=en&amp;page=1" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -2037,7 +2063,7 @@ Must be one of:
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/commercial"
+    "https://mw.realty.mightywarnersdemo.com/api/commercial"
 );
 
 const params = {
@@ -2358,7 +2384,7 @@ select filter whose key is a property column also works as <code>?{key}=value</c
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/properties?lang=en&amp;page=1" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/properties?lang=en&amp;page=1" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -2366,7 +2392,7 @@ select filter whose key is a property column also works as <code>?{key}=value</c
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/properties"
+    "https://mw.realty.mightywarnersdemo.com/api/properties"
 );
 
 const params = {
@@ -2799,7 +2825,7 @@ of the current viewport after each pan/zoom.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/properties/map?segment=residential&amp;lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/properties/map?segment=residential&amp;lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -2807,7 +2833,7 @@ of the current viewport after each pan/zoom.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/properties/map"
+    "https://mw.realty.mightywarnersdemo.com/api/properties/map"
 );
 
 const params = {
@@ -3006,7 +3032,7 @@ from here for wishlist and lead endpoints.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/properties/virella-2?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/properties/virella-2?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -3014,7 +3040,7 @@ from here for wishlist and lead endpoints.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/properties/virella-2"
+    "https://mw.realty.mightywarnersdemo.com/api/properties/virella-2"
 );
 
 const params = {
@@ -3159,6 +3185,494 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                 </form>
 
+                    <h2 id="properties-GETapi-properties--slug--insights">Market &amp; investment insights</h2>
+
+<p>
+</p>
+
+<p>The listing's Market &amp; Investment panel: asking and verified (closed-deal) price summaries for
+the same type in the same area, estimated value / annual rent, gross yield, price vs market,
+year-on-year growth, a quarterly price-per-sq.ft trend, recent closed deals, the automated
+assessment badge and the starting assumptions for the investment calculator. Every estimate
+carries <code>source</code> (verified | asking) and <code>count</code>. Amounts in AED; rents annual.</p>
+
+<span id="example-requests-GETapi-properties--slug--insights">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://mw.realty.mightywarnersdemo.com/api/properties/virella-2/insights" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://mw.realty.mightywarnersdemo.com/api/properties/virella-2/insights"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-Device-Id": "{DEVICE_ID}",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-properties--slug--insights">
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Not found&quot;
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-properties--slug--insights" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-properties--slug--insights"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-properties--slug--insights"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-properties--slug--insights" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-properties--slug--insights">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-properties--slug--insights" data-method="GET"
+      data-path="api/properties/{slug}/insights"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-properties--slug--insights', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-properties--slug--insights"
+                    onclick="tryItOut('GETapi-properties--slug--insights');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-properties--slug--insights"
+                    onclick="cancelTryOut('GETapi-properties--slug--insights');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-properties--slug--insights"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/properties/{slug}/insights</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-properties--slug--insights"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-properties--slug--insights"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-Device-Id"                data-endpoint="GETapi-properties--slug--insights"
+               value="{DEVICE_ID}"
+               data-component="header">
+    <br>
+<p>Example: <code>{DEVICE_ID}</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>slug</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="slug"                data-endpoint="GETapi-properties--slug--insights"
+               value="virella-2"
+               data-component="url">
+    <br>
+<p>Example: <code>virella-2</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="properties-GETapi-compare">Compare properties</h2>
+
+<p>
+</p>
+
+<p>Two to five listings side by side in one shape, whichever emirate they are in: price (rent per
+year), size and price per sq.ft, specs, amenities, nearest place of each type, buying costs
+under that emirate's fees (move-in costs for rentals), market estimates (rent, gross / net
+yield, price vs area, growth), ownership rules and Golden Visa eligibility. <code>notes</code> carries the
+cross-border notes (FX margin, UAE tax, notes per buyer currency). Amounts in AED.</p>
+<p>The money &amp; investment figures (<code>costs</code>, <code>total_outlay</code>, <code>market</code>) come back null with
+<code>locked: true</code> until the visitor has left their contact details — send the token from
+<code>POST /api/contact</code> (source=compare) as the <code>X-Compare-Unlock</code> header.</p>
+
+<span id="example-requests-GETapi-compare">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://mw.realty.mightywarnersdemo.com/api/compare?slugs=virella-2%2Cmarina-gate-1&amp;lang=en" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://mw.realty.mightywarnersdemo.com/api/compare"
+);
+
+const params = {
+    "slugs": "virella-2,marina-gate-1",
+    "lang": "en",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-Device-Id": "{DEVICE_ID}",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-compare">
+    </span>
+<span id="execution-results-GETapi-compare" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-compare"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-compare"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-compare" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-compare">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-compare" data-method="GET"
+      data-path="api/compare"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-compare', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-compare"
+                    onclick="tryItOut('GETapi-compare');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-compare"
+                    onclick="cancelTryOut('GETapi-compare');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-compare"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/compare</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-compare"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-compare"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-Device-Id"                data-endpoint="GETapi-compare"
+               value="{DEVICE_ID}"
+               data-component="header">
+    <br>
+<p>Example: <code>{DEVICE_ID}</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>slugs</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="slugs"                data-endpoint="GETapi-compare"
+               value="virella-2,marina-gate-1"
+               data-component="query">
+    <br>
+<p>Comma-separated listing slugs, in display order. Example: <code>virella-2,marina-gate-1</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>lang</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="lang"                data-endpoint="GETapi-compare"
+               value="en"
+               data-component="query">
+    <br>
+<p>Example: <code>en</code></p>
+            </div>
+                </form>
+
+                    <h2 id="properties-GETapi-compare-summary">Comparison summary</h2>
+
+<p>
+</p>
+
+<p>A written summary of the same listings — the main trade-off, 4–6 key differences and who each
+listing suits (<code>best_for</code>, keyed by position 1..n) — with amounts in <code>currency</code>. <code>source</code> is
+<code>ai</code>, or <code>rules</code> when the AI isn't available. Without the <code>X-Compare-Unlock</code> header it is
+written without the locked money &amp; investment figures.</p>
+
+<span id="example-requests-GETapi-compare-summary">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://mw.realty.mightywarnersdemo.com/api/compare/summary?slugs=virella-2%2Cmarina-gate-1&amp;currency=USD&amp;lang=en" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://mw.realty.mightywarnersdemo.com/api/compare/summary"
+);
+
+const params = {
+    "slugs": "virella-2,marina-gate-1",
+    "currency": "USD",
+    "lang": "en",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-Device-Id": "{DEVICE_ID}",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-compare-summary">
+    </span>
+<span id="execution-results-GETapi-compare-summary" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-compare-summary"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-compare-summary"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-compare-summary" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-compare-summary">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-compare-summary" data-method="GET"
+      data-path="api/compare/summary"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-compare-summary', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-compare-summary"
+                    onclick="tryItOut('GETapi-compare-summary');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-compare-summary"
+                    onclick="cancelTryOut('GETapi-compare-summary');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-compare-summary"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/compare/summary</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-compare-summary"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-compare-summary"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-Device-Id"                data-endpoint="GETapi-compare-summary"
+               value="{DEVICE_ID}"
+               data-component="header">
+    <br>
+<p>Example: <code>{DEVICE_ID}</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>slugs</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="slugs"                data-endpoint="GETapi-compare-summary"
+               value="virella-2,marina-gate-1"
+               data-component="query">
+    <br>
+<p>Example: <code>virella-2,marina-gate-1</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>currency</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="currency"                data-endpoint="GETapi-compare-summary"
+               value="USD"
+               data-component="query">
+    <br>
+<p>A code from GET /api/currencies. Example: <code>USD</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>lang</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="lang"                data-endpoint="GETapi-compare-summary"
+               value="en"
+               data-component="query">
+    <br>
+<p>Example: <code>en</code></p>
+            </div>
+                </form>
+
                 <h1 id="advertisements">Advertisements</h1>
 
     
@@ -3178,7 +3692,7 @@ every running ad: use <strong>Ad slider</strong> (<code>/api/ads/slides</code>).
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/ads?placement=home&amp;lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/ads?placement=home&amp;lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -3186,7 +3700,7 @@ every running ad: use <strong>Ad slider</strong> (<code>/api/ads/slides</code>).
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/ads"
+    "https://mw.realty.mightywarnersdemo.com/api/ads"
 );
 
 const params = {
@@ -3338,7 +3852,7 @@ an empty list means hide the slot. Report each slide once it has been on screen
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/ads/slides?placement=home&amp;lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/ads/slides?placement=home&amp;lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -3346,7 +3860,7 @@ an empty list means hide the slot. Report each slide once it has been on screen
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/ads/slides"
+    "https://mw.realty.mightywarnersdemo.com/api/ads/slides"
 );
 
 const params = {
@@ -3519,7 +4033,7 @@ screen visit — not again every time the slider comes back round to it.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/track/ad-impressions" \
+    "https://mw.realty.mightywarnersdemo.com/api/track/ad-impressions" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -3534,7 +4048,7 @@ screen visit — not again every time the slider comes back round to it.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/track/ad-impressions"
+    "https://mw.realty.mightywarnersdemo.com/api/track/ad-impressions"
 );
 
 const headers = {
@@ -3679,7 +4193,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/track/ad-click" \
+    "https://mw.realty.mightywarnersdemo.com/api/track/ad-click" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -3691,7 +4205,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/track/ad-click"
+    "https://mw.realty.mightywarnersdemo.com/api/track/ad-click"
 );
 
 const headers = {
@@ -3836,7 +4350,7 @@ page through them and get a <code>pagination</code> block.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/agents?lang=en&amp;per_page=20&amp;page=1" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/agents?lang=en&amp;per_page=20&amp;page=1" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -3844,7 +4358,7 @@ page through them and get a <code>pagination</code> block.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/agents"
+    "https://mw.realty.mightywarnersdemo.com/api/agents"
 );
 
 const params = {
@@ -4006,7 +4520,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/agents/sruthi-raveendran-m?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/agents/sruthi-raveendran-m?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -4014,7 +4528,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/agents/sruthi-raveendran-m"
+    "https://mw.realty.mightywarnersdemo.com/api/agents/sruthi-raveendran-m"
 );
 
 const params = {
@@ -4173,7 +4687,7 @@ page through them and get a <code>pagination</code> block.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/agencies?lang=en&amp;per_page=20&amp;page=1" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/agencies?lang=en&amp;per_page=20&amp;page=1" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -4181,7 +4695,7 @@ page through them and get a <code>pagination</code> block.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/agencies"
+    "https://mw.realty.mightywarnersdemo.com/api/agencies"
 );
 
 const params = {
@@ -4343,7 +4857,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/agencies/test-company?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/agencies/test-company?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -4351,7 +4865,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/agencies/test-company"
+    "https://mw.realty.mightywarnersdemo.com/api/agencies/test-company"
 );
 
 const params = {
@@ -4520,7 +5034,7 @@ a Sanctum token instead of a cookie.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/auth/register" \
+    "https://mw.realty.mightywarnersdemo.com/api/auth/register" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -4537,7 +5051,7 @@ a Sanctum token instead of a cookie.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/auth/register"
+    "https://mw.realty.mightywarnersdemo.com/api/auth/register"
 );
 
 const headers = {
@@ -4762,7 +5276,7 @@ email verified and returns a Bearer token.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/auth/verify-otp" \
+    "https://mw.realty.mightywarnersdemo.com/api/auth/verify-otp" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -4776,7 +5290,7 @@ email verified and returns a Bearer token.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/auth/verify-otp"
+    "https://mw.realty.mightywarnersdemo.com/api/auth/verify-otp"
 );
 
 const headers = {
@@ -4964,7 +5478,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/auth/resend-otp" \
+    "https://mw.realty.mightywarnersdemo.com/api/auth/resend-otp" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -4976,7 +5490,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/auth/resend-otp"
+    "https://mw.realty.mightywarnersdemo.com/api/auth/resend-otp"
 );
 
 const headers = {
@@ -5137,7 +5651,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/auth/login" \
+    "https://mw.realty.mightywarnersdemo.com/api/auth/login" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -5151,7 +5665,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/auth/login"
+    "https://mw.realty.mightywarnersdemo.com/api/auth/login"
 );
 
 const headers = {
@@ -5341,7 +5855,7 @@ agents and agencies don't have Google sign-in (show the button only on the User 
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/auth/google" \
+    "https://mw.realty.mightywarnersdemo.com/api/auth/google" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -5354,7 +5868,7 @@ agents and agencies don't have Google sign-in (show the button only on the User 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/auth/google"
+    "https://mw.realty.mightywarnersdemo.com/api/auth/google"
 );
 
 const headers = {
@@ -5530,7 +6044,7 @@ the email is registered.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/auth/forgot-password" \
+    "https://mw.realty.mightywarnersdemo.com/api/auth/forgot-password" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -5542,7 +6056,7 @@ the email is registered.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/auth/forgot-password"
+    "https://mw.realty.mightywarnersdemo.com/api/auth/forgot-password"
 );
 
 const headers = {
@@ -5686,7 +6200,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/auth/reset-password" \
+    "https://mw.realty.mightywarnersdemo.com/api/auth/reset-password" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -5701,7 +6215,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/auth/reset-password"
+    "https://mw.realty.mightywarnersdemo.com/api/auth/reset-password"
 );
 
 const headers = {
@@ -5893,7 +6407,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/auth/logout" \
+    "https://mw.realty.mightywarnersdemo.com/api/auth/logout" \
     --header "Authorization: Bearer {YOUR_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -5902,7 +6416,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/auth/logout"
+    "https://mw.realty.mightywarnersdemo.com/api/auth/logout"
 );
 
 const headers = {
@@ -6050,7 +6564,7 @@ icons). Works without a token too — guests get <code>authenticated: false</cod
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/customer/session" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/customer/session" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -6058,7 +6572,7 @@ icons). Works without a token too — guests get <code>authenticated: false</cod
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/customer/session"
+    "https://mw.realty.mightywarnersdemo.com/api/customer/session"
 );
 
 const headers = {
@@ -6206,7 +6720,7 @@ paginated <code>GET /api/customer/wishlist</code> instead.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/customer/me?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/customer/me?lang=en" \
     --header "Authorization: Bearer {YOUR_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -6215,7 +6729,7 @@ paginated <code>GET /api/customer/wishlist</code> instead.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/customer/me"
+    "https://mw.realty.mightywarnersdemo.com/api/customer/me"
 );
 
 const params = {
@@ -6422,7 +6936,7 @@ not parse file uploads on <code>PUT</code> (the <code>PUT</code> route is kept f
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/customer/settings" \
+    "https://mw.realty.mightywarnersdemo.com/api/customer/settings" \
     --header "Authorization: Bearer {YOUR_TOKEN}" \
     --header "Content-Type: multipart/form-data" \
     --header "Accept: application/json" \
@@ -6433,12 +6947,12 @@ not parse file uploads on <code>PUT</code> (the <code>PUT</code> route is kept f
     --form "location=Dubai Marina"\
     --form "password=newSecret123"\
     --form "password_confirmation=newSecret123"\
-    --form "avatar=@C:\Users\User\AppData\Local\Temp\php137C.tmp" </code></pre></div>
+    --form "avatar=@C:\Users\User\AppData\Local\Temp\phpA0D3.tmp" </code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/customer/settings"
+    "https://mw.realty.mightywarnersdemo.com/api/customer/settings"
 );
 
 const headers = {
@@ -6643,7 +7157,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Image, max 2 MB. Example: <code>C:\Users\User\AppData\Local\Temp\php137C.tmp</code></p>
+<p>Image, max 2 MB. Example: <code>C:\Users\User\AppData\Local\Temp\phpA0D3.tmp</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>password_confirmation</code></b>&nbsp;&nbsp;
@@ -6676,7 +7190,7 @@ Google-only accounts send nothing.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request DELETE \
-    "http://127.0.0.1:8000/api/customer/account" \
+    "https://mw.realty.mightywarnersdemo.com/api/customer/account" \
     --header "Authorization: Bearer {YOUR_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -6689,7 +7203,7 @@ Google-only accounts send nothing.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/customer/account"
+    "https://mw.realty.mightywarnersdemo.com/api/customer/account"
 );
 
 const headers = {
@@ -6860,7 +7374,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/customer/wishlist?page=1&amp;lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/customer/wishlist?page=1&amp;lang=en" \
     --header "Authorization: Bearer {YOUR_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -6869,7 +7383,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/customer/wishlist"
+    "https://mw.realty.mightywarnersdemo.com/api/customer/wishlist"
 );
 
 const params = {
@@ -7055,7 +7569,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/customer/wishlist/82" \
+    "https://mw.realty.mightywarnersdemo.com/api/customer/wishlist/82" \
     --header "Authorization: Bearer {YOUR_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -7064,7 +7578,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/customer/wishlist/82"
+    "https://mw.realty.mightywarnersdemo.com/api/customer/wishlist/82"
 );
 
 const headers = {
@@ -7230,7 +7744,7 @@ keys as the <code>GET /api/properties</code> query string.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/customer/saved-searches" \
+    "https://mw.realty.mightywarnersdemo.com/api/customer/saved-searches" \
     --header "Authorization: Bearer {YOUR_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -7249,7 +7763,7 @@ keys as the <code>GET /api/properties</code> query string.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/customer/saved-searches"
+    "https://mw.realty.mightywarnersdemo.com/api/customer/saved-searches"
 );
 
 const headers = {
@@ -7432,7 +7946,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request DELETE \
-    "http://127.0.0.1:8000/api/customer/saved-searches/3" \
+    "https://mw.realty.mightywarnersdemo.com/api/customer/saved-searches/3" \
     --header "Authorization: Bearer {YOUR_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -7441,7 +7955,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/customer/saved-searches/3"
+    "https://mw.realty.mightywarnersdemo.com/api/customer/saved-searches/3"
 );
 
 const headers = {
@@ -7619,7 +8133,7 @@ token is sent, the enquiry also appears under their account.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/leads/capture" \
+    "https://mw.realty.mightywarnersdemo.com/api/leads/capture" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -7629,8 +8143,8 @@ token is sent, the enquiry also appears under their account.</p>
     \"email\": \"buyer@example.com\",
     \"phone\": \"501234567\",
     \"phone_country_code\": \"+971\",
-    \"company\": \"mniihfqcoynlazghdtqtq\",
-    \"country\": \"xbajwbpilpmufinllwloa\",
+    \"company\": \"g\",
+    \"country\": \"z\",
     \"message\": \"Is this still available? I\'d like to view it this week.\",
     \"page_source\": \"mobile-app\"
 }"
@@ -7639,7 +8153,7 @@ token is sent, the enquiry also appears under their account.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/leads/capture"
+    "https://mw.realty.mightywarnersdemo.com/api/leads/capture"
 );
 
 const headers = {
@@ -7654,8 +8168,8 @@ let body = {
     "email": "buyer@example.com",
     "phone": "501234567",
     "phone_country_code": "+971",
-    "company": "mniihfqcoynlazghdtqtq",
-    "country": "xbajwbpilpmufinllwloa",
+    "company": "g",
+    "country": "z",
     "message": "Is this still available? I'd like to view it this week.",
     "page_source": "mobile-app"
 };
@@ -7830,10 +8344,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="company"                data-endpoint="POSTapi-leads-capture"
-               value="mniihfqcoynlazghdtqtq"
+               value="g"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>mniihfqcoynlazghdtqtq</code></p>
+<p>Must not be greater than 255 characters. Example: <code>g</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>country</code></b>&nbsp;&nbsp;
@@ -7842,10 +8356,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="country"                data-endpoint="POSTapi-leads-capture"
-               value="xbajwbpilpmufinllwloa"
+               value="z"
                data-component="body">
     <br>
-<p>Must not be greater than 100 characters. Example: <code>xbajwbpilpmufinllwloa</code></p>
+<p>Must not be greater than 100 characters. Example: <code>z</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>message</code></b>&nbsp;&nbsp;
@@ -7900,7 +8414,7 @@ are accepted; otherwise any day from today up to 60 days ahead.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/leads/viewing" \
+    "https://mw.realty.mightywarnersdemo.com/api/leads/viewing" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -7919,7 +8433,7 @@ are accepted; otherwise any day from today up to 60 days ahead.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/leads/viewing"
+    "https://mw.realty.mightywarnersdemo.com/api/leads/viewing"
 );
 
 const headers = {
@@ -8183,7 +8697,7 @@ listing has no brochure.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/leads/brochure-download" \
+    "https://mw.realty.mightywarnersdemo.com/api/leads/brochure-download" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -8199,7 +8713,7 @@ listing has no brochure.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/leads/brochure-download"
+    "https://mw.realty.mightywarnersdemo.com/api/leads/brochure-download"
 );
 
 const headers = {
@@ -8408,7 +8922,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/leads/floor-plan-download" \
+    "https://mw.realty.mightywarnersdemo.com/api/leads/floor-plan-download" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -8424,7 +8938,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/leads/floor-plan-download"
+    "https://mw.realty.mightywarnersdemo.com/api/leads/floor-plan-download"
 );
 
 const headers = {
@@ -8635,7 +9149,7 @@ notified and picks it up from the Unassigned Leads screen.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/leads/custom-request" \
+    "https://mw.realty.mightywarnersdemo.com/api/leads/custom-request" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -8646,20 +9160,20 @@ notified and picks it up from the Unassigned Leads screen.</p>
     \"phone\": \"501234567\",
     \"phone_country_code\": \"+971\",
     \"property_category\": \"Apartment\",
-    \"specification\": \"auydlsmsjuryvojcybzvr\",
+    \"specification\": \"z\",
     \"price_range\": \"AED 1M – 2M\",
-    \"area\": \"vazjrcnfbaqywuxhgjjmz\",
+    \"area\": \"i\",
     \"preferred_location\": \"Dubai Marina\",
     \"additional_details\": \"Sea view, high floor.\",
-    \"move_in_timeline\": \"sedyghenqcopwvownkbam\",
-    \"furnishing_status\": \"lnfngefbeilfzsyuxoezb\"
+    \"move_in_timeline\": \"d\",
+    \"furnishing_status\": \"l\"
 }"
 </code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/leads/custom-request"
+    "https://mw.realty.mightywarnersdemo.com/api/leads/custom-request"
 );
 
 const headers = {
@@ -8675,13 +9189,13 @@ let body = {
     "phone": "501234567",
     "phone_country_code": "+971",
     "property_category": "Apartment",
-    "specification": "auydlsmsjuryvojcybzvr",
+    "specification": "z",
     "price_range": "AED 1M – 2M",
-    "area": "vazjrcnfbaqywuxhgjjmz",
+    "area": "i",
     "preferred_location": "Dubai Marina",
     "additional_details": "Sea view, high floor.",
-    "move_in_timeline": "sedyghenqcopwvownkbam",
-    "furnishing_status": "lnfngefbeilfzsyuxoezb"
+    "move_in_timeline": "d",
+    "furnishing_status": "l"
 };
 
 fetch(url, {
@@ -8866,10 +9380,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="specification"                data-endpoint="POSTapi-leads-custom-request"
-               value="auydlsmsjuryvojcybzvr"
+               value="z"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>auydlsmsjuryvojcybzvr</code></p>
+<p>Must not be greater than 255 characters. Example: <code>z</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>price_range</code></b>&nbsp;&nbsp;
@@ -8890,10 +9404,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="area"                data-endpoint="POSTapi-leads-custom-request"
-               value="vazjrcnfbaqywuxhgjjmz"
+               value="i"
                data-component="body">
     <br>
-<p>Must not be greater than 100 characters. Example: <code>vazjrcnfbaqywuxhgjjmz</code></p>
+<p>Must not be greater than 100 characters. Example: <code>i</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>preferred_location</code></b>&nbsp;&nbsp;
@@ -8926,10 +9440,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="move_in_timeline"                data-endpoint="POSTapi-leads-custom-request"
-               value="sedyghenqcopwvownkbam"
+               value="d"
                data-component="body">
     <br>
-<p>Must not be greater than 100 characters. Example: <code>sedyghenqcopwvownkbam</code></p>
+<p>Must not be greater than 100 characters. Example: <code>d</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>furnishing_status</code></b>&nbsp;&nbsp;
@@ -8938,10 +9452,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="furnishing_status"                data-endpoint="POSTapi-leads-custom-request"
-               value="lnfngefbeilfzsyuxoezb"
+               value="l"
                data-component="body">
     <br>
-<p>Must not be greater than 100 characters. Example: <code>lnfngefbeilfzsyuxoezb</code></p>
+<p>Must not be greater than 100 characters. Example: <code>l</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>recaptcha_token</code></b>&nbsp;&nbsp;
@@ -8971,7 +9485,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/leads/profile-request" \
+    "https://mw.realty.mightywarnersdemo.com/api/leads/profile-request" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -8979,25 +9493,25 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"profile_type\": \"agent\",
     \"profile_slug\": \"sruthi-raveendran-m\",
     \"first_name\": \"Sara\",
-    \"last_name\": \"qxbajwbpilpmufinllwlo\",
+    \"last_name\": \"g\",
     \"email\": \"buyer@example.com\",
     \"phone\": \"501234567\",
     \"phone_country_code\": \"+971\",
-    \"property_category\": \"auydlsmsjuryvojcybzvr\",
-    \"specification\": \"byickznkygloigmkwxphl\",
-    \"price_range\": \"vazjrcnfbaqywuxhgjjmz\",
-    \"area\": \"uxjubqouzswiwxtrkimfc\",
-    \"preferred_location\": \"atbxspzmrazsroyjpxmqe\",
-    \"additional_details\": \"sedyghenqcopwvownkbam\",
-    \"move_in_timeline\": \"lnfngefbeilfzsyuxoezb\",
-    \"furnishing_status\": \"dtabptcyyerevrljcbwkt\"
+    \"property_category\": \"z\",
+    \"specification\": \"m\",
+    \"price_range\": \"i\",
+    \"area\": \"y\",
+    \"preferred_location\": \"v\",
+    \"additional_details\": \"d\",
+    \"move_in_timeline\": \"l\",
+    \"furnishing_status\": \"j\"
 }"
 </code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/leads/profile-request"
+    "https://mw.realty.mightywarnersdemo.com/api/leads/profile-request"
 );
 
 const headers = {
@@ -9010,18 +9524,18 @@ let body = {
     "profile_type": "agent",
     "profile_slug": "sruthi-raveendran-m",
     "first_name": "Sara",
-    "last_name": "qxbajwbpilpmufinllwlo",
+    "last_name": "g",
     "email": "buyer@example.com",
     "phone": "501234567",
     "phone_country_code": "+971",
-    "property_category": "auydlsmsjuryvojcybzvr",
-    "specification": "byickznkygloigmkwxphl",
-    "price_range": "vazjrcnfbaqywuxhgjjmz",
-    "area": "uxjubqouzswiwxtrkimfc",
-    "preferred_location": "atbxspzmrazsroyjpxmqe",
-    "additional_details": "sedyghenqcopwvownkbam",
-    "move_in_timeline": "lnfngefbeilfzsyuxoezb",
-    "furnishing_status": "dtabptcyyerevrljcbwkt"
+    "property_category": "z",
+    "specification": "m",
+    "price_range": "i",
+    "area": "y",
+    "preferred_location": "v",
+    "additional_details": "d",
+    "move_in_timeline": "l",
+    "furnishing_status": "j"
 };
 
 fetch(url, {
@@ -9170,10 +9684,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="last_name"                data-endpoint="POSTapi-leads-profile-request"
-               value="qxbajwbpilpmufinllwlo"
+               value="g"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>qxbajwbpilpmufinllwlo</code></p>
+<p>Must not be greater than 255 characters. Example: <code>g</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
@@ -9218,10 +9732,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="property_category"                data-endpoint="POSTapi-leads-profile-request"
-               value="auydlsmsjuryvojcybzvr"
+               value="z"
                data-component="body">
     <br>
-<p>Must not be greater than 100 characters. Example: <code>auydlsmsjuryvojcybzvr</code></p>
+<p>Must not be greater than 100 characters. Example: <code>z</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>specification</code></b>&nbsp;&nbsp;
@@ -9230,10 +9744,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="specification"                data-endpoint="POSTapi-leads-profile-request"
-               value="byickznkygloigmkwxphl"
+               value="m"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>byickznkygloigmkwxphl</code></p>
+<p>Must not be greater than 255 characters. Example: <code>m</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>price_range</code></b>&nbsp;&nbsp;
@@ -9242,10 +9756,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="price_range"                data-endpoint="POSTapi-leads-profile-request"
-               value="vazjrcnfbaqywuxhgjjmz"
+               value="i"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>vazjrcnfbaqywuxhgjjmz</code></p>
+<p>Must not be greater than 255 characters. Example: <code>i</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>area</code></b>&nbsp;&nbsp;
@@ -9254,10 +9768,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="area"                data-endpoint="POSTapi-leads-profile-request"
-               value="uxjubqouzswiwxtrkimfc"
+               value="y"
                data-component="body">
     <br>
-<p>Must not be greater than 100 characters. Example: <code>uxjubqouzswiwxtrkimfc</code></p>
+<p>Must not be greater than 100 characters. Example: <code>y</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>preferred_location</code></b>&nbsp;&nbsp;
@@ -9266,10 +9780,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="preferred_location"                data-endpoint="POSTapi-leads-profile-request"
-               value="atbxspzmrazsroyjpxmqe"
+               value="v"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>atbxspzmrazsroyjpxmqe</code></p>
+<p>Must not be greater than 255 characters. Example: <code>v</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>additional_details</code></b>&nbsp;&nbsp;
@@ -9278,10 +9792,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="additional_details"                data-endpoint="POSTapi-leads-profile-request"
-               value="sedyghenqcopwvownkbam"
+               value="d"
                data-component="body">
     <br>
-<p>Must not be greater than 2000 characters. Example: <code>sedyghenqcopwvownkbam</code></p>
+<p>Must not be greater than 2000 characters. Example: <code>d</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>move_in_timeline</code></b>&nbsp;&nbsp;
@@ -9290,10 +9804,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="move_in_timeline"                data-endpoint="POSTapi-leads-profile-request"
-               value="lnfngefbeilfzsyuxoezb"
+               value="l"
                data-component="body">
     <br>
-<p>Must not be greater than 100 characters. Example: <code>lnfngefbeilfzsyuxoezb</code></p>
+<p>Must not be greater than 100 characters. Example: <code>l</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>furnishing_status</code></b>&nbsp;&nbsp;
@@ -9302,10 +9816,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="furnishing_status"                data-endpoint="POSTapi-leads-profile-request"
-               value="dtabptcyyerevrljcbwkt"
+               value="j"
                data-component="body">
     <br>
-<p>Must not be greater than 100 characters. Example: <code>dtabptcyyerevrljcbwkt</code></p>
+<p>Must not be greater than 100 characters. Example: <code>j</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>recaptcha_token</code></b>&nbsp;&nbsp;
@@ -9334,6 +9848,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
 conversation to continue. Needs the <code>X-Device-Id</code> header; a customer token makes the
 user known automatically.</p>
 <p>Widget opened: is this visitor known yet, and the latest conversation to pick up from.</p>
+<p><code>languages</code> are the languages the assistant chats in (show them as "Choose your language");
+<code>language</code> is the one this conversation is in (null until the user picks one). Send the
+chosen code as <code>language</code> with each message.</p>
 
 <span id="example-requests-GETapi-chatbot-session">
 <blockquote>Example request:</blockquote>
@@ -9341,7 +9858,7 @@ user known automatically.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/chatbot/session" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/chatbot/session" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -9349,7 +9866,7 @@ user known automatically.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/chatbot/session"
+    "https://mw.realty.mightywarnersdemo.com/api/chatbot/session"
 );
 
 const headers = {
@@ -9376,6 +9893,25 @@ fetch(url, {
     &quot;identified&quot;: false,
     &quot;details_required&quot;: false,
     &quot;conversation_id&quot;: null,
+    &quot;requirements&quot;: null,
+    &quot;language&quot;: null,
+    &quot;default_language&quot;: &quot;en&quot;,
+    &quot;languages&quot;: [
+        {
+            &quot;code&quot;: &quot;ar&quot;,
+            &quot;name&quot;: &quot;Arabic&quot;,
+            &quot;native&quot;: &quot;العربية&quot;,
+            &quot;dir&quot;: &quot;rtl&quot;,
+            &quot;speech&quot;: &quot;ar-AE&quot;,
+            &quot;strings&quot;: {
+                &quot;welcome&quot;: &quot;&hellip;&quot;,
+                &quot;placeholder&quot;: &quot;&hellip;&quot;,
+                &quot;switch_offer&quot;: &quot;&hellip;&quot;,
+                &quot;switched&quot;: &quot;&hellip;&quot;,
+                &quot;error&quot;: &quot;&hellip;&quot;
+            }
+        }
+    ],
     &quot;messages&quot;: []
 }</code>
  </pre>
@@ -9481,7 +10017,7 @@ chat is attached by VisitorTracker).</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/chatbot/start" \
+    "https://mw.realty.mightywarnersdemo.com/api/chatbot/start" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -9496,7 +10032,7 @@ chat is attached by VisitorTracker).</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/chatbot/start"
+    "https://mw.realty.mightywarnersdemo.com/api/chatbot/start"
 );
 
 const headers = {
@@ -9703,7 +10239,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/chatbot/reset" \
+    "https://mw.realty.mightywarnersdemo.com/api/chatbot/reset" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -9711,7 +10247,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/chatbot/reset"
+    "https://mw.realty.mightywarnersdemo.com/api/chatbot/reset"
 );
 
 const headers = {
@@ -9838,20 +10374,21 @@ messages/minute and 150/day per IP.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/chatbot/message" \
+    "https://mw.realty.mightywarnersdemo.com/api/chatbot/message" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
     --data "{
     \"message\": \"Show me 2 bedroom apartments in Dubai Marina under 2M\",
-    \"lang\": \"en\"
+    \"lang\": \"en\",
+    \"language\": \"ar\\n\\nThe buyer can describe what they want in their own words (budget, area, near schools,\\nrental income, commute, …): `requirements` is everything captured so far in this\\nconversation, and the cards are ranked against it — each has `match` with a 0-100 `score`\\n(null when there\'s nothing to score on), `reasons` and `misses`.\"
 }"
 </code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/chatbot/message"
+    "https://mw.realty.mightywarnersdemo.com/api/chatbot/message"
 );
 
 const headers = {
@@ -9862,7 +10399,8 @@ const headers = {
 
 let body = {
     "message": "Show me 2 bedroom apartments in Dubai Marina under 2M",
-    "lang": "en"
+    "lang": "en",
+    "language": "ar\n\nThe buyer can describe what they want in their own words (budget, area, near schools,\nrental income, commute, …): `requirements` is everything captured so far in this\nconversation, and the cards are ranked against it — each has `match` with a 0-100 `score`\n(null when there's nothing to score on), `reasons` and `misses`."
 };
 
 fetch(url, {
@@ -9886,13 +10424,31 @@ fetch(url, {
             &quot;id&quot;: 111,
             &quot;slug&quot;: &quot;virella-2&quot;,
             &quot;image&quot;: &quot;https://.../photo.jpg&quot;,
+            &quot;match&quot;: {
+                &quot;score&quot;: 92,
+                &quot;reasons&quot;: [
+                    &quot;Within budget&quot;,
+                    &quot;2 bedrooms&quot;,
+                    &quot;Near school&quot;
+                ],
+                &quot;misses&quot;: []
+            },
             &quot;...&quot;: &quot;same card shape as GET /api/properties&quot;
         }
     ],
     &quot;pagination&quot;: {
         &quot;current_page&quot;: 1,
-        &quot;last_page&quot;: 3,
-        &quot;total&quot;: 41
+        &quot;last_page&quot;: 1,
+        &quot;total&quot;: 6
+    },
+    &quot;requirements&quot;: {
+        &quot;location&quot;: &quot;Dubai Marina&quot;,
+        &quot;bedrooms&quot;: &quot;2&quot;,
+        &quot;max_price&quot;: 2000000,
+        &quot;nearby&quot;: [
+            &quot;school&quot;
+        ],
+        &quot;purpose&quot;: &quot;invest&quot;
     },
     &quot;error&quot;: false,
     &quot;conversation_id&quot;: 44,
@@ -10028,7 +10584,28 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="en"
                data-component="body">
     <br>
-<p>Reply language. Example: <code>en</code></p>
+<p>Website language — the listing text on the cards. Example: <code>en</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>language</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="language"                data-endpoint="POSTapi-chatbot-message"
+               value="ar
+
+The buyer can describe what they want in their own words (budget, area, near schools,
+rental income, commute, …): `requirements` is everything captured so far in this
+conversation, and the cards are ranked against it — each has `match` with a 0-100 `score`
+(null when there's nothing to score on), `reasons` and `misses`."
+               data-component="body">
+    <br>
+<p>Chat language the user picked (a <code>languages</code> code from Open chat) — the assistant replies in it whatever language the message is in. Example: `ar</p>
+<p>The buyer can describe what they want in their own words (budget, area, near schools,
+rental income, commute, …): <code>requirements</code> is everything captured so far in this
+conversation, and the cards are ranked against it — each has <code>match</code> with a 0-100 <code>score</code>
+(null when there's nothing to score on), <code>reasons</code> and <code>misses</code>.`</p>
         </div>
         </form>
 
@@ -10049,7 +10626,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/contact?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/contact?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -10057,7 +10634,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/contact"
+    "https://mw.realty.mightywarnersdemo.com/api/contact"
 );
 
 const params = {
@@ -10196,7 +10773,7 @@ Saves to Enquiries and emails admin.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/contact" \
+    "https://mw.realty.mightywarnersdemo.com/api/contact" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -10214,7 +10791,7 @@ Saves to Enquiries and emails admin.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/contact"
+    "https://mw.realty.mightywarnersdemo.com/api/contact"
 );
 
 const headers = {
@@ -10418,7 +10995,19 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="contact"
                data-component="body">
     <br>
-<p>contact or home. Example: <code>contact</code></p>
+<p>contact, home, calculator or compare. <code>compare</code> is the /compare page's unlock form: <code>calculation</code> lists the compared listings and the reply carries <code>compare_unlock</code>, the token for the <code>X-Compare-Unlock</code> header of GET /api/compare. Example: <code>contact</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>calculation</code></b>&nbsp;&nbsp;
+<small>object</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="calculation"                data-endpoint="POSTapi-contact"
+               value=""
+               data-component="body">
+    <br>
+<p>Calculator pages (<code>source=calculator</code>): the figures the visitor worked out, label =&gt; value, e.g. {"Calculator": "Mortgage", "Loan amount": "AED 1,402,500"}. Saved with the enquiry; the message is then optional.</p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>recaptcha_token</code></b>&nbsp;&nbsp;
@@ -10447,7 +11036,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/newsletter/subscribe" \
+    "https://mw.realty.mightywarnersdemo.com/api/newsletter/subscribe" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -10459,7 +11048,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/newsletter/subscribe"
+    "https://mw.realty.mightywarnersdemo.com/api/newsletter/subscribe"
 );
 
 const headers = {
@@ -10619,7 +11208,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/about?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/about?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -10627,7 +11216,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/about"
+    "https://mw.realty.mightywarnersdemo.com/api/about"
 );
 
 const params = {
@@ -10763,7 +11352,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/blogs?page=1&amp;lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/blogs?page=1&amp;lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -10771,7 +11360,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/blogs"
+    "https://mw.realty.mightywarnersdemo.com/api/blogs"
 );
 
 const params = {
@@ -10932,7 +11521,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/blogs/5-reasons-to-invest-in-dubai-off-plan-properties?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/blogs/5-reasons-to-invest-in-dubai-off-plan-properties?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -10940,7 +11529,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/blogs/5-reasons-to-invest-in-dubai-off-plan-properties"
+    "https://mw.realty.mightywarnersdemo.com/api/blogs/5-reasons-to-invest-in-dubai-off-plan-properties"
 );
 
 const params = {
@@ -11098,7 +11687,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/landing-pages/?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/landing-pages/?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -11106,7 +11695,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/landing-pages/"
+    "https://mw.realty.mightywarnersdemo.com/api/landing-pages/"
 );
 
 const params = {
@@ -11264,7 +11853,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/market-insights?page=1&amp;lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/market-insights?page=1&amp;lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -11272,7 +11861,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/market-insights"
+    "https://mw.realty.mightywarnersdemo.com/api/market-insights"
 );
 
 const params = {
@@ -11445,7 +12034,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/market-insights/dubai-property-market-report-q3-2026?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/market-insights/dubai-property-market-report-q3-2026?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -11453,7 +12042,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/market-insights/dubai-property-market-report-q3-2026"
+    "https://mw.realty.mightywarnersdemo.com/api/market-insights/dubai-property-market-report-q3-2026"
 );
 
 const params = {
@@ -11611,7 +12200,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/legal/privacy?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/legal/privacy?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -11619,7 +12208,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/legal/privacy"
+    "https://mw.realty.mightywarnersdemo.com/api/legal/privacy"
 );
 
 const params = {
@@ -11764,6 +12353,330 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                 </form>
 
+                    <h2 id="content-GETapi-calculators">Calculators menu</h2>
+
+<p>
+</p>
+
+<p>The calculators shown in the header menu and the page tabs, in order.</p>
+
+<span id="example-requests-GETapi-calculators">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://mw.realty.mightywarnersdemo.com/api/calculators?lang=en" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://mw.realty.mightywarnersdemo.com/api/calculators"
+);
+
+const params = {
+    "lang": "en",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-Device-Id": "{DEVICE_ID}",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-calculators">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;data&quot;: [
+        {
+            &quot;key&quot;: &quot;mortgage&quot;,
+            &quot;title&quot;: &quot;Mortgage Calculator&quot;
+        }
+    ]
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-calculators" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-calculators"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-calculators"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-calculators" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-calculators">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-calculators" data-method="GET"
+      data-path="api/calculators"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-calculators', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-calculators"
+                    onclick="tryItOut('GETapi-calculators');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-calculators"
+                    onclick="cancelTryOut('GETapi-calculators');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-calculators"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/calculators</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-calculators"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-calculators"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-Device-Id"                data-endpoint="GETapi-calculators"
+               value="{DEVICE_ID}"
+               data-component="header">
+    <br>
+<p>Example: <code>{DEVICE_ID}</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>lang</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="lang"                data-endpoint="GETapi-calculators"
+               value="en"
+               data-component="query">
+    <br>
+<p>Example: <code>en</code></p>
+            </div>
+                </form>
+
+                    <h2 id="content-GETapi-calculators--key-">Calculator page</h2>
+
+<p>
+</p>
+
+<p>Page copy, enquiry-form copy, FAQs, settings and SEO of one calculator.</p>
+
+<span id="example-requests-GETapi-calculators--key-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://mw.realty.mightywarnersdemo.com/api/calculators/refinance?lang=en" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://mw.realty.mightywarnersdemo.com/api/calculators/refinance"
+);
+
+const params = {
+    "lang": "en",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-Device-Id": "{DEVICE_ID}",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-calculators--key-">
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Not found&quot;
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-calculators--key-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-calculators--key-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-calculators--key-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-calculators--key-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-calculators--key-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-calculators--key-" data-method="GET"
+      data-path="api/calculators/{key}"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-calculators--key-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-calculators--key-"
+                    onclick="tryItOut('GETapi-calculators--key-');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-calculators--key-"
+                    onclick="cancelTryOut('GETapi-calculators--key-');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-calculators--key-"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/calculators/{key}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-calculators--key-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-calculators--key-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-Device-Id"                data-endpoint="GETapi-calculators--key-"
+               value="{DEVICE_ID}"
+               data-component="header">
+    <br>
+<p>Example: <code>{DEVICE_ID}</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>key</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="key"                data-endpoint="GETapi-calculators--key-"
+               value="refinance"
+               data-component="url">
+    <br>
+<p>mortgage, eligibility, rent-vs-buy or refinance. Example: <code>refinance</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>lang</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="lang"                data-endpoint="GETapi-calculators--key-"
+               value="en"
+               data-component="query">
+    <br>
+<p>Example: <code>en</code></p>
+            </div>
+                </form>
+
                 <h1 id="careers">Careers</h1>
 
     
@@ -11781,7 +12694,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/careers?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/careers?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -11789,7 +12702,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/careers"
+    "https://mw.realty.mightywarnersdemo.com/api/careers"
 );
 
 const params = {
@@ -11928,25 +12841,25 @@ Saves to Careers &gt; Candidates and emails admin.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/careers/apply" \
+    "https://mw.realty.mightywarnersdemo.com/api/careers/apply" \
     --header "Content-Type: multipart/form-data" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
     --form "career=senior-property-consultant"\
-    --form "name=mqeopfuudtdsufvyvddqa"\
-    --form "email=eloisa.harber@example.com"\
-    --form "phone=fqcoynlazghdtqtqxbajw"\
-    --form "country=bpilpmufinllwloauydls"\
-    --form "experience=msjuryvojcybzvrbyickz"\
-    --form "designation=nkygloigmkwxphlvazjrc"\
-    --form "additional_information=nfbaqywuxhgjjmzuxjubq"\
+    --form "name=n"\
+    --form "email=ashly64@example.com"\
+    --form "phone=v"\
+    --form "country=d"\
+    --form "experience=l"\
+    --form "designation=j"\
+    --form "additional_information=n"\
     --form "privacy=1"\
-    --form "attachment=@C:\Users\User\AppData\Local\Temp\php129F.tmp" </code></pre></div>
+    --form "attachment=@C:\Users\User\AppData\Local\Temp\php9C9A.tmp" </code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/careers/apply"
+    "https://mw.realty.mightywarnersdemo.com/api/careers/apply"
 );
 
 const headers = {
@@ -11957,13 +12870,13 @@ const headers = {
 
 const body = new FormData();
 body.append('career', 'senior-property-consultant');
-body.append('name', 'mqeopfuudtdsufvyvddqa');
-body.append('email', 'eloisa.harber@example.com');
-body.append('phone', 'fqcoynlazghdtqtqxbajw');
-body.append('country', 'bpilpmufinllwloauydls');
-body.append('experience', 'msjuryvojcybzvrbyickz');
-body.append('designation', 'nkygloigmkwxphlvazjrc');
-body.append('additional_information', 'nfbaqywuxhgjjmzuxjubq');
+body.append('name', 'n');
+body.append('email', 'ashly64@example.com');
+body.append('phone', 'v');
+body.append('country', 'd');
+body.append('experience', 'l');
+body.append('designation', 'j');
+body.append('additional_information', 'n');
 body.append('privacy', '1');
 body.append('attachment', document.querySelector('input[name="attachment"]').files[0]);
 
@@ -12089,10 +13002,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="name"                data-endpoint="POSTapi-careers-apply"
-               value="mqeopfuudtdsufvyvddqa"
+               value="n"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>mqeopfuudtdsufvyvddqa</code></p>
+<p>Must not be greater than 255 characters. Example: <code>n</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
@@ -12101,10 +13014,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="email"                data-endpoint="POSTapi-careers-apply"
-               value="eloisa.harber@example.com"
+               value="ashly64@example.com"
                data-component="body">
     <br>
-<p>Must be a valid email address. Must not be greater than 255 characters. Example: <code>eloisa.harber@example.com</code></p>
+<p>Must be a valid email address. Must not be greater than 255 characters. Example: <code>ashly64@example.com</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>phone</code></b>&nbsp;&nbsp;
@@ -12113,10 +13026,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="phone"                data-endpoint="POSTapi-careers-apply"
-               value="fqcoynlazghdtqtqxbajw"
+               value="v"
                data-component="body">
     <br>
-<p>Must not be greater than 50 characters. Example: <code>fqcoynlazghdtqtqxbajw</code></p>
+<p>Must not be greater than 50 characters. Example: <code>v</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>country</code></b>&nbsp;&nbsp;
@@ -12125,10 +13038,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="country"                data-endpoint="POSTapi-careers-apply"
-               value="bpilpmufinllwloauydls"
+               value="d"
                data-component="body">
     <br>
-<p>Must not be greater than 100 characters. Example: <code>bpilpmufinllwloauydls</code></p>
+<p>Must not be greater than 100 characters. Example: <code>d</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>experience</code></b>&nbsp;&nbsp;
@@ -12137,10 +13050,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="experience"                data-endpoint="POSTapi-careers-apply"
-               value="msjuryvojcybzvrbyickz"
+               value="l"
                data-component="body">
     <br>
-<p>Must not be greater than 50 characters. Example: <code>msjuryvojcybzvrbyickz</code></p>
+<p>Must not be greater than 50 characters. Example: <code>l</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>designation</code></b>&nbsp;&nbsp;
@@ -12149,10 +13062,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="designation"                data-endpoint="POSTapi-careers-apply"
-               value="nkygloigmkwxphlvazjrc"
+               value="j"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>nkygloigmkwxphlvazjrc</code></p>
+<p>Must not be greater than 255 characters. Example: <code>j</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>additional_information</code></b>&nbsp;&nbsp;
@@ -12161,10 +13074,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="additional_information"                data-endpoint="POSTapi-careers-apply"
-               value="nfbaqywuxhgjjmzuxjubq"
+               value="n"
                data-component="body">
     <br>
-<p>Must not be greater than 2000 characters. Example: <code>nfbaqywuxhgjjmzuxjubq</code></p>
+<p>Must not be greater than 2000 characters. Example: <code>n</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>attachment</code></b>&nbsp;&nbsp;
@@ -12176,7 +13089,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>The CV: PDF, DOC or DOCX, max 5 MB. Example: <code>C:\Users\User\AppData\Local\Temp\php129F.tmp</code></p>
+<p>The CV: PDF, DOC or DOCX, max 5 MB. Example: <code>C:\Users\User\AppData\Local\Temp\php9C9A.tmp</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>privacy</code></b>&nbsp;&nbsp;
@@ -12227,7 +13140,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://127.0.0.1:8000/api/careers/senior-property-consultant?lang=en" \
+    --get "https://mw.realty.mightywarnersdemo.com/api/careers/senior-property-consultant?lang=en" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
@@ -12235,7 +13148,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/careers/senior-property-consultant"
+    "https://mw.realty.mightywarnersdemo.com/api/careers/senior-property-consultant"
 );
 
 const params = {
@@ -12401,7 +13314,7 @@ search, anything else = a page view. Keep the returned <code>id</code> to report
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/track/page" \
+    "https://mw.realty.mightywarnersdemo.com/api/track/page" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -12414,7 +13327,7 @@ search, anything else = a page view. Keep the returned <code>id</code> to report
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/track/page"
+    "https://mw.realty.mightywarnersdemo.com/api/track/page"
 );
 
 const headers = {
@@ -12583,7 +13496,7 @@ goes to the background; the largest value wins, so re-sending is safe.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/track/page/5821/time" \
+    "https://mw.realty.mightywarnersdemo.com/api/track/page/5821/time" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -12595,7 +13508,7 @@ goes to the background; the largest value wins, so re-sending is safe.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/track/page/5821/time"
+    "https://mw.realty.mightywarnersdemo.com/api/track/page/5821/time"
 );
 
 const headers = {
@@ -12750,7 +13663,7 @@ day per device.</p>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/track/impressions" \
+    "https://mw.realty.mightywarnersdemo.com/api/track/impressions" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -12766,7 +13679,7 @@ day per device.</p>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/track/impressions"
+    "https://mw.realty.mightywarnersdemo.com/api/track/impressions"
 );
 
 const headers = {
@@ -12912,7 +13825,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://127.0.0.1:8000/api/track/lead-click" \
+    "https://mw.realty.mightywarnersdemo.com/api/track/lead-click" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --header "X-Device-Id: {DEVICE_ID}" \
@@ -12925,7 +13838,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://127.0.0.1:8000/api/track/lead-click"
+    "https://mw.realty.mightywarnersdemo.com/api/track/lead-click"
 );
 
 const headers = {
@@ -13064,6 +13977,135 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>call, whatsapp, email, enquiry, viewing, brochure or floor_plan. Example: <code>whatsapp</code></p>
         </div>
         </form>
+
+                <h1 id="endpoints">Endpoints</h1>
+
+    
+
+                                <h2 id="endpoints-POSTapi-webhooks-facebook-data-deletion">POST api/webhooks/facebook/data-deletion</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-POSTapi-webhooks-facebook-data-deletion">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "https://mw.realty.mightywarnersdemo.com/api/webhooks/facebook/data-deletion" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --header "X-Device-Id: {DEVICE_ID}"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://mw.realty.mightywarnersdemo.com/api/webhooks/facebook/data-deletion"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-Device-Id": "{DEVICE_ID}",
+};
+
+
+fetch(url, {
+    method: "POST",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-webhooks-facebook-data-deletion">
+</span>
+<span id="execution-results-POSTapi-webhooks-facebook-data-deletion" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-webhooks-facebook-data-deletion"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-webhooks-facebook-data-deletion"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-webhooks-facebook-data-deletion" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-webhooks-facebook-data-deletion">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-webhooks-facebook-data-deletion" data-method="POST"
+      data-path="api/webhooks/facebook/data-deletion"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-webhooks-facebook-data-deletion', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-webhooks-facebook-data-deletion"
+                    onclick="tryItOut('POSTapi-webhooks-facebook-data-deletion');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-webhooks-facebook-data-deletion"
+                    onclick="cancelTryOut('POSTapi-webhooks-facebook-data-deletion');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-webhooks-facebook-data-deletion"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/webhooks/facebook/data-deletion</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-webhooks-facebook-data-deletion"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-webhooks-facebook-data-deletion"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>X-Device-Id</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="X-Device-Id"                data-endpoint="POSTapi-webhooks-facebook-data-deletion"
+               value="{DEVICE_ID}"
+               data-component="header">
+    <br>
+<p>Example: <code>{DEVICE_ID}</code></p>
+            </div>
+                        </form>
 
             
 

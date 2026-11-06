@@ -19,6 +19,10 @@ endpoints:
         user known automatically.
 
         Widget opened: is this visitor known yet, and the latest conversation to pick up from.
+
+        `languages` are the languages the assistant chats in (show them as "Choose your language");
+        `language` is the one this conversation is in (null until the user picks one). Send the
+        chosen code as `language` with each message.
       authenticated: false
       deprecated: false
     headers:
@@ -36,7 +40,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"identified": false, "details_required": false, "conversation_id": null, "messages": []}'
+        content: '{"identified": false, "details_required": false, "conversation_id": null, "requirements": null, "language": null, "default_language": "en", "languages": [{"code": "ar", "name": "Arabic", "native": "العربية", "dir": "rtl", "speech": "ar-AE", "strings": {"welcome": "…", "placeholder": "…", "switch_offer": "…", "switched": "…", "error": "…"}}], "messages": []}'
         headers: []
         description: ''
     responseFields: []
@@ -246,9 +250,26 @@ endpoints:
       lang:
         custom: []
         name: lang
-        description: 'Reply language.'
+        description: 'Website language — the listing text on the cards.'
         required: false
         example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      language:
+        custom: []
+        name: language
+        description: 'Chat language the user picked (a `languages` code from Open chat) — the assistant replies in it whatever language the message is in.'
+        required: false
+        example: |-
+          ar
+
+          The buyer can describe what they want in their own words (budget, area, near schools,
+          rental income, commute, …): `requirements` is everything captured so far in this
+          conversation, and the cards are ranked against it — each has `match` with a 0-100 `score`
+          (null when there's nothing to score on), `reasons` and `misses`.
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -257,12 +278,19 @@ endpoints:
     cleanBodyParameters:
       message: 'Show me 2 bedroom apartments in Dubai Marina under 2M'
       lang: en
+      language: |-
+        ar
+
+        The buyer can describe what they want in their own words (budget, area, near schools,
+        rental income, commute, …): `requirements` is everything captured so far in this
+        conversation, and the cards are ranked against it — each has `match` with a 0-100 `score`
+        (null when there's nothing to score on), `reasons` and `misses`.
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"reply": "Here are some 2-bedroom apartments in Dubai Marina:", "properties": [{"id": 111, "slug": "virella-2", "image": "https://.../photo.jpg", "...": "same card shape as GET /api/properties"}], "pagination": {"current_page": 1, "last_page": 3, "total": 41}, "error": false, "conversation_id": 44, "details_required": false}'
+        content: '{"reply": "Here are some 2-bedroom apartments in Dubai Marina:", "properties": [{"id": 111, "slug": "virella-2", "image": "https://.../photo.jpg", "match": {"score": 92, "reasons": ["Within budget", "2 bedrooms", "Near school"], "misses": []}, "...": "same card shape as GET /api/properties"}], "pagination": {"current_page": 1, "last_page": 1, "total": 6}, "requirements": {"location": "Dubai Marina", "bedrooms": "2", "max_price": 2000000, "nearby": ["school"], "purpose": "invest"}, "error": false, "conversation_id": 44, "details_required": false}'
         headers: []
         description: ''
       -

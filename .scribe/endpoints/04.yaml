@@ -138,17 +138,28 @@ endpoints:
         type: string
         enumValues: []
         exampleWasSpecified: true
-        nullable: true
+        nullable: false
         deprecated: false
       source:
         custom: []
         name: source
-        description: 'contact or home.'
+        description: "contact, home, calculator or compare. `compare` is the /compare page's unlock form: `calculation` lists the compared listings and the reply carries `compare_unlock`, the token for the `X-Compare-Unlock` header of GET /api/compare."
         required: false
         example: contact
         type: string
         enumValues: []
         exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      calculation:
+        custom: []
+        name: calculation
+        description: 'Calculator pages (`source=calculator`): the figures the visitor worked out, label => value, e.g. {"Calculator": "Mortgage", "Loan amount": "AED 1,402,500"}. Saved with the enquiry; the message is then optional.'
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
         nullable: true
         deprecated: false
       recaptcha_token:

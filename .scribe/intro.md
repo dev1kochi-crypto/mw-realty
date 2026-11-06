@@ -3,7 +3,7 @@
 REST API for the MW Realty mobile app: property search, listings, agents, content, customer accounts, enquiries and the AI assistant.
 
 <aside>
-    <strong>Base URL</strong>: <code>http://127.0.0.1:8000</code>
+    <strong>Base URL</strong>: <code>https://mw.realty.mightywarnersdemo.com/</code>
 </aside>
 
     The same API the website uses. All responses are JSON. Example responses for `GET` endpoints were recorded from real data, so field names and nesting are exact.

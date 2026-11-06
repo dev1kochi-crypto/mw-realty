@@ -5,7 +5,7 @@ info:
   version: 1.0.0
 servers:
   -
-    url: 'http://127.0.0.1:8000'
+    url: 'https://mw.realty.mightywarnersdemo.com'
 tags:
   -
     name: 'App Config'
@@ -49,6 +49,9 @@ tags:
   -
     name: Tracking
     description: ''
+  -
+    name: Endpoints
+    description: ''
 components:
   securitySchemes:
     default:
@@ -72,7 +75,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'App Config'
       security: []
@@ -89,7 +92,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'App Config'
       security: []
@@ -116,7 +119,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'App Config'
       security: []
@@ -143,7 +146,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'App Config'
       security: []
@@ -151,7 +154,7 @@ paths:
     get:
       summary: 'Home screen'
       operationId: homeScreen
-      description: "Every home section in one request: banner, brands, ad, developments, premium properties,\nluxury, why-choose-us, communities, popular places, testimonials, contact. Property lists\ninside are shuffled on each call.\n\n`ad` is a single ad, kept for older clients. The home ad slider shows every running ad:\nload it from **Ad slider** (`/api/ads/slides?placement=home`)."
+      description: "Every home section in one request: banner, brands, ad, developments, premium properties,\nluxury, why-choose-us, communities, popular places, testimonials, contact. Property lists\ninside are shuffled on each call — except Realty Property while it shows Super Admin's\nMarketing Properties list (`realty.curated`), which keeps that list's order.\n\n`ad` is a single ad, kept for older clients. The home ad slider shows every running ad:\nload it from **Ad slider** (`/api/ads/slides?placement=home`)."
       parameters:
         -
           in: query
@@ -170,7 +173,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Home
       security: []
@@ -207,7 +210,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Home
       security: []
@@ -254,7 +257,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'Search & Filters'
       requestBody:
@@ -267,14 +270,14 @@ paths:
                 page:
                   type: string
                   description: ''
-                  example: home
+                  example: listing
                   enum:
                     - home
                     - listing
                 lang:
                   type: string
                   description: 'Must not be greater than 10 characters.'
-                  example: vmqeopfuu
+                  example: bngzmi
                 scope:
                   type: string
                   description: ''
@@ -562,7 +565,7 @@ paths:
                 lang:
                   type: string
                   description: 'Must not be greater than 10 characters.'
-                  example: vmqeopfuu
+                  example: bngzmi
       security: []
     parameters:
       -
@@ -622,7 +625,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'Search & Filters'
       requestBody:
@@ -635,12 +638,12 @@ paths:
                 q:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: vmqeopfuudtdsufvyvddq
+                  example: b
                   nullable: true
                 lang:
                   type: string
                   description: 'Must not be greater than 10 characters.'
-                  example: amniihfqc
+                  example: ngzmiy
                   nullable: true
                 scope:
                   type: string
@@ -826,7 +829,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Properties
       security: []
@@ -1065,7 +1068,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Properties
       security: []
@@ -1142,7 +1145,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Properties
       security: []
@@ -1194,6 +1197,128 @@ paths:
         required: true
         schema:
           type: string
+  '/api/properties/{slug}/insights':
+    get:
+      summary: 'Market & investment insights'
+      operationId: marketInvestmentInsights
+      description: "The listing's Market & Investment panel: asking and verified (closed-deal) price summaries for\nthe same type in the same area, estimated value / annual rent, gross yield, price vs market,\nyear-on-year growth, a quarterly price-per-sq.ft trend, recent closed deals, the automated\nassessment badge and the starting assumptions for the investment calculator. Every estimate\ncarries `source` (verified | asking) and `count`. Amounts in AED; rents annual."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not found'
+      tags:
+        - Properties
+      security: []
+    parameters:
+      -
+        in: path
+        name: slug
+        description: ''
+        example: virella-2
+        required: true
+        schema:
+          type: string
+  /api/compare:
+    get:
+      summary: 'Compare properties'
+      operationId: compareProperties
+      description: "Two to five listings side by side in one shape, whichever emirate they are in: price (rent per\nyear), size and price per sq.ft, specs, amenities, nearest place of each type, buying costs\nunder that emirate's fees (move-in costs for rentals), market estimates (rent, gross / net\nyield, price vs area, growth), ownership rules and Golden Visa eligibility. `notes` carries the\ncross-border notes (FX margin, UAE tax, notes per buyer currency). Amounts in AED.\n\nThe money & investment figures (`costs`, `total_outlay`, `market`) come back null with\n`locked: true` until the visitor has left their contact details — send the token from\n`POST /api/contact` (source=compare) as the `X-Compare-Unlock` header."
+      parameters:
+        -
+          in: query
+          name: slugs
+          description: 'Comma-separated listing slugs, in display order.'
+          example: 'virella-2,marina-gate-1'
+          required: true
+          schema:
+            type: string
+            description: 'Comma-separated listing slugs, in display order.'
+            example: 'virella-2,marina-gate-1'
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - Properties
+      security: []
+  /api/compare/summary:
+    get:
+      summary: 'Comparison summary'
+      operationId: comparisonSummary
+      description: "A written summary of the same listings — the main trade-off, 4–6 key differences and who each\nlisting suits (`best_for`, keyed by position 1..n) — with amounts in `currency`. `source` is\n`ai`, or `rules` when the AI isn't available. Without the `X-Compare-Unlock` header it is\nwritten without the locked money & investment figures."
+      parameters:
+        -
+          in: query
+          name: slugs
+          description: ''
+          example: 'virella-2,marina-gate-1'
+          required: true
+          schema:
+            type: string
+            description: ''
+            example: 'virella-2,marina-gate-1'
+        -
+          in: query
+          name: currency
+          description: 'A code from GET /api/currencies.'
+          example: USD
+          required: false
+          schema:
+            type: string
+            description: 'A code from GET /api/currencies.'
+            example: USD
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - Properties
+      security: []
   /api/ads:
     get:
       summary: 'Ad banner'
@@ -1227,7 +1352,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Advertisements
       security: []
@@ -1361,8 +1486,8 @@ paths:
             application/json:
               schema:
                 type: object
-                example: {  }
-                properties: {  }
+                example: {}
+                properties: {}
       tags:
         - Advertisements
       requestBody:
@@ -1403,8 +1528,8 @@ paths:
             application/json:
               schema:
                 type: object
-                example: {  }
-                properties: {  }
+                example: {}
+                properties: {}
       tags:
         - Advertisements
       requestBody:
@@ -1464,7 +1589,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'Agents & Agencies'
       security: []
@@ -1559,7 +1684,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'Agents & Agencies'
       security: []
@@ -2338,7 +2463,7 @@ paths:
                       id: 12
                       slug: marina-gate-2br
                       image: 'https://.../photo.jpg'
-                      ...: 'same card shape as GET /api/properties'
+                      '...': 'same card shape as GET /api/properties'
                   saved_searches:
                     -
                       id: 3
@@ -2413,7 +2538,7 @@ paths:
                         id: 12
                         slug: marina-gate-2br
                         image: 'https://.../photo.jpg'
-                        ...: 'same card shape as GET /api/properties'
+                        '...': 'same card shape as GET /api/properties'
                     items:
                       type: object
                       properties:
@@ -2426,7 +2551,7 @@ paths:
                         image:
                           type: string
                           example: 'https://.../photo.jpg'
-                        ...:
+                        '...':
                           type: string
                           example: 'same card shape as GET /api/properties'
                   saved_searches:
@@ -2677,7 +2802,7 @@ paths:
                       slug: marina-gate-2br
                       title: 'Marina Gate 2BR'
                       image: 'https://.../photo.jpg'
-                      ...: 'same card shape as GET /api/properties'
+                      '...': 'same card shape as GET /api/properties'
                   pagination:
                     current_page: 1
                     last_page: 1
@@ -2692,7 +2817,7 @@ paths:
                         slug: marina-gate-2br
                         title: 'Marina Gate 2BR'
                         image: 'https://.../photo.jpg'
-                        ...: 'same card shape as GET /api/properties'
+                        '...': 'same card shape as GET /api/properties'
                     items:
                       type: object
                       properties:
@@ -2708,7 +2833,7 @@ paths:
                         image:
                           type: string
                           example: 'https://.../photo.jpg'
-                        ...:
+                        '...':
                           type: string
                           example: 'same card shape as GET /api/properties'
                   pagination:
@@ -2848,7 +2973,7 @@ paths:
                     bedrooms: '2'
                     listing_type: sale
                     min_price: 1500000
-                  properties: {  }
+                  properties: {}
                   nullable: true
               required:
                 - title
@@ -2967,12 +3092,12 @@ paths:
                 company:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: mniihfqcoynlazghdtqtq
+                  example: g
                   nullable: true
                 country:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: xbajwbpilpmufinllwloa
+                  example: z
                   nullable: true
                 message:
                   type: string
@@ -3302,7 +3427,7 @@ paths:
                 specification:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: auydlsmsjuryvojcybzvr
+                  example: z
                   nullable: true
                 price_range:
                   type: string
@@ -3312,7 +3437,7 @@ paths:
                 area:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: vazjrcnfbaqywuxhgjjmz
+                  example: i
                   nullable: true
                 preferred_location:
                   type: string
@@ -3327,12 +3452,12 @@ paths:
                 move_in_timeline:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: sedyghenqcopwvownkbam
+                  example: d
                   nullable: true
                 furnishing_status:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: lnfngefbeilfzsyuxoezb
+                  example: l
                   nullable: true
                 recaptcha_token:
                   type: string
@@ -3393,7 +3518,7 @@ paths:
                 last_name:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: qxbajwbpilpmufinllwlo
+                  example: g
                   nullable: true
                 email:
                   type: string
@@ -3410,42 +3535,42 @@ paths:
                 property_category:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: auydlsmsjuryvojcybzvr
+                  example: z
                   nullable: true
                 specification:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: byickznkygloigmkwxphl
+                  example: m
                   nullable: true
                 price_range:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: vazjrcnfbaqywuxhgjjmz
+                  example: i
                   nullable: true
                 area:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: uxjubqouzswiwxtrkimfc
+                  example: 'y'
                   nullable: true
                 preferred_location:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: atbxspzmrazsroyjpxmqe
+                  example: v
                   nullable: true
                 additional_details:
                   type: string
                   description: 'Must not be greater than 2000 characters.'
-                  example: sedyghenqcopwvownkbam
+                  example: d
                   nullable: true
                 move_in_timeline:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: lnfngefbeilfzsyuxoezb
+                  example: l
                   nullable: true
                 furnishing_status:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: dtabptcyyerevrljcbwkt
+                  example: j
                   nullable: true
                 recaptcha_token:
                   type: string
@@ -3462,7 +3587,7 @@ paths:
     get:
       summary: 'Open chat'
       operationId: openChat
-      description: "Call when the chat screen opens: is this device's user known yet, and the latest\nconversation to continue. Needs the `X-Device-Id` header; a customer token makes the\nuser known automatically.\n\nWidget opened: is this visitor known yet, and the latest conversation to pick up from."
+      description: "Call when the chat screen opens: is this device's user known yet, and the latest\nconversation to continue. Needs the `X-Device-Id` header; a customer token makes the\nuser known automatically.\n\nWidget opened: is this visitor known yet, and the latest conversation to pick up from.\n\n`languages` are the languages the assistant chats in (show them as \"Choose your language\");\n`language` is the one this conversation is in (null until the user picks one). Send the\nchosen code as `language` with each message."
       parameters:
         -
           in: header
@@ -3482,6 +3607,22 @@ paths:
                   identified: false
                   details_required: false
                   conversation_id: null
+                  requirements: null
+                  language: null
+                  default_language: en
+                  languages:
+                    -
+                      code: ar
+                      name: Arabic
+                      native: العربية
+                      dir: rtl
+                      speech: ar-AE
+                      strings:
+                        welcome: …
+                        placeholder: …
+                        switch_offer: …
+                        switched: …
+                        error: …
                   messages: []
                 properties:
                   identified:
@@ -3494,6 +3635,68 @@ paths:
                     type: string
                     example: null
                     nullable: true
+                  requirements:
+                    type: string
+                    example: null
+                    nullable: true
+                  language:
+                    type: string
+                    example: null
+                    nullable: true
+                  default_language:
+                    type: string
+                    example: en
+                  languages:
+                    type: array
+                    example:
+                      -
+                        code: ar
+                        name: Arabic
+                        native: العربية
+                        dir: rtl
+                        speech: ar-AE
+                        strings:
+                          welcome: …
+                          placeholder: …
+                          switch_offer: …
+                          switched: …
+                          error: …
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          example: ar
+                        name:
+                          type: string
+                          example: Arabic
+                        native:
+                          type: string
+                          example: العربية
+                        dir:
+                          type: string
+                          example: rtl
+                        speech:
+                          type: string
+                          example: ar-AE
+                        strings:
+                          type: object
+                          properties:
+                            welcome:
+                              type: string
+                              example: …
+                            placeholder:
+                              type: string
+                              example: …
+                            switch_offer:
+                              type: string
+                              example: …
+                            switched:
+                              type: string
+                              example: …
+                            error:
+                              type: string
+                              example: …
                   messages:
                     type: array
                     example: []
@@ -3626,11 +3829,25 @@ paths:
                       id: 111
                       slug: virella-2
                       image: 'https://.../photo.jpg'
-                      ...: 'same card shape as GET /api/properties'
+                      match:
+                        score: 92
+                        reasons:
+                          - 'Within budget'
+                          - '2 bedrooms'
+                          - 'Near school'
+                        misses: []
+                      '...': 'same card shape as GET /api/properties'
                   pagination:
                     current_page: 1
-                    last_page: 3
-                    total: 41
+                    last_page: 1
+                    total: 6
+                  requirements:
+                    location: 'Dubai Marina'
+                    bedrooms: '2'
+                    max_price: 2000000
+                    nearby:
+                      - school
+                    purpose: invest
                   error: false
                   conversation_id: 44
                   details_required: false
@@ -3645,7 +3862,14 @@ paths:
                         id: 111
                         slug: virella-2
                         image: 'https://.../photo.jpg'
-                        ...: 'same card shape as GET /api/properties'
+                        match:
+                          score: 92
+                          reasons:
+                            - 'Within budget'
+                            - '2 bedrooms'
+                            - 'Near school'
+                          misses: []
+                        '...': 'same card shape as GET /api/properties'
                     items:
                       type: object
                       properties:
@@ -3658,7 +3882,24 @@ paths:
                         image:
                           type: string
                           example: 'https://.../photo.jpg'
-                        ...:
+                        match:
+                          type: object
+                          properties:
+                            score:
+                              type: integer
+                              example: 92
+                            reasons:
+                              type: array
+                              example:
+                                - 'Within budget'
+                                - '2 bedrooms'
+                                - 'Near school'
+                              items:
+                                type: string
+                            misses:
+                              type: array
+                              example: []
+                        '...':
                           type: string
                           example: 'same card shape as GET /api/properties'
                   pagination:
@@ -3669,10 +3910,31 @@ paths:
                         example: 1
                       last_page:
                         type: integer
-                        example: 3
+                        example: 1
                       total:
                         type: integer
-                        example: 41
+                        example: 6
+                  requirements:
+                    type: object
+                    properties:
+                      location:
+                        type: string
+                        example: 'Dubai Marina'
+                      bedrooms:
+                        type: string
+                        example: '2'
+                      max_price:
+                        type: integer
+                        example: 2000000
+                      nearby:
+                        type: array
+                        example:
+                          - school
+                        items:
+                          type: string
+                      purpose:
+                        type: string
+                        example: invest
                   error:
                     type: boolean
                     example: false
@@ -3718,8 +3980,13 @@ paths:
                   nullable: true
                 lang:
                   type: string
-                  description: 'Reply language.'
+                  description: 'Website language — the listing text on the cards.'
                   example: en
+                  nullable: true
+                language:
+                  type: string
+                  description: 'Chat language the user picked (a `languages` code from Open chat) — the assistant replies in it whatever language the message is in.'
+                  example: "ar\n\nThe buyer can describe what they want in their own words (budget, area, near schools,\nrental income, commute, …): `requirements` is everything captured so far in this\nconversation, and the cards are ranked against it — each has `match` with a 0-100 `score`\n(null when there's nothing to score on), `reasons` and `misses`."
                   nullable: true
               required:
                 - message
@@ -3747,7 +4014,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - 'Contact & Newsletter'
       security: []
@@ -3809,11 +4076,16 @@ paths:
                   type: string
                   description: 'Required unless `interest` is sent.'
                   example: "I'd like a call about 2BR apartments in Marina."
-                  nullable: true
                 source:
                   type: string
-                  description: 'contact or home.'
+                  description: "contact, home, calculator or compare. `compare` is the /compare page's unlock form: `calculation` lists the compared listings and the reply carries `compare_unlock`, the token for the `X-Compare-Unlock` header of GET /api/compare."
                   example: contact
+                  nullable: true
+                calculation:
+                  type: object
+                  description: 'Calculator pages (`source=calculator`): the figures the visitor worked out, label => value, e.g. {"Calculator": "Mortgage", "Loan amount": "AED 1,402,500"}. Saved with the enquiry; the message is then optional.'
+                  example: null
+                  properties: {}
                   nullable: true
                 recaptcha_token:
                   type: string
@@ -3898,7 +4170,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Content
       security: []
@@ -3945,7 +4217,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Content
       security: []
@@ -4098,7 +4370,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Content
       security: []
@@ -4198,6 +4470,108 @@ paths:
         required: true
         schema:
           type: string
+  /api/calculators:
+    get:
+      summary: 'Calculators menu'
+      operationId: calculatorsMenu
+      description: 'The calculators shown in the header menu and the page tabs, in order.'
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      key: mortgage
+                      title: 'Mortgage Calculator'
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        key: mortgage
+                        title: 'Mortgage Calculator'
+                    items:
+                      type: object
+                      properties:
+                        key:
+                          type: string
+                          example: mortgage
+                        title:
+                          type: string
+                          example: 'Mortgage Calculator'
+      tags:
+        - Content
+      security: []
+  '/api/calculators/{key}':
+    get:
+      summary: 'Calculator page'
+      operationId: calculatorPage
+      description: 'Page copy, enquiry-form copy, FAQs, settings and SEO of one calculator.'
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not found'
+      tags:
+        - Content
+      security: []
+    parameters:
+      -
+        in: path
+        name: key
+        description: 'mortgage, eligibility, rent-vs-buy or refinance.'
+        example: refinance
+        required: true
+        schema:
+          type: string
   /api/careers:
     get:
       summary: 'List vacancies'
@@ -4221,7 +4595,7 @@ paths:
           example: '{DEVICE_ID}'
           schema:
             type: string
-      responses: {  }
+      responses: {}
       tags:
         - Careers
       security: []
@@ -4268,34 +4642,34 @@ paths:
                 name:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: mqeopfuudtdsufvyvddqa
+                  example: 'n'
                 email:
                   type: string
                   description: 'Must be a valid email address. Must not be greater than 255 characters.'
-                  example: eloisa.harber@example.com
+                  example: ashly64@example.com
                 phone:
                   type: string
                   description: 'Must not be greater than 50 characters.'
-                  example: fqcoynlazghdtqtqxbajw
+                  example: v
                 country:
                   type: string
                   description: 'Must not be greater than 100 characters.'
-                  example: bpilpmufinllwloauydls
+                  example: d
                   nullable: true
                 experience:
                   type: string
                   description: 'Must not be greater than 50 characters.'
-                  example: msjuryvojcybzvrbyickz
+                  example: l
                   nullable: true
                 designation:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: nkygloigmkwxphlvazjrc
+                  example: j
                   nullable: true
                 additional_information:
                   type: string
                   description: 'Must not be greater than 2000 characters.'
-                  example: nfbaqywuxhgjjmzuxjubq
+                  example: 'n'
                   nullable: true
                 attachment:
                   type: string
@@ -4437,8 +4811,8 @@ paths:
             application/json:
               schema:
                 type: object
-                example: {  }
-                properties: {  }
+                example: {}
+                properties: {}
       tags:
         - Tracking
       requestBody:
@@ -4484,8 +4858,8 @@ paths:
             application/json:
               schema:
                 type: object
-                example: {  }
-                properties: {  }
+                example: {}
+                properties: {}
       tags:
         - Tracking
       requestBody:
@@ -4527,8 +4901,8 @@ paths:
             application/json:
               schema:
                 type: object
-                example: {  }
-                properties: {  }
+                example: {}
+                properties: {}
       tags:
         - Tracking
       requestBody:
@@ -4549,4 +4923,21 @@ paths:
               required:
                 - property_id
                 - kind
+      security: []
+  /api/webhooks/facebook/data-deletion:
+    post:
+      summary: ''
+      operationId: postApiWebhooksFacebookDataDeletion
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - Endpoints
       security: []

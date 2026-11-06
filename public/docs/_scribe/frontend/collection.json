@@ -5,12 +5,12 @@
             "key": "baseUrl",
             "type": "string",
             "name": "string",
-            "value": "http:\/\/127.0.0.1:8000"
+            "value": "https:\/\/mw.realty.mightywarnersdemo.com\/"
         }
     ],
     "info": {
         "name": "MW Realty \u2014 Frontend API",
-        "_postman_id": "0288c8ec-b680-489b-9f3e-eea56cb3b5d9",
+        "_postman_id": "38b5502a-e0d5-4c4e-848f-6de5e2a4ce8d",
         "description": "REST API for the MW Realty mobile app: property search, listings, agents, content, customer accounts, enquiries and the AI assistant.",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -199,7 +199,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Every home section in one request: banner, brands, ad, developments, premium properties,\nluxury, why-choose-us, communities, popular places, testimonials, contact. Property lists\ninside are shuffled on each call.\n\n`ad` is a single ad, kept for older clients. The home ad slider shows every running ad:\nload it from **Ad slider** (`\/api\/ads\/slides?placement=home`).",
+                        "description": "Every home section in one request: banner, brands, ad, developments, premium properties,\nluxury, why-choose-us, communities, popular places, testimonials, contact. Property lists\ninside are shuffled on each call \u2014 except Realty Property while it shows Super Admin's\nMarketing Properties list (`realty.curated`), which keeps that list's order.\n\n`ad` is a single ad, kept for older clients. The home ad slider shows every running ad:\nload it from **Ad slider** (`\/api\/ads\/slides?placement=home`).",
                         "auth": {
                             "type": "noauth"
                         }
@@ -302,7 +302,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"page\":\"home\",\"lang\":\"vmqeopfuu\",\"scope\":\"marketing\"}"
+                            "raw": "{\"page\":\"listing\",\"lang\":\"bngzmi\",\"scope\":\"marketing\"}"
                         },
                         "description": "The filters to render (selects with their options and live listing counts, number sliders\nwith min\/max\/step), in admin order. Pass the chosen `value`s back to the listing endpoints\nunder each filter's `key`.",
                         "auth": {
@@ -352,7 +352,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"lang\":\"vmqeopfuu\"}"
+                            "raw": "{\"lang\":\"bngzmi\"}"
                         },
                         "description": "Key-value: `filters` is keyed by each filter's key, and every option list is `{ value: label }`.\nSend the picked values back to the listing endpoint under the filter's `param` (or `params.min`\n\/ `params.max` for a range). Checkbox filters (`multiple: true`) take several values,\ncomma-separated. `order` \/ `options_order` give the admin's order.",
                         "auth": {
@@ -413,7 +413,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"q\":\"vmqeopfuudtdsufvyvddq\",\"lang\":\"amniihfqc\",\"scope\":\"commercial\"}"
+                            "raw": "{\"q\":\"b\",\"lang\":\"ngzmiy\",\"scope\":\"commercial\"}"
                         },
                         "description": "Cities, communities and addresses matching what the user typed (2+ characters; fewer\nreturns an empty list). Pass a picked suggestion back as `city=` \/ `community=` \/\n`location=` on the listing endpoints. Debounce on the client \u2014 limited to 120 calls\/minute.",
                         "auth": {
@@ -844,6 +844,149 @@
                             "name": ""
                         }
                     ]
+                },
+                {
+                    "name": "Market & investment insights",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/properties\/:slug\/insights",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/properties\/:slug\/insights",
+                            "variable": [
+                                {
+                                    "id": "slug",
+                                    "key": "slug",
+                                    "value": "virella-2",
+                                    "description": ""
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "The listing's Market & Investment panel: asking and verified (closed-deal) price summaries for\nthe same type in the same area, estimated value \/ annual rent, gross yield, price vs market,\nyear-on-year growth, a quarterly price-per-sq.ft trend, recent closed deals, the automated\nassessment badge and the starting assumptions for the investment calculator. Every estimate\ncarries `source` (verified | asking) and `count`. Amounts in AED; rents annual.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"Not found\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Compare properties",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/compare",
+                            "query": [
+                                {
+                                    "key": "slugs",
+                                    "value": "virella-2,marina-gate-1",
+                                    "description": "Comma-separated listing slugs, in display order.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/compare?slugs=virella-2%2Cmarina-gate-1&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Two to five listings side by side in one shape, whichever emirate they are in: price (rent per\nyear), size and price per sq.ft, specs, amenities, nearest place of each type, buying costs\nunder that emirate's fees (move-in costs for rentals), market estimates (rent, gross \/ net\nyield, price vs area, growth), ownership rules and Golden Visa eligibility. `notes` carries the\ncross-border notes (FX margin, UAE tax, notes per buyer currency). Amounts in AED.\n\nThe money & investment figures (`costs`, `total_outlay`, `market`) come back null with\n`locked: true` until the visitor has left their contact details \u2014 send the token from\n`POST \/api\/contact` (source=compare) as the `X-Compare-Unlock` header.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Comparison summary",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/compare\/summary",
+                            "query": [
+                                {
+                                    "key": "slugs",
+                                    "value": "virella-2,marina-gate-1",
+                                    "description": "",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "currency",
+                                    "value": "USD",
+                                    "description": "A code from GET \/api\/currencies.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/compare\/summary?slugs=virella-2%2Cmarina-gate-1&currency=USD&lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "A written summary of the same listings \u2014 the main trade-off, 4\u20136 key differences and who each\nlisting suits (`best_for`, keyed by position 1..n) \u2014 with amounts in `currency`. `source` is\n`ai`, or `rules` when the AI isn't available. Without the `X-Compare-Unlock` header it is\nwritten without the locked money & investment figures.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
                 }
             ]
         },
@@ -2072,7 +2215,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"property_id\":111,\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"company\":\"mniihfqcoynlazghdtqtq\",\"country\":\"xbajwbpilpmufinllwloa\",\"message\":\"Is this still available? I'd like to view it this week.\",\"page_source\":\"mobile-app\"}"
+                            "raw": "{\"property_id\":111,\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"company\":\"g\",\"country\":\"z\",\"message\":\"Is this still available? I'd like to view it this week.\",\"page_source\":\"mobile-app\"}"
                         },
                         "description": "\"Contact agent\" form on a listing \u2014 goes to the listing's agent\/agency CRM. If a customer\ntoken is sent, the enquiry also appears under their account.",
                         "auth": {
@@ -2246,7 +2389,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"first_name\":\"Sara\",\"last_name\":\"Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"property_category\":\"Apartment\",\"specification\":\"auydlsmsjuryvojcybzvr\",\"price_range\":\"AED 1M \u2013 2M\",\"area\":\"vazjrcnfbaqywuxhgjjmz\",\"preferred_location\":\"Dubai Marina\",\"additional_details\":\"Sea view, high floor.\",\"move_in_timeline\":\"sedyghenqcopwvownkbam\",\"furnishing_status\":\"lnfngefbeilfzsyuxoezb\"}"
+                            "raw": "{\"first_name\":\"Sara\",\"last_name\":\"Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"property_category\":\"Apartment\",\"specification\":\"z\",\"price_range\":\"AED 1M \u2013 2M\",\"area\":\"i\",\"preferred_location\":\"Dubai Marina\",\"additional_details\":\"Sea view, high floor.\",\"move_in_timeline\":\"d\",\"furnishing_status\":\"l\"}"
                         },
                         "description": "\"Can't find what you're looking for?\" \u2014 the buyer describes the property they want; the\nteam picks it up.\n\nThere's no property to route this to, so it's always an unassigned Lead: superadmin gets\nnotified and picks it up from the Unassigned Leads screen.",
                         "auth": {
@@ -2288,7 +2431,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"profile_type\":\"agent\",\"profile_slug\":\"sruthi-raveendran-m\",\"first_name\":\"Sara\",\"last_name\":\"qxbajwbpilpmufinllwlo\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"property_category\":\"auydlsmsjuryvojcybzvr\",\"specification\":\"byickznkygloigmkwxphl\",\"price_range\":\"vazjrcnfbaqywuxhgjjmz\",\"area\":\"uxjubqouzswiwxtrkimfc\",\"preferred_location\":\"atbxspzmrazsroyjpxmqe\",\"additional_details\":\"sedyghenqcopwvownkbam\",\"move_in_timeline\":\"lnfngefbeilfzsyuxoezb\",\"furnishing_status\":\"dtabptcyyerevrljcbwkt\"}"
+                            "raw": "{\"profile_type\":\"agent\",\"profile_slug\":\"sruthi-raveendran-m\",\"first_name\":\"Sara\",\"last_name\":\"g\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"property_category\":\"z\",\"specification\":\"m\",\"price_range\":\"i\",\"area\":\"y\",\"preferred_location\":\"v\",\"additional_details\":\"d\",\"move_in_timeline\":\"l\",\"furnishing_status\":\"j\"}"
                         },
                         "description": "\"Find me a property\" form on an agent's or agency's profile \u2014 sent to that agent\/agency.\n\nCapture a property-search request from an agent or agency profile and route it to that CRM.",
                         "auth": {
@@ -2335,7 +2478,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Call when the chat screen opens: is this device's user known yet, and the latest\nconversation to continue. Needs the `X-Device-Id` header; a customer token makes the\nuser known automatically.\n\nWidget opened: is this visitor known yet, and the latest conversation to pick up from.",
+                        "description": "Call when the chat screen opens: is this device's user known yet, and the latest\nconversation to continue. Needs the `X-Device-Id` header; a customer token makes the\nuser known automatically.\n\nWidget opened: is this visitor known yet, and the latest conversation to pick up from.\n\n`languages` are the languages the assistant chats in (show them as \"Choose your language\");\n`language` is the one this conversation is in (null until the user picks one). Send the\nchosen code as `language` with each message.",
                         "auth": {
                             "type": "noauth"
                         }
@@ -2344,7 +2487,7 @@
                         {
                             "header": [],
                             "code": 200,
-                            "body": "{\"identified\": false, \"details_required\": false, \"conversation_id\": null, \"messages\": []}",
+                            "body": "{\"identified\": false, \"details_required\": false, \"conversation_id\": null, \"requirements\": null, \"language\": null, \"default_language\": \"en\", \"languages\": [{\"code\": \"ar\", \"name\": \"Arabic\", \"native\": \"\u0627\u0644\u0639\u0631\u0628\u064a\u0629\", \"dir\": \"rtl\", \"speech\": \"ar-AE\", \"strings\": {\"welcome\": \"\u2026\", \"placeholder\": \"\u2026\", \"switch_offer\": \"\u2026\", \"switched\": \"\u2026\", \"error\": \"\u2026\"}}], \"messages\": []}",
                             "name": ""
                         }
                     ]
@@ -2456,7 +2599,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"message\":\"Show me 2 bedroom apartments in Dubai Marina under 2M\",\"lang\":\"en\"}"
+                            "raw": "{\"message\":\"Show me 2 bedroom apartments in Dubai Marina under 2M\",\"lang\":\"en\",\"language\":\"ar\\n\\nThe buyer can describe what they want in their own words (budget, area, near schools,\\nrental income, commute, \u2026): `requirements` is everything captured so far in this\\nconversation, and the cards are ranked against it \u2014 each has `match` with a 0-100 `score`\\n(null when there's nothing to score on), `reasons` and `misses`.\"}"
                         },
                         "description": "Ask the AI assistant. The reply may include matching property cards. Limited to 8\nmessages\/minute and 150\/day per IP.",
                         "auth": {
@@ -2467,7 +2610,7 @@
                         {
                             "header": [],
                             "code": 200,
-                            "body": "{\"reply\": \"Here are some 2-bedroom apartments in Dubai Marina:\", \"properties\": [{\"id\": 111, \"slug\": \"virella-2\", \"image\": \"https:\/\/...\/photo.jpg\", \"...\": \"same card shape as GET \/api\/properties\"}], \"pagination\": {\"current_page\": 1, \"last_page\": 3, \"total\": 41}, \"error\": false, \"conversation_id\": 44, \"details_required\": false}",
+                            "body": "{\"reply\": \"Here are some 2-bedroom apartments in Dubai Marina:\", \"properties\": [{\"id\": 111, \"slug\": \"virella-2\", \"image\": \"https:\/\/...\/photo.jpg\", \"match\": {\"score\": 92, \"reasons\": [\"Within budget\", \"2 bedrooms\", \"Near school\"], \"misses\": []}, \"...\": \"same card shape as GET \/api\/properties\"}], \"pagination\": {\"current_page\": 1, \"last_page\": 1, \"total\": 6}, \"requirements\": {\"location\": \"Dubai Marina\", \"bedrooms\": \"2\", \"max_price\": 2000000, \"nearby\": [\"school\"], \"purpose\": \"invest\"}, \"error\": false, \"conversation_id\": 44, \"details_required\": false}",
                             "name": ""
                         },
                         {
@@ -2975,6 +3118,106 @@
                             "name": ""
                         }
                     ]
+                },
+                {
+                    "name": "Calculators menu",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/calculators",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/calculators?lang=en"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "The calculators shown in the header menu and the page tabs, in order.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\": [{\"key\": \"mortgage\", \"title\": \"Mortgage Calculator\"}]}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Calculator page",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/calculators\/:key",
+                            "query": [
+                                {
+                                    "key": "lang",
+                                    "value": "en",
+                                    "description": "",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/calculators\/:key?lang=en",
+                            "variable": [
+                                {
+                                    "id": "key",
+                                    "key": "key",
+                                    "value": "refinance",
+                                    "description": "mortgage, eligibility, rent-vs-buy or refinance."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Page copy, enquiry-form copy, FAQs, settings and SEO of one calculator.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\": \"Not found\"}",
+                            "name": ""
+                        }
+                    ]
                 }
             ]
         },
@@ -3056,43 +3299,43 @@
                                 },
                                 {
                                     "key": "name",
-                                    "value": "mqeopfuudtdsufvyvddqa",
+                                    "value": "n",
                                     "type": "text",
                                     "description": "Must not be greater than 255 characters."
                                 },
                                 {
                                     "key": "email",
-                                    "value": "eloisa.harber@example.com",
+                                    "value": "ashly64@example.com",
                                     "type": "text",
                                     "description": "Must be a valid email address. Must not be greater than 255 characters."
                                 },
                                 {
                                     "key": "phone",
-                                    "value": "fqcoynlazghdtqtqxbajw",
+                                    "value": "v",
                                     "type": "text",
                                     "description": "Must not be greater than 50 characters."
                                 },
                                 {
                                     "key": "country",
-                                    "value": "bpilpmufinllwloauydls",
+                                    "value": "d",
                                     "type": "text",
                                     "description": "Must not be greater than 100 characters."
                                 },
                                 {
                                     "key": "experience",
-                                    "value": "msjuryvojcybzvrbyickz",
+                                    "value": "l",
                                     "type": "text",
                                     "description": "Must not be greater than 50 characters."
                                 },
                                 {
                                     "key": "designation",
-                                    "value": "nkygloigmkwxphlvazjrc",
+                                    "value": "j",
                                     "type": "text",
                                     "description": "Must not be greater than 255 characters."
                                 },
                                 {
                                     "key": "additional_information",
-                                    "value": "nfbaqywuxhgjjmzuxjubq",
+                                    "value": "n",
                                     "type": "text",
                                     "description": "Must not be greater than 2000 characters."
                                 },
@@ -3358,6 +3601,44 @@
                             "name": "Recorded"
                         }
                     ]
+                }
+            ]
+        },
+        {
+            "name": "Endpoints",
+            "description": "",
+            "item": [
+                {
+                    "name": "POST api\/webhooks\/facebook\/data-deletion",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/webhooks\/facebook\/data-deletion",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/webhooks\/facebook\/data-deletion"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "X-Device-Id",
+                                "value": "{DEVICE_ID}"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
                 }
             ]
         }

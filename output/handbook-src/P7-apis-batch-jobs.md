@@ -37,7 +37,7 @@ Named limiters are defined in app/Providers/AppServiceProvider.php. Plain `throt
 | admin-login | 5/min per email+IP and 30/min per IP | email + IP | Admin login, CRM login, customer login, Google sign-in |
 | portal-registration | 10/hour | IP | Customer registration |
 | otp-verify | 8/min and 30/day | IP | OTP verify/resend, 2FA, email change, password-reset email check |
-| form-submit | 20/hour | IP | Contact form, newsletter, careers apply, forgot/reset password |
+| form-submit | 20/hour | IP | Contact form (incl. calculator and compare unlock forms), newsletter, careers apply, forgot/reset password |
 | lead-capture | 20/hour | IP | All lead forms, chatbot start |
 | landing-page-enquiry | 20/hour | IP | `POST /{slug}/enquiry` |
 | ai-chatbot | 8/min and 150/day | IP | `POST /api/chatbot/message` (paid AI call) |
@@ -90,8 +90,8 @@ Auth column legend: Public = no login; Token = Sanctum Bearer token; Session = w
 | GET | `/api/properties/{slug}` | Property details | Public | Customer app |
 | GET | `/api/properties/{slug}/insights` | Market and investment panel | Public | Limit 60/min |
 | GET | `/api/commercial` | Commercial listing page | Public | Customer app |
-| GET | `/api/compare` | Compare 2 to 5 listings | Public | Limit 60/min |
-| GET | `/api/compare/summary` | AI written comparison | Public | Limit: ai-compare; cached per listing set |
+| GET | `/api/compare` | Compare 2 to 5 listings. Without a valid `X-Compare-Unlock` header: `locked: true` and `costs`, `total_outlay`, `market` are null | Public | Limit 60/min |
+| GET | `/api/compare/summary` | AI written comparison; written without the locked figures unless `X-Compare-Unlock` is valid | Public | Limit: ai-compare; cached per listing set |
 | GET | `/api/agents` | Agents listing | Public | |
 | GET | `/api/agents/{slug}` | Agent profile | Public | |
 | GET | `/api/agencies` | Agencies listing | Public | |
@@ -119,7 +119,7 @@ Auth column legend: Public = no login; Token = Sanctum Bearer token; Session = w
 
 | Method | Path | Purpose | Auth | Notes |
 |---|---|---|---|---|
-| POST | `/api/contact` | Contact form; saves enquiry, emails admin | Public | Limit: form-submit |
+| POST | `/api/contact` | Contact form; saves enquiry, emails admin, creates a Website Lead. `source=compare` (the /compare unlock form) also returns `compare_unlock`, the token for the `X-Compare-Unlock` header (valid 365 days) | Public | Limit: form-submit |
 | POST | `/api/newsletter/subscribe` | Newsletter sign-up | Public | Limit: form-submit |
 | POST | `/api/careers/apply` | Job application with CV | Public | Limit: form-submit |
 | POST | `/api/leads/capture` | Property enquiry; routed to the listing owner | Public (token optional) | Limit: lead-capture; Customer app |

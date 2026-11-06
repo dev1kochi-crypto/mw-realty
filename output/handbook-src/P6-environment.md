@@ -149,5 +149,7 @@ Values live in the environment's `.env` file, which is never committed and never
 | Few listings in a community | Market Insights shows "Not enough data yet"; Listing Review price checks need at least 5 similar listings |
 | Currency auto-sync off (default) | Rates change only when Admin edits them |
 | reCAPTCHA keys blank | Forms work without bot protection |
+| reCAPTCHA keys set but PHP has no CA certificate file (common on local XAMPP) | Every protected form, including the /compare unlock, fails with "Verification failed — please try again."; the log shows "cURL error 60". Fix: set `curl.cainfo` and `openssl.cafile` in php.ini to a CA bundle (XAMPP: `apache/bin/curl-ca-bundle.crt`) and restart PHP |
+| reCAPTCHA key's allowed domains do not include the test host | "Verification failed — please try again." on every protected form; add the host (e.g. `127.0.0.1`, `localhost`) in the reCAPTCHA admin console |
 | Several testers on one IP address | Shared rate limits ("too many requests") are reached sooner |
 | Cached configuration on the server | A changed `.env` value has no effect until a developer clears and rebuilds the config cache |

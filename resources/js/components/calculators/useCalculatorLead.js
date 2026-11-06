@@ -16,7 +16,9 @@ export function useCalculatorLead() {
     const submitting = ref(false);
     const feedback = ref(null);
 
-    async function send(summary) {
+    // `source`: 'calculator', or 'compare' for the /compare unlock form. Resolves to the response
+    // body (truthy) once saved — the compare form reads its `compare_unlock` token from it.
+    async function send(summary, source = 'calculator') {
         if (submitting.value) return false;
         const problem = (!form.name.trim() && t('calculators.enquiry.error_name', 'Please enter your name.')) || contactError(form);
         if (problem) {
@@ -28,9 +30,9 @@ export function useCalculatorLead() {
 
         try {
             const calculation = Object.fromEntries(Object.entries(summary || {}).map(([label, value]) => [label, String(value)]));
-            const recaptcha_token = await getRecaptchaToken('calculator');
-            await window.axios.post('/api/contact', { ...form, source: 'calculator', calculation, recaptcha_token });
-            return true;
+            const recaptcha_token = await getRecaptchaToken(source);
+            const res = await window.axios.post('/api/contact', { ...form, source, calculation, recaptcha_token });
+            return res.data || true;
         } catch (error) {
             feedback.value = { type: 'error', text: responseError(error, t('contact_page.generic_error', 'Something went wrong. Please try again.')) };
             return false;
