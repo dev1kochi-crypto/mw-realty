@@ -56,6 +56,7 @@ class Plan extends Model
         'facebook' => 'Facebook Lead Ads integration',
         'property_finder' => 'Property Finder integration',
         'agent_insights' => 'Agent insights (team performance)',
+        'market_demand' => 'Market demand insights',
     ];
 
     public function allows(string $feature): bool

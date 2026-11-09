@@ -69,6 +69,7 @@ The project does not define a browserslist or a Vite build target, so the build 
 | `credits:expire` | Hourly | "Expired credits" lines in credit history |
 | `currencies:sync-rates` | Hourly, only when `CURRENCY_RATES_AUTO_SYNC=true` | Currency rates updated from the feed |
 | `visitors:prune` | Daily 03:30 | Anonymous visitor activity older than 30 days deleted |
+| `market-demand:aggregate` | Hourly at :10 | Website activity rolled into anonymous demand counts (Buyer Demand, CRM Market Demand) |
 | `facebook:check-page-tokens` | Daily 08:00 | Broken Facebook Pages flagged; reconnect email |
 | `portal:remind-subscription-renewals` | Daily 09:00 Dubai time | Email and bell the day before an auto-renewal |
 | `portal:notify-expiring-documents` | Daily | Email when a passport, trade licence or TRN expiry date has passed |

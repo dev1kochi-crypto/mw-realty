@@ -89,6 +89,8 @@ Auth column legend: Public = no login; Token = Sanctum Bearer token; Session = w
 | GET | `/api/properties/map` | Map pins for the visible area | Public | Limit 120/min; Customer app |
 | GET | `/api/properties/{slug}` | Property details | Public | Customer app |
 | GET | `/api/properties/{slug}/insights` | Market and investment panel | Public | Limit 60/min |
+| GET | `/api/properties/{slug}/demand` | Buyer Demand block (anonymised area demand) | Public | Limit 60/min |
+| GET | `/api/properties/{slug}/demand/summary` | AI market overview of the Buyer Demand figures (`?lang=`) | Public | Limit 20/min, 300/day per IP |
 | GET | `/api/commercial` | Commercial listing page | Public | Customer app |
 | GET | `/api/compare` | Compare 2 to 5 listings. Without a valid `X-Compare-Unlock` header: `locked: true` and `costs`, `total_outlay`, `market` are null | Public | Limit 60/min |
 | GET | `/api/compare/summary` | AI written comparison; written without the locked figures unless `X-Compare-Unlock` is valid | Public | Limit: ai-compare; cached per listing set |
@@ -212,6 +214,8 @@ The CRM API tables below list all 251 /api/crm routes, grouped by CRM module. Ev
 | POST | `/api/crm/help/seen` | Mark help as seen | CRM |  |
 | GET | `/api/crm/help/{topic}` | One help topic | CRM |  |
 | GET | `/api/crm/lead-insights` | Lead insights report | CRM + 2FA + Approved | Plan feature: lead_insights |
+| GET | `/api/crm/market-demand` | Market Demand report for an area, purpose and type (anonymised) | CRM + 2FA + Approved | Plan feature: market_demand |
+| GET | `/api/crm/market-demand/areas` | Area picker (cities and communities, 20 per page) | CRM + 2FA + Approved | Plan feature: market_demand |
 | GET | `/api/crm/property-insights` | Property insights: every listing on the market with impressions, clicks, lead clicks, leads and quality for the period; totals; day-by-day series. Query: days (7/30/90), sort (impressions/clicks/leads/no_views/newest), segment, search, page | CRM + 2FA + Approved | Plan feature: property_insights |
 | GET | `/api/crm/navigation` | Sidebar menu for this account | CRM |  |
 | GET | `/api/crm/notifications` | Bell notifications | CRM | Agent app |
@@ -627,6 +631,7 @@ The schedule is defined in bootstrap/app.php (`withSchedule`); routes/console.ph
 | `credits:expire` | Hourly | Writes off credits past their validity (also done on the spot when a wallet is read) | withoutOverlapping | `php artisan credits:expire` |
 | `ads:settle` | Every 15 minutes | Closes client ads still unreviewed when their booked time ended, and refunds credits | withoutOverlapping | `php artisan ads:settle` |
 | `visitors:prune` | Daily 03:30 UTC (07:30 Dubai) | Deletes anonymous tracking events and chats older than 30 days, and unused browsers | withoutOverlapping | `php artisan visitors:prune` |
+| `market-demand:aggregate` | Hourly at :10 | Rebuilds today's and yesterday's anonymous demand counts (market_demand_daily, market_demand_amenities) from visitor events | withoutOverlapping; re-running a day replaces it | `php artisan market-demand:aggregate` (`--days=30` to backfill, `--date=Y-m-d` for one day) |
 | `currencies:sync-rates` | Hourly | Refreshes currency rates from the live feed | Only if `CURRENCY_RATES_AUTO_SYNC=true` (off by default) | `php artisan currencies:sync-rates` |
 | `properties:expire-permits` | Daily 00:05 Asia/Dubai | Unpublishes listings whose DLD permit expired; reminds 7 days before | withoutOverlapping | `php artisan properties:expire-permits` |
 | Newsletter campaign (closure) | Every 15 minutes | Emails subscribers about blogs/insights whose publish date has arrived | Closure, not a command | `php artisan schedule:test` and pick it, or `schedule:run` |

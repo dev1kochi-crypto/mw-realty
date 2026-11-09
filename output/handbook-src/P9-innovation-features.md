@@ -2,13 +2,15 @@
 
 The seven new innovation features: the pages each one changed, how each feature works, and the test scenarios that prove it.
 
-**Scope:** 1 AI property matching · 2 Authenticity and trust engine · 3 Investment intelligence · 4 Cross-border intelligence · 5 Conversational assistant · 6 Agency listing automation · 7 Demand and market analytics. **Who tests:** QA, using the Super Admin, Agency A, Agency B, Agent and website visitor test accounts (P4 Test Data). **Full rules:** guides 24 Listing Review, 25 Property Import & AI Copy and 26 Website: Compare, Insights & AI Chat.
+**Scope:** 1 AI property matching · 2 Authenticity and trust engine · 3 Investment intelligence · 4 Cross-border intelligence · 5 Conversational assistant · 6 Agency listing automation · 7 Demand and market analytics. **Who tests:** QA, using the Super Admin, Agency A, Agency B, Agent and website visitor test accounts (P4 Test Data). **Full rules:** guides 24 Listing Review, 25 Property Import & AI Copy and 26 Website: Compare, Insights & AI Chat; for feature 7, section 7 of this guide.
 
 ## 0. Before you start
 
 | Need | Why | Check |
 |---|---|---|
-| CHATBOT_PROVIDER and its API key set on the server | AI chat (1, 5), AI compare summary (4) and Write with AI (6) | The chat answers instead of "The AI assistant isn't available yet…" |
+| CHATBOT_PROVIDER and its API key set on the server | AI chat (1, 5), AI compare summary (4), Write with AI (6) and the AI market overview (7) | The chat answers instead of "The AI assistant isn't available yet…" |
+| Scheduler running (`market-demand:aggregate` every hour at :10) | Demand figures (7) are rebuilt from website activity each hour | A developer can run `php artisan market-demand:aggregate` to update at once |
+| Demo demand data, on a test server only (`php artisan db:seed --class=MarketDemandDemoSeeder`) | A new server has too little activity to fill the Buyer Demand block (7) | Buyer Demand shows a demand level and "Interest over time" bars |
 | Queue worker running (the scheduler starts it every minute) | Photo duplicate check (2) and spreadsheet import (6) | An import moves past "Starting import..." within about a minute |
 | At least 5 live listings of the same type, purpose and community | Price-risk check (2) needs 5 similar listings; market figures (3) need 3 | Seed them first (P4 Test Data) |
 | Two agency accounts, both KYC-approved, with plan listings left | Duplicate and authority checks (2), import (6) | Both can add a listing |
@@ -354,9 +356,96 @@ Every figure says whether it is **Verified** (closed deals), an **Estimate** (as
 
 ## 7. Property demand and market analytics
 
-**What it does today.** The platform records visitor searches, saved searches, property views, favourites, AI chats and enquiries, plus impressions and clicks per listing. Agencies see this **for their own leads and listings**.
+**What it does.** The website records what visitors search for, save, view, favourite and enquire about. Every hour this activity is turned into **anonymous demand figures** per area, purpose (sale or rent), property type, bedrooms and price range. The figures are shown in two places:
+
+- **Buyer Demand** (Tenant Demand for rentals), a new block on every listing page under Market Insights. It shows how much interest the listing's area and segment get, with an **AI market overview**.
+- **CRM > Market Demand**, a new screen for agencies and developers. It shows demand for **any area** on MW Realty, not only their own listings: where buyers are looking, which price ranges and bedroom counts are **underserved**, and how interest changes month by month.
+
+The per-lead and per-listing tracking described in 7.4 is unchanged.
 
 ### 7.1 Pages affected
+
+| Page | URL / place | Who | What changed |
+|---|---|---|---|
+| Property details: Buyer Demand | /property-details/{slug}, new tab "Buyer Demand" ("Tenant Demand" for rentals), section under Market Insights | Everyone | AI market overview, demand level, activity tiles, price benchmark, interest vs listings, interest over time, most wanted amenities |
+| Market Demand | CRM > Insights > Market Demand (/crm/market-demand) | Agency, Agent, Super Admin (plan feature **market_demand**) | New screen: area picker, purpose, property type; demand level, totals, key findings, monthly chart, price range and bedroom tables, amenities |
+| Plans | Admin > Plans > a plan | Admin | New tick box "Market demand insights" |
+| Static texts | Admin > Languages > Translations, `property_details.demand.*` | Admin | English and Arabic texts for the block |
+
+### 7.2 How it works
+
+> flow: Visitor searches / saves / views / favourites / enquires -> visitor_events -> hourly market-demand:aggregate -> market_demand_daily (counts only) -> Buyer Demand block + CRM Market Demand
+
+- **What counts as interest.** Searches on /properties, /commercial, /premium-properties and /marketing-properties (with filters), saved searches, listing views, favourites, contact clicks (Call, WhatsApp, Email, Enquire, Viewing, Brochure, Floor plan) and enquiry forms.
+- **Counting.** Each figure is the number of **different visitors per day**: one person refreshing a page 10 times counts once. Bots are not counted.
+- **Segment of a search.** A search is placed by its filters: community or city (picked from the suggestions, or typed text that matches a known community or city), purpose, property type(s), bedrooms and price range. A filter that is not set counts for every value. For example, "2 bed in Dubai Marina" with no type counts toward 2-bed apartments, villas and so on.
+- **Segment of a listing.** Its English community and city, purpose, type, bedrooms (6 or more = "6+") and price range. Rent is compared per year.
+- **Price ranges (AED).**
+  - **Sale:** under 750K, 750K–1.5M, 1.5M–2.5M, 2.5M–4M, 4M–7M, 7M–12M, 12M+.
+  - **Rent per year:** under 50K, 50K–90K, 90K–130K, 130K–200K, 200K–300K, 300K–500K, 500K+.
+- **Interest score.** Searches ×1, saved searches ×3, views ×1, favourites ×3, enquiries ×5.
+- **Demand level.** The segment's interest per live listing (last 30 days) is divided by the same figure for **the same type and bedrooms across the city**. For a city-wide CRM report, the comparison is with the whole platform.
+  - **High:** 1.3× or more.
+  - **Low:** under 0.7×.
+  - **Medium:** anything in between.
+  - **"Demand not rated yet":** the segment's interest score is under 10.
+- **Changes.** The last 30 days are compared with the 30 days before. A % change is shown only when both periods have **5 or more**; otherwise the CRM shows "Too few to compare".
+- **Underserved.** A price range or bedroom count is underserved when it has at least **1.25×** its share of listings as share of interest, and at least 5% of all interest. Shares use the last 60 days. They are shown only when the area has an interest score of 10 or more.
+- **Price benchmark.** Median and average asking price of live listings with the same type and bedrooms in the community (at least 3, not counting the listing itself). Also shown: where this listing sits against the median, and the area's 12-month price change from Market Insights.
+- **Amenities.** Ranked by searches that asked for the amenity (×3) plus views of listings that have it, over 90 days. A ✓ means this listing has it.
+- **Key findings.** Up to 6 sentences, most important first. Examples:
+  - "Searches for 4 bed · Villa in Arabian Ranches are up 35% on the previous 30 days";
+  - a demand level against the city;
+  - an underserved price range or bedroom count;
+  - the most wanted amenity;
+  - the listing priced above or below similar listings.
+- **AI market overview.** The figures (counts only, no listings or people) are sent to the AI. It writes 2–3 sentences and 2–4 highlights in the site language, using only those figures. The result is reused for 6 hours for the same figures and language. Without AI, or when the call fails, the block shows "Market overview" with the key findings instead.
+- **Privacy safeguards.**
+  - Only activity on MW Realty itself is used: data the platform collects for its own service.
+  - The demand tables hold counts only, never a visitor, browser, lead, IP or contact detail. They can therefore be kept after `visitors:prune` deletes anonymous events (30 days).
+  - Counts under 3 are shown as "Fewer than 3" (website) or "< 3" (CRM).
+  - The CRM screen never lists leads, visitors or other agencies' listings.
+- **Updates.** Hourly at :10, for today and yesterday. The website caches a listing's figures for up to 1 hour.
+- **Code:**
+  - `app/Services/MarketDemand/DemandAggregator.php`, `MarketDemandService.php`, `MarketDemandSummary.php`, `DemandSegments.php`;
+  - `app/Console/Commands/AggregateMarketDemand.php`, `app/Http/Controllers/Crm/Insights/MarketDemandController.php`;
+  - `resources/js/components/insights/MarketDemand.vue`, `resources/js/crm/pages/market-demand/MarketDemandIndex.vue`;
+  - settings in `config/market_demand.php`.
+- **API:**
+  - `GET /api/properties/{slug}/demand`;
+  - `GET /api/properties/{slug}/demand/summary?lang=en`;
+  - CRM `GET /api/crm/market-demand?area=&purpose=&type=` and `GET /api/crm/market-demand/areas`.
+
+### 7.3 How to check it (test scenarios)
+
+**Two ways to test.**
+
+- **With demo data (fast).** On a test server, a developer runs `php artisan db:seed --class=MarketDemandDemoSeeder`. It fills 6 months of made-up demand for every community with live listings, so every part of the block has data. Use it for DM-01 to DM-07 and MD-01 to MD-05.
+- **With real activity (proves the pipeline).** Use DM-08 and DM-09.
+
+To return to real figures after the demo, run `php artisan market-demand:aggregate --days=180`.
+
+| ID | Scenario | Priority | Steps | Expected result |
+|---|---|---|---|---|
+| DM-01 | Block and tab | High | 1. Open a for-sale listing that has a community.<br>2. Open a yearly rental. | Sale: tab and section "Buyer Demand" under Market Insights. Rental: "Tenant Demand", with "tenant" wording on the level. The tab scrolls to the section. |
+| DM-02 | AI market overview | High | 1. With AI configured, scroll to Buyer Demand.<br>2. Compare the text with the tiles below it. | Label "AI market overview" and "Written by AI from the figures below." The text is 2–3 sentences plus 2–4 points. Every number in it appears in the block (searches, views, %, ratio). It doesn't invent places or prices and doesn't advise buying. |
+| DM-03 | Overview without AI | Medium | 1. On a server without CHATBOT_PROVIDER (or with the AI call failing), open the same listing. | Label "Market overview" with the key findings as bullet points (e.g. "Searches for 2 bed · Apartment in Dubai Marina are up 35% on the previous 30 days"). No error is shown. |
+| DM-04 | Language | Medium | 1. Switch the site to العربية on a listing. | All labels are Arabic, and the AI overview is reloaded in Arabic. Amenity and property type names are Arabic. |
+| DM-05 | Demand level | High | 1. Open listings in a busy and a quiet community (demo data: the first communities are busiest). | 3 green bars "High buyer interest", 2 blue bars "Moderate…", or 1 amber bar "Low…". The note reads "{segment} in {area} get N× the interest per listing of similar listings across {city}, last 30 days." The ratio matches the level (≥ 1.3 High, < 0.7 Low). |
+| DM-06 | Interest vs listings | High | 1. In "Interest vs listings in {area}", switch between Price range and Bedrooms. | Each row shows two bars (interest share, dark; listing share, light) and "x% / y%". The listing's own row is highlighted "THIS LISTING". "Underserved" appears only where the interest share is ≥ 1.25× the listing share and at least 5%. |
+| DM-07 | Interest over time, amenities, privacy | Medium | 1. Hover the bars of "Interest over time".<br>2. Read "Most wanted amenities nearby".<br>3. Find a tile with a very small count. | A tooltip per month with Searches, Listing views, Enquiries & favourites; the current month says "(so far)". Amenity chips show "N searches · N views", with a ✓ on those this listing has. Counts of 1–2 show "Fewer than 3". |
+| DM-08 | Real activity reaches the block | High | 1. In 3 different browsers (or private windows), search /properties for a community with bedrooms and a price range, open 2 listings there and favourite one.<br>2. Ask a developer to run `php artisan market-demand:aggregate`.<br>3. Open one of those listings. | The command prints today's date with the number of events and rows. Searches, views and favourites in the block go up by 3 (different visitors); repeating the same steps in the same browser on the same day does not add more. |
+| DM-09 | Anonymous storage | High | 1. Ask a developer to look at the tables `market_demand_daily` and `market_demand_amenities`. | Only dates, areas, purpose, type, bedrooms, price range and counts. No visitor, browser, lead, IP, email or phone column. |
+| DM-10 | No area | Low | 1. Open a listing with neither community nor city. | No Buyer Demand tab or section. |
+| MD-01 | Plan gate | High | 1. As an agency whose plan doesn't include "Market demand insights", open CRM > Market Demand.<br>2. In Admin > Plans tick "Market demand insights" for that plan and reload. | 1: padlock in the menu and the "Unlock market demand" card. 2: the screen opens. An agent on an agency plan sees "Ask your agency to upgrade". |
+| MD-02 | Area report | High | 1. Leave "All of MW Realty", then pick a city, then a community, in the area picker (type to search; more load on scroll). | Tiles: demand level (not shown for All of MW Realty), Searches, Listing views, Favourites, Enquiries, Live listings with "interest / listing". The numbers change with the area. |
+| MD-03 | Purpose and type | Medium | 1. Switch For sale / For rent.<br>2. Pick a property type. | Rent price ranges are per year (Under AED 50K…). The tables and chart change with the type. Clear resets all filters. |
+| MD-04 | Underserved and findings | High | 1. With demo data, open a community.<br>2. Read Key findings and the two tables. | Each underserved row in the tables has the "Underserved" badge. Key findings name an underserved price range or bedroom count with "x% of interest but only y% of listings", plus any rise or fall of 10% or more. |
+| MD-05 | No personal data | High | 1. As Agency A, look at Market Demand for an area where Agency B has listings. | Only totals, shares and counts. No lead, visitor, agency or listing names. |
+
+### 7.4 Per-lead and per-listing tracking (unchanged)
+
+The platform also shows this activity **for an account's own leads and listings**:
 
 | Page | URL / place | Who | What it shows |
 |---|---|---|---|
@@ -366,14 +455,10 @@ Every figure says whether it is **Verified** (closed deals), an **Estimate** (as
 | Listing performance | Properties list > a card's Insights / quality ring | Agency, Agent, Super Admin (plan feature property_insights) | Impressions → listing clicks → lead clicks → leads, last 30 days, quality score |
 | Reports | /crm/reports/leads, /properties, /sales, /agents | Plan feature reports_access | Leads, listings, sales and agents over time, for the account's own data |
 
-### 7.2 How it works
-
 - **Website tracking:** a visitor is identified by a browser cookie. Views, searches, saved searches, favourites and chats are stored as visitor events. When the visitor leaves their details, these events are attached to the lead.
 - **Listing tracking:** listing cards seen on screen and clicks are added up per listing per day.
 - **Privacy:** an account sees only its own leads and listings. Super Admin sees all.
 - **Code:** `app/Services/Visitors/VisitorTracker.php`, `VisitorInsights.php`, `app/Services/ListingPerformanceService.php`, `app/Http/Controllers/Crm/Leads/LeadInsightsController.php`.
-
-### 7.3 Test scenarios
 
 | ID | Scenario | Priority | Steps | Expected result |
 |---|---|---|---|---|
@@ -383,13 +468,12 @@ Every figure says whether it is **Verified** (closed deals), an **Estimate** (as
 | DA-04 | Privacy between agencies | High | 1. As Agency B, open Lead Insights and Leads. | Agency A's DA-01 lead and its activity are not visible. |
 | DA-05 | Reports | Medium | 1. Open /crm/reports/leads and /crm/reports/properties as Agency A. | Charts include the new lead and listing activity. Without the plan feature a "locked" message names the plan. |
 
-### 7.4 Known gap (not a bug)
+### 7.5 Measure and known gaps
 
-There is **no marketplace-wide, anonymised demand screen** yet: where buyers are searching across the whole platform, which price bands have few listings, or how demand changes over time. The raw data needed for it (searches, saved searches, views and enquiries in `visitor_events`, plus `property_daily_stats`) is already being collected, so this screen can be built on top of it. Until then, these measures are **not available**:
-
-- forecast performance;
-- subscription renewals driven by analytics;
-- reduction in marketing spend.
+- **Unproductive marketing spend:** agencies can now see underserved and oversupplied areas, price ranges and bedroom counts before they list or promote. The saving itself is **not measured on screen**.
+- **Agency subscription renewals:** Market Demand is its own plan feature (`market_demand`), so renewals of plans that include it can be compared with those that don't, using the existing Admin > Payments data. There is **no dedicated report** yet.
+- **Forecast performance:** the block shows trends and changes, **not forecasts**, so there is nothing to score yet. The daily history in `market_demand_daily` is kept for this.
+- **Coverage:** demand reflects activity on MW Realty only, not the whole UAE market. This is stated in the disclaimer under the block.
 
 ## 8. Summary
 
@@ -401,6 +485,6 @@ There is **no marketplace-wide, anonymised demand screen** yet: where buyers are
 | 4 | Cross-border | Partly done: UAE emirates and currencies | /compare | CB-01 to CB-10 |
 | 5 | Conversational assistant | Done | Website AI chat, /crm/website-leads | CA-01 to CA-10 |
 | 6 | Listing automation API | Done | /crm/properties/import, /api/crm | LA-01 to LA-11 |
-| 7 | Demand analytics | Partly done: per lead and per listing | /crm/lead-insights, listing Insights, Reports | DA-01 to DA-05 |
+| 7 | Demand analytics | Done. Marketplace demand on listings + CRM Market Demand; forecasts not built | /property-details/{slug} Buyer Demand, /crm/market-demand | DM-01 to DM-10, MD-01 to MD-05, DA-01 to DA-05 |
 
 **Reporting a bug:** give the scenario ID, the account used, the URL, the listing reference, what you expected and what you saw, with a screenshot. For AI answers, copy the full chat text, because AI wording changes from run to run.

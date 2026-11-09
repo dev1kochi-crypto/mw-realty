@@ -188,6 +188,11 @@ Route::middleware('crm.auth')->group(function () {
 
         Route::get('/lead-insights', [LeadInsightsController::class, 'index'])->name('lead-insights.index')->middleware(['portal.approved', 'plan.feature:lead_insights']);
         Route::get('/property-insights', PropertyInsightsIndexController::class)->name('property-insights.index')->middleware(['portal.approved', 'plan.feature:property_insights']);
+        // Market Demand — anonymised, marketplace-wide demand by area (any area, not only the account's listings).
+        Route::middleware(['portal.approved', 'plan.feature:market_demand'])->group(function () {
+            Route::get('/market-demand', [\App\Http\Controllers\Crm\Insights\MarketDemandController::class, 'index'])->name('market-demand.index');
+            Route::get('/market-demand/areas', [\App\Http\Controllers\Crm\Insights\MarketDemandController::class, 'areas'])->name('market-demand.areas');
+        });
 
         // Website Leads — AI chat / form / customer-account visitors and the pool not routed to an
         // agency / agent yet. Super Admin only (checked in the controller).

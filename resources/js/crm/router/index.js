@@ -45,6 +45,12 @@ const routes = [
         meta: { title: 'Lead Insights', nav: 'lead-insights', help: 'lead-insights' },
     },
     {
+        path: '/market-demand',
+        name: 'market-demand.index',
+        component: () => import('../pages/market-demand/MarketDemandIndex.vue'),
+        meta: { title: 'Market Demand', nav: 'market-demand' },
+    },
+    {
         path: '/property-insights',
         name: 'property-insights.index',
         component: () => import('../pages/property-insights/PropertyInsightsIndex.vue'),

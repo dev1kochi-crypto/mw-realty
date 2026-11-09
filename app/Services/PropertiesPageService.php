@@ -154,7 +154,7 @@ class PropertiesPageService
      * Master › Property Options] — a listing matches when it has any of those options. The last
      * group is for commercial listings (/commercial's panel).
      */
-    private const AMENITY_OPTIONS = [
+    public const AMENITY_OPTIONS = [
         'community-pool' => ['amenities', ['shared_pool', 'childrens_pool']],
         'gym' => ['amenities', ['shared_gym', 'private_gym']],
         'security' => ['amenities', ['security']],

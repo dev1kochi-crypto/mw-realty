@@ -1120,6 +1120,7 @@ Some saves clear the related cache straight away (for example Marketing Properti
 | currencies:sync-rates (only when auto sync is on) | Hourly |
 | properties:expire-permits | Daily 00:05 UAE time |
 | visitors:prune (anonymous activity older than 30 days) | Daily 03:30 |
+| market-demand:aggregate (anonymous demand figures for Buyer Demand and CRM Market Demand, today + yesterday) | Hourly at :10 |
 | facebook:check-page-tokens | Daily 08:00 |
 | portal:remind-subscription-renewals | Daily 09:00 UAE time |
 | portal:notify-expiring-documents | Daily |

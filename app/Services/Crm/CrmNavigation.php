@@ -86,6 +86,8 @@ class CrmNavigation
             $isSuperAdmin || $owner?->type === 'company' ? $this->item('agent-insights', 'Agent Insights', 'fa-user-check', 'Insights', null, route: 'agent-insights.index',
                 lock: $planLock('agent_insights')) : null,
             $this->item('lead-insights', 'Lead Insights', 'fa-chart-line', 'Insights', null, route: 'lead-insights.index', lock: $planLock('lead_insights')),
+            // Anonymised demand across the whole marketplace (any area) — not tied to the account's own data.
+            $this->item('market-demand', 'Market Demand', 'fa-chart-area', 'Insights', null, route: 'market-demand.index', lock: $planLock('market_demand')),
             $this->item('reports', 'Reports', 'fa-chart-pie', 'Insights', null, route: 'reports.show',
                 lock: $kycLock ?? ($owner && !$owner->hasReportsAccess() ? 'Upgrade your plan to unlock reports' : null)),
 

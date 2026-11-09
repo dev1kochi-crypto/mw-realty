@@ -121,6 +121,9 @@ Route::get('/properties/map', [\App\Http\Controllers\Api\PropertyMapController::
 Route::get('/properties/{slug}', [PropertyController::class, 'show']);
 // Its Market & Investment panel (comparables, yield, trend, assessment) — loaded after the page.
 Route::get('/properties/{slug}/insights', [PropertyController::class, 'insights'])->middleware('throttle:60,1');
+// Its Buyer Demand block (anonymised marketplace demand), then the AI overview of it.
+Route::get('/properties/{slug}/demand', [PropertyController::class, 'demand'])->middleware('throttle:60,1');
+Route::get('/properties/{slug}/demand/summary', [PropertyController::class, 'demandSummary'])->middleware('throttle:ai-demand');
 
 // Public, read-only — the /compare page: 2–5 listings side by side, then its written (AI) summary.
 Route::get('/compare', [\App\Http\Controllers\Api\PropertyCompareController::class, 'index'])->middleware('throttle:60,1');

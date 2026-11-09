@@ -14,6 +14,7 @@ import MortgageCalculator from '../components/calculators/MortgageCalculator.vue
 import InvestmentCalculator from '../components/insights/InvestmentCalculator.vue';
 import RentalCosts from '../components/insights/RentalCosts.vue';
 import MarketInsights from '../components/insights/MarketInsights.vue';
+import MarketDemand from '../components/insights/MarketDemand.vue';
 import { badgeLabel } from '../components/insights/assessment';
 import { contactError, responseError } from '../composables/useContactValidation';
 import { trackInsightView, trackLeadClick } from '../composables/useListingImpressions';
@@ -388,6 +389,9 @@ const hasMortgage = computed(() => !!(property.value && property.value.listing_t
 const hasRentalCosts = computed(() => !!(property.value && property.value.listing_type === 'rent' && Number(property.value.price_value) > 0
     && ['yearly', 'monthly', null, undefined].includes(property.value.rental_period)));
 const hasMarket = computed(() => !!(property.value && Number(property.value.price_value) > 0));
+// Buyer Demand needs the listing's community or city ("—" = neither). Decided from the page data, not
+// the demand request, so the tab exists when the tabs script binds on render.
+const hasDemand = computed(() => !!(property.value?.location && property.value.location !== '—'));
 
 // Market & Investment figures (GET /api/properties/{slug}/insights) load after the page itself, so
 // the listing shows straight away; the sections are on the page from the start and fill in.
@@ -405,6 +409,52 @@ watch(() => property.value?.slug, (slug) => {
         .finally(() => { if (id === insightsRequest) insightsLoading.value = false; });
 }, { immediate: true });
 const assessmentBadge = computed(() => insights.value?.assessment?.headline || null);
+const demandTitle = computed(() => (property.value?.listing_type === 'rent' ? t('property_details.tab_demand_rent', 'Tenant Demand') : t('property_details.tab_demand', 'Buyer Demand')));
+
+// Buyer Demand (GET /api/properties/{slug}/demand): anonymised area demand. Its AI overview
+// (/demand/summary) is only asked for once the section is about to be seen, in the site language.
+const demand = ref(null);
+const demandLoading = ref(false);
+const demandSummary = ref(null);
+const demandSummaryLoading = ref(false);
+let demandRequest = 0;
+let summaryKey = null;
+let demandObserver = null;
+watch(() => property.value?.slug, (slug) => {
+    const id = ++demandRequest;
+    demand.value = null;
+    demandSummary.value = null;
+    summaryKey = null;
+    if (!slug || !hasDemand.value) return;
+    demandLoading.value = true;
+    window.axios.get(`/api/properties/${slug}/demand`)
+        .then(({ data }) => { if (id === demandRequest) { demand.value = data; nextTick(watchDemandSection); } })
+        .catch(() => {})
+        .finally(() => { if (id === demandRequest) demandLoading.value = false; });
+}, { immediate: true });
+function loadDemandSummary() {
+    const slug = property.value?.slug;
+    const lang = selectedLanguage.value?.code || 'en';
+    if (!slug || !demand.value?.available || summaryKey === `${slug}:${lang}`) return;
+    summaryKey = `${slug}:${lang}`;
+    const id = demandRequest;
+    demandSummaryLoading.value = true;
+    window.axios.get(`/api/properties/${slug}/demand/summary`, { params: { lang } })
+        .then(({ data }) => { if (id === demandRequest) demandSummary.value = data; })
+        .catch(() => { if (id === demandRequest) demandSummary.value = { source: 'rules' }; })
+        .finally(() => { if (id === demandRequest) demandSummaryLoading.value = false; });
+}
+function watchDemandSection() {
+    demandObserver?.disconnect();
+    const el = document.getElementById('demand');
+    if (!el || !('IntersectionObserver' in window)) { loadDemandSummary(); return; }
+    demandObserver = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) { loadDemandSummary(); demandObserver.disconnect(); }
+    }, { rootMargin: '400px 0px' });
+    demandObserver.observe(el);
+}
+watch(() => selectedLanguage.value?.code, () => { if (summaryKey) loadDemandSummary(); });
+onBeforeUnmount(() => demandObserver?.disconnect());
 
 // Mortgage & Investment section: which calculator is showing. Opening the investment one counts as
 // using the insights (report usage).
@@ -546,6 +596,7 @@ function agentAria(template, name) {
                         <a v-if="hasMortgage" href="#mortgage" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="mortgage">{{ t('property_details.tab_finance', 'Mortgage & Investment') }}</a>
                         <a v-if="hasRentalCosts" href="#rental-costs" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="rental-costs">{{ t('property_details.tab_rental_costs', 'Rental Costs') }}</a>
                         <a v-if="hasMarket" href="#market" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="market">{{ t('property_details.tab_market', 'Market Insights') }}</a>
+                        <a v-if="hasDemand" href="#demand" class="mw-property__tab" role="tab" aria-selected="false" data-property-tab="demand">{{ demandTitle }}</a>
                     </nav>
 
                     <select class="mw-property__tabs-select" :aria-label="t('property_details.tabs_aria')" data-property-tabs-select>
@@ -558,6 +609,7 @@ function agentAria(template, name) {
                         <option v-if="hasMortgage" value="mortgage">{{ t('property_details.tab_finance', 'Mortgage & Investment') }}</option>
                         <option v-if="hasRentalCosts" value="rental-costs">{{ t('property_details.tab_rental_costs', 'Rental Costs') }}</option>
                         <option v-if="hasMarket" value="market">{{ t('property_details.tab_market', 'Market Insights') }}</option>
+                        <option v-if="hasDemand" value="demand">{{ demandTitle }}</option>
                     </select>
                 </div>
 
@@ -747,6 +799,12 @@ function agentAria(template, name) {
                         <section v-if="hasMarket" id="market" class="mw-property__section" data-reveal data-property-panel="market" data-insight-section>
                             <h3 class="mw-property__section-title">{{ t('property_details.market_title', 'Market Insights') }}</h3>
                             <MarketInsights :insights="insights" :loading="insightsLoading" />
+                        </section>
+
+                        <!-- Buyer / Tenant Demand: anonymised activity in this area, with an AI overview. -->
+                        <section v-if="hasDemand" id="demand" class="mw-property__section" data-reveal data-property-panel="demand" data-insight-section>
+                            <h3 class="mw-property__section-title">{{ demandTitle }}</h3>
+                            <MarketDemand :demand="demand" :loading="demandLoading" :summary="demandSummary" :summary-loading="demandSummaryLoading" />
                         </section>
 
                         <!-- Regulatory information: reference, permit, broker / agent licenses + the permit QR buyers can scan. -->
