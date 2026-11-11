@@ -9434,6 +9434,17 @@ html:has(.about-page) {
     padding: clamp(14px, 0.5vw, 15px) clamp(15px, 0.5vw, 16px) clamp(15px, 0.5vw, 16px) clamp(130px, 7vw, 137px);
   }
 }
+/* The avatar hangs below the blue head: keep the body text clear of it at every width. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .mw-agent-card__body {
+    padding-left: clamp(128px, 8vw, 137px);
+  }
+}
+@media (max-width: 767.98px) {
+  .mw-agent-card__head {
+    min-height: calc(39px + clamp(72px, 9vw, 100px));
+  }
+}
 .mw-agent-card__body p {
   margin: 0;
   max-width: 314px;

@@ -123,7 +123,8 @@ const featureMode = ref('create');
 const stopping = ref(null);
 
 const quota = computed(() => page.value?.featured_quota ?? null);
-const canAdd = computed(() => page.value.is_admin || (quota.value && (quota.value.limit > 0 || quota.value.credits)));
+// Premium not in the plan → only show "Add Premium" when there are credits to pay with (0 credits = no button).
+const canAdd = computed(() => page.value.is_admin || (quota.value && (quota.value.limit > 0 || (quota.value.credits && (quota.value.credit_balance ?? 0) > 0))));
 const tabs = computed(() => [
     { key: 'all', label: 'All', count: page.value.counts.live + page.value.counts.scheduled },
     { key: 'live', label: 'Live', count: page.value.counts.live },

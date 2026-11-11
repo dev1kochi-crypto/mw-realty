@@ -352,6 +352,7 @@ function removeCoupon() {
     coupon.value = null;
     couponCode.value = '';
     couponError.value = '';
+    couponTouched.value = false; // back to the normal "Have a coupon?" hint, same as after a reload
     couponInput.value?.focus();
 }
 

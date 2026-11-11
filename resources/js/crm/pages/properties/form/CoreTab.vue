@@ -54,7 +54,7 @@
                     <option v-else>No license on file</option>
                 </select>
                 <div v-if="show.validates" id="permitLicenseHelp" class="form-text">{{ f.permitType.value === 'adrec' ? 'ADREC checks the broker license together with the permit number.' : 'DLD checks the permit against this RERA office registration number (ORN).' }}</div>
-                <div v-if="show.validates && !f.license.value" class="alert alert-warning small py-2 mt-2 mb-0">
+                <div v-if="!f.license.value && f.licenseMissing.value.text" class="alert alert-warning small py-2 mt-2 mb-0">
                     <i class="fas fa-triangle-exclamation me-1"></i><span>{{ f.licenseMissing.value.text || '' }}</span>
                     <a v-if="f.licenseMissing.value.url" :href="f.licenseMissing.value.url" target="_blank" class="ms-1 fw-semibold">{{ f.licenseMissing.value.link }}</a>
                 </div>

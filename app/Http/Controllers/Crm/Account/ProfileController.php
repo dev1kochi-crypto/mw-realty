@@ -10,6 +10,7 @@ use App\Models\CmsKit\SiteInformation;
 use App\Models\PortalUser;
 use App\Notifications\PortalRegistrationNotification;
 use App\Rules\PhoneNumber;
+use App\Services\AgentAgencyPageService;
 use App\Services\ManagedFiles;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -230,7 +231,8 @@ class ProfileController extends Controller
             // "Experience since" is what's asked; the years shown on the website follow from it.
             if ($request->has('experience_since')) {
                 $portalUser->experience_since = $request->input('experience_since') ?: null;
-                $portalUser->years_of_experience = $portalUser->experience_since ? max(0, now()->year - $portalUser->experience_since) : $portalUser->years_of_experience;
+                // Cleared → no years either (otherwise the old "8 years" stays on the public profile).
+                $portalUser->years_of_experience = $portalUser->experience_since ? max(0, now()->year - $portalUser->experience_since) : null;
             }
 
             if ($request->has('bio') || $request->has('bio_ar')) {
@@ -248,6 +250,9 @@ class ProfileController extends Controller
             }
 
             $portalUser->save();
+
+            // Public /agents, /agent-details, /agencies, /agency-details show these fields — drop their cache so the change shows at once.
+            AgentAgencyPageService::forget($portalUser);
         } elseif ($section === 'seo') {
             $metadata = $request->input('metadata', []);
             $existingMetadata = $portalUser->metadata ?? [];
@@ -379,6 +384,7 @@ class ProfileController extends Controller
         }
         $portalUser->avatar = $files->store($request->file('avatar'), 'avatars');
         $portalUser->save();
+        AgentAgencyPageService::forget($portalUser); // public agent/agency pages show the new photo at once
 
         return response()->json(['success' => true, 'avatar_url' => media_url($portalUser->avatar), 'message' => $portalUser->type === 'company' ? 'Logo updated.' : 'Profile photo updated.']);
     }
@@ -391,6 +397,7 @@ class ProfileController extends Controller
             app(ManagedFiles::class)->delete($portalUser->avatar);
             $portalUser->avatar = null;
             $portalUser->save();
+            AgentAgencyPageService::forget($portalUser);
         }
 
         return response()->json(['success' => true]);

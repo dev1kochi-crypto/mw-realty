@@ -350,7 +350,20 @@ class StripeBillingService
             $this->applySubscription($user->fresh(), $updated);
         });
 
-        return 'Your plan is now ' . $plan->getTranslation('name') . ' (' . $interval . '). The amount shown was charged to your card.';
+        // The upgrade charge goes into Payment History now, same as a first purchase does — not only
+        // when the invoice.paid webhook arrives (it may be late, or not reach a sandbox at all).
+        // recordInvoice() is keyed by the Stripe invoice id, so the later webhook doesn't add a second row.
+        try {
+            if ($updated->latest_invoice) {
+                $this->recordInvoice($this->client()->invoices->retrieve(
+                    is_string($updated->latest_invoice) ? $updated->latest_invoice : $updated->latest_invoice->id
+                ));
+            }
+        } catch (\Throwable $e) {
+            self::logError($e, 'upgrade payment record (webhook will retry)');
+        }
+
+        return 'Your plan is now '. $plan->getTranslation('name') . ' (' . $interval . '). The amount shown was charged to your card.';
     }
 
     /**

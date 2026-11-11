@@ -16,6 +16,23 @@ class AgentAgencyPageService
 
     private const CACHE_TTL = 180; // seconds
 
+    /**
+     * Drop the cached public pages that show this agent / agency (name, photo, experience…), so a CRM
+     * change shows at once instead of after the cache expires. An agent also appears on its agency's page.
+     */
+    public static function forget(PortalUser $user): void
+    {
+        $slugs = array_filter([$user->slug, $user->company_id ? $user->company()->value('slug') : null]);
+        foreach (\App\Models\CmsKit\Language::active()->pluck('code') as $code) {
+            Cache::forget("agents-listing:{$code}");
+            Cache::forget("agencies-listing:{$code}");
+            foreach ($slugs as $slug) {
+                Cache::forget("agent-detail:{$code}:{$slug}");
+                Cache::forget("agency-detail:{$code}:{$slug}");
+            }
+        }
+    }
+
     public function getAgentsListing(string $lang): array
     {
         return Cache::remember("agents-listing:{$lang}", self::CACHE_TTL, function () use ($lang) {

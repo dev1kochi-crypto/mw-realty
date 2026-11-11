@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Crm\Properties;
 
 use App\Http\Controllers\Crm\Concerns\ScopesListings;
 use App\Models\Property;
+use App\Services\CreditService;
 use App\Services\FeaturedListingService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -57,6 +58,16 @@ class PremiumController extends Controller
 
         $editable = $this->featured->editableIds($this->isAdmin() ? null : $this->viewer(), collect($listings->items())->pluck('id'));
         $quota = $this->isAdmin() ? null : $this->featured->quota($this->viewer());
+        if ($quota) {
+            $credits = app(CreditService::class);
+            $usable = CreditService::usableBy($this->viewer());
+            $quota += [
+                'resets' => now()->addMonthNoOverflow()->startOfMonth()->format('d M'),
+                'credits' => $usable,
+                // Balance decides whether "Add Premium" shows on a plan without premium (0 credits = no button).
+                'credit_balance' => $usable ? $credits->balance($credits->wallet($this->viewer())) : 0,
+            ];
+        }
 
         return response()->json([
             'data' => collect($listings->items())->map(function (Property $p) use ($editable) {
@@ -88,7 +99,7 @@ class PremiumController extends Controller
                 'scheduled' => $owned()->where('featured', false)->whereNotNull('featured_from')->where('featured_from', '>', now())->count(),
             ],
             'is_admin' => $this->isAdmin(),
-            'featured_quota' => $quota ? $quota + ['resets' => now()->addMonthNoOverflow()->startOfMonth()->format('d M'), 'credits' => \App\Services\CreditService::usableBy($this->viewer())] : null,
+            'featured_quota' => $quota,
             'feature_max_days' => FeaturedListingService::MAX_DAYS,
             'batch_limit' => self::BATCH_LIMIT,
         ]);

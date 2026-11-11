@@ -8,6 +8,7 @@ import { useStaticText } from '../composables/useStaticText';
 import { useCurrency } from '../composables/useCurrency';
 import AdBlock from '../components/AdBlock.vue';
 import CompareToggle from '../components/compare/CompareToggle.vue';
+import { useWishlist } from '../composables/useWishlist';
 import PhoneInput from '../components/PhoneInput.vue';
 import PropertyNearbyMap from '../components/PropertyNearbyMap.vue';
 import MortgageCalculator from '../components/calculators/MortgageCalculator.vue';
@@ -389,6 +390,15 @@ const hasMortgage = computed(() => !!(property.value && property.value.listing_t
 const hasRentalCosts = computed(() => !!(property.value && property.value.listing_type === 'rent' && Number(property.value.price_value) > 0
     && ['yearly', 'monthly', null, undefined].includes(property.value.rental_period)));
 const hasMarket = computed(() => !!(property.value && Number(property.value.price_value) > 0));
+
+// Save (wishlist) — the same shared state as the hearts on listing cards.
+const { isWishlisted, toggleWishlist } = useWishlist();
+const saving = ref(false);
+function toggleSave() {
+    if (!property.value || saving.value) return;
+    saving.value = true;
+    toggleWishlist(property.value.id).catch(() => {}).finally(() => { saving.value = false; });
+}
 // Buyer Demand needs the listing's community or city ("—" = neither). Decided from the page data, not
 // the demand request, so the tab exists when the tabs script binds on render.
 const hasDemand = computed(() => !!(property.value?.location && property.value.location !== '—'));
@@ -581,7 +591,16 @@ function agentAria(template, name) {
                         <button v-if="property.brochure_available" type="button" class="mw-brochure-button" @click="openDownload('brochure')">
                             <span class="mw-download-arrow" aria-hidden="true">↓</span> Download Brochure
                         </button>
-                        <CompareToggle :property="property" large />
+                        <div class="mw-property__quick">
+                            <!-- Save to the visitor's wishlist (Profile › Wishlist) — same shared state as the card hearts; logged-out visitors go to login. -->
+                            <button type="button" class="mw-property__save" :class="{ 'is-saved': isWishlisted(property.id) }" :aria-pressed="isWishlisted(property.id) ? 'true' : 'false'"
+                                :aria-label="isWishlisted(property.id) ? t('property_details.saved_aria', 'Remove from saved properties') : t('property_details.save_aria', 'Save property')"
+                                :disabled="saving" @click="toggleSave">
+                                <img :src="isWishlisted(property.id) ? '/frontend/assets/images/icons/heart-filled.svg' : '/frontend/assets/images/icons/heart.svg'" alt="" width="18" height="18">
+                                {{ isWishlisted(property.id) ? t('property_details.saved', 'Saved') : t('property_details.save', 'Save') }}
+                            </button>
+                            <CompareToggle :property="property" large />
+                        </div>
                     </div>
                 </div>
 
@@ -1126,6 +1145,14 @@ function agentAria(template, name) {
 .mw-brochure-button{display:flex;align-items:center;gap:9px;margin-top:16px;padding:11px 17px;border:0;border-radius:10px;background:#203f68;color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 8px 20px #203f6830;transition:transform .2s,box-shadow .2s,background .2s}
 .mw-brochure-button:hover{transform:translateY(-2px);background:#c3264b;box-shadow:0 12px 24px #c3264b40}
 .mw-brochure-button span{font-size:22px;line-height:14px}
+/* Save + Compare under the price — white pills on the red price card. */
+.mw-property__quick{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:6px}
+.mw-property__quick .mw-compare-toggle{margin:0}
+.mw-property__save{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid transparent;border-radius:999px;background:#fff;color:#244373;font:inherit;font-size:14px;font-weight:700;line-height:1.2;cursor:pointer;transition:border-color .2s,background .2s}
+.mw-property__save:hover{border-color:#244373}
+.mw-property__save.is-saved{background:#fff4f6;color:#b9233c}
+.mw-property__save:disabled{opacity:.7;cursor:wait}
+.mw-property__save img{flex-shrink:0}
 .mw-brochure-overlay{position:fixed;z-index:10000;inset:0;display:grid;place-items:center;padding:20px;background:#101c2dcc;backdrop-filter:blur(6px);animation:brochureFade .18s ease-out}
 .mw-brochure-dialog{position:relative;width:min(100%,450px);padding:36px;border-radius:22px;background:#fff;box-shadow:0 28px 90px #08162d55;animation:brochurePop .28s cubic-bezier(.2,.8,.2,1)}
 .mw-brochure-close{position:absolute;top:14px;right:17px;border:0;background:transparent;color:#64748b;font-size:28px;cursor:pointer}

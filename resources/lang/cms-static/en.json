@@ -871,6 +871,10 @@
         "tab_market": "Market Insights",
         "tab_demand": "Buyer Demand",
         "tab_demand_rent": "Tenant Demand",
+        "save": "Save",
+        "saved": "Saved",
+        "save_aria": "Save property",
+        "saved_aria": "Remove from saved properties",
         "demand": {
             "ai_title": "AI market overview",
             "quick_title": "Market overview",
