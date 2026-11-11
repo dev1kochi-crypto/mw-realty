@@ -283,7 +283,7 @@ function agencyAria(template, name) {
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>{{ t('agency_details.not_found.title') }}</h1>
+                    <h1 class="mw-about-title">{{ t('agency_details.not_found.title') }}</h1>
                 </div>
             </div>
         </section>

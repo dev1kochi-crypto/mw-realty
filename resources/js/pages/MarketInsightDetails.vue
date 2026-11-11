@@ -180,7 +180,7 @@ function copyLink() {
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>{{ t('market_insight_details.not_found.title', 'Insight Not Found') }}</h1>
+                    <h1 class="mw-about-title">{{ t('market_insight_details.not_found.title', 'Insight Not Found') }}</h1>
                 </div>
             </div>
         </section>

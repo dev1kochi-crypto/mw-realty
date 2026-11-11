@@ -234,7 +234,7 @@ async function shareToInstagram() {
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>{{ t('agent_details.not_found.title') }}</h1>
+                    <h1 class="mw-about-title">{{ t('agent_details.not_found.title') }}</h1>
                 </div>
             </div>
         </section>

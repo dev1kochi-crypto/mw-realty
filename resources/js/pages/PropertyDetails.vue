@@ -74,7 +74,7 @@ function destroySliders() {
     $(SLIDERS).filter('.slick-initialized').slick('unslick');
 }
 watch(property, destroySliders, { flush: 'pre' });
-// Also on "not found": its data-reveal heading stays hidden until refresh() scans it.
+// Also on "not found" (re-binds page scripts; its heading has no data-reveal, so it's visible regardless).
 watch([property, notFound], () => {
     nextTick(() => window.MWRealty && window.MWRealty.refresh());
 });
@@ -1038,7 +1038,7 @@ function agentAria(template, name) {
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>{{ t('property_details.not_found.title') }}</h1>
+                    <h1 class="mw-about-title">{{ t('property_details.not_found.title') }}</h1>
                 </div>
             </div>
         </section>

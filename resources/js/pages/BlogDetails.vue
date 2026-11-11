@@ -163,7 +163,7 @@ const nextPost = computed(() => blogPost.value?.next || null);
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>{{ t('blog_details.not_found.title') }}</h1>
+                    <h1 class="mw-about-title">{{ t('blog_details.not_found.title') }}</h1>
                 </div>
             </div>
         </section>

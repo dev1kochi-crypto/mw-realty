@@ -59,7 +59,7 @@ watch(legalPage, () => {
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>{{ t('legal_page.not_found_title') }}</h1>
+                    <h1 class="mw-about-title">{{ t('legal_page.not_found_title') }}</h1>
                 </div>
             </div>
         </section>

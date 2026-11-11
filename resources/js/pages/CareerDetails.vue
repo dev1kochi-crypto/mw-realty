@@ -131,7 +131,7 @@ function scrollToApply() {
         <section class="mw-about-hero">
             <div class="mw-about-hero__band">
                 <div class="container-ctn">
-                    <h1 class="mw-about-title" data-reveal>{{ t('career_details.not_found.title', 'Position Not Available') }}</h1>
+                    <h1 class="mw-about-title">{{ t('career_details.not_found.title', 'Position Not Available') }}</h1>
                 </div>
             </div>
         </section>
