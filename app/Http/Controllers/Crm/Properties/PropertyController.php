@@ -1146,6 +1146,19 @@ class PropertyController extends Controller
             }
         }
 
+        // A paid plan's allowance is listings added this month — deleting doesn't give the slot back
+        // (see PortalUser::usedPropertySlots). Credit-paid listings never used a plan slot.
+        $paidWithCredits = DB::table('credit_transactions')->where('property_id', $property->id)
+            ->where('type', \App\Models\CreditTransaction::SPEND)->where('kind', 'listing')->exists();
+        if ($property->portal_user_id && $property->created_at && !$paidWithCredits) {
+            DB::table('deleted_listing_slots')->insert([
+                'portal_user_id' => $property->portal_user_id,
+                'property_id' => $property->id,
+                'listing_created_at' => $property->created_at,
+                'deleted_at' => now(),
+            ]);
+        }
+
         $property->delete();
     }
 

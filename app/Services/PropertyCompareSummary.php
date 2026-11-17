@@ -45,6 +45,16 @@ class PropertyCompareSummary
         $rate = $currency->isBase() ? 1.0 : (float) $currency->rate;
         $money = fn ($aed) => $aed === null ? null : round($aed * $rate);
 
+        // Models get "which is cheaper" wrong now and then — hand them the order instead of the sums.
+        $rank = function (string $field) use ($compare) {
+            $values = collect($compare['properties'])->values()->map(fn ($p, $i) => ['n' => $i + 1, 'v' => $p[$field] ?? null])->filter(fn ($r) => $r['v'] !== null);
+
+            return $values->count() > 1 ? $values->sortBy('v')->values()->mapWithKeys(fn ($r, $pos) => [$r['n'] => $pos + 1])->all() : [];
+        };
+        $priceRank = $rank('price');
+        $psfRank = $rank('price_psf');
+        $sizeRank = $rank('sqft');
+
         return [
             'currency' => $currency->code,
             'properties' => collect($compare['properties'])->values()->map(fn ($p, $i) => array_filter([
@@ -56,6 +66,9 @@ class PropertyCompareSummary
                 'location' => $p['location'],
                 'emirate' => $p['emirate_label'] ?? $p['emirate'],
                 'price' => $money($p['price']),
+                'price_rank_low_to_high' => $priceRank[$i + 1] ?? null,
+                'price_per_sqft_rank_low_to_high' => $psfRank[$i + 1] ?? null,
+                'size_rank_small_to_large' => $sizeRank[$i + 1] ?? null,
                 'annual_rent' => $money($p['annual_rent']),
                 'size_sqft' => $p['sqft'],
                 'price_per_sqft' => $p['price_psf'] === null ? null : round($p['price_psf'] * $rate, 2),
@@ -86,6 +99,7 @@ You compare property listings for buyers and tenants on MW Realty, a UAE propert
 Use ONLY the facts in the JSON you are given. Never invent prices, distances, amenities, fees or laws; if something isn't in the facts, don't mention it.
 Amounts are already in {$currency->code}: write them in {$currency->code}, rounded (e.g. "{$currency->code} 1.25M", "{$currency->code} 850K").
 price_vs_area_pct is the listing's price per sq.ft against similar listings in its area (negative = cheaper). Yields and growth are estimates — say so.
+The *_rank fields give the order (1 = lowest / smallest). Every "lower", "cheaper", "higher", "more expensive", "larger" or "smaller" claim must agree with those ranks; when you quote two amounts, name them in the same order as the listings they belong to.
 Write in the language with code "{$lang}". Plain text inside the JSON strings, no markdown.
 Reply with JSON only, exactly this shape:
 {"overview": "2 sentences on the main trade-off", "points": ["4 to 6 short points, each naming the listings it compares"], "best_for": {"1": "one short phrase: who listing 1 suits best", "2": "..."}}
@@ -98,14 +112,47 @@ TXT;
         }
 
         $clean = fn ($s) => trim(str_replace(['**', '__'], '', (string) $s));
+        $code = preg_quote($currency->code, '/');
+        $points = array_values(array_filter(array_map($clean, array_filter($json['points'], 'is_string')), fn ($p) => $p !== '' && $this->consistent($p, $code)));
+        if (!$points) {
+            return null; // nothing trustworthy left — the rule-based summary is used instead
+        }
+        $overview = $clean($json['overview']);
 
         return [
             'source' => 'ai',
-            'overview' => $clean($json['overview']),
-            'points' => array_values(array_filter(array_map($clean, array_filter($json['points'], 'is_string')))),
+            'overview' => $this->consistent($overview, $code) ? $overview : $this->fromRules($facts, $currency)['overview'],
+            'points' => $points,
             'best_for' => collect($json['best_for'] ?? [])->filter(fn ($v, $k) => is_string($v) && is_numeric($k))
                 ->mapWithKeys(fn ($v, $k) => [(int) $k => $clean($v)])->all(),
         ];
+    }
+
+    /**
+     * False when a sentence says one amount is lower / higher but the amounts it quotes say the
+     * opposite — e.g. "a lower price (AED 1.85M vs AED 1.45M)". The amounts are read in the order
+     * written; sentences with both a "lower" and a "higher" word (or under two amounts) aren't judged.
+     */
+    private function consistent(string $text, string $code): bool
+    {
+        $lower = (bool) preg_match('/\b(lower|lowest|cheaper|cheapest|less expensive|more affordable|less than|undercuts?)\b/i', $text);
+        $higher = (bool) preg_match('/\b(higher|highest|pricier|priciest|costlier|more expensive|most expensive|more than|premium over)\b/i', $text);
+        if ($lower === $higher) {
+            return true;
+        }
+        preg_match_all('/' . $code . '\s?([\d.,]+)\s?(m|million|k|thousand)?\b/i', $text, $m, PREG_SET_ORDER);
+        if (count($m) < 2) {
+            return true;
+        }
+        $amount = function (array $match) {
+            $n = (float) str_replace(',', '', $match[1]);
+            $unit = strtolower($match[2] ?? '');
+
+            return $n * (str_starts_with($unit, 'm') ? 1e6 : (str_starts_with($unit, 'k') || $unit === 'thousand' ? 1e3 : 1));
+        };
+        [$first, $second] = [$amount($m[0]), $amount($m[1])];
+
+        return $first === $second || ($lower ? $first < $second : $first > $second);
     }
 
     /** The same comparison without AI: cheapest, best value per sq.ft, largest, best yield, most amenities, closest metro. */

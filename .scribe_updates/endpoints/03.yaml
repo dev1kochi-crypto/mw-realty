@@ -1,0 +1,590 @@
+name: 'Listing automation (CRM)'
+description: |-
+  **Feature 6 — agency listing automation.** Agencies bulk-upload their inventory from a spreadsheet (or another CRM's export): upload → the columns are matched to our fields → confirm → the import runs in the background (poll its progress) → download the file back with an Import Status / Remarks column per row. Descriptions are standardised and missing information reported per row. In the listing form, **Write with AI** drafts the title / description from the details and **Auto-translate** fills the other languages.
+
+  CRM endpoints: `Authorization: Bearer {token}` from `POST /api/crm/auth/login`.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/properties/translate
+    metadata:
+      custom: []
+      groupName: 'Listing automation (CRM)'
+      groupDescription: |-
+        **Feature 6 — agency listing automation.** Agencies bulk-upload their inventory from a spreadsheet (or another CRM's export): upload → the columns are matched to our fields → confirm → the import runs in the background (poll its progress) → download the file back with an Import Status / Remarks column per row. Descriptions are standardised and missing information reported per row. In the listing form, **Write with AI** drafts the title / description from the details and **Auto-translate** fills the other languages.
+
+        CRM endpoints: `Authorization: Bearer {token}` from `POST /api/crm/auth/login`.
+      subgroup: 'Listing form helpers'
+      subgroupDescription: ''
+      title: Auto-translate
+      description: |-
+        The source-language title / key features / description / location translated into the other
+        site languages (Google Cloud Translation — see AutoTranslator). 503 when not set up.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      source:
+        custom: []
+        name: source
+        description: ''
+        required: true
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      targets:
+        custom: []
+        name: targets
+        description: ''
+        required: true
+        example:
+          - ar
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      fields:
+        custom: []
+        name: fields
+        description: ''
+        required: true
+        example:
+          title: 'Sea view apartment'
+        type: object
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      source: en
+      targets:
+        - ar
+      fields:
+        title: 'Sea view apartment'
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/properties/write-copy
+    metadata:
+      custom: []
+      groupName: 'Listing automation (CRM)'
+      groupDescription: |-
+        **Feature 6 — agency listing automation.** Agencies bulk-upload their inventory from a spreadsheet (or another CRM's export): upload → the columns are matched to our fields → confirm → the import runs in the background (poll its progress) → download the file back with an Import Status / Remarks column per row. Descriptions are standardised and missing information reported per row. In the listing form, **Write with AI** drafts the title / description from the details and **Auto-translate** fills the other languages.
+
+        CRM endpoints: `Authorization: Bearer {token}` from `POST /api/crm/auth/login`.
+      subgroup: 'Listing form helpers'
+      subgroupDescription: ''
+      title: 'Write with AI'
+      description: |-
+        Title, key features and description for one language, written from the form's current specs
+        (`write`) or polished from the agent's own draft (`improve`) — see ListingCopywriter. Nothing
+        is saved: the form shows it for the agent to use or discard. 503 when no AI is set up.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: true
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      mode:
+        custom: []
+        name: mode
+        description: 'write | improve.'
+        required: false
+        example: write
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      tone:
+        custom: []
+        name: tone
+        description: 'professional | luxury | friendly | concise.'
+        required: false
+        example: professional
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      specs:
+        custom: []
+        name: specs
+        description: "The form's values (listing_type, property_type, bedrooms, sqft, price, amenities, community, notes…)."
+        required: true
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      specs.amenities:
+        custom: []
+        name: specs.amenities
+        description: 'Must not be greater than 100 characters.'
+        required: false
+        example:
+          - 'n'
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      specs.notes:
+        custom: []
+        name: specs.notes
+        description: 'Must not be greater than 2000 characters.'
+        required: false
+        example: g
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      draft:
+        custom: []
+        name: draft
+        description: 'The current description (HTML), for `improve`.'
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      lang: en
+      mode: write
+      tone: professional
+      specs:
+        amenities:
+          - 'n'
+        notes: g
+      draft: architecto
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"title": "Bright 2 Bed Apartment with Marina View", "key_features": "Marina view\nHigh floor", "description": "<p>…</p>"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/properties/imports
+    metadata:
+      custom: []
+      groupName: 'Listing automation (CRM)'
+      groupDescription: |-
+        **Feature 6 — agency listing automation.** Agencies bulk-upload their inventory from a spreadsheet (or another CRM's export): upload → the columns are matched to our fields → confirm → the import runs in the background (poll its progress) → download the file back with an Import Status / Remarks column per row. Descriptions are standardised and missing information reported per row. In the listing form, **Write with AI** drafts the title / description from the details and **Auto-translate** fills the other languages.
+
+        CRM endpoints: `Authorization: Bearer {token}` from `POST /api/crm/auth/login`.
+      subgroup: 'Spreadsheet import'
+      subgroupDescription: ''
+      title: 'Import history'
+      description: "The account's past imports, newest first, 10 a page (the Import page's history table)."
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      page:
+        custom: []
+        name: page
+        description: ''
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data": [{"id": 4, "status": "done", "file": "inventory.xlsx", "total": 120, "added": 110, "created_at": "2026-10-30T10:00:00Z", "uploaded_by": "Sara"}], "next_page": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/crm/properties/imports
+    metadata:
+      custom: []
+      groupName: 'Listing automation (CRM)'
+      groupDescription: |-
+        **Feature 6 — agency listing automation.** Agencies bulk-upload their inventory from a spreadsheet (or another CRM's export): upload → the columns are matched to our fields → confirm → the import runs in the background (poll its progress) → download the file back with an Import Status / Remarks column per row. Descriptions are standardised and missing information reported per row. In the listing form, **Write with AI** drafts the title / description from the details and **Auto-translate** fills the other languages.
+
+        CRM endpoints: `Authorization: Bearer {token}` from `POST /api/crm/auth/login`.
+      subgroup: 'Spreadsheet import'
+      subgroupDescription: ''
+      title: 'Upload a listing file'
+      description: "Returns the file's columns (with sample values), our fields and the suggested mapping."
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: multipart/form-data
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      file:
+        custom: []
+        name: file
+        description: '.xlsx, .xls or .csv, max 10 MB.'
+        required: true
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      segment:
+        custom: []
+        name: segment
+        description: "residential | commercial (the page it's uploaded from)."
+        required: false
+        example: residential
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      segment: residential
+    fileParameters:
+      file: null
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"import": {"id": 4, "status": "mapping", "file": "inventory.xlsx", "total": 120}, "columns": [{"index": 0, "heading": "Ref", "samples": ["AG-1"]}], "fields": [{"key": "price", "label": "Price (AED)", "required": true, "hint": "…"}], "mapping": {"reference": 0}, "ai_available": true, "translate_available": true}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/properties/imports/template
+    metadata:
+      custom: []
+      groupName: 'Listing automation (CRM)'
+      groupDescription: |-
+        **Feature 6 — agency listing automation.** Agencies bulk-upload their inventory from a spreadsheet (or another CRM's export): upload → the columns are matched to our fields → confirm → the import runs in the background (poll its progress) → download the file back with an Import Status / Remarks column per row. Descriptions are standardised and missing information reported per row. In the listing form, **Write with AI** drafts the title / description from the details and **Auto-translate** fills the other languages.
+
+        CRM endpoints: `Authorization: Bearer {token}` from `POST /api/crm/auth/login`.
+      subgroup: 'Spreadsheet import'
+      subgroupDescription: ''
+      title: 'Import template'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/crm/properties/imports/latest
+    metadata:
+      custom: []
+      groupName: 'Listing automation (CRM)'
+      groupDescription: |-
+        **Feature 6 — agency listing automation.** Agencies bulk-upload their inventory from a spreadsheet (or another CRM's export): upload → the columns are matched to our fields → confirm → the import runs in the background (poll its progress) → download the file back with an Import Status / Remarks column per row. Descriptions are standardised and missing information reported per row. In the listing form, **Write with AI** drafts the title / description from the details and **Auto-translate** fills the other languages.
+
+        CRM endpoints: `Authorization: Bearer {token}` from `POST /api/crm/auth/login`.
+      subgroup: 'Spreadsheet import'
+      subgroupDescription: ''
+      title: 'Latest import'
+      description: |-
+        The account's latest import still running or finished in the last day (the Properties page
+        shows it on load), or a given one with `?id=`.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/crm/properties/imports/{propertyImport_id}/start'
+    metadata:
+      custom: []
+      groupName: 'Listing automation (CRM)'
+      groupDescription: |-
+        **Feature 6 — agency listing automation.** Agencies bulk-upload their inventory from a spreadsheet (or another CRM's export): upload → the columns are matched to our fields → confirm → the import runs in the background (poll its progress) → download the file back with an Import Status / Remarks column per row. Descriptions are standardised and missing information reported per row. In the listing form, **Write with AI** drafts the title / description from the details and **Auto-translate** fills the other languages.
+
+        CRM endpoints: `Authorization: Bearer {token}` from `POST /api/crm/auth/login`.
+      subgroup: 'Spreadsheet import'
+      subgroupDescription: ''
+      title: 'Start the import'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      propertyImport_id:
+        custom: []
+        name: propertyImport_id
+        description: 'The ID of the propertyImport.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      propertyImport_id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      mapping:
+        custom: []
+        name: mapping
+        description: "Our field => the file's column index."
+        required: true
+        example:
+          price: 3
+          community: 5
+        type: object
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      translate:
+        custom: []
+        name: translate
+        description: 'Translate title / description / location into the other site languages.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      ai_descriptions:
+        custom: []
+        name: ai_descriptions
+        description: 'Write a description with AI for rows that have none.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      mapping:
+        price: 3
+        community: 5
+      translate: false
+      ai_descriptions: false
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"message": "Importing 120 listings in the background…", "import": {"id": 4, "status": "queued"}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/crm/properties/imports/{propertyImport_id}'
+    metadata:
+      custom: []
+      groupName: 'Listing automation (CRM)'
+      groupDescription: |-
+        **Feature 6 — agency listing automation.** Agencies bulk-upload their inventory from a spreadsheet (or another CRM's export): upload → the columns are matched to our fields → confirm → the import runs in the background (poll its progress) → download the file back with an Import Status / Remarks column per row. Descriptions are standardised and missing information reported per row. In the listing form, **Write with AI** drafts the title / description from the details and **Auto-translate** fills the other languages.
+
+        CRM endpoints: `Authorization: Bearer {token}` from `POST /api/crm/auth/login`.
+      subgroup: 'Spreadsheet import'
+      subgroupDescription: ''
+      title: 'Import progress'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      propertyImport_id:
+        custom: []
+        name: propertyImport_id
+        description: 'The ID of the propertyImport.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      propertyImport_id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/crm/properties/imports/{propertyImport_id}/result'
+    metadata:
+      custom: []
+      groupName: 'Listing automation (CRM)'
+      groupDescription: |-
+        **Feature 6 — agency listing automation.** Agencies bulk-upload their inventory from a spreadsheet (or another CRM's export): upload → the columns are matched to our fields → confirm → the import runs in the background (poll its progress) → download the file back with an Import Status / Remarks column per row. Descriptions are standardised and missing information reported per row. In the listing form, **Write with AI** drafts the title / description from the details and **Auto-translate** fills the other languages.
+
+        CRM endpoints: `Authorization: Bearer {token}` from `POST /api/crm/auth/login`.
+      subgroup: 'Spreadsheet import'
+      subgroupDescription: ''
+      title: 'Import status file'
+      description: 'The uploaded file with Import Status / Import Remarks columns added (kept 30 days).'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      propertyImport_id:
+        custom: []
+        name: propertyImport_id
+        description: 'The ID of the propertyImport.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      propertyImport_id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

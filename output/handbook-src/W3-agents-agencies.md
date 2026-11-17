@@ -69,7 +69,7 @@ The directories list approved agents and agencies with a search box. Each profil
 **Shared rules (all lead and contact forms)**
 - **Email:** must look like name@domain.tld. Messages: "Please enter your email address." and "Please enter a valid email address.". Server limit 255 characters.
 - **Phone:** typed **without** the country code. A flag picker sets the code (default +971).
-  - Only digits, spaces and dashes are allowed: "The phone number may only contain digits.".
+  - Only digits, spaces and dashes can be typed — letters and other characters are removed as you type or paste (e.g. "phone12ab" becomes "12", which then fails the 7–13 digit rule). The server still answers "The phone number may only contain digits." if letters reach it some other way (e.g. the API).
   - 7–13 digits: "The phone number must be 7–13 digits (without the country code)." (the server wording is "… 7 to 13 digits …").
   - When required: "Please enter your phone number.".
 - **Name:** "Please enter your name." on the property enquiry, viewing, download, contact and calculator forms. Server limit 255.

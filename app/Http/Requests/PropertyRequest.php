@@ -116,6 +116,49 @@ class PropertyRequest extends FormRequest
         return $rules;
     }
 
+    /**
+     * The emirate must agree with the address: a listing in "Al Reem Island, Abu Dhabi" saved as
+     * Dubai gets Dubai's permit rules, buying fees and ownership notes (e.g. on /compare).
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $chosen = $this->input('emirate');
+            if (!$chosen || $validator->errors()->has('emirate')) {
+                return;
+            }
+            $translations = (array) $this->input('translations', []);
+            $address = (array) ($translations['en'] ?? reset($translations) ?: []);
+            // Editing: only when the emirate or city changes — an approved listing's emirate is
+            // locked (permit), so an old mismatch must not stop every other edit.
+            $existing = $this->route('id') ? \App\Models\Property::find($this->route('id')) : null;
+            if ($existing && $existing->emirate === $chosen && $existing->getTranslation('city', 'en') === ($address['city'] ?? null)) {
+                return;
+            }
+            $found = self::emirateFromAddress($address['city'] ?? null, $address['community'] ?? null, $address['address'] ?? null, $this->input('location'));
+            if ($found && $found !== $chosen) {
+                $label = fn ($code) => \App\Models\FilterValue::whereHas('filter', fn ($q) => $q->where('key', Filter::EMIRATE_KEY))
+                    ->where('value', $code)->first()?->translations['en']['label'] ?? str_replace('_', ' ', ucfirst($code));
+                $validator->errors()->add('emirate', "The address is in {$label($found)} — choose {$label($found)} as the emirate (it decides the permit, buying fees and ownership rules).");
+            }
+        });
+    }
+
+    /**
+     * The emirate an address clearly names, or null when it doesn't say. The city decides first;
+     * community / address / location only when the city names none. Al Ain is filed under
+     * Northern Emirates with an ADREC permit here (PermitRules::NORTHERN_CITIES), so it never conflicts with that.
+     */
+    public static function emirateFromAddress(?string $city, ?string $community, ?string $address, ?string $location): ?string
+    {
+        $matcher = app(\App\Services\Properties\ListingOptionMatcher::class);
+        $names = [$community, $address, $location ? str_replace(['-', '_'], ' ', $location) : null];
+        $found = $matcher->emirateFromNames([$city]) ?? $matcher->emirateFromNames($names);
+        $all = mb_strtolower(implode(' ', array_filter([$city, ...$names])));
+
+        return $found === \App\Support\PermitRules::ABU_DHABI && str_contains($all, 'al ain') ? null : $found;
+    }
+
     public function messages(): array
     {
         return [

@@ -55,7 +55,7 @@ class PropertyMatcher
             ->when(!$category && ($brief['purpose'] ?? null) === 'invest', fn ($q) => $q->where('listing_type', 'sale'))
             ->when($brief['property_type'] ?? null, fn ($q, $type) => $q->where('property_type', $type));
         if (!empty($brief['location'])) {
-            LocationFilter::apply($query, null, null, $brief['location']);
+            $this->applyLocation($query, $brief['location']);
         }
 
         // Loose bounds so the scored pool is the relevant end of the market, not the newest 300.
@@ -173,6 +173,37 @@ class PropertyMatcher
             ->get()
             ->mapWithKeys(fn ($value) => [$value->value => $value->getTranslation('label', $lang) ?? $value->value])
             ->all());
+    }
+
+    /** Filler the AI / visitor wraps around a place name ("the Ranches area", "near JVC"). */
+    private const LOCATION_FILLER = ['the', 'area', 'areas', 'community', 'communities', 'near', 'in', 'at', 'around', 'of', 'and', 'uae'];
+
+    /**
+     * The place as typed first ("Arabian Ranches"); when that matches nothing, its meaningful words
+     * instead, each of which must match ("The Ranches" → "ranches" → Arabian Ranches). Without
+     * this, a loosely-worded place filtered every listing out and the chat said nothing matched.
+     */
+    private function applyLocation($query, string $location): void
+    {
+        if ((clone $query)->where(fn ($q) => LocationFilter::apply($q, null, null, $location))->exists()) {
+            LocationFilter::apply($query, null, null, $location);
+
+            return;
+        }
+
+        $words = array_filter(
+            preg_split('/[\s,\/\-]+/u', mb_strtolower($location)) ?: [],
+            fn ($w) => mb_strlen($w) >= 3 && !in_array($w, self::LOCATION_FILLER, true)
+        );
+        if (!$words) {
+            LocationFilter::apply($query, null, null, $location); // nothing better to try — keep the honest "no matches"
+
+            return;
+        }
+        foreach ($words as $word) {
+            // Each word in its own group: LocationFilter ORs across fields, the groups AND together.
+            $query->where(fn ($q) => LocationFilter::apply($q, null, null, rtrim($word, 's') ?: $word));
+        }
     }
 
     /** 'studio' => 0, '5+' => 5, '2' => 2, null => no preference. */

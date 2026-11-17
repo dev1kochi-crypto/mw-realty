@@ -924,11 +924,11 @@ function agentAria(template, name) {
                             <form class="mw-property-enquiry__form" novalidate @submit.prevent="handleEnquirySubmit" @focusin.once="trackLeadClick(property.id, 'enquiry')">
                                 <div class="mw-property-enquiry__field">
                                     <label for="enquiry-name">{{ t('property_details.enquiry.name_label') }}</label>
-                                    <input type="text" id="enquiry-name" name="name" :placeholder="t('property_details.enquiry.name_placeholder')" v-model="enquiryForm.name" required>
+                                    <input type="text" id="enquiry-name" name="name" :placeholder="t('property_details.enquiry.name_placeholder')" v-model="enquiryForm.name" aria-required="true">
                                 </div>
                                 <div class="mw-property-enquiry__field">
                                     <label for="enquiry-email">{{ t('property_details.enquiry.email_label') }}</label>
-                                    <input type="email" id="enquiry-email" name="email" :placeholder="t('property_details.enquiry.email_placeholder')" v-model="enquiryForm.email" required>
+                                    <input type="email" id="enquiry-email" name="email" :placeholder="t('property_details.enquiry.email_placeholder')" v-model="enquiryForm.email" aria-required="true">
                                 </div>
                                 <div class="mw-property-enquiry__field">
                                     <label for="enquiry-phone">{{ t('property_details.enquiry.phone_label') }}</label>
@@ -1079,8 +1079,8 @@ function agentAria(template, name) {
                                 </button>
                             </div>
                         </div>
-                        <label>{{ t('property_details.viewing.name', 'Name') }}<input v-model="viewingForm.name" required autocomplete="name" maxlength="255" :disabled="viewing.stage === 'sending'"></label>
-                        <label>{{ t('property_details.viewing.email', 'Email') }}<input v-model="viewingForm.email" required type="email" autocomplete="email" maxlength="255" :disabled="viewing.stage === 'sending'"></label>
+                        <label>{{ t('property_details.viewing.name', 'Name') }}<input v-model="viewingForm.name" aria-required="true" autocomplete="name" maxlength="255" :disabled="viewing.stage === 'sending'"></label>
+                        <label>{{ t('property_details.viewing.email', 'Email') }}<input v-model="viewingForm.email" aria-required="true" type="email" autocomplete="email" maxlength="255" :disabled="viewing.stage === 'sending'"></label>
                         <div class="mw-brochure-form__field"><label for="viewing-phone">{{ t('property_details.viewing.phone', 'Phone') }}</label>
                             <PhoneInput id="viewing-phone" v-model="viewingForm.phone" v-model:country-code="viewingForm.phone_country_code" required :disabled="viewing.stage === 'sending'" /></div>
                         <label>{{ t('property_details.viewing.note', 'Note for the agent (optional)') }}<textarea v-model="viewingForm.note" rows="2" maxlength="1000" :disabled="viewing.stage === 'sending'"></textarea></label>
@@ -1112,8 +1112,8 @@ function agentAria(template, name) {
                 <p>{{ downloadConfig.text }}</p>
 
                 <form v-if="download.stage === 'form' || download.stage === 'sending'" class="mw-brochure-form" novalidate @submit.prevent="handleDownloadSubmit">
-                    <label>Name<input v-model="downloadForm.name" required autocomplete="name" maxlength="255" :disabled="download.stage === 'sending'"></label>
-                    <label>Email<input v-model="downloadForm.email" required type="email" autocomplete="email" maxlength="255" :disabled="download.stage === 'sending'"></label>
+                    <label>Name<input v-model="downloadForm.name" aria-required="true" autocomplete="name" maxlength="255" :disabled="download.stage === 'sending'"></label>
+                    <label>Email<input v-model="downloadForm.email" aria-required="true" type="email" autocomplete="email" maxlength="255" :disabled="download.stage === 'sending'"></label>
                     <div class="mw-brochure-form__field"><label for="download-phone">Phone</label>
                         <PhoneInput id="download-phone" v-model="downloadForm.phone" v-model:country-code="downloadForm.phone_country_code" required :disabled="download.stage === 'sending'" /></div>
                     <p v-if="download.error" class="mw-brochure-feedback is-error" role="alert">{{ download.error }}</p>

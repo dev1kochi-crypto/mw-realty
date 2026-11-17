@@ -337,13 +337,25 @@ class PortalUser extends Authenticatable
      */
     public function usedPropertySlots(): int
     {
-        return $this->properties()
-            ->when($this->plan?->listingsPerMonth(), fn ($q) => $q->where('created_at', '>=', now()->startOfMonth()))
+        $perMonth = (bool) $this->plan?->listingsPerMonth();
+
+        $existing = $this->properties()
+            ->when($perMonth, fn ($q) => $q->where('created_at', '>=', now()->startOfMonth()))
             ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('credit_transactions')
                 ->whereColumn('credit_transactions.property_id', 'properties.id')
                 ->where('credit_transactions.type', \App\Models\CreditTransaction::SPEND)
                 ->where('credit_transactions.kind', 'listing'))
             ->count();
+
+        // Paid plan = listings ADDED this month: one deleted since still used its slot.
+        if ($perMonth) {
+            $existing += \Illuminate\Support\Facades\DB::table('deleted_listing_slots')
+                ->where('portal_user_id', $this->id)
+                ->where('listing_created_at', '>=', now()->startOfMonth())
+                ->count();
+        }
+
+        return $existing;
     }
 
     /** Downgrade waiting for the next renewal (see StripeBillingService::scheduleDowngrade()). */

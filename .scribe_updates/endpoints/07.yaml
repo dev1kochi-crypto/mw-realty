@@ -1,0 +1,319 @@
+name: Calculators
+description: |-
+  **Feature 3 — investment intelligence.** The calculators run **on the device**: the API gives only the page content (`GET /api/calculators`, `GET /api/calculators/{key}`) and, on Property Details, the market figures that seed them (`GET /api/properties/{slug}/insights`). Calculate in AED and convert for display with `GET /api/currencies`. The website's code is in `resources/js/components/calculators/finance.js` and `resources/js/components/insights/investment.js` — port it as-is so the app shows the same numbers.
+
+  ### 1. Mortgage calculator (Property Details "Mortgage" tab, and `/calculators/mortgage`)
+
+  Inputs: price (from the listing), residency, down payment %, interest rate (1–10%), term (max 25 years).
+
+  | Residency | Min. down payment ≤ AED 5M | > AED 5M | Starting rate |
+  |---|---|---|---|
+  | UAE National | 15% | 25% | 4.24% |
+  | UAE Resident | 20% | 30% | 3.75% |
+  | Non-resident | 40% | 40% | 4.19% |
+
+  Down payment max is 80%. Changing residency resets the down payment to its minimum and the rate to its starting rate.
+
+  ```
+  loan     = price × (1 − down% / 100)
+  r        = rate% / 100 / 12          n = years × 12
+  monthly  = loan × r × (1+r)^n / ((1+r)^n − 1)      (loan / n when r = 0)
+  total    = monthly × n               interest = total − loan
+  ```
+
+  Purchase costs (Dubai), shown under it — mortgage items only when there is a loan:
+
+  | Item | Amount |
+  |---|---|
+  | Land Department fee | 4% of price + AED 580 |
+  | Registration trustee | AED 4,000 + 5% VAT |
+  | Mortgage registration | 0.25% of loan + AED 10 |
+  | Agency fee | 2% of price + 5% VAT |
+  | Bank arrangement | 1% of loan + 5% VAT |
+  | Valuation | AED 3,000 + 5% VAT |
+
+  ### 2. Investment calculator (Property Details "Investment" tab, sale listings)
+
+  Starting values: **rent** = `insights.estimates.annual_rent.amount` (else 6% of the price); **service charges** = size (sq.ft) × `insights.assumptions.service_charge_psf`; **maintenance %** and **vacancy %** from `insights.assumptions` (defaults 12 AED/sq.ft, 1%, 5%). Every value can be changed; plus residency / down payment / rate / term as in the mortgage calculator, and holding period (default 5 years).
+
+  ```
+  loan          = price × (1 − down%/100)        down = price − loan
+  fees          = purchase costs above            upfront = down + fees
+  monthlyLoan   = monthly(loan, rate, years)
+  effectiveRent = rent × (1 − vacancy%/100)
+  maintenance   = price × maintenance%/100
+  runningCosts  = serviceCharges + maintenance                (a year)
+  NOI           = effectiveRent − runningCosts
+  cashFlow/yr   = NOI − monthlyLoan × 12                       (show /12 as monthly)
+  grossYield    = rent / price × 100
+  netYield      = NOI / (price + fees) × 100
+  cashOnCash    = cashFlow/yr / upfront × 100
+  -- over the holding period (hold years) --
+  loanPaid      = monthlyLoan × min(hold, years) × 12
+  loanBalance   = balance after hold×12 instalments
+  loanInterest  = loanPaid − (loan − loanBalance)
+  totalCost     = upfront + loanPaid + runningCosts × hold
+  rentIncome    = effectiveRent × hold        netCost = totalCost − rentIncome
+  ```
+
+  **Financing scenarios** table: the same calculation for down payments of the minimum, 40%, 60%, 100% (cash) and the user's own choice.
+
+  ### Rental costs (rent listings)
+
+  Annual rent = price × periods per year (yearly 1, monthly 12, weekly 52, daily 365). Security deposit = the listing's `pricing.security_deposit`, else 5% of the annual rent (10% furnished); agency fee 5% (editable) + VAT; Ejari / Tawtheeq AED 220; utility deposit AED 2,000 (apartment) / 4,000 (villa, townhouse); housing fee 5% of the rent in Dubai, 3% in Abu Dhabi. Refundable: the two deposits. Year one = rent + housing fee + move-in costs − refundable.
+
+  The other two calculator pages (`eligibility`, `rent-vs-buy`, `refinance`) use the same `finance.js` helpers; `settings` in `GET /api/calculators/{key}` holds their admin-editable options (e.g. the refinance lender list).
+
+  **Also uses (connected):**
+
+  * `GET /api/properties/{slug}/insights` — see **Property Details — new sections**
+  * `GET /api/currencies` — see **Cross-border compare**
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/calculators
+    metadata:
+      custom: []
+      groupName: Calculators
+      groupDescription: |-
+        **Feature 3 — investment intelligence.** The calculators run **on the device**: the API gives only the page content (`GET /api/calculators`, `GET /api/calculators/{key}`) and, on Property Details, the market figures that seed them (`GET /api/properties/{slug}/insights`). Calculate in AED and convert for display with `GET /api/currencies`. The website's code is in `resources/js/components/calculators/finance.js` and `resources/js/components/insights/investment.js` — port it as-is so the app shows the same numbers.
+
+        ### 1. Mortgage calculator (Property Details "Mortgage" tab, and `/calculators/mortgage`)
+
+        Inputs: price (from the listing), residency, down payment %, interest rate (1–10%), term (max 25 years).
+
+        | Residency | Min. down payment ≤ AED 5M | > AED 5M | Starting rate |
+        |---|---|---|---|
+        | UAE National | 15% | 25% | 4.24% |
+        | UAE Resident | 20% | 30% | 3.75% |
+        | Non-resident | 40% | 40% | 4.19% |
+
+        Down payment max is 80%. Changing residency resets the down payment to its minimum and the rate to its starting rate.
+
+        ```
+        loan     = price × (1 − down% / 100)
+        r        = rate% / 100 / 12          n = years × 12
+        monthly  = loan × r × (1+r)^n / ((1+r)^n − 1)      (loan / n when r = 0)
+        total    = monthly × n               interest = total − loan
+        ```
+
+        Purchase costs (Dubai), shown under it — mortgage items only when there is a loan:
+
+        | Item | Amount |
+        |---|---|
+        | Land Department fee | 4% of price + AED 580 |
+        | Registration trustee | AED 4,000 + 5% VAT |
+        | Mortgage registration | 0.25% of loan + AED 10 |
+        | Agency fee | 2% of price + 5% VAT |
+        | Bank arrangement | 1% of loan + 5% VAT |
+        | Valuation | AED 3,000 + 5% VAT |
+
+        ### 2. Investment calculator (Property Details "Investment" tab, sale listings)
+
+        Starting values: **rent** = `insights.estimates.annual_rent.amount` (else 6% of the price); **service charges** = size (sq.ft) × `insights.assumptions.service_charge_psf`; **maintenance %** and **vacancy %** from `insights.assumptions` (defaults 12 AED/sq.ft, 1%, 5%). Every value can be changed; plus residency / down payment / rate / term as in the mortgage calculator, and holding period (default 5 years).
+
+        ```
+        loan          = price × (1 − down%/100)        down = price − loan
+        fees          = purchase costs above            upfront = down + fees
+        monthlyLoan   = monthly(loan, rate, years)
+        effectiveRent = rent × (1 − vacancy%/100)
+        maintenance   = price × maintenance%/100
+        runningCosts  = serviceCharges + maintenance                (a year)
+        NOI           = effectiveRent − runningCosts
+        cashFlow/yr   = NOI − monthlyLoan × 12                       (show /12 as monthly)
+        grossYield    = rent / price × 100
+        netYield      = NOI / (price + fees) × 100
+        cashOnCash    = cashFlow/yr / upfront × 100
+        -- over the holding period (hold years) --
+        loanPaid      = monthlyLoan × min(hold, years) × 12
+        loanBalance   = balance after hold×12 instalments
+        loanInterest  = loanPaid − (loan − loanBalance)
+        totalCost     = upfront + loanPaid + runningCosts × hold
+        rentIncome    = effectiveRent × hold        netCost = totalCost − rentIncome
+        ```
+
+        **Financing scenarios** table: the same calculation for down payments of the minimum, 40%, 60%, 100% (cash) and the user's own choice.
+
+        ### Rental costs (rent listings)
+
+        Annual rent = price × periods per year (yearly 1, monthly 12, weekly 52, daily 365). Security deposit = the listing's `pricing.security_deposit`, else 5% of the annual rent (10% furnished); agency fee 5% (editable) + VAT; Ejari / Tawtheeq AED 220; utility deposit AED 2,000 (apartment) / 4,000 (villa, townhouse); housing fee 5% of the rent in Dubai, 3% in Abu Dhabi. Refundable: the two deposits. Year one = rent + housing fee + move-in costs − refundable.
+
+        The other two calculator pages (`eligibility`, `rent-vs-buy`, `refinance`) use the same `finance.js` helpers; `settings` in `GET /api/calculators/{key}` holds their admin-editable options (e.g. the refinance lender list).
+
+        **Also uses (connected):**
+
+        * `GET /api/properties/{slug}/insights` — see **Property Details — new sections**
+        * `GET /api/currencies` — see **Cross-border compare**
+      subgroup: 'Calculator pages'
+      subgroupDescription: ''
+      title: 'Calculators menu'
+      description: 'The calculators shown in the header menu and the page tabs, in order.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data": [{"key": "mortgage", "title": "Mortgage Calculator"}]}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/calculators/{key}'
+    metadata:
+      custom: []
+      groupName: Calculators
+      groupDescription: |-
+        **Feature 3 — investment intelligence.** The calculators run **on the device**: the API gives only the page content (`GET /api/calculators`, `GET /api/calculators/{key}`) and, on Property Details, the market figures that seed them (`GET /api/properties/{slug}/insights`). Calculate in AED and convert for display with `GET /api/currencies`. The website's code is in `resources/js/components/calculators/finance.js` and `resources/js/components/insights/investment.js` — port it as-is so the app shows the same numbers.
+
+        ### 1. Mortgage calculator (Property Details "Mortgage" tab, and `/calculators/mortgage`)
+
+        Inputs: price (from the listing), residency, down payment %, interest rate (1–10%), term (max 25 years).
+
+        | Residency | Min. down payment ≤ AED 5M | > AED 5M | Starting rate |
+        |---|---|---|---|
+        | UAE National | 15% | 25% | 4.24% |
+        | UAE Resident | 20% | 30% | 3.75% |
+        | Non-resident | 40% | 40% | 4.19% |
+
+        Down payment max is 80%. Changing residency resets the down payment to its minimum and the rate to its starting rate.
+
+        ```
+        loan     = price × (1 − down% / 100)
+        r        = rate% / 100 / 12          n = years × 12
+        monthly  = loan × r × (1+r)^n / ((1+r)^n − 1)      (loan / n when r = 0)
+        total    = monthly × n               interest = total − loan
+        ```
+
+        Purchase costs (Dubai), shown under it — mortgage items only when there is a loan:
+
+        | Item | Amount |
+        |---|---|
+        | Land Department fee | 4% of price + AED 580 |
+        | Registration trustee | AED 4,000 + 5% VAT |
+        | Mortgage registration | 0.25% of loan + AED 10 |
+        | Agency fee | 2% of price + 5% VAT |
+        | Bank arrangement | 1% of loan + 5% VAT |
+        | Valuation | AED 3,000 + 5% VAT |
+
+        ### 2. Investment calculator (Property Details "Investment" tab, sale listings)
+
+        Starting values: **rent** = `insights.estimates.annual_rent.amount` (else 6% of the price); **service charges** = size (sq.ft) × `insights.assumptions.service_charge_psf`; **maintenance %** and **vacancy %** from `insights.assumptions` (defaults 12 AED/sq.ft, 1%, 5%). Every value can be changed; plus residency / down payment / rate / term as in the mortgage calculator, and holding period (default 5 years).
+
+        ```
+        loan          = price × (1 − down%/100)        down = price − loan
+        fees          = purchase costs above            upfront = down + fees
+        monthlyLoan   = monthly(loan, rate, years)
+        effectiveRent = rent × (1 − vacancy%/100)
+        maintenance   = price × maintenance%/100
+        runningCosts  = serviceCharges + maintenance                (a year)
+        NOI           = effectiveRent − runningCosts
+        cashFlow/yr   = NOI − monthlyLoan × 12                       (show /12 as monthly)
+        grossYield    = rent / price × 100
+        netYield      = NOI / (price + fees) × 100
+        cashOnCash    = cashFlow/yr / upfront × 100
+        -- over the holding period (hold years) --
+        loanPaid      = monthlyLoan × min(hold, years) × 12
+        loanBalance   = balance after hold×12 instalments
+        loanInterest  = loanPaid − (loan − loanBalance)
+        totalCost     = upfront + loanPaid + runningCosts × hold
+        rentIncome    = effectiveRent × hold        netCost = totalCost − rentIncome
+        ```
+
+        **Financing scenarios** table: the same calculation for down payments of the minimum, 40%, 60%, 100% (cash) and the user's own choice.
+
+        ### Rental costs (rent listings)
+
+        Annual rent = price × periods per year (yearly 1, monthly 12, weekly 52, daily 365). Security deposit = the listing's `pricing.security_deposit`, else 5% of the annual rent (10% furnished); agency fee 5% (editable) + VAT; Ejari / Tawtheeq AED 220; utility deposit AED 2,000 (apartment) / 4,000 (villa, townhouse); housing fee 5% of the rent in Dubai, 3% in Abu Dhabi. Refundable: the two deposits. Year one = rent + housing fee + move-in costs − refundable.
+
+        The other two calculator pages (`eligibility`, `rent-vs-buy`, `refinance`) use the same `finance.js` helpers; `settings` in `GET /api/calculators/{key}` holds their admin-editable options (e.g. the refinance lender list).
+
+        **Also uses (connected):**
+
+        * `GET /api/properties/{slug}/insights` — see **Property Details — new sections**
+        * `GET /api/currencies` — see **Cross-border compare**
+      subgroup: 'Calculator pages'
+      subgroupDescription: ''
+      title: 'Calculator page'
+      description: 'Page copy, enquiry-form copy, FAQs, settings and SEO of one calculator.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      X-Device-Id: '{DEVICE_ID}'
+    urlParameters:
+      key:
+        custom: []
+        name: key
+        description: 'mortgage, eligibility, rent-vs-buy or refinance.'
+        required: true
+        example: refinance
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      key: refinance
+    queryParameters:
+      lang:
+        custom: []
+        name: lang
+        description: ''
+        required: false
+        example: en
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      lang: en
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 404
+        content: '{"message": "Not found"}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

@@ -252,7 +252,14 @@ function submit() {
             translate.value = res.data.translate_available;
         })
         .catch((e) => {
-            error.value = errorMessage(e, 'The file could not be uploaded.');
+            // No readable message (a server crash / gateway page while reading the file): the
+            // upload step only reads the file, so say that rather than a generic error.
+            const status = e.response?.status;
+            if (status >= 500) {
+                error.value = 'This file could not be read. Please upload a valid Excel (.xlsx, .xls) or CSV file.';
+                return;
+            }
+            error.value = errorMessage(e, status === 413 ? 'The file is too large — upload at most 10 MB.' : 'The file could not be uploaded.');
         })
         .finally(() => {
             busy.value = false;

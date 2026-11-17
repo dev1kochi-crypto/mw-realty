@@ -21,6 +21,16 @@ class LeadImportReader
     {
         $extension = strtolower($file->getClientOriginalExtension());
 
+        // A renamed text / random file isn't handed to PhpSpreadsheet at all: an .xlsx is a ZIP
+        // ("PK"), an .xls an OLE2 compound file or an HTML/XML "Excel" export.
+        $head = (string) file_get_contents($file->getRealPath(), false, null, 0, 512);
+        if ($extension === 'xlsx' && !str_starts_with($head, "PK\x03\x04")) {
+            throw new \RuntimeException('Not an XLSX (ZIP) file.');
+        }
+        if ($extension === 'xls' && !str_starts_with($head, "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1") && !preg_match('/<(html|\?xml|table)/i', $head)) {
+            throw new \RuntimeException('Not an XLS file.');
+        }
+
         $rows = in_array($extension, ['csv', 'tsv', 'txt'], true)
             ? self::readDelimited((string) file_get_contents($file->getRealPath()))
             : (Excel::toArray(new class implements Import {}, $file)[0] ?? []);

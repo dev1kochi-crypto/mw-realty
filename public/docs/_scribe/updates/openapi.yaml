@@ -1,0 +1,2349 @@
+openapi: 3.0.3
+info:
+  title: 'MW Realty — Latest API Updates'
+  description: 'Only the endpoints added or changed in the latest updates: AI chat & matching, Property Details sections, calculators, cross-border compare, trust engine, listing automation, market demand.'
+  version: 1.0.0
+servers:
+  -
+    url: 'https://mw.realty.mightywarnersdemo.com'
+tags:
+  -
+    name: 'AI chat & property matching'
+    description: "**Features 1 & 5 — AI property matching engine + conversational assistant.** The buyer describes what they want in their own words (\"a two-bedroom apartment in Abu Dhabi, near schools, with rental income potential, a manageable service charge and a 20-minute commute\"); the assistant turns it into a brief (`requirements`) and returns real listings **ranked** against it, each card with a `match` (`score` 0–100, `reasons`, `misses`). Near misses (one bedroom more, a little over budget) still show, lower down, with the reason.\n\n**Flow**\n\n1. Chat screen opens → `GET /api/chatbot/session` (send `X-Device-Id`; a customer token identifies the user). Show `languages` as \"Choose your language\".\n2. Each message → `POST /api/chatbot/message` with `message`, `conversation_id`, `lang` (listing text) and `language` (chat language). Render `reply`, then `properties` as cards with their `match`.\n3. When a reply (or a `422`) has `details_required: true`, show the details form → `POST /api/chatbot/start`, then resend the message.\n4. \"Clear chat\" → `POST /api/chatbot/reset`.\n\n**What is scored:** budget, bedrooms, nearby places (school, metro, mall, beach, … — the places tagged on the listing), investment purpose, size, bathrooms, furnishing. Service charge, financing and commute are captured in `requirements` for the agent but are not in the listing data, so they are not scored. A loosely-worded place (\"the Ranches area\") falls back to its meaningful words, so it still finds Arabian Ranches.\n\n**Server setup (backend, `.env`):** `CHATBOT_PROVIDER=groq` (default) or `gemini`; `GROQ_API_KEY` / `GROQ_MODEL` (default `openai/gpt-oss-120b`) or `GEMINI_API_KEY` / `GEMINI_MODEL`; optional `CHATBOT_NAME` (persona, default \"Noor\"). Without a key the chat answers with the `unavailable` text instead of failing. The chat languages and their fixed strings are in `config/chatbot.php`. Limits: 8 messages/min and 150/day per IP.\n\n**Agent side:** the captured brief and the transcript appear on the website lead in the CRM (`GET /api/crm/website-leads/{id}/insights`)."
+  -
+    name: 'Property Details — new sections'
+    description: "The new sections of the Property Details page and the endpoint behind each one. Load the page with `GET /api/properties/{slug}`, then the sections **separately** (they are slower and can show a loading state):\n\n| Section | Endpoint | Shown for |\n|---|---|---|\n| Mortgage / Investment calculator (two tabs) | none — calculated on the device, see **Calculators**; the Investment tab is seeded from `insights` | sale listings |\n| Rental costs (move-in costs) | none — calculated on the device, see **Calculators** | rent listings |\n| Market & investment insights (price vs area, estimated rent, gross / net yield, growth, trend chart) | `GET /api/properties/{slug}/insights` | all |\n| Buyer demand (+ AI written overview) | `GET /api/properties/{slug}/demand`, `GET /api/properties/{slug}/demand/summary` | all |\n| Nearby places map | `nearby` and `map` in `GET /api/properties/{slug}` | when set |\n| Add to compare | see **Cross-border compare** | all |\n\nThe market figures in `insights` carry a `source` — `verified` (from recorded transactions, label \"Verified · n deals\") or `asking` (from listing prices, label \"Estimate · n listings\") — and a `count`. Show it, so estimates are never presented as verified data.\n\n**Also uses (connected):**\n\n* `GET /api/compare` — see **Cross-border compare**\n* `GET /api/currencies` — see **Cross-border compare**"
+  -
+    name: Calculators
+    description: "**Feature 3 — investment intelligence.** The calculators run **on the device**: the API gives only the page content (`GET /api/calculators`, `GET /api/calculators/{key}`) and, on Property Details, the market figures that seed them (`GET /api/properties/{slug}/insights`). Calculate in AED and convert for display with `GET /api/currencies`. The website's code is in `resources/js/components/calculators/finance.js` and `resources/js/components/insights/investment.js` — port it as-is so the app shows the same numbers.\n\n### 1. Mortgage calculator (Property Details \"Mortgage\" tab, and `/calculators/mortgage`)\n\nInputs: price (from the listing), residency, down payment %, interest rate (1–10%), term (max 25 years).\n\n| Residency | Min. down payment ≤ AED 5M | > AED 5M | Starting rate |\n|---|---|---|---|\n| UAE National | 15% | 25% | 4.24% |\n| UAE Resident | 20% | 30% | 3.75% |\n| Non-resident | 40% | 40% | 4.19% |\n\nDown payment max is 80%. Changing residency resets the down payment to its minimum and the rate to its starting rate.\n\n```\nloan     = price × (1 − down% / 100)\nr        = rate% / 100 / 12          n = years × 12\nmonthly  = loan × r × (1+r)^n / ((1+r)^n − 1)      (loan / n when r = 0)\ntotal    = monthly × n               interest = total − loan\n```\n\nPurchase costs (Dubai), shown under it — mortgage items only when there is a loan:\n\n| Item | Amount |\n|---|---|\n| Land Department fee | 4% of price + AED 580 |\n| Registration trustee | AED 4,000 + 5% VAT |\n| Mortgage registration | 0.25% of loan + AED 10 |\n| Agency fee | 2% of price + 5% VAT |\n| Bank arrangement | 1% of loan + 5% VAT |\n| Valuation | AED 3,000 + 5% VAT |\n\n### 2. Investment calculator (Property Details \"Investment\" tab, sale listings)\n\nStarting values: **rent** = `insights.estimates.annual_rent.amount` (else 6% of the price); **service charges** = size (sq.ft) × `insights.assumptions.service_charge_psf`; **maintenance %** and **vacancy %** from `insights.assumptions` (defaults 12 AED/sq.ft, 1%, 5%). Every value can be changed; plus residency / down payment / rate / term as in the mortgage calculator, and holding period (default 5 years).\n\n```\nloan          = price × (1 − down%/100)        down = price − loan\nfees          = purchase costs above            upfront = down + fees\nmonthlyLoan   = monthly(loan, rate, years)\neffectiveRent = rent × (1 − vacancy%/100)\nmaintenance   = price × maintenance%/100\nrunningCosts  = serviceCharges + maintenance                (a year)\nNOI           = effectiveRent − runningCosts\ncashFlow/yr   = NOI − monthlyLoan × 12                       (show /12 as monthly)\ngrossYield    = rent / price × 100\nnetYield      = NOI / (price + fees) × 100\ncashOnCash    = cashFlow/yr / upfront × 100\n-- over the holding period (hold years) --\nloanPaid      = monthlyLoan × min(hold, years) × 12\nloanBalance   = balance after hold×12 instalments\nloanInterest  = loanPaid − (loan − loanBalance)\ntotalCost     = upfront + loanPaid + runningCosts × hold\nrentIncome    = effectiveRent × hold        netCost = totalCost − rentIncome\n```\n\n**Financing scenarios** table: the same calculation for down payments of the minimum, 40%, 60%, 100% (cash) and the user's own choice.\n\n### Rental costs (rent listings)\n\nAnnual rent = price × periods per year (yearly 1, monthly 12, weekly 52, daily 365). Security deposit = the listing's `pricing.security_deposit`, else 5% of the annual rent (10% furnished); agency fee 5% (editable) + VAT; Ejari / Tawtheeq AED 220; utility deposit AED 2,000 (apartment) / 4,000 (villa, townhouse); housing fee 5% of the rent in Dubai, 3% in Abu Dhabi. Refundable: the two deposits. Year one = rent + housing fee + move-in costs − refundable.\n\nThe other two calculator pages (`eligibility`, `rent-vs-buy`, `refinance`) use the same `finance.js` helpers; `settings` in `GET /api/calculators/{key}` holds their admin-editable options (e.g. the refinance lender list).\n\n**Also uses (connected):**\n\n* `GET /api/properties/{slug}/insights` — see **Property Details — new sections**\n* `GET /api/currencies` — see **Cross-border compare**"
+  -
+    name: 'Cross-border compare'
+    description: "**Feature 4 — cross-border property intelligence.** Compare 2–5 listings in any UAE emirate side by side in one shape: price, size, price per sq.ft, buying costs under each emirate's fees (move-in costs for rentals), market estimates, ownership rules, Golden Visa — with a written AI summary in the buyer's currency.\n\nThe money and investment figures are **locked** until the visitor leaves contact details: `POST /api/contact` with `source=compare` returns a token; send it as `X-Compare-Unlock` on both compare endpoints. Amounts in `GET /api/compare` are AED — convert with `GET /api/currencies`; the summary takes `currency` itself."
+  -
+    name: 'Trust engine (CRM)'
+    description: "**Feature 2 — property authenticity and trust engine.** Automated screening flags listings for a **human review** — it never claims a listing is verified by AI: the same unit already listed by another agency (duplicate photos via image hashing, shown side by side with the price spread; the first listing stays live, newer ones wait), price far off the area, advert details not matching the permit, resubmitted listings. Super Admin approves or rejects each one. Permits are checked when a listing is created (`POST /api/crm/properties/permit/validate`) and reviewed in the permit queue.\n\nCRM endpoints: sign in with `POST /api/crm/auth/login` and send `Authorization: Bearer {token}`."
+  -
+    name: 'Listing automation (CRM)'
+    description: "**Feature 6 — agency listing automation.** Agencies bulk-upload their inventory from a spreadsheet (or another CRM's export): upload → the columns are matched to our fields → confirm → the import runs in the background (poll its progress) → download the file back with an Import Status / Remarks column per row. Descriptions are standardised and missing information reported per row. In the listing form, **Write with AI** drafts the title / description from the details and **Auto-translate** fills the other languages.\n\nCRM endpoints: `Authorization: Bearer {token}` from `POST /api/crm/auth/login`."
+  -
+    name: 'Market demand'
+    description: "**Feature 7 — property demand and market analytics.** Anonymised, aggregated marketplace demand (searches, views, saves, enquiries vs listing supply) — never an individual lead or visitor. On the website it is the **Buyer demand** section of Property Details; in the CRM it is the **Market Demand** page for agencies and developers (where buyers look, underserved bedroom counts and price bands, month-by-month change), a plan feature (`market_demand`).\n\n**Also uses (connected):**\n\n* `GET /api/properties/{slug}/demand` — see **Property Details — new sections**\n* `GET /api/properties/{slug}/demand/summary` — see **Property Details — new sections**"
+  -
+    name: 'Performance insights (CRM)'
+    description: "Other recent CRM updates: how each listing performs (views, impressions, enquiries, insight views), the agency's agents compared, and lead insights."
+components:
+  securitySchemes:
+    default:
+      type: http
+      scheme: bearer
+      description: 'Get a token from <code>POST /api/auth/login</code>, <code>/api/auth/verify-otp</code> or <code>/api/auth/google</code>, and send it as <code>Authorization: Bearer {token}</code>.'
+security:
+  -
+    default: []
+paths:
+  '/api/crm/website-leads/{websiteLead_id}/insights/summary':
+    get:
+      summary: 'Insights panel'
+      operationId: insightsPanel
+      description: 'Stats, engagement, most interested properties and the first page of each list (VisitorInsights::summaryJson).'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'AI chat & property matching'
+      security: []
+    parameters:
+      -
+        in: path
+        name: websiteLead_id
+        description: 'The ID of the websiteLead.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  '/api/crm/website-leads/{websiteLead_id}/insights':
+    get:
+      summary: 'Insights panel — next page of a list'
+      operationId: insightsPanelNextPageOfAList
+      description: 'The next page of its timeline / favorites / saved searches / chats (load on scroll).'
+      parameters:
+        -
+          in: query
+          name: section
+          description: 'timeline | favorites | searches | chats | messages.'
+          example: timeline
+          required: true
+          schema:
+            type: string
+            description: 'timeline | favorites | searches | chats | messages.'
+            example: timeline
+        -
+          in: query
+          name: after
+          description: 'The last id already shown.'
+          example: 120
+          required: false
+          schema:
+            type: integer
+            description: 'The last id already shown.'
+            example: 120
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'AI chat & property matching'
+      security: []
+    parameters:
+      -
+        in: path
+        name: websiteLead_id
+        description: 'The ID of the websiteLead.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  /api/chatbot/session:
+    get:
+      summary: 'Open chat'
+      operationId: openChat
+      description: "Call when the chat screen opens: is this device's user known yet, and the latest\nconversation to continue. Needs the `X-Device-Id` header; a customer token makes the\nuser known automatically.\n\nWidget opened: is this visitor known yet, and the latest conversation to pick up from.\n\n`languages` are the languages the assistant chats in (show them as \"Choose your language\");\n`language` is the one this conversation is in (null until the user picks one). Send the\nchosen code as `language` with each message."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  identified: false
+                  details_required: false
+                  conversation_id: null
+                  requirements: null
+                  language: null
+                  default_language: en
+                  languages:
+                    -
+                      code: ar
+                      name: Arabic
+                      native: العربية
+                      dir: rtl
+                      speech: ar-AE
+                      strings:
+                        welcome: …
+                        placeholder: …
+                        switch_offer: …
+                        switched: …
+                        error: …
+                  messages: []
+                properties:
+                  identified:
+                    type: boolean
+                    example: false
+                  details_required:
+                    type: boolean
+                    example: false
+                  conversation_id:
+                    type: string
+                    example: null
+                    nullable: true
+                  requirements:
+                    type: string
+                    example: null
+                    nullable: true
+                  language:
+                    type: string
+                    example: null
+                    nullable: true
+                  default_language:
+                    type: string
+                    example: en
+                  languages:
+                    type: array
+                    example:
+                      -
+                        code: ar
+                        name: Arabic
+                        native: العربية
+                        dir: rtl
+                        speech: ar-AE
+                        strings:
+                          welcome: …
+                          placeholder: …
+                          switch_offer: …
+                          switched: …
+                          error: …
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          example: ar
+                        name:
+                          type: string
+                          example: Arabic
+                        native:
+                          type: string
+                          example: العربية
+                        dir:
+                          type: string
+                          example: rtl
+                        speech:
+                          type: string
+                          example: ar-AE
+                        strings:
+                          type: object
+                          properties:
+                            welcome:
+                              type: string
+                              example: …
+                            placeholder:
+                              type: string
+                              example: …
+                            switch_offer:
+                              type: string
+                              example: …
+                            switched:
+                              type: string
+                              example: …
+                            error:
+                              type: string
+                              example: …
+                  messages:
+                    type: array
+                    example: []
+      tags:
+        - 'AI chat & property matching'
+      security: []
+  /api/chatbot/start:
+    post:
+      summary: 'Share contact details'
+      operationId: shareContactDetails
+      description: "Shown when a reply has `details_required: true` (after the first free question, for\nguests). Identifies the user and continues the conversation they started.\n\nThe details form — identifies the visitor (switching this browser to them; their anonymous\nchat is attached by VisitorTracker)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  conversation_id: 44
+                  name: 'Sara Ahmed'
+                properties:
+                  conversation_id:
+                    type: integer
+                    example: 44
+                  name:
+                    type: string
+                    example: 'Sara Ahmed'
+      tags:
+        - 'AI chat & property matching'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: ''
+                  example: 'Sara Ahmed'
+                email:
+                  type: string
+                  description: ''
+                  example: buyer@example.com
+                phone:
+                  type: string
+                  description: ''
+                  example: '501234567'
+                phone_country_code:
+                  type: string
+                  description: ''
+                  example: '+971'
+                conversation_id:
+                  type: integer
+                  description: 'The current conversation, if any.'
+                  example: null
+                  nullable: true
+                recaptcha_token:
+                  type: string
+                  description: 'See "Forms & reCAPTCHA" in the introduction.'
+                  example: null
+                  nullable: true
+              required:
+                - name
+                - email
+                - phone
+      security: []
+  /api/chatbot/reset:
+    post:
+      summary: 'New conversation'
+      operationId: newConversation
+      description: '"Clear chat" — the old transcript is kept on the server, the user just starts fresh.'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  conversation_id: 45
+                properties:
+                  conversation_id:
+                    type: integer
+                    example: 45
+      tags:
+        - 'AI chat & property matching'
+      security: []
+  /api/chatbot/message:
+    post:
+      summary: 'Send a message'
+      operationId: sendAMessage
+      description: "Ask the AI assistant. The reply may include matching property cards. Limited to 8\nmessages/minute and 150/day per IP."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  reply: 'Here are some 2-bedroom apartments in Dubai Marina:'
+                  properties:
+                    -
+                      id: 111
+                      slug: virella-2
+                      image: 'https://.../photo.jpg'
+                      match:
+                        score: 92
+                        reasons:
+                          - 'Within budget'
+                          - '2 bedrooms'
+                          - 'Near school'
+                        misses: []
+                      '...': 'same card shape as GET /api/properties'
+                  pagination:
+                    current_page: 1
+                    last_page: 1
+                    total: 6
+                  requirements:
+                    location: 'Dubai Marina'
+                    bedrooms: '2'
+                    max_price: 2000000
+                    nearby:
+                      - school
+                    purpose: invest
+                  error: false
+                  conversation_id: 44
+                  details_required: false
+                properties:
+                  reply:
+                    type: string
+                    example: 'Here are some 2-bedroom apartments in Dubai Marina:'
+                  properties:
+                    type: array
+                    example:
+                      -
+                        id: 111
+                        slug: virella-2
+                        image: 'https://.../photo.jpg'
+                        match:
+                          score: 92
+                          reasons:
+                            - 'Within budget'
+                            - '2 bedrooms'
+                            - 'Near school'
+                          misses: []
+                        '...': 'same card shape as GET /api/properties'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 111
+                        slug:
+                          type: string
+                          example: virella-2
+                        image:
+                          type: string
+                          example: 'https://.../photo.jpg'
+                        match:
+                          type: object
+                          properties:
+                            score:
+                              type: integer
+                              example: 92
+                            reasons:
+                              type: array
+                              example:
+                                - 'Within budget'
+                                - '2 bedrooms'
+                                - 'Near school'
+                              items:
+                                type: string
+                            misses:
+                              type: array
+                              example: []
+                        '...':
+                          type: string
+                          example: 'same card shape as GET /api/properties'
+                  pagination:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                        example: 1
+                      last_page:
+                        type: integer
+                        example: 1
+                      total:
+                        type: integer
+                        example: 6
+                  requirements:
+                    type: object
+                    properties:
+                      location:
+                        type: string
+                        example: 'Dubai Marina'
+                      bedrooms:
+                        type: string
+                        example: '2'
+                      max_price:
+                        type: integer
+                        example: 2000000
+                      nearby:
+                        type: array
+                        example:
+                          - school
+                        items:
+                          type: string
+                      purpose:
+                        type: string
+                        example: invest
+                  error:
+                    type: boolean
+                    example: false
+                  conversation_id:
+                    type: integer
+                    example: 44
+                  details_required:
+                    type: boolean
+                    example: false
+        422:
+          description: 'Guest must share details first'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  details_required: true
+                  message: 'Please share your details to keep chatting.'
+                properties:
+                  details_required:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Please share your details to keep chatting.'
+      tags:
+        - 'AI chat & property matching'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: ''
+                  example: 'Show me 2 bedroom apartments in Dubai Marina under 2M'
+                conversation_id:
+                  type: integer
+                  description: 'From open chat / share details.'
+                  example: null
+                  nullable: true
+                lang:
+                  type: string
+                  description: 'Website language — the listing text on the cards.'
+                  example: en
+                  nullable: true
+                language:
+                  type: string
+                  description: 'Chat language the user picked (a `languages` code from Open chat) — the assistant replies in it whatever language the message is in.'
+                  example: "ar\n\nThe buyer can describe what they want in their own words (budget, area, near schools,\nrental income, commute, …): `requirements` is everything captured so far in this\nconversation, and the cards are ranked against it — each has `match` with a 0-100 `score`\n(null when there's nothing to score on), `reasons` and `misses`."
+                  nullable: true
+              required:
+                - message
+      security: []
+  '/api/properties/{slug}':
+    get:
+      summary: 'Property details'
+      operationId: propertyDetails
+      description: "The full listing: gallery, price, specs, description, amenities, location, agent/agency\ncontact, floor plans, open house days, similar listings and SEO. Use the property's `id`\nfrom here for wishlist and lead endpoints."
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not found'
+      tags:
+        - 'Property Details — new sections'
+      security: []
+    parameters:
+      -
+        in: path
+        name: slug
+        description: 'The listing slug from a property card.'
+        example: virella-2
+        required: true
+        schema:
+          type: string
+  '/api/properties/{slug}/insights':
+    get:
+      summary: 'Market & investment insights'
+      operationId: marketInvestmentInsights
+      description: "The listing's Market & Investment panel: asking and verified (closed-deal) price summaries for\nthe same type in the same area, estimated value / annual rent, gross yield, price vs market,\nyear-on-year growth, a quarterly price-per-sq.ft trend, recent closed deals, the automated\nassessment badge and the starting assumptions for the investment calculator. Every estimate\ncarries `source` (verified | asking) and `count`. Amounts in AED; rents annual."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not found'
+      tags:
+        - 'Property Details — new sections'
+      security: []
+    parameters:
+      -
+        in: path
+        name: slug
+        description: ''
+        example: virella-2
+        required: true
+        schema:
+          type: string
+  '/api/properties/{slug}/demand':
+    get:
+      summary: 'Buyer demand'
+      operationId: buyerDemand
+      description: "The listing's Buyer Demand block, from anonymised, aggregated activity on MW Realty (searches,\nsaved searches, listing views, favourites, enquiries — counted as different browsers per day):\ndemand level for its segment (same type + bedrooms) against its city, last 30 days vs the 30\nbefore, price benchmark, demand vs supply by bedrooms and price band, monthly trend, most\nwanted amenities and key findings (`insights`, as keys + values for the page to word).\n`available: false` when the listing has no city / community. Counts below `fewer_than` are null."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not found'
+      tags:
+        - 'Property Details — new sections'
+      security: []
+    parameters:
+      -
+        in: path
+        name: slug
+        description: ''
+        example: virella-2
+        required: true
+        schema:
+          type: string
+  '/api/properties/{slug}/demand/summary':
+    get:
+      summary: 'Buyer demand summary'
+      operationId: buyerDemandSummary
+      description: "The AI-written overview of the Buyer Demand figures, in the requested language: `source: ai`\nwith `summary` and `highlights`, or `source: rules` when AI is unavailable (show the key\nfindings instead). Cached per segment and language."
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  source: ai
+                  summary: 'Demand for 2-bedroom apartments in Dubai Marina is high…'
+                  highlights:
+                    - 'Searches up 35% on the previous 30 days'
+                properties:
+                  source:
+                    type: string
+                    example: ai
+                  summary:
+                    type: string
+                    example: 'Demand for 2-bedroom apartments in Dubai Marina is high…'
+                  highlights:
+                    type: array
+                    example:
+                      - 'Searches up 35% on the previous 30 days'
+                    items:
+                      type: string
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not found'
+      tags:
+        - 'Property Details — new sections'
+      security: []
+    parameters:
+      -
+        in: path
+        name: slug
+        description: ''
+        example: virella-2
+        required: true
+        schema:
+          type: string
+  /api/calculators:
+    get:
+      summary: 'Calculators menu'
+      operationId: calculatorsMenu
+      description: 'The calculators shown in the header menu and the page tabs, in order.'
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      key: mortgage
+                      title: 'Mortgage Calculator'
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        key: mortgage
+                        title: 'Mortgage Calculator'
+                    items:
+                      type: object
+                      properties:
+                        key:
+                          type: string
+                          example: mortgage
+                        title:
+                          type: string
+                          example: 'Mortgage Calculator'
+      tags:
+        - Calculators
+      security: []
+  '/api/calculators/{key}':
+    get:
+      summary: 'Calculator page'
+      operationId: calculatorPage
+      description: 'Page copy, enquiry-form copy, FAQs, settings and SEO of one calculator.'
+      parameters:
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Not found'
+                properties:
+                  message:
+                    type: string
+                    example: 'Not found'
+      tags:
+        - Calculators
+      security: []
+    parameters:
+      -
+        in: path
+        name: key
+        description: 'mortgage, eligibility, rent-vs-buy or refinance.'
+        example: refinance
+        required: true
+        schema:
+          type: string
+  /api/currencies:
+    get:
+      summary: Currencies
+      operationId: currencies
+      description: "Prices from every endpoint are in AED; to display another currency, multiply by its `rate`\n(units per 1 AED)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Cross-border compare'
+      security: []
+  /api/contact:
+    post:
+      summary: 'Send a contact message'
+      operationId: sendAContactMessage
+      description: "General enquiry (not about a specific property — for that use `POST /api/leads/capture`).\nSaves to Enquiries and emails admin.\n\nPublic, unauthenticated — the /contact page form and the home page's contact section\n(`source=home`, which also sends `interest`; its message is then optional)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: "Thanks — we've received your message and will be in touch soon."
+                properties:
+                  message:
+                    type: string
+                    example: "Thanks — we've received your message and will be in touch soon."
+      tags:
+        - 'Cross-border compare'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: ''
+                  example: 'Sara Ahmed'
+                email:
+                  type: string
+                  description: ''
+                  example: buyer@example.com
+                phone:
+                  type: string
+                  description: 'Local number.'
+                  example: '501234567'
+                phone_country_code:
+                  type: string
+                  description: ''
+                  example: '+971'
+                interest:
+                  type: string
+                  description: 'buy, rent, sell or management.'
+                  example: buy
+                message:
+                  type: string
+                  description: 'Required unless `interest` is sent.'
+                  example: "I'd like a call about 2BR apartments in Marina."
+                source:
+                  type: string
+                  description: "contact, home, calculator or compare. `compare` is the /compare page's unlock form: `calculation` lists the compared listings and the reply carries `compare_unlock`, the token for the `X-Compare-Unlock` header of GET /api/compare."
+                  example: contact
+                  nullable: true
+                calculation:
+                  type: object
+                  description: 'Calculator pages (`source=calculator`): the figures the visitor worked out, label => value, e.g. {"Calculator": "Mortgage", "Loan amount": "AED 1,402,500"}. Saved with the enquiry; the message is then optional.'
+                  example: null
+                  properties: {}
+                  nullable: true
+                recaptcha_token:
+                  type: string
+                  description: 'See "Forms & reCAPTCHA" in the introduction.'
+                  example: null
+                  nullable: true
+              required:
+                - name
+                - email
+      security: []
+  /api/compare:
+    get:
+      summary: 'Compare properties'
+      operationId: compareProperties
+      description: "Two to five listings side by side in one shape, whichever emirate they are in: price (rent per\nyear), size and price per sq.ft, specs, amenities, nearest place of each type, buying costs\nunder that emirate's fees (move-in costs for rentals), market estimates (rent, gross / net\nyield, price vs area, growth), ownership rules and Golden Visa eligibility. `notes` carries the\ncross-border notes (FX margin, UAE tax, notes per buyer currency). Amounts in AED.\n\nThe money & investment figures (`costs`, `total_outlay`, `market`) come back null with\n`locked: true` until the visitor has left their contact details — send the token from\n`POST /api/contact` (source=compare) as the `X-Compare-Unlock` header."
+      parameters:
+        -
+          in: query
+          name: slugs
+          description: 'Comma-separated listing slugs, in display order.'
+          example: 'virella-2,marina-gate-1'
+          required: true
+          schema:
+            type: string
+            description: 'Comma-separated listing slugs, in display order.'
+            example: 'virella-2,marina-gate-1'
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Cross-border compare'
+      security: []
+  /api/compare/summary:
+    get:
+      summary: 'Comparison summary'
+      operationId: comparisonSummary
+      description: "A written summary of the same listings — the main trade-off, 4–6 key differences and who each\nlisting suits (`best_for`, keyed by position 1..n) — with amounts in `currency`. `source` is\n`ai`, or `rules` when the AI isn't available. Without the `X-Compare-Unlock` header it is\nwritten without the locked money & investment figures."
+      parameters:
+        -
+          in: query
+          name: slugs
+          description: ''
+          example: 'virella-2,marina-gate-1'
+          required: true
+          schema:
+            type: string
+            description: ''
+            example: 'virella-2,marina-gate-1'
+        -
+          in: query
+          name: currency
+          description: 'A code from GET /api/currencies.'
+          example: USD
+          required: false
+          schema:
+            type: string
+            description: 'A code from GET /api/currencies.'
+            example: USD
+        -
+          in: query
+          name: lang
+          description: ''
+          example: en
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: en
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Cross-border compare'
+      security: []
+  /api/crm/properties/permit/validate:
+    post:
+      summary: 'Validate a permit'
+      operationId: validateAPermit
+      description: "Checks the permit with DLD / ADREC. Returns the status, the details to fill in and a token the\nform posts back on save (`permit_token`, see PermitVerifier)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Trust engine (CRM)'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emirate:
+                  type: string
+                  description: ''
+                  example: dubai
+                permit_type:
+                  type: string
+                  description: 'rera | dtcm | none (Dubai).'
+                  example: rera
+                  nullable: true
+                permit_city:
+                  type: string
+                  description: 'al_ain | other (Northern Emirates).'
+                  example: architecto
+                  nullable: true
+                permit_number:
+                  type: string
+                  description: ''
+                  example: '7112345678'
+                property_id:
+                  type: integer
+                  description: 'The listing being edited.'
+                  example: 16
+                  nullable: true
+              required:
+                - emirate
+                - permit_number
+      security: []
+  /api/crm/listing-permits:
+    get:
+      summary: 'List listings by permit status'
+      operationId: listListingsByPermitStatus
+      description: '20 per page, the most recently submitted / saved first, with the count per status.'
+      parameters:
+        -
+          in: query
+          name: tab
+          description: 'draft | pending | changes_requested | approved | expired.'
+          example: pending
+          required: false
+          schema:
+            type: string
+            description: 'draft | pending | changes_requested | approved | expired.'
+            example: pending
+        -
+          in: query
+          name: q
+          description: 'Title, ref, permit no, agency or agent.'
+          example: marina
+          required: false
+          schema:
+            type: string
+            description: 'Title, ref, permit no, agency or agent.'
+            example: marina
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Trust engine (CRM)'
+      security: []
+  '/api/crm/listing-permits/{id}':
+    get:
+      summary: "A listing's permit review"
+      operationId: aListingsPermitReview
+      description: "The permit, what the authority's record says next to the ad, the checklist, the review\nhistory, and which action applies (approve / take down)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Trust engine (CRM)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the listing permit.'
+        example: '564'
+        required: true
+        schema:
+          type: string
+  '/api/crm/listing-permits/{id}/approve':
+    post:
+      summary: 'Approve & publish'
+      operationId: approvePublish
+      description: 'A listing waiting for Super Admin (PermitRules::needsApproval) — it goes live.'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Trust engine (CRM)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the listing permit.'
+        example: '564'
+        required: true
+        schema:
+          type: string
+  '/api/crm/listing-permits/{id}/take-down':
+    post:
+      summary: 'Take a listing down'
+      operationId: takeAListingDown
+      description: 'Off the website (wrong details, a DLD complaint …) until its permit details are changed.'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Trust engine (CRM)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the listing permit.'
+        example: '564'
+        required: true
+        schema:
+          type: string
+  /api/crm/listing-review:
+    get:
+      summary: 'List review cases'
+      operationId: listReviewCases
+      description: '20 per page, newest first, with the count per tab and the screening measures.'
+      parameters:
+        -
+          in: query
+          name: tab
+          description: 'duplicate | risk | resolved.'
+          example: duplicate
+          required: false
+          schema:
+            type: string
+            description: 'duplicate | risk | resolved.'
+            example: duplicate
+        -
+          in: query
+          name: q
+          description: 'Title, ref, agency or agent of any listing in the case.'
+          example: marina
+          required: false
+          schema:
+            type: string
+            description: 'Title, ref, agency or agent of any listing in the case.'
+            example: marina
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Trust engine (CRM)'
+      security: []
+  '/api/crm/listing-review/{id}':
+    get:
+      summary: 'A review case'
+      operationId: aReviewCase
+      description: "Every listing in the case side by side (what differs is marked), why each was matched, the\nprice spread, the risk signals, and the case's outcome once resolved."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Trust engine (CRM)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the listing review.'
+        example: '564'
+        required: true
+        schema:
+          type: string
+  '/api/crm/listing-review/{id}/approve':
+    post:
+      summary: 'Approve one listing'
+      operationId: approveOneListing
+      description: "It may be on the website. In a duplicate case both agencies then advertise the unit, each\nwith its own permit, and the two are never flagged against each other again."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Trust engine (CRM)'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                property_id:
+                  type: integer
+                  description: ''
+                  example: 16
+                note:
+                  type: string
+                  description: 'Must not be greater than 1000 characters.'
+                  example: 'n'
+                  nullable: true
+              required:
+                - property_id
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the listing review.'
+        example: '564'
+        required: true
+        schema:
+          type: string
+  '/api/crm/listing-review/{id}/reject':
+    post:
+      summary: 'Reject one listing'
+      operationId: rejectOneListing
+      description: 'Off the website with the reason; once the agency fixes it and saves, it comes back here.'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Trust engine (CRM)'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                property_id:
+                  type: integer
+                  description: ''
+                  example: 16
+                note:
+                  type: string
+                  description: 'Must not be greater than 1000 characters.'
+                  example: 'n'
+              required:
+                - property_id
+                - note
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the listing review.'
+        example: '564'
+        required: true
+        schema:
+          type: string
+  /api/crm/properties/translate:
+    post:
+      summary: Auto-translate
+      operationId: autoTranslate
+      description: "The source-language title / key features / description / location translated into the other\nsite languages (Google Cloud Translation — see AutoTranslator). 503 when not set up."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Listing automation (CRM)'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                source:
+                  type: string
+                  description: ''
+                  example: en
+                targets:
+                  type: array
+                  description: ''
+                  example:
+                    - ar
+                  items:
+                    type: string
+                fields:
+                  type: object
+                  description: ''
+                  example:
+                    title: 'Sea view apartment'
+                  properties: {}
+                  nullable: true
+              required:
+                - source
+                - targets
+                - fields
+      security: []
+  /api/crm/properties/write-copy:
+    post:
+      summary: 'Write with AI'
+      operationId: writeWithAI
+      description: "Title, key features and description for one language, written from the form's current specs\n(`write`) or polished from the agent's own draft (`improve`) — see ListingCopywriter. Nothing\nis saved: the form shows it for the agent to use or discard. 503 when no AI is set up."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  title: 'Bright 2 Bed Apartment with Marina View'
+                  key_features: "Marina view\nHigh floor"
+                  description: '<p>…</p>'
+                properties:
+                  title:
+                    type: string
+                    example: 'Bright 2 Bed Apartment with Marina View'
+                  key_features:
+                    type: string
+                    example: "Marina view\nHigh floor"
+                  description:
+                    type: string
+                    example: '<p>…</p>'
+      tags:
+        - 'Listing automation (CRM)'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lang:
+                  type: string
+                  description: ''
+                  example: en
+                mode:
+                  type: string
+                  description: 'write | improve.'
+                  example: write
+                tone:
+                  type: string
+                  description: 'professional | luxury | friendly | concise.'
+                  example: professional
+                  nullable: true
+                specs:
+                  type: object
+                  description: "The form's values (listing_type, property_type, bedrooms, sqft, price, amenities, community, notes…)."
+                  example: []
+                  properties:
+                    amenities:
+                      type: array
+                      description: 'Must not be greater than 100 characters.'
+                      example:
+                        - 'n'
+                      items:
+                        type: string
+                    notes:
+                      type: string
+                      description: 'Must not be greater than 2000 characters.'
+                      example: g
+                      nullable: true
+                  nullable: true
+                draft:
+                  type: string
+                  description: 'The current description (HTML), for `improve`.'
+                  example: architecto
+                  nullable: true
+              required:
+                - lang
+                - specs
+      security: []
+  /api/crm/properties/imports:
+    get:
+      summary: 'Import history'
+      operationId: importHistory
+      description: "The account's past imports, newest first, 10 a page (the Import page's history table)."
+      parameters:
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      id: 4
+                      status: done
+                      file: inventory.xlsx
+                      total: 120
+                      added: 110
+                      created_at: '2026-10-30T10:00:00Z'
+                      uploaded_by: Sara
+                  next_page: null
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 4
+                        status: done
+                        file: inventory.xlsx
+                        total: 120
+                        added: 110
+                        created_at: '2026-10-30T10:00:00Z'
+                        uploaded_by: Sara
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 4
+                        status:
+                          type: string
+                          example: done
+                        file:
+                          type: string
+                          example: inventory.xlsx
+                        total:
+                          type: integer
+                          example: 120
+                        added:
+                          type: integer
+                          example: 110
+                        created_at:
+                          type: string
+                          example: '2026-10-30T10:00:00Z'
+                        uploaded_by:
+                          type: string
+                          example: Sara
+                  next_page:
+                    type: string
+                    example: null
+                    nullable: true
+      tags:
+        - 'Listing automation (CRM)'
+      security: []
+    post:
+      summary: 'Upload a listing file'
+      operationId: uploadAListingFile
+      description: "Returns the file's columns (with sample values), our fields and the suggested mapping."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  import:
+                    id: 4
+                    status: mapping
+                    file: inventory.xlsx
+                    total: 120
+                  columns:
+                    -
+                      index: 0
+                      heading: Ref
+                      samples:
+                        - AG-1
+                  fields:
+                    -
+                      key: price
+                      label: 'Price (AED)'
+                      required: true
+                      hint: …
+                  mapping:
+                    reference: 0
+                  ai_available: true
+                  translate_available: true
+                properties:
+                  import:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 4
+                      status:
+                        type: string
+                        example: mapping
+                      file:
+                        type: string
+                        example: inventory.xlsx
+                      total:
+                        type: integer
+                        example: 120
+                  columns:
+                    type: array
+                    example:
+                      -
+                        index: 0
+                        heading: Ref
+                        samples:
+                          - AG-1
+                    items:
+                      type: object
+                      properties:
+                        index:
+                          type: integer
+                          example: 0
+                        heading:
+                          type: string
+                          example: Ref
+                        samples:
+                          type: array
+                          example:
+                            - AG-1
+                          items:
+                            type: string
+                  fields:
+                    type: array
+                    example:
+                      -
+                        key: price
+                        label: 'Price (AED)'
+                        required: true
+                        hint: …
+                    items:
+                      type: object
+                      properties:
+                        key:
+                          type: string
+                          example: price
+                        label:
+                          type: string
+                          example: 'Price (AED)'
+                        required:
+                          type: boolean
+                          example: true
+                        hint:
+                          type: string
+                          example: …
+                  mapping:
+                    type: object
+                    properties:
+                      reference:
+                        type: integer
+                        example: 0
+                  ai_available:
+                    type: boolean
+                    example: true
+                  translate_available:
+                    type: boolean
+                    example: true
+      tags:
+        - 'Listing automation (CRM)'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: '.xlsx, .xls or .csv, max 10 MB.'
+                segment:
+                  type: string
+                  description: "residential | commercial (the page it's uploaded from)."
+                  example: residential
+                  nullable: true
+              required:
+                - file
+      security: []
+  /api/crm/properties/imports/template:
+    get:
+      summary: 'Import template'
+      operationId: importTemplate
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Listing automation (CRM)'
+      security: []
+  /api/crm/properties/imports/latest:
+    get:
+      summary: 'Latest import'
+      operationId: latestImport
+      description: "The account's latest import still running or finished in the last day (the Properties page\nshows it on load), or a given one with `?id=`."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Listing automation (CRM)'
+      security: []
+  '/api/crm/properties/imports/{propertyImport_id}/start':
+    post:
+      summary: 'Start the import'
+      operationId: startTheImport
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Importing 120 listings in the background…'
+                  import:
+                    id: 4
+                    status: queued
+                properties:
+                  message:
+                    type: string
+                    example: 'Importing 120 listings in the background…'
+                  import:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 4
+                      status:
+                        type: string
+                        example: queued
+      tags:
+        - 'Listing automation (CRM)'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mapping:
+                  type: object
+                  description: "Our field => the file's column index."
+                  example:
+                    price: 3
+                    community: 5
+                  properties: {}
+                  nullable: true
+                translate:
+                  type: boolean
+                  description: 'Translate title / description / location into the other site languages.'
+                  example: false
+                ai_descriptions:
+                  type: boolean
+                  description: 'Write a description with AI for rows that have none.'
+                  example: false
+              required:
+                - mapping
+      security: []
+    parameters:
+      -
+        in: path
+        name: propertyImport_id
+        description: 'The ID of the propertyImport.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  '/api/crm/properties/imports/{propertyImport_id}':
+    get:
+      summary: 'Import progress'
+      operationId: importProgress
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Listing automation (CRM)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: propertyImport_id
+        description: 'The ID of the propertyImport.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  '/api/crm/properties/imports/{propertyImport_id}/result':
+    get:
+      summary: 'Import status file'
+      operationId: importStatusFile
+      description: 'The uploaded file with Import Status / Import Remarks columns added (kept 30 days).'
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Listing automation (CRM)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: propertyImport_id
+        description: 'The ID of the propertyImport.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  /api/crm/market-demand:
+    get:
+      summary: 'Market demand'
+      operationId: marketDemand
+      description: "The report for one area (empty = all of MW Realty) and purpose, optionally one property type:\ninterest totals and changes (last 30 days vs the 30 before), demand level against the city /\nplatform, interest vs listings by bedrooms and price band, monthly trend, most wanted\namenities and key findings. Counts below `fewer_than` are null."
+      parameters:
+        -
+          in: query
+          name: area
+          description: 'An area id from the areas endpoint ("City|Community" or "City").'
+          example: 'Dubai|Dubai Marina'
+          required: false
+          schema:
+            type: string
+            description: 'An area id from the areas endpoint ("City|Community" or "City").'
+            example: 'Dubai|Dubai Marina'
+        -
+          in: query
+          name: purpose
+          description: 'sale or rent.'
+          example: sale
+          required: false
+          schema:
+            type: string
+            description: 'sale or rent.'
+            example: sale
+        -
+          in: query
+          name: type
+          description: 'A property type value (Admin › Filters).'
+          example: apartment
+          required: false
+          schema:
+            type: string
+            description: 'A property type value (Admin › Filters).'
+            example: apartment
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Market demand'
+      security: []
+  /api/crm/market-demand/areas:
+    get:
+      summary: 'Market demand areas'
+      operationId: marketDemandAreas
+      description: "Cities and communities with live listings, for the area picker — searched and paged on the\nserver (20 per page). `?id=` returns just that area."
+      parameters:
+        -
+          in: query
+          name: search
+          description: ''
+          example: marina
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: marina
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: query
+          name: id
+          description: ''
+          example: 'Dubai|Dubai Marina'
+          required: false
+          schema:
+            type: string
+            description: ''
+            example: 'Dubai|Dubai Marina'
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      id: 'Dubai|Dubai Marina'
+                      name: 'Dubai Marina, Dubai'
+                      listings: 68
+                  next_page: 2
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 'Dubai|Dubai Marina'
+                        name: 'Dubai Marina, Dubai'
+                        listings: 68
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: 'Dubai|Dubai Marina'
+                        name:
+                          type: string
+                          example: 'Dubai Marina, Dubai'
+                        listings:
+                          type: integer
+                          example: 68
+                  next_page:
+                    type: integer
+                    example: 2
+      tags:
+        - 'Market demand'
+      security: []
+  '/api/crm/leads/{id}/insights/summary':
+    get:
+      summary: 'Website activity summary'
+      operationId: websiteActivitySummary
+      description: "The Insights tab — what this lead did on the website: stats, engagement level, most\ninterested properties, what they search for, and the first page of the activity timeline,\nfavorites, saved searches and AI chats. 404 when the lead didn't come from a tracked visitor."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Performance insights (CRM)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the lead.'
+        example: '564'
+        required: true
+        schema:
+          type: string
+  '/api/crm/leads/{id}/insights':
+    get:
+      summary: 'Website activity — next page'
+      operationId: websiteActivityNextPage
+      description: 'The next page of one Insights list (load on scroll).'
+      parameters:
+        -
+          in: query
+          name: section
+          description: 'timeline, favorites, searches, chats or messages.'
+          example: timeline
+          required: true
+          schema:
+            type: string
+            description: 'timeline, favorites, searches, chats or messages.'
+            example: timeline
+        -
+          in: query
+          name: after
+          description: 'The `next` cursor from the previous page.'
+          example: 5512
+          required: false
+          schema:
+            type: integer
+            description: 'The `next` cursor from the previous page.'
+            example: 5512
+        -
+          in: query
+          name: filter
+          description: 'Timeline only: key (default) or all (adds page views).'
+          example: key
+          required: false
+          schema:
+            type: string
+            description: 'Timeline only: key (default) or all (adds page views).'
+            example: key
+        -
+          in: query
+          name: conversation
+          description: "messages only: the chat's id."
+          example: 31
+          required: false
+          schema:
+            type: integer
+            description: "messages only: the chat's id."
+            example: 31
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  items: []
+                  next: null
+                properties:
+                  items:
+                    type: array
+                    example: []
+                  next:
+                    type: string
+                    example: null
+                    nullable: true
+      tags:
+        - 'Performance insights (CRM)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the lead.'
+        example: '564'
+        required: true
+        schema:
+          type: string
+  /api/crm/lead-insights:
+    get:
+      summary: 'Lead insights'
+      operationId: leadInsights
+      description: '20 per page, plus totals across all of them and the sort options.'
+      parameters:
+        -
+          in: query
+          name: sort
+          description: 'active, time, views or chats.'
+          example: active
+          required: false
+          schema:
+            type: string
+            description: 'active, time, views or chats.'
+            example: active
+        -
+          in: query
+          name: search
+          description: 'Name, email or phone.'
+          example: sara
+          required: false
+          schema:
+            type: string
+            description: 'Name, email or phone.'
+            example: sara
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Performance insights (CRM)'
+      security: []
+  /api/crm/property-insights:
+    get:
+      summary: 'Property insights'
+      operationId: propertyInsights
+      description: "20 listings per page with their numbers for the period, plus totals across all of them and a\nday-by-day series of impressions / clicks."
+      parameters:
+        -
+          in: query
+          name: days
+          description: '7, 30 or 90.'
+          example: 30
+          required: false
+          schema:
+            type: integer
+            description: '7, 30 or 90.'
+            example: 30
+        -
+          in: query
+          name: sort
+          description: 'impressions, clicks, leads, no_views or newest.'
+          example: impressions
+          required: false
+          schema:
+            type: string
+            description: 'impressions, clicks, leads, no_views or newest.'
+            example: impressions
+        -
+          in: query
+          name: segment
+          description: 'residential or commercial (empty = both).'
+          example: residential
+          required: false
+          schema:
+            type: string
+            description: 'residential or commercial (empty = both).'
+            example: residential
+        -
+          in: query
+          name: search
+          description: 'Title, reference, address or permit number.'
+          example: marina
+          required: false
+          schema:
+            type: string
+            description: 'Title, reference, address or permit number.'
+            example: marina
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Performance insights (CRM)'
+      security: []
+  '/api/crm/properties/{id}/insights':
+    get:
+      summary: 'Listing performance'
+      operationId: listingPerformance
+      description: "The side panel behind a card's Insights / Leads / quality ring: performance funnel\n(impressions → listing clicks → lead clicks → leads), the last 30 days day by day, quality\nscore with what to improve, who works the listing, and its leads (only those the viewer sees)."
+      parameters:
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Performance insights (CRM)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the property.'
+        example: 82
+        required: true
+        schema:
+          type: integer
+  /api/crm/agent-insights:
+    get:
+      summary: 'Agent insights'
+      operationId: agentInsights
+      description: '20 agents per page with their numbers and score, plus team totals.'
+      parameters:
+        -
+          in: query
+          name: days
+          description: '7, 30 or 90 — the period for leads received / closed.'
+          example: 30
+          required: false
+          schema:
+            type: integer
+            description: '7, 30 or 90 — the period for leads received / closed.'
+            example: 30
+        -
+          in: query
+          name: sort
+          description: 'attention or name.'
+          example: attention
+          required: false
+          schema:
+            type: string
+            description: 'attention or name.'
+            example: attention
+        -
+          in: query
+          name: search
+          description: 'Agent name or email.'
+          example: omar
+          required: false
+          schema:
+            type: string
+            description: 'Agent name or email.'
+            example: omar
+        -
+          in: query
+          name: page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Performance insights (CRM)'
+      security: []
+  '/api/crm/agent-insights/{id}':
+    get:
+      summary: "One agent's insights"
+      operationId: oneAgentsInsights
+      description: "The numbers and score breakdown, plus what needs their attention: untouched leads, overdue\nfollow-ups and listings needing work (10 per page each)."
+      parameters:
+        -
+          in: query
+          name: days
+          description: '7, 30 or 90.'
+          example: 30
+          required: false
+          schema:
+            type: integer
+            description: '7, 30 or 90.'
+            example: 30
+        -
+          in: query
+          name: leads_page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: query
+          name: follow_ups_page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: query
+          name: listings_page
+          description: ''
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: ''
+            example: 1
+        -
+          in: header
+          name: X-Device-Id
+          description: ''
+          example: '{DEVICE_ID}'
+          schema:
+            type: string
+      responses: {}
+      tags:
+        - 'Performance insights (CRM)'
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the agent insight.'
+        example: '564'
+        required: true
+        schema:
+          type: string

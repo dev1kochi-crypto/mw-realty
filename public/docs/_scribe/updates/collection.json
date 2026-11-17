@@ -1,0 +1,2162 @@
+{
+    "variable": [
+        {
+            "id": "baseUrl",
+            "key": "baseUrl",
+            "type": "string",
+            "name": "string",
+            "value": "https:\/\/mw.realty.mightywarnersdemo.com\/"
+        }
+    ],
+    "info": {
+        "name": "MW Realty \u2014 Latest API Updates",
+        "_postman_id": "d974f553-3dc8-4ed2-a43f-762c11d77864",
+        "description": "Only the endpoints added or changed in the latest updates: AI chat & matching, Property Details sections, calculators, cross-border compare, trust engine, listing automation, market demand.",
+        "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
+    },
+    "item": [
+        {
+            "name": "AI chat & property matching",
+            "description": "**Features 1 & 5 \u2014 AI property matching engine + conversational assistant.** The buyer describes what they want in their own words (\"a two-bedroom apartment in Abu Dhabi, near schools, with rental income potential, a manageable service charge and a 20-minute commute\"); the assistant turns it into a brief (`requirements`) and returns real listings **ranked** against it, each card with a `match` (`score` 0\u2013100, `reasons`, `misses`). Near misses (one bedroom more, a little over budget) still show, lower down, with the reason.\n\n**Flow**\n\n1. Chat screen opens \u2192 `GET \/api\/chatbot\/session` (send `X-Device-Id`; a customer token identifies the user). Show `languages` as \"Choose your language\".\n2. Each message \u2192 `POST \/api\/chatbot\/message` with `message`, `conversation_id`, `lang` (listing text) and `language` (chat language). Render `reply`, then `properties` as cards with their `match`.\n3. When a reply (or a `422`) has `details_required: true`, show the details form \u2192 `POST \/api\/chatbot\/start`, then resend the message.\n4. \"Clear chat\" \u2192 `POST \/api\/chatbot\/reset`.\n\n**What is scored:** budget, bedrooms, nearby places (school, metro, mall, beach, \u2026 \u2014 the places tagged on the listing), investment purpose, size, bathrooms, furnishing. Service charge, financing and commute are captured in `requirements` for the agent but are not in the listing data, so they are not scored. A loosely-worded place (\"the Ranches area\") falls back to its meaningful words, so it still finds Arabian Ranches.\n\n**Server setup (backend, `.env`):** `CHATBOT_PROVIDER=groq` (default) or `gemini`; `GROQ_API_KEY` \/ `GROQ_MODEL` (default `openai\/gpt-oss-120b`) or `GEMINI_API_KEY` \/ `GEMINI_MODEL`; optional `CHATBOT_NAME` (persona, default \"Noor\"). Without a key the chat answers with the `unavailable` text instead of failing. The chat languages and their fixed strings are in `config\/chatbot.php`. Limits: 8 messages\/min and 150\/day per IP.\n\n**Agent side:** the captured brief and the transcript appear on the website lead in the CRM (`GET \/api\/crm\/website-leads\/{id}\/insights`).",
+            "item": [
+                {
+                    "name": "Buyer brief for the agent (CRM)",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Insights panel",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/website-leads\/:websiteLead_id\/insights\/summary",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/website-leads\/:websiteLead_id\/insights\/summary",
+                                    "variable": [
+                                        {
+                                            "id": "websiteLead_id",
+                                            "key": "websiteLead_id",
+                                            "value": 1,
+                                            "description": "The ID of the websiteLead."
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "Stats, engagement, most interested properties and the first page of each list (VisitorInsights::summaryJson).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Insights panel \u2014 next page of a list",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/website-leads\/:websiteLead_id\/insights",
+                                    "query": [
+                                        {
+                                            "key": "section",
+                                            "value": "timeline",
+                                            "description": "timeline | favorites | searches | chats | messages.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "after",
+                                            "value": "120",
+                                            "description": "The last id already shown.",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/website-leads\/:websiteLead_id\/insights?section=timeline&after=120",
+                                    "variable": [
+                                        {
+                                            "id": "websiteLead_id",
+                                            "key": "websiteLead_id",
+                                            "value": 1,
+                                            "description": "The ID of the websiteLead."
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The next page of its timeline \/ favorites \/ saved searches \/ chats (load on scroll).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Chat",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Open chat",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/chatbot\/session",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/chatbot\/session"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "Call when the chat screen opens: is this device's user known yet, and the latest\nconversation to continue. Needs the `X-Device-Id` header; a customer token makes the\nuser known automatically.\n\nWidget opened: is this visitor known yet, and the latest conversation to pick up from.\n\n`languages` are the languages the assistant chats in (show them as \"Choose your language\");\n`language` is the one this conversation is in (null until the user picks one). Send the\nchosen code as `language` with each message.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"identified\": false, \"details_required\": false, \"conversation_id\": null, \"requirements\": null, \"language\": null, \"default_language\": \"en\", \"languages\": [{\"code\": \"ar\", \"name\": \"Arabic\", \"native\": \"\u0627\u0644\u0639\u0631\u0628\u064a\u0629\", \"dir\": \"rtl\", \"speech\": \"ar-AE\", \"strings\": {\"welcome\": \"\u2026\", \"placeholder\": \"\u2026\", \"switch_offer\": \"\u2026\", \"switched\": \"\u2026\", \"error\": \"\u2026\"}}], \"messages\": []}",
+                                    "name": ""
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Share contact details",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/chatbot\/start",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/chatbot\/start"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\"}"
+                                },
+                                "description": "Shown when a reply has `details_required: true` (after the first free question, for\nguests). Identifies the user and continues the conversation they started.\n\nThe details form \u2014 identifies the visitor (switching this browser to them; their anonymous\nchat is attached by VisitorTracker).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"conversation_id\": 44, \"name\": \"Sara Ahmed\"}",
+                                    "name": ""
+                                }
+                            ]
+                        },
+                        {
+                            "name": "New conversation",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/chatbot\/reset",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/chatbot\/reset"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "\"Clear chat\" \u2014 the old transcript is kept on the server, the user just starts fresh.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"conversation_id\": 45}",
+                                    "name": ""
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Send a message",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/chatbot\/message",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/chatbot\/message"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"message\":\"Show me 2 bedroom apartments in Dubai Marina under 2M\",\"lang\":\"en\",\"language\":\"ar\\n\\nThe buyer can describe what they want in their own words (budget, area, near schools,\\nrental income, commute, \u2026): `requirements` is everything captured so far in this\\nconversation, and the cards are ranked against it \u2014 each has `match` with a 0-100 `score`\\n(null when there's nothing to score on), `reasons` and `misses`.\"}"
+                                },
+                                "description": "Ask the AI assistant. The reply may include matching property cards. Limited to 8\nmessages\/minute and 150\/day per IP.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"reply\": \"Here are some 2-bedroom apartments in Dubai Marina:\", \"properties\": [{\"id\": 111, \"slug\": \"virella-2\", \"image\": \"https:\/\/...\/photo.jpg\", \"match\": {\"score\": 92, \"reasons\": [\"Within budget\", \"2 bedrooms\", \"Near school\"], \"misses\": []}, \"...\": \"same card shape as GET \/api\/properties\"}], \"pagination\": {\"current_page\": 1, \"last_page\": 1, \"total\": 6}, \"requirements\": {\"location\": \"Dubai Marina\", \"bedrooms\": \"2\", \"max_price\": 2000000, \"nearby\": [\"school\"], \"purpose\": \"invest\"}, \"error\": false, \"conversation_id\": 44, \"details_required\": false}",
+                                    "name": ""
+                                },
+                                {
+                                    "header": [],
+                                    "code": 422,
+                                    "body": "{\"details_required\": true, \"message\": \"Please share your details to keep chatting.\"}",
+                                    "name": "Guest must share details first"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Property Details \u2014 new sections",
+            "description": "The new sections of the Property Details page and the endpoint behind each one. Load the page with `GET \/api\/properties\/{slug}`, then the sections **separately** (they are slower and can show a loading state):\n\n| Section | Endpoint | Shown for |\n|---|---|---|\n| Mortgage \/ Investment calculator (two tabs) | none \u2014 calculated on the device, see **Calculators**; the Investment tab is seeded from `insights` | sale listings |\n| Rental costs (move-in costs) | none \u2014 calculated on the device, see **Calculators** | rent listings |\n| Market & investment insights (price vs area, estimated rent, gross \/ net yield, growth, trend chart) | `GET \/api\/properties\/{slug}\/insights` | all |\n| Buyer demand (+ AI written overview) | `GET \/api\/properties\/{slug}\/demand`, `GET \/api\/properties\/{slug}\/demand\/summary` | all |\n| Nearby places map | `nearby` and `map` in `GET \/api\/properties\/{slug}` | when set |\n| Add to compare | see **Cross-border compare** | all |\n\nThe market figures in `insights` carry a `source` \u2014 `verified` (from recorded transactions, label \"Verified \u00b7 n deals\") or `asking` (from listing prices, label \"Estimate \u00b7 n listings\") \u2014 and a `count`. Show it, so estimates are never presented as verified data.\n\n**Also uses (connected):**\n\n* `GET \/api\/compare` \u2014 see **Cross-border compare**\n* `GET \/api\/currencies` \u2014 see **Cross-border compare**",
+            "item": [
+                {
+                    "name": "Page",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Property details",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/properties\/:slug",
+                                    "query": [
+                                        {
+                                            "key": "lang",
+                                            "value": "en",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/properties\/:slug?lang=en",
+                                    "variable": [
+                                        {
+                                            "id": "slug",
+                                            "key": "slug",
+                                            "value": "virella-2",
+                                            "description": "The listing slug from a property card."
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The full listing: gallery, price, specs, description, amenities, location, agent\/agency\ncontact, floor plans, open house days, similar listings and SEO. Use the property's `id`\nfrom here for wishlist and lead endpoints.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 404,
+                                    "body": "{\"message\": \"Not found\"}",
+                                    "name": ""
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Market & investment insights",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Market & investment insights",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/properties\/:slug\/insights",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/properties\/:slug\/insights",
+                                    "variable": [
+                                        {
+                                            "id": "slug",
+                                            "key": "slug",
+                                            "value": "virella-2",
+                                            "description": ""
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The listing's Market & Investment panel: asking and verified (closed-deal) price summaries for\nthe same type in the same area, estimated value \/ annual rent, gross yield, price vs market,\nyear-on-year growth, a quarterly price-per-sq.ft trend, recent closed deals, the automated\nassessment badge and the starting assumptions for the investment calculator. Every estimate\ncarries `source` (verified | asking) and `count`. Amounts in AED; rents annual.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 404,
+                                    "body": "{\"message\": \"Not found\"}",
+                                    "name": ""
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Buyer demand",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Buyer demand",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/properties\/:slug\/demand",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/properties\/:slug\/demand",
+                                    "variable": [
+                                        {
+                                            "id": "slug",
+                                            "key": "slug",
+                                            "value": "virella-2",
+                                            "description": ""
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The listing's Buyer Demand block, from anonymised, aggregated activity on MW Realty (searches,\nsaved searches, listing views, favourites, enquiries \u2014 counted as different browsers per day):\ndemand level for its segment (same type + bedrooms) against its city, last 30 days vs the 30\nbefore, price benchmark, demand vs supply by bedrooms and price band, monthly trend, most\nwanted amenities and key findings (`insights`, as keys + values for the page to word).\n`available: false` when the listing has no city \/ community. Counts below `fewer_than` are null.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 404,
+                                    "body": "{\"message\": \"Not found\"}",
+                                    "name": ""
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Buyer demand summary",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/properties\/:slug\/demand\/summary",
+                                    "query": [
+                                        {
+                                            "key": "lang",
+                                            "value": "en",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/properties\/:slug\/demand\/summary?lang=en",
+                                    "variable": [
+                                        {
+                                            "id": "slug",
+                                            "key": "slug",
+                                            "value": "virella-2",
+                                            "description": ""
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The AI-written overview of the Buyer Demand figures, in the requested language: `source: ai`\nwith `summary` and `highlights`, or `source: rules` when AI is unavailable (show the key\nfindings instead). Cached per segment and language.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"source\": \"ai\", \"summary\": \"Demand for 2-bedroom apartments in Dubai Marina is high\u2026\", \"highlights\": [\"Searches up 35% on the previous 30 days\"]}",
+                                    "name": ""
+                                },
+                                {
+                                    "header": [],
+                                    "code": 404,
+                                    "body": "{\"message\": \"Not found\"}",
+                                    "name": ""
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Calculators",
+            "description": "**Feature 3 \u2014 investment intelligence.** The calculators run **on the device**: the API gives only the page content (`GET \/api\/calculators`, `GET \/api\/calculators\/{key}`) and, on Property Details, the market figures that seed them (`GET \/api\/properties\/{slug}\/insights`). Calculate in AED and convert for display with `GET \/api\/currencies`. The website's code is in `resources\/js\/components\/calculators\/finance.js` and `resources\/js\/components\/insights\/investment.js` \u2014 port it as-is so the app shows the same numbers.\n\n### 1. Mortgage calculator (Property Details \"Mortgage\" tab, and `\/calculators\/mortgage`)\n\nInputs: price (from the listing), residency, down payment %, interest rate (1\u201310%), term (max 25 years).\n\n| Residency | Min. down payment \u2264 AED 5M | > AED 5M | Starting rate |\n|---|---|---|---|\n| UAE National | 15% | 25% | 4.24% |\n| UAE Resident | 20% | 30% | 3.75% |\n| Non-resident | 40% | 40% | 4.19% |\n\nDown payment max is 80%. Changing residency resets the down payment to its minimum and the rate to its starting rate.\n\n```\nloan     = price \u00d7 (1 \u2212 down% \/ 100)\nr        = rate% \/ 100 \/ 12          n = years \u00d7 12\nmonthly  = loan \u00d7 r \u00d7 (1+r)^n \/ ((1+r)^n \u2212 1)      (loan \/ n when r = 0)\ntotal    = monthly \u00d7 n               interest = total \u2212 loan\n```\n\nPurchase costs (Dubai), shown under it \u2014 mortgage items only when there is a loan:\n\n| Item | Amount |\n|---|---|\n| Land Department fee | 4% of price + AED 580 |\n| Registration trustee | AED 4,000 + 5% VAT |\n| Mortgage registration | 0.25% of loan + AED 10 |\n| Agency fee | 2% of price + 5% VAT |\n| Bank arrangement | 1% of loan + 5% VAT |\n| Valuation | AED 3,000 + 5% VAT |\n\n### 2. Investment calculator (Property Details \"Investment\" tab, sale listings)\n\nStarting values: **rent** = `insights.estimates.annual_rent.amount` (else 6% of the price); **service charges** = size (sq.ft) \u00d7 `insights.assumptions.service_charge_psf`; **maintenance %** and **vacancy %** from `insights.assumptions` (defaults 12 AED\/sq.ft, 1%, 5%). Every value can be changed; plus residency \/ down payment \/ rate \/ term as in the mortgage calculator, and holding period (default 5 years).\n\n```\nloan          = price \u00d7 (1 \u2212 down%\/100)        down = price \u2212 loan\nfees          = purchase costs above            upfront = down + fees\nmonthlyLoan   = monthly(loan, rate, years)\neffectiveRent = rent \u00d7 (1 \u2212 vacancy%\/100)\nmaintenance   = price \u00d7 maintenance%\/100\nrunningCosts  = serviceCharges + maintenance                (a year)\nNOI           = effectiveRent \u2212 runningCosts\ncashFlow\/yr   = NOI \u2212 monthlyLoan \u00d7 12                       (show \/12 as monthly)\ngrossYield    = rent \/ price \u00d7 100\nnetYield      = NOI \/ (price + fees) \u00d7 100\ncashOnCash    = cashFlow\/yr \/ upfront \u00d7 100\n-- over the holding period (hold years) --\nloanPaid      = monthlyLoan \u00d7 min(hold, years) \u00d7 12\nloanBalance   = balance after hold\u00d712 instalments\nloanInterest  = loanPaid \u2212 (loan \u2212 loanBalance)\ntotalCost     = upfront + loanPaid + runningCosts \u00d7 hold\nrentIncome    = effectiveRent \u00d7 hold        netCost = totalCost \u2212 rentIncome\n```\n\n**Financing scenarios** table: the same calculation for down payments of the minimum, 40%, 60%, 100% (cash) and the user's own choice.\n\n### Rental costs (rent listings)\n\nAnnual rent = price \u00d7 periods per year (yearly 1, monthly 12, weekly 52, daily 365). Security deposit = the listing's `pricing.security_deposit`, else 5% of the annual rent (10% furnished); agency fee 5% (editable) + VAT; Ejari \/ Tawtheeq AED 220; utility deposit AED 2,000 (apartment) \/ 4,000 (villa, townhouse); housing fee 5% of the rent in Dubai, 3% in Abu Dhabi. Refundable: the two deposits. Year one = rent + housing fee + move-in costs \u2212 refundable.\n\nThe other two calculator pages (`eligibility`, `rent-vs-buy`, `refinance`) use the same `finance.js` helpers; `settings` in `GET \/api\/calculators\/{key}` holds their admin-editable options (e.g. the refinance lender list).\n\n**Also uses (connected):**\n\n* `GET \/api\/properties\/{slug}\/insights` \u2014 see **Property Details \u2014 new sections**\n* `GET \/api\/currencies` \u2014 see **Cross-border compare**",
+            "item": [
+                {
+                    "name": "Calculator pages",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Calculators menu",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/calculators",
+                                    "query": [
+                                        {
+                                            "key": "lang",
+                                            "value": "en",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/calculators?lang=en"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The calculators shown in the header menu and the page tabs, in order.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"data\": [{\"key\": \"mortgage\", \"title\": \"Mortgage Calculator\"}]}",
+                                    "name": ""
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Calculator page",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/calculators\/:key",
+                                    "query": [
+                                        {
+                                            "key": "lang",
+                                            "value": "en",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/calculators\/:key?lang=en",
+                                    "variable": [
+                                        {
+                                            "id": "key",
+                                            "key": "key",
+                                            "value": "refinance",
+                                            "description": "mortgage, eligibility, rent-vs-buy or refinance."
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "Page copy, enquiry-form copy, FAQs, settings and SEO of one calculator.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 404,
+                                    "body": "{\"message\": \"Not found\"}",
+                                    "name": ""
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Cross-border compare",
+            "description": "**Feature 4 \u2014 cross-border property intelligence.** Compare 2\u20135 listings in any UAE emirate side by side in one shape: price, size, price per sq.ft, buying costs under each emirate's fees (move-in costs for rentals), market estimates, ownership rules, Golden Visa \u2014 with a written AI summary in the buyer's currency.\n\nThe money and investment figures are **locked** until the visitor leaves contact details: `POST \/api\/contact` with `source=compare` returns a token; send it as `X-Compare-Unlock` on both compare endpoints. Amounts in `GET \/api\/compare` are AED \u2014 convert with `GET \/api\/currencies`; the summary takes `currency` itself.",
+            "item": [
+                {
+                    "name": "Currencies",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Currencies",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/currencies",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/currencies"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "Prices from every endpoint are in AED; to display another currency, multiply by its `rate`\n(units per 1 AED).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Compare",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Send a contact message",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/contact",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/contact"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"name\":\"Sara Ahmed\",\"email\":\"buyer@example.com\",\"phone\":\"501234567\",\"phone_country_code\":\"+971\",\"interest\":\"buy\",\"message\":\"I'd like a call about 2BR apartments in Marina.\",\"source\":\"contact\"}"
+                                },
+                                "description": "General enquiry (not about a specific property \u2014 for that use `POST \/api\/leads\/capture`).\nSaves to Enquiries and emails admin.\n\nPublic, unauthenticated \u2014 the \/contact page form and the home page's contact section\n(`source=home`, which also sends `interest`; its message is then optional).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"message\": \"Thanks \u2014 we've received your message and will be in touch soon.\"}",
+                                    "name": ""
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Compare properties",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/compare",
+                                    "query": [
+                                        {
+                                            "key": "slugs",
+                                            "value": "virella-2,marina-gate-1",
+                                            "description": "Comma-separated listing slugs, in display order.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "lang",
+                                            "value": "en",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/compare?slugs=virella-2%2Cmarina-gate-1&lang=en"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "Two to five listings side by side in one shape, whichever emirate they are in: price (rent per\nyear), size and price per sq.ft, specs, amenities, nearest place of each type, buying costs\nunder that emirate's fees (move-in costs for rentals), market estimates (rent, gross \/ net\nyield, price vs area, growth), ownership rules and Golden Visa eligibility. `notes` carries the\ncross-border notes (FX margin, UAE tax, notes per buyer currency). Amounts in AED.\n\nThe money & investment figures (`costs`, `total_outlay`, `market`) come back null with\n`locked: true` until the visitor has left their contact details \u2014 send the token from\n`POST \/api\/contact` (source=compare) as the `X-Compare-Unlock` header.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Comparison summary",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/compare\/summary",
+                                    "query": [
+                                        {
+                                            "key": "slugs",
+                                            "value": "virella-2,marina-gate-1",
+                                            "description": "",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "currency",
+                                            "value": "USD",
+                                            "description": "A code from GET \/api\/currencies.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "lang",
+                                            "value": "en",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/compare\/summary?slugs=virella-2%2Cmarina-gate-1&currency=USD&lang=en"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "A written summary of the same listings \u2014 the main trade-off, 4\u20136 key differences and who each\nlisting suits (`best_for`, keyed by position 1..n) \u2014 with amounts in `currency`. `source` is\n`ai`, or `rules` when the AI isn't available. Without the `X-Compare-Unlock` header it is\nwritten without the locked money & investment figures.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Trust engine (CRM)",
+            "description": "**Feature 2 \u2014 property authenticity and trust engine.** Automated screening flags listings for a **human review** \u2014 it never claims a listing is verified by AI: the same unit already listed by another agency (duplicate photos via image hashing, shown side by side with the price spread; the first listing stays live, newer ones wait), price far off the area, advert details not matching the permit, resubmitted listings. Super Admin approves or rejects each one. Permits are checked when a listing is created (`POST \/api\/crm\/properties\/permit\/validate`) and reviewed in the permit queue.\n\nCRM endpoints: sign in with `POST \/api\/crm\/auth\/login` and send `Authorization: Bearer {token}`.",
+            "item": [
+                {
+                    "name": "Permits",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Validate a permit",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/permit\/validate",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/permit\/validate"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"emirate\":\"dubai\",\"permit_type\":\"rera\",\"permit_city\":\"architecto\",\"permit_number\":\"7112345678\",\"property_id\":16}"
+                                },
+                                "description": "Checks the permit with DLD \/ ADREC. Returns the status, the details to fill in and a token the\nform posts back on save (`permit_token`, see PermitVerifier).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "List listings by permit status",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/listing-permits",
+                                    "query": [
+                                        {
+                                            "key": "tab",
+                                            "value": "pending",
+                                            "description": "draft | pending | changes_requested | approved | expired.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "q",
+                                            "value": "marina",
+                                            "description": "Title, ref, permit no, agency or agent.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/listing-permits?tab=pending&q=marina&page=1"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "20 per page, the most recently submitted \/ saved first, with the count per status.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "A listing's permit review",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/listing-permits\/:id",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/listing-permits\/:id",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": "564",
+                                            "description": "The ID of the listing permit."
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The permit, what the authority's record says next to the ad, the checklist, the review\nhistory, and which action applies (approve \/ take down).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Approve & publish",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/listing-permits\/:id\/approve",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/listing-permits\/:id\/approve",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": "564",
+                                            "description": "The ID of the listing permit."
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "A listing waiting for Super Admin (PermitRules::needsApproval) \u2014 it goes live.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Take a listing down",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/listing-permits\/:id\/take-down",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/listing-permits\/:id\/take-down",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": "564",
+                                            "description": "The ID of the listing permit."
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "Off the website (wrong details, a DLD complaint \u2026) until its permit details are changed.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Listing review queue (Super Admin)",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "List review cases",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/listing-review",
+                                    "query": [
+                                        {
+                                            "key": "tab",
+                                            "value": "duplicate",
+                                            "description": "duplicate | risk | resolved.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "q",
+                                            "value": "marina",
+                                            "description": "Title, ref, agency or agent of any listing in the case.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/listing-review?tab=duplicate&q=marina&page=1"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "20 per page, newest first, with the count per tab and the screening measures.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "A review case",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/listing-review\/:id",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/listing-review\/:id",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": "564",
+                                            "description": "The ID of the listing review."
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "Every listing in the case side by side (what differs is marked), why each was matched, the\nprice spread, the risk signals, and the case's outcome once resolved.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Approve one listing",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/listing-review\/:id\/approve",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/listing-review\/:id\/approve",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": "564",
+                                            "description": "The ID of the listing review."
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"property_id\":16,\"note\":\"n\"}"
+                                },
+                                "description": "It may be on the website. In a duplicate case both agencies then advertise the unit, each\nwith its own permit, and the two are never flagged against each other again.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Reject one listing",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/listing-review\/:id\/reject",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/listing-review\/:id\/reject",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": "564",
+                                            "description": "The ID of the listing review."
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"property_id\":16,\"note\":\"n\"}"
+                                },
+                                "description": "Off the website with the reason; once the agency fixes it and saves, it comes back here.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Listing automation (CRM)",
+            "description": "**Feature 6 \u2014 agency listing automation.** Agencies bulk-upload their inventory from a spreadsheet (or another CRM's export): upload \u2192 the columns are matched to our fields \u2192 confirm \u2192 the import runs in the background (poll its progress) \u2192 download the file back with an Import Status \/ Remarks column per row. Descriptions are standardised and missing information reported per row. In the listing form, **Write with AI** drafts the title \/ description from the details and **Auto-translate** fills the other languages.\n\nCRM endpoints: `Authorization: Bearer {token}` from `POST \/api\/crm\/auth\/login`.",
+            "item": [
+                {
+                    "name": "Listing form helpers",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Auto-translate",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/translate",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/translate"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"source\":\"en\",\"targets\":[\"ar\"],\"fields\":{\"title\":\"Sea view apartment\"}}"
+                                },
+                                "description": "The source-language title \/ key features \/ description \/ location translated into the other\nsite languages (Google Cloud Translation \u2014 see AutoTranslator). 503 when not set up.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Write with AI",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/write-copy",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/write-copy"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"lang\":\"en\",\"mode\":\"write\",\"tone\":\"professional\",\"specs\":{\"amenities\":[\"n\"],\"notes\":\"g\"},\"draft\":\"architecto\"}"
+                                },
+                                "description": "Title, key features and description for one language, written from the form's current specs\n(`write`) or polished from the agent's own draft (`improve`) \u2014 see ListingCopywriter. Nothing\nis saved: the form shows it for the agent to use or discard. 503 when no AI is set up.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"title\": \"Bright 2 Bed Apartment with Marina View\", \"key_features\": \"Marina view\\nHigh floor\", \"description\": \"<p>\u2026<\/p>\"}",
+                                    "name": ""
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Spreadsheet import",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Import history",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/imports",
+                                    "query": [
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/imports?page=1"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The account's past imports, newest first, 10 a page (the Import page's history table).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"data\": [{\"id\": 4, \"status\": \"done\", \"file\": \"inventory.xlsx\", \"total\": 120, \"added\": 110, \"created_at\": \"2026-10-30T10:00:00Z\", \"uploaded_by\": \"Sara\"}], \"next_page\": null}",
+                                    "name": ""
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Upload a listing file",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/imports",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/imports"
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart\/form-data"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "segment",
+                                            "value": "residential",
+                                            "type": "text",
+                                            "description": "residential | commercial (the page it's uploaded from)."
+                                        },
+                                        {
+                                            "key": "file",
+                                            "src": [],
+                                            "type": "file"
+                                        }
+                                    ]
+                                },
+                                "description": "Returns the file's columns (with sample values), our fields and the suggested mapping.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"import\": {\"id\": 4, \"status\": \"mapping\", \"file\": \"inventory.xlsx\", \"total\": 120}, \"columns\": [{\"index\": 0, \"heading\": \"Ref\", \"samples\": [\"AG-1\"]}], \"fields\": [{\"key\": \"price\", \"label\": \"Price (AED)\", \"required\": true, \"hint\": \"\u2026\"}], \"mapping\": {\"reference\": 0}, \"ai_available\": true, \"translate_available\": true}",
+                                    "name": ""
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Import template",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/imports\/template",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/imports\/template"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Latest import",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/imports\/latest",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/imports\/latest"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The account's latest import still running or finished in the last day (the Properties page\nshows it on load), or a given one with `?id=`.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Start the import",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/imports\/:propertyImport_id\/start",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/imports\/:propertyImport_id\/start",
+                                    "variable": [
+                                        {
+                                            "id": "propertyImport_id",
+                                            "key": "propertyImport_id",
+                                            "value": 1,
+                                            "description": "The ID of the propertyImport."
+                                        }
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"mapping\":{\"price\":3,\"community\":5},\"translate\":false,\"ai_descriptions\":false}"
+                                },
+                                "description": "",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"message\": \"Importing 120 listings in the background\u2026\", \"import\": {\"id\": 4, \"status\": \"queued\"}}",
+                                    "name": ""
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Import progress",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/imports\/:propertyImport_id",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/imports\/:propertyImport_id",
+                                    "variable": [
+                                        {
+                                            "id": "propertyImport_id",
+                                            "key": "propertyImport_id",
+                                            "value": 1,
+                                            "description": "The ID of the propertyImport."
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Import status file",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/imports\/:propertyImport_id\/result",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/imports\/:propertyImport_id\/result",
+                                    "variable": [
+                                        {
+                                            "id": "propertyImport_id",
+                                            "key": "propertyImport_id",
+                                            "value": 1,
+                                            "description": "The ID of the propertyImport."
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The uploaded file with Import Status \/ Import Remarks columns added (kept 30 days).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Market demand",
+            "description": "**Feature 7 \u2014 property demand and market analytics.** Anonymised, aggregated marketplace demand (searches, views, saves, enquiries vs listing supply) \u2014 never an individual lead or visitor. On the website it is the **Buyer demand** section of Property Details; in the CRM it is the **Market Demand** page for agencies and developers (where buyers look, underserved bedroom counts and price bands, month-by-month change), a plan feature (`market_demand`).\n\n**Also uses (connected):**\n\n* `GET \/api\/properties\/{slug}\/demand` \u2014 see **Property Details \u2014 new sections**\n* `GET \/api\/properties\/{slug}\/demand\/summary` \u2014 see **Property Details \u2014 new sections**",
+            "item": [
+                {
+                    "name": "CRM Market Demand",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Market demand",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/market-demand",
+                                    "query": [
+                                        {
+                                            "key": "area",
+                                            "value": "Dubai|Dubai Marina",
+                                            "description": "An area id from the areas endpoint (\"City|Community\" or \"City\").",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "purpose",
+                                            "value": "sale",
+                                            "description": "sale or rent.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "type",
+                                            "value": "apartment",
+                                            "description": "A property type value (Admin \u203a Filters).",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/market-demand?area=Dubai%7CDubai%20Marina&purpose=sale&type=apartment"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The report for one area (empty = all of MW Realty) and purpose, optionally one property type:\ninterest totals and changes (last 30 days vs the 30 before), demand level against the city \/\nplatform, interest vs listings by bedrooms and price band, monthly trend, most wanted\namenities and key findings. Counts below `fewer_than` are null.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Market demand areas",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/market-demand\/areas",
+                                    "query": [
+                                        {
+                                            "key": "search",
+                                            "value": "marina",
+                                            "description": "",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "id",
+                                            "value": "Dubai|Dubai Marina",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/market-demand\/areas?search=marina&page=1&id=Dubai%7CDubai%20Marina"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "Cities and communities with live listings, for the area picker \u2014 searched and paged on the\nserver (20 per page). `?id=` returns just that area.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"data\": [{\"id\": \"Dubai|Dubai Marina\", \"name\": \"Dubai Marina, Dubai\", \"listings\": 68}], \"next_page\": 2}",
+                                    "name": ""
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Performance insights (CRM)",
+            "description": "Other recent CRM updates: how each listing performs (views, impressions, enquiries, insight views), the agency's agents compared, and lead insights.",
+            "item": [
+                {
+                    "name": "Leads",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Website activity summary",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/leads\/:id\/insights\/summary",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/leads\/:id\/insights\/summary",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": "564",
+                                            "description": "The ID of the lead."
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The Insights tab \u2014 what this lead did on the website: stats, engagement level, most\ninterested properties, what they search for, and the first page of the activity timeline,\nfavorites, saved searches and AI chats. 404 when the lead didn't come from a tracked visitor.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Website activity \u2014 next page",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/leads\/:id\/insights",
+                                    "query": [
+                                        {
+                                            "key": "section",
+                                            "value": "timeline",
+                                            "description": "timeline, favorites, searches, chats or messages.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "after",
+                                            "value": "5512",
+                                            "description": "The `next` cursor from the previous page.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "filter",
+                                            "value": "key",
+                                            "description": "Timeline only: key (default) or all (adds page views).",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "conversation",
+                                            "value": "31",
+                                            "description": "messages only: the chat's id.",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/leads\/:id\/insights?section=timeline&after=5512&filter=key&conversation=31",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": "564",
+                                            "description": "The ID of the lead."
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The next page of one Insights list (load on scroll).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": [
+                                {
+                                    "header": [],
+                                    "code": 200,
+                                    "body": "{\"items\": [], \"next\": null}",
+                                    "name": ""
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Lead insights",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/lead-insights",
+                                    "query": [
+                                        {
+                                            "key": "sort",
+                                            "value": "active",
+                                            "description": "active, time, views or chats.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "search",
+                                            "value": "sara",
+                                            "description": "Name, email or phone.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/lead-insights?sort=active&search=sara&page=1"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "20 per page, plus totals across all of them and the sort options.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Listings",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Property insights",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/property-insights",
+                                    "query": [
+                                        {
+                                            "key": "days",
+                                            "value": "30",
+                                            "description": "7, 30 or 90.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "sort",
+                                            "value": "impressions",
+                                            "description": "impressions, clicks, leads, no_views or newest.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "segment",
+                                            "value": "residential",
+                                            "description": "residential or commercial (empty = both).",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "search",
+                                            "value": "marina",
+                                            "description": "Title, reference, address or permit number.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/property-insights?days=30&sort=impressions&segment=residential&search=marina&page=1"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "20 listings per page with their numbers for the period, plus totals across all of them and a\nday-by-day series of impressions \/ clicks.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Listing performance",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/properties\/:id\/insights",
+                                    "query": [],
+                                    "raw": "{{baseUrl}}\/api\/crm\/properties\/:id\/insights",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": 82,
+                                            "description": "The ID of the property."
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The side panel behind a card's Insights \/ Leads \/ quality ring: performance funnel\n(impressions \u2192 listing clicks \u2192 lead clicks \u2192 leads), the last 30 days day by day, quality\nscore with what to improve, who works the listing, and its leads (only those the viewer sees).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Agents",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "Agent insights",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/agent-insights",
+                                    "query": [
+                                        {
+                                            "key": "days",
+                                            "value": "30",
+                                            "description": "7, 30 or 90 \u2014 the period for leads received \/ closed.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "sort",
+                                            "value": "attention",
+                                            "description": "attention or name.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "search",
+                                            "value": "omar",
+                                            "description": "Agent name or email.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/agent-insights?days=30&sort=attention&search=omar&page=1"
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "20 agents per page with their numbers and score, plus team totals.",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "One agent's insights",
+                            "request": {
+                                "url": {
+                                    "host": "{{baseUrl}}",
+                                    "path": "api\/crm\/agent-insights\/:id",
+                                    "query": [
+                                        {
+                                            "key": "days",
+                                            "value": "30",
+                                            "description": "7, 30 or 90.",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "leads_page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "follow_ups_page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        },
+                                        {
+                                            "key": "listings_page",
+                                            "value": "1",
+                                            "description": "",
+                                            "disabled": false
+                                        }
+                                    ],
+                                    "raw": "{{baseUrl}}\/api\/crm\/agent-insights\/:id?days=30&leads_page=1&follow_ups_page=1&listings_page=1",
+                                    "variable": [
+                                        {
+                                            "id": "id",
+                                            "key": "id",
+                                            "value": "564",
+                                            "description": "The ID of the agent insight."
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application\/json"
+                                    },
+                                    {
+                                        "key": "X-Device-Id",
+                                        "value": "{DEVICE_ID}"
+                                    }
+                                ],
+                                "body": null,
+                                "description": "The numbers and score breakdown, plus what needs their attention: untouched leads, overdue\nfollow-ups and listings needing work (10 per page each).",
+                                "auth": {
+                                    "type": "noauth"
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "Authorization",
+                "type": "string"
+            }
+        ]
+    }
+}
