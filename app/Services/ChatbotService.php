@@ -78,6 +78,10 @@ class ChatbotService
             // Ranked best match first; `match.score` is 0-100 (null when the brief has nothing to score).
             'properties' => array_map(fn ($card) => array_intersect_key($card, array_flip(['name', 'location', 'price', 'beds', 'baths', 'area', 'type', 'purpose_badge', 'match'])), $properties),
             'listings_considered' => $result['total'],
+            // Requirements dropped to find any listing at all — these are the closest, not exact matches.
+            'relaxed_requirements' => $result['relaxed'],
+            // Landmarks the named places were matched to (distances in match.reasons are from these).
+            'places_matched' => $result['places_found'],
             'not_in_listing_data' => array_values(array_intersect(['max_service_charge', 'commute'], array_keys($brief))),
         ]);
 
@@ -130,6 +134,17 @@ class ChatbotService
         if (is_bool($args['furnished'] ?? null)) {
             $clean['furnished'] = $args['furnished'];
         }
+        foreach (['places', 'keywords'] as $key) {
+            if (is_array($args[$key] ?? null)) {
+                $terms = array_values(array_unique(array_filter(array_map(
+                    fn ($t) => is_string($t) ? mb_substr(trim($t), 0, 80) : '',
+                    $args[$key]
+                ))));
+                if ($terms) {
+                    $clean[$key] = array_slice($terms, 0, 5);
+                }
+            }
+        }
         if (is_array($args['nearby'] ?? null)) {
             $nearby = array_values(array_unique(array_intersect($args['nearby'], array_keys(PropertyMatcher::nearbyLabels('en')))));
             if ($nearby) {
@@ -151,6 +166,16 @@ class ChatbotService
             ->all());
     }
 
+    /** The real location names (from the listings + Master data, never a hand-kept list) for the
+     *  AI to map the buyer's words onto; capped so a huge list can't bloat every request — past
+     *  that, PropertyMatcher's own matching (short forms, typos) still resolves them. */
+    private function locationHint(): string
+    {
+        $names = PropertyMatcher::knownLocations('en');
+
+        return count($names) <= 400 ? implode(', ', $names) : "e.g. 'Dubai Marina', 'Jumeirah Village Circle', 'Abu Dhabi'";
+    }
+
     private function searchPropertiesDeclaration(): array
     {
         return [
@@ -164,7 +189,9 @@ class ChatbotService
                 'properties' => [
                     'location' => [
                         'type' => 'STRING',
-                        'description' => "Free-text community/city/area name, e.g. 'Dubai Marina', 'JVC', 'Abu Dhabi'. Matches partially, case-insensitively.",
+                        'description' => "Community/city/area name only. Short forms, nicknames and misspellings are fine, but when the "
+                            . 'buyer means one of the locations we have listings in, pass that exact name: ' . $this->locationHint()
+                            . '. A clinic, school, mall or building name goes in `places`, not here.',
                     ],
                     'property_type' => [
                         'type' => 'STRING',
@@ -202,7 +229,21 @@ class ChatbotService
                         'type' => 'ARRAY',
                         // An empty enum is rejected by the APIs — only before any nearby type is set up.
                         'items' => array_filter(['type' => 'STRING', 'enum' => array_keys(PropertyMatcher::nearbyLabels('en')) ?: null]),
-                        'description' => "Places the buyer wants close by, e.g. 'near schools' => ['school'], 'close to the metro' => ['metro_station'].",
+                        'description' => "TYPES of place the buyer wants close by, e.g. 'near schools' => ['school'], 'close to the metro' => ['metro_station']. For a specific named place use `places` instead.",
+                    ],
+                    'places' => [
+                        'type' => 'ARRAY',
+                        'items' => ['type' => 'STRING'],
+                        'description' => "Specific NAMED places, buildings or landmarks the buyer wants to be near, as they named them, e.g. "
+                            . "'near Aster Clinic in JVC' => ['Aster Clinic JVC'], 'close to Dubai Mall' => ['Dubai Mall'], "
+                            . "'walking distance to GEMS Wellington' => ['GEMS Wellington']. Returns listings that have the place on their "
+                            . "Location & Nearby list; only when none do, listings within a few km. "
+                            . 'Never put these in `location`.',
+                    ],
+                    'keywords' => [
+                        'type' => 'ARRAY',
+                        'items' => ['type' => 'STRING'],
+                        'description' => "Short features / words to look for in the listing text, e.g. ['sea view', 'private pool', 'maid room', 'balcony', 'pet friendly'].",
                     ],
                     'furnished' => [
                         'type' => 'BOOLEAN',
@@ -285,9 +326,13 @@ class ChatbotService
             . 'before answering, passing every requirement they have described. Results come ranked with a '
             . 'match score and reasons — explain briefly why the top ones fit and mention any important miss. '
             . 'Service charge and commute time are not in the listing data: never claim a property meets them; '
-            . 'say the agent can confirm. If it returns zero results, tell the user no matches were found and '
-            . 'suggest which requirement to relax — do not suggest specific alternative properties from '
-            . 'memory. Keep replies to 2-3 sentences; the actual property cards are rendered separately by '
+            . 'say the agent can confirm. Buyers may ask for anything — a named clinic, school, mall or building, '
+            . 'a view, a feature: always search with it (named places in `places`, features in `keywords`) and show '
+            . 'the related listings it returns, closest first. When the result lists `relaxed_requirements`, no listing '
+            . 'met all requirements: say so in one short sentence, then present the returned listings as the closest '
+            . 'options and name what differs (e.g. 2 bedrooms instead of 1, 1.8 km from the clinic). Only when no '
+            . 'properties come back at all, say no matches were found and suggest which requirement to relax — never '
+            . 'suggest specific alternative properties from memory. Keep replies to 2-3 sentences; the actual property cards are rendered separately by '
             . "the app, so don't repeat every field for every result in prose."
             . ' Base every fact on the listing data the search returns and say so when something is an estimate or '
             . 'not in the data. You are not a lawyer, financial adviser or licensed real-estate broker: for legal, tax, '
