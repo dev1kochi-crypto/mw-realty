@@ -117,11 +117,16 @@ class MarketDemandService
         $prevFrom = $curFrom->copy()->subDays($days);
         $trendFrom = today()->startOfMonth()->subMonths((int) $c['trend_months'] - 1);
 
+        // Summed in SQL per month × window (current / previous / older) × type × bedrooms × price band —
+        // a platform-wide report would otherwise pull every area's daily rows into memory. Each group's
+        // MIN(date) sits in the same month and window as all its days, so the date checks below hold.
         $rows = DB::table('market_demand_daily')
             ->where('purpose', $purpose)
             ->where('date', '>=', ($prevFrom->lt($trendFrom) ? $prevFrom : $trendFrom)->toDateString())
             ->when($community, fn ($q) => $q->where('community', $community))
             ->when($city, fn ($q) => $q->where('city', $city))
+            ->selectRaw('MIN(date) as date, property_type, bedrooms, price_band, ' . implode(', ', array_map(fn ($m) => "SUM({$m}) as {$m}", self::METRICS)))
+            ->groupByRaw('SUBSTR(date, 1, 7), CASE WHEN date >= ? THEN 2 WHEN date >= ? THEN 1 ELSE 0 END, property_type, bedrooms, price_band', [$curFrom->toDateString(), $prevFrom->toDateString()])
             ->get()
             ->map(function ($r) {
                 $r->date = Carbon::parse($r->date);
